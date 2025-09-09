@@ -226,6 +226,7 @@ export default function RootLayout({
               async
               src={process.env.NEXT_PUBLIC_UMAMI_SRC}
               data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+              data-auto-track="false"
               {...(process.env.NODE_ENV === "production" && {
                 "data-domains":
                   process.env.NEXT_PUBLIC_SITE_URL?.replace(
@@ -233,6 +234,25 @@ export default function RootLayout({
                     ""
                   ) || "blockfestafrica.com",
               })}
+            />
+          )}
+
+        {/* Manual Umami tracking initialization - excludes insights pages */}
+        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID &&
+          process.env.NEXT_PUBLIC_UMAMI_SRC && (
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.addEventListener('DOMContentLoaded', function() {
+                    // Only track if not on insights pages
+                    if (!window.location.pathname.startsWith('/insights')) {
+                      if (window.umami) {
+                        window.umami.pageView();
+                      }
+                    }
+                  });
+                `,
+              }}
             />
           )}
 
@@ -260,7 +280,10 @@ export default function RootLayout({
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7c3aed" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
-      <body className="antialiased w-full mx-auto [@media(min-width:1920px)]:max-w-[1440px]">
+      <body
+        className="antialiased w-full mx-auto [@media(min-width:1920px)]:max-w-[1440px]"
+        suppressHydrationWarning={true}
+      >
         <PerformanceMonitor />
         <Navbar />
         {children}

@@ -7,6 +7,8 @@ Disallow: /admin/
 Disallow: /api/
 Disallow: /_next/
 Disallow: /private/
+Disallow: /insights/
+Disallow: /analytics/
 
 # Sitemap location
 Sitemap: https://blockfestafrica.com/sitemap.xml

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
+// Add headers to exclude from analytics tracking
+const PRIVATE_HEADERS = {
+  "X-Robots-Tag": "noindex, nofollow, noarchive, nosnippet",
+};
+
 // This would typically connect to your actual database
 // For now, we'll structure it to work with CSV data processing
 
@@ -560,28 +565,40 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
         locationParts.length > 1 ? locationParts[locationParts.length - 1] : "";
       const country = normalizeCountry(rawCountry);
 
-      // Parse profession from "describes you" field with better logic
+      // Parse profession from "describes you" field - HANDLE MULTIPLE SELECTIONS
       const professionField = fields[indices.profession] || "";
-      let profession = "Other";
+      const professions: string[] = [];
       const professionLower = professionField.toLowerCase();
 
-      if (professionLower.includes("developer")) profession = "Developer";
-      else if (professionLower.includes("student")) profession = "Student";
-      else if (professionLower.includes("creator")) profession = "Creator";
-      else if (professionLower.includes("researcher"))
-        profession = "Researcher";
-      else if (
+      // Check for ALL selected professions (not just first match)
+      if (professionLower.includes("developer")) professions.push("Developer");
+      if (professionLower.includes("student")) professions.push("Student");
+      if (professionLower.includes("creator")) professions.push("Creator");
+      if (professionLower.includes("researcher"))
+        professions.push("Researcher");
+      if (
         professionLower.includes("founder") ||
         professionLower.includes("entrepreneur")
       )
-        profession = "Founder";
-      else if (professionLower.includes("designer")) profession = "Designer";
-      else if (
+        professions.push("Founder");
+      if (professionLower.includes("designer")) professions.push("Designer");
+      if (
         professionLower.includes("bd/sales") ||
         professionLower.includes("business")
       )
-        profession = "Business Development";
-      else if (professionLower.includes("marketing")) profession = "Marketing";
+        professions.push("Business Development");
+      if (professionLower.includes("marketing")) professions.push("Marketing");
+      if (
+        professionLower.includes("policy") ||
+        professionLower.includes("lawyer")
+      )
+        professions.push("Policy/Legal");
+      if (professionLower.includes("investor"))
+        professions.push("Professional Investor");
+
+      // If no matches found or empty, use "Other"
+      const profession =
+        professions.length > 0 ? professions.join(", ") : "Other";
 
       // Parse experience level more accurately
       const experienceField = fields[indices.experience] || "";
@@ -631,7 +648,10 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
     }
   }
 
-  console.log(`Parsed ${registrations.length} registrations from CSV`);
+  // Only log in development
+  if (process.env.NODE_ENV === "development") {
+    console.log(`Parsed ${registrations.length} registrations from CSV`);
+  }
   return registrations;
 }
 
@@ -730,7 +750,7 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
         experienceScores.length
       : 0;
 
-  // Interest/Profession analysis - based on the profession categorization
+  // Interest/Profession analysis - handle multiple selections correctly
   const professionCounts: { [key: string]: number } = {};
   registrations.forEach((reg) => {
     if (
@@ -738,8 +758,17 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
       reg.profession !== "Other" &&
       reg.profession !== "Unknown"
     ) {
-      professionCounts[reg.profession] =
-        (professionCounts[reg.profession] || 0) + 1;
+      // Handle multiple professions (comma-separated)
+      const individualProfessions = reg.profession
+        .split(", ")
+        .map((p) => p.trim());
+
+      individualProfessions.forEach((profession) => {
+        if (profession && profession !== "Other" && profession !== "Unknown") {
+          professionCounts[profession] =
+            (professionCounts[profession] || 0) + 1;
+        }
+      });
     }
   });
 
@@ -769,11 +798,14 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
         registrationsByWeek[weekKey] = (registrationsByWeek[weekKey] || 0) + 1;
       }
     } catch {
-      console.warn(
-        "Invalid timestamp for registration:",
-        reg.id,
-        reg.timestamp
-      );
+      // Only warn in development
+      if (process.env.NODE_ENV === "development") {
+        console.warn(
+          "Invalid timestamp for registration:",
+          reg.id,
+          reg.timestamp
+        );
+      }
     }
   });
 
@@ -936,21 +968,27 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
       percentage: totalGuests > 0 ? (count / totalGuests) * 100 : 0,
     }));
 
-  // Education Sector Analysis
+  // Education Sector Analysis - handle multiple professions
   const studentCount = registrations.filter(
     (reg) =>
-      reg.profession === "Student" ||
+      (reg.profession && reg.profession.includes("Student")) ||
       (reg.school &&
         reg.school.length > 2 &&
         reg.school.toLowerCase() !== "n/a")
   ).length;
 
-  const professionalCount = registrations.filter(
-    (reg) =>
-      reg.profession !== "Student" &&
-      reg.profession !== "Other" &&
-      reg.profession !== "Unknown"
-  ).length;
+  const professionalCount = registrations.filter((reg) => {
+    if (!reg.profession) return false;
+
+    const professions = reg.profession.split(", ");
+    // Consider as professional if they have any non-student, non-other profession
+    return professions.some(
+      (prof) =>
+        prof.trim() !== "Student" &&
+        prof.trim() !== "Other" &&
+        prof.trim() !== "Unknown"
+    );
+  }).length;
 
   const topSchools: { [key: string]: number } = {};
   registrations.forEach((reg) => {
@@ -1009,33 +1047,70 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
   };
 }
 
-// Function to load guest data from CSV file
+// Function to load guest data from CSV file or environment variable
 async function loadGuestData(): Promise<GuestRegistration[]> {
   try {
-    // Look for CSV file in the components/insights directory
-    const csvPath = path.join(
-      process.cwd(),
-      "components",
-      "insights",
-      "guest-list.csv"
-    );
+    // Option 1: Use base64-encoded CSV data from environment variable (Netlify/Vercel)
+    if (process.env.GUEST_LIST_CSV_BASE64) {
+      try {
+        const csvContent = Buffer.from(
+          process.env.GUEST_LIST_CSV_BASE64,
+          "base64"
+        ).toString("utf-8");
+        const registrations = parseGuestCSV(csvContent);
+
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `Loaded ${registrations.length} registrations from environment variable`
+          );
+        }
+        return registrations;
+      } catch (error) {
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error parsing base64 CSV from environment:", error);
+        }
+      }
+    }
+
+    // Option 2: Use file path (for local development or VPS hosting)
+    const csvPath =
+      process.env.GUEST_LIST_CSV_PATH ||
+      path.join(process.cwd(), "data", "secure", "guest-list.csv") ||
+      path.join(
+        process.cwd(),
+        "components",
+        "insights",
+        "guest-list-sample.csv"
+      );
 
     // Check if file exists
     if (!fs.existsSync(csvPath)) {
-      console.warn("CSV file not found at:", csvPath);
+      if (process.env.NODE_ENV === "development") {
+        console.warn("CSV file not found at:", csvPath);
+        console.warn(
+          "Set GUEST_LIST_CSV_BASE64 environment variable for Netlify/Vercel hosting"
+        );
+        console.warn("Or set GUEST_LIST_CSV_PATH for file-based hosting");
+      }
       return [];
     }
 
     // Read and parse CSV file
     const csvContent = fs.readFileSync(csvPath, "utf8");
-    console.log(`CSV file size: ${csvContent.length} characters`);
-    console.log(`First 200 characters: ${csvContent.substring(0, 200)}`);
+
+    // Only log debug info in development
+    if (process.env.NODE_ENV === "development") {
+      console.log(`CSV file size: ${csvContent.length} characters`);
+      console.log(`First 200 characters: ${csvContent.substring(0, 200)}`);
+    }
 
     const registrations = parseGuestCSV(csvContent);
 
-    console.log(`Loaded ${registrations.length} registrations from CSV`);
-    if (registrations.length > 0) {
-      console.log(`First registration:`, registrations[0]);
+    if (process.env.NODE_ENV === "development") {
+      console.log(`Loaded ${registrations.length} registrations from CSV`);
+      if (registrations.length > 0) {
+        console.log(`First registration:`, registrations[0]);
+      }
     }
     return registrations;
   } catch (error) {
@@ -1054,6 +1129,7 @@ export async function GET() {
 
     return NextResponse.json(stats, {
       headers: {
+        ...PRIVATE_HEADERS,
         "Cache-Control": "no-cache, no-store, must-revalidate",
         Pragma: "no-cache",
         Expires: "0",

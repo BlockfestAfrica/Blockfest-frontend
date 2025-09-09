@@ -158,48 +158,23 @@ export function PartnersSection() {
               🥇 Gold Sponsors
             </h3>
             <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-20 lg:h-24 w-64 lg:w-80">
-                <div className="text-center">
-                  <div className="text-3xl lg:text-4xl mb-2">🏢</div>
-                  <p className="text-white/60 text-sm lg:text-base font-medium">
-                    Coming Soon
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
               <Link
                 href="https://hyperbridge.network"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-20 lg:h-24">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-20 lg:h-24 w-48 lg:w-56">
                   <Image
-                    src="/images/sponsors/hyperbridge-logo.png"
+                    src="/images/sponsors/hyperbridge-logo.png?v=2"
                     alt="Hyperbridge"
-                    width={220}
-                    height={88}
-                    className="h-14 lg:h-18 w-auto object-contain"
+                    width={200}
+                    height={80}
+                    className="h-12 lg:h-16 w-auto object-contain scale-[2]"
                   />
                 </div>
               </Link>
-              <Link
-                href="https://polkadot.africa"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-20 lg:h-24">
-                  <Image
-                    src="/images/sponsors/polkadot-africa-logo.webp"
-                    alt="Polkadot Africa"
-                    width={220}
-                    height={88}
-                    className="h-14 lg:h-18 w-auto object-contain"
-                  />
-                </div>
-              </Link>
-            </div> */}
+            </div>
+          </div>
 
           {/* Silver Sponsors */}
           <div className="text-center">
@@ -233,7 +208,7 @@ export function PartnersSection() {
               🤝 Community Partners
             </h3>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
             <Link
               href="https://www.web3bridgeafrica.com/"
               target="_blank"
@@ -295,7 +270,7 @@ export function PartnersSection() {
                 />
               </div>
             </Link>
-            {/* <Link
+            <Link
               href="https://x.com/web3unilag"
               target="_blank"
               rel="noopener noreferrer"
@@ -309,7 +284,52 @@ export function PartnersSection() {
                   className="h-full lg:h-full w-auto object-cover scale-130"
                 />
               </div>
-            </Link> */}
+            </Link>
+            <Link
+              href="https://dtcsi.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-1 lg:p-1 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 overflow-hidden">
+                <Image
+                  src="/images/community/dtcsi-logo.png"
+                  alt="DTCSI"
+                  width={150}
+                  height={64}
+                  className="h-full lg:h-full w-auto object-cover scale-200"
+                />
+              </div>
+            </Link>
+            <Link
+              href="https://x.com/mgs_web3"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/mgsweb3-logo.png"
+                  alt="MGS Web3"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain"
+                />
+              </div>
+            </Link>
+            <Link
+              href="https://polkadot.africa/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/polkadot-logo.png"
+                  alt="Polkadot Africa"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain scale-[3]"
+                />
+              </div>
+            </Link>
           </div>
         </div>
 
