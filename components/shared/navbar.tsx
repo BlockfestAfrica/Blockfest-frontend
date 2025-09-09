@@ -35,24 +35,26 @@ const Navbar = () => {
     <div
       className={`${Gotham.className} bg-white md:bg-black px-5 lg:px-[70px] py-5 lg:py-10 flex items-center justify-between`}
     >
-      <Image
-        src="/images/mobile-logo.svg"
-        alt="Blockfest Africa Logo"
-        width={140}
-        height={38}
-        sizes="(max-width: 768px) 124px, 140px"
-        priority
-        className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px] block md:hidden"
-      />
-      <Image
-        src="/images/logo.svg"
-        alt="Blockfest Africa Logo"
-        width={140}
-        height={38}
-        sizes="(max-width: 768px) 124px, 140px"
-        priority
-        className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px] hidden md:block"
-      />
+      <Link href="/" className="cursor-pointer">
+        <Image
+          src="/images/mobile-logo.svg"
+          alt="Blockfest Africa Logo"
+          width={140}
+          height={38}
+          sizes="(max-width: 768px) 124px, 140px"
+          priority
+          className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px] block md:hidden"
+        />
+        <Image
+          src="/images/logo.svg"
+          alt="Blockfest Africa Logo"
+          width={140}
+          height={38}
+          sizes="(max-width: 768px) 124px, 140px"
+          priority
+          className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px] hidden md:block"
+        />
+      </Link>
       <nav className="hidden md:flex items-center gap-x-[28px]">
         {navbarMenu.map((item) => (
           <button

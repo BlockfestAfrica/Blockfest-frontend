@@ -34,12 +34,11 @@ export function SpeakersSection() {
               <div className="text-4xl lg:text-5xl">🎤</div>
             </div>
             <h3 className="text-3xl lg:text-5xl font-bold mb-4">
-               <span className="text-[#F2CB45]">Revealing Soon!</span>
+              <span className="text-[#F2CB45]">Revealing Soon!</span>
             </h3>
             <p className="text-lg lg:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
-              We&apos;re curating an incredible lineup of Africa&apos;s most
-              influential Web3 leaders, innovators, and visionaries. Get ready
-              to hear from the minds contributing to the future of blockchain in Africa.
+              An incredible lineup of Africa&apos;s most influential Web3
+              leaders and innovators.
             </p>
           </div>
 

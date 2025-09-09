@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import {
@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa6";
 import type { Menu } from "@/types";
 import localFont from "next/font/local";
+import { useUmami } from "@/lib/hooks/use-umami";
 import { toast } from "sonner";
 
 const Gotham = localFont({
@@ -34,8 +35,102 @@ const scrollToSection = (id: string) => {
 };
 
 const Footer = () => {
+  const { trackButtonClick, trackRegistration } = useUmami();
   const contactEmail =
     process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
+
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+
+  useEffect(() => {
+    const env = process.env.NEXT_PUBLIC_REGISTRATION_OPEN_AT;
+    const fallbackIso = "2025-09-07T17:15:00.000Z";
+    const parsed = Date.parse(env ?? fallbackIso);
+    const openAtMs = Number.isFinite(parsed) ? parsed : Date.parse(fallbackIso);
+
+    let timer: number | null = null;
+    const MAX_DELAY = 2_147_483_647; // ~24.8 days
+
+    const schedule = () => {
+      const now = Date.now();
+      if (now >= openAtMs) {
+        setIsRegistrationOpen(true);
+        return;
+      }
+      setIsRegistrationOpen(false);
+      const delay = Math.min(openAtMs - now, MAX_DELAY);
+      timer = window.setTimeout(schedule, delay);
+    };
+
+    schedule();
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, []);
+
+  const handleRegistrationClick = () => {
+    trackButtonClick("Register Now", "Footer Section");
+    trackRegistration("footer-cta");
+
+    if (isRegistrationOpen) {
+      // Registration is open - redirect to Luma
+      window.open(
+        "https://luma.com/gf1ye3cw?tk=AQAG9o",
+        "_blank",
+        "noopener,noreferrer"
+      );
+    } else {
+      // Show X Space invitation toast with dynamic date formatting
+      const openAtStr =
+        process.env.NEXT_PUBLIC_REGISTRATION_OPEN_AT ??
+        "2025-09-07T17:15:00.000Z";
+      const openAt = new Date(openAtStr);
+      const isValidOpenAt = !Number.isNaN(openAt.getTime());
+      const whenLagos = isValidOpenAt
+        ? openAt.toLocaleString("en-NG", {
+            timeZone: "Africa/Lagos",
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })
+        : "soon";
+      toast(
+        `🎤 Join our X Space ${
+          isValidOpenAt ? `${whenLagos} WAT` : whenLagos
+        }!`,
+        {
+          description:
+            "The registration link will be posted here once it opens.",
+          style: {
+            background:
+              "linear-gradient(145deg, #000000 0%, #1DA1F2 15%, #000000 100%)",
+            border: "2px solid #1DA1F2",
+            color: "#FFFFFF",
+            borderRadius: "16px",
+            boxShadow:
+              "0 20px 40px rgba(29, 161, 242, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3)",
+            fontWeight: "600",
+            backdropFilter: "blur(12px)",
+          },
+          className:
+            "font-bold text-lg [&>div]:text-white [&>div>div]:text-gray-200",
+          duration: 7000,
+          action: {
+            label: "Join X Space",
+            onClick: () =>
+              window.open(
+                "https://twitter.com/i/spaces/1kvJpMYEXALxE",
+                "_blank",
+                "noopener,noreferrer"
+              ),
+          },
+        }
+      );
+    }
+  };
+
   const twitterHandle = (
     process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica"
   ).replace("@", "");
@@ -70,15 +165,17 @@ const Footer = () => {
       id="contact"
     >
       <div className="">
-        <Image
-          src="/images/footer-logo.svg"
-          alt="Blockfest Africa Footer Logo"
-          width={150}
-          height={49}
-          sizes="(max-width: 768px) 124px, 150px"
-          loading="lazy"
-          className="xl:w-[150px] w-[124px] h-[42px] xl:h-[49px] aspect-[124/42] xl:aspect-[150/49]"
-        />
+        <Link href="/insights" className="inline-block cursor-pointer">
+          <Image
+            src="/images/footer-logo.svg"
+            alt="Blockfest Africa Footer Logo"
+            width={150}
+            height={49}
+            sizes="(max-width: 768px) 124px, 150px"
+            loading="lazy"
+            className="xl:w-[150px] w-[124px] h-[42px] xl:h-[49px] aspect-[124/42] xl:aspect-[150/49] hover:opacity-80 transition-opacity duration-200"
+          />
+        </Link>
       </div>
 
       <div className="flex flex-col md:flex-row md:items-end md:gap-x-12.5 gap-y-10">
@@ -86,7 +183,7 @@ const Footer = () => {
         <nav className="hidden lg:grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4 md:gap-x-12.5 md:gap-y-6">
           {footerMenu.map((item) => (
             <button
-            type="button"
+              type="button"
               key={item.title}
               onClick={() => scrollToSection(item.path)}
               className="text-base xl:text-2xl font-medium cursor-pointer text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out text-left"
@@ -133,20 +230,7 @@ const Footer = () => {
         <Button
           type="button"
           variant="ghost"
-          onClick={() =>
-            toast("� Registration is coming soon!", {
-              description: "Stay tuned for the biggest Web3 event in Africa",
-              style: {
-                background: "linear-gradient(145deg, #000000 0%, #1A3461 100%)",
-                border: "1px solid #F2CB45",
-                color: "#FFFFFF",
-                borderRadius: "10px",
-                backdropFilter: "blur(10px)",
-              },
-              className: "font-medium text-base",
-              duration: 4500,
-            })
-          }
+          onClick={handleRegistrationClick}
           className="text-white border-2 px-[38px] py-5 text-lg font-semibold cursor-pointer rounded-[12px]"
         >
           Register

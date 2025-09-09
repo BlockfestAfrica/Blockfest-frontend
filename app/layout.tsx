@@ -3,6 +3,7 @@ import "./globals.css";
 import Footer from "@/components/shared/footer";
 import Navbar from "@/components/shared/navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { PerformanceMonitor } from "@/components/performance-monitor";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
@@ -218,28 +219,42 @@ export default function RootLayout({
           }}
         />
 
-        {/* Google Analytics */}
-        {process.env.NEXT_PUBLIC_GA_ID && (
-          <>
+        {/* Umami Analytics */}
+        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID &&
+          process.env.NEXT_PUBLIC_UMAMI_SRC && (
             <script
               async
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+              src={process.env.NEXT_PUBLIC_UMAMI_SRC}
+              data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+              data-auto-track="false"
+              {...(process.env.NODE_ENV === "production" && {
+                "data-domains":
+                  process.env.NEXT_PUBLIC_SITE_URL?.replace(
+                    /https?:\/\//,
+                    ""
+                  ) || "blockfestafrica.com",
+              })}
             />
+          )}
+
+        {/* Manual Umami tracking initialization - excludes insights pages */}
+        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID &&
+          process.env.NEXT_PUBLIC_UMAMI_SRC && (
             <script
               dangerouslySetInnerHTML={{
                 __html: `
-                  window.dataLayer = window.dataLayer || [];
-                  function gtag(){dataLayer.push(arguments);}
-                  gtag('js', new Date());
-                  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-                    page_title: document.title,
-                    page_location: window.location.href,
+                  window.addEventListener('DOMContentLoaded', function() {
+                    // Only track if not on insights pages
+                    if (!window.location.pathname.startsWith('/insights')) {
+                      if (window.umami) {
+                        window.umami.pageView();
+                      }
+                    }
                   });
                 `,
               }}
             />
-          </>
-        )}
+          )}
 
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -265,7 +280,11 @@ export default function RootLayout({
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7c3aed" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
-      <body className="antialiased w-full mx-auto [@media(min-width:1920px)]:max-w-[1440px]">
+      <body
+        className="antialiased w-full mx-auto [@media(min-width:1920px)]:max-w-[1440px]"
+        suppressHydrationWarning={true}
+      >
+        <PerformanceMonitor />
         <Navbar />
         {children}
         <Footer />

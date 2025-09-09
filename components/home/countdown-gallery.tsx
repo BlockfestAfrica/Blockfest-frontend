@@ -17,7 +17,7 @@ export function CountdownGallerySection() {
               height={446}
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 40vw, 500px"
               priority
-              className="w-full h-full object-cover rounded-[8px] lg:rounded-[24px]"
+              className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
             />
           </div>
           <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] flex-1 basis-[60%] overflow-hidden">
@@ -28,7 +28,7 @@ export function CountdownGallerySection() {
               height={446}
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 700px"
               priority
-              className="w-full h-full object-cover rounded-[8px] lg:rounded-[24px]"
+              className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
             />
           </div>
         </div>
@@ -42,7 +42,7 @@ export function CountdownGallerySection() {
               height={446}
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 700px"
               loading="lazy"
-              className="w-full h-full object-cover rounded-[8px] lg:rounded-[24px]"
+              className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
             />
           </div>
           <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] flex-1 basis-[40%] overflow-hidden">
@@ -53,7 +53,7 @@ export function CountdownGallerySection() {
               height={446}
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 40vw, 500px"
               loading="lazy"
-              className="w-full h-full object-cover rounded-[8px] lg:rounded-[24px]"
+              className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
             />
           </div>
         </div>

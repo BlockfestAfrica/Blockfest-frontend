@@ -55,7 +55,7 @@ Blockfest Africa is a comprehensive Web3 conference website featuring a fully re
 - **Environment Configuration:** Complete dynamic content through environment variables
 - **Type Safety:** Full TypeScript implementation with strict type checking
 - **Performance Optimized:** Next.js 14 with App Router and automatic code splitting
-- **Analytics Ready:** Google Analytics 4 integration with event tracking
+- **Analytics Ready:** Umami Analytics integration with privacy-focused tracking
 - **Security Headers:** Comprehensive security configuration for production
 - **Error Handling:** Graceful error handling and fallback states
 
@@ -213,16 +213,16 @@ This project includes comprehensive SEO optimization for all platforms:
 
 ### Analytics Ready
 
-- **Google Analytics**: Pre-configured GA4 integration
+- **Umami Analytics**: Privacy-focused, open-source analytics integration
 - **Event Tracking**: Custom event tracking for user interactions
-- **Performance Monitoring**: Core Web Vitals tracking
+- **Performance Monitoring**: Core Web Vitals tracking with Umami
 
 ### Configuration
 
 1. Copy `.env.example` to `.env.local`
 2. Update the environment variables with your actual values:
    - Site URL
-   - Google Analytics ID
+   - Umami Analytics Website ID and Script URL
    - Social media handles
    - Site verification codes
    - Event details
@@ -245,7 +245,7 @@ The project includes a programmatic image generation script that creates all req
 - `screenshot-wide.png` & `screenshot-narrow.png` - PWA screenshots ✅
 
 **Automated Image Generation:**
-Run `node scripts/generate-icons.js` to regenerate all SEO images from your logo. The script:
+Run `node scripts/generate-icons.mjs` to regenerate all SEO images from your logo. The script:
 
 - Uses your existing `logo.svg` as the source
 - Maintains transparent backgrounds

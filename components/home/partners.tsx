@@ -1,63 +1,363 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "../ui/button";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useUmami } from "@/lib/hooks/use-umami";
 import { toast } from "sonner";
 
 export function PartnersSection() {
+  const { trackButtonClick, trackRegistration } = useUmami();
   const contactEmail =
     process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
 
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+
+  useEffect(() => {
+    const env = process.env.NEXT_PUBLIC_REGISTRATION_OPEN_AT;
+    const fallbackIso = "2025-09-07T17:15:00.000Z";
+    const parsed = Date.parse(env ?? fallbackIso);
+    const openAtMs = Number.isFinite(parsed) ? parsed : Date.parse(fallbackIso);
+
+    let timer: number | null = null;
+    const MAX_DELAY = 2_147_483_647; // ~24.8 days
+
+    const schedule = () => {
+      const now = Date.now();
+      if (now >= openAtMs) {
+        setIsRegistrationOpen(true);
+        return;
+      }
+      setIsRegistrationOpen(false);
+      const delay = Math.min(openAtMs - now, MAX_DELAY);
+      timer = window.setTimeout(schedule, delay);
+    };
+
+    schedule();
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, []);
+
+  const handleRegistrationClick = () => {
+    trackButtonClick("Register Now", "Partners Section");
+    trackRegistration("partners-cta");
+
+    if (isRegistrationOpen) {
+      // Registration is open - redirect to Luma
+      window.open(
+        "https://luma.com/gf1ye3cw?tk=AQAG9o",
+        "_blank",
+        "noopener,noreferrer"
+      );
+    } else {
+      // Show X Space invitation toast with dynamic date formatting
+      const openAtStr =
+        process.env.NEXT_PUBLIC_REGISTRATION_OPEN_AT ??
+        "2025-09-07T17:15:00.000Z";
+      const openAt = new Date(openAtStr);
+      const isValidOpenAt = !Number.isNaN(openAt.getTime());
+      const whenLagos = isValidOpenAt
+        ? openAt.toLocaleString("en-NG", {
+            timeZone: "Africa/Lagos",
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })
+        : "soon";
+      toast(
+        `🎤 Join our X Space ${
+          isValidOpenAt ? `${whenLagos} WAT` : whenLagos
+        }!`,
+        {
+          description:
+            "The registration link will be posted here once it opens.",
+          style: {
+            background:
+              "linear-gradient(145deg, #000000 0%, #1DA1F2 15%, #000000 100%)",
+            border: "2px solid #1DA1F2",
+            color: "#FFFFFF",
+            borderRadius: "16px",
+            boxShadow:
+              "0 20px 40px rgba(29, 161, 242, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3)",
+            fontWeight: "600",
+            backdropFilter: "blur(12px)",
+          },
+          className:
+            "font-bold text-lg [&>div]:text-white [&>div>div]:text-gray-200",
+          duration: 7000,
+          action: {
+            label: "Join X Space",
+            onClick: () =>
+              window.open(
+                "https://twitter.com/i/spaces/1kvJpMYEXALxE",
+                "_blank",
+                "noopener,noreferrer"
+              ),
+          },
+        }
+      );
+    }
+  };
+
   return (
-    <section className="flex flex-col items-center justify-center px-5 py-14 lg:py-[80px] lg:px-[70px] bg-[#1B64E4]">
+    <section className="flex flex-col items-center justify-center px-5 py-8 lg:py-[60px] lg:px-[70px] bg-[#1B64E4]">
+      {/* Industry Partners Section */}
       <div className="flex flex-col items-center justify-center space-y-5">
-        <h2 className="font-medium text-[39px] lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] md:my-[25px] lg:my-[50px] text-center text-white">
-          Our Partners
+        <h2 className="font-medium text-[39px] lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] md:my-[15px] lg:my-[30px] text-center text-white">
+          Partners
         </h2>
 
-        {/* Revealing Soon Design */}
-        <div className="w-full max-w-5xl mx-auto">
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 lg:p-12 text-center border border-white/20">
-            <div className="mb-6">
-              <div className="w-20 h-20 lg:w-24 lg:h-24 mx-auto mb-6 bg-[#F2CB45]/20 rounded-full flex items-center justify-center">
-                <div className="text-3xl lg:text-4xl">🤝</div>
-              </div>
-              <h3 className="text-2xl lg:text-4xl font-bold mb-4 text-white">
-                <span className="text-[#F2CB45]">Revealing Soon!</span>
-              </h3>
-              <p className="text-base lg:text-lg text-white/90 max-w-3xl mx-auto leading-relaxed">
-                We&apos;re partnering with Africa&apos;s leading blockchain
-                companies, innovative startups, and global Web3 organizations to
-                bring you an unprecedented festival experience.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
-              {[...Array(8)].map((_, index) => (
-                <div
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                  key={index}
-                  className="bg-white/5 rounded-2xl p-6 h-20 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-all duration-300"
-                >
-                  <div
-                    className="w-3 h-3 bg-[#F2CB45] rounded-full animate-pulse"
-                    style={{ animationDelay: `${index * 200}ms` }}
+        {/* Sponsors Section */}
+        <div className="w-full max-w-6xl mx-auto space-y-6">
+          {/* Diamond Sponsors */}
+          <div className="text-center">
+            <h3 className="text-2xl lg:text-3xl font-bold text-[#F2CB45] mb-4">
+              💎 Diamond Sponsors
+            </h3>
+            <div className="flex justify-center">
+              <Link
+                href="https://jeroid.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-24 lg:h-28 w-64 lg:w-80">
+                  <Image
+                    src="/images/sponsors/jeroid-logo.png"
+                    alt="Jeroid"
+                    width={250}
+                    height={100}
+                    className="h-16 lg:h-20 w-auto object-contain"
                   />
                 </div>
-              ))}
+              </Link>
+              {/* <Link
+                href="https://0g.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-24 lg:h-28">
+                  <Image
+                    src="/images/sponsors/0g-lab-logo.png"
+                    alt="0G Labs"
+                    width={250}
+                    height={100}
+                    className="h-16 lg:h-20 w-auto object-contain"
+                  />
+                </div>
+              </Link> */}
+            </div>
+          </div>
+
+          {/* Gold Sponsors */}
+          <div className="text-center">
+            <h3 className="text-2xl lg:text-3xl font-bold text-[#FFD700] mb-4">
+              🥇 Gold Sponsors
+            </h3>
+            <div className="flex justify-center">
+              <Link
+                href="https://hyperbridge.network"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-20 lg:h-24 w-48 lg:w-56">
+                  <Image
+                    src="/images/sponsors/hyperbridge-logo.png?v=2"
+                    alt="Hyperbridge"
+                    width={200}
+                    height={80}
+                    className="h-12 lg:h-16 w-auto object-contain scale-[2]"
+                  />
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          {/* Silver Sponsors */}
+          <div className="text-center">
+            <h3 className="text-2xl lg:text-3xl font-bold text-[#C0C0C0] mb-4">
+              🥈 Silver Sponsors
+            </h3>
+            <div className="flex justify-center">
+              <Link
+                href="https://gidi.africa"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-1 lg:p-2 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                    src="/images/sponsors/gidi-logo.png"
+                    alt="Gidi"
+                    width={240}
+                    height={96}
+                    className="h-full lg:h-full w-auto object-cover scale-125"
+                  />
+                </div>
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Original partners grid commented out */}
-        {/* <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 w-full mt-[30px] place-items-center">
-          {[...Array(6)].map((_, index) => (
-            <div
-              key={index}
-              className=" h-[50px] w-[50px] md:aspect-[195/116] bg-[#D9D9D9] 2xl:w-[195px] 2xl:h-[116px] 2xl:aspect-[195/116] xl:w-[120px] xl:h-[80px] md:rounded-[16px] rounded-full flex items-center justify-center"
-            />
-          ))}
-        </div> */}
+        {/* Community Partners Section */}
+        <div className="w-full max-w-6xl mx-auto pt-4">
+          <div className="text-center mb-4">
+            <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4">
+              🤝 Community Partners
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+            <Link
+              href="https://www.web3bridgeafrica.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/web3bridge-logo.webp"
+                  alt="Web3Bridge"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain"
+                />
+              </div>
+            </Link>
+
+            <Link
+              href="https://web3afrika.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/web3afrika-logo.png"
+                  alt="Web3Afrika"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain"
+                />
+              </div>
+            </Link>
+            <Link
+              href="https://bchainafrica.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/bchain-logo.jpg"
+                  alt="Bchain"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain"
+                />
+              </div>
+            </Link>
+            <Link
+              href="https://womenindefi.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-1 lg:p-1 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/wid-logo.png"
+                  alt="WID"
+                  width={300}
+                  height={120}
+                  className="h-full lg:h-full w-auto object-cover scale-170"
+                />
+              </div>
+            </Link>
+            <Link
+              href="https://x.com/web3unilag"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-1 lg:p-1 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/web3unilag.png"
+                  alt="Web3 Unilag"
+                  width={200}
+                  height={80}
+                  className="h-full lg:h-full w-auto object-cover scale-130"
+                />
+              </div>
+            </Link>
+            <Link
+              href="https://dtcsi.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-1 lg:p-1 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 overflow-hidden">
+                <Image
+                  src="/images/community/dtcsi-logo.png"
+                  alt="DTCSI"
+                  width={150}
+                  height={64}
+                  className="h-full lg:h-full w-auto object-cover scale-200"
+                />
+              </div>
+            </Link>
+            <Link
+              href="https://x.com/mgs_web3"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/mgsweb3-logo.png"
+                  alt="MGS Web3"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain"
+                />
+              </div>
+            </Link>
+            <Link
+              href="https://polkadot.africa/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/polkadot-logo.png"
+                  alt="Polkadot Africa"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain scale-[3]"
+                />
+              </div>
+            </Link>
+          </div>
+        </div>
+
+        {/* Media Partners Section */}
+        <div className="w-full max-w-6xl mx-auto pt-4">
+          <div className="text-center mb-4">
+            <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4">
+              📺 Media Partners
+            </h3>
+          </div>
+          <div className="flex justify-center">
+            <Link
+              href="https://amdmediaworld.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/media/amd-logo.webp"
+                  alt="AMD"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain"
+                />
+              </div>
+            </Link>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col items-center justify-center space-y-5 mt-12.5 lg:mt-[110px] text-white text-center">
@@ -74,30 +374,17 @@ export function PartnersSection() {
         <div className="flex items-center justify-center gap-4 mt-5 mb-10 lg:mb-0">
           <Button
             className="font-semibold text-sm lg:text-[22px] rounded-[13px] p-[21px] lg:p-[34px] w-fit"
-            onClick={() =>
-              toast("🚀 Registration is coming soon!", {
-                // description: "Africa's biggest Web3 festival awaits you",
-                style: {
-                  background:
-                    "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
-                  border: "3px solid #1B64E4",
-                  color: "#000000",
-                  borderRadius: "16px",
-                  boxShadow:
-                    "0 20px 40px rgba(27, 100, 228, 0.4), 0 6px 20px rgba(0, 0, 0, 0.15)",
-                  fontWeight: "700",
-                  backdropFilter: "blur(8px)",
-                  transform: "scale(1.02)",
-                },
-                className:
-                  "font-extrabold text-lg [&>div]:text-black [&>div>div]:text-gray-700",
-                duration: 6000,
-              })
-            }
+            onClick={handleRegistrationClick}
           >
             Register Now
           </Button>
-          <Link href={`mailto:${contactEmail}`} passHref>
+          <Link
+            href={`mailto:${contactEmail}`}
+            passHref
+            onClick={() => {
+              trackButtonClick("Become a sponsor", "Partners Section");
+            }}
+          >
             <Button
               asChild
               className="lg:p-[34px] font-semibold text-sm lg:text-[22px] rounded-[13px] p-[21px] w-fit  border border-white text-white bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50"

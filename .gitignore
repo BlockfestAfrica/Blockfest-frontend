@@ -31,7 +31,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env.local
 
 # vercel
 .vercel
@@ -39,3 +39,29 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Security & Testing
+# Cookie files from testing
+*.cookies.txt
+*cookies.txt
+secure_cookies.txt
+
+# Test credentials and auth files
+*.auth
+*.session
+test-credentials.*
+
+# Temporary security test files
+security-test.*
+auth-test.*
+
+# Personal Data & Privacy
+# CSV files containing personal information
+guest-list.csv
+registrations.csv
+*-personal-data.csv
+*-pii.csv
+
+# Secure data directory (contains sensitive information)
+/data/secure/
+data/secure/

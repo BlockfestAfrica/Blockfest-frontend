@@ -64,14 +64,14 @@ function FeaturesComp() {
           >
             {/* Image Section */}
             <div className="w-full md:w-[40%] flex">
-              <div className="relative w-full h-[200px] md:h-auto flex-1">
+              <div className="relative w-full h-[200px] md:h-auto flex-1 overflow-hidden rounded-l-[11px] lg:rounded-l-[20px] md:rounded-r-none">
                 <Image
                   src={category.image}
                   alt={`${category.header} - Blockfest Africa benefit`}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 40vw, 160px"
                   loading="lazy"
-                  className="object-cover"
+                  className="object-cover object-center scale-115"
                 />
               </div>
             </div>
@@ -89,8 +89,6 @@ function FeaturesComp() {
             </div>
           </div>
         ))}
-
-
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { umamiTrack, sanitizeStack } from "@/lib/analytics";
 
 export default function Error({
   error,
@@ -14,12 +15,20 @@ export default function Error({
     // Log the error to an error reporting service
     console.error("Global error:", error);
 
-    // Log to analytics if available
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "exception", {
-        description: error.message,
-        fatal: true,
-      });
+    // Log to Umami analytics (production-only, guarded)
+    try {
+      if (process.env.NODE_ENV === "production") {
+        umamiTrack("error", {
+          errorMessage: error.message?.slice(0, 500),
+          errorType: "global",
+          fatal: true,
+          digest: error.digest,
+          stack: sanitizeStack(error.stack),
+        });
+      }
+    } catch (analyticsErr) {
+      // Never let analytics throw inside an error handler
+      console.warn("umamiTrack failed:", analyticsErr);
     }
   }, [error]);
 

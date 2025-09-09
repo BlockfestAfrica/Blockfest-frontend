@@ -3,9 +3,9 @@
 // Run: npm install sharp
 // Then: node scripts/generate-icons.js
 
-const sharp = require("sharp");
-const fs = require("fs");
-const path = require("path");
+import sharp from "sharp";
+import fs from "fs";
+import path from "path";
 
 const logoPath = "./public/images/logo.svg";
 const publicDir = "./public/";

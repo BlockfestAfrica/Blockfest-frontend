@@ -52,6 +52,54 @@ const nextConfig: NextConfig = {
         destination: "/",
         permanent: true,
       },
+      // Legacy HTML paths redirect to home
+      {
+        source: "/about.html",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/index.html",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/home.html",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/speakers.html",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/contact.html",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/sponsors.html",
+        destination: "/",
+        permanent: true,
+      },
+      // Common old paths
+      {
+        source: "/about",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/contact",
+        destination: "/",
+        permanent: true,
+      },
+
+      {
+        source: "/register",
+        destination: "/",
+        permanent: true,
+      },
     ];
   },
 
