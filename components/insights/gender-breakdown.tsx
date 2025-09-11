@@ -1,9 +1,14 @@
+import { memo } from "react";
+
 interface GenderBreakdownProps {
   data: Array<{ gender: string; count: number; percentage: number }>;
   loading?: boolean;
 }
 
-export function GenderBreakdown({ data, loading }: GenderBreakdownProps) {
+export const GenderBreakdown = memo(function GenderBreakdown({
+  data,
+  loading,
+}: GenderBreakdownProps) {
   if (loading) {
     return (
       <div
@@ -163,4 +168,4 @@ export function GenderBreakdown({ data, loading }: GenderBreakdownProps) {
       </div>
     </div>
   );
-}
+});

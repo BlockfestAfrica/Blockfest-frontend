@@ -5,13 +5,9 @@ import type { Menu } from "@/types";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "../ui/sheet";
 // import { CiMenuBurger } from "react-icons/ci";
 import { AiOutlineClose } from "react-icons/ai";
-import localFont from "next/font/local";
 import Link from "next/link";
 import BurgerIcon from "../icons/burger-icon";
-
-const Gotham = localFont({
-  src: "../../app/fonts/Gotham-Medium.otf",
-});
+import { gotham } from "@/lib/fonts";
 
 const navbarMenu: Menu[] = [
   { title: "Home", path: "home" },
@@ -33,7 +29,7 @@ const Navbar = () => {
 
   return (
     <div
-      className={`${Gotham.className} bg-white md:bg-black px-5 lg:px-[70px] py-5 lg:py-10 flex items-center justify-between`}
+      className={`${gotham.className} bg-white md:bg-black px-5 lg:px-[70px] py-5 lg:py-10 flex items-center justify-between`}
     >
       <Link href="/" className="cursor-pointer">
         <Image
@@ -104,7 +100,7 @@ const MobileMenu = () => {
 
   return (
     <div
-      className={`${Gotham.className} px-6 py-8 flex flex-col h-full bg-black`}
+      className={`${gotham.className} px-6 py-8 flex flex-col h-full bg-black`}
     >
       {/* Close Button */}
       <div className="flex justify-end mb-8">

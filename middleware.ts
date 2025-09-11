@@ -9,12 +9,12 @@ function validateSessionToken(token: string): boolean {
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  // Allow auth endpoint to pass through
-  if (pathname === "/api/insights/auth") {
+  // Allow auth endpoint and login page to pass through
+  if (pathname === "/api/insights/auth" || pathname === "/insights/login") {
     return NextResponse.next();
   }
 
-  // Protect insights pages and APIs
+  // Protect insights pages and APIs (except login)
   if (
     pathname.startsWith("/insights") ||
     pathname.startsWith("/api/insights")

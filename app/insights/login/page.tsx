@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { PasswordProtected } from "@/components/password-protected";
+import { LoginForm } from "@/components/insights/login-form";
 
 export const metadata: Metadata = {
   title: "Insights Login | Blockfest Africa",
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function InsightsLoginPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4">
       {/* Disable Umami tracking for this page */}
       <script
         dangerouslySetInnerHTML={{
@@ -28,13 +28,7 @@ export default function InsightsLoginPage() {
         }}
       />
 
-      <div className="w-full max-w-md">
-        <PasswordProtected>
-          <div className="text-center text-white">
-            <p>Redirecting to insights...</p>
-          </div>
-        </PasswordProtected>
-      </div>
+      <LoginForm />
     </div>
   );
 }

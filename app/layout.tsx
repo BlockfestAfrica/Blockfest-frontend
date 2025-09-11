@@ -4,6 +4,7 @@ import Footer from "@/components/shared/footer";
 import Navbar from "@/components/shared/navbar";
 import { Toaster } from "@/components/ui/sonner";
 import { PerformanceMonitor } from "@/components/performance-monitor";
+import { gotham } from "@/lib/fonts";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
@@ -212,6 +213,15 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//instagram.com" />
         <link rel="dns-prefetch" href="//youtube.com" />
 
+        {/* Preload critical images */}
+        <link rel="preload" as="image" href="/images/hero.webp" />
+        <link rel="preload" as="image" href="/images/logo.svg" />
+        <link rel="preload" as="image" href="/images/mobile-logo.svg" />
+
+        {/* Prefetch likely next pages */}
+        <link rel="prefetch" href="/insights" />
+        <link rel="prefetch" href="/analytics" />
+
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -276,12 +286,31 @@ export default function RootLayout({
           sizes="16x16"
           href="/favicon-16x16.png"
         />
-        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="manifest" href="/manifest.json" />
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7c3aed" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
+
+        {/* Service Worker Registration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                      console.log('SW registration failed: ', registrationError);
+                    });
+                });
+              }
+            `,
+          }}
+        />
       </head>
       <body
-        className="antialiased w-full mx-auto [@media(min-width:1920px)]:max-w-[1440px]"
+        className={`${gotham.className} antialiased w-full mx-auto [@media(min-width:1920px)]:max-w-[1440px]`}
         suppressHydrationWarning={true}
       >
         <PerformanceMonitor />

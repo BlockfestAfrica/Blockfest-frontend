@@ -15,7 +15,7 @@ export function CountdownGallerySection() {
               alt="Blockfest Africa event gallery image"
               width={500}
               height={446}
-              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 40vw, 500px"
+              sizes="(min-width: 1024px) 40vw, (min-width: 768px) 35vw, 50vw"
               priority
               className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
             />
@@ -26,7 +26,7 @@ export function CountdownGallerySection() {
               alt="Blockfest Africa networking event"
               width={700}
               height={446}
-              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 700px"
+              sizes="(min-width: 1024px) 60vw, (min-width: 768px) 55vw, 50vw"
               priority
               className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
             />
@@ -40,7 +40,7 @@ export function CountdownGallerySection() {
               alt="Blockfest Africa conference speakers"
               width={700}
               height={446}
-              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 700px"
+              sizes="(min-width: 1024px) 60vw, (min-width: 768px) 55vw, 50vw"
               loading="lazy"
               className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
             />
@@ -51,7 +51,7 @@ export function CountdownGallerySection() {
               alt="Blockfest Africa community gathering"
               width={500}
               height={446}
-              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 40vw, 500px"
+              sizes="(min-width: 1024px) 40vw, (min-width: 768px) 35vw, 50vw"
               loading="lazy"
               className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
             />

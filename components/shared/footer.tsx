@@ -10,13 +10,9 @@ import {
   FaYoutube,
 } from "react-icons/fa6";
 import type { Menu } from "@/types";
-import localFont from "next/font/local";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { toast } from "sonner";
-
-const Gotham = localFont({
-  src: "../../app/fonts/Gotham-Medium.otf",
-});
+import { gotham } from "@/lib/fonts";
 
 // Footer menu (removed "Contacts" and "Sponsors" for special handling)
 const footerMenu: Menu[] = [
@@ -161,7 +157,7 @@ const Footer = () => {
   ];
   return (
     <footer
-      className={`${Gotham.className} bg-black px-10 py-10 pt-14 lg:p-[70px] flex gap-y-10  items-center md:items-end justify-between`}
+      className={`${gotham.className} bg-black px-10 py-10 pt-14 lg:p-[70px] flex gap-y-10  items-center md:items-end justify-between`}
       id="contact"
     >
       <div className="">
