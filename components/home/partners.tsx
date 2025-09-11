@@ -119,7 +119,7 @@ export function PartnersSection() {
             </h3>
             <div className="flex justify-center">
               <Link
-                href="https://jeroid.com"
+                href="https://jeroid.co"
                 target="_blank"
                 rel="noopener noreferrer"
               >
