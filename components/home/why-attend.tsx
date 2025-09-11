@@ -69,7 +69,7 @@ function FeaturesComp() {
                   src={category.image}
                   alt={`${category.header} - Blockfest Africa benefit`}
                   fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 40vw, 160px"
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 40vw, 300px"
                   loading="lazy"
                   className="object-cover object-center scale-115"
                 />

@@ -1,10 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { Button } from "@/components/ui/button";
 
 interface PasswordProtectedProps {
   children: React.ReactNode;
+}
+
+interface AuthContextType {
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within PasswordProtected");
+  }
+  return context;
 }
 
 export function PasswordProtected({ children }: PasswordProtectedProps) {
@@ -175,19 +189,8 @@ export function PasswordProtected({ children }: PasswordProtectedProps) {
   }
 
   return (
-    <div className="relative">
-      {/* Logout Button */}
-      <div className="absolute top-4 right-4 z-50">
-        <Button
-          onClick={handleLogout}
-          variant="outline"
-          size="sm"
-          className="bg-red-500/20 border-red-500/30 text-red-200 hover:bg-red-500/30 hover:border-red-500/50"
-        >
-          Logout
-        </Button>
-      </div>
+    <AuthContext.Provider value={{ logout: handleLogout }}>
       {children}
-    </div>
+    </AuthContext.Provider>
   );
 }

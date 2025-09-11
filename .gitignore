@@ -48,6 +48,11 @@ secure_cookies.txt
 
 # Test credentials and auth files
 *.auth
+
+# Secure data files - NEVER commit sensitive data
+/data/secure/
+data/secure/
+*.csv
 *.session
 test-credentials.*
 
@@ -61,7 +66,3 @@ guest-list.csv
 registrations.csv
 *-personal-data.csv
 *-pii.csv
-
-# Secure data directory (contains sensitive information)
-/data/secure/
-data/secure/

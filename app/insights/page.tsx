@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { InsightsDashboard } from "@/components/insights/dashboard";
 import { DashboardSkeleton } from "@/components/insights/skeleton";
 import { PasswordProtected } from "@/components/password-protected";
+import { LogoutButton } from "@/components/insights/logout-button";
 
 export const metadata: Metadata = {
   title: "Event Insights | Blockfest Africa",
@@ -59,7 +60,7 @@ export default function InsightsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between lg:justify-end gap-6">
+              <div className="flex items-center justify-between lg:justify-end gap-3">
                 {/* Data Update Status */}
                 <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2 border border-white/10">
                   <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
@@ -73,20 +74,26 @@ export default function InsightsPage() {
                   )}
                 </div>
 
-                {/* Back to Site */}
-                <Link
-                  href="/"
-                  className="flex items-center gap-2 bg-[#F2CB45] hover:bg-yellow-400 text-black px-4 py-2 rounded-full font-medium transition-all duration-300 transform hover:scale-105"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3">
+                  {/* Back to Site */}
+                  <Link
+                    href="/"
+                    className="flex items-center gap-2 bg-[#F2CB45] hover:bg-yellow-400 text-black px-4 py-2 rounded-full font-medium transition-all duration-300 transform hover:scale-105"
                   >
-                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-                  </svg>
-                  <span className="text-sm">Back to Site</span>
-                </Link>
+                    <svg
+                      className="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                    <span className="text-sm">Back to Site</span>
+                  </Link>
+
+                  {/* Logout Button */}
+                  <LogoutButton />
+                </div>
               </div>
             </div>
           </div>

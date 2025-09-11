@@ -1,9 +1,26 @@
+"use client";
+
+import { memo } from "react";
+
 interface RegistrationChartProps {
   data: Array<{ date: string; count: number }>;
   loading?: boolean;
 }
 
-export function RegistrationChart({ data, loading }: RegistrationChartProps) {
+const RegistrationChart = memo(function RegistrationChart({
+  data,
+  loading,
+}: RegistrationChartProps) {
+  // Debug logging in development
+  if (process.env.NODE_ENV === "development" && data?.length > 0) {
+    console.log("Registration Trends Data:", {
+      dataPoints: data.length,
+      totalRegistrations: data.reduce((sum, item) => sum + item.count, 0),
+      maxCount: Math.max(...data.map((d) => d.count)),
+      data: data.map((d) => ({ date: d.date, count: d.count })),
+    });
+  }
+
   if (loading) {
     return (
       <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 animate-pulse">
@@ -31,7 +48,33 @@ export function RegistrationChart({ data, loading }: RegistrationChartProps) {
     );
   }
 
-  const maxCount = Math.max(...data.map((d) => d.count));
+  // Validate and sanitize data
+  const validData = data.filter(
+    (item) =>
+      item &&
+      typeof item.count === "number" &&
+      item.count >= 0 &&
+      item.date &&
+      !isNaN(new Date(item.date).getTime())
+  );
+
+  if (validData.length === 0) {
+    return (
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-white mb-2">
+            Registration Trends
+          </h3>
+          <p className="text-gray-300 text-sm">
+            Invalid registration data format
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const maxCount = Math.max(...validData.map((d) => d.count));
+  const totalCount = validData.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 h-full flex flex-col">
@@ -40,7 +83,7 @@ export function RegistrationChart({ data, loading }: RegistrationChartProps) {
           Registration Trends
         </h3>
         <p className="text-gray-300 text-sm">
-          Weekly registration volume over time
+          Weekly registration volume over time ({validData.length} weeks)
         </p>
       </div>
 
@@ -69,7 +112,7 @@ export function RegistrationChart({ data, loading }: RegistrationChartProps) {
 
             {/* Bars */}
             <div className="flex items-end justify-between h-full gap-2 relative z-10">
-              {data.map((item, index) => {
+              {validData.map((item, index) => {
                 const date = new Date(item.date);
                 const isHighest = item.count === maxCount;
                 // Calculate exact height to match Y-axis scale
@@ -90,7 +133,7 @@ export function RegistrationChart({ data, loading }: RegistrationChartProps) {
                             : "bg-gradient-to-t from-blue-600/80 to-blue-500/80"
                         }`}
                         style={{
-                          height: `${Math.max(heightPercent * 2.4, 4)}px`, // Convert to pixels with scale
+                          height: `${Math.max(heightPercent * 2.24, 8)}px`, // Better scaling with minimum height
                         }}
                       />
 
@@ -104,10 +147,28 @@ export function RegistrationChart({ data, loading }: RegistrationChartProps) {
 
                     {/* Date label */}
                     <div className="text-xs text-gray-400 text-center truncate">
-                      {date.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
+                      {(() => {
+                        // For weekly data, show week range
+                        const weekStart = new Date(date);
+                        const weekEnd = new Date(weekStart);
+                        weekEnd.setDate(weekEnd.getDate() + 6);
+
+                        // If it's the same month, show range like "Sep 1-7"
+                        if (weekStart.getMonth() === weekEnd.getMonth()) {
+                          return `${weekStart.toLocaleDateString("en-US", {
+                            month: "short",
+                          })} ${weekStart.getDate()}-${weekEnd.getDate()}`;
+                        } else {
+                          // Different months, show like "Aug 31-Sep 6"
+                          return `${weekStart.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}-${weekEnd.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}`;
+                        }
+                      })()}
                     </div>
                   </div>
                 );
@@ -121,7 +182,7 @@ export function RegistrationChart({ data, loading }: RegistrationChartProps) {
           <div>
             <span className="text-gray-400">Total: </span>
             <span className="text-white font-medium">
-              {data.reduce((sum, item) => sum + item.count, 0).toLocaleString()}
+              {totalCount.toLocaleString()}
             </span>
           </div>
           <div>
@@ -133,13 +194,13 @@ export function RegistrationChart({ data, loading }: RegistrationChartProps) {
           <div>
             <span className="text-gray-400">Average: </span>
             <span className="text-white font-medium">
-              {Math.round(
-                data.reduce((sum, item) => sum + item.count, 0) / data.length
-              ).toLocaleString()}
+              {Math.round(totalCount / validData.length).toLocaleString()}
             </span>
           </div>
         </div>
       </div>
     </div>
   );
-}
+});
+
+export { RegistrationChart };

@@ -26,6 +26,7 @@ interface GuestRegistration {
   status: "confirmed" | "pending" | "cancelled";
   gender?: string;
   school?: string;
+  transportation?: string;
 }
 
 // Utility function to parse CSV line with proper quoted field handling
@@ -83,6 +84,38 @@ function parseExperienceLevel(expText: string): string {
   }
 
   return "Unknown";
+}
+
+// Normalizes a free-text Lagos location for analytics display and grouping.
+function normalizeTransportLocation(input: string): string {
+  if (!input) return "";
+  // Lowercase, collapse spaces, remove quotes, canonicalize common synonyms, strip standalone numbers
+  let s = input.toLowerCase().replace(/["'']/g, "").replace(/\s+/g, " ").trim();
+  // Canonicalize "VI" variants to "victoria island"
+  s = s.replace(/\b(v\.?\s*\/?\s*i)\b/g, "victoria island");
+  // Trim obvious address numerals to reduce PII risk (keeps words)
+  s = s
+    .replace(/\b\d+\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  // Title Case for nicer display
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Classify to major zones with word boundaries to avoid false positives.
+function classifyTransportZone(displayLocation: string): string {
+  const l = displayLocation.toLowerCase();
+  if (/\bikeja\b|\bmaryland\b|\bojota\b/.test(l)) return "Ikeja/Maryland Axis";
+  if (/\bsurulere\b|\byaba\b|\blagos island\b/.test(l))
+    return "Lagos Island/Surulere";
+  if (/\bfestac\b|\bsatellite\b|\bamuwo\b/.test(l))
+    return "Festac/Satellite Town";
+  if (/\bajah\b|\blekki\b|\bvictoria island\b|\bvi\b/.test(l))
+    return "Lekki/VI Axis";
+  if (/\biyana?\s*ipaja\b|\balimosho\b|\begbeda\b/.test(l))
+    return "Alimosho/Iyana Ipaja";
+  if (/\bikorodu\b|\bkosofe\b/.test(l)) return "Ikorodu/Kosofe";
+  return "Other";
 }
 
 // Function to normalize country names
@@ -619,9 +652,10 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
       else if (sourceLower.includes("other")) source = "Other";
       else if (sourceField.trim()) source = sourceField.trim();
 
-      // Parse gender and school
+      // Parse gender, school, and transportation
       const gender = fields[indices.gender]?.trim() || "";
       const school = fields[indices.school]?.trim() || "";
+      const transportation = fields[indices.transportation]?.trim() || "";
 
       const registration: GuestRegistration = {
         id: fields[indices.id] || `guest-${i}`,
@@ -639,6 +673,7 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
         status,
         gender: gender || undefined,
         school: school || undefined,
+        transportation: transportation || undefined,
       };
 
       registrations.push(registration);
@@ -785,15 +820,17 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
       if (isNaN(date.getTime())) {
         // Use current date if timestamp is invalid
         const fallbackDate = new Date();
-        const weekStart = new Date(
-          fallbackDate.setDate(fallbackDate.getDate() - fallbackDate.getDay())
-        );
+        // Create new date object to avoid mutation
+        const weekStart = new Date(fallbackDate);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        weekStart.setHours(0, 0, 0, 0); // Start of day
         const weekKey = weekStart.toISOString().split("T")[0];
         registrationsByWeek[weekKey] = (registrationsByWeek[weekKey] || 0) + 1;
       } else {
-        const weekStart = new Date(
-          date.setDate(date.getDate() - date.getDay())
-        );
+        // Create new date object to avoid mutation
+        const weekStart = new Date(date);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        weekStart.setHours(0, 0, 0, 0); // Start of day
         const weekKey = weekStart.toISOString().split("T")[0];
         registrationsByWeek[weekKey] = (registrationsByWeek[weekKey] || 0) + 1;
       }
@@ -812,7 +849,36 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
   const registrationTrend = Object.entries(registrationsByWeek)
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-8) // Last 8 weeks
-    .map(([date, count]) => ({ date, count }));
+    .map(([date, count]) => ({
+      date,
+      count: count > registrations.length ? registrations.length : count, // Cap at total registrations as sanity check
+    }));
+
+  // Debug logging in development
+  if (process.env.NODE_ENV === "development") {
+    const totalTrendCount = registrationTrend.reduce(
+      (sum, t) => sum + t.count,
+      0
+    );
+    console.log("Registration Trends Debug:", {
+      totalRegistrations: registrations.length,
+      weekCounts: registrationsByWeek,
+      trendData: registrationTrend,
+      trendTotal: totalTrendCount,
+      possibleIssue:
+        totalTrendCount > registrations.length
+          ? "POTENTIAL DATA DUPLICATION DETECTED"
+          : "Data looks normal",
+      maxWeeklyCount: Math.max(...registrationTrend.map((t) => t.count)),
+      avgWeeklyCount:
+        registrationTrend.length > 0
+          ? Math.round(
+              registrationTrend.reduce((sum, t) => sum + t.count, 0) /
+                registrationTrend.length
+            )
+          : 0,
+    });
+  }
 
   // Location breakdown - countries are already normalized during parsing
   const locationCounts: { [key: string]: number } = {};
@@ -1014,6 +1080,400 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
       .map(([school, count]) => ({ school, count })),
   };
 
+  // Approval Status Analysis by Profession
+  const developerStats = {
+    approved: registrations.filter(
+      (r) => r.profession?.includes("Developer") && r.status === "confirmed"
+    ).length,
+    pending: registrations.filter(
+      (r) => r.profession?.includes("Developer") && r.status === "pending"
+    ).length,
+    declined: registrations.filter(
+      (r) => r.profession?.includes("Developer") && r.status === "cancelled"
+    ).length,
+    total: registrations.filter((r) => r.profession?.includes("Developer"))
+      .length,
+  };
+
+  const designerStats = {
+    approved: registrations.filter(
+      (r) =>
+        (r.profession?.includes("Creator") ||
+          r.profession?.includes("Designer")) &&
+        r.status === "confirmed"
+    ).length,
+    pending: registrations.filter(
+      (r) =>
+        (r.profession?.includes("Creator") ||
+          r.profession?.includes("Designer")) &&
+        r.status === "pending"
+    ).length,
+    declined: registrations.filter(
+      (r) =>
+        (r.profession?.includes("Creator") ||
+          r.profession?.includes("Designer")) &&
+        r.status === "cancelled"
+    ).length,
+    total: registrations.filter(
+      (r) =>
+        r.profession?.includes("Creator") || r.profession?.includes("Designer")
+    ).length,
+  };
+
+  const founderStats = {
+    approved: registrations.filter(
+      (r) => r.profession?.includes("Founder") && r.status === "confirmed"
+    ).length,
+    pending: registrations.filter(
+      (r) => r.profession?.includes("Founder") && r.status === "pending"
+    ).length,
+    declined: registrations.filter(
+      (r) => r.profession?.includes("Founder") && r.status === "cancelled"
+    ).length,
+    total: registrations.filter((r) => r.profession?.includes("Founder"))
+      .length,
+  };
+
+  const studentStats = {
+    approved: registrations.filter(
+      (r) => r.profession?.includes("Student") && r.status === "confirmed"
+    ).length,
+    pending: registrations.filter(
+      (r) => r.profession?.includes("Student") && r.status === "pending"
+    ).length,
+    declined: registrations.filter(
+      (r) => r.profession?.includes("Student") && r.status === "cancelled"
+    ).length,
+    total: registrations.filter((r) => r.profession?.includes("Student"))
+      .length,
+  };
+
+  const approvalBreakdown = {
+    approvedDevelopers: developerStats.approved,
+    pendingDevelopers: developerStats.pending,
+    declinedDevelopers: developerStats.declined,
+    totalDevelopers: developerStats.total,
+    developerApprovalRate:
+      developerStats.total > 0
+        ? (developerStats.approved / developerStats.total) * 100
+        : 0,
+    approvedCreators: designerStats.approved,
+    pendingCreators: designerStats.pending,
+    declinedCreators: designerStats.declined,
+    totalCreators: designerStats.total,
+    creatorApprovalRate:
+      designerStats.total > 0
+        ? (designerStats.approved / designerStats.total) * 100
+        : 0,
+    approvedFounders: founderStats.approved,
+    pendingFounders: founderStats.pending,
+    declinedFounders: founderStats.declined,
+    totalFounders: founderStats.total,
+    founderApprovalRate:
+      founderStats.total > 0
+        ? (founderStats.approved / founderStats.total) * 100
+        : 0,
+    approvedStudents: studentStats.approved,
+    pendingStudents: studentStats.pending,
+    declinedStudents: studentStats.declined,
+    totalStudents: studentStats.total,
+    studentApprovalRate:
+      studentStats.total > 0
+        ? (studentStats.approved / studentStats.total) * 100
+        : 0,
+    overallApprovalRate:
+      totalGuests > 0 ? (confirmedGuests / totalGuests) * 100 : 0,
+  };
+
+  // Advanced Analytics Breakdown
+  // 1. Application Quality Analysis
+  const completeApplications = registrations.filter(
+    (r) =>
+      r.email &&
+      r.firstName &&
+      r.lastName &&
+      r.country &&
+      r.city &&
+      r.profession &&
+      r.company &&
+      r.experience
+  ).length;
+  const partialApplications = totalGuests - completeApplications;
+  const completionRate =
+    totalGuests > 0 ? (completeApplications / totalGuests) * 100 : 0;
+
+  // 2. Source Quality Analysis
+  const sourceQualityMap: {
+    [key: string]: { applications: number; approved: number };
+  } = {};
+  registrations.forEach((r) => {
+    const source = r.source || "Unknown";
+    if (!sourceQualityMap[source]) {
+      sourceQualityMap[source] = { applications: 0, approved: 0 };
+    }
+    sourceQualityMap[source].applications++;
+    if (r.status === "confirmed") {
+      sourceQualityMap[source].approved++;
+    }
+  });
+
+  const sourceQuality = Object.entries(sourceQualityMap)
+    .map(([source, stats]) => ({
+      source,
+      applications: stats.applications,
+      approvalRate:
+        stats.applications > 0
+          ? (stats.approved / stats.applications) * 100
+          : 0,
+      qualityScore:
+        stats.applications > 0
+          ? (stats.approved / stats.applications) * 100
+          : 0,
+    }))
+    .sort((a, b) => b.applications - a.applications)
+    .slice(0, 5);
+
+  // 3. Geographic Analysis
+  const africanCountriesSet = new Set();
+  const cityCountMap: {
+    [key: string]: { city: string; country: string; count: number };
+  } = {};
+
+  registrations.forEach((r) => {
+    if (r.country && r.country !== "Unknown") {
+      africanCountriesSet.add(r.country);
+
+      if (r.city && r.city !== "Unknown") {
+        const key = `${r.city}, ${r.country}`;
+        if (!cityCountMap[key]) {
+          cityCountMap[key] = { city: r.city, country: r.country, count: 0 };
+        }
+        cityCountMap[key].count++;
+      }
+    }
+  });
+
+  const africanCountries = africanCountriesSet.size;
+  const topAfricanCities = Object.values(cityCountMap)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  // Diversity score based on country distribution
+  const countryDistribution = Array.from(africanCountriesSet).length;
+  const diversityScore = Math.min((countryDistribution / 10) * 100, 100); // Max score at 10+ countries
+
+  // 4. Experience Distribution with Approval Rates
+  const expStats = {
+    newcomer: { total: 0, approved: 0 },
+    intermediate: { total: 0, approved: 0 },
+    advanced: { total: 0, approved: 0 },
+    web2Transitioning: { total: 0, approved: 0 },
+  };
+
+  registrations.forEach((r) => {
+    const exp = r.experience; // Already normalized by parseExperienceLevel
+    if (exp === "Newcomer") {
+      expStats.newcomer.total++;
+      if (r.status === "confirmed") expStats.newcomer.approved++;
+    } else if (exp === "Intermediate") {
+      expStats.intermediate.total++;
+      if (r.status === "confirmed") expStats.intermediate.approved++;
+    } else if (exp === "Advanced") {
+      expStats.advanced.total++;
+      if (r.status === "confirmed") expStats.advanced.approved++;
+    } else if (exp === "Web2 Transitioning") {
+      expStats.web2Transitioning.total++;
+      if (r.status === "confirmed") expStats.web2Transitioning.approved++;
+    }
+  });
+
+  const experienceDistribution = {
+    newcomer: {
+      count: expStats.newcomer.total,
+      percentage:
+        totalGuests > 0 ? (expStats.newcomer.total / totalGuests) * 100 : 0,
+      approvalRate:
+        expStats.newcomer.total > 0
+          ? (expStats.newcomer.approved / expStats.newcomer.total) * 100
+          : 0,
+    },
+    intermediate: {
+      count: expStats.intermediate.total,
+      percentage:
+        totalGuests > 0 ? (expStats.intermediate.total / totalGuests) * 100 : 0,
+      approvalRate:
+        expStats.intermediate.total > 0
+          ? (expStats.intermediate.approved / expStats.intermediate.total) * 100
+          : 0,
+    },
+    advanced: {
+      count: expStats.advanced.total,
+      percentage:
+        totalGuests > 0 ? (expStats.advanced.total / totalGuests) * 100 : 0,
+      approvalRate:
+        expStats.advanced.total > 0
+          ? (expStats.advanced.approved / expStats.advanced.total) * 100
+          : 0,
+    },
+    web2Transitioning: {
+      count: expStats.web2Transitioning.total,
+      percentage:
+        totalGuests > 0
+          ? (expStats.web2Transitioning.total / totalGuests) * 100
+          : 0,
+      approvalRate:
+        expStats.web2Transitioning.total > 0
+          ? (expStats.web2Transitioning.approved /
+              expStats.web2Transitioning.total) *
+            100
+          : 0,
+    },
+  };
+
+  // 5. Community & Company Analysis
+  const uniqueCompanies = new Set(
+    registrations.map((r) => r.company).filter((c) => c && c.trim() !== "")
+  ).size;
+  const referralCount = registrations.filter(
+    (r) =>
+      r.source?.toLowerCase().includes("referral") ||
+      r.source?.toLowerCase().includes("friend")
+  ).length;
+  const referralRate =
+    totalGuests > 0 ? (referralCount / totalGuests) * 100 : 0;
+
+  // Company type classification
+  const companyTypeMap: { [key: string]: number } = {};
+  registrations.forEach((r) => {
+    if (r.company && r.company.trim() !== "") {
+      const company = r.company.toLowerCase();
+      let type = "Other";
+
+      if (
+        company.includes("startup") ||
+        company.includes("tech") ||
+        company.includes("software")
+      ) {
+        type = "Tech Startup";
+      } else if (
+        company.includes("university") ||
+        company.includes("college") ||
+        company.includes("school")
+      ) {
+        type = "Educational";
+      } else if (
+        company.includes("bank") ||
+        company.includes("finance") ||
+        company.includes("fintech")
+      ) {
+        type = "Financial Services";
+      } else if (
+        company.includes("consulting") ||
+        company.includes("advisory")
+      ) {
+        type = "Consulting";
+      }
+
+      companyTypeMap[type] = (companyTypeMap[type] || 0) + 1;
+    }
+  });
+
+  const topCompanyTypes = Object.entries(companyTypeMap)
+    .map(([type, count]) => ({
+      type,
+      count,
+      percentage: totalGuests > 0 ? (count / totalGuests) * 100 : 0,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  // Transportation Analytics
+  // Privacy-first approach: normalize locations to prevent PII exposure
+  // and apply k-anonymity to only show locations with sufficient count
+  const transportationRequests = registrations.filter(
+    (r) => r.transportation && r.transportation.trim() !== ""
+  );
+  const totalTransportationRequests = transportationRequests.length;
+  const transportationPercentage =
+    totalGuests > 0 ? (totalTransportationRequests / totalGuests) * 100 : 0;
+
+  // Count transportation locations
+  const transportationLocationCounts = new Map<string, number>();
+  transportationRequests.forEach((r) => {
+    if (r.transportation) {
+      const location = normalizeTransportLocation(r.transportation);
+      transportationLocationCounts.set(
+        location,
+        (transportationLocationCounts.get(location) || 0) + 1
+      );
+    }
+  });
+
+  const MIN_K = 3; // k-anonymity threshold to reduce PII risk
+  const topTransportationLocations = Array.from(
+    transportationLocationCounts.entries()
+  )
+    .filter(([, count]) => count >= MIN_K)
+    .map(([location, count]) => ({
+      location,
+      count,
+      percentage:
+        totalTransportationRequests > 0
+          ? (count / totalTransportationRequests) * 100
+          : 0,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 15);
+
+  // Group by transportation zones (major areas)
+  const transportationZones = new Map<string, number>();
+  transportationRequests.forEach((r) => {
+    if (r.transportation) {
+      const location = normalizeTransportLocation(r.transportation);
+      const zone = classifyTransportZone(location);
+      transportationZones.set(zone, (transportationZones.get(zone) || 0) + 1);
+    }
+  });
+
+  const transportationBreakdown = Array.from(transportationZones.entries())
+    .map(([zone, count]) => ({
+      zone,
+      count,
+      percentage:
+        totalTransportationRequests > 0
+          ? (count / totalTransportationRequests) * 100
+          : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  const transportationInsights = {
+    totalTransportationRequests,
+    transportationPercentage,
+    // Only expose detailed locations in development or when explicitly enabled
+    topLocations:
+      process.env.NODE_ENV === "development" ||
+      process.env.SHOW_TRANSPORT_DETAILS === "true"
+        ? topTransportationLocations
+        : [],
+    transportationBreakdown,
+  };
+
+  const analyticsBreakdown = {
+    completeApplications,
+    partialApplications,
+    completionRate,
+    sourceQuality,
+    africanCountries,
+    topAfricanCities,
+    diversityScore,
+    experienceDistribution,
+    pendingApplications: pendingGuests,
+    conversionRate: totalGuests > 0 ? (confirmedGuests / totalGuests) * 100 : 0,
+    uniqueCompanies,
+    referralRate,
+    topCompanyTypes,
+  };
+
   return {
     totalGuests,
     confirmedGuests,
@@ -1034,6 +1494,9 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
     registrationTimePatterns,
     genderBreakdown,
     educationInsights,
+    approvalBreakdown,
+    analyticsBreakdown,
+    transportationInsights,
     recentRegistrations: registrations
       .filter((r) => r.status === "confirmed")
       .sort((a, b) => {
@@ -1047,74 +1510,54 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
   };
 }
 
-// Function to load guest data from CSV file or environment variable
+// Simple function to load guest data from Google Sheets or local file (dev only)
 async function loadGuestData(): Promise<GuestRegistration[]> {
   try {
-    // Option 1: Use base64-encoded CSV data from environment variable (Netlify/Vercel)
-    if (process.env.GUEST_LIST_CSV_BASE64) {
-      try {
-        const csvContent = Buffer.from(
-          process.env.GUEST_LIST_CSV_BASE64,
-          "base64"
-        ).toString("utf-8");
+    // Option 1: Google Sheets URL (production and development)
+    if (process.env.GOOGLE_SHEETS_CSV_URL) {
+      const response = await fetch(process.env.GOOGLE_SHEETS_CSV_URL);
+      if (response.ok) {
+        const csvContent = await response.text();
         const registrations = parseGuestCSV(csvContent);
 
         if (process.env.NODE_ENV === "development") {
           console.log(
-            `Loaded ${registrations.length} registrations from environment variable`
+            `🌐 Loaded ${registrations.length} registrations from Google Sheets`
           );
         }
         return registrations;
-      } catch (error) {
-        if (process.env.NODE_ENV === "development") {
-          console.error("Error parsing base64 CSV from environment:", error);
-        }
       }
     }
 
-    // Option 2: Use file path (for local development or VPS hosting)
-    const csvPath =
-      process.env.GUEST_LIST_CSV_PATH ||
-      path.join(process.cwd(), "data", "secure", "guest-list.csv") ||
-      path.join(
-        process.cwd(),
-        "components",
-        "insights",
-        "guest-list-sample.csv"
-      );
+    // Option 2: Local file (development fallback only)
+    const csvPath = path.join(
+      process.cwd(),
+      "data",
+      "secure",
+      "guest-list.csv"
+    );
 
-    // Check if file exists
-    if (!fs.existsSync(csvPath)) {
+    if (fs.existsSync(csvPath)) {
+      const csvContent = fs.readFileSync(csvPath, "utf8");
+      const registrations = parseGuestCSV(csvContent);
+
       if (process.env.NODE_ENV === "development") {
-        console.warn("CSV file not found at:", csvPath);
-        console.warn(
-          "Set GUEST_LIST_CSV_BASE64 environment variable for Netlify/Vercel hosting"
+        console.log(
+          `� Loaded ${registrations.length} registrations from local file`
         );
-        console.warn("Or set GUEST_LIST_CSV_PATH for file-based hosting");
       }
-      return [];
+      return registrations;
     }
 
-    // Read and parse CSV file
-    const csvContent = fs.readFileSync(csvPath, "utf8");
-
-    // Only log debug info in development
+    // No data source available
     if (process.env.NODE_ENV === "development") {
-      console.log(`CSV file size: ${csvContent.length} characters`);
-      console.log(`First 200 characters: ${csvContent.substring(0, 200)}`);
+      console.warn(
+        "⚠️ No data source available. Please set GOOGLE_SHEETS_CSV_URL environment variable."
+      );
     }
-
-    const registrations = parseGuestCSV(csvContent);
-
-    if (process.env.NODE_ENV === "development") {
-      console.log(`Loaded ${registrations.length} registrations from CSV`);
-      if (registrations.length > 0) {
-        console.log(`First registration:`, registrations[0]);
-      }
-    }
-    return registrations;
+    return [];
   } catch (error) {
-    console.error("Error loading guest data:", error);
+    console.error("❌ Error loading guest data:", error);
     return [];
   }
 }
