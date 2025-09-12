@@ -33,14 +33,10 @@ export function PartnersSection() {
       timer = window.setTimeout(schedule, delay);
     };
 
-    // Small delay to prevent hydration mismatch
-    const initialTimer = setTimeout(() => {
-      schedule();
-    }, 100);
+    schedule();
 
     return () => {
       if (timer !== null) window.clearTimeout(timer);
-      clearTimeout(initialTimer);
     };
   }, []);
 
@@ -170,11 +166,11 @@ export function PartnersSection() {
               >
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-20 lg:h-24 w-48 lg:w-56">
                   <Image
-                    src="/images/sponsors/hyperbridge-logo.png?v=2"
+                    src="/images/sponsors/hb-logo.png"
                     alt="Hyperbridge"
-                    width={200}
-                    height={80}
-                    className="h-12 lg:h-16 w-auto object-contain scale-[1]"
+                    width={1081}
+                    height={601}
+                    className="h-12 lg:h-16 w-auto object-contain scale-[2]"
                   />
                 </div>
               </Link>
