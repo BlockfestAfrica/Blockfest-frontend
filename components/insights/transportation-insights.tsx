@@ -31,37 +31,37 @@ export const TransportationInsights = memo(function TransportationInsights({
 }: TransportationInsightsProps) {
   if (loading) {
     return (
-      <div className="relative overflow-hidden bg-gradient-to-br from-orange-950/90 via-slate-900/95 to-yellow-950/90 backdrop-blur-sm border border-orange-300/20 rounded-xl p-8 h-full">
-        <div className="absolute inset-0 bg-gradient-to-tr from-orange-600/5 via-transparent to-yellow-400/5 pointer-events-none" />
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-950/90 via-slate-900/95 to-navy-950/90 backdrop-blur-sm border border-blue-300/20 rounded-xl p-8 h-full">
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/5 via-transparent to-indigo-400/5 pointer-events-none" />
         <div className="relative z-10 flex items-center gap-4 mb-6">
-          <div className="p-4 bg-orange-500/20 rounded-xl border border-orange-300/20">
-            <FaBus className="w-7 h-7 text-orange-400" />
+          <div className="p-4 bg-blue-500/20 rounded-xl border border-blue-300/20">
+            <FaBus className="w-7 h-7 text-blue-400" />
           </div>
           <div>
-            <div className="h-7 bg-orange-200/20 rounded-lg w-48 mb-2 animate-pulse"></div>
-            <div className="h-4 bg-orange-200/15 rounded-md w-36 animate-pulse"></div>
+            <div className="h-7 bg-blue-200/20 rounded-lg w-48 mb-2 animate-pulse"></div>
+            <div className="h-4 bg-blue-200/15 rounded-md w-36 animate-pulse"></div>
           </div>
         </div>
 
         <div className="relative z-10 space-y-6">
           {/* Loading skeletons */}
           <div className="grid grid-cols-2 gap-6">
-            <div className="bg-orange-200/10 rounded-xl p-5 animate-pulse border border-orange-300/10">
-              <div className="h-5 bg-orange-200/20 rounded-md mb-3"></div>
-              <div className="h-10 bg-orange-200/15 rounded-lg"></div>
+            <div className="bg-blue-200/10 rounded-xl p-5 animate-pulse border border-blue-300/10">
+              <div className="h-5 bg-blue-200/20 rounded-md mb-3"></div>
+              <div className="h-10 bg-blue-200/15 rounded-lg"></div>
             </div>
-            <div className="bg-orange-200/10 rounded-xl p-5 animate-pulse border border-orange-300/10">
-              <div className="h-5 bg-orange-200/20 rounded-md mb-3"></div>
-              <div className="h-10 bg-orange-200/15 rounded-lg"></div>
+            <div className="bg-blue-200/10 rounded-xl p-5 animate-pulse border border-blue-300/10">
+              <div className="h-5 bg-blue-200/20 rounded-md mb-3"></div>
+              <div className="h-10 bg-blue-200/15 rounded-lg"></div>
             </div>
           </div>
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="bg-orange-200/10 rounded-lg p-4 animate-pulse border border-orange-300/10"
+                className="bg-blue-200/10 rounded-lg p-4 animate-pulse border border-blue-300/10"
               >
-                <div className="h-5 bg-orange-200/15 rounded-md"></div>
+                <div className="h-5 bg-blue-200/15 rounded-md"></div>
               </div>
             ))}
           </div>
@@ -73,25 +73,23 @@ export const TransportationInsights = memo(function TransportationInsights({
   const hasData = data.totalTransportationRequests > 0;
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-orange-950/90 via-slate-900/95 to-yellow-950/90 backdrop-blur-sm border border-orange-300/20 rounded-xl p-8 h-full transition-all duration-300 hover:border-orange-300/30 hover:shadow-xl hover:shadow-orange-500/10">
+    <div className="relative overflow-hidden bg-gradient-to-br from-blue-950/90 via-slate-900/95 to-indigo-950/90 backdrop-blur-sm border border-blue-300/20 rounded-xl p-8 h-full transition-all duration-300 hover:border-blue-300/30 hover:shadow-xl hover:shadow-blue-500/10">
       {/* Enhanced background overlay */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-orange-600/5 via-transparent to-yellow-400/5 pointer-events-none" />
-
+      <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/5 via-transparent to-indigo-400/5 pointer-events-none" />
       {/* Header */}
       <div className="relative z-10 flex items-center gap-4 mb-6">
-        <div className="p-4 bg-orange-500/20 rounded-xl border border-orange-300/20">
-          <FaBus className="w-7 h-7 text-orange-400" />
+        <div className="p-4 bg-blue-500/20 rounded-xl border border-blue-300/20">
+          <FaBus className="w-7 h-7 text-blue-400" />
         </div>
         <div>
           <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
             Transportation Analytics
           </h3>
-          <p className="text-orange-100/70 text-sm leading-relaxed">
+          <p className="text-blue-100/70 text-sm leading-relaxed">
             Where attendees are coming from within Lagos
           </p>
         </div>
-      </div>
-
+      </div>{" "}
       {!hasData ? (
         <div className="text-center py-8">
           <FaRoute className="w-12 h-12 text-gray-500 mx-auto mb-4" />

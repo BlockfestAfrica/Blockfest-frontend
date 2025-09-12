@@ -544,26 +544,34 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
 
   return (
     <div className="space-y-8 sm:space-y-10 p-6 sm:p-8 lg:p-12 max-w-7xl mx-auto">
-      {/* Header with refresh info */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-3 tracking-tight leading-tight">
+      {/* Header with refresh info - Mobile optimized */}
+      <div className="flex flex-col sm:flex-row sm:items-start lg:items-center sm:justify-between gap-4 sm:gap-6">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-100 mb-2 sm:mb-3 tracking-tight leading-tight">
             Dashboard Overview
           </h2>
-          <p className="text-slate-400 text-sm sm:text-base font-medium leading-relaxed">
-            Last updated: {formattedDates.lastUpdated} • Next refresh:{" "}
-            {formattedDates.nextRefresh}
-          </p>
+          {/* Mobile: Stack update info, Desktop: Inline */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-slate-400 text-xs sm:text-sm lg:text-base font-medium leading-relaxed">
+            <span className="whitespace-nowrap">
+              Last updated: {formattedDates.lastUpdated}
+            </span>
+            <span className="hidden sm:inline">•</span>
+            <span className="whitespace-nowrap">
+              Next refresh: {formattedDates.nextRefresh}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center sm:justify-end">
           <button
             onClick={fetchData}
             disabled={loading}
-            className="flex items-center gap-3 bg-gradient-to-r from-slate-700/60 to-slate-800/60 hover:from-slate-600/70 hover:to-slate-700/70 backdrop-blur-xl text-slate-100 px-4 sm:px-6 py-3 rounded-xl border border-slate-600/40 hover:border-slate-500/50 transition-all duration-300 disabled:opacity-50 text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-slate-700/60 to-slate-800/60 hover:from-slate-600/70 hover:to-slate-700/70 backdrop-blur-xl text-slate-100 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-slate-600/40 hover:border-slate-500/50 transition-all duration-300 disabled:opacity-50 text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto max-w-[200px] sm:max-w-none"
           >
             <svg
-              className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+              className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
+                loading ? "animate-spin" : ""
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -575,7 +583,9 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            {loading ? "Refreshing..." : "Refresh"}
+            <span className="whitespace-nowrap">
+              {loading ? "Refreshing..." : "Refresh"}
+            </span>
           </button>
         </div>
       </div>
