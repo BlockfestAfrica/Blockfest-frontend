@@ -436,6 +436,32 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
           ...prev.transportationInsights,
           ...(data.transportationInsights ?? {}),
         },
+        consentAnalytics: {
+          ...prev.consentAnalytics,
+          ...(data.consentAnalytics ?? {}),
+          photoConsent: {
+            ...prev.consentAnalytics.photoConsent,
+            ...(data.consentAnalytics?.photoConsent ?? {}),
+          },
+          emailConsent: {
+            ...prev.consentAnalytics.emailConsent,
+            ...(data.consentAnalytics?.emailConsent ?? {}),
+          },
+          socialEngagement: {
+            ...prev.consentAnalytics.socialEngagement,
+            ...(data.consentAnalytics?.socialEngagement ?? {}),
+          },
+        },
+        dietaryRequirements: {
+          ...prev.dietaryRequirements,
+          ...(data.dietaryRequirements ?? {}),
+          restrictions:
+            data.dietaryRequirements?.restrictions ??
+            prev.dietaryRequirements.restrictions,
+          commonRestrictions:
+            data.dietaryRequirements?.commonRestrictions ??
+            prev.dietaryRequirements.commonRestrictions,
+        },
       }));
       setLastRefresh(new Date());
     } catch (err) {
