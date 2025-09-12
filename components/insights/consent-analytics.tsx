@@ -308,9 +308,11 @@ export const ConsentAnalytics = memo(function ConsentAnalytics({
               </div>
               <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 text-center">
                 <div className="text-purple-400 text-lg font-bold">
-                  {data.emailConsent.yes + data.photoConsent.yes}
+                  {data.emailConsent.yes}
                 </div>
-                <div className="text-gray-300 text-xs">Marketing Contacts</div>
+                <div className="text-gray-300 text-xs">
+                  Marketing Contacts (Email)
+                </div>
               </div>
             </div>
           </div>

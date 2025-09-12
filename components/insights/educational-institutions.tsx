@@ -50,7 +50,7 @@ export const EducationalInstitutions = memo(function EducationalInstitutions({
       .reduce((sum, inst) => sum + inst.count, 0);
     const diversityScore = Math.min(
       100,
-      (totalInstitutions / totalCount) * 100
+      totalCount > 0 ? (totalInstitutions / totalCount) * 100 : 0
     );
 
     return {
@@ -89,7 +89,7 @@ export const EducationalInstitutions = memo(function EducationalInstitutions({
           <div className="text-2xl font-bold text-purple-400">
             {data.length}
           </div>
-          <div className="text-xs text-gray-400">Total Responses</div>
+          <div className="text-xs text-gray-400">Institutions</div>
         </div>
       </div>
 
