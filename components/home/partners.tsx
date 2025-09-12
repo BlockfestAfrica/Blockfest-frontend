@@ -174,7 +174,7 @@ export function PartnersSection() {
                     alt="Hyperbridge"
                     width={200}
                     height={80}
-                    className="h-12 lg:h-16 w-auto object-contain scale-[2]"
+                    className="h-12 lg:h-16 w-auto object-contain scale-[1]"
                   />
                 </div>
               </Link>
