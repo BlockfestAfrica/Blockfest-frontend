@@ -33,9 +33,14 @@ export function PartnersSection() {
       timer = window.setTimeout(schedule, delay);
     };
 
-    schedule();
+    // Small delay to prevent hydration mismatch
+    const initialTimer = setTimeout(() => {
+      schedule();
+    }, 100);
+
     return () => {
       if (timer !== null) window.clearTimeout(timer);
+      clearTimeout(initialTimer);
     };
   }, []);
 
@@ -169,7 +174,7 @@ export function PartnersSection() {
                     alt="Hyperbridge"
                     width={200}
                     height={80}
-                    className="h-10 w-auto object-contain scale-[3]"
+                    className="h-12 lg:h-16 w-auto object-contain scale-[2]"
                   />
                 </div>
               </Link>
