@@ -27,6 +27,11 @@ interface GuestRegistration {
   gender?: string;
   school?: string;
   transportation?: string;
+  dietary?: string;
+  photoConsent?: string;
+  emailConsent?: string;
+  xFollow?: string;
+  telegramJoin?: string;
 }
 
 // Utility function to parse CSV line with proper quoted field handling
@@ -564,6 +569,12 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
     emailConsent: getColumnIndex([
       "do you consent to receive email updates and event information from blockfest africa?",
     ]),
+    xFollow: getColumnIndex([
+      "follow blockf3st africa on x: https://x.com/blockfestafrica",
+    ]),
+    telegramJoin: getColumnIndex([
+      "join the blockfest africa telegram channel here: https://t.me/blockf3stafrica",
+    ]),
   };
 
   for (let i = 1; i < lines.length; i++) {
@@ -652,10 +663,15 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
       else if (sourceLower.includes("other")) source = "Other";
       else if (sourceField.trim()) source = sourceField.trim();
 
-      // Parse gender, school, and transportation
+      // Parse gender, school, transportation, dietary, and consent fields
       const gender = fields[indices.gender]?.trim() || "";
       const school = fields[indices.school]?.trim() || "";
       const transportation = fields[indices.transportation]?.trim() || "";
+      const dietary = fields[indices.dietary]?.trim() || "";
+      const photoConsent = fields[indices.photoConsent]?.trim() || "";
+      const emailConsent = fields[indices.emailConsent]?.trim() || "";
+      const xFollow = fields[indices.xFollow]?.trim() || "";
+      const telegramJoin = fields[indices.telegramJoin]?.trim() || "";
 
       const registration: GuestRegistration = {
         id: fields[indices.id] || `guest-${i}`,
@@ -674,6 +690,11 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
         gender: gender || undefined,
         school: school || undefined,
         transportation: transportation || undefined,
+        dietary: dietary || undefined,
+        photoConsent: photoConsent || undefined,
+        emailConsent: emailConsent || undefined,
+        xFollow: xFollow || undefined,
+        telegramJoin: telegramJoin || undefined,
       };
 
       registrations.push(registration);
@@ -688,6 +709,305 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
     console.log(`Parsed ${registrations.length} registrations from CSV`);
   }
   return registrations;
+}
+
+// Helper function to calculate professional roles breakdown
+function calculateProfessionalRoles(registrations: GuestRegistration[]) {
+  const roleCounts = new Map<string, number>();
+  const totalResponses = registrations.length;
+
+  registrations.forEach((reg) => {
+    // Parse profession field that may contain multiple selections
+    const professionField = reg.profession || "";
+    const roles = [];
+    const professionLower = professionField.toLowerCase();
+
+    // Extract individual roles
+    if (professionLower.includes("developer")) roles.push("Developer");
+    if (professionLower.includes("student")) roles.push("Student");
+    if (professionLower.includes("creator")) roles.push("Creator");
+    if (professionLower.includes("researcher")) roles.push("Researcher");
+    if (
+      professionLower.includes("founder") ||
+      professionLower.includes("entrepreneur")
+    )
+      roles.push("Founder");
+    if (professionLower.includes("designer")) roles.push("Designer");
+    if (
+      professionLower.includes("bd/sales") ||
+      professionLower.includes("business")
+    )
+      roles.push("Business Development");
+    if (professionLower.includes("marketing")) roles.push("Marketing");
+    if (
+      professionLower.includes("policy") ||
+      professionLower.includes("lawyer")
+    )
+      roles.push("Policy/Legal");
+    if (professionLower.includes("investor"))
+      roles.push("Professional Investor");
+
+    // If no roles found, categorize as "Other"
+    if (roles.length === 0) roles.push("Other");
+
+    // Count each role (a person can have multiple roles)
+    roles.forEach((role) => {
+      roleCounts.set(role, (roleCounts.get(role) || 0) + 1);
+    });
+  });
+
+  // Convert to array and calculate percentages
+  const rolesArray = Array.from(roleCounts.entries())
+    .map(([role, count]) => ({
+      role,
+      count,
+      percentage: Math.round((count / totalResponses) * 100 * 10) / 10,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return rolesArray;
+}
+
+// Helper function to calculate educational institutions breakdown
+function calculateEducationalInstitutions(registrations: GuestRegistration[]) {
+  const institutionCounts = new Map<string, number>();
+  const validInstitutions = registrations
+    .map((reg) => reg.school?.trim())
+    .filter(
+      (school) =>
+        school &&
+        school !== "" &&
+        school.toLowerCase() !== "n/a" &&
+        school.toLowerCase() !== "none"
+    );
+
+  const totalResponses = validInstitutions.length;
+
+  validInstitutions.forEach((institution) => {
+    if (institution) {
+      // Normalize institution names
+      const normalizedName = institution
+        .replace(/\buniversity\b/gi, "University")
+        .replace(/\bcollege\b/gi, "College")
+        .replace(/\binstitute\b/gi, "Institute")
+        .trim();
+
+      institutionCounts.set(
+        normalizedName,
+        (institutionCounts.get(normalizedName) || 0) + 1
+      );
+    }
+  });
+
+  // Convert to array and calculate percentages
+  const institutionsArray = Array.from(institutionCounts.entries())
+    .map(([institution, count]) => ({
+      institution,
+      count,
+      percentage:
+        totalResponses > 0
+          ? Math.round((count / totalResponses) * 100 * 10) / 10
+          : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return institutionsArray;
+}
+
+// Helper function to calculate dietary requirements breakdown
+function calculateDietaryRequirements(registrations: GuestRegistration[]) {
+  const restrictionCounts = new Map<string, number>();
+  let hasRestrictions = 0;
+  let noRestrictions = 0;
+  const allRestrictions: string[] = [];
+
+  const totalResponses = registrations.length;
+
+  registrations.forEach((reg) => {
+    const dietaryField = reg.dietary?.toLowerCase() || "";
+
+    // Check if they have no restrictions (common responses)
+    const noRestrictionIndicators = [
+      "no",
+      "none",
+      "nil",
+      "nothing",
+      "n/a",
+      "na",
+      "no restrictions",
+      "no dietary restrictions",
+      "i don't have any",
+      "i do not have any",
+    ];
+
+    const hasNoRestrictions =
+      !dietaryField ||
+      dietaryField.trim() === "" ||
+      noRestrictionIndicators.some((indicator) =>
+        dietaryField.includes(indicator)
+      );
+
+    if (hasNoRestrictions) {
+      noRestrictions++;
+    } else {
+      hasRestrictions++;
+
+      // Parse dietary restrictions from text
+      const restrictions = [];
+      const dietaryLower = dietaryField;
+
+      if (dietaryLower.includes("vegetarian")) restrictions.push("Vegetarian");
+      if (dietaryLower.includes("vegan")) restrictions.push("Vegan");
+      if (dietaryLower.includes("halal")) restrictions.push("Halal");
+      if (dietaryLower.includes("kosher")) restrictions.push("Kosher");
+      if (dietaryLower.includes("gluten") || dietaryLower.includes("celiac"))
+        restrictions.push("Gluten-Free");
+      if (dietaryLower.includes("dairy") || dietaryLower.includes("lactose"))
+        restrictions.push("Dairy-Free");
+      if (dietaryLower.includes("nut") || dietaryLower.includes("peanut"))
+        restrictions.push("Nut Allergy");
+      if (
+        dietaryLower.includes("seafood") ||
+        dietaryLower.includes("shellfish")
+      )
+        restrictions.push("Seafood Allergy");
+      if (
+        dietaryLower.includes("diabetic") ||
+        dietaryLower.includes("diabetes")
+      )
+        restrictions.push("Diabetic");
+
+      // If no specific restriction found but they indicated they have restrictions
+      if (restrictions.length === 0) restrictions.push("Other");
+
+      // Count each restriction
+      restrictions.forEach((restriction) => {
+        restrictionCounts.set(
+          restriction,
+          (restrictionCounts.get(restriction) || 0) + 1
+        );
+        allRestrictions.push(restriction);
+      });
+    }
+  });
+
+  // Convert to array format
+  const restrictionsArray = Array.from(restrictionCounts.entries())
+    .map(([type, count]) => ({
+      type,
+      count,
+      percentage:
+        hasRestrictions > 0
+          ? Math.round((count / hasRestrictions) * 100 * 10) / 10
+          : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    totalResponses,
+    hasRestrictions,
+    noRestrictions,
+    restrictions: restrictionsArray,
+    commonRestrictions: [...new Set(allRestrictions)].slice(0, 5), // Top 5 unique restrictions
+  };
+}
+
+// Helper function to calculate consent analytics
+function calculateConsentAnalytics(registrations: GuestRegistration[]) {
+  const totalResponses = registrations.length;
+  let photoConsentYes = 0;
+  let photoConsentNo = 0;
+  let emailConsentYes = 0;
+  let emailConsentNo = 0;
+  let xFollowed = 0;
+  let telegramJoined = 0;
+
+  registrations.forEach((reg) => {
+    // Photo consent analysis
+    const photoConsent = reg.photoConsent?.toLowerCase() || "";
+    if (
+      photoConsent.includes("yes") ||
+      photoConsent.includes("done") ||
+      photoConsent === "true"
+    ) {
+      photoConsentYes++;
+    } else if (photoConsent.includes("no") || photoConsent === "false") {
+      photoConsentNo++;
+    }
+
+    // Email consent analysis
+    const emailConsent = reg.emailConsent?.toLowerCase() || "";
+    if (
+      emailConsent.includes("yes") ||
+      emailConsent.includes("done") ||
+      emailConsent === "true"
+    ) {
+      emailConsentYes++;
+    } else if (emailConsent.includes("no") || emailConsent === "false") {
+      emailConsentNo++;
+    }
+
+    // Social media engagement
+    const xFollow = reg.xFollow?.toLowerCase() || "";
+    if (
+      xFollow.includes("done") ||
+      xFollow.includes("yes") ||
+      xFollow.includes("followed")
+    ) {
+      xFollowed++;
+    }
+
+    const telegramJoin = reg.telegramJoin?.toLowerCase() || "";
+    if (
+      telegramJoin.includes("done") ||
+      telegramJoin.includes("yes") ||
+      telegramJoin.includes("joined")
+    ) {
+      telegramJoined++;
+    }
+  });
+
+  // Calculate percentages
+  const photoPercentage =
+    totalResponses > 0
+      ? Math.round((photoConsentYes / totalResponses) * 100)
+      : 0;
+  const emailPercentage =
+    totalResponses > 0
+      ? Math.round((emailConsentYes / totalResponses) * 100)
+      : 0;
+  const xPercentage =
+    totalResponses > 0 ? Math.round((xFollowed / totalResponses) * 100) : 0;
+  const telegramPercentage =
+    totalResponses > 0
+      ? Math.round((telegramJoined / totalResponses) * 100)
+      : 0;
+
+  // Overall compliance score
+  const complianceScore = Math.round(
+    (photoPercentage + emailPercentage + xPercentage + telegramPercentage) / 4
+  );
+
+  return {
+    totalResponses,
+    photoConsent: {
+      yes: photoConsentYes,
+      no: photoConsentNo,
+      percentage: photoPercentage,
+    },
+    emailConsent: {
+      yes: emailConsentYes,
+      no: emailConsentNo,
+      percentage: emailPercentage,
+    },
+    socialEngagement: {
+      xFollowed,
+      telegramJoined,
+      xPercentage,
+      telegramPercentage,
+    },
+    complianceScore,
+  };
 }
 
 // Function to process CSV data or database results into dashboard stats
@@ -1497,6 +1817,10 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
     approvalBreakdown,
     analyticsBreakdown,
     transportationInsights,
+    professionalRoles: calculateProfessionalRoles(registrations),
+    educationalInstitutions: calculateEducationalInstitutions(registrations),
+    dietaryRequirements: calculateDietaryRequirements(registrations),
+    consentAnalytics: calculateConsentAnalytics(registrations),
     recentRegistrations: registrations
       .filter((r) => r.status === "confirmed")
       .sort((a, b) => {

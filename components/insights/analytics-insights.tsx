@@ -6,11 +6,6 @@ import { DashboardStats } from "./dashboard";
 interface AnalyticsInsightsProps {
   stats: DashboardStats & {
     analyticsBreakdown: {
-      // Application Quality
-      completeApplications: number;
-      partialApplications: number;
-      completionRate: number;
-
       // Source Quality
       sourceQuality: Array<{
         source: string;
@@ -220,15 +215,6 @@ export const AnalyticsInsights = memo(function AnalyticsInsights({
     if (!analytics) return null;
 
     return {
-      totalApplications:
-        (analytics.completeApplications || 0) +
-        (analytics.partialApplications || 0),
-      completionDescription: `${
-        analytics.completeApplications || 0
-      } complete out of ${
-        (analytics.completeApplications || 0) +
-        (analytics.partialApplications || 0)
-      } total`,
       uniqueCompaniesCount: analytics.uniqueCompanies || 0,
       communityDescription: `${
         analytics.uniqueCompanies || 0
@@ -303,32 +289,7 @@ export const AnalyticsInsights = memo(function AnalyticsInsights({
       </div>
 
       {/* Quality Score Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <QualityScoreCard
-          title="Application Quality"
-          score={analytics?.completionRate || 0}
-          description={
-            qualityMetrics?.completionDescription || "No data available"
-          }
-          color="green"
-          loading={loading}
-          icon={
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          }
-        />
-
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <QualityScoreCard
           title="Geographic Diversity"
           score={analytics?.diversityScore || 0}

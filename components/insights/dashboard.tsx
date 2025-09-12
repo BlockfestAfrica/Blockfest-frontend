@@ -14,6 +14,10 @@ import { EducationInsights } from "./education-insights";
 import { ApprovalInsights } from "./approval-insights";
 import { AnalyticsInsights } from "./analytics-insights";
 import { TransportationInsights } from "./transportation-insights";
+import { ProfessionalRoles } from "./professional-roles";
+import { EducationalInstitutions } from "./educational-institutions";
+import { DietaryRequirements } from "./dietary-requirements";
+import { ConsentAnalytics } from "./consent-analytics";
 import type { TransportationData } from "./transportation-insights";
 
 const defaultTransportation: TransportationData = {
@@ -110,11 +114,6 @@ export interface DashboardStats {
     overallApprovalRate: number;
   };
   analyticsBreakdown: {
-    // Application Quality
-    completeApplications: number;
-    partialApplications: number;
-    completionRate: number;
-
     // Source Quality
     sourceQuality: Array<{
       source: string;
@@ -158,6 +157,47 @@ export interface DashboardStats {
     }>;
   };
   transportationInsights: TransportationData;
+  professionalRoles: Array<{
+    role: string;
+    count: number;
+    percentage: number;
+  }>;
+  educationalInstitutions: Array<{
+    institution: string;
+    count: number;
+    percentage: number;
+  }>;
+  dietaryRequirements: {
+    totalResponses: number;
+    hasRestrictions: number;
+    noRestrictions: number;
+    restrictions: Array<{
+      type: string;
+      count: number;
+      percentage: number;
+    }>;
+    commonRestrictions: string[];
+  };
+  consentAnalytics: {
+    totalResponses: number;
+    photoConsent: {
+      yes: number;
+      no: number;
+      percentage: number;
+    };
+    emailConsent: {
+      yes: number;
+      no: number;
+      percentage: number;
+    };
+    socialEngagement: {
+      xFollowed: number;
+      telegramJoined: number;
+      xPercentage: number;
+      telegramPercentage: number;
+    };
+    complianceScore: number;
+  };
   recentRegistrations: GuestData[];
   lastUpdated: string;
 }
@@ -284,9 +324,6 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
       overallApprovalRate: 0,
     },
     analyticsBreakdown: {
-      completeApplications: 0,
-      partialApplications: 0,
-      completionRate: 0,
       sourceQuality: [],
       africanCountries: 0,
       topAfricanCities: [],
@@ -304,6 +341,35 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
       topCompanyTypes: [],
     },
     transportationInsights: defaultTransportation,
+    professionalRoles: [],
+    educationalInstitutions: [],
+    dietaryRequirements: {
+      totalResponses: 0,
+      hasRestrictions: 0,
+      noRestrictions: 0,
+      restrictions: [],
+      commonRestrictions: [],
+    },
+    consentAnalytics: {
+      totalResponses: 0,
+      photoConsent: {
+        yes: 0,
+        no: 0,
+        percentage: 0,
+      },
+      emailConsent: {
+        yes: 0,
+        no: 0,
+        percentage: 0,
+      },
+      socialEngagement: {
+        xFollowed: 0,
+        telegramJoined: 0,
+        xPercentage: 0,
+        telegramPercentage: 0,
+      },
+      complianceScore: 0,
+    },
     recentRegistrations: [],
     lastUpdated: new Date().toISOString(),
   });
@@ -566,6 +632,32 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
             data={memoizedStats.educationData}
             loading={loading}
           />
+        </div>
+      </div>
+
+      {/* Professional & Educational Insights */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+        <div className="min-h-[500px]">
+          <ProfessionalRoles data={stats.professionalRoles} loading={loading} />
+        </div>
+        <div className="min-h-[500px]">
+          <EducationalInstitutions
+            data={stats.educationalInstitutions}
+            loading={loading}
+          />
+        </div>
+      </div>
+
+      {/* Event Planning Analytics */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+        <div className="min-h-[400px]">
+          <DietaryRequirements
+            data={stats.dietaryRequirements}
+            loading={loading}
+          />
+        </div>
+        <div className="min-h-[400px]">
+          <ConsentAnalytics data={stats.consentAnalytics} loading={loading} />
         </div>
       </div>
     </div>
