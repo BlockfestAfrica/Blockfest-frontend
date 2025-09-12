@@ -13,18 +13,19 @@ export function TimeAnalysis({ data, loading }: TimeAnalysisProps) {
   if (loading) {
     return (
       <div
-        className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 animate-pulse motion-reduce:animate-none"
+        className="relative overflow-hidden bg-gradient-to-br from-cyan-950/90 via-slate-900/95 to-sky-950/90 backdrop-blur-sm border border-cyan-300/20 rounded-xl p-8 animate-pulse motion-reduce:animate-none"
         role="status"
         aria-live="polite"
         aria-busy="true"
       >
-        <div className="space-y-4">
-          <div className="h-6 bg-white/10 rounded w-1/3"></div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="h-32 bg-white/10 rounded-lg"></div>
-            <div className="h-32 bg-white/10 rounded-lg"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-600/5 via-transparent to-sky-400/5 pointer-events-none" />
+        <div className="relative z-10 space-y-6">
+          <div className="h-7 bg-cyan-200/20 rounded-lg w-1/3"></div>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="h-40 bg-cyan-200/10 rounded-xl border border-cyan-300/10"></div>
+            <div className="h-40 bg-cyan-200/10 rounded-xl border border-cyan-300/10"></div>
           </div>
-          <div className="h-24 bg-white/10 rounded-lg"></div>
+          <div className="h-32 bg-cyan-200/10 rounded-xl border border-cyan-300/10"></div>
         </div>
       </div>
     );
@@ -46,12 +47,15 @@ export function TimeAnalysis({ data, loading }: TimeAnalysisProps) {
     : 0;
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 h-full flex flex-col">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-white mb-2">
+    <div className="relative overflow-hidden bg-gradient-to-br from-cyan-950/90 via-slate-900/95 to-sky-950/90 backdrop-blur-sm border border-cyan-300/20 rounded-xl p-8 h-full flex flex-col transition-all duration-300 hover:border-cyan-300/30 hover:shadow-xl hover:shadow-cyan-500/10">
+      {/* Enhanced background overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-cyan-600/5 via-transparent to-sky-400/5 pointer-events-none" />
+
+      <div className="relative z-10 mb-6">
+        <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
           Registration Patterns
         </h3>
-        <p className="text-gray-300 text-sm">
+        <p className="text-cyan-100/70 text-sm leading-relaxed">
           When people register for the event
         </p>
       </div>

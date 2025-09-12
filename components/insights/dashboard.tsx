@@ -543,14 +543,14 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="space-y-8 sm:space-y-10 p-6 sm:p-8 lg:p-12 max-w-7xl mx-auto">
       {/* Header with refresh info */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-3 tracking-tight leading-tight">
             Dashboard Overview
           </h2>
-          <p className="text-gray-300 text-xs sm:text-sm">
+          <p className="text-slate-400 text-sm sm:text-base font-medium leading-relaxed">
             Last updated: {formattedDates.lastUpdated} • Next refresh:{" "}
             {formattedDates.nextRefresh}
           </p>
@@ -560,7 +560,7 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
           <button
             onClick={fetchData}
             disabled={loading}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-3 sm:px-4 py-2 rounded-lg border border-white/20 transition-all duration-200 disabled:opacity-50 text-sm"
+            className="flex items-center gap-3 bg-gradient-to-r from-slate-700/60 to-slate-800/60 hover:from-slate-600/70 hover:to-slate-700/70 backdrop-blur-xl text-slate-100 px-4 sm:px-6 py-3 rounded-xl border border-slate-600/40 hover:border-slate-500/50 transition-all duration-300 disabled:opacity-50 text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             <svg
               className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
@@ -662,11 +662,11 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
       </div>
 
       {/* Professional & Educational Insights */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-        <div className="min-h-[500px]">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
+        <div className="min-h-[500px] insight-card">
           <ProfessionalRoles data={stats.professionalRoles} loading={loading} />
         </div>
-        <div className="min-h-[500px]">
+        <div className="min-h-[500px] insight-card">
           <EducationalInstitutions
             data={stats.educationalInstitutions}
             loading={loading}
@@ -675,14 +675,14 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
       </div>
 
       {/* Event Planning Analytics */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-        <div className="min-h-[400px]">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
+        <div className="min-h-[400px] insight-card">
           <DietaryRequirements
             data={stats.dietaryRequirements}
             loading={loading}
           />
         </div>
-        <div className="min-h-[400px]">
+        <div className="min-h-[400px] insight-card">
           <ConsentAnalytics data={stats.consentAnalytics} loading={loading} />
         </div>
       </div>

@@ -74,34 +74,36 @@ export const DietaryRequirements = memo(function DietaryRequirements({
 
   if (loading) {
     return (
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-gradient-to-br from-slate-800/70 via-slate-900/80 to-slate-950/90 backdrop-blur-xl border border-slate-700/30 rounded-2xl p-8 shadow-2xl shadow-black/20">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <div className="h-6 bg-white/10 rounded w-48 animate-pulse"></div>
-            <div className="h-4 bg-white/10 rounded w-32 mt-2 animate-pulse"></div>
+            <div className="h-7 bg-slate-700/50 rounded-lg w-56 animate-pulse"></div>
+            <div className="h-4 bg-slate-800/50 rounded-lg w-36 mt-3 animate-pulse"></div>
           </div>
         </div>
-        <div className="h-80 bg-white/5 rounded-xl animate-pulse"></div>
+        <div className="h-96 bg-slate-800/30 rounded-xl animate-pulse"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:bg-white/[0.07] transition-all duration-300 min-h-[750px] flex flex-col">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-gradient-to-br from-slate-800/70 via-slate-900/80 to-slate-950/90 backdrop-blur-xl border border-slate-700/30 rounded-2xl p-8 hover:from-slate-800/80 hover:via-slate-900/90 hover:to-slate-950/95 hover:border-slate-600/40 transition-all duration-500 ease-out min-h-[750px] flex flex-col shadow-2xl shadow-black/20">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h3 className="text-xl font-semibold text-white mb-2">
+          <h3 className="text-2xl font-bold text-slate-100 mb-3 tracking-tight leading-tight">
             Dietary Requirements
           </h3>
-          <p className="text-gray-300 text-sm">
+          <p className="text-slate-400 text-sm font-medium leading-relaxed">
             Catering and accessibility planning
           </p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-orange-400">
+          <div className="text-3xl font-bold text-orange-400 tabular-nums">
             {data.totalResponses}
           </div>
-          <div className="text-xs text-gray-400">Total Responses</div>
+          <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+            Total Responses
+          </div>
         </div>
       </div>
 
@@ -225,49 +227,32 @@ export const DietaryRequirements = memo(function DietaryRequirements({
 
             {/* Most Common Restrictions */}
             {data.commonRestrictions.length > 0 && (
-              <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-lg p-4">
-                <h5 className="text-orange-300 font-medium mb-4 flex items-center gap-2">
-                  <span className="text-lg">🚫</span>
+              <div className="bg-slate-800/40 border border-slate-700/40 rounded-lg p-5">
+                <h5 className="text-slate-200 font-semibold mb-4 text-base">
                   Most Common Restrictions
                 </h5>
-                <div className="space-y-3">
-                  {data.commonRestrictions
-                    .slice(0, 5)
-                    .map((restriction, index) => {
-                      const colors = [
-                        "from-red-500/20 to-red-600/20 border-red-500/30 text-red-300",
-                        "from-orange-500/20 to-orange-600/20 border-orange-500/30 text-orange-300",
-                        "from-yellow-500/20 to-yellow-600/20 border-yellow-500/30 text-yellow-300",
-                        "from-blue-500/20 to-blue-600/20 border-blue-500/30 text-blue-300",
-                        "from-purple-500/20 to-purple-600/20 border-purple-500/30 text-purple-300",
-                      ];
-                      const count =
-                        chartData.find((c) => c.type === restriction)?.count ||
-                        0;
-                      const percentage =
-                        chartData.find((c) => c.type === restriction)
-                          ?.percentage || 0;
+                <div className="space-y-2">
+                  {data.commonRestrictions.slice(0, 5).map((restriction) => {
+                    const count =
+                      chartData.find((c) => c.type === restriction)?.count || 0;
+                    const percentage =
+                      chartData.find((c) => c.type === restriction)
+                        ?.percentage || 0;
 
-                      return (
-                        <div
-                          key={restriction}
-                          className={`bg-gradient-to-r ${colors[index]} border rounded-lg p-3 flex items-center justify-between hover:scale-[1.02] transition-transform duration-200`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-current opacity-80"></div>
-                            <span className="font-medium capitalize">
-                              {restriction}
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold">{count}</div>
-                            <div className="text-xs opacity-75">
-                              {percentage}%
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    return (
+                      <div
+                        key={restriction}
+                        className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors duration-200"
+                      >
+                        <span className="text-slate-300 font-medium capitalize text-sm">
+                          {restriction}
+                        </span>
+                        <span className="text-slate-200 font-semibold text-sm tabular-nums">
+                          {count} ({percentage}%)
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

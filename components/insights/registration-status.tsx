@@ -15,15 +15,16 @@ export function RegistrationStatus({
 }: RegistrationStatusProps) {
   if (loading) {
     return (
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 animate-pulse">
-        <div className="space-y-4">
-          <div className="h-6 bg-white/10 rounded w-1/3"></div>
-          <div className="h-32 bg-white/10 rounded-lg"></div>
-          <div className="space-y-2">
+      <div className="relative overflow-hidden bg-gradient-to-br from-green-950/90 via-slate-900/95 to-emerald-950/90 backdrop-blur-sm border border-green-300/20 rounded-xl p-8 animate-pulse">
+        <div className="absolute inset-0 bg-gradient-to-tr from-green-600/5 via-transparent to-emerald-400/5 pointer-events-none" />
+        <div className="relative z-10 space-y-6">
+          <div className="h-7 bg-green-200/20 rounded-lg w-1/3"></div>
+          <div className="h-40 bg-green-200/10 rounded-xl border border-green-300/10"></div>
+          <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex justify-between">
-                <div className="h-4 bg-white/10 rounded w-20"></div>
-                <div className="h-4 bg-white/10 rounded w-16"></div>
+                <div className="h-5 bg-green-200/15 rounded-md w-24"></div>
+                <div className="h-5 bg-green-200/15 rounded-md w-20"></div>
               </div>
             ))}
           </div>
@@ -64,12 +65,15 @@ export function RegistrationStatus({
   ];
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 h-full flex flex-col">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-white mb-2">
+    <div className="relative overflow-hidden bg-gradient-to-br from-green-950/90 via-slate-900/95 to-emerald-950/90 backdrop-blur-sm border border-green-300/20 rounded-xl p-8 h-full flex flex-col transition-all duration-300 hover:border-green-300/30 hover:shadow-xl hover:shadow-green-500/10">
+      {/* Enhanced background overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-green-600/5 via-transparent to-emerald-400/5 pointer-events-none" />
+
+      <div className="relative z-10 mb-6">
+        <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
           Registration Status
         </h3>
-        <p className="text-gray-300 text-sm">
+        <p className="text-green-100/70 text-sm leading-relaxed">
           Current breakdown of all registrations
         </p>
       </div>

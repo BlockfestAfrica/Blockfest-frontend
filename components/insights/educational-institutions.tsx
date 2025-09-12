@@ -75,21 +75,23 @@ export const EducationalInstitutions = memo(function EducationalInstitutions({
   }
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:bg-white/[0.07] transition-all duration-300 min-h-[600px] flex flex-col">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-gradient-to-br from-emerald-900/70 via-slate-900/80 to-teal-950/90 backdrop-blur-xl border border-emerald-700/30 rounded-2xl p-8 hover:from-emerald-900/80 hover:via-slate-900/90 hover:to-teal-950/95 hover:border-emerald-600/40 transition-all duration-500 ease-out min-h-[600px] flex flex-col shadow-2xl shadow-black/20">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h3 className="text-xl font-semibold text-white mb-2">
+          <h3 className="text-2xl font-bold text-slate-100 mb-3 tracking-tight leading-tight">
             Educational Institutions
           </h3>
-          <p className="text-gray-300 text-sm">
+          <p className="text-slate-400 text-sm font-medium leading-relaxed">
             Universities and schools represented
           </p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-purple-400">
+          <div className="text-3xl font-bold text-emerald-400 tabular-nums">
             {data.length}
           </div>
-          <div className="text-xs text-gray-400">Institutions</div>
+          <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+            Institutions
+          </div>
         </div>
       </div>
 
