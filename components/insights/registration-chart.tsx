@@ -77,23 +77,26 @@ const RegistrationChart = memo(function RegistrationChart({
   const totalCount = validData.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 h-full flex flex-col">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-white mb-1">
+    <div className="relative overflow-hidden bg-gradient-to-br from-blue-950/90 via-slate-900/95 to-indigo-950/90 backdrop-blur-sm border border-blue-300/20 rounded-xl p-8 h-full flex flex-col transition-all duration-300 hover:border-blue-300/30 hover:shadow-xl hover:shadow-blue-500/10">
+      {/* Enhanced background overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/5 via-transparent to-indigo-400/5 pointer-events-none" />
+
+      <div className="relative z-10 mb-6">
+        <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
           Registration Trends
         </h3>
-        <p className="text-gray-300 text-sm">
+        <p className="text-blue-100/70 text-sm leading-relaxed">
           Weekly registration volume over time ({validData.length} weeks)
         </p>
       </div>
 
-      <div className="flex-1 flex flex-col">
+      <div className="relative z-10 flex-1 flex flex-col">
         {/* Chart */}
-        <div className="relative bg-gray-900/20 rounded-lg p-6 flex-1 min-h-[320px]">
+        <div className="relative bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-indigo-900/40 backdrop-blur-sm rounded-xl border border-blue-300/10 p-6 flex-1 min-h-[320px] transition-all duration-300 hover:border-blue-300/20">
           {/* Chart area */}
           <div className="relative h-64 ml-12 mr-4">
             {/* Y-axis labels */}
-            <div className="absolute -left-12 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-400 text-right w-10">
+            <div className="absolute -left-12 top-0 bottom-0 flex flex-col justify-between text-xs text-blue-100/60 text-right w-10 font-mono tabular-nums">
               <span>{maxCount.toLocaleString()}</span>
               <span>{Math.floor(maxCount * 0.75).toLocaleString()}</span>
               <span>{Math.floor(maxCount * 0.5).toLocaleString()}</span>
@@ -103,11 +106,11 @@ const RegistrationChart = memo(function RegistrationChart({
 
             {/* Grid lines */}
             <div className="absolute inset-0 pointer-events-none">
-              <div className="border-t border-white/20 absolute top-0 left-0 right-0"></div>
-              <div className="border-t border-white/10 absolute top-1/4 left-0 right-0"></div>
-              <div className="border-t border-white/10 absolute top-1/2 left-0 right-0"></div>
-              <div className="border-t border-white/10 absolute top-3/4 left-0 right-0"></div>
-              <div className="border-t border-white/20 absolute bottom-0 left-0 right-0"></div>
+              <div className="border-t border-blue-300/30 absolute top-0 left-0 right-0"></div>
+              <div className="border-t border-blue-300/15 absolute top-1/4 left-0 right-0"></div>
+              <div className="border-t border-blue-300/15 absolute top-1/2 left-0 right-0"></div>
+              <div className="border-t border-blue-300/15 absolute top-3/4 left-0 right-0"></div>
+              <div className="border-t border-blue-300/30 absolute bottom-0 left-0 right-0"></div>
             </div>
 
             {/* Bars */}
@@ -127,10 +130,10 @@ const RegistrationChart = memo(function RegistrationChart({
                     {/* Bar with calculated height */}
                     <div className="relative mb-2">
                       <div
-                        className={`w-8 rounded-t-md transition-all duration-300 group-hover:opacity-80 ${
+                        className={`w-8 rounded-t-md transition-all duration-300 group-hover:opacity-90 group-hover:scale-105 ${
                           isHighest
-                            ? "bg-gradient-to-t from-blue-500 to-blue-400 shadow-lg shadow-blue-500/20"
-                            : "bg-gradient-to-t from-blue-600/80 to-blue-500/80"
+                            ? "bg-gradient-to-t from-blue-400 via-blue-300 to-blue-200 shadow-lg shadow-blue-400/30 animate-pulse-glow"
+                            : "bg-gradient-to-t from-blue-500/90 via-blue-400/80 to-blue-300/70 shadow-md shadow-blue-500/20"
                         }`}
                         style={{
                           height: `${Math.max(heightPercent * 2.24, 8)}px`, // Better scaling with minimum height
@@ -138,15 +141,15 @@ const RegistrationChart = memo(function RegistrationChart({
                       />
 
                       {/* Value label on hover */}
-                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                        <div className="bg-gray-900/95 text-white text-xs rounded py-1 px-2 whitespace-nowrap shadow-lg">
-                          {item.count.toLocaleString()}
+                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-20">
+                        <div className="bg-gradient-to-r from-blue-900/95 to-indigo-900/95 backdrop-blur-sm text-blue-50 text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg shadow-blue-500/20 border border-blue-300/20 font-medium tabular-nums">
+                          {item.count.toLocaleString()} registrations
                         </div>
                       </div>
                     </div>
 
                     {/* Date label */}
-                    <div className="text-xs text-gray-400 text-center truncate">
+                    <div className="text-xs text-blue-100/60 text-center truncate font-medium">
                       {(() => {
                         // For weekly data, show week range
                         const weekStart = new Date(date);
@@ -178,22 +181,22 @@ const RegistrationChart = memo(function RegistrationChart({
         </div>
 
         {/* Summary Stats */}
-        <div className="flex items-center justify-between pt-4 mt-2 border-t border-white/10 text-sm">
-          <div>
-            <span className="text-gray-400">Total: </span>
-            <span className="text-white font-medium">
+        <div className="flex items-center justify-between pt-6 mt-4 border-t border-blue-300/20 text-sm">
+          <div className="flex flex-col">
+            <span className="text-blue-100/60 text-xs">Total</span>
+            <span className="text-blue-50 font-bold text-lg tabular-nums tracking-tight">
               {totalCount.toLocaleString()}
             </span>
           </div>
-          <div>
-            <span className="text-gray-400">Peak: </span>
-            <span className="text-white font-medium">
+          <div className="flex flex-col text-center">
+            <span className="text-blue-100/60 text-xs">Peak Week</span>
+            <span className="text-blue-50 font-bold text-lg tabular-nums tracking-tight">
               {maxCount.toLocaleString()}
             </span>
           </div>
-          <div>
-            <span className="text-gray-400">Average: </span>
-            <span className="text-white font-medium">
+          <div className="flex flex-col text-right">
+            <span className="text-blue-100/60 text-xs">Average</span>
+            <span className="text-blue-50 font-bold text-lg tabular-nums tracking-tight">
               {Math.round(totalCount / validData.length).toLocaleString()}
             </span>
           </div>

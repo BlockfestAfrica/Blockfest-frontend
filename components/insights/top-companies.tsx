@@ -7,18 +7,19 @@ export function TopCompanies({ data, loading }: TopCompaniesProps) {
   if (loading) {
     return (
       <div
-        className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 animate-pulse motion-reduce:animate-none"
+        className="relative overflow-hidden bg-gradient-to-br from-purple-950/90 via-slate-900/95 to-violet-950/90 backdrop-blur-sm border border-purple-300/20 rounded-xl p-8 animate-pulse motion-reduce:animate-none"
         role="status"
         aria-live="polite"
         aria-busy="true"
       >
-        <div className="space-y-4">
-          <div className="h-6 bg-white/10 rounded w-1/3"></div>
-          <div className="space-y-3">
+        <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/5 via-transparent to-violet-400/5 pointer-events-none" />
+        <div className="relative z-10 space-y-6">
+          <div className="h-7 bg-purple-200/20 rounded-lg w-1/3"></div>
+          <div className="space-y-4">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="flex items-center justify-between">
-                <div className="h-4 bg-white/10 rounded w-40"></div>
-                <div className="h-4 bg-white/10 rounded w-8"></div>
+                <div className="h-5 bg-purple-200/15 rounded-md w-44"></div>
+                <div className="h-5 bg-purple-200/15 rounded-md w-10"></div>
               </div>
             ))}
           </div>
@@ -32,12 +33,15 @@ export function TopCompanies({ data, loading }: TopCompaniesProps) {
     : 0;
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 h-full flex flex-col">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-white mb-2">
+    <div className="relative overflow-hidden bg-gradient-to-br from-purple-950/90 via-slate-900/95 to-violet-950/90 backdrop-blur-sm border border-purple-300/20 rounded-xl p-8 h-full flex flex-col transition-all duration-300 hover:border-purple-300/30 hover:shadow-xl hover:shadow-purple-500/10">
+      {/* Enhanced background overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/5 via-transparent to-violet-400/5 pointer-events-none" />
+
+      <div className="relative z-10 mb-6">
+        <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
           Top Companies & Projects
         </h3>
-        <p className="text-gray-300 text-sm">
+        <p className="text-purple-100/70 text-sm leading-relaxed">
           Organizations represented at the event
         </p>
       </div>

@@ -42,19 +42,22 @@ export function SpeakersGrid() {
             key={index}
             className="flex md:flex-col items-center bg-white rounded-[24px] p-3 md:p-6 border border-[#D1D1D1] shadow-sm gap-y-6 justify-around gap-x-6"
           >
-            <Image
-              src={speaker.image}
-              alt={speaker.name}
-              width={250}
-              height={250}
-              priority
-              className="object-cover rounded-full h-[140px] w-[140px] md:h-[250px] md:w-[250px] aspect-square"
-              sizes="(max-width: 768px) 140px, 250px"
-              quality={85}
-            />
-            <div className="flex flex-col items-center gap-y-6 ">
+            {/* ✅ Fixed circular image container */}
+            <div className="relative shrink-0 w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] md:w-[280px] md:h-[280px] rounded-full overflow-hidden">
+              <Image
+                src={speaker.image}
+                alt={speaker.name}
+                fill
+                className="object-cover"
+                quality={85}
+                priority
+                sizes="(min-width: 768px) 280px, (min-width: 640px) 200px, 150px"
+              />
+            </div>
+
+            <div className="flex flex-col items-center gap-y-6">
               <div className="flex flex-col gap-y-2 items-center text-center">
-                <h3 className={`${montserrat.className} md:text-[30px] text-[22px] font-semibold `}>
+                <h3 className={`${montserrat.className} md:text-[30px] text-[22px] font-semibold`}>
                   {speaker.name}
                 </h3>
                 <p className={`${montserrat.className} md:text-[20px] text-sm font-medium text-[#A4A4A4]`}>
@@ -88,7 +91,6 @@ export function SpeakersGrid() {
                 </Link> */}
               </div>
             </div>
-
           </div>
         ))}
       </div>

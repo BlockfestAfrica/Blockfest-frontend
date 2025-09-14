@@ -29,30 +29,34 @@ const StatCard = memo(function StatCard({
   if (loading) {
     return (
       <div
-        className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 animate-pulse motion-reduce:animate-none"
+        className="bg-gradient-to-br from-slate-800/70 via-slate-900/80 to-slate-950/90 backdrop-blur-xl border border-slate-700/30 rounded-2xl p-6 animate-pulse motion-reduce:animate-none shadow-2xl shadow-black/20"
         role="status"
         aria-live="polite"
         aria-busy="true"
         aria-label={`Loading ${title}`}
       >
         <div className="space-y-4">
-          <div className="h-4 bg-white/10 rounded w-3/4"></div>
-          <div className="h-8 bg-white/10 rounded w-1/2"></div>
-          <div className="h-3 bg-white/10 rounded w-2/3"></div>
+          <div className="h-4 bg-slate-700/50 rounded-lg w-3/4"></div>
+          <div className="h-8 bg-slate-700/50 rounded-lg w-1/2"></div>
+          <div className="h-3 bg-slate-800/50 rounded-lg w-2/3"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-200 group">
+    <div className="bg-gradient-to-br from-slate-800/70 via-slate-900/80 to-slate-950/90 backdrop-blur-xl border border-slate-700/30 rounded-2xl p-6 hover:from-slate-800/80 hover:via-slate-900/90 hover:to-slate-950/95 hover:border-slate-600/40 transition-all duration-300 ease-out group shadow-2xl shadow-black/20">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-gray-300 text-sm font-medium mb-1">{title}</p>
-          <p className="text-white text-2xl font-bold mb-2">
+          <p className="text-slate-400 text-sm font-medium mb-2 tracking-wide">
+            {title}
+          </p>
+          <p className="text-slate-100 text-3xl font-bold mb-2 tabular-nums">
             {typeof value === "number" ? value.toLocaleString() : value}
           </p>
-          {subtitle && <p className="text-gray-400 text-xs">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-slate-500 text-xs font-medium">{subtitle}</p>
+          )}
           {trend && (
             <div
               className={`flex items-center gap-1 mt-2 text-xs ${

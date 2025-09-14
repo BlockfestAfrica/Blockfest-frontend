@@ -34,6 +34,7 @@ export function PartnersSection() {
     };
 
     schedule();
+
     return () => {
       if (timer !== null) window.clearTimeout(timer);
     };
@@ -164,15 +165,15 @@ export function PartnersSection() {
               >
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-20 lg:h-24 w-48 lg:w-56">
                   <Image
-                    src="/images/sponsors/hyperbridge-logo.png?v=2"
+                    src="/images/sponsors/hb-logo.png"
                     alt="Hyperbridge"
-                    width={200}
-                    height={80}
-                    className="h-10 w-auto object-contain scale-[2]"
+                    width={1081}
+                    height={601}
+                    className="h-12 lg:h-16 w-auto object-contain scale-[2]"
                   />
                 </div>
               </Link>
-              {/* <Link
+              <Link
                 href="https://cakewallet.com"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -186,7 +187,7 @@ export function PartnersSection() {
                     className="h-12 lg:h-16 w-auto object-contain"
                   />
                 </div>
-              </Link> */}
+              </Link>
             </div>
           </div>
 
@@ -195,44 +196,38 @@ export function PartnersSection() {
             <h3 className="text-2xl lg:text-3xl font-bold text-[#C0C0C0] mb-4">
               🥈 Silver Sponsors
             </h3>
-            <div className="flex items-center gap-5 justify-center">
-              <div className="flex md:flex-row flex-col items-center gap-5 justify-center">
-                <div className="flex justify-center">
-                  <Link
-                    href="https://gidi.africa"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-1 lg:p-2 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                      <Image
-                        src="/images/sponsors/gidi-logo.png"
-                        alt="Gidi"
-                        width={240}
-                        height={96}
-                        className="h-full lg:h-full w-auto object-cover scale-125"
-                      />
-                    </div>
-                  </Link>
+            <div className="flex flex-wrap justify-center gap-4 lg:gap-6">
+              <Link
+                href="https://gidi.africa"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                    src="/images/sponsors/gidi-logo.png"
+                    alt="Gidi"
+                    width={200}
+                    height={80}
+                    className="h-12 lg:h-14 w-auto object-contain scale-[3]"
+                  />
                 </div>
+              </Link>
 
-                <div className="flex justify-center">
-                  <Link
-                    href="https://jup.ag/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-2 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer w-fit h-fit">
-                      <Image
-                        src="/images/sponsors/jupiter.png"
-                        alt="Jupiter"
-                        width={240}
-                        height={96}
-                        className="max-h-20 w-auto object-contain"
-                      />
-                    </div>
-                  </Link>
+              <Link
+                href="https://jup.ag/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                    src="/images/sponsors/jupiter.png"
+                    alt="Jupiter"
+                    width={200}
+                    height={80}
+                    className="h-12 lg:h-14 w-auto object-contain"
+                  />
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -366,6 +361,36 @@ export function PartnersSection() {
                 />
               </div>
             </Link>
+            <Link
+              href="https://x.com/Web3Nigeria?s=09"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/webnig.jpg"
+                  alt="Web3 Nigeria"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain"
+                />
+              </div>
+            </Link>
+            <Link
+              href="https://x.com/GuildAcademy_"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/guild.png"
+                  alt="Guild Academy"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain"
+                />
+              </div>
+            </Link>
           </div>
         </div>
 
@@ -376,22 +401,41 @@ export function PartnersSection() {
               📺 Media Partners
             </h3>
           </div>
-          <div className="flex justify-center">
-            <Link
-              href="https://ambcrypto.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/amd-logo.webp"
-                  alt="AMD"
-                  width={150}
-                  height={64}
-                  className="h-10 lg:h-12 w-auto object-contain"
-                />
-              </div>
-            </Link>
+          <div className="flex flex-wrap justify-center gap-4 lg:gap-6">
+            <div className="flex justify-center">
+              <Link
+                href="https://ambcrypto.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                    src="/images/media/amd-logo.webp"
+                    alt="AMD"
+                    width={150}
+                    height={64}
+                    className="h-10 lg:h-12 w-auto object-contain"
+                  />
+                </div>
+              </Link>
+            </div>
+            <div className="flex justify-center">
+              <Link
+                href="https://x.com/forexbloggerayo?s=21&t=6lhy88Nx16NRD-zFs2-S9w"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                    src="/images/media/3FBA.png"
+                    alt="Forex Blogger Ayo"
+                    width={150}
+                    height={64}
+                    className="h-16 w-auto object-contain"
+                  />
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

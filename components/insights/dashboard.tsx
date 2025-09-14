@@ -14,6 +14,10 @@ import { EducationInsights } from "./education-insights";
 import { ApprovalInsights } from "./approval-insights";
 import { AnalyticsInsights } from "./analytics-insights";
 import { TransportationInsights } from "./transportation-insights";
+import { ProfessionalRoles } from "./professional-roles";
+import { EducationalInstitutions } from "./educational-institutions";
+import { DietaryRequirements } from "./dietary-requirements";
+import { ConsentAnalytics } from "./consent-analytics";
 import type { TransportationData } from "./transportation-insights";
 
 const defaultTransportation: TransportationData = {
@@ -110,11 +114,6 @@ export interface DashboardStats {
     overallApprovalRate: number;
   };
   analyticsBreakdown: {
-    // Application Quality
-    completeApplications: number;
-    partialApplications: number;
-    completionRate: number;
-
     // Source Quality
     sourceQuality: Array<{
       source: string;
@@ -158,6 +157,47 @@ export interface DashboardStats {
     }>;
   };
   transportationInsights: TransportationData;
+  professionalRoles: Array<{
+    role: string;
+    count: number;
+    percentage: number;
+  }>;
+  educationalInstitutions: Array<{
+    institution: string;
+    count: number;
+    percentage: number;
+  }>;
+  dietaryRequirements: {
+    totalResponses: number;
+    hasRestrictions: number;
+    noRestrictions: number;
+    restrictions: Array<{
+      type: string;
+      count: number;
+      percentage: number;
+    }>;
+    commonRestrictions: string[];
+  };
+  consentAnalytics: {
+    totalResponses: number;
+    photoConsent: {
+      yes: number;
+      no: number;
+      percentage: number;
+    };
+    emailConsent: {
+      yes: number;
+      no: number;
+      percentage: number;
+    };
+    socialEngagement: {
+      xFollowed: number;
+      telegramJoined: number;
+      xPercentage: number;
+      telegramPercentage: number;
+    };
+    complianceScore: number;
+  };
   recentRegistrations: GuestData[];
   lastUpdated: string;
 }
@@ -284,9 +324,6 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
       overallApprovalRate: 0,
     },
     analyticsBreakdown: {
-      completeApplications: 0,
-      partialApplications: 0,
-      completionRate: 0,
       sourceQuality: [],
       africanCountries: 0,
       topAfricanCities: [],
@@ -304,6 +341,35 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
       topCompanyTypes: [],
     },
     transportationInsights: defaultTransportation,
+    professionalRoles: [],
+    educationalInstitutions: [],
+    dietaryRequirements: {
+      totalResponses: 0,
+      hasRestrictions: 0,
+      noRestrictions: 0,
+      restrictions: [],
+      commonRestrictions: [],
+    },
+    consentAnalytics: {
+      totalResponses: 0,
+      photoConsent: {
+        yes: 0,
+        no: 0,
+        percentage: 0,
+      },
+      emailConsent: {
+        yes: 0,
+        no: 0,
+        percentage: 0,
+      },
+      socialEngagement: {
+        xFollowed: 0,
+        telegramJoined: 0,
+        xPercentage: 0,
+        telegramPercentage: 0,
+      },
+      complianceScore: 0,
+    },
     recentRegistrations: [],
     lastUpdated: new Date().toISOString(),
   });
@@ -369,6 +435,32 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
         transportationInsights: {
           ...prev.transportationInsights,
           ...(data.transportationInsights ?? {}),
+        },
+        consentAnalytics: {
+          ...prev.consentAnalytics,
+          ...(data.consentAnalytics ?? {}),
+          photoConsent: {
+            ...prev.consentAnalytics.photoConsent,
+            ...(data.consentAnalytics?.photoConsent ?? {}),
+          },
+          emailConsent: {
+            ...prev.consentAnalytics.emailConsent,
+            ...(data.consentAnalytics?.emailConsent ?? {}),
+          },
+          socialEngagement: {
+            ...prev.consentAnalytics.socialEngagement,
+            ...(data.consentAnalytics?.socialEngagement ?? {}),
+          },
+        },
+        dietaryRequirements: {
+          ...prev.dietaryRequirements,
+          ...(data.dietaryRequirements ?? {}),
+          restrictions:
+            data.dietaryRequirements?.restrictions ??
+            prev.dietaryRequirements.restrictions,
+          commonRestrictions:
+            data.dietaryRequirements?.commonRestrictions ??
+            prev.dietaryRequirements.commonRestrictions,
         },
       }));
       setLastRefresh(new Date());
@@ -451,27 +543,35 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header with refresh info */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+    <div className="space-y-8 sm:space-y-10 p-6 sm:p-8 lg:p-12 max-w-7xl mx-auto">
+      {/* Header with refresh info - Mobile optimized */}
+      <div className="flex flex-col sm:flex-row sm:items-start lg:items-center sm:justify-between gap-4 sm:gap-6">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-100 mb-2 sm:mb-3 tracking-tight leading-tight">
             Dashboard Overview
           </h2>
-          <p className="text-gray-300 text-xs sm:text-sm">
-            Last updated: {formattedDates.lastUpdated} • Next refresh:{" "}
-            {formattedDates.nextRefresh}
-          </p>
+          {/* Mobile: Stack update info, Desktop: Inline */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-slate-400 text-xs sm:text-sm lg:text-base font-medium leading-relaxed">
+            <span className="whitespace-nowrap">
+              Last updated: {formattedDates.lastUpdated}
+            </span>
+            <span className="hidden sm:inline">•</span>
+            <span className="whitespace-nowrap">
+              Next refresh: {formattedDates.nextRefresh}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center sm:justify-end">
           <button
             onClick={fetchData}
             disabled={loading}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-3 sm:px-4 py-2 rounded-lg border border-white/20 transition-all duration-200 disabled:opacity-50 text-sm"
+            className="flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-slate-700/60 to-slate-800/60 hover:from-slate-600/70 hover:to-slate-700/70 backdrop-blur-xl text-slate-100 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-slate-600/40 hover:border-slate-500/50 transition-all duration-300 disabled:opacity-50 text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto max-w-[200px] sm:max-w-none"
           >
             <svg
-              className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+              className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
+                loading ? "animate-spin" : ""
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -483,7 +583,9 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            {loading ? "Refreshing..." : "Refresh"}
+            <span className="whitespace-nowrap">
+              {loading ? "Refreshing..." : "Refresh"}
+            </span>
           </button>
         </div>
       </div>
@@ -566,6 +668,32 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
             data={memoizedStats.educationData}
             loading={loading}
           />
+        </div>
+      </div>
+
+      {/* Professional & Educational Insights */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
+        <div className="min-h-[500px] insight-card">
+          <ProfessionalRoles data={stats.professionalRoles} loading={loading} />
+        </div>
+        <div className="min-h-[500px] insight-card">
+          <EducationalInstitutions
+            data={stats.educationalInstitutions}
+            loading={loading}
+          />
+        </div>
+      </div>
+
+      {/* Event Planning Analytics */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
+        <div className="min-h-[400px] insight-card">
+          <DietaryRequirements
+            data={stats.dietaryRequirements}
+            loading={loading}
+          />
+        </div>
+        <div className="min-h-[400px] insight-card">
+          <ConsentAnalytics data={stats.consentAnalytics} loading={loading} />
         </div>
       </div>
     </div>

@@ -60,11 +60,12 @@ export default function InsightsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between lg:justify-end gap-3">
+              {/* Mobile-first responsive layout */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between lg:justify-end gap-3 sm:gap-4">
                 {/* Data Update Status */}
-                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2 border border-white/10">
+                <div className="flex items-center justify-center sm:justify-start gap-2 bg-black/30 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 border border-white/10 order-2 sm:order-1">
                   <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-xs sm:text-sm font-medium text-white whitespace-nowrap">
                     Updates Every 6hrs
                   </span>
                   {process.env.NODE_ENV === "development" && (
@@ -75,20 +76,20 @@ export default function InsightsPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-3 order-1 sm:order-2">
                   {/* Back to Site */}
                   <Link
                     href="/"
-                    className="flex items-center gap-2 bg-[#F2CB45] hover:bg-yellow-400 text-black px-4 py-2 rounded-full font-medium transition-all duration-300 transform hover:scale-105"
+                    className="flex items-center gap-1.5 sm:gap-2 bg-[#F2CB45] hover:bg-yellow-400 text-black px-3 sm:px-4 py-2 rounded-full font-medium transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="w-3.5 h-3.5 sm:w-4 sm:h-4"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
                       <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
                     </svg>
-                    <span className="text-sm">Back to Site</span>
+                    <span className="whitespace-nowrap">Back to Site</span>
                   </Link>
 
                   {/* Logout Button */}
