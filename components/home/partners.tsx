@@ -228,6 +228,22 @@ export function PartnersSection() {
                   />
                 </div>
               </Link>
+
+              <Link
+                href="https://linktr.ee/Huelebienbyprudent"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                    src="/images/sponsors/hb.png"
+                    alt="Huele bien"
+                    width={150}
+                    height={64}
+                    className="h-16 w-auto object-contain"
+                  />
+                </div>
+              </Link>
             </div>
           </div>
         </div>
