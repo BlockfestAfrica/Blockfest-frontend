@@ -120,7 +120,7 @@ export function PartnersSection() {
             </h3>
             <div className="flex justify-center">
               <Link
-                href="https://jeroid.co"
+                href="https://www.jeroid.ng/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -465,7 +465,7 @@ export function PartnersSection() {
             </h3>
           </div>
           <div className="flex flex-wrap justify-center gap-4 lg:gap-6">
-            <div className="flex justify-center">
+            {/* <div className="flex justify-center">
               <Link
                 href="https://x.com/_CryptoBootcamp?t=t4j6OitblQ_BEmduornOvQ&s=08"
                 target="_blank"
@@ -481,7 +481,7 @@ export function PartnersSection() {
                   />
                 </div>
               </Link>
-            </div>
+            </div> */}
             <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
