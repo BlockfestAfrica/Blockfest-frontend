@@ -438,6 +438,47 @@ export function PartnersSection() {
             </div>
           </div>
         </div>
+
+
+
+        {/* Ecosystem Partners Section */}
+        <div className="w-full max-w-6xl mx-auto pt-4">
+          <div className="text-center mb-4">
+            <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4">
+              🌐 Ecosystem Partners
+            </h3>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 lg:gap-6">
+            <div className="flex justify-center">
+              <Link
+                href="https://x.com/_CryptoBootcamp?t=t4j6OitblQ_BEmduornOvQ&s=08"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                    src="/images/ecosystem/bootcamp.png"
+                    alt="AMD"
+                    width={150}
+                    height={64}
+                    className="h-10 lg:h-12 w-auto object-contain "
+                  />
+                </div>
+              </Link>
+            </div>
+            <div className="flex justify-center">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                  src="/images/ecosystem/lsg.png"
+                    alt="Forex Blogger Ayo"
+                    width={150}
+                    height={64}
+                  className="h-16 w-auto object-contain "
+                  />
+                </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col items-center justify-center space-y-5 mt-12.5 lg:mt-[110px] text-white text-center">
