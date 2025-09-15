@@ -1,21 +1,11 @@
-// import { EmblaOptionsType } from "embla-carousel";
+// import type { EmblaOptionsType } from "embla-carousel";
 // import Speakers from "../carousel";
+// import { SpeakersList } from "@/lib/speakers";
 import React from "react";
 
 export function SpeakersSection() {
   // const OPTIONS: EmblaOptionsType = { loop: true }
-  // const SLIDES = [
-  //   {
-  //     name: "Nduka Blessing",
-  //     title: "CEO SOLUTIONS",
-  //     image: "/images/speaker.webp",
-  //   },
-  //   {
-  //     name: "John Smith",
-  //     title: "CTO INNOVATIONS",
-  //     image: "/images/speaker.webp",
-  //   }
-  // ]
+  
 
   return (
     <section
@@ -44,15 +34,15 @@ export function SpeakersSection() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
             <div className="flex items-center gap-2 text-[#F2CB45] font-semibold">
-              <div className="w-2 h-2 bg-[#F2CB45] rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-[#F2CB45] rounded-full animate-pulse"/>
               <span>Industry Leaders</span>
             </div>
             <div className="flex items-center gap-2 text-[#F2CB45] font-semibold">
-              <div className="w-2 h-2 bg-[#F2CB45] rounded-full animate-pulse delay-300"></div>
+              <div className="w-2 h-2 bg-[#F2CB45] rounded-full animate-pulse delay-300"/>
               <span>Tech Innovators</span>
             </div>
             <div className="flex items-center gap-2 text-[#F2CB45] font-semibold">
-              <div className="w-2 h-2 bg-[#F2CB45] rounded-full animate-pulse delay-500"></div>
+              <div className="w-2 h-2 bg-[#F2CB45] rounded-full animate-pulse delay-500"/>
               <span>Global Experts</span>
             </div>
           </div>
@@ -60,7 +50,7 @@ export function SpeakersSection() {
       </div>
 
       {/* Original carousel code commented out */}
-      {/* <Speakers speakers={SLIDES} options={OPTIONS} /> */}
+      {/* <Speakers speakers={SpeakersList} options={OPTIONS} /> */}
     </section>
   );
 }

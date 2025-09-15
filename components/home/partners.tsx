@@ -391,6 +391,22 @@ export function PartnersSection() {
                 />
               </div>
             </Link>
+
+            <Link
+              href="https://x.com/blockchainNG"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/bnug2.jpg"
+                  alt="blockchain nigeria user group"
+                  width={150}
+                  height={64}
+                  className="h-10 lg:h-12 w-auto object-contain"
+                />
+              </div>
+            </Link>
           </div>
         </div>
 
@@ -467,15 +483,15 @@ export function PartnersSection() {
               </Link>
             </div>
             <div className="flex justify-center">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                  <Image
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
                   src="/images/ecosystem/lsg.png"
-                    alt="Forex Blogger Ayo"
-                    width={150}
-                    height={64}
+                  alt="Forex Blogger Ayo"
+                  width={150}
+                  height={64}
                   className="h-16 w-auto object-contain "
-                  />
-                </div>
+                />
+              </div>
             </div>
           </div>
         </div>

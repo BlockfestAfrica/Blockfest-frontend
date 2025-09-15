@@ -5,6 +5,7 @@ import React from "react";
 import { Montserrat } from "next/font/google";
 import { FaXTwitter } from "react-icons/fa6";
 import Link from "next/link";
+import {  SpeakersList } from "@/lib/speakers";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -12,22 +13,7 @@ const montserrat = Montserrat({
 });
 
 export function SpeakersGrid() {
-  const Speakers = [
-    {
-      name: "Jeremiah Mayowa",
-      title: "CEO JEROID",
-      image: "/images/speakers/Jeroidceo.jpg",
-      twitter: "https://x.com/belikejeroid?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
-      website: "https://jeroid.co/"
-    },
-    {
-      name: "Ayodeji Awisika (Ebunayo)",
-      title: "FOUNDER WEB3BRIDGE",
-      image: "/images/speakers/ebunayo.jpg",
-      twitter: "https://x.com/ebunayo08?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
-      website: "https://www.web3bridgeafrica.com/"
-    },
-  ];
+ 
 
   return (
     <section className="flex flex-col items-center justify-center lg:py-[50px] lg:px-[70px] py-14 px-5">
@@ -36,7 +22,7 @@ export function SpeakersGrid() {
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
-        {Speakers.map((speaker, index) => (
+        {SpeakersList.map((speaker, index) => (
           <div
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             key={index}
