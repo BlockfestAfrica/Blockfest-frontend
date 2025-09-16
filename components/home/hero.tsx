@@ -106,14 +106,14 @@ export function HeroSection() {
 
   return (
     <section
-      className="relative w-full flex items-center justify-center bg-[url('/images/hero.webp')] bg-cover bg-center bg-no-repeat min-h-[65vh] 2xl:min-h-[65vh] xl:min-h-screen md:min-h-screen lg:min-h-screen object-contain  "
+      className="relative w-full flex items-center justify-center bg-[url('/images/hero.webp')] bg-cover bg-center bg-no-repeat min-h-[65vh] 2xl:min-h-[65vh] xl:min-h-screen md:min-h-screen lg:min-h-screen object-contain"
       id="home"
     >
-      <div className="flex items-center flex-col space-y-4  text-center text-black mt-50 mb-20 md:my-20 lg:my-30">
+      <div className="flex items-center flex-col space-y-4  text-center text-black mt-50 mb-20 md:my-20 lg:my-30 px-10">
         <p className="font-medium text-[10px] lg:text-base lg:text-[22.3px] uppercase bg-[#F2CB45] px-4 py-3.5 lg:px-[35px] lg:py-[26px] rounded-[5px] lg:rounded-[10.71px]">
           welcome to blockfest 2025
         </p>
-        <p className="text-[43px] lg:text-5xl leading-13 lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] font-[350px]">
+        <p className="text-[43px] lg:text-5xl leading-13 lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] font-[350px] ">
           Africa&apos;s biggest web<span className="text-[#F2CB45]">3</span>{" "}
           {""}
           festival

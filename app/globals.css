@@ -125,8 +125,13 @@
 
 html {
   scroll-behavior: smooth;
+  @apply overflow-x-hidden;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
 /* Enhanced Insights Dashboard Animations */
 @keyframes fadeInUp {
   from {
