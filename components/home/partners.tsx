@@ -120,7 +120,7 @@ export function PartnersSection() {
             </h3>
             <div className="flex justify-center">
               <Link
-                href="https://www.jeroid.ng/"
+                href="https://jeroid.co"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -423,6 +423,22 @@ export function PartnersSection() {
                 />
               </div>
             </Link>
+
+            <Link
+              href="https://x.com/InsideDHive"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                <Image
+                  src="/images/community/hive.png"
+                  alt="Insidethehive Image"
+                  width={150}
+                  height={64}
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+            </Link>
           </div>
         </div>
 
@@ -514,10 +530,10 @@ export function PartnersSection() {
       </div>
 
       <div className="flex flex-col items-center justify-center space-y-5 mt-12.5 lg:mt-[110px] text-white text-center">
-        <h1 className="font-medium text-[39px] leading-[45.13px] lg:text-[69.65px] lg:leading-[82.21px] tracking-[-5%] xl:w-[55%] ">
+        <h1 className="font-medium text-[39px] leading-[45.13px] lg:text-[69.65px] lg:leading-[82.21px] tracking-[-5%] xl:w-[55%] md:w-[65%] ">
           Be part of Africa&apos;s web3 Revolution
         </h1>
-        <p className="font-medium text-sm lg:text-2xl lg:leading-[1.2] w-[90%] xl:w-[65%]">
+        <p className="font-medium text-sm lg:text-2xl lg:leading-[1.2] md:w-[75%] w-[90%] xl:w-[65%]">
           Whether you&apos;re ready to attend, showcase your brand, or invest in
           the future Blockfest Africa offers a front-row seat to innovation,
           culture, and community. Don&apos;t just watch the future happen be

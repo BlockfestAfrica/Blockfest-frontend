@@ -116,7 +116,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
+    @apply !min-w-full;
     @apply bg-background text-foreground;
   }
 }
@@ -131,6 +133,7 @@ html {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -142,6 +145,7 @@ html {
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -149,10 +153,12 @@ html {
 }
 
 @keyframes pulse-glow {
+
   0%,
   100% {
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
   }
+
   50% {
     box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
   }
