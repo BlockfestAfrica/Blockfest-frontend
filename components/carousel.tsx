@@ -74,8 +74,8 @@ const Speakers: React.FC<PropType> = (props) => {
               key={`${speaker.name}-${index}`}
             >
               {/* Speaker Card */}
-              <div className="bg-gradient-to-b from-[#0F377E] to-[#1B64E4] rounded-3xl p-6 lg:p-8 w-full xl:max-w-[839px] mx-auto">
-                <div className="flex items-center justify-between gap-6">
+              <div className="bg-gradient-to-b from-[#0F377E] to-[#1B64E4] rounded-3xl p-6 lg:p-8 w-full xl:max-w-[839px] mx-auto h-[500px] md:h-fit flex items-center">
+                <div className="flex items-center justify-between gap-6 flex-col-reverse md:flex-row">
                   {/* Text Content */}
                   <div className="text-white flex-1 basis-[60%]">
                     <h2 className="text-2xl lg:text-[57.65px] lg:leading-[68.05px] font-[350px] mb-2 uppercase">
@@ -87,7 +87,7 @@ const Speakers: React.FC<PropType> = (props) => {
                   </div>
 
                   {/* Speaker Image */}
-                  <div className="w-40 h-40 lg:w-80 lg:h-80 basis-[40%] rounded-2xl overflow-hidden flex-shrink-0">
+                  <div className="w-full md:w-80 md:h-80 basis-[40%] rounded-2xl overflow-hidden flex-shrink-0">
                     <Image
                       src={speaker.image}
                       alt={`${speaker.name} - ${speaker.title}`}

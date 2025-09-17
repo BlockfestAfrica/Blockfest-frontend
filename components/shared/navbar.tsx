@@ -1,15 +1,41 @@
 "use client";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect } from "react";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "../ui/sheet";
 import { AiOutlineClose } from "react-icons/ai";
 import Link from "next/link";
 import BurgerIcon from "../icons/burger-icon";
 import { gotham } from "@/lib/fonts";
+import { useRouter, usePathname } from "next/navigation";
 
 const Navbar = () => {
   const contactEmail =
     process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
+
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleAboutClick = () => {
+    if (pathname === "/") {
+      document.getElementById("about")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    } else {
+      router.push("/#about");
+    }
+  };
+
+  // Clean up #about in URL after navigating
+  useEffect(() => {
+    if (window.location.hash === "#about") {
+      const el = document.getElementById("about");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.history.replaceState(null, "", "/");
+      }
+    }
+  }, []);
 
   return (
     <div
@@ -45,12 +71,13 @@ const Navbar = () => {
         >
           Home
         </Link>
-        <Link
-          href="/#about"
+        <button
+          type="button"
+          onClick={handleAboutClick}
           className="text-sm lg:text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
         >
           About
-        </Link>
+        </button>
         <Link
           href="/speakers"
           className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
@@ -65,7 +92,7 @@ const Navbar = () => {
         </Link>
       </nav>
 
-      {/* Right side */}
+      {/* Right Side */}
       <div className="flex items-center gap-x-5">
         <Link
           href={`mailto:${contactEmail}`}
@@ -91,6 +118,20 @@ const Navbar = () => {
 const MobileMenu = () => {
   const contactEmail =
     process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
+
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleAboutClick = () => {
+    if (pathname === "/") {
+      document.getElementById("about")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    } else {
+      router.push("/#about");
+    }
+  };
 
   return (
     <div
@@ -120,12 +161,13 @@ const MobileMenu = () => {
         </SheetClose>
 
         <SheetClose asChild>
-          <Link
-            href="/#about"
+          <button
+            type="button"
+            onClick={handleAboutClick}
             className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
           >
             About
-          </Link>
+          </button>
         </SheetClose>
 
         <SheetClose asChild>
@@ -137,6 +179,7 @@ const MobileMenu = () => {
           </Link>
         </SheetClose>
 
+        {/* Contact mailto link */}
         <SheetClose asChild>
           <a
             href={`mailto:${contactEmail}`}

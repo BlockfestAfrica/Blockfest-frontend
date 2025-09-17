@@ -1,10 +1,10 @@
-// import type { EmblaOptionsType } from "embla-carousel";
-// import Speakers from "../carousel";
-// import { SpeakersList } from "@/lib/speakers";
+import type { EmblaOptionsType } from "embla-carousel";
+import Speakers from "../carousel";
+import { SpeakersList } from "@/lib/speakers";
 import React from "react";
 
 export function SpeakersSection() {
-  // const OPTIONS: EmblaOptionsType = { loop: true }
+  const OPTIONS: EmblaOptionsType = { loop: true }
   
 
   return (
@@ -17,7 +17,7 @@ export function SpeakersSection() {
       </h2>
 
       {/* Revealing Soon Design */}
-      <div className="w-full max-w-4xl mx-auto">
+      {/* <div className="w-full max-w-4xl mx-auto">
         <div className="bg-gradient-to-br from-[#1B64E4] to-[#3D7BE8] rounded-3xl p-8 lg:p-12 text-center text-white shadow-2xl">
           <div className="mb-6">
             <div className="w-24 h-24 lg:w-32 lg:h-32 mx-auto mb-6 bg-white/20 rounded-full flex items-center justify-center">
@@ -47,10 +47,10 @@ export function SpeakersSection() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Original carousel code commented out */}
-      {/* <Speakers speakers={SpeakersList} options={OPTIONS} /> */}
+      <Speakers speakers={SpeakersList} options={OPTIONS} />
     </section>
   );
 }

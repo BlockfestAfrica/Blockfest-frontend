@@ -15,14 +15,14 @@ export const SpeakersList: Speaker[] = [
     website: "https://jeroid.co/"
   },
   {
-    name: "Ayodeji Awisika (Ebunayo)",
+    name: "Ayodeji Israel Awosika",
     title: "Founder Web3bridge ",
     image: "/images/speakers/ayodeji.jpg",
     twitter: "https://x.com/ebunayo08?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
     website: "https://www.web3bridgeafrica.com/"
   },
   {
-    name: "Daniel Ejike Muonuagha (DannyCrypt)",
+    name: "Daniel Ejike Muonuagha",
     title: "Founder, Moon Republic Academy",
     image: "/images/speakers/ejike.WEBP",
     
