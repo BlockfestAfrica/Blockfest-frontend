@@ -95,7 +95,7 @@ const Speakers: React.FC<PropType> = (props) => {
                       height={322}
                       sizes="(max-width: 768px) 160px, (max-width: 1024px) 320px, 340px"
                       priority
-                      className=" md:object-cover object-center"
+                      className=" md:object-cover object-center h-[500px] md:h-full"
                     />
                   </div>
                 </div>

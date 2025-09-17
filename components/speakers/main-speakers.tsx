@@ -23,9 +23,9 @@ export function SpeakersGrid() {
           <div
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             key={index}
-            className="flex md:flex-col items-center bg-white rounded-[24px] p-3 md:p-6 border border-[#D1D1D1] shadow-sm gap-y-6 justify-around"
+            className="flex flex-col items-center bg-white rounded-[24px] p-5 md:p-6 border border-[#D1D1D1] shadow-sm gap-y-6 justify-around"
           >
-            <div className="relative shrink-0 w-[120px] h-[120px] sm:w-[150px] rounded-full sm:h-[150px] md:w-[280px] md:h-[280px] overflow-hidden">
+            <div className="relative shrink-0 w-[170px] h-[170px] sm:w-[150px] rounded-full sm:h-[150px] md:w-[280px] md:h-[280px] overflow-hidden">
               <Image
                 src={speaker.image}
                 alt={speaker.name}
@@ -33,19 +33,19 @@ export function SpeakersGrid() {
                 className="object-center"
                 quality={85}
                 priority
-                sizes="(min-width: 768px) 280px, (min-width: 640px) 120px, 150px"
+                sizes="(min-width: 768px) 280px, (min-width: 640px) 120px, 200px aspect-square"
               />
             </div>
 
             <div className="flex flex-col items-center gap-y-4">
               <div className="flex flex-col gap-y-2 items-center text-center">
                 <h3
-                  className={`${montserrat.className} md:text-[29px] text-lg font-semibold`}
+                  className={`${montserrat.className} md:text-[29px] text-[20px] font-bold md:font-semibold`}
                 >
                   {speaker.name}
                 </h3>
                 <p
-                  className={`${montserrat.className} md:text-[20px] text-[15px] font-medium text-[#A4A4A4] w-[85%] md:w-full`}
+                  className={`${montserrat.className} md:text-[20px] text-base font-medium text-[#A4A4A4] w-[85%] md:w-full`}
                 >
                   {speaker.title}
                 </p>
