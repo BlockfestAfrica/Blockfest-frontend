@@ -37,9 +37,9 @@ export const SpeakersList: Speaker[] = [
     title: "Research Analyst, Cointelegraph Research",
     image: "/images/speakers/alex.jpg"
   },
-  {
-    name: "Chidubem Emelumadu",
-    title: "Ecosystem Lead(Africa), Lisk",
-    image: "/images/speakers/chidubem.jpg"
-  }
+  // {
+  //   name: "Chidubem Emelumadu",
+  //   title: "Ecosystem Lead(Africa), Lisk",
+  //   image: "/images/speakers/chidubem.jpg"
+  // }
 ];
