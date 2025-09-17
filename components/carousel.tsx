@@ -75,7 +75,7 @@ const Speakers: React.FC<PropType> = (props) => {
             >
               {/* Speaker Card */}
               <div className="bg-gradient-to-b from-[#0F377E] to-[#1B64E4] rounded-3xl p-8 w-full xl:max-w-[839px] mx-auto h-fit md:h-fit flex items-center">
-                <div className="flex items-center md:justify-between justify-center gap-6 flex-col-reverse md:flex-row">
+                <div className="flex items-center md:justify-between justify-center gap-6 flex-col-reverse md:flex-row text-center md:text-start">
                   {/* Text Content */}
                   <div className="text-white flex-1 basis-[60%]">
                     <h2 className="text-2xl lg:text-[57.65px] lg:leading-[68.05px] font-[350px] mb-2 uppercase">
@@ -95,7 +95,7 @@ const Speakers: React.FC<PropType> = (props) => {
                       height={322}
                       sizes="(max-width: 768px) 160px, (max-width: 1024px) 320px, 340px"
                       priority
-                      className=" md:object-cover object-center h-[500px] md:h-full"
+                      className=" md:object-cover object-center h-[350px] md:h-full"
                     />
                   </div>
                 </div>
