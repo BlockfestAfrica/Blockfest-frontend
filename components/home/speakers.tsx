@@ -10,7 +10,7 @@ export function SpeakersSection() {
   return (
     <section
       className="flex flex-col items-center justify-center lg:py-[80px] lg:px-[70px] py-14 px-5"
-      id="speakers"
+      
     >
       <h2 className="font-medium text-4xl lg:text-5xl lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] my-[25px] lg:my-[50px] text-black">
         Our Speakers

@@ -1,27 +1,11 @@
 "use client";
 import Image from "next/image";
 import React from "react";
-import type { Menu } from "@/types";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "../ui/sheet";
-// import { CiMenuBurger } from "react-icons/ci";
 import { AiOutlineClose } from "react-icons/ai";
 import Link from "next/link";
 import BurgerIcon from "../icons/burger-icon";
 import { gotham } from "@/lib/fonts";
-
-const navbarMenu: Menu[] = [
-  { title: "Home", path: "home" },
-  { title: "About", path: "about" },
-  { title: "Speakers", path: "speakers" },
-  // removed Contact from here
-];
-
-const scrollToSection = (id: string) => {
-  const el = document.getElementById(id);
-  if (el) {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-};
 
 const Navbar = () => {
   const contactEmail =
@@ -31,6 +15,7 @@ const Navbar = () => {
     <div
       className={`${gotham.className} bg-white md:bg-black px-5 lg:px-[70px] py-5 lg:py-10 flex items-center justify-between`}
     >
+      {/* Logo */}
       <Link href="/" className="cursor-pointer">
         <Image
           src="/images/mobile-logo.svg"
@@ -51,19 +36,27 @@ const Navbar = () => {
           className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px] hidden md:block"
         />
       </Link>
-      <nav className="hidden md:flex items-center gap-x-[28px]">
-        {navbarMenu.map((item) => (
-          <button
-            type="button"
-            key={item.title}
-            onClick={() => scrollToSection(item.path)}
-            className="text-sm lg:text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
-          >
-            {item.title}
-          </button>
-        ))}
 
-        {/* Contact mailto link */}
+      {/* Desktop Nav */}
+      <nav className="hidden md:flex items-center gap-x-[28px]">
+        <Link
+          href="/"
+          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+        >
+          Home
+        </Link>
+        <Link
+          href="/#about"
+          className="text-sm lg:text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+        >
+          About
+        </Link>
+        <Link
+          href="/speakers"
+          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+        >
+          Speakers
+        </Link>
         <Link
           href={`mailto:${contactEmail}`}
           className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
@@ -72,6 +65,7 @@ const Navbar = () => {
         </Link>
       </nav>
 
+      {/* Right side */}
       <div className="flex items-center gap-x-5">
         <Link
           href={`mailto:${contactEmail}`}
@@ -116,19 +110,33 @@ const MobileMenu = () => {
 
       {/* Navigation Links */}
       <div className="flex flex-col gap-y-6 flex-grow">
-        {navbarMenu.map((item) => (
-          <SheetClose asChild key={item.title}>
-            <button
-              type="button"
-              onClick={() => scrollToSection(item.path)}
-              className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
-            >
-              {item.title}
-            </button>
-          </SheetClose>
-        ))}
+        <SheetClose asChild>
+          <Link
+            href="/"
+            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
+          >
+            Home
+          </Link>
+        </SheetClose>
 
-        {/* Contact mailto link in mobile */}
+        <SheetClose asChild>
+          <Link
+            href="/#about"
+            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
+          >
+            About
+          </Link>
+        </SheetClose>
+
+        <SheetClose asChild>
+          <Link
+            href="/speakers"
+            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
+          >
+            Speakers
+          </Link>
+        </SheetClose>
+
         <SheetClose asChild>
           <a
             href={`mailto:${contactEmail}`}
