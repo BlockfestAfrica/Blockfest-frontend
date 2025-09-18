@@ -16,19 +16,21 @@ const Navbar = () => {
   const pathname = usePathname();
 
   const handleAboutClick = () => {
-    if (pathname === "/") {
-      document.getElementById("about")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    } else {
-      router.push("/#about");
+    if (typeof window !== "undefined") {
+      if (pathname === "/") {
+        document.getElementById("about")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      } else {
+        router.push("/#about");
+      }
     }
   };
 
   // Clean up #about in URL after navigating
   useEffect(() => {
-    if (window.location.hash === "#about") {
+    if (typeof window !== "undefined" && window.location.hash === "#about") {
       const el = document.getElementById("about");
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -123,13 +125,15 @@ const MobileMenu = () => {
   const pathname = usePathname();
 
   const handleAboutClick = () => {
-    if (pathname === "/") {
-      document.getElementById("about")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    } else {
-      router.push("/#about");
+    if (typeof window !== "undefined") {
+      if (pathname === "/") {
+        document.getElementById("about")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      } else {
+        router.push("/#about");
+      }
     }
   };
 

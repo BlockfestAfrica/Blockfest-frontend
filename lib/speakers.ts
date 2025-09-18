@@ -4,6 +4,9 @@ export interface Speaker {
   image: string;
   twitter?: string;
   website?: string;
+  imagePosition?: string; // For custom object positioning
+  expertise?: string[]; // Areas of expertise
+  company?: string; // Company name for easier filtering
 }
 
 export const SpeakersList: Speaker[] = [
@@ -12,30 +15,35 @@ export const SpeakersList: Speaker[] = [
     title: "Founder and CEO, Jeroid",
     image: "/images/speakers/Jeroidceo.jpg",
     twitter: "https://x.com/belikejeroid?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
-    website: "https://jeroid.co/"
+    website: "https://jeroid.co/",
+    expertise: ["Entrepreneurship", "Tech Leadership", "Startup"],
+    company: "Jeroid",
   },
   {
     name: "Ayodeji Israel Awosika",
     title: "Founder Web3bridge ",
     image: "/images/speakers/ayodeji.jpg",
     twitter: "https://x.com/ebunayo08?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
-    website: "https://www.web3bridgeafrica.com/"
+    website: "https://www.web3bridgeafrica.com/",
+    expertise: ["Web3", "Blockchain Education", "DeFi"],
+    company: "Web3bridge",
   },
   {
     name: "Daniel Ejike Muonuagha",
     title: "Founder, Moon Republic Academy",
     image: "/images/speakers/ejike.WEBP",
-    
+    expertise: ["Blockchain Education", "Cryptocurrency", "Training"],
+    company: "Moon Republic Academy",
   },
   {
     name: "Balogun Sofiyullah",
     title: "Lawyer/Managing Partner, Lightfield LP",
-    image: "/images/speakers/balogun.jpg"
+    image: "/images/speakers/balogun.jpg",
   },
   {
     name: "Kyrian Alex",
     title: "Research Analyst, Cointelegraph Research",
-    image: "/images/speakers/alex.jpg"
+    image: "/images/speakers/alex.jpg",
   },
   // {
   //   name: "Chidubem Emelumadu",
@@ -46,14 +54,16 @@ export const SpeakersList: Speaker[] = [
   {
     name: "Elisha Owusu Akyaw ",
     title: "Senior Social Media Manager, OG Labs",
-    image: "/images/speakers/elisha.jpg"
-  }, {
+    image: "/images/speakers/elisha.jpg",
+  },
+  {
     name: "Sir. K.C. Onyekachi",
     title: "Founder, Opex School of Excellence",
-    image: "/images/speakers/onyekachi.jpg"
-  }, {
+    image: "/images/speakers/onyekachi.jpg",
+  },
+  {
     name: "Hon. Mobolaji Ogunlende Abubakre",
     title: "Commissioner for Youth & Social Development, LASG",
-    image: "/images/speakers/mobolaji.jpg"
+    image: "/images/speakers/mobolaji.jpg",
   },
 ];
