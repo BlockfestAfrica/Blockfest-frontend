@@ -14,12 +14,9 @@ import "./animations.css";
 export function SpeakersGrid() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedExpertise, setSelectedExpertise] = useState<string | null>(
-    null
-  );
+  const [selectedExpertise, setSelectedExpertise] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate loading time - in real app this might be an API call
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1500);
@@ -27,7 +24,6 @@ export function SpeakersGrid() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Filter speakers based on search term and expertise
   const filteredSpeakers = useMemo(() => {
     return SpeakersList.filter((speaker) => {
       const matchesSearch =
@@ -46,11 +42,8 @@ export function SpeakersGrid() {
     });
   }, [searchTerm, selectedExpertise]);
 
-  // Get all unique expertise areas for filter options
   const expertiseOptions = useMemo(() => {
-    const allExpertise = SpeakersList.flatMap(
-      (speaker) => speaker.expertise || []
-    );
+    const allExpertise = SpeakersList.flatMap((speaker) => speaker.expertise || []);
     return Array.from(new Set(allExpertise)).sort();
   }, []);
 
@@ -66,7 +59,6 @@ export function SpeakersGrid() {
 
       {/* Search and Filter Section */}
       <div className="w-full max-w-4xl mb-6 sm:mb-8 space-y-3 sm:space-y-4 animate-slide-in-left px-2 sm:px-0">
-        {/* Search Bar */}
         <div className="relative group">
           <FiSearch className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5 group-focus-within:text-blue-500 transition-colors duration-200" />
           <input
@@ -78,6 +70,7 @@ export function SpeakersGrid() {
           />
           {searchTerm && (
             <button
+              type="button"
               onClick={() => setSearchTerm("")}
               className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
               aria-label="Clear search"
@@ -87,31 +80,30 @@ export function SpeakersGrid() {
           )}
         </div>
 
-        {/* Expertise Filter */}
         <div className="space-y-3">
           <span className="block text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
             Filter by expertise:
           </span>
           <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 sm:gap-2">
             <button
+              type="button"
               onClick={() => setSelectedExpertise(null)}
-              className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation ${
-                selectedExpertise === null
+              className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation ${selectedExpertise === null
                   ? "bg-blue-500 text-white shadow-sm"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300 active:bg-gray-400"
-              }`}
+                }`}
             >
               All
             </button>
             {expertiseOptions.map((expertise) => (
               <button
+                type="button"
                 key={expertise}
                 onClick={() => setSelectedExpertise(expertise)}
-                className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation whitespace-nowrap ${
-                  selectedExpertise === expertise
+                className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation whitespace-nowrap ${selectedExpertise === expertise
                     ? "bg-blue-500 text-white shadow-sm"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300 active:bg-gray-400"
-                }`}
+                  }`}
               >
                 {expertise}
               </button>
@@ -119,7 +111,6 @@ export function SpeakersGrid() {
           </div>
         </div>
 
-        {/* Results Count */}
         <div className="text-center text-gray-600">
           <span className="text-xs sm:text-sm">
             Showing {filteredSpeakers.length} of {SpeakersList.length} speakers
@@ -132,18 +123,15 @@ export function SpeakersGrid() {
           filteredSpeakers.map((speaker, index) => (
             <div
               key={speaker.name}
-              className={`flex flex-col items-center bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-6 border border-[#D1D1D1] shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 ease-out gap-y-4 sm:gap-y-6 justify-around group animate-fade-in ${
-                index < 6 ? `animate-delay-${(index + 1) * 100}` : ""
-              }`}
+              className={`flex flex-col items-center bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-6 border border-[#D1D1D1] shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 ease-out gap-y-4 sm:gap-y-6 justify-around group animate-fade-in ${index < 6 ? `animate-delay-${(index + 1) * 100}` : ""
+                }`}
             >
               <div className="relative shrink-0 w-[140px] h-[140px] xs:w-[160px] xs:h-[160px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px] lg:w-[280px] lg:h-[280px] rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-105">
                 <Image
                   src={speaker.image}
                   alt={`${speaker.name} - ${speaker.title}`}
                   fill
-                  className={`object-cover ${
-                    speaker.imagePosition || "object-top"
-                  }`}
+                  className={`object-cover ${speaker.imagePosition || "object-top"}`}
                   quality={85}
                   loading="lazy"
                   sizes="(min-width: 1024px) 280px, (min-width: 768px) 220px, (min-width: 640px) 180px, (min-width: 480px) 160px, 140px"
@@ -167,7 +155,7 @@ export function SpeakersGrid() {
                 {/* Social links section */}
                 <div className="inline-flex gap-x-3 items-center">
                   {speaker.twitter && (
-                    <div className="group relative">
+                    <div className="relative group/icon">
                       <Link
                         href={speaker.twitter}
                         target="_blank"
@@ -178,14 +166,14 @@ export function SpeakersGrid() {
                       >
                         <FaXTwitter size={18} />
                       </Link>
-                      {/* Tooltip */}
-                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
                         Follow on Twitter
                       </div>
                     </div>
                   )}
+
                   {speaker.website && (
-                    <div className="group relative">
+                    <div className="relative group/icon">
                       <Link
                         href={speaker.website}
                         target="_blank"
@@ -196,8 +184,7 @@ export function SpeakersGrid() {
                       >
                         <CiGlobe size={20} />
                       </Link>
-                      {/* Tooltip */}
-                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
                         Visit Website
                       </div>
                     </div>
@@ -215,10 +202,10 @@ export function SpeakersGrid() {
               No speakers found
             </h3>
             <p className="text-sm sm:text-base text-gray-500 text-center max-w-sm sm:max-w-md mb-4">
-              Try adjusting your search terms or clearing the filters to see
-              more speakers.
+              Try adjusting your search terms or clearing the filters to see more speakers.
             </p>
             <button
+              type="button"
               onClick={() => {
                 setSearchTerm("");
                 setSelectedExpertise(null);

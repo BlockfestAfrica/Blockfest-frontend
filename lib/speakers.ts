@@ -78,5 +78,15 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/onyekachi.jpg",
     expertise: ["Education", "Entrepreneurship"],
     company: "Opex School of Excellence",
+    twitter: "https://x.com/kceeonyekachi1?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
   },
+  {
+    name: "TheGreatOla",
+    title: "Web3 Marketer & Vibe Creator",
+    image: "/images/speakers/ola.jpg",
+    expertise: ["Education", "Blockchain & Web3"],
+    twitter: "https://x.com/thegreatola?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
+    website: "https://linktr.ee/thegreatola",
+  },
+
 ];
