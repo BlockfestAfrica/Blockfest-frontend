@@ -7,6 +7,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { toast } from "sonner";
+import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
+import "./subtle-animations.css";
 
 export function HeroSection() {
   const { trackButtonClick, trackRegistration } = useUmami();
@@ -14,6 +16,8 @@ export function HeroSection() {
     process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
 
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+
+  useSubtleAnimations();
 
   useEffect(() => {
     const env = process.env.NEXT_PUBLIC_REGISTRATION_OPEN_AT;
@@ -105,27 +109,24 @@ export function HeroSection() {
   };
 
   return (
-    <section
-      className="relative w-full flex items-center justify-center bg-[url('/images/hero.webp')] bg-cover bg-center bg-no-repeat min-h-[65vh] 2xl:min-h-[65vh] xl:min-h-screen md:min-h-screen lg:min-h-screen object-contain"
-      
-    >
+    <section className="relative w-full flex items-center justify-center bg-[url('/images/hero.webp')] bg-cover bg-center bg-no-repeat min-h-[65vh] 2xl:min-h-[65vh] xl:min-h-screen md:min-h-screen lg:min-h-screen object-contain">
       <div className="flex items-center flex-col space-y-4  text-center text-black mt-50 mb-20 md:my-20 lg:my-30 px-10">
-        <p className="font-medium text-[10px] lg:text-base lg:text-[22.3px] uppercase bg-[#F2CB45] px-4 py-3.5 lg:px-[35px] lg:py-[26px] rounded-[5px] lg:rounded-[10.71px]">
+        <p className="font-medium text-[10px] lg:text-base lg:text-[22.3px] uppercase bg-[#F2CB45] px-4 py-3.5 lg:px-[35px] lg:py-[26px] rounded-[5px] lg:rounded-[10.71px] fade-in-on-scroll">
           welcome to blockfest 2025
         </p>
-        <p className="text-[43px] lg:text-5xl leading-13 lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] font-[350px] ">
+        <p className="text-[43px] lg:text-5xl leading-13 lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] font-[350px] scale-in">
           Africa&apos;s biggest web<span className="text-[#F2CB45]">3</span>{" "}
           {""}
           festival
         </p>
-        <div className="flex items-center justify-center lg:space-x-2 text-lg lg:text-[28px] font-medium text-[#1A63E3]">
+        <div className="flex items-center justify-center lg:space-x-2 text-lg lg:text-[28px] font-medium text-[#1A63E3] fade-in-on-scroll">
           <p>BUIDL</p>
           <GoDotFill />
           <p>BRIDGE</p>
           <GoDotFill />
           <p>BECOME</p>
         </div>
-        <div className="flex items-center justify-center md:space-x-8 space-x-[18px] text-[10px] lg:text-base font-medium text-black">
+        <div className="flex items-center justify-center md:space-x-8 space-x-[18px] text-[10px] lg:text-base font-medium text-black slide-in-left">
           <div className="flex items-center space-x-1 lg:space-x-2 uppercase ">
             <FaLocationDot className="text-[#F34C73]" />
             <span>lagos,nigeria</span>
@@ -135,7 +136,7 @@ export function HeroSection() {
             <span>October 11th, 2025</span>
           </div>
         </div>
-        <div className="flex items-center justify-center gap-4 mt-5 mb-10 lg:mb-0">
+        <div className="flex items-center justify-center gap-4 mt-5 mb-10 lg:mb-0 slide-in-right">
           <Button
             className="font-semibold text-sm lg:text-[22px] rounded-[13px] p-[21px] lg:p-[34px] w-fit"
             onClick={handleRegistrationClick}

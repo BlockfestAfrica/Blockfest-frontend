@@ -1,21 +1,29 @@
+"use client";
 import { Montserrat } from "next/font/google";
 
 import Image from "next/image";
 import React from "react";
+import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
+import "./subtle-animations.css";
+
 const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 export function WhyAttendSection() {
+  useSubtleAnimations();
+
   return (
     <section
       className="flex flex-col items-center justify-center px-2.5 py-20 lg:py-[80px] lg:px-[70px] bg-gradient-to-b from-[#1A3461] to-[#005DFF]"
       id="about"
     >
-      <h2 className="font-[350px] text-4xl lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] mb-[40px] lg:my-[50px] text-white">
+      <h2 className="font-[350px] text-4xl lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] mb-[40px] lg:my-[50px] text-white fade-in-on-scroll">
         Why Attend<span className="text-[#F2CB45]">?</span>
       </h2>
-      <FeaturesComp />
+      <div className="scale-in">
+        <FeaturesComp />
+      </div>
     </section>
   );
 }

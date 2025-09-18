@@ -9,7 +9,7 @@ Blockfest Africa is a comprehensive Web3 conference website featuring a fully re
 **Event Details:**
 
 - 📅 **Date:** October 11th, 2025
-- 📍 **Location:** Lagos, Nigeria
+- 📍 **Location:** Lagos,  Nigeria
 - 🌐 **Theme:** BUIDL • BRIDGE • BECOME
 
 ## ✨ Features

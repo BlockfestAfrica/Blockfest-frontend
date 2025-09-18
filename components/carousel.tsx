@@ -99,14 +99,14 @@ const Speakers: React.FC<PropType> = (props) => {
 
   return (
     <section
-      className={`embla w-full flex items-center justify-center flex-col relative px-0 xl:px-20 ${className}`}
+      className={`embla w-full flex items-center justify-center flex-col relative px-0 lg:px-20 ${className}`}
       role="region"
       aria-label="Speaker carousel"
       aria-live="polite"
     >
       {/* Navigation Buttons - Positioned absolutely */}
       <div className="hidden lg:block">
-        <div className="absolute left-4 xl:left-8 lg:left-[-44px] top-1/2 transform -translate-y-1/2 z-10">
+        <div className="absolute left-4 lg:left-8 top-1/2 transform -translate-y-1/2 z-10">
           <PrevButton
             onClick={onPrevButtonClick}
             disabled={prevBtnDisabled}
@@ -114,7 +114,7 @@ const Speakers: React.FC<PropType> = (props) => {
           />
         </div>
 
-        <div className="absolute right-4 xl:right-8 lg:right-[-44px] top-1/2 transform -translate-y-1/2 z-10">
+        <div className="absolute right-4 lg:right-8 top-1/2 transform -translate-y-1/2 z-10">
           <NextButton
             onClick={onNextButtonClick}
             disabled={nextBtnDisabled}

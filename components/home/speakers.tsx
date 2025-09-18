@@ -1,18 +1,19 @@
+"use client";
 import type { EmblaOptionsType } from "embla-carousel";
 import Speakers from "../carousel";
 import { SpeakersList } from "@/lib/speakers";
 import React from "react";
+import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
+import "./subtle-animations.css";
 
 export function SpeakersSection() {
-  const OPTIONS: EmblaOptionsType = { loop: true }
-  
+  const OPTIONS: EmblaOptionsType = { loop: true };
+
+  useSubtleAnimations();
 
   return (
-    <section
-      className="flex flex-col items-center justify-center lg:py-[80px] lg:px-[70px] py-14 px-5"
-      
-    >
-      <h2 className="font-medium text-4xl lg:text-5xl lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] my-[25px] lg:my-[50px] text-black">
+    <section className="flex flex-col items-center justify-center lg:py-[80px] lg:px-[70px] py-14 px-5">
+      <h2 className="font-medium text-4xl lg:text-5xl lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] my-[25px] lg:my-[50px] text-black fade-in-on-scroll">
         Our Speakers
       </h2>
 
@@ -50,7 +51,9 @@ export function SpeakersSection() {
       </div> */}
 
       {/* Original carousel code commented out */}
-      <Speakers speakers={SpeakersList} options={OPTIONS} />
+      <div className="scale-in">
+        <Speakers speakers={SpeakersList} options={OPTIONS} />
+      </div>
     </section>
   );
 }

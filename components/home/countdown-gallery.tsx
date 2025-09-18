@@ -1,13 +1,20 @@
+"use client";
 import Image from "next/image";
 import { Countdown } from "@/components/countdown";
 import React from "react";
+import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
+import "./subtle-animations.css";
 
 export function CountdownGallerySection() {
+  useSubtleAnimations();
+
   return (
     <section className="flex flex-col items-center justify-center px-5 py-20 lg:py-[80px] lg:px-[70px]">
-      <Countdown targetDate={"2025-10-11T23:59:59"} />
+      <div className="scale-in">
+        <Countdown targetDate={"2025-10-11T23:59:59"} />
+      </div>
 
-      <div className="flex flex-col gap-[7px] lg:gap-4 w-full mt-10 lg:mt-[80px]">
+      <div className="flex flex-col gap-[7px] lg:gap-4 w-full mt-10 lg:mt-[80px] fade-in-on-scroll">
         <div className="flex gap-[7px] lg:gap-4">
           <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] flex-1 basis-[40%] overflow-hidden">
             <Image

@@ -5,6 +5,8 @@ import { Button } from "../ui/button";
 import React, { useState, useEffect } from "react";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { toast } from "sonner";
+import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
+import "./subtle-animations.css";
 
 export function PartnersSection() {
   const { trackButtonClick, trackRegistration } = useUmami();
@@ -12,6 +14,8 @@ export function PartnersSection() {
     process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
 
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+
+  useSubtleAnimations();
 
   useEffect(() => {
     const env = process.env.NEXT_PUBLIC_REGISTRATION_OPEN_AT;
@@ -60,17 +64,18 @@ export function PartnersSection() {
       const isValidOpenAt = !Number.isNaN(openAt.getTime());
       const whenLagos = isValidOpenAt
         ? openAt.toLocaleString("en-NG", {
-          timeZone: "Africa/Lagos",
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        })
+            timeZone: "Africa/Lagos",
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })
         : "soon";
       toast(
-        `🎤 Join our X Space ${isValidOpenAt ? `${whenLagos} WAT` : whenLagos
+        `🎤 Join our X Space ${
+          isValidOpenAt ? `${whenLagos} WAT` : whenLagos
         }!`,
         {
           description:
@@ -107,12 +112,12 @@ export function PartnersSection() {
     <section className="flex flex-col items-center justify-center px-5 py-8 lg:py-[60px] lg:px-[70px] bg-[#1B64E4]">
       {/* Industry Partners Section */}
       <div className="flex flex-col items-center justify-center space-y-5">
-        <h2 className="font-medium text-[39px] lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] md:my-[15px] lg:my-[30px] text-center text-white">
+        <h2 className="font-medium text-[39px] lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] md:my-[15px] lg:my-[30px] text-center text-white fade-in-on-scroll">
           Partners
         </h2>
 
         {/* Sponsors Section */}
-        <div className="w-full max-w-6xl mx-auto space-y-6">
+        <div className="w-full max-w-6xl mx-auto space-y-6 scale-in">
           {/* Diamond Sponsors */}
           <div className="text-center">
             <h3 className="text-2xl lg:text-3xl font-bold text-[#F2CB45] mb-4">
@@ -486,8 +491,6 @@ export function PartnersSection() {
             </div>
           </div>
         </div>
-
-
 
         {/* Ecosystem Partners Section */}
         <div className="w-full max-w-6xl mx-auto pt-4">
