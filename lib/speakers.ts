@@ -89,4 +89,18 @@ export const SpeakersList: Speaker[] = [
     website: "https://linktr.ee/thegreatola",
   },
 
+  {
+    name: "Adum Obinna Abraham",
+    title: "Founder DTCSI ACADEMY, TECHNOVA",
+    image: "/images/speakers/obinna.jpg",
+    expertise: ["Education"],
+    company: "DTCSI ACADEMY",
+  }, {
+    name: "Idris Olubisi",
+    title: "Developer Relations Engineer & Founder, Web3 Afrika",
+    image: "/images/speakers/idris.jpg",
+    expertise: ["Blockchain & Web3", "Education"],
+    company: "Web3 Afrika",
+  },
+
 ];
