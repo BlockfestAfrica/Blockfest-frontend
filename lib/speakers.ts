@@ -11,13 +11,11 @@ export interface Speaker {
 
 export const SpeakersList: Speaker[] = [
   {
-    name: "Jeremiah Mayowa",
-    title: "Founder and CEO, Jeroid",
-    image: "/images/speakers/Jeroidceo.jpg",
-    twitter: "https://x.com/belikejeroid?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
-    website: "https://jeroid.co/",
-    expertise: ["Entrepreneurship"],
-    company: "Jeroid",
+    name: "Hon. Mobolaji Ogunlende Abubakre",
+    title: "Commissioner for Youth & Social Development, LASG",
+    image: "/images/speakers/mobolaji.jpg",
+    expertise: ["Government & Policy"],
+    company: "Lagos State Government",
   },
   {
     name: "Ayodeji Israel Awosika",
@@ -28,6 +26,16 @@ export const SpeakersList: Speaker[] = [
     expertise: ["Blockchain & Web3", "Education"],
     company: "Web3bridge",
   },
+  {
+    name: "Jeremiah Mayowa",
+    title: "Founder and CEO, Jeroid",
+    image: "/images/speakers/Jeroidceo.jpg",
+    twitter: "https://x.com/belikejeroid?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
+    website: "https://jeroid.co/",
+    expertise: ["Entrepreneurship"],
+    company: "Jeroid",
+  },
+
   {
     name: "Daniel Ejike Muonuagha",
     title: "Founder, Moon Republic Academy",
@@ -70,12 +78,5 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/onyekachi.jpg",
     expertise: ["Education", "Entrepreneurship"],
     company: "Opex School of Excellence",
-  },
-  {
-    name: "Hon. Mobolaji Ogunlende Abubakre",
-    title: "Commissioner for Youth & Social Development, LASG",
-    image: "/images/speakers/mobolaji.jpg",
-    expertise: ["Government & Policy"],
-    company: "Lagos State Government",
   },
 ];
