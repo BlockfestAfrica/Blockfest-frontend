@@ -113,7 +113,13 @@
 }
 
 @layer base {
-  * {
+  /* Apply border styles to specific interactive elements instead of universal selector */
+  button,
+  input,
+  textarea,
+  select,
+  [role="button"],
+  [tabindex]:not([tabindex="-1"]) {
     @apply border-border outline-ring/50;
   }
 
@@ -158,7 +164,6 @@ body {
 }
 
 @keyframes pulse-glow {
-
   0%,
   100% {
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);

@@ -223,8 +223,14 @@
   }
 }
 
-/* Smooth transitions for all elements */
-* {
+/* Targeted smooth transitions for interactive elements */
+.smooth-transition,
+button,
+a,
+input,
+[role="button"],
+.animate-on-scroll,
+.will-animate {
   transition-property: transform, opacity, box-shadow;
   transition-duration: 0.3s;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -237,9 +243,13 @@
 
 /* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  .animate-on-scroll,
+  .will-animate,
+  .fade-in-on-scroll,
+  .slide-in-left,
+  .slide-in-right,
+  .scale-in,
+  .stagger-animation {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect } from "react";
+import { useIsClient } from "./use-is-client";
 
 // Singleton observer to prevent multiple observers
 let globalObserver: IntersectionObserver | null = null;
 let observerInitialized = false;
 
 export function useSubtleAnimations() {
+  const isClient = useIsClient();
+
   useEffect(() => {
+    // Only run on client-side after hydration
+    if (!isClient) return;
+
     // Only initialize observer once
     if (observerInitialized) return;
     observerInitialized = true;
@@ -26,8 +32,8 @@ export function useSubtleAnimations() {
       return;
     }
 
-    // Mobile-friendly intersection observer settings
-    const isMobile = window.innerWidth < 768;
+    // Mobile-friendly intersection observer settings - use safer client-side detection
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
     globalObserver = new IntersectionObserver(
       (entries) => {
@@ -48,14 +54,26 @@ export function useSubtleAnimations() {
       ".fade-in-on-scroll, .slide-in-left, .slide-in-right, .scale-in, .stagger-animation"
     );
 
-    animateElements.forEach((el) => globalObserver!.observe(el));
+    if (globalObserver && animateElements.length > 0) {
+      animateElements.forEach((el) => {
+        try {
+          globalObserver!.observe(el);
+        } catch (error) {
+          console.warn("Failed to observe element for animation:", error);
+        }
+      });
+    }
 
     return () => {
       if (globalObserver) {
-        globalObserver.disconnect();
+        try {
+          globalObserver.disconnect();
+        } catch (error) {
+          console.warn("Failed to disconnect observer:", error);
+        }
         globalObserver = null;
         observerInitialized = false;
       }
     };
-  }, []);
+  }, [isClient]);
 }
