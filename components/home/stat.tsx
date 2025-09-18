@@ -17,6 +17,7 @@ export function StatsSection() {
     <section className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:space-x-3 px-25 lg:px-5 text-center py-[35px] bg-gradient-to-b lg:bg-gradient-to-r from-[#1B64E4] to-[#031940] text-white">
       {stats.map((stat, index) => (
         <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           key={index}
           className={`flex flex-col items-center space-y-2 stagger-animation stagger-${
             index + 1

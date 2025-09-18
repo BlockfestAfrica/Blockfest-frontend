@@ -72,7 +72,7 @@ export function Countdown ({ targetDate, onExpire }: CountdownProps)  {
   };
 
   return (
-    <div className={`${bebasNeue.className} flex items-start justify-between lg:justify-center border-[1.44px] lg:border-4 border-[#3870D3] w-[60%] lg:w-fit lg:space-x-5 rounded-[8px] lg:rounded-[24px] py-2.5 px-5 md:px-10 lg:py-[30px] lg:px-[50px]`}>
+    <div className={`${bebasNeue.className} flex items-start justify-between lg:justify-center border-[1.44px] lg:border-4 border-[#3870D3] space-x-2 lg:w-fit lg:space-x-5 rounded-[8px] lg:rounded-[24px] py-2.5 px-5 md:px-10 lg:py-[30px] lg:px-[50px]`}>
       <div className="flex items-center flex-col">
         <p className="text-[#3870D3] font-normal text-[34px] md:text-4xl lg:text-[104.95px] lg:leading-[110px] tabular-nums">
           {formatNumber(timeLeft.days)}
