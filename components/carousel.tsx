@@ -42,10 +42,10 @@ const Speakers: React.FC<PropType> = (props) => {
   } = usePrevNextButtons(emblaApi, onNavButtonClick);
 
   return (
-    <section className="embla w-full flex items-center justify-center flex-col relative px-0 lg:px-20">
+    <section className="embla w-full flex items-center justify-center flex-col relative px-0 xl:px-20 ">
       {/* Navigation Buttons - Positioned absolutely */}
       <div className="hidden lg:block">
-        <div className="absolute left-4 lg:left-8 top-1/2 transform -translate-y-1/2 z-10">
+        <div className="absolute left-4 xl:left-8 lg:left-[-44px] top-1/2 transform -translate-y-1/2 z-10">
           <PrevButton
             onClick={onPrevButtonClick}
             disabled={prevBtnDisabled}
@@ -53,7 +53,7 @@ const Speakers: React.FC<PropType> = (props) => {
           />
         </div>
 
-        <div className="absolute right-4 lg:right-8 top-1/2 transform -translate-y-1/2 z-10">
+        <div className="absolute right-4 xl:right-8 lg:right-[-44px] top-1/2 transform -translate-y-1/2 z-10">
           <NextButton
             onClick={onNextButtonClick}
             disabled={nextBtnDisabled}
@@ -78,10 +78,10 @@ const Speakers: React.FC<PropType> = (props) => {
                 <div className="flex items-center md:justify-between justify-center gap-6 flex-col-reverse md:flex-row text-center md:text-start">
                   {/* Text Content */}
                   <div className="text-white flex-1 basis-[60%]">
-                    <h2 className="text-2xl lg:text-[57.65px] lg:leading-[68.05px] font-[350px] mb-2 uppercase">
+                    <h2 className="text-2xl md:text-[35px] lg:text-[57.65px] lg:leading-[68.05px] font-[350px] mb-2 uppercase">
                       {speaker.name}
                     </h2>
-                    <p className="text-[#E9EBF8] font-light text-base lg:text-[26.49px] lg:leading-[32px] italic">
+                    <p className="text-[#E9EBF8] font-light text-base md:text-[20px] lg:text-[26.49px] lg:leading-[32px] italic">
                       {speaker.title}
                     </p>
                   </div>
@@ -93,9 +93,10 @@ const Speakers: React.FC<PropType> = (props) => {
                       alt={`${speaker.name} - ${speaker.title}`}
                       width={340}
                       height={322}
+                      quality={85}
                       sizes="(max-width: 768px) 160px, (max-width: 1024px) 320px, 340px"
                       priority
-                      className=" md:object-cover object-center h-[350px] md:h-full"
+                      className=" md:object-cover object-center h-[250px] md:h-full"
                     />
                   </div>
                 </div>
