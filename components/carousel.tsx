@@ -97,7 +97,7 @@ const Speakers: React.FC<PropType> = (props) => {
 
   return (
     <section
-      className={`embla w-full flex items-center justify-center flex-col relative px-0 lg:px-8 ${className}`}
+      className={`embla w-full flex items-center justify-center flex-col relative ${className}`}
       // biome-ignore lint/a11y/noRedundantRoles: <explanation>
       // biome-ignore lint/a11y/useSemanticElements: <explanation>
       role="region"
@@ -105,26 +105,26 @@ const Speakers: React.FC<PropType> = (props) => {
       aria-live="polite"
     >
       {/* Navigation Buttons - Positioned absolutely */}
-      <div className="hidden lg:block">
-        <div className="absolute left-2 lg:left-6 top-1/2 -translate-y-1/2 z-10">
+      <div className="hidden lg:block absolute inset-0 pointer-events-none">
+        <div className="absolute left-0 xl:left-4 top-1/2 -translate-y-1/2 z-10 pointer-events-auto">
           <PrevButton
             onClick={onPrevButtonClick}
             disabled={prevBtnDisabled}
-            className="w-16 h-16 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200"
+            className="w-12 h-12 xl:w-16 xl:h-16 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
           />
         </div>
-        <div className="absolute right-2 lg:right-6 top-1/2 -translate-y-1/2 z-10">
+        <div className="absolute right-0 xl:right-4 top-1/2 -translate-y-1/2 z-10 pointer-events-auto">
           <NextButton
             onClick={onNextButtonClick}
             disabled={nextBtnDisabled}
-            className="w-16 h-16 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200"
+            className="w-12 h-12 xl:w-16 xl:h-16 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
           />
         </div>
       </div>
 
       {/* Carousel Container */}
       <div
-        className="overflow-hidden max-w-5xl mx-auto"
+        className="overflow-hidden w-full max-w-6xl mx-auto px-4 md:px-6"
         ref={emblaRef}
         // biome-ignore lint/a11y/useSemanticElements: <explanation>
         role="group"
@@ -133,7 +133,7 @@ const Speakers: React.FC<PropType> = (props) => {
         <div className="flex touch-pan-y touch-pinch-zoom">
           {speakers.map((speaker, index) => (
             <div
-              className="flex-[0_0_100%] min-w-0 flex justify-center items-center px-2 md:px-4 h-full"
+              className="flex-[0_0_100%] min-w-0 flex justify-center items-center px-2 md:px-4"
               key={`${speaker.name}-${index}`}
               // biome-ignore lint/a11y/useSemanticElements: <explanation>
               role="group"
@@ -145,32 +145,28 @@ const Speakers: React.FC<PropType> = (props) => {
                 className="block group cursor-pointer"
                 aria-label={`View all speakers including ${speaker.name}`}
               >
-                <div className="bg-gradient-to-b from-[#0F377E] to-[#1B64E4] rounded-3xl p-4 md:p-6 w-full xl:max-w-3xl mx-auto shadow-2xl border border-white/10 flex items-center transition-all duration-300 hover:shadow-3xl hover:scale-[1.02] hover:border-white/20">
-                  <div className="flex items-center md:justify-between justify-center gap-6 flex-col-reverse md:flex-row text-center md:text-start ">
+                <div className="bg-gradient-to-b from-[#0F377E] to-[#1B64E4] rounded-3xl p-6 md:p-8 w-full max-w-4xl mx-auto shadow-2xl border border-white/10 transition-all duration-300 hover:shadow-3xl hover:scale-[1.02] hover:border-white/20">
+                  <div className="flex items-center justify-center md:justify-between gap-6 flex-col-reverse md:flex-row text-center md:text-left">
                     {/* Text Content */}
-                    <div className="text-white flex-1 basis-[60%] min-w-0 w-[70%] md:w-full">
-                      <h2
-                        className="text-2xl md:text-3xl lg:text-5xl font-medium mb-3 md:mb-5 uppercase tracking-tight line-clamp-2"
-                      >
+                    <div className="text-white flex-1 md:basis-[60%] min-w-0">
+                      <h2 className="text-xl md:text-3xl lg:text-4xl xl:text-5xl font-medium mb-3 md:mb-5 uppercase tracking-tight leading-tight">
                         {speaker.name}
                       </h2>
-                      <p
-                        className="text-[#E9EBF8] font-light text-base md:text-lg lg:text-2xl italic mx-auto md:mx-0 leading-relaxed line-clamp-2"
-                      >
+                      <p className="text-[#E9EBF8] font-light text-sm md:text-lg lg:text-xl xl:text-2xl italic leading-relaxed">
                         {speaker.title}
                       </p>
-
                     </div>
                     {/* Speaker Image */}
-                    <div className="basis-[40%] md:w-56 md:h-56 lg:w-72 lg:h-72 aspect-square rounded-2xl overflow-hidden ring-4 ring-white/20 flex-shrink-0 mx-auto">
+                    <div className="md:basis-[40%] w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 aspect-square rounded-2xl overflow-hidden ring-4 ring-white/20 flex-shrink-0 mx-auto">
                       <Image
                         src={speaker.image}
                         alt={`Portrait of ${speaker.name}, ${speaker.title}`}
-                        width={340}
-                        height={322}
-                        quality={85}
-                        sizes="(max-width: 768px) 160px, (max-width: 1024px) 320px, 340px"
-                        className="h-full object-cover object-center transition-transform duration-300 hover:scale-105"
+                        width={300}
+                        height={300}
+                        quality={90}
+                        sizes="(max-width: 640px) 128px, (max-width: 768px) 160px, (max-width: 1024px) 192px, (max-width: 1280px) 224px, 256px"
+                        className="w-full h-full object-cover object-top transition-transform duration-300 hover:scale-105"
+                        style={{ objectPosition: "center 15%" }}
                         aria-describedby={`speaker-${index}-name speaker-${index}-title`}
                       />
                     </div>
@@ -194,10 +190,11 @@ const Speakers: React.FC<PropType> = (props) => {
               type="button"
               // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               key={index}
-              className={`w-3 h-3 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${index === selectedIndex
-                ? "bg-blue-600 scale-125"
-                : "bg-gray-300 hover:bg-gray-400"
-                }`}
+              className={`w-3 h-3 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                index === selectedIndex
+                  ? "bg-blue-600 scale-125"
+                  : "bg-gray-300 hover:bg-gray-400"
+              }`}
               onClick={() => scrollTo(index)}
               role="tab"
               aria-selected={index === selectedIndex}
@@ -208,17 +205,17 @@ const Speakers: React.FC<PropType> = (props) => {
       )}
 
       {/* Mobile Navigation Buttons - Below the card */}
-      <div className="block lg:hidden w-full my-3 px-3">
-        <div className="flex justify-end gap-2">
+      <div className="block lg:hidden w-full mt-4 mb-2">
+        <div className="flex justify-center gap-4">
           <PrevButton
             onClick={onPrevButtonClick}
             disabled={prevBtnDisabled}
-            className="w-10 h-10 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200"
+            className="w-12 h-12 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <NextButton
             onClick={onNextButtonClick}
             disabled={nextBtnDisabled}
-            className="w-10 h-10 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200"
+            className="w-12 h-12 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>

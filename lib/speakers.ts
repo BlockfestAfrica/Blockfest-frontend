@@ -51,6 +51,20 @@ export const SpeakersList: Speaker[] = [
     company: "Lightfield LP",
   },
   {
+    name: "Idris Olubisi",
+    title: "Developer Relations Engineer & Founder, Web3 Afrika",
+    image: "/images/speakers/idris.jpg",
+    expertise: [
+      "Blockchain & Web3",
+      "Education",
+      "Developer Relations",
+      "Developer",
+    ],
+    company: "Web3 Afrika",
+    twitter: "https://x.com/olanetsoft",
+    website: "https://www.web3afrika.com/",
+  },
+  {
     name: "Kyrian Alex",
     title: "Research Analyst, Cointelegraph Research",
     image: "/images/speakers/alex.jpg",
@@ -64,6 +78,14 @@ export const SpeakersList: Speaker[] = [
   // }
 
   {
+    name: "Sir. K.C. Onyekachi",
+    title: "Founder, Opex School of Excellence",
+    image: "/images/speakers/onyekachi.jpg",
+    expertise: ["Education", "Entrepreneurship"],
+    company: "Opex School of Excellence",
+    twitter: "https://x.com/kceeonyekachi1?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
+  },
+  {
     name: "Elisha Owusu Akyaw ",
     title: "Senior Social Media Manager, OG Labs",
     image: "/images/speakers/elisha.jpg",
@@ -71,14 +93,6 @@ export const SpeakersList: Speaker[] = [
     company: "0G Labs",
     twitter: "https://x.com/GhCryptoGuy",
     website: "https://elisha-owusu-akyaw.com",
-  },
-  {
-    name: "Sir. K.C. Onyekachi",
-    title: "Founder, Opex School of Excellence",
-    image: "/images/speakers/onyekachi.jpg",
-    expertise: ["Education", "Entrepreneurship"],
-    company: "Opex School of Excellence",
-    twitter: "https://x.com/kceeonyekachi1?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
   },
   {
     name: "TheGreatOla",
@@ -95,12 +109,5 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/obinna.jpg",
     expertise: ["Education"],
     company: "DTCSI ACADEMY",
-  }, {
-    name: "Idris Olubisi",
-    title: "Developer Relations Engineer & Founder, Web3 Afrika",
-    image: "/images/speakers/idris.jpg",
-    expertise: ["Blockchain & Web3", "Education"],
-    company: "Web3 Afrika",
   },
-
 ];
