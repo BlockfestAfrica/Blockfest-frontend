@@ -5,6 +5,7 @@ import type { EmblaOptionsType, EmblaCarouselType } from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import Image from "next/image";
+import Link from "next/link";
 import { NextButton, PrevButton, usePrevNextButtons } from "./carouselbuttons";
 
 type Speaker = {
@@ -139,43 +140,49 @@ const Speakers: React.FC<PropType> = (props) => {
               aria-label={`${index + 1} of ${speakers.length}`}
             >
               {/* Speaker Card */}
-              <div className="bg-gradient-to-b from-[#0F377E] to-[#1B64E4] rounded-3xl p-6 md:p-8 w-full xl:max-w-[839px] mx-auto min-h-[400px] md:min-h-[450px] lg:min-h-[500px] shadow-2xl border border-white/10 flex items-center">
-                <div className="flex items-center md:justify-between justify-center gap-6 flex-col-reverse md:flex-row text-center md:text-start w-full">
-                  {/* Text Content */}
-                  <div className="text-white flex-1 basis-[60%] flex flex-col justify-center min-h-[280px] md:min-h-[320px] lg:min-h-[360px]">
-                    <div className="flex-1 flex flex-col justify-center">
-                      <h2
-                        className="text-2xl md:text-[35px] lg:text-[57.65px] lg:leading-[68.05px] font-medium mb-4 md:mb-6 uppercase tracking-tight line-clamp-3"
-                        id={`speaker-${index}-name`}
-                      >
-                        {speaker.name}
-                      </h2>
-                      <p
-                        className="text-[#E9EBF8] font-light text-base md:text-[20px] lg:text-[26.49px] lg:leading-[32px] italic line-clamp-4"
-                        id={`speaker-${index}-title`}
-                      >
-                        {speaker.title}
-                      </p>
+              <Link
+                href="/speakers"
+                className="block w-full group cursor-pointer"
+                aria-label={`View all speakers including ${speaker.name}`}
+              >
+                <div className="bg-gradient-to-b from-[#0F377E] to-[#1B64E4] rounded-3xl p-6 md:p-8 w-full xl:max-w-[839px] mx-auto min-h-[400px] md:min-h-[450px] lg:min-h-[500px] shadow-2xl border border-white/10 flex items-center transition-all duration-300 hover:shadow-3xl hover:scale-[1.02] hover:border-white/20">
+                  <div className="flex items-center md:justify-between justify-center gap-6 flex-col-reverse md:flex-row text-center md:text-start w-full">
+                    {/* Text Content */}
+                    <div className="text-white flex-1 basis-[60%] flex flex-col justify-center min-h-[280px] md:min-h-[320px] lg:min-h-[360px]">
+                      <div className="flex-1 flex flex-col justify-center">
+                        <h2
+                          className="text-2xl md:text-[35px] lg:text-[57.65px] lg:leading-[68.05px] font-medium mb-4 md:mb-6 uppercase tracking-tight line-clamp-3"
+                          id={`speaker-${index}-name`}
+                        >
+                          {speaker.name}
+                        </h2>
+                        <p
+                          className="text-[#E9EBF8] font-light text-base md:text-[20px] lg:text-[26.49px] lg:leading-[32px] italic line-clamp-4"
+                          id={`speaker-${index}-title`}
+                        >
+                          {speaker.title}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Speaker Image */}
+                    <div className="w-full md:w-80 md:h-80 lg:w-96 lg:h-96 basis-[40%] rounded-2xl overflow-hidden ring-4 ring-white/20 flex-shrink-0">
+                      <Image
+                        src={speaker.image}
+                        alt={`Portrait of ${speaker.name}, ${speaker.title}`}
+                        width={384}
+                        height={384}
+                        quality={90}
+                        sizes="(max-width: 768px) 280px, (max-width: 1024px) 320px, 384px"
+                        priority={index === 0} // Only prioritize first image
+                        loading={index === 0 ? "eager" : "lazy"}
+                        className="w-full h-[280px] md:h-80 lg:h-96 object-cover object-center transition-transform duration-300 hover:scale-105"
+                        aria-describedby={`speaker-${index}-name speaker-${index}-title`}
+                      />
                     </div>
                   </div>
-
-                  {/* Speaker Image */}
-                  <div className="w-full md:w-80 md:h-80 lg:w-96 lg:h-96 basis-[40%] rounded-2xl overflow-hidden ring-4 ring-white/20 flex-shrink-0">
-                    <Image
-                      src={speaker.image}
-                      alt={`Portrait of ${speaker.name}, ${speaker.title}`}
-                      width={384}
-                      height={384}
-                      quality={90}
-                      sizes="(max-width: 768px) 280px, (max-width: 1024px) 320px, 384px"
-                      priority={index === 0} // Only prioritize first image
-                      loading={index === 0 ? "eager" : "lazy"}
-                      className="w-full h-[280px] md:h-80 lg:h-96 object-cover object-center transition-transform duration-300 hover:scale-105"
-                      aria-describedby={`speaker-${index}-name speaker-${index}-title`}
-                    />
-                  </div>
                 </div>
-              </div>
+              </Link>
             </div>
           ))}
         </div>

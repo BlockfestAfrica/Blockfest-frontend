@@ -30,6 +30,28 @@ export function SpeakersGridSkeleton() {
     <section className="flex flex-col items-center justify-center lg:py-[30px] lg:px-[70px] py-8 px-4 sm:px-6">
       <div className="h-8 sm:h-10 md:h-12 lg:h-20 bg-gray-200 rounded-md w-48 sm:w-56 md:w-64 mb-6 sm:mb-8 lg:mb-16 animate-pulse"></div>
 
+      {/* Search and Filter Skeleton */}
+      <div className="w-full max-w-4xl mb-6 sm:mb-8 space-y-3 sm:space-y-4 px-2 sm:px-0">
+        {/* Search bar skeleton */}
+        <div className="h-10 sm:h-12 bg-gray-200 rounded-lg sm:rounded-xl animate-pulse"></div>
+
+        {/* Filter buttons skeleton */}
+        <div className="space-y-3">
+          <div className="h-4 bg-gray-200 rounded w-32 mx-auto sm:mx-0 animate-pulse"></div>
+          <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 sm:gap-2">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-7 sm:h-8 bg-gray-200 rounded-full w-16 sm:w-20 animate-pulse"
+              ></div>
+            ))}
+          </div>
+        </div>
+
+        {/* Results count skeleton */}
+        <div className="h-4 bg-gray-200 rounded w-40 mx-auto animate-pulse"></div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full max-w-7xl">
         {Array.from({ length: 6 }).map((_, index) => (
           <SpeakerCardSkeleton key={index} />
