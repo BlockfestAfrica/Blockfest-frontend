@@ -38,6 +38,7 @@ export function Countdown ({ targetDate, onExpire }: CountdownProps)  {
     };
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const updateCountdown = () => {
       const newTimeLeft = calculateTimeLeft();

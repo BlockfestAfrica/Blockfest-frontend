@@ -42,4 +42,18 @@ export const SpeakersList: Speaker[] = [
   //   title: "Ecosystem Lead(Africa), Lisk",
   //   image: "/images/speakers/chidubem.jpg"
   // }
+
+  {
+    name: "Elisha Owusu Akyaw ",
+    title: "Senior Social Media Manager, OG Labs",
+    image: "/images/speakers/elisha.jpg"
+  }, {
+    name: "Sir. K.C. Onyekachi",
+    title: "Founder, Opex School of Excellence",
+    image: "/images/speakers/onyekachi.jpg"
+  }, {
+    name: "Hon. Mobolaji Ogunlende Abubakre",
+    title: "Commissioner for Youth & Social Development, LASG",
+    image: "/images/speakers/mobolaji.jpg"
+  },
 ];
