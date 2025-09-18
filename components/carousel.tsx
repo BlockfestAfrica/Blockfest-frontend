@@ -146,9 +146,9 @@ const Speakers: React.FC<PropType> = (props) => {
                 aria-label={`View all speakers including ${speaker.name}`}
               >
                 <div className="bg-gradient-to-b from-[#0F377E] to-[#1B64E4] rounded-3xl p-6 md:p-8 w-full max-w-4xl mx-auto shadow-2xl border border-white/10 transition-all duration-300 hover:shadow-3xl hover:scale-[1.02] hover:border-white/20">
-                  <div className="flex items-center justify-center md:justify-between gap-6 flex-col-reverse md:flex-row text-center md:text-left">
+                  <div className="flex items-center justify-center md:justify-between gap-6 flex-col-reverse md:flex-row text-center md:text-left ">
                     {/* Text Content */}
-                    <div className="text-white flex-1 md:basis-[60%] min-w-0">
+                    <div className="text-white flex-1 md:basis-[60%] min-w-0 basis-full">
                       <h2 className="text-xl md:text-3xl lg:text-4xl xl:text-5xl font-medium mb-3 md:mb-5 uppercase tracking-tight leading-tight">
                         {speaker.name}
                       </h2>
@@ -157,7 +157,7 @@ const Speakers: React.FC<PropType> = (props) => {
                       </p>
                     </div>
                     {/* Speaker Image */}
-                    <div className="md:basis-[40%] w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 aspect-square rounded-2xl overflow-hidden ring-4 ring-white/20 flex-shrink-0 mx-auto">
+                    <div className="md:basis-[40%] basis-full w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 aspect-square rounded-2xl overflow-hidden ring-4 ring-white/20 flex-shrink-0 mx-auto">
                       <Image
                         src={speaker.image}
                         alt={`Portrait of ${speaker.name}, ${speaker.title}`}
@@ -190,11 +190,10 @@ const Speakers: React.FC<PropType> = (props) => {
               type="button"
               // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               key={index}
-              className={`w-3 h-3 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                index === selectedIndex
+              className={`w-3 h-3 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${index === selectedIndex
                   ? "bg-blue-600 scale-125"
                   : "bg-gray-300 hover:bg-gray-400"
-              }`}
+                }`}
               onClick={() => scrollTo(index)}
               role="tab"
               aria-selected={index === selectedIndex}

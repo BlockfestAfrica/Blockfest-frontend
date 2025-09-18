@@ -42,6 +42,7 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/ejike.WEBP",
     expertise: ["Blockchain & Web3", "Education"],
     company: "Moon Republic Academy",
+    twitter: "https://x.com/ajebodanny?s=21&t=6lhy88Nx16NRD-zFs2-S9w"
   },
   {
     name: "Balogun Sofiyullah",
@@ -109,5 +110,20 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/obinna.jpg",
     expertise: ["Education"],
     company: "DTCSI ACADEMY",
+    twitter: "https://x.com/thenameisbrill?s=21&t=6lhy88Nx16NRD-zFs2-S9w"
+  },
+  {
+    name: "Sarah Idahosa",
+    title: "Founder, Women In DeFi",
+    image: "/images/speakers/sarah.jpg",
+    expertise: ["Education", "Blockchain & Web3", "DeFi"],
+    company: "Women In DeFi",
+  },
+  {
+    name: "Mrs. Chisom Edwin",
+    title: "Founder Peaches Academy/Nestrolab",
+    image: "/images/speakers/chisom.jpg",
+    expertise: ["Education"],
+    company: "Nestrolab",
   },
 ];
