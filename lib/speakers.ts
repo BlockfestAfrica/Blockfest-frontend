@@ -71,6 +71,8 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/alex.jpg",
     expertise: ["Research & Analysis"],
     company: "Cointelegraph",
+    twitter: "https://x.com/0xsese?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
+    website: "https://substack.com/@kyrianalex"
   },
   // {
   //   name: "Chidubem Emelumadu",
