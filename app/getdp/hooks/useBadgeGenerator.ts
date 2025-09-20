@@ -262,7 +262,7 @@ export const useBadgeGenerator = () => {
   }, [state.generatedBadge, state.userName]);
 
   const shareOnX = useCallback(() => {
-    const shareText = `Just created my #Blockfest2025 badge! Ready for Africa's biggest blockchain conference. See you there! 🔥`;
+    const shareText = `Just created my #Blockfest2025 badge! Ready for Africa's biggest blockchain conference. See you there! 🔥\n\nWho else is attending? Create your badge and let's connect! 👇\nhttps://blockfestafrica.com/getdp`;
     const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       shareText
     )}`;
