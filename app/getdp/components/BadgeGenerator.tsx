@@ -94,19 +94,19 @@ export default function BadgeGenerator() {
       </div>
 
       {/* Header */}
-      <div className="relative z-10 pt-12 pb-8 text-center">
-        <h1 className="text-4xl font-bold text-blue-900 mb-3 tracking-tight">
+      <div className="relative z-10 pt-8 sm:pt-12 pb-6 sm:pb-8 text-center px-4">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-blue-900 mb-3 tracking-tight">
           Badge Generator
         </h1>
-        <p className="text-blue-700 font-medium text-lg max-w-lg mx-auto">
+        <p className="text-blue-700 font-medium text-base sm:text-lg max-w-lg mx-auto px-2">
           Generate your personalized Blockfest Africa badge and make it your
           display picture.
         </p>
       </div>
 
       {/* Main Form */}
-      <div className="relative z-10 max-w-md mx-auto px-6 pb-20">
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+      <div className="relative z-10 max-w-md mx-auto px-4 sm:px-6 pb-20">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 sm:p-8">
           <div className="space-y-6">
             {/* Name Input */}
             <div className="space-y-2">
@@ -138,7 +138,7 @@ export default function BadgeGenerator() {
                   onClick={openFileDialog}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
-                  className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-200 group"
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-200 group"
                 >
                   <input
                     ref={fileInputRef}
