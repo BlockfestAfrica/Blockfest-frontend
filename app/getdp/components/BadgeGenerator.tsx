@@ -103,14 +103,14 @@ export default function BadgeGenerator() {
       </div>
 
       {/* Main Form */}
-      <div className="relative z-10 max-w-md mx-auto px-4 sm:px-6 pb-24 sm:pb-20">
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 p-4 sm:p-6 md:p-8">
-          <div className="space-y-5 sm:space-y-6">
+      <div className="relative z-10 max-w-sm sm:max-w-md lg:max-w-lg mx-auto px-4 sm:px-6 lg:px-8 pb-24 sm:pb-20">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 p-6 sm:p-8 lg:p-10">
+          <div className="space-y-6 sm:space-y-7 lg:space-y-8">
             {/* Name Input */}
             <div className="space-y-2">
               <label
                 htmlFor="name"
-                className="block text-sm font-semibold text-gray-700"
+                className="block text-sm sm:text-base lg:text-lg font-semibold text-gray-700"
               >
                 Full Name
               </label>
@@ -122,7 +122,7 @@ export default function BadgeGenerator() {
                 placeholder="Enter your full name"
                 maxLength={50}
                 minLength={2}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#005DFF] focus:border-transparent transition-all duration-200 text-gray-800 placeholder-gray-400"
+                className="w-full px-4 py-4 sm:px-5 sm:py-4 lg:px-6 lg:py-5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#005DFF] focus:border-transparent transition-all duration-200 text-gray-800 placeholder-gray-400 text-base sm:text-lg"
                 disabled={isGenerating}
               />
               {name.length > 40 && (
@@ -134,7 +134,7 @@ export default function BadgeGenerator() {
 
             {/* Photo Upload */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
+              <label className="block text-sm sm:text-base lg:text-lg font-semibold text-gray-700">
                 Profile Photo
               </label>
 
@@ -143,7 +143,7 @@ export default function BadgeGenerator() {
                   onClick={openFileDialog}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
-                  className="border-2 border-dashed border-gray-300 rounded-xl p-4 sm:p-6 md:p-8 text-center cursor-pointer hover:border-[#005DFF] hover:bg-[#005DFF]/5 active:bg-[#005DFF]/10 transition-all duration-200 group touch-manipulation"
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 lg:p-10 text-center cursor-pointer hover:border-[#005DFF] hover:bg-[#005DFF]/5 active:bg-[#005DFF]/10 transition-all duration-200 group touch-manipulation min-h-[180px] sm:min-h-[200px] lg:min-h-[220px] flex items-center justify-center"
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -169,18 +169,18 @@ export default function BadgeGenerator() {
                       <p className="text-sm text-gray-600">Uploading...</p>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center space-y-3">
-                      <div className="p-3 bg-[#005DFF]/10 rounded-full group-hover:bg-[#005DFF]/20 transition-colors">
-                        <Camera className="w-6 h-6 text-[#005DFF]" />
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="p-4 sm:p-5 lg:p-6 bg-[#005DFF]/10 rounded-full group-hover:bg-[#005DFF]/20 transition-colors">
+                        <Camera className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-[#005DFF]" />
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">
+                      <div className="text-center">
+                        <p className="text-sm sm:text-base lg:text-lg font-medium text-gray-700">
                           <span className="hidden sm:inline">
                             Drag & drop or c
                           </span>
                           <span className="sm:hidden">C</span>lick to upload
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs sm:text-sm lg:text-base text-gray-500 mt-1">
                           JPG, PNG, WebP up to 10MB
                         </p>
                       </div>
@@ -193,7 +193,7 @@ export default function BadgeGenerator() {
                   <img
                     src={preview}
                     alt="Profile Preview"
-                    className="w-full h-64 object-cover rounded-xl border border-gray-200"
+                    className="w-full h-72 sm:h-80 lg:h-96 object-cover rounded-xl border border-gray-200"
                   />
                   <button
                     onClick={clearPhoto}
@@ -215,7 +215,7 @@ export default function BadgeGenerator() {
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !name.trim() || !preview}
-              className="w-full py-4 px-6 bg-gradient-to-r from-[#005DFF] to-[#1B64E4] text-white font-semibold rounded-xl hover:from-[#1B64E4] hover:to-[#005DFF] focus:ring-4 focus:ring-[#005DFF]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
+              className="w-full py-4 px-6 sm:py-5 sm:px-8 lg:py-6 lg:px-10 bg-gradient-to-r from-[#005DFF] to-[#1B64E4] text-white font-semibold rounded-xl hover:from-[#1B64E4] hover:to-[#005DFF] focus:ring-4 focus:ring-[#005DFF]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg text-base sm:text-lg lg:text-xl"
               title={
                 !name.trim() || !preview
                   ? "Please add both your name and photo"
