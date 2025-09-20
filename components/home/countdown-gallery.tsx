@@ -16,7 +16,7 @@ export function CountdownGallerySection() {
 
       <div className="flex flex-col gap-[7px] lg:gap-4 w-full mt-10 lg:mt-[80px] fade-in-on-scroll">
         <div className="flex gap-[7px] lg:gap-4">
-          <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] flex-1 basis-[40%] overflow-hidden">
+          <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] md:h-[250px] flex-1 basis-[40%] overflow-hidden">
             <Image
               src="/images/img4.webp"
               alt="Blockfest Africa event gallery image"
@@ -27,7 +27,7 @@ export function CountdownGallerySection() {
               className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
             />
           </div>
-          <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] flex-1 basis-[60%] overflow-hidden">
+          <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] md:h-[250px] flex-1 basis-[60%] overflow-hidden">
             <Image
               src="/images/img7.webp"
               alt="Blockfest Africa networking event"
@@ -41,7 +41,7 @@ export function CountdownGallerySection() {
         </div>
 
         <div className="flex gap-[7px] lg:gap-4">
-          <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] flex-1 basis-[60%] overflow-hidden">
+          <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] md:h-[250px] flex-1 basis-[60%] overflow-hidden">
             <Image
               src="/images/img-3.webp"
               alt="Blockfest Africa conference speakers"
@@ -52,7 +52,7 @@ export function CountdownGallerySection() {
               className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
             />
           </div>
-          <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] flex-1 basis-[40%] overflow-hidden">
+          <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[148px] lg:h-[446px] md:h-[250px] flex-1 basis-[40%] overflow-hidden">
             <Image
               src="/images/img1.webp"
               alt="Blockfest Africa community gathering"
