@@ -39,6 +39,8 @@ export const useBadgeGenerator = () => {
     progress: 0,
     error: null,
     success: false,
+    generatedBadge: null,
+    userName: null,
   });
 
   const generateBadge = useCallback(async (userGraphic: UserGraphic) => {
@@ -70,6 +72,8 @@ export const useBadgeGenerator = () => {
       progress: 0,
       error: null,
       success: false,
+      generatedBadge: null,
+      userName: null,
     });
 
     try {
@@ -204,31 +208,18 @@ export const useBadgeGenerator = () => {
 
       setState((prev) => ({ ...prev, progress: 80 }));
 
-      // Generate and download badge with memory management
+      // Generate badge and store for sharing/downloading
       try {
         const dataURL = canvas.toDataURL("image/png", 0.95); // Slightly compressed for memory
-
-        const link = document.createElement("a");
-        link.download = `blockfest-badge-${userGraphic.name
-          .replace(/\s+/g, "-")
-          .toLowerCase()}.png`;
-        link.href = dataURL;
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
 
         setState({
           isGenerating: false,
           progress: 100,
           error: null,
           success: true,
+          generatedBadge: dataURL,
+          userName: trimmedName,
         });
-
-        // Reset success state after 3 seconds
-        setTimeout(() => {
-          setState((prev) => ({ ...prev, success: false, progress: 0 }));
-        }, 3000);
       } catch {
         throw new Error("Failed to generate download. Image may be too large.");
       } finally {
@@ -246,6 +237,8 @@ export const useBadgeGenerator = () => {
             ? error.message
             : "Failed to generate badge. Please try again.",
         success: false,
+        generatedBadge: null,
+        userName: null,
       });
     }
   }, []);
@@ -254,9 +247,45 @@ export const useBadgeGenerator = () => {
     setState((prev) => ({ ...prev, error: null }));
   }, []);
 
+  const downloadBadge = useCallback(() => {
+    if (!state.generatedBadge || !state.userName) return;
+
+    const link = document.createElement("a");
+    link.download = `blockfest-badge-${state.userName
+      .replace(/\s+/g, "-")
+      .toLowerCase()}.png`;
+    link.href = state.generatedBadge;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [state.generatedBadge, state.userName]);
+
+  const shareOnX = useCallback(() => {
+    const shareText = `Just created my #Blockfest2025 badge! Ready for Africa's biggest blockchain conference. See you there! 🔥`;
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      shareText
+    )}`;
+
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+  }, []);
+
+  const resetBadge = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      success: false,
+      progress: 0,
+      generatedBadge: null,
+      userName: null,
+    }));
+  }, []);
+
   return {
     ...state,
     generateBadge,
     clearError,
+    downloadBadge,
+    shareOnX,
+    resetBadge,
   };
 };

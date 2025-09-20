@@ -3,7 +3,16 @@
 import { useState, useCallback, useRef } from "react";
 import { usePhotoUpload } from "../hooks/usePhotoUpload";
 import { useBadgeGenerator } from "../hooks/useBadgeGenerator";
-import { Camera, Download, Loader2, X, CheckCircle } from "lucide-react";
+import {
+  Camera,
+  Download,
+  Loader2,
+  X,
+  CheckCircle,
+  Share,
+  RotateCcw,
+  ChevronDown,
+} from "lucide-react";
 
 export default function BadgeGenerator() {
   const [name, setName] = useState("");
@@ -19,8 +28,13 @@ export default function BadgeGenerator() {
     progress,
     error: generationError,
     success,
+    generatedBadge,
+    userName,
     generateBadge,
     clearError,
+    downloadBadge,
+    shareOnX,
+    resetBadge,
   } = useBadgeGenerator();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -235,8 +249,8 @@ export default function BadgeGenerator() {
                 </>
               ) : success ? (
                 <>
-                  <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                  <span>Downloaded!</span>
+                  <ChevronDown className="w-5 h-5 flex-shrink-0 animate-bounce" />
+                  <span>Ready! 👇</span>
                 </>
               ) : (
                 <>
@@ -267,6 +281,82 @@ export default function BadgeGenerator() {
           </div>
         </div>
       </div>
+
+      {/* Scroll Indicator - Shows when badge is ready */}
+      {success && generatedBadge && (
+        <div className="relative z-10 text-center py-6">
+          <div className="flex flex-col items-center space-y-2 animate-bounce">
+            <ChevronDown className="w-8 h-8 text-white/80" />
+            <p className="text-white/80 text-sm font-medium">
+              Your badge is ready!
+            </p>
+            <ChevronDown className="w-6 h-6 text-white/60" />
+          </div>
+        </div>
+      )}
+
+      {/* Success View - Generated Badge */}
+      {success && generatedBadge && (
+        <div className="relative z-10 max-w-sm sm:max-w-md lg:max-w-lg mx-auto px-4 sm:px-6 lg:px-8 pb-24 sm:pb-20 mt-6">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 p-6 sm:p-8 lg:p-10">
+            <div className="text-center space-y-6">
+              {/* Success Header */}
+              <div className="space-y-2">
+                <div className="flex justify-center">
+                  <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-500" />
+                </div>
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
+                  Your Badge is Ready!
+                </h2>
+                <p className="text-sm sm:text-base text-gray-600">
+                  Welcome to Blockfest Africa 2025, {userName}! 🎉
+                </p>
+              </div>
+
+              {/* Generated Badge Preview */}
+              <div className="space-y-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={generatedBadge}
+                  alt={`${userName}'s Blockfest Africa Badge`}
+                  className="w-full max-w-sm mx-auto rounded-xl shadow-lg border border-gray-200"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-4">
+                {/* Share on X Button */}
+                <button
+                  onClick={shareOnX}
+                  className="w-full py-4 px-6 sm:py-5 sm:px-8 bg-gradient-to-r from-[#1DA1F2] to-[#0d8bd4] text-white font-semibold rounded-xl hover:from-[#0d8bd4] hover:to-[#1DA1F2] focus:ring-4 focus:ring-[#1DA1F2]/20 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg text-base sm:text-lg"
+                >
+                  <Share className="w-5 h-5 flex-shrink-0" />
+                  <span>Share on X</span>
+                </button>
+
+                {/* Secondary Actions */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={downloadBadge}
+                    className="flex-1 py-3 px-4 sm:py-4 sm:px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base"
+                  >
+                    <Download className="w-4 h-4 flex-shrink-0" />
+                    <span>Download</span>
+                  </button>
+
+                  <button
+                    onClick={resetBadge}
+                    className="flex-1 py-3 px-4 sm:py-4 sm:px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base"
+                  >
+                    <RotateCcw className="w-4 h-4 flex-shrink-0" />
+                    <span>Create New</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

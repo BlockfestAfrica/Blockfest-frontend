@@ -36,4 +36,6 @@ export interface BadgeGenerationState {
   progress: number;
   error: string | null;
   success: boolean;
+  generatedBadge: string | null;
+  userName: string | null;
 }
