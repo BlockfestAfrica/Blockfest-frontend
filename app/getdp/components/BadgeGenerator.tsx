@@ -99,9 +99,9 @@ export default function BadgeGenerator() {
       </div>
 
       {/* Main Form */}
-      <div className="relative z-10 max-w-md mx-auto px-4 sm:px-6 pb-20">
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 p-6 sm:p-8">
-          <div className="space-y-6">
+      <div className="relative z-10 max-w-md mx-auto px-4 sm:px-6 pb-24 sm:pb-20">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 p-4 sm:p-6 md:p-8">
+          <div className="space-y-5 sm:space-y-6">
             {/* Name Input */}
             <div className="space-y-2">
               <label
@@ -132,7 +132,16 @@ export default function BadgeGenerator() {
                   onClick={openFileDialog}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
-                  className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 text-center cursor-pointer hover:border-[#005DFF] hover:bg-[#005DFF]/5 transition-all duration-200 group"
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-4 sm:p-6 md:p-8 text-center cursor-pointer hover:border-[#005DFF] hover:bg-[#005DFF]/5 active:bg-[#005DFF]/10 transition-all duration-200 group touch-manipulation"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openFileDialog();
+                    }
+                  }}
+                  aria-label="Upload profile photo"
                 >
                   <input
                     ref={fileInputRef}
@@ -155,7 +164,10 @@ export default function BadgeGenerator() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-700">
-                          Upload your photo
+                          <span className="hidden sm:inline">
+                            Drag & drop or c
+                          </span>
+                          <span className="sm:hidden">C</span>lick to upload
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
                           JPG, PNG up to 5MB
@@ -170,14 +182,15 @@ export default function BadgeGenerator() {
                   <img
                     src={preview}
                     alt="Profile Preview"
-                    className="w-full h-48 object-cover rounded-xl border border-gray-200"
+                    className="w-full h-64 object-cover rounded-xl border border-gray-200"
                   />
                   <button
                     onClick={clearPhoto}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                    className="absolute top-2 right-2 p-2 sm:p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto flex items-center justify-center"
                     disabled={isGenerating}
+                    aria-label="Remove photo"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-5 h-5 sm:w-4 sm:h-4" />
                   </button>
                 </div>
               )}
@@ -195,29 +208,41 @@ export default function BadgeGenerator() {
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Generating Badge... {progress}%</span>
+                  <Loader2 className="w-5 h-5 animate-spin flex-shrink-0" />
+                  <span className="truncate">
+                    <span className="hidden xs:inline">
+                      Generating Badge...{" "}
+                    </span>
+                    <span className="xs:hidden">Generating... </span>
+                    {progress}%
+                  </span>
                 </>
               ) : success ? (
                 <>
-                  <CheckCircle className="w-5 h-5" />
+                  <CheckCircle className="w-5 h-5 flex-shrink-0" />
                   <span>Downloaded!</span>
                 </>
               ) : (
                 <>
-                  <Download className="w-5 h-5" />
-                  <span>Generate My Badge</span>
+                  <Download className="w-5 h-5 flex-shrink-0" />
+                  <span className="truncate">
+                    <span className="hidden xs:inline">Generate My Badge</span>
+                    <span className="xs:hidden">Generate</span>
+                  </span>
                 </>
               )}
             </button>
 
             {/* Error Display */}
             {generationError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{generationError}</p>
+              <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600 break-words leading-relaxed">
+                  {generationError}
+                </p>
                 <button
                   onClick={clearError}
-                  className="text-xs text-red-500 underline mt-1 hover:text-red-700"
+                  className="text-xs text-red-500 underline mt-2 hover:text-red-700 min-h-[44px] sm:min-h-auto py-2 sm:py-0 touch-manipulation"
+                  aria-label="Dismiss error message"
                 >
                   Dismiss
                 </button>
@@ -226,13 +251,13 @@ export default function BadgeGenerator() {
 
             {/* Footer */}
             <div className="text-center pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs sm:text-sm text-gray-500 px-2">
                 Built with ❤️ by the{" "}
                 <a
                   href="https://x.com/Zer0PulseFi"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-700 underline"
+                  className="text-blue-600 hover:text-blue-700 underline touch-manipulation"
                 >
                   ZerØPulse
                 </a>{" "}

@@ -196,6 +196,14 @@ const Footer = () => {
             Sponsors
           </Link>
 
+          {/* Badge Generator link */}
+          <Link
+            href="/getdp"
+            className="text-base xl:text-2xl font-medium cursor-pointer text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+          >
+            Badge
+          </Link>
+
           {/* Contact mailto link */}
           <Link
             href={`mailto:${contactEmail}`}
