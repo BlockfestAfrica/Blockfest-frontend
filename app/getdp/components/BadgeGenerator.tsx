@@ -4,7 +4,6 @@ import { useState, useCallback, useRef } from "react";
 import { usePhotoUpload } from "../hooks/usePhotoUpload";
 import { useBadgeGenerator } from "../hooks/useBadgeGenerator";
 import { Camera, Download, Loader2, X, CheckCircle } from "lucide-react";
-import Image from "next/image";
 
 export default function BadgeGenerator() {
   const [name, setName] = useState("");
@@ -265,34 +264,8 @@ export default function BadgeGenerator() {
                 </button>
               </div>
             )}
-
-            {/* Footer */}
-            <div className="text-center pt-4 border-t border-gray-100">
-              <p className="text-xs sm:text-sm text-gray-500 px-2">
-                Built with ❤️ by the{" "}
-                <a
-                  href="https://x.com/Zer0PulseFi"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-700 underline touch-manipulation"
-                >
-                  ZerØPulse
-                </a>{" "}
-                team
-              </p>
-            </div>
           </div>
         </div>
-      </div>
-
-      {/* Footer Pattern */}
-      <div className="fixed bottom-0 left-0 right-0 h-20 pointer-events-none">
-        <Image
-          src="/images/getdp/footerPattern.png"
-          alt="Footer Pattern"
-          fill
-          className="object-cover opacity-20"
-        />
       </div>
     </div>
   );
