@@ -56,6 +56,11 @@ export default function BadgeGenerator() {
       return;
     }
 
+    if (!preview) {
+      alert("Please upload your photo");
+      return;
+    }
+
     await generateBadge({
       name: name.trim(),
       photo: preview,
@@ -210,8 +215,13 @@ export default function BadgeGenerator() {
             {/* Generate Button */}
             <button
               onClick={handleGenerate}
-              disabled={isGenerating || !name.trim()}
+              disabled={isGenerating || !name.trim() || !preview}
               className="w-full py-4 px-6 bg-gradient-to-r from-[#005DFF] to-[#1B64E4] text-white font-semibold rounded-xl hover:from-[#1B64E4] hover:to-[#005DFF] focus:ring-4 focus:ring-[#005DFF]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
+              title={
+                !name.trim() || !preview
+                  ? "Please add both your name and photo"
+                  : "Generate your badge"
+              }
             >
               {isGenerating ? (
                 <>

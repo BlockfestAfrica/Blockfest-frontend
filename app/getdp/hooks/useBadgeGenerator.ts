@@ -15,12 +15,12 @@ const TEMPLATE_CONFIG: BadgeConfig = {
   userName: {
     x: 1450,
     y: 900,
-    font: "bold 180px Bebas Neue",
+    font: "bold 140px Bebas Neue",
     color: "#000000",
     align: "left",
     maxWidth: 2000,
     maxHeight: 120,
-    lineHeight: 70,
+    lineHeight: 55,
   },
 };
 
@@ -229,7 +229,7 @@ export const useBadgeGenerator = () => {
         setTimeout(() => {
           setState((prev) => ({ ...prev, success: false, progress: 0 }));
         }, 3000);
-      } catch (downloadError) {
+      } catch {
         throw new Error("Failed to generate download. Image may be too large.");
       } finally {
         // Clean up canvas and context for memory management
