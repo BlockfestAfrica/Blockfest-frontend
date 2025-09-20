@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Blockfest Africa 2025 - Badge Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="assets/logoText.png" alt="Blockfest Africa 2025" class="logo-text">
+        <div class="brand-subtitle">BLOCKF3ST AFRICA 2025</div>
+        <div class="event-date">11th OCT, 2025 • Victoria Island, Lagos</div>
+    </div>
+
+    <div class="form-container">
+        <div class="glossy-form-overlay">
+            <div class="form-content">
+                <div class="form-group">
+                    <input type="text" id="name" placeholder="Enter your full name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                    <div class="file-upload-area" id="file-upload-area">
+                        <input type="file" id="photo" accept="image/*" hidden>
+                        <div class="upload-content">
+                            <i class="fas fa-camera"></i>
+                            <p>Upload your photo</p>
+                    </div>
+                    </div>
+                    <div class="photo-preview" id="photo-preview" style="display: none;"></div>
+                </div>
+                
+                <button class="generate-btn" onclick="generateAndDownload()">
+                            <i class="fas fa-download"></i>
+                    Generate My Badge
+                        </button>
+                        
+                        <div class="form-footer">
+                            <div class="built-with-love">Built with ❤️ by the <a href="https://x.com/Zer0PulseFi" target="_blank" rel="noopener noreferrer" class="zeropulse-link">ZerØPulse</a> team</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+    <div class="hidden-badge" id="hidden-badge">
+        <div class="template-container">
+            <img src="assets/template.jpg" alt="Blockfest Template" class="template-image" id="template-image">
+            
+            <div class="user-photo-overlay" id="user-photo-overlay">
+                <div class="photo-placeholder">
+                    <div class="placeholder-icon">👤</div>
+                </div>
+            </div>
+            
+            <div class="user-name-overlay" id="user-name-overlay">
+                <span class="user-name" id="badge-name">Your Name</span>
+                    </div>
+                    
+            <div class="user-role-overlay" id="user-role-overlay">
+                <span class="user-role" id="badge-role">ATTENDEE</span>
+            </div>
+        </div>
+                    </div>
+
+    <div class="decorative-elements">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+        <div class="floating-shape shape-4"></div>
+    </div>
+
+    <div class="footer-pattern">
+        <img src="assets/footerPattern.png" alt="Footer Pattern" class="pattern-image">
+        </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
