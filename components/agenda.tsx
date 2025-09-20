@@ -5,55 +5,84 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { agendaItems } from "@/lib/schedule";
-import { Montserrat } from "next/font/google";
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
+import { gotham } from "@/lib/fonts";
 
 export function Agenda() {
   return (
-    <Accordion
-      type="single"
-      collapsible
-      className={`${montserrat.className} w-full `}
-    // defaultValue="item-1"
-    >
-      {agendaItems.map((item, index) => (
-        <AccordionItem
-          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-          key={index}
-          value={`item-${index + 1}`}
-          className="border-b"
-        >
-          <AccordionTrigger className="flex justify-between  items-center py-4">
-            <div className="flex md:items-center md:flex-row flex-col w-[80%] justify-between gap-y-3 ">
-              <p className="text-[15px] md:text-2xl font-medium text-left">
-                {item.time}
-              </p>
-              <div className="flex flex-col  w-full xl:w-[50%] lg:w-[60%] md:w-[55%] ">
-                <p className="text-2xl md:text-[30px] lg:text-[35px] xl:text-[40px] font-semibold text-[#0051FF] ">
-                  {item.title}
-                </p>
-                {/* Speaker if available*/}
-                {item.speaker && (
-                  <p className="text-sm md:text-base text-[#000000] font-semibold ">
-                    Presented by {item.speaker}
-                  </p>
-                )}
+    <section aria-labelledby="schedule-heading" className="w-full">
+      <Accordion
+        type="single"
+        collapsible
+        className={`${gotham.className} w-full space-y-3 sm:space-y-4`}
+      >
+        {agendaItems.map((item) => (
+          <AccordionItem
+            key={item.id}
+            value={item.id}
+            className="relative border border-gray-200 rounded-xl bg-gradient-to-r from-white to-gray-50 hover:from-[#005DFF]/5 hover:to-[#1B64E4]/5 hover:border-[#3D7BE8] hover:shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <AccordionTrigger className="flex justify-between items-start py-4 md:py-6 px-4 md:px-6 hover:no-underline group rounded-xl active:scale-[0.98] transition-transform duration-150">
+              <div className="flex flex-col w-full gap-3 text-left pr-4 md:pr-8">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <time
+                    className="text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#3D7BE8] to-[#6597ED] px-3 py-1.5 rounded-full whitespace-nowrap shadow-md group-hover:shadow-lg transition-all duration-300 flex-shrink-0"
+                    dateTime={item.time.replace(/\s/g, "")}
+                  >
+                    {item.time}
+                  </time>
+                  <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-[#3D7BE8] group-hover:text-[#1B64E4] transition-colors duration-300 leading-tight flex-1">
+                    {item.title}
+                  </h3>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                  {item.speaker && (
+                    <p className="text-xs sm:text-sm md:text-base text-gray-700 font-medium order-1">
+                      Presented by{" "}
+                      <span className="text-[#1B64E4] font-bold">
+                        {item.speaker}
+                      </span>
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 order-2">
+                    <span
+                      className={`text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm flex-shrink-0 ${
+                        item.type === "keynote"
+                          ? "bg-gradient-to-r from-[#3D7BE8] to-[#6597ED] text-white"
+                          : item.type === "lecture"
+                          ? "bg-gradient-to-r from-[#1B64E4] to-[#4F85EB] text-white"
+                          : item.type === "workshop"
+                          ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
+                          : item.type === "break"
+                          ? "bg-gradient-to-r from-orange-400 to-orange-500 text-white"
+                          : "bg-gradient-to-r from-gray-400 to-gray-500 text-white"
+                      }`}
+                    >
+                      {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                    </span>
+                    {item.duration && (
+                      <span className="text-xs text-[#3D7BE8] font-semibold bg-[#3D7BE8]/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex-shrink-0">
+                        {item.duration} min
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-2 text-[#000]">
-            {item.description.map((desc, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              <p key={i}>{desc}</p>
-            ))}
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 sm:px-5 md:px-6 pb-4 sm:pb-6">
+              <div className="space-y-3 sm:space-y-4 text-gray-700 leading-relaxed bg-gradient-to-r from-[#3D7BE8]/5 to-[#6597ED]/5 p-3 sm:p-4 md:p-6 rounded-lg border-l-4 border-[#3D7BE8]">
+                {item.description.map((desc, i) => (
+                  <p
+                    key={`${item.id}-desc-${i}`}
+                    className="text-sm sm:text-base md:text-lg font-medium text-gray-800 leading-relaxed"
+                  >
+                    {desc}
+                  </p>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </section>
   );
 }

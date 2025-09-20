@@ -16,7 +16,7 @@ import { gotham } from "@/lib/fonts";
 
 // Footer menu (removed "Contacts" and "Sponsors" for special handling)
 const footerMenu: Menu[] = [
-  { path: "agenda", title: "Agenda" },
+  { path: "/schedule", title: "Schedule" },
   { path: "about", title: "About" },
   { path: "/blogs", title: "Blogs" },
   { path: "speakers", title: "Speakers" },
