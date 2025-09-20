@@ -4,7 +4,7 @@
 
 The following assets are used in the badge generator:
 
-1. **template.jpg** - The badge template background image  
+1. **template.jpg** - The badge template background image
 2. **footerPattern.png** - Decorative footer pattern
 
 ## Implementation Complete
