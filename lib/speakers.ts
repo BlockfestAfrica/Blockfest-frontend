@@ -79,7 +79,7 @@ export const SpeakersList: Speaker[] = [
     expertise: ["Research & Analysis"],
     company: "Cointelegraph",
     twitter: "https://x.com/0xsese?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
-    website: "https://substack.com/@kyrianalex"
+    website: "https://substack.com/@kyrianalex",
   },
   // {
   //   name: "Chidubem Emelumadu",
@@ -127,5 +127,57 @@ export const SpeakersList: Speaker[] = [
     expertise: ["Education"],
     company: "DTCSI ACADEMY",
     twitter: "https://x.com/thenameisbrill?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
+  },
+
+  {
+    name: "Tochukwu Okoro",
+    title: "Founder and CEO UseAzza",
+    image: "/images/speakers/okoro.jpg",
+    expertise: ["Education", "Entrepreneurship"],
+    company: "UseAzza",
+  },
+
+  {
+    name: "Chike Okonkwo",
+    title: "Business Development, Marketing & Operations",
+    image: "/images/speakers/chike.jpg",
+    expertise: ["Business", "Marketing"],
+  },
+  {
+    name: "Onone Peace Ega",
+    title: "Program Manager | FinTech & Web3 Innovation",
+    image: "/images/speakers/peace.jpg",
+    expertise: ["Education", "Blockchain & Web3", "Fintech"],
+    company: "FinTech & Web3 Innovation",
+  },
+  {
+    name: "Gilchrist Emeremgini",
+    title: "Co-founder & CEO, Tiva Finance",
+    image: "/images/speakers/gilchrist.jpg",
+    expertise: ["Education", "Finance"],
+    company: "Tiva Finance",
+  },
+  {
+    name: "Faith Mona Alumona",
+    title: "Business Development and Partnership, Tiva Finance",
+    image: "/images/speakers/faith.jpg",
+    expertise: ["Education", "Finance", "Business"],
+    company: "Tiva Finance",
+  },
+  {
+    name: "Chimezie Chuta",
+    title: "Founder Blockchain Nigeria User Group.",
+    image: "/images/speakers/chuta.jpg",
+    expertise: ["Education", "Blockchain & Web3"],
+    company: "Blockchain Nigeria User Group.",
+    twitter: "https://x.com/chimeziechuta?s=21&t=6lhy88Nx16NRD-zFs2-S9w"
+  },
+  {
+    name: "Seun Lanlege",
+    title: "Mad scientist Polytope Labs, Co-Founder, Hyperbridge",
+    image: "/images/speakers/seun.jpg",
+    expertise: ["Education", "Blockchain & Web3"],
+    company: "Polytope Labs, Hyperbridge",
+    twitter: "https://x.com/seunlanlege?s=21&t=KUUVGbyiHCPiGJm1RzUibA"
   },
 ];
