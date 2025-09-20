@@ -42,8 +42,26 @@ export const useBadgeGenerator = () => {
   });
 
   const generateBadge = useCallback(async (userGraphic: UserGraphic) => {
-    if (!userGraphic.name.trim()) {
+    const trimmedName = userGraphic.name.trim();
+
+    if (!trimmedName) {
       setState((prev) => ({ ...prev, error: "Please enter your name" }));
+      return;
+    }
+
+    if (trimmedName.length > 50) {
+      setState((prev) => ({
+        ...prev,
+        error: "Name is too long. Please use a shorter name.",
+      }));
+      return;
+    }
+
+    if (trimmedName.length < 2) {
+      setState((prev) => ({
+        ...prev,
+        error: "Name is too short. Please enter at least 2 characters.",
+      }));
       return;
     }
 
@@ -59,13 +77,28 @@ export const useBadgeGenerator = () => {
       const ctx = canvas.getContext("2d");
 
       if (!ctx) {
-        throw new Error("Failed to get canvas context");
+        throw new Error(
+          "Failed to get canvas context. Your browser may not support this feature."
+        );
       }
+
+      // Set memory management options
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
 
       setState((prev) => ({ ...prev, progress: 10 }));
 
       // Load template image
       const templateImg = await loadImage("/images/getdp/template.jpg");
+
+      // Check canvas size for memory management
+      const maxCanvasSize = 4000 * 4000; // 16MP max
+      const canvasArea = templateImg.width * templateImg.height;
+
+      if (canvasArea > maxCanvasSize) {
+        throw new Error("Template image is too large for processing");
+      }
+
       canvas.width = templateImg.width;
       canvas.height = templateImg.height;
 
@@ -171,34 +204,47 @@ export const useBadgeGenerator = () => {
 
       setState((prev) => ({ ...prev, progress: 80 }));
 
-      // Download badge
-      const link = document.createElement("a");
-      link.download = `blockfest-badge-${userGraphic.name
-        .replace(/\s+/g, "-")
-        .toLowerCase()}.png`;
-      link.href = canvas.toDataURL("image/png", 1.0);
+      // Generate and download badge with memory management
+      try {
+        const dataURL = canvas.toDataURL("image/png", 0.95); // Slightly compressed for memory
 
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+        const link = document.createElement("a");
+        link.download = `blockfest-badge-${userGraphic.name
+          .replace(/\s+/g, "-")
+          .toLowerCase()}.png`;
+        link.href = dataURL;
 
-      setState({
-        isGenerating: false,
-        progress: 100,
-        error: null,
-        success: true,
-      });
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-      // Reset success state after 2 seconds
-      setTimeout(() => {
-        setState((prev) => ({ ...prev, success: false, progress: 0 }));
-      }, 2000);
+        setState({
+          isGenerating: false,
+          progress: 100,
+          error: null,
+          success: true,
+        });
+
+        // Reset success state after 3 seconds
+        setTimeout(() => {
+          setState((prev) => ({ ...prev, success: false, progress: 0 }));
+        }, 3000);
+      } catch (downloadError) {
+        throw new Error("Failed to generate download. Image may be too large.");
+      } finally {
+        // Clean up canvas and context for memory management
+        canvas.width = 1;
+        canvas.height = 1;
+        ctx.clearRect(0, 0, 1, 1);
+      }
     } catch (error) {
       setState({
         isGenerating: false,
         progress: 0,
         error:
-          error instanceof Error ? error.message : "Failed to generate badge",
+          error instanceof Error
+            ? error.message
+            : "Failed to generate badge. Please try again.",
         success: false,
       });
     }

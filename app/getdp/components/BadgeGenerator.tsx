@@ -116,9 +116,16 @@ export default function BadgeGenerator() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your full name"
+                maxLength={50}
+                minLength={2}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#005DFF] focus:border-transparent transition-all duration-200 text-gray-800 placeholder-gray-400"
                 disabled={isGenerating}
               />
+              {name.length > 40 && (
+                <p className="text-xs text-yellow-600 mt-1">
+                  {50 - name.length} characters remaining
+                </p>
+              )}
             </div>
 
             {/* Photo Upload */}
@@ -170,7 +177,7 @@ export default function BadgeGenerator() {
                           <span className="sm:hidden">C</span>lick to upload
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          JPG, PNG up to 5MB
+                          JPG, PNG, WebP up to 10MB
                         </p>
                       </div>
                     </div>
