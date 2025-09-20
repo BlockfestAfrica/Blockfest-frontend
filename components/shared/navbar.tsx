@@ -87,6 +87,12 @@ const Navbar = () => {
           Speakers
         </Link>
         <Link
+          href="/getdp"
+          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+        >
+          Badge
+        </Link>
+        <Link
           href={`mailto:${contactEmail}`}
           className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
         >
@@ -180,6 +186,15 @@ const MobileMenu = () => {
             className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
           >
             Speakers
+          </Link>
+        </SheetClose>
+
+        <SheetClose asChild>
+          <Link
+            href="/getdp"
+            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
+          >
+            Badge
           </Link>
         </SheetClose>
 
