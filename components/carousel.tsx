@@ -180,7 +180,7 @@ const Speakers: React.FC<PropType> = (props) => {
       {/* Dot Indicators */}
       {showDots && scrollSnaps.length > 1 && (
         <div
-          className="flex justify-center gap-2 mt-5 mb-3"
+          className=" hidden md:flex justify-center gap-2 mt-5 mb-3"
           role="tablist"
           aria-label="Speaker slides"
         >
