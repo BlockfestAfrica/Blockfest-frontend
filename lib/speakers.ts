@@ -45,7 +45,7 @@ export const SpeakersList: Speaker[] = [
   {
     name: "Jeremiah Mayowa",
     title: "Founder and CEO, Jeroid",
-    image: "/images/speakers/Jeroidceo.jpg",
+    image: "/images/speakers/Jeroidceo.webp",
     twitter: "https://x.com/belikejeroid?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
     website: "https://jeroid.co/",
     expertise: ["Entrepreneurship", "Fintech"],
@@ -77,7 +77,7 @@ export const SpeakersList: Speaker[] = [
   {
     name: "Faith Mona Alumona",
     title: "Business Development and Partnership, Tiva Finance",
-    image: "/images/speakers/faith.jpg",
+    image: "/images/speakers/faith.webp",
     expertise: ["Business & Finance", "Partnerships"],
     company: "Tiva Finance",
   },
@@ -91,7 +91,7 @@ export const SpeakersList: Speaker[] = [
   {
     name: "Idris Olubisi",
     title: "Developer Relations Engineer | Founder, Web3 Afrika",
-    image: "/images/speakers/idris.jpg",
+    image: "/images/speakers/idris.webp",
     expertise: [
       "Web3 & Blockchain",
       "Education",
@@ -171,13 +171,30 @@ export const SpeakersList: Speaker[] = [
     expertise: ["DeFi", "Entrepreneurship"],
     company: "Azza",
   },
-
   {
     name: "Gilchrist Emeremgini",
     title: "Co-founder & CEO, Tiva Finance",
     image: "/images/speakers/gilchrist.jpg",
     expertise: ["Business & Finance", "Entrepreneurship"],
     company: "Tiva Finance",
+  },
+  {
+    name: "Zebulun Ajayi ",
+    title: "Web3 Creative Director",
+    image: "/images/speakers/ajayi.jpg",
+    expertise: ["Education", "Web3 & Blockchain"],
+  }, {
+    name: "Ugochukwu Aronu",
+    title: "Co-Founder Xend Finance, Wicrypt and AssetChain",
+    image: "/images/speakers/aronu.webp",
+    expertise: ["Business & Finance", "Entrepreneurship", "Web3 & Blockchain", "Education"],
+    company: "Xend Finance, Wicrypt and AssetChain",
+  }, {
+    name: "Harri Obi",
+    title: "Lead, Solana SuperteamNG",
+    image: "/images/speakers/obi.webp",
+    expertise: ["Education", "Web3 & Blockchain"],
+    company: "SuperteamNG",
   },
 ];
 
