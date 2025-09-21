@@ -149,7 +149,12 @@ export const SpeakersList: Speaker[] = [
     twitter: "https://x.com/thegreatola?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
     website: "https://linktr.ee/thegreatola",
   },
-
+  {
+    name: "Chike Okonkwo",
+    title: "Business Development, Marketing & Operations",
+    image: "/images/speakers/chike.jpg",
+    expertise: ["Business & Finance", "Marketing & Media"],
+  },
   {
     name: "Adum Obinna Abraham",
     title: "Founder, DTCSI ACADEMY & TECHNOVA",
@@ -165,13 +170,6 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/okoro.jpg",
     expertise: ["DeFi", "Entrepreneurship"],
     company: "Azza",
-  },
-
-  {
-    name: "Chike Okonkwo",
-    title: "Business Development, Marketing & Operations",
-    image: "/images/speakers/chike.jpg",
-    expertise: ["Business & Finance", "Marketing & Media"],
   },
 
   {
