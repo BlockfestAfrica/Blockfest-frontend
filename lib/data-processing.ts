@@ -14,6 +14,14 @@ export interface GuestRegistration {
   interests: string;
   source: string;
   status: "confirmed" | "pending" | "cancelled";
+  school?: string;
+  gender?: string;
+  transportation?: string;
+  dietary?: string;
+  photoConsent?: string;
+  emailConsent?: string;
+  xFollow?: string;
+  telegramJoin?: string;
 }
 
 /**
@@ -356,6 +364,8 @@ function mapHeaderToField(header: string): string {
     // Location info from actual CSV headers
     "city & country of residence (e.g abuja, nigeria)": "country",
     "city & country of residence": "country",
+    "transportation might be provided (within lagos). where will you be coming from that day?":
+      "transportation",
 
     // Professional info from actual CSV headers
     "what is your role at the company?": "profession",
@@ -363,6 +373,27 @@ function mapHeaderToField(header: string): string {
     "what is your current experience level in web3?": "experience",
     "which of the following best describes you? select all that applies":
       "interests",
+
+    // Educational info from actual CSV headers
+    "if you're a student, what's the name of your school?": "school",
+
+    // Additional demographic info
+    gender: "gender",
+
+    // Dietary requirements
+    "we will be providing lunch. do you have any dietary restrictions or special needs we should be aware of?":
+      "dietary",
+
+    // Consent tracking
+    "i consent to photos/videos being taken during the event for promotional use":
+      "photoConsent",
+    "do you consent to receive email updates and event information from blockfest africa?":
+      "emailConsent",
+
+    // Social engagement tracking
+    "follow blockf3st africa on x: https://x.com/blockfestafrica": "xFollow",
+    "join the blockfest africa telegram channel here: https://t.me/blockf3stafrica":
+      "telegramJoin",
 
     // Source tracking from actual CSV
     custom_source: "source",
@@ -527,6 +558,167 @@ export function exportToCSV(registrations: GuestRegistration[]): string {
     .join("\n");
 
   return csvContent;
+}
+
+/**
+ * Normalize school names to group variations together
+ */
+export function normalizeSchoolName(schoolName: string): string {
+  if (!schoolName || schoolName.trim() === "") return "";
+
+  const normalized = schoolName.trim();
+  const lower = normalized.toLowerCase();
+
+  // Handle common variations and abbreviations
+  const schoolMappings: { [key: string]: string } = {
+    // University of Lagos variations
+    unilag: "University of Lagos",
+    "university of lagos": "University of Lagos",
+    "univ of lagos": "University of Lagos",
+    "uni lag": "University of Lagos",
+
+    // Lagos State University variations
+    lasu: "Lagos State University",
+    "lagos state university": "Lagos State University",
+    "lagos state uni": "Lagos State University",
+    "lagos state univ": "Lagos State University",
+    "lagosstate university": "Lagos State University",
+
+    // Olabisi Onabanjo University variations
+    oou: "Olabisi Onabanjo University",
+    "olabisi onabanjo university": "Olabisi Onabanjo University",
+    "olabisi onabanjo uni": "Olabisi Onabanjo University",
+
+    // Yabatech variations
+    yabatech: "Yaba College of Technology",
+    "yaba college of technology": "Yaba College of Technology",
+    "yaba tech": "Yaba College of Technology",
+    yct: "Yaba College of Technology",
+
+    // Federal University of Agriculture Abeokuta
+    funaab: "Federal University of Agriculture Abeokuta",
+    "federal university of agriculture abeokuta":
+      "Federal University of Agriculture Abeokuta",
+    "federal university of agriculture, abeokuta":
+      "Federal University of Agriculture Abeokuta",
+
+    // Federal University of Technology Akure
+    futa: "Federal University of Technology Akure",
+    "federal university of technology akure":
+      "Federal University of Technology Akure",
+    "federal university of technology, akure":
+      "Federal University of Technology Akure",
+    "federal uni of tech akure": "Federal University of Technology Akure",
+
+    // University of Ilorin
+    unilorin: "University of Ilorin",
+    "university of ilorin": "University of Ilorin",
+    "uni ilorin": "University of Ilorin",
+
+    // Lagos State University of Science and Technology
+    lasustech: "Lagos State University of Science and Technology",
+    "lasu tech": "Lagos State University of Science and Technology",
+    "lagos state university of science and technology":
+      "Lagos State University of Science and Technology",
+
+    // Ladoke Akintola University of Technology
+    lautech: "Ladoke Akintola University of Technology",
+    laut: "Ladoke Akintola University of Technology",
+    "ladoke akintola university of technology":
+      "Ladoke Akintola University of Technology",
+
+    // University of Ibadan
+    ui: "University of Ibadan",
+    "university of ibadan": "University of Ibadan",
+    "ibadan university": "University of Ibadan",
+
+    // Obafemi Awolowo University
+    oau: "Obafemi Awolowo University",
+    "obafemi awolowo university": "Obafemi Awolowo University",
+    "obafemi awolowo uni": "Obafemi Awolowo University",
+    "ife university": "Obafemi Awolowo University",
+
+    // Ahmadu Bello University
+    abu: "Ahmadu Bello University",
+    "ahmadu bello university": "Ahmadu Bello University",
+    "ahmadu bello uni": "Ahmadu Bello University",
+
+    // University of Benin
+    uniben: "University of Benin",
+    "university of benin": "University of Benin",
+    "benin university": "University of Benin",
+
+    // Federal University Oye Ekiti
+    fuoye: "Federal University Oye Ekiti",
+    "federal university oye ekiti": "Federal University Oye Ekiti",
+    "federal uni oye ekiti": "Federal University Oye Ekiti",
+
+    // University of Calabar
+    unical: "University of Calabar",
+    "university of calabar": "University of Calabar",
+    "calabar university": "University of Calabar",
+
+    // Covenant University
+    cu: "Covenant University",
+    "covenant university": "Covenant University",
+    "covenant uni": "Covenant University",
+
+    // Bowen University
+    "bowen university": "Bowen University",
+    "bowen uni": "Bowen University",
+
+    // Ekiti State University
+    eksu: "Ekiti State University",
+    "ekiti state university": "Ekiti State University",
+    "ekiti state uni": "Ekiti State University",
+
+    // Kwara State University
+    kwasu: "Kwara State University",
+    "kwara state university": "Kwara State University",
+    "kwara state uni": "Kwara State University",
+
+    // Osun State University
+    uniosun: "Osun State University",
+    "osun state university": "Osun State University",
+    "osun state uni": "Osun State University",
+
+    // National Open University
+    noun: "National Open University",
+    "national open university": "National Open University",
+    "open university": "National Open University",
+
+    // Adeleke University
+    "adeleke university": "Adeleke University",
+    "adeleke uni": "Adeleke University",
+
+    // Al-Hikmah University
+    "al-hikmah university": "Al-Hikmah University",
+    "al hikmah university": "Al-Hikmah University",
+    "alhikmah university": "Al-Hikmah University",
+  };
+
+  // Check for exact matches first
+  if (schoolMappings[lower]) {
+    return schoolMappings[lower];
+  }
+
+  // Check for partial matches (contains)
+  for (const [key, value] of Object.entries(schoolMappings)) {
+    if (lower.includes(key) || key.includes(lower)) {
+      return value;
+    }
+  }
+
+  // If no mapping found, just clean up the original name
+  return normalized
+    .replace(/\buniversity\b/gi, "University")
+    .replace(/\bcollege\b/gi, "College")
+    .replace(/\binstitute\b/gi, "Institute")
+    .replace(/\btech\b/gi, "Technology")
+    .replace(/\bpoly\b/gi, "Polytechnic")
+    .replace(/\buni\b/gi, "University")
+    .replace(/\buniv\b/gi, "University")
+    .trim();
 }
 
 /**
