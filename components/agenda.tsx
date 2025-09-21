@@ -23,9 +23,9 @@ export function Agenda() {
           >
             <AccordionTrigger className="flex justify-between items-start py-4 md:py-6 px-4 md:px-6 hover:no-underline group rounded-xl active:scale-[0.98] transition-transform duration-150">
               <div className="flex flex-col w-full gap-3 text-left pr-4 md:pr-8">
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex gap-3 md:flex-row flex-col md:items-center md:gap-3">
                   <time
-                    className="text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#3D7BE8] to-[#6597ED] px-3 py-1.5 rounded-full whitespace-nowrap shadow-md group-hover:shadow-lg transition-all duration-300 flex-shrink-0"
+                    className="text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#3D7BE8] to-[#6597ED] px-3 py-1.5 rounded-full whitespace-nowrap shadow-md group-hover:shadow-lg transition-all duration-300 flex-shrink-0 w-fit"
                     dateTime={item.time.replace(/\s/g, "")}
                   >
                     {item.time}
