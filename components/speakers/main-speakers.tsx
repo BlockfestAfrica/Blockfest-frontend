@@ -4,7 +4,13 @@ import Image from "next/image";
 import { CiGlobe } from "react-icons/ci";
 import React, { useState, useEffect, useMemo } from "react";
 import { FaXTwitter } from "react-icons/fa6";
-import { FiSearch, FiX } from "react-icons/fi";
+import {
+  FiSearch,
+  FiX,
+  FiFilter,
+  FiChevronDown,
+  FiChevronUp,
+} from "react-icons/fi";
 import Link from "next/link";
 import { SpeakersList } from "@/lib/speakers";
 import { gotham } from "@/lib/fonts";
@@ -14,7 +20,10 @@ import "./animations.css";
 export function SpeakersGrid() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedExpertise, setSelectedExpertise] = useState<string | null>(null);
+  const [selectedExpertise, setSelectedExpertise] = useState<string | null>(
+    null
+  );
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -43,7 +52,9 @@ export function SpeakersGrid() {
   }, [searchTerm, selectedExpertise]);
 
   const expertiseOptions = useMemo(() => {
-    const allExpertise = SpeakersList.flatMap((speaker) => speaker.expertise || []);
+    const allExpertise = SpeakersList.flatMap(
+      (speaker) => speaker.expertise || []
+    );
     return Array.from(new Set(allExpertise)).sort();
   }, []);
 
@@ -80,18 +91,44 @@ export function SpeakersGrid() {
           )}
         </div>
 
-        <div className="space-y-3">
-          <span className="block text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
+        {/* Mobile Filter Toggle Button */}
+        <div className="sm:hidden">
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-lg text-sm font-medium text-gray-700 transition-all duration-200 touch-manipulation"
+            aria-label={showFilters ? "Hide filters" : "Show filters"}
+          >
+            <FiFilter className="w-4 h-4" />
+            <span>Filter by expertise</span>
+            {showFilters ? (
+              <FiChevronUp className="w-4 h-4" />
+            ) : (
+              <FiChevronDown className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+
+        {/* Filter Section - Hidden on mobile by default, always visible on desktop */}
+        <div
+          className={`space-y-3 transition-all duration-300 ease-in-out ${
+            showFilters
+              ? "block opacity-100 max-h-screen"
+              : "hidden opacity-0 max-h-0"
+          } sm:block sm:opacity-100 sm:max-h-none`}
+        >
+          <span className="hidden sm:block text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
             Filter by expertise:
           </span>
           <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={() => setSelectedExpertise(null)}
-              className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation ${selectedExpertise === null
+              className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation ${
+                selectedExpertise === null
                   ? "bg-blue-500 text-white shadow-sm"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300 active:bg-gray-400"
-                }`}
+              }`}
             >
               All
             </button>
@@ -100,10 +137,11 @@ export function SpeakersGrid() {
                 type="button"
                 key={expertise}
                 onClick={() => setSelectedExpertise(expertise)}
-                className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation whitespace-nowrap ${selectedExpertise === expertise
+                className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation whitespace-nowrap ${
+                  selectedExpertise === expertise
                     ? "bg-blue-500 text-white shadow-sm"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300 active:bg-gray-400"
-                  }`}
+                }`}
               >
                 {expertise}
               </button>
@@ -123,15 +161,18 @@ export function SpeakersGrid() {
           filteredSpeakers.map((speaker, index) => (
             <div
               key={speaker.name}
-              className={`flex flex-col items-center bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-6 border border-[#D1D1D1] shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 ease-out gap-y-4 sm:gap-y-6 justify-around group animate-fade-in ${index < 6 ? `animate-delay-${(index + 1) * 100}` : ""
-                }`}
+              className={`flex flex-col items-center bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-6 border border-[#D1D1D1] shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 ease-out gap-y-4 sm:gap-y-6 justify-around group animate-fade-in ${
+                index < 6 ? `animate-delay-${(index + 1) * 100}` : ""
+              }`}
             >
               <div className="relative shrink-0 w-[140px] h-[140px] xs:w-[160px] xs:h-[160px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px] lg:w-[280px] lg:h-[280px] rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-105">
                 <Image
                   src={speaker.image}
                   alt={`${speaker.name} - ${speaker.title}`}
                   fill
-                  className={`object-cover ${speaker.imagePosition || "object-top"}`}
+                  className={`object-cover ${
+                    speaker.imagePosition || "object-top"
+                  }`}
                   quality={85}
                   loading="lazy"
                   sizes="(min-width: 1024px) 280px, (min-width: 768px) 220px, (min-width: 640px) 180px, (min-width: 480px) 160px, 140px"
@@ -202,7 +243,8 @@ export function SpeakersGrid() {
               No speakers found
             </h3>
             <p className="text-sm sm:text-base text-gray-500 text-center max-w-sm sm:max-w-md mb-4">
-              Try adjusting your search terms or clearing the filters to see more speakers.
+              Try adjusting your search terms or clearing the filters to see
+              more speakers.
             </p>
             <button
               type="button"
