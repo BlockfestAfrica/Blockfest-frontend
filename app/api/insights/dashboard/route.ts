@@ -26,6 +26,7 @@ interface GuestRegistration {
   status: "confirmed" | "pending" | "cancelled";
   gender?: string;
   school?: string;
+  role?: string;
   transportation?: string;
   dietary?: string;
   photoConsent?: string;
@@ -502,6 +503,268 @@ function normalizeCountry(country: string): string {
   return countryMappings[cleaned] || "Nigeria";
 }
 
+// Function to normalize location entries for city-level analytics
+function normalizeLocation(locationInput: string): string {
+  if (!locationInput || locationInput.trim() === "") {
+    return "Nigeria"; // Default for Nigerian event
+  }
+
+  const location = locationInput.trim();
+  const locationLower = location.toLowerCase();
+
+  // Handle obvious non-location entries
+  const nonLocationKeywords = [
+    "university",
+    "college",
+    "school",
+    "polytechnic",
+    "institute",
+    "founder",
+    "ceo",
+    "manager",
+    "developer",
+    "designer",
+    "creator",
+    "ltd",
+    "limited",
+    "inc",
+    "company",
+    "corp",
+    "enterprise",
+  ];
+
+  const hasNonLocationKeyword = nonLocationKeywords.some((keyword) =>
+    locationLower.includes(keyword)
+  );
+
+  if (hasNonLocationKeyword) {
+    return "Nigeria"; // Default for Nigerian event
+  }
+
+  // Comprehensive city normalizations for major Nigerian cities
+
+  // Lagos variations (5000+ entries)
+  if (
+    locationLower.includes("lagos") ||
+    locationLower.includes("ikeja") ||
+    locationLower.includes("lekki") ||
+    locationLower.includes("ikorodu") ||
+    locationLower.includes("yaba") ||
+    locationLower.includes("surulere") ||
+    locationLower.includes("mushin") ||
+    locationLower.includes("isolo") ||
+    locationLower.includes("agege") ||
+    locationLower.includes("apapa") ||
+    locationLower.includes("gbagada") ||
+    locationLower.includes("shomolu") ||
+    locationLower.includes("ojo") ||
+    locationLower.includes("ikotun") ||
+    locationLower.includes("ipaja") ||
+    locationLower.includes("egbeda") ||
+    locationLower.includes("bariga") ||
+    locationLower.includes("ogba") ||
+    locationLower.includes("berger") ||
+    locationLower.includes("alaba") ||
+    locationLower.includes("ajah") ||
+    locationLower.includes("badore") ||
+    locationLower.includes("sangotedo") ||
+    locationLower.includes("epe") ||
+    locationLower.includes("badagry") ||
+    locationLower.includes("victoria island") ||
+    locationLower.includes("ikoyi") ||
+    (locationLower.includes("island") && locationLower.includes("lagos"))
+  ) {
+    return "Lagos, Nigeria";
+  }
+
+  // Abuja variations (280+ entries)
+  if (locationLower.includes("abuja") || locationLower.includes("fct")) {
+    return "Abuja, Nigeria";
+  }
+
+  // Ibadan variations (444+ entries)
+  if (
+    locationLower.includes("ibadan") ||
+    (locationLower.includes("oyo") && !locationLower.includes("state"))
+  ) {
+    return "Ibadan, Nigeria";
+  }
+
+  // Ogun State variations (321+ entries)
+  if (
+    locationLower.includes("abeokuta") ||
+    locationLower.includes("ogun") ||
+    locationLower.includes("sagamu") ||
+    locationLower.includes("ota") ||
+    locationLower.includes("ijebu ode") ||
+    locationLower.includes("ago iwoye") ||
+    locationLower.includes("mowe") ||
+    locationLower.includes("magboro") ||
+    locationLower.includes("arepo") ||
+    locationLower.includes("ifo") ||
+    locationLower.includes("agbara")
+  ) {
+    return "Ogun State, Nigeria";
+  }
+
+  // Port Harcourt variations (107+ entries)
+  if (
+    locationLower.includes("port harcourt") ||
+    locationLower.includes("portharcourt") ||
+    (locationLower.includes("rivers") && locationLower.includes("state"))
+  ) {
+    return "Port Harcourt, Nigeria";
+  }
+
+  // Enugu variations (102+ entries)
+  if (locationLower.includes("enugu") || locationLower.includes("nsukka")) {
+    return "Enugu, Nigeria";
+  }
+
+  // Benin City variations (90+ entries)
+  if (
+    locationLower.includes("benin city") ||
+    locationLower.includes("benin-city") ||
+    (locationLower.includes("benin") && !locationLower.includes("republic")) ||
+    (locationLower.includes("edo") && locationLower.includes("state"))
+  ) {
+    return "Benin City, Nigeria";
+  }
+
+  // Ilorin variations (83+ entries)
+  if (
+    locationLower.includes("ilorin") ||
+    (locationLower.includes("kwara") && locationLower.includes("state"))
+  ) {
+    return "Ilorin, Nigeria";
+  }
+
+  // Akure variations (74+ entries)
+  if (
+    locationLower.includes("akure") ||
+    (locationLower.includes("ondo") && locationLower.includes("state"))
+  ) {
+    return "Akure, Nigeria";
+  }
+
+  // Owerri variations (69+ entries)
+  if (
+    locationLower.includes("owerri") ||
+    (locationLower.includes("imo") && locationLower.includes("state"))
+  ) {
+    return "Owerri, Nigeria";
+  }
+
+  // Kaduna variations (48+ entries)
+  if (locationLower.includes("kaduna") || locationLower.includes("zaria")) {
+    return "Kaduna, Nigeria";
+  }
+
+  // Uyo variations (40+ entries)
+  if (
+    locationLower.includes("uyo") ||
+    locationLower.includes("akwa ibom") ||
+    locationLower.includes("akwaibom")
+  ) {
+    return "Uyo, Nigeria";
+  }
+
+  // Warri variations (35+ entries)
+  if (
+    locationLower.includes("warri") ||
+    (locationLower.includes("delta") && locationLower.includes("state"))
+  ) {
+    return "Warri, Nigeria";
+  }
+
+  // Calabar variations (30+ entries)
+  if (
+    locationLower.includes("calabar") ||
+    locationLower.includes("cross river")
+  ) {
+    return "Calabar, Nigeria";
+  }
+
+  // Kano variations (25+ entries)
+  if (locationLower.includes("kano")) {
+    return "Kano, Nigeria";
+  }
+
+  // Osogbo variations (22+ entries)
+  if (
+    locationLower.includes("osogbo") ||
+    (locationLower.includes("osun") && locationLower.includes("state"))
+  ) {
+    return "Osogbo, Nigeria";
+  }
+
+  // Handle other Nigerian states without major cities mentioned
+  const stateMap = {
+    abia: "Abia State, Nigeria",
+    adamawa: "Adamawa State, Nigeria",
+    anambra: "Anambra State, Nigeria",
+    bauchi: "Bauchi State, Nigeria",
+    bayelsa: "Bayelsa State, Nigeria",
+    benue: "Benue State, Nigeria",
+    borno: "Borno State, Nigeria",
+    ebonyi: "Ebonyi State, Nigeria",
+    ekiti: "Ekiti State, Nigeria",
+    gombe: "Gombe State, Nigeria",
+    jigawa: "Jigawa State, Nigeria",
+    katsina: "Katsina State, Nigeria",
+    kebbi: "Kebbi State, Nigeria",
+    kogi: "Kogi State, Nigeria",
+    nasarawa: "Nasarawa State, Nigeria",
+    niger: "Niger State, Nigeria",
+    plateau: "Plateau State, Nigeria",
+    sokoto: "Sokoto State, Nigeria",
+    taraba: "Taraba State, Nigeria",
+    yobe: "Yobe State, Nigeria",
+    zamfara: "Zamfara State, Nigeria",
+  };
+
+  for (const [state, normalized] of Object.entries(stateMap)) {
+    if (
+      locationLower.includes(state + " state") ||
+      (locationLower.includes(state) && locationLower.includes("state"))
+    ) {
+      return normalized;
+    }
+  }
+
+  // International locations
+  if (locationLower.includes("ghana")) return "Ghana";
+  if (locationLower.includes("kenya")) return "Kenya";
+  if (locationLower.includes("south africa")) return "South Africa";
+  if (locationLower.includes("egypt")) return "Egypt";
+  if (locationLower.includes("morocco")) return "Morocco";
+  if (locationLower.includes("tunisia")) return "Tunisia";
+  if (locationLower.includes("algeria")) return "Algeria";
+  if (locationLower.includes("usa") || locationLower.includes("united states"))
+    return "United States";
+  if (locationLower.includes("uk") || locationLower.includes("united kingdom"))
+    return "United Kingdom";
+  if (locationLower.includes("canada")) return "Canada";
+  if (locationLower.includes("france")) return "France";
+  if (locationLower.includes("germany")) return "Germany";
+  if (locationLower.includes("poland")) return "Poland";
+  if (locationLower.includes("turkey") || locationLower.includes("türkiye"))
+    return "Turkey";
+
+  // If contains any Nigerian indicators, default to Nigeria
+  if (
+    locationLower.includes("nigeria") ||
+    locationLower.includes("ng") ||
+    locationLower.includes("nigerian") ||
+    locationLower.includes("state")
+  ) {
+    return "Nigeria";
+  }
+
+  // Default fallback
+  return location.includes(",") ? location : `${location}, Nigeria`;
+}
+
 // Function to parse CSV data from the guest list
 function parseGuestCSV(csvContent: string): GuestRegistration[] {
   const lines = csvContent.trim().split("\n");
@@ -601,13 +864,14 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
           status = "pending"; // Default for any unknown status
       }
 
-      // Extract location (City & Country) with normalization
+      // Extract and normalize location for better city-level analytics
       const locationField = fields[indices.location] || "";
-      const locationParts = locationField.split(",").map((p) => p.trim());
+      const normalizedLocation = normalizeLocation(locationField);
+
+      // Extract city and country from normalized location
+      const locationParts = normalizedLocation.split(",").map((p) => p.trim());
       const city = locationParts.length > 0 ? locationParts[0] : "";
-      const rawCountry =
-        locationParts.length > 1 ? locationParts[locationParts.length - 1] : "";
-      const country = normalizeCountry(rawCountry);
+      const country = locationParts.length > 1 ? locationParts[1] : "Nigeria";
 
       // Parse profession from "describes you" field - HANDLE MULTIPLE SELECTIONS
       const professionField = fields[indices.profession] || "";
@@ -648,14 +912,19 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
       const experienceField = fields[indices.experience] || "";
       const experienceLevel = parseExperienceLevel(experienceField);
 
-      // Clean up source field
+      // Clean up source field with enhanced normalization
       const sourceField = fields[indices.source] || "";
       let source = "Unknown";
       const sourceLower = sourceField.toLowerCase();
 
       if (sourceLower.includes("friend") || sourceLower.includes("referral"))
         source = "Friend/Referral";
-      else if (sourceLower.includes("x") || sourceLower.includes("twitter"))
+      else if (
+        sourceLower.includes("x (formerly twitter)") ||
+        sourceLower.includes("x (twitter)") ||
+        sourceLower.includes("twitter") ||
+        sourceLower === "x"
+      )
         source = "X (Twitter)";
       else if (sourceLower.includes("linkedin")) source = "LinkedIn";
       else if (sourceLower.includes("instagram")) source = "Instagram";
@@ -689,6 +958,7 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
         status,
         gender: gender || undefined,
         school: school || undefined,
+        role: fields[indices.role]?.trim() || undefined,
         transportation: transportation || undefined,
         dietary: dietary || undefined,
         photoConsent: photoConsent || undefined,
@@ -711,7 +981,7 @@ function parseGuestCSV(csvContent: string): GuestRegistration[] {
   return registrations;
 }
 
-// Helper function to calculate professional roles breakdown
+// Helper function to calculate professional roles breakdown (job descriptions)
 function calculateProfessionalRoles(registrations: GuestRegistration[]) {
   const roleCounts = new Map<string, number>();
   const totalResponses = registrations.length;
@@ -768,6 +1038,360 @@ function calculateProfessionalRoles(registrations: GuestRegistration[]) {
   return rolesArray;
 }
 
+// Helper function to calculate company role breakdown (actual job titles)
+function calculateCompanyRoles(registrations: GuestRegistration[]) {
+  const roleCounts = new Map<string, number>();
+  const validRoles: string[] = [];
+
+  // Normalize and filter roles
+  function normalizeRole(roleInput: string): string | null {
+    if (!roleInput || roleInput.trim() === "") return null;
+
+    const role = roleInput.trim();
+    const roleLower = role.toLowerCase();
+
+    // Filter out non-role entries
+    if (
+      ["none", "nil", "nill", "n/a", "na", "non", "null", ""].includes(
+        roleLower
+      )
+    ) {
+      return null;
+    }
+
+    // Normalize common roles
+    if (roleLower.includes("founder")) return "Founder";
+    if (roleLower.includes("ceo")) return "CEO";
+    if (roleLower.includes("ambassador")) return "Ambassador";
+    if (roleLower.includes("member")) return "Member";
+    if (roleLower.includes("creator")) return "Creator";
+    if (roleLower.includes("student")) return "Student";
+    if (roleLower.includes("developer") || roleLower.includes("dev"))
+      return "Developer";
+    if (roleLower.includes("manager")) return "Manager";
+    if (roleLower.includes("lead")) return "Lead";
+    if (roleLower.includes("director")) return "Director";
+    if (roleLower.includes("engineer")) return "Engineer";
+    if (roleLower.includes("analyst")) return "Analyst";
+    if (roleLower.includes("designer")) return "Designer";
+    if (roleLower.includes("marketing")) return "Marketing";
+    if (roleLower.includes("community")) return "Community Manager";
+    if (roleLower.includes("product") && roleLower.includes("manager"))
+      return "Product Manager";
+    if (roleLower.includes("co-founder") || roleLower.includes("cofounder"))
+      return "Co-Founder";
+
+    return role; // Keep original if no pattern matches
+  }
+
+  registrations.forEach((reg) => {
+    if (reg.role) {
+      const normalizedRole = normalizeRole(reg.role);
+      if (normalizedRole) {
+        validRoles.push(normalizedRole);
+        roleCounts.set(
+          normalizedRole,
+          (roleCounts.get(normalizedRole) || 0) + 1
+        );
+      }
+    }
+  });
+
+  // Convert to array and calculate percentages
+  const rolesArray = Array.from(roleCounts.entries())
+    .map(([role, count]) => ({
+      role,
+      count,
+      percentage:
+        validRoles.length > 0
+          ? Math.round((count / validRoles.length) * 100 * 10) / 10
+          : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  // Calculate role categories
+  const leadership = ["Founder", "CEO", "Co-Founder", "Director"];
+  const technical = ["Developer", "Engineer", "Designer", "Product Manager"];
+  const business = ["Ambassador", "Marketing", "Community Manager", "Manager"];
+
+  const leadersCount = leadership.reduce(
+    (sum, role) => sum + (roleCounts.get(role) || 0),
+    0
+  );
+  const techCount = technical.reduce(
+    (sum, role) => sum + (roleCounts.get(role) || 0),
+    0
+  );
+  const businessCount = business.reduce(
+    (sum, role) => sum + (roleCounts.get(role) || 0),
+    0
+  );
+
+  return {
+    roles: rolesArray.slice(0, 15), // Top 15 roles
+    categories: {
+      leadership: {
+        count: leadersCount,
+        percentage:
+          validRoles.length > 0
+            ? Math.round((leadersCount / validRoles.length) * 100 * 10) / 10
+            : 0,
+      },
+      technical: {
+        count: techCount,
+        percentage:
+          validRoles.length > 0
+            ? Math.round((techCount / validRoles.length) * 100 * 10) / 10
+            : 0,
+      },
+      business: {
+        count: businessCount,
+        percentage:
+          validRoles.length > 0
+            ? Math.round((businessCount / validRoles.length) * 100 * 10) / 10
+            : 0,
+      },
+    },
+    totalValidRoles: validRoles.length,
+    totalResponses: registrations.length,
+  };
+}
+
+// Normalize school names to group variations together
+function normalizeSchoolName(schoolName: string): string {
+  if (!schoolName || schoolName.trim() === "") return "";
+
+  const normalized = schoolName.trim();
+  const lower = normalized.toLowerCase();
+
+  // Handle common variations and abbreviations
+  const schoolMappings: { [key: string]: string } = {
+    // University of Lagos variations
+    unilag: "University of Lagos",
+    "university of lagos": "University of Lagos",
+    "univ of lagos": "University of Lagos",
+    "uni lag": "University of Lagos",
+
+    // Lagos State University variations
+    lasu: "Lagos State University",
+    "lagos state university": "Lagos State University",
+    "lagos state uni": "Lagos State University",
+    "lagos state univ": "Lagos State University",
+    "lagosstate university": "Lagos State University",
+
+    // Olabisi Onabanjo University variations
+    oou: "Olabisi Onabanjo University",
+    "olabisi onabanjo university": "Olabisi Onabanjo University",
+    "olabisi onabanjo uni": "Olabisi Onabanjo University",
+
+    // Yabatech variations
+    yabatech: "Yaba College of Technology",
+    "yaba college of technology": "Yaba College of Technology",
+    "yaba tech": "Yaba College of Technology",
+    yct: "Yaba College of Technology",
+
+    // Federal University of Agriculture Abeokuta
+    funaab: "Federal University of Agriculture Abeokuta",
+    "federal university of agriculture abeokuta":
+      "Federal University of Agriculture Abeokuta",
+    "federal university of agriculture, abeokuta":
+      "Federal University of Agriculture Abeokuta",
+
+    // Federal University of Technology Akure
+    futa: "Federal University of Technology Akure",
+    "federal university of technology akure":
+      "Federal University of Technology Akure",
+    "federal university of technology, akure":
+      "Federal University of Technology Akure",
+    "federal uni of tech akure": "Federal University of Technology Akure",
+
+    // University of Ilorin
+    unilorin: "University of Ilorin",
+    "university of ilorin": "University of Ilorin",
+    "uni ilorin": "University of Ilorin",
+
+    // Lagos State University of Science and Technology
+    lasustech: "Lagos State University of Science and Technology",
+    "lasu tech": "Lagos State University of Science and Technology",
+    "lagos state university of science and technology":
+      "Lagos State University of Science and Technology",
+
+    // Ladoke Akintola University of Technology
+    lautech: "Ladoke Akintola University of Technology",
+    laut: "Ladoke Akintola University of Technology",
+    "ladoke akintola university of technology":
+      "Ladoke Akintola University of Technology",
+
+    // University of Ibadan
+    ui: "University of Ibadan",
+    "university of ibadan": "University of Ibadan",
+    "ibadan university": "University of Ibadan",
+
+    // Obafemi Awolowo University
+    oau: "Obafemi Awolowo University",
+    "obafemi awolowo university": "Obafemi Awolowo University",
+    "obafemi awolowo uni": "Obafemi Awolowo University",
+    "ife university": "Obafemi Awolowo University",
+
+    // Ahmadu Bello University
+    abu: "Ahmadu Bello University",
+    "ahmadu bello university": "Ahmadu Bello University",
+    "ahmadu bello uni": "Ahmadu Bello University",
+
+    // University of Benin
+    uniben: "University of Benin",
+    "university of benin": "University of Benin",
+    "benin university": "University of Benin",
+
+    // Federal University Oye Ekiti
+    fuoye: "Federal University Oye Ekiti",
+    "federal university oye ekiti": "Federal University Oye Ekiti",
+    "federal uni oye ekiti": "Federal University Oye Ekiti",
+
+    // University of Calabar
+    unical: "University of Calabar",
+    "university of calabar": "University of Calabar",
+    "calabar university": "University of Calabar",
+
+    // Covenant University
+    cu: "Covenant University",
+    "covenant university": "Covenant University",
+    "covenant uni": "Covenant University",
+
+    // Bowen University
+    "bowen university": "Bowen University",
+    "bowen uni": "Bowen University",
+
+    // Ekiti State University
+    eksu: "Ekiti State University",
+    "ekiti state university": "Ekiti State University",
+    "ekiti state uni": "Ekiti State University",
+
+    // Kwara State University
+    kwasu: "Kwara State University",
+    "kwara state university": "Kwara State University",
+    "kwara state uni": "Kwara State University",
+
+    // Osun State University
+    uniosun: "Osun State University",
+    "osun state university": "Osun State University",
+    "osun state uni": "Osun State University",
+
+    // National Open University
+    noun: "National Open University",
+    "national open university": "National Open University",
+    "open university": "National Open University",
+
+    // Adeleke University
+    "adeleke university": "Adeleke University",
+    "adeleke uni": "Adeleke University",
+
+    // Al-Hikmah University
+    "al-hikmah university": "Al-Hikmah University",
+    "al hikmah university": "Al-Hikmah University",
+    "alhikmah university": "Al-Hikmah University",
+
+    // Federal University of Technology Owerri
+    futo: "Federal University of Technology Owerri",
+    "federal university of technology owerri":
+      "Federal University of Technology Owerri",
+    "federal university of technology, owerri":
+      "Federal University of Technology Owerri",
+    "federal uni of tech owerri": "Federal University of Technology Owerri",
+
+    // Nnamdi Azikiwe University
+    unizik: "Nnamdi Azikiwe University",
+    "nnamdi azikiwe university": "Nnamdi Azikiwe University",
+    nau: "Nnamdi Azikiwe University",
+
+    // University of Uyo
+    uniuyo: "University of Uyo",
+    "university of uyo": "University of Uyo",
+
+    // National Open University variations (additional)
+    "national open university of nigeria": "National Open University",
+
+    // Federal University of Technology Minna
+    futminna: "Federal University of Technology Minna",
+    "federal university of technology minna":
+      "Federal University of Technology Minna",
+    "federal university of technology, minna":
+      "Federal University of Technology Minna",
+
+    // Lagos State University of Education
+    lasued: "Lagos State University of Education",
+    "lagos state university of education":
+      "Lagos State University of Education",
+
+    // Ebonyi State University
+    ebsu: "Ebonyi State University",
+    "ebonyi state university": "Ebonyi State University",
+
+    // Cross River State University of Technology
+    crutech: "Cross River State University of Technology",
+    "cross river state university of technology":
+      "Cross River State University of Technology",
+
+    // Rivers State University of Science and Technology
+    rsust: "Rivers State University of Science and Technology",
+    "rivers state university of science and technology":
+      "Rivers State University of Science and Technology",
+
+    // Enugu State University of Science and Technology
+    esut: "Enugu State University of Science and Technology",
+    "enugu state university of science and technology":
+      "Enugu State University of Science and Technology",
+
+    // Olusegun Agagu University of Science and Technology
+    oaustech: "Olusegun Agagu University of Science and Technology",
+    "olusegun agagu university of science and technology":
+      "Olusegun Agagu University of Science and Technology",
+
+    // Bells University of Technology
+    bellstech: "Bells University of Technology",
+    "bells university of technology": "Bells University of Technology",
+    "the bells university of technology": "Bells University of Technology",
+
+    // First Technical University Ibadan
+    "tech-u": "First Technical University Ibadan",
+    "first technical university ibadan": "First Technical University Ibadan",
+    "abiola ajimobi technical university": "First Technical University Ibadan",
+
+    // Kebbi State University of Science and Technology
+    ksust: "Kebbi State University of Science and Technology",
+    "kebbi state university of science and technology":
+      "Kebbi State University of Science and Technology",
+
+    // Imo State University of Science and Technology
+    imosu: "Imo State University of Science and Technology",
+    "imo state university of science and technology":
+      "Imo State University of Science and Technology",
+  };
+
+  // Check for exact matches first
+  if (schoolMappings[lower]) {
+    return schoolMappings[lower];
+  }
+
+  // Check for partial matches (contains)
+  for (const [key, value] of Object.entries(schoolMappings)) {
+    if (lower.includes(key) || key.includes(lower)) {
+      return value;
+    }
+  }
+
+  // If no mapping found, just clean up the original name
+  return normalized
+    .replace(/\buniversity\b/gi, "University")
+    .replace(/\bcollege\b/gi, "College")
+    .replace(/\binstitute\b/gi, "Institute")
+    .replace(/\btech\b/gi, "Technology")
+    .replace(/\bpoly\b/gi, "Polytechnic")
+    .replace(/\buni\b/gi, "University")
+    .replace(/\buniv\b/gi, "University")
+    .trim();
+}
+
 // Helper function to calculate educational institutions breakdown
 function calculateEducationalInstitutions(registrations: GuestRegistration[]) {
   const institutionCounts = new Map<string, number>();
@@ -778,24 +1402,25 @@ function calculateEducationalInstitutions(registrations: GuestRegistration[]) {
         school &&
         school !== "" &&
         school.toLowerCase() !== "n/a" &&
-        school.toLowerCase() !== "none"
+        school.toLowerCase() !== "none" &&
+        school.toLowerCase() !== "nil" &&
+        school.toLowerCase() !== "not a student" &&
+        school.toLowerCase() !== "graduate"
     );
 
   const totalResponses = validInstitutions.length;
 
   validInstitutions.forEach((institution) => {
     if (institution) {
-      // Normalize institution names
-      const normalizedName = institution
-        .replace(/\buniversity\b/gi, "University")
-        .replace(/\bcollege\b/gi, "College")
-        .replace(/\binstitute\b/gi, "Institute")
-        .trim();
+      // Use the comprehensive normalization function
+      const normalizedName = normalizeSchoolName(institution);
 
-      institutionCounts.set(
-        normalizedName,
-        (institutionCounts.get(normalizedName) || 0) + 1
-      );
+      if (normalizedName && normalizedName.trim() !== "") {
+        institutionCounts.set(
+          normalizedName,
+          (institutionCounts.get(normalizedName) || 0) + 1
+        );
+      }
     }
   });
 
@@ -1200,20 +1825,30 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
     });
   }
 
-  // Location breakdown - countries are already normalized during parsing
+  // Location breakdown - using normalized city + country combinations
   const locationCounts: { [key: string]: number } = {};
   registrations.forEach((reg) => {
-    const country =
-      reg.country && reg.country.trim() !== "" && reg.country !== "Unknown"
-        ? reg.country.trim()
-        : "Unknown";
-    locationCounts[country] = (locationCounts[country] || 0) + 1;
+    // Create location string from city and country
+    let location = "Unknown";
+    if (reg.city && reg.country) {
+      location = `${reg.city}, ${reg.country}`;
+    } else if (reg.country) {
+      location = reg.country;
+    }
+
+    // Use the raw registration data to reconstruct normalized location
+    // This preserves the normalization we did during parsing
+    if (location !== "Unknown") {
+      locationCounts[location] = (locationCounts[location] || 0) + 1;
+    } else {
+      locationCounts["Unknown"] = (locationCounts["Unknown"] || 0) + 1;
+    }
   });
 
   const locationBreakdown = Object.entries(locationCounts)
     .sort(([, a], [, b]) => b - a)
-    .map(([country, count]) => ({
-      country,
+    .map(([location, count]) => ({
+      country: location, // Keep the field name as 'country' for backward compatibility with frontend
       count,
       percentage: totalGuests > 0 ? (count / totalGuests) * 100 : 0,
     }));
@@ -1222,25 +1857,34 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
   const sourceCounts: { [key: string]: number } = {};
   registrations.forEach((reg) => {
     const source = reg.source || "Unknown";
-    // Normalize source names for better grouping
+    // Enhanced source normalization for better grouping
     let normalizedSource = source;
+    const sourceLower = source.toLowerCase();
+
     if (
-      source.toLowerCase().includes("x (twitter)") ||
-      source.toLowerCase().includes("twitter")
+      sourceLower.includes("x (formerly twitter)") ||
+      sourceLower.includes("x (twitter)") ||
+      sourceLower.includes("twitter") ||
+      sourceLower === "x"
     ) {
       normalizedSource = "X (Twitter)";
-    } else if (source.toLowerCase().includes("instagram")) {
+    } else if (sourceLower.includes("instagram")) {
       normalizedSource = "Instagram";
-    } else if (source.toLowerCase().includes("linkedin")) {
+    } else if (sourceLower.includes("linkedin")) {
       normalizedSource = "LinkedIn";
     } else if (
-      source.toLowerCase().includes("friend") ||
-      source.toLowerCase().includes("referral")
+      sourceLower.includes("friend") ||
+      sourceLower.includes("referral") ||
+      sourceLower.includes("a friend")
     ) {
       normalizedSource = "Friend/Referral";
+    } else if (sourceLower.includes("telegram")) {
+      normalizedSource = "Telegram";
+    } else if (sourceLower.includes("billboard")) {
+      normalizedSource = "Billboard";
     } else if (
-      source.toLowerCase().includes("other") ||
-      source.toLowerCase().includes("unknown")
+      sourceLower.includes("other") ||
+      sourceLower.includes("unknown")
     ) {
       normalizedSource = source === "Unknown" ? "Unknown" : "Other";
     }
@@ -1381,10 +2025,16 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
     if (
       reg.school &&
       reg.school.length > 2 &&
-      reg.school.toLowerCase() !== "n/a"
+      reg.school.toLowerCase() !== "n/a" &&
+      reg.school.toLowerCase() !== "none" &&
+      reg.school.toLowerCase() !== "nil" &&
+      reg.school.toLowerCase() !== "not a student" &&
+      reg.school.toLowerCase() !== "graduate"
     ) {
-      const school = reg.school.trim();
-      topSchools[school] = (topSchools[school] || 0) + 1;
+      const normalizedSchool = normalizeSchoolName(reg.school);
+      if (normalizedSchool && normalizedSchool.trim() !== "") {
+        topSchools[normalizedSchool] = (topSchools[normalizedSchool] || 0) + 1;
+      }
     }
   });
 
@@ -1821,6 +2471,7 @@ function calculateDashboardStats(registrations: GuestRegistration[]) {
     educationalInstitutions: calculateEducationalInstitutions(registrations),
     dietaryRequirements: calculateDietaryRequirements(registrations),
     consentAnalytics: calculateConsentAnalytics(registrations),
+    companyRoles: calculateCompanyRoles(registrations),
     recentRegistrations: registrations
       .filter((r) => r.status === "confirmed")
       .sort((a, b) => {

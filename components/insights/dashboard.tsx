@@ -15,6 +15,7 @@ import { ApprovalInsights } from "./approval-insights";
 import { AnalyticsInsights } from "./analytics-insights";
 import { TransportationInsights } from "./transportation-insights";
 import { ProfessionalRoles } from "./professional-roles";
+import { CompanyRoles } from "./company-roles";
 import { EducationalInstitutions } from "./educational-institutions";
 import { DietaryRequirements } from "./dietary-requirements";
 import { ConsentAnalytics } from "./consent-analytics";
@@ -41,6 +42,14 @@ export interface GuestData {
   interests: string[];
   source: string;
   status: "confirmed" | "pending" | "cancelled";
+  gender?: string;
+  school?: string;
+  transportation?: string;
+  dietary?: string;
+  photoConsent?: string;
+  emailConsent?: string;
+  xFollow?: string;
+  telegramJoin?: string;
 }
 
 export interface DashboardStats {
@@ -162,6 +171,20 @@ export interface DashboardStats {
     count: number;
     percentage: number;
   }>;
+  companyRoles: {
+    roles: Array<{
+      role: string;
+      count: number;
+      percentage: number;
+    }>;
+    categories: {
+      leadership: { count: number; percentage: number };
+      technical: { count: number; percentage: number };
+      business: { count: number; percentage: number };
+    };
+    totalValidRoles: number;
+    totalResponses: number;
+  };
   educationalInstitutions: Array<{
     institution: string;
     count: number;
@@ -342,6 +365,16 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
     },
     transportationInsights: defaultTransportation,
     professionalRoles: [],
+    companyRoles: {
+      roles: [],
+      categories: {
+        leadership: { count: 0, percentage: 0 },
+        technical: { count: 0, percentage: 0 },
+        business: { count: 0, percentage: 0 },
+      },
+      totalValidRoles: 0,
+      totalResponses: 0,
+    },
     educationalInstitutions: [],
     dietaryRequirements: {
       totalResponses: 0,
@@ -631,19 +664,19 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
       </div>
 
       {/* Marketing & Engagement Analytics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-        <div className="md:col-span-1 min-h-[400px]">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+        <div className="min-h-[400px]">
           <TrafficSources data={memoizedStats.trafficData} loading={loading} />
         </div>
-        <div className="md:col-span-1 min-h-[400px]">
+        <div className="min-h-[400px]">
           <TopCompanies data={memoizedStats.companyData} loading={loading} />
         </div>
-        <div className="md:col-span-2 xl:col-span-1 min-h-[400px]">
+        {/* <div className="md:col-span-2 xl:col-span-1 min-h-[400px]">
           <TimeAnalysis
             data={memoizedStats.timeAnalysisData}
             loading={loading}
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Transportation Analytics */}
@@ -676,6 +709,9 @@ export const InsightsDashboard = memo(function InsightsDashboard() {
         <div className="min-h-[500px] insight-card">
           <ProfessionalRoles data={stats.professionalRoles} loading={loading} />
         </div>
+        {/* <div className="min-h-[500px] insight-card">
+          <CompanyRoles data={stats.companyRoles} loading={loading} />
+        </div> */}
         <div className="min-h-[500px] insight-card">
           <EducationalInstitutions
             data={stats.educationalInstitutions}
