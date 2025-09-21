@@ -63,8 +63,8 @@ export function SpeakersGrid() {
   }
 
   return (
-    <section className="flex flex-col items-center justify-center lg:py-[30px] lg:px-[70px] py-8 px-4 sm:px-6">
-      <h2 className="font-medium text-3xl sm:text-4xl md:text-5xl lg:text-[69.65px] lg:leading-[82px] tracking-[-2%] sm:tracking-[-3%] lg:tracking-[-5%] my-[20px] sm:my-[25px] lg:my-[60px] text-black text-center">
+    <section className="flex flex-col items-center justify-center pt-4 sm:pt-6 lg:pt-[20px] pb-12 sm:pb-16 lg:pb-20 px-4 sm:px-6 lg:px-[70px]">
+      <h2 className="font-medium text-3xl sm:text-4xl md:text-5xl lg:text-[69.65px] lg:leading-[82px] tracking-[-2%] sm:tracking-[-3%] lg:tracking-[-5%] mt-2 mb-4 sm:mt-[15px] sm:mb-[25px] lg:mt-[20px] lg:mb-[40px] text-black text-center">
         Speak<span className="text-[#F2CB45]">3</span>rs
       </h2>
 
@@ -111,11 +111,11 @@ export function SpeakersGrid() {
 
         {/* Filter Section - Hidden on mobile by default, always visible on desktop */}
         <div
-          className={`space-y-3 transition-all duration-300 ease-in-out ${
+          className={`space-y-3 transition-all duration-300 ease-in-out overflow-hidden ${
             showFilters
-              ? "block opacity-100 max-h-screen"
+              ? "block opacity-100 max-h-96"
               : "hidden opacity-0 max-h-0"
-          } sm:block sm:opacity-100 sm:max-h-none`}
+          } sm:block sm:opacity-100 sm:max-h-none sm:overflow-visible`}
         >
           <span className="hidden sm:block text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
             Filter by expertise:
