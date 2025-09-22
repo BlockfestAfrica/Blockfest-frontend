@@ -328,7 +328,7 @@ export function PartnersSection() {
             >
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
                 <Image
-                  src="/images/community/bchain-logo.jpg"
+                  src="/images/community/bchain-logo.png"
                   alt="Bchain"
                   width={150}
                   height={64}
