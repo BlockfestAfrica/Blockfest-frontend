@@ -11,6 +11,13 @@ export interface Speaker {
 
 export const SpeakersList: Speaker[] = [
   {
+    name: "Samuel Olaoyenikan",
+    title: "Convener BlockF3st Africa & Founder, Nirvana Academy",
+    image: "/images/speakers/samuel.jpg",
+    expertise: ["Education", "Web3 & Blockchain"],
+    company: "BlockF3st Africa & Nirvana Academy",
+  },
+  {
     name: "Hon. Mobolaji Ogunlende Abubakre",
     title: "Commissioner for Youth & Social Development, LASG",
     image: "/images/speakers/mobolaji.jpg",
