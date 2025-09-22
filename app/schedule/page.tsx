@@ -29,40 +29,41 @@ export default function Schedule() {
     "@context": "https://schema.org",
     "@type": "Event",
     name: "Blockfest Africa 2025",
-    description: "Premier blockchain and technology conference in Africa bringing together builders, founders, investors, and DeFi professionals.",
+    description:
+      "Premier blockchain and technology conference in Africa bringing together builders, founders, investors, and DeFi professionals.",
     startDate: "2025-10-11T08:30:00+01:00",
     endDate: "2025-10-11T17:30:00+01:00",
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
-      "@type": "Place", 
+      "@type": "Place",
       name: "Lagos, Nigeria",
       address: {
         "@type": "PostalAddress",
         addressLocality: "Lagos",
-        addressCountry: "NG"
-      }
+        addressCountry: "NG",
+      },
     },
     image: "https://blockfestafrica.com/images/og-image.jpg",
     organizer: {
       "@type": "Organization",
       name: "Blockfest Africa",
-      url: "https://blockfestafrica.com"
+      url: "https://blockfestafrica.com",
     },
     offers: {
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
-      url: "https://luma.com/gf1ye3cw?tk=AQAG9o"
+      url: "https://luma.com/gf1ye3cw?tk=AQAG9o",
     },
     performer: [
       {
         "@type": "Organization",
         name: "Blockfest Africa",
-        url: "https://blockfestafrica.com"
-      }
-    ]
+        url: "https://blockfestafrica.com",
+      },
+    ],
   };
 
   const schedulePageData = {
