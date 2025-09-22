@@ -35,7 +35,7 @@ export function SpeakersSchema({ speakers }: SpeakersSchemaProps) {
         performerIn: {
           "@type": "Event",
           name: "Blockfest Africa 2025",
-          startDate: "2025-10-11T08:30:00+01:00",
+          startDate: "2025-10-11T08:00:00+01:00",
           location: {
             "@type": "Place",
             name: "Landmark Event Center",
@@ -72,7 +72,7 @@ export function SpeakerSchema({ speaker }: SpeakerSchemaProps) {
     performerIn: {
       "@type": "Event",
       name: "Blockfest Africa 2025",
-      startDate: "2025-10-11T08:30:00+01:00",
+      startDate: "2025-10-11T08:00:00+01:00",
       location: {
         "@type": "Place",
         name: "Landmark Event Center",
