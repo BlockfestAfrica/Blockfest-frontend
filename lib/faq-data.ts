@@ -11,7 +11,7 @@ export const faqData: FAQItem[] = [
     id: 1,
     question: "When and where is Blockfest Africa 2025?",
     answer:
-      "Blockfest Africa 2025 will be held on October 11th, 2025, in Lagos, Nigeria at the Landmark Event Center. The event runs from 8:30 AM to 6:00 PM WAT.",
+      "Blockfest Africa 2025 will be held on October 11th, 2025, in Lagos, Nigeria at the Landmark Event Center. The event runs from 8:00 AM to 6:00 PM WAT.",
     category: "Event Details",
   },
   {
@@ -25,7 +25,7 @@ export const faqData: FAQItem[] = [
     id: 8,
     question: "What time should I arrive at the venue?",
     answer:
-      "Please come early! Registration opens at 8:30 AM, and we recommend arriving by this time to check in, get settled, and secure good seats. The main program starts at 9:00 AM sharp.",
+      "Please come early! Registration opens at 8:00 AM, and we recommend arriving by this time to check in, get settled, and secure good seats. The main program starts at 8:30 AM sharp.",
     category: "Event Details",
   },
   {
@@ -39,7 +39,14 @@ export const faqData: FAQItem[] = [
     id: 14,
     question: "Can I attend virtually or is it only in-person?",
     answer:
-      "Blockfest Africa 2025 is an in-person event only. We believe the best connections and learning experiences happen face-to-face, especially for Africa's Web3 community.",
+      "While Blockfest Africa 2025 is primarily an in-person event, we understand not everyone can attend physically. The event will be live-streamed for those who cannot make it to Lagos. However, we strongly encourage in-person attendance for the best networking and learning experience.",
+    category: "Event Details",
+  },
+  {
+    id: 17,
+    question: "Is the venue accessible for people with physical challenges?",
+    answer:
+      "Yes! Accessibility for physically challenged attendees is provided at the Landmark Event Center. The venue includes wheelchair access, accessible restrooms, and designated seating areas. If you have specific accessibility needs, please mention them during registration so we can ensure proper accommodations.",
     category: "Event Details",
   },
 
