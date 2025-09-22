@@ -263,6 +263,21 @@ export function PartnersSection() {
                   />
                 </div>
               </Link>
+              <Link
+                href="https://x.com/avaxng?s=21&t=2kHrWD_DTFp7Yu9aXZPEOg"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
+                  <Image
+                    src="/images/sponsors/avalanche.png"
+                    alt="Somnia africa"
+                    width={150}
+                    height={64}
+                    className="h-16 w-auto object-contain"
+                  />
+                </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -403,7 +418,7 @@ export function PartnersSection() {
             >
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
                 <Image
-                  src="/images/community/webnig.jpg"
+                  src="/images/community/webnig.png"
                   alt="Web3 Nigeria"
                   width={150}
                   height={64}
@@ -434,7 +449,7 @@ export function PartnersSection() {
             >
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
                 <Image
-                  src="/images/community/bnug2.jpg"
+                  src="/images/community/bnug.png"
                   alt="blockchain nigeria user group"
                   width={150}
                   height={64}
