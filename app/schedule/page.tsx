@@ -1,6 +1,7 @@
 import { Agenda } from "@/components/agenda";
 import { gotham } from "@/lib/fonts";
 import type { Metadata } from "next";
+import { BaseSchema } from "@/components/seo/schema-markup";
 
 export const metadata: Metadata = {
   title: "Schedule | Blockfest Africa - Event Program & Activities",
@@ -39,8 +40,32 @@ export default function Schedule() {
     },
   };
 
+  const schedulePageData = {
+    name: "Schedule - Blockfest Africa 2025",
+    description:
+      "Explore the full schedule of activities for Blockfest Africa. Join industry leaders, attend keynote sessions, and participate in workshops on AI, Blockchain, and emerging technologies.",
+    url: "https://blockfestafrica.com/schedule",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "Blockfest Africa",
+      url: "https://blockfestafrica.com",
+    },
+    about: {
+      "@type": "Event",
+      name: "Blockfest Africa 2025",
+      startDate: "2025-10-11T08:30:00+01:00",
+      endDate: "2025-10-11T18:00:00+01:00",
+    },
+    mainEntity: {
+      "@type": "EventSchedule",
+      name: "Blockfest Africa 2025 Schedule",
+      description: "Complete program of activities for Blockfest Africa 2025",
+    },
+  };
+
   return (
     <>
+      <BaseSchema type="WebPage" data={schedulePageData} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}

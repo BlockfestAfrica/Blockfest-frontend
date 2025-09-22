@@ -2,8 +2,9 @@ import React from "react";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { SpeakersGrid } from "@/components/speakers/main-speakers";
-
-
+import { SpeakersSchema } from "@/components/seo/speakers-schema";
+import { BreadcrumbSchema } from "@/components/seo/schema-markup";
+import { SpeakersList, type Speaker } from "@/lib/speakers";
 
 const Gotham = localFont({
   src: "../../app/fonts/Gotham-Medium.otf",
@@ -50,12 +51,34 @@ export const metadata: Metadata = {
   },
 };
 
-
 const SpeakersPage = () => {
+  // Convert actual speakers data for schema markup
+  const speakers = SpeakersList.map((speaker: Speaker) => ({
+    name: speaker.name,
+    jobTitle: speaker.title,
+    description: speaker.expertise?.join(", ") || speaker.title,
+    image: speaker.image
+      ? `https://blockfestafrica.com${speaker.image}`
+      : undefined,
+    url: speaker.website,
+    sameAs: [speaker.twitter, speaker.website].filter(Boolean) as string[],
+  }));
+
+  const breadcrumbItems = [
+    { name: "Blockfest Africa", url: "https://blockfestafrica.com" },
+    { name: "Speakers", url: "https://blockfestafrica.com/speakers" },
+  ];
+
   return (
-    <main className={`${Gotham.className}`}>
-      <SpeakersGrid />
-    </main>
+    <>
+      {/* Schema Markup for SEO */}
+      <SpeakersSchema speakers={speakers} />
+      <BreadcrumbSchema items={breadcrumbItems} />
+
+      <main className={`${Gotham.className}`}>
+        <SpeakersGrid />
+      </main>
+    </>
   );
 };
 
