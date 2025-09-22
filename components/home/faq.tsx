@@ -99,7 +99,7 @@ const faqData: FAQItem[] = [
     id: 15,
     question: "How do I join the Telegram community?",
     answer:
-      "Join our Telegram channel for real-time updates, accommodation deals, networking, and community discussions. You can find the link on our website or social media channels.",
+      "Join our Telegram channel at https://t.me/blockf3stafrica for real-time updates, accommodation deals, networking, and community discussions. Stay connected with the Blockfest Africa community!",
   },
   {
     id: 16,
