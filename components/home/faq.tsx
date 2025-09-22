@@ -161,6 +161,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
               className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300"
             >
               <button
+                type="button"
                 className="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-gray-50 rounded-xl transition-colors duration-200"
                 onClick={() => toggleItem(item.id)}
                 aria-expanded={openItems.has(item.id)}
