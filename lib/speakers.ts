@@ -142,12 +142,27 @@ export const SpeakersList: Speaker[] = [
     website: "https://elisha-owusu-akyaw.com",
   },
   {
+    name: "Ugochukwu Aronu",
+    title: "Co-Founder Xend Finance, Wicrypt and AssetChain",
+    image: "/images/speakers/aronu.webp",
+    expertise: ["Business & Finance", "Entrepreneurship", "Web3 & Blockchain"],
+    company: "Xend Finance, Wicrypt and AssetChain",
+  },
+
+  {
     name: "TheGreatOla",
     title: "Web3 Marketer & Vibe Creator",
     image: "/images/speakers/ola.jpg",
     expertise: ["Marketing & Media", "Web3 & Blockchain"],
     twitter: "https://x.com/thegreatola?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
     website: "https://linktr.ee/thegreatola",
+  },
+  {
+    name: "Harri Obi",
+    title: "Lead, Solana SuperteamNG",
+    image: "/images/speakers/obi.webp",
+    expertise: ["Education", "Web3 & Blockchain"],
+    company: "SuperteamNG",
   },
   {
     name: "Chike Okonkwo",
@@ -183,18 +198,6 @@ export const SpeakersList: Speaker[] = [
     title: "Web3 Creative Director",
     image: "/images/speakers/ajayi.jpg",
     expertise: ["Education", "Web3 & Blockchain"],
-  }, {
-    name: "Ugochukwu Aronu",
-    title: "Co-Founder Xend Finance, Wicrypt and AssetChain",
-    image: "/images/speakers/aronu.webp",
-    expertise: ["Business & Finance", "Entrepreneurship", "Web3 & Blockchain", "Education"],
-    company: "Xend Finance, Wicrypt and AssetChain",
-  }, {
-    name: "Harri Obi",
-    title: "Lead, Solana SuperteamNG",
-    image: "/images/speakers/obi.webp",
-    expertise: ["Education", "Web3 & Blockchain"],
-    company: "SuperteamNG",
   },
 ];
 
