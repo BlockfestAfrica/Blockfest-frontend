@@ -6,6 +6,7 @@ import { CountdownGallerySection } from "@/components/home/countdown-gallery";
 import { WhyAttendSection } from "@/components/home/why-attend";
 import { SpeakersSection } from "@/components/home/speakers";
 import { PartnersSection } from "@/components/home/partners";
+import { FAQSection } from "@/components/home/faq";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -26,6 +27,9 @@ export const metadata: Metadata = {
     "fintech conference",
     "blockchain startup",
     "web3 developers",
+    "blockfest africa faq",
+    "blockchain conference questions",
+    "web3 event nigeria registration",
   ],
   openGraph: {
     title: "Blockfest Africa 2025 - Africa's Premier Blockchain Conference",
@@ -57,6 +61,7 @@ const HomePage = () => {
       <WhyAttendSection />
       <SpeakersSection />
       <PartnersSection />
+      <FAQSection />
     </main>
   );
 };
