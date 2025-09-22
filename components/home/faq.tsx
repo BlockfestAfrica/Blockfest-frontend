@@ -121,7 +121,11 @@ const faqData: FAQItem[] = [
   },
 ];
 
-export function FAQSection() {
+interface FAQSectionProps {
+  hideHeader?: boolean;
+}
+
+export function FAQSection({ hideHeader = false }: FAQSectionProps) {
   const [openItems, setOpenItems] = useState<Set<number>>(new Set());
   useSubtleAnimations();
 
@@ -138,15 +142,17 @@ export function FAQSection() {
   return (
     <section className="py-20 lg:py-28 px-4 lg:px-8 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12 lg:mb-16 fade-in-on-scroll">
-          <h2 className="font-light text-3xl lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] mb-4 lg:mb-6 text-black">
-            Frequently Asked <span className="text-[#F2CB45]">Questions</span>
-          </h2>
-          <p className="text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto">
-            Everything you need to know about Africa&apos;s premier Web3
-            conference
-          </p>
-        </div>
+        {!hideHeader && (
+          <div className="text-center mb-12 lg:mb-16 fade-in-on-scroll">
+            <h2 className="font-light text-3xl lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] mb-4 lg:mb-6 text-black">
+              Frequently Asked <span className="text-[#F2CB45]">Questions</span>
+            </h2>
+            <p className="text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto">
+              Everything you need to know about Africa&apos;s premier Web3
+              conference
+            </p>
+          </div>
+        )}
 
         <div className="space-y-4 scale-in">
           {faqData.map((item) => (
