@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { LoginForm } from "@/components/insights/login-form";
+import { BaseSchema } from "@/components/seo/schema-markup";
 
 export const metadata: Metadata = {
   title: "Insights Login | Blockfest Africa",
@@ -8,12 +9,32 @@ export const metadata: Metadata = {
 };
 
 export default function InsightsLoginPage() {
+  const loginPageData = {
+    name: "Insights Login - Blockfest Africa 2025",
+    description:
+      "Secure login access for Blockfest Africa event insights and analytics",
+    url: "https://blockfestafrica.com/insights/login",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "Blockfest Africa",
+      url: "https://blockfestafrica.com",
+    },
+    about: {
+      "@type": "Event",
+      name: "Blockfest Africa 2025",
+    },
+    accessMode: "restricted",
+    isAccessibleForFree: false,
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4">
-      {/* Disable Umami tracking for this page */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
+    <>
+      <BaseSchema type="WebPage" data={loginPageData} />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4">
+        {/* Disable Umami tracking for this page */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
             if (typeof window !== 'undefined') {
               // Disable Umami tracking for this page
               if (typeof localStorage !== 'undefined') {
@@ -25,10 +46,11 @@ export default function InsightsLoginPage() {
               }
             }
           `,
-        }}
-      />
+          }}
+        />
 
-      <LoginForm />
-    </div>
+        <LoginForm />
+      </div>
+    </>
   );
 }

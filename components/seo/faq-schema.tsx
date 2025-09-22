@@ -1,11 +1,5 @@
 import React from "react";
-
-interface FAQItem {
-  id: number;
-  question: string;
-  answer: string;
-  category: string;
-}
+import { type FAQItem } from "@/lib/faq-data";
 
 interface FAQSchemaProps {
   faqs: FAQItem[];

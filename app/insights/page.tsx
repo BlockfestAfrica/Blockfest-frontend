@@ -5,6 +5,7 @@ import { InsightsDashboard } from "@/components/insights/dashboard";
 import { DashboardSkeleton } from "@/components/insights/skeleton";
 import { PasswordProtected } from "@/components/password-protected";
 import { LogoutButton } from "@/components/insights/logout-button";
+import { InsightsSchema } from "@/components/seo/analytics-schema";
 
 export const metadata: Metadata = {
   title: "Event Insights | Blockfest Africa",
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 export default function InsightsPage() {
   return (
     <PasswordProtected>
+      <InsightsSchema />
       <div
         className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 relative overflow-hidden"
         data-umami-ignore="true"

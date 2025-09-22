@@ -7,6 +7,11 @@ import { WhyAttendSection } from "@/components/home/why-attend";
 import { SpeakersSection } from "@/components/home/speakers";
 import { PartnersSection } from "@/components/home/partners";
 import { FAQSection } from "@/components/home/faq";
+import {
+  EventSchema,
+  OrganizationSchema,
+  WebsiteSchema,
+} from "@/components/seo/schema-markup";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -54,15 +59,22 @@ export const metadata: Metadata = {
 
 const HomePage = () => {
   return (
-    <main>
-      <HeroSection />
-      <StatsSection />
-      <CountdownGallerySection />
-      <WhyAttendSection />
-      <SpeakersSection />
-      <PartnersSection />
-      <FAQSection />
-    </main>
+    <>
+      {/* Schema Markup for SEO */}
+      <EventSchema />
+      <OrganizationSchema />
+      <WebsiteSchema />
+
+      <main>
+        <HeroSection />
+        <StatsSection />
+        <CountdownGallerySection />
+        <WhyAttendSection />
+        <SpeakersSection />
+        <PartnersSection />
+        <FAQSection />
+      </main>
+    </>
   );
 };
 
