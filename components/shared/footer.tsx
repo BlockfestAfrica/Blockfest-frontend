@@ -204,6 +204,14 @@ const Footer = () => {
             Badge
           </Link>
 
+          {/* FAQ Page link */}
+          <Link
+            href="/faq"
+            className="text-base xl:text-2xl font-medium cursor-pointer text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+          >
+            FAQ
+          </Link>
+
           {/* Contact mailto link */}
           <Link
             href={`mailto:${contactEmail}`}
