@@ -23,7 +23,7 @@ const faqData: FAQItem[] = [
     id: 1,
     question: "When and where is Blockfest Africa 2025?",
     answer:
-      "Blockfest Africa 2025 will be held on October 11th, 2025, in Lagos, Nigeria at the Landmark Event Center. The event runs from 8:30 AM to 6:00 PM WAT.",
+      "Blockfest Africa 2025 will be held on October 11th, 2025, in Lagos, Nigeria at the Landmark Event Center. The event runs from 8:00 AM to 6:00 PM WAT.",
     category: "Event Details",
   },
   {
@@ -37,7 +37,7 @@ const faqData: FAQItem[] = [
     id: 8,
     question: "What time should I arrive at the venue?",
     answer:
-      "Please come early! Registration opens at 8:30 AM, and we recommend arriving by this time to check in, get settled, and secure good seats. The main program starts at 9:00 AM sharp.",
+      "Please come early! Registration opens at 8:00 AM, and we recommend arriving by this time to check in, get settled, and secure good seats. The main program starts at 8:30 AM sharp.",
     category: "Event Details",
   },
   {

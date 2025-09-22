@@ -11,18 +11,18 @@ export type AgendaItem = {
 export const agendaItems: AgendaItem[] = [
   {
     id: "registration",
-    time: "8:30 - 9:00am",
+    time: "8:00 - 8:30am",
     title: "Registration & Get Settled",
     description: [
       "Arrive early to find your seat and get comfortable.",
       "Registration desk opens for check-in.",
     ],
     type: "networking",
-    duration: 15,
+    duration: 30,
   },
   {
     id: "welcome-keynote",
-    time: "9:00 - 9:30am",
+    time: "8:30 - 9:00am",
     title: "Welcome Keynote",
     speaker: "TBD",
     description: [
@@ -35,7 +35,7 @@ export const agendaItems: AgendaItem[] = [
   },
   {
     id: "first-session",
-    time: "9:30 - 10:15am",
+    time: "9:00 - 9:45am",
     title: "Session 1 - TBD",
     speaker: "TBD",
     description: [

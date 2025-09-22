@@ -34,7 +34,7 @@ export function EventSchema() {
     name: "Blockfest Africa 2025",
     description:
       "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators for a day of learning, networking, and building the future of decentralized technology in Africa.",
-    startDate: "2025-10-11T08:30:00+01:00",
+    startDate: "2025-10-11T08:00:00+01:00",
     endDate: "2025-10-11T18:00:00+01:00",
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
