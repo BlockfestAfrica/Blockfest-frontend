@@ -543,17 +543,17 @@ export function PartnersSection() {
             </div> <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
-                  src="/images/media/businessday.png"
+                  src="/images/media/businessday.svg"
                   alt="Business day"
                   width={150}
                   height={64}
-                  className="h-14 w-auto object-contain"
+                  className="h-14 w-auto object-contain scale-[2]"
                 />
               </div>
             </div> <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
-                  src="/images/media/guardian.png"
+                  src="/images/media/guardian.svg"
                   alt="Guardian"
                   width={150}
                   height={64}
@@ -583,21 +583,21 @@ export function PartnersSection() {
             </div> <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
-                  src="/images/media/tclogo.png"
+                  src="/images/media/tclogo.svg"
                   alt="techcabal"
                   width={150}
                   height={64}
-                  className="h-14 w-auto object-contain"
+                  className="h-16 w-auto object-contain "
                 />
               </div>
             </div> <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
-                  src="/images/media/techpoint.webp"
+                  src="/images/media/techpoint.svg"
                   alt="techpoint"
                   width={150}
                   height={64}
-                  className="h-14 w-auto object-contain"
+                  className="h-16 w-auto object-contain "
                 />
               </div>
             </div>
