@@ -219,6 +219,14 @@ export const SpeakersList: Speaker[] = [
     company: "Tiva Finance",
   },
   {
+    name: "Obinna Iwuno",
+    title: "Strategy Lead, CBC Blockchain Services & Founder, Crypto Bootcamp ",
+    image: "/images/speakers/obinnaiw.jpg",
+    expertise: ["Business & Finance", "Entrepreneurship", "Education", "Web3 & Blockchain"],
+    company: "Crypto Bootcamp",
+    twitter:"https://twitter.com/iwuno_obinna"
+  },
+  {
     name: "Zebulun Ajayi ",
     title: "Web3 Creative Director",
     image: "/images/speakers/ajayi.jpg",
