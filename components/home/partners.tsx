@@ -529,6 +529,77 @@ export function PartnersSection() {
                 />
               </div>
             </div>
+            <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/media/arise.webp"
+                  alt="Arise"
+                  width={150}
+                  height={64}
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+            </div> <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/media/businessday.png"
+                  alt="Business day"
+                  width={150}
+                  height={64}
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+            </div> <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/media/guardian.png"
+                  alt="Guardian"
+                  width={150}
+                  height={64}
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+            </div> <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/media/legit.svg"
+                  alt="legit"
+                  width={150}
+                  height={64}
+                  className="h-12 w-auto object-contain"
+                />
+              </div>
+            </div> <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/media/punch.svg"
+                  alt="punch newspaper"
+                  width={150}
+                  height={64}
+                  className="h-12 w-auto object-contain"
+                />
+              </div>
+            </div> <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/media/tclogo.png"
+                  alt="techcabal"
+                  width={150}
+                  height={64}
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+            </div> <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/media/techpoint.webp"
+                  alt="techpoint"
+                  width={150}
+                  height={64}
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -561,7 +632,7 @@ export function PartnersSection() {
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
                   src="/images/ecosystem/lsg.png"
-                  alt="Forex Blogger Ayo"
+                  alt="Lagos state government"
                   width={150}
                   height={64}
                   className="h-16 w-auto object-contain "
