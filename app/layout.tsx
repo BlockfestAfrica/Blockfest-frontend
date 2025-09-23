@@ -123,15 +123,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const eventStartDate =
-    process.env.NEXT_PUBLIC_EVENT_START_DATE || "2025-10-11T09:00:00+01:00";
-  const eventEndDate =
-    process.env.NEXT_PUBLIC_EVENT_END_DATE || "2025-10-11T18:00:00+01:00";
-  const eventLocation =
-    process.env.NEXT_PUBLIC_EVENT_LOCATION || "Lagos, Nigeria";
-  const eventVenue =
-    process.env.NEXT_PUBLIC_EVENT_VENUE || "Landmark Event Center";
-
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
@@ -161,35 +152,6 @@ export default function RootLayout({
           "@id": `${siteUrl}/#organization`,
         },
         inLanguage: "en-US",
-      },
-      {
-        "@type": "Event",
-        "@id": `${siteUrl}/#event`,
-        name: "Blockfest Africa 2025",
-        description:
-          "Africa's premier blockchain conference bringing together the Web3 community",
-        startDate: eventStartDate,
-        endDate: eventEndDate,
-        eventStatus: "https://schema.org/EventScheduled",
-        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-        location: {
-          "@type": "Place",
-          name: eventVenue,
-          address: {
-            "@type": "PostalAddress",
-            addressCountry: "NG",
-            addressLocality: eventLocation.split(",")[0].trim(),
-          },
-        },
-        organizer: {
-          "@id": `${siteUrl}/#organization`,
-        },
-        offers: {
-          "@type": "Offer",
-          price: "0",
-          priceCurrency: "USD",
-          availability: "https://schema.org/InStock",
-        },
       },
     ],
   };
