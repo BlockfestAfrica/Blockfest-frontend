@@ -181,7 +181,6 @@ export default function RootLayout({
         <link rel="preload" as="image" href="/images/mobile-logo.svg" />
 
         {/* Prefetch likely next pages */}
-        <link rel="prefetch" href="/insights" />
         <link rel="prefetch" href="/analytics" />
 
         <script
