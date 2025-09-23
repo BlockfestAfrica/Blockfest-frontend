@@ -190,6 +190,59 @@ export function WebsiteSchema() {
     mainEntity: {
       "@type": "Event",
       name: "Blockfest Africa 2025",
+      description:
+        "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators for a day of learning, networking, and building the future of decentralized technology in Africa.",
+      startDate: "2025-10-11T08:00:00+01:00",
+      endDate: "2025-10-11T18:00:00+01:00",
+      eventStatus: "https://schema.org/EventScheduled",
+      eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+      location: {
+        "@type": "Place",
+        name: "Landmark Event Center",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "Landmark Event Center",
+          addressLocality: "Lagos",
+          addressRegion: "Lagos State",
+          postalCode: "101001",
+          addressCountry: "NG",
+        },
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: "6.4474",
+          longitude: "3.4126",
+        },
+      },
+      organizer: {
+        "@type": "Organization",
+        name: "Blockfest Africa",
+        url: "https://blockfestafrica.com",
+        email: "partnership@blockfestafrica.com",
+        sameAs: [
+          "https://twitter.com/blockfestafrica",
+          "https://instagram.com/blockfestafrica",
+          "https://youtube.com/@blockfestafrica",
+          "https://linkedin.com/company/blockfest-africa",
+          "https://t.me/blockf3stafrica",
+        ],
+      },
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "NGN",
+        availability: "https://schema.org/InStock",
+        url: "https://luma.com/gf1ye3cw?tk=AQAG9o",
+        description: "Free admission to Blockfest Africa 2025",
+      },
+      performer: [
+        {
+          "@type": "Organization",
+          name: "Blockfest Africa",
+          description:
+            "Leading Web3 and blockchain conference organizer in Africa",
+        },
+      ],
+      image: "https://blockfestafrica.com/images/og-image.jpg",
     },
   };
 
