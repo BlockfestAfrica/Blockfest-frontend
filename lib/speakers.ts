@@ -16,6 +16,7 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/samuel.jpg",
     expertise: ["Education", "Web3 & Blockchain"],
     company: "BlockF3st Africa & Nirvana Academy",
+    twitter: "https://x.com/SamuelXeus"
   },
   {
     name: "Hon. Mobolaji Ogunlende Abubakre",
@@ -23,23 +24,44 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/mobolaji.jpg",
     expertise: ["Government & Policy"],
     company: "Lagos State Government",
+    twitter:"https://x.com/mo_ogunlende?s=21&t=6lhy88Nx16NRD-zFs2-S9w"
   },
 
   {
     name: "Chimezie Chuta",
     title: "Founder, Blockchain Nigeria User Group",
     image: "/images/speakers/chuta.jpg",
-    expertise: ["Education", "Web3 & Blockchain"],
+    expertise: ["Education", "Web3 & Blockchain", "Government & Policy"],
     company: "Blockchain Nigeria User Group",
     twitter: "https://x.com/chimeziechuta?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
   },
+
   {
-    name: "Mrs. Chisom Edwin",
-    title: "Founder, Peaches Academy/Nestrolab",
-    image: "/images/speakers/chisom.jpg",
-    expertise: ["Education", "Tech Innovation"],
-    company: "Nestrolab",
+    name: "Idris Olubisi",
+    title: "Developer Relations Engineer | Founder, Web3 Afrika",
+    image: "/images/speakers/idris.webp",
+    expertise: [
+      "Web3 & Blockchain",
+      "Education",
+      "Development",
+      "Community Building",
+    ],
+    company: "Web3 Afrika",
+    twitter: "https://x.com/olanetsoft",
+    website: "https://www.web3afrika.com/",
   },
+
+  {
+    name: "Sarah Idahosa",
+    title: "Founder, Women In DeFi",
+    image: "/images/speakers/sarah.jpg",
+    expertise: ["Web3 & Blockchain", "DeFi", "Community Building", "Education"],
+    company: "Women In DeFi",
+    twitter: "https://x.com/thesarahidahosa",
+    website: "https://womenindefi.org/"
+  },
+
+
   {
     name: "Ayodeji Israel Awosika",
     title: "Founder, Web3bridge",
@@ -58,12 +80,23 @@ export const SpeakersList: Speaker[] = [
     expertise: ["Entrepreneurship", "Fintech"],
     company: "Jeroid",
   },
+
+  {
+    name: "Mrs. Chisom Edwin",
+    title: "Founder, Peaches Academy/Nestrolab",
+    image: "/images/speakers/chisom.jpg",
+    expertise: ["Education", "Tech Innovation"],
+    company: "Nestrolab",
+    twitter: "https://x.com/1CryptoMama"
+  },
+
   {
     name: "Onone Peace Ega",
     title: "Program Manager | FinTech & Web3 Innovation",
     image: "/images/speakers/peace.jpg",
     expertise: ["Education", "Web3 & Blockchain", "Fintech"],
     company: "FinTech & Web3 Innovation",
+    twitter: "https://x.com/Scrum_maestro"
   },
   {
     name: "Seun Lanlege",
@@ -95,20 +128,7 @@ export const SpeakersList: Speaker[] = [
     expertise: ["Legal & Regulation"],
     company: "Lightfield LP",
   },
-  {
-    name: "Idris Olubisi",
-    title: "Developer Relations Engineer | Founder, Web3 Afrika",
-    image: "/images/speakers/idris.webp",
-    expertise: [
-      "Web3 & Blockchain",
-      "Education",
-      "Development",
-      "Community Building",
-    ],
-    company: "Web3 Afrika",
-    twitter: "https://x.com/olanetsoft",
-    website: "https://www.web3afrika.com/",
-  },
+
   {
     name: "Kyrian Alex",
     title: "Research Analyst, Cointelegraph Research",
@@ -123,13 +143,7 @@ export const SpeakersList: Speaker[] = [
   //   title: "Ecosystem Lead(Africa), Lisk",
   //   image: "/images/speakers/chidubem.jpg"
   // }
-  {
-    name: "Sarah Idahosa",
-    title: "Founder, Women In DeFi",
-    image: "/images/speakers/sarah.jpg",
-    expertise: ["Web3 & Blockchain", "DeFi", "Community Building"],
-    company: "Women In DeFi",
-  },
+
   {
     name: "Sir. K.C. Onyekachi",
     title: "Founder, Opex School of Excellence",
@@ -154,6 +168,7 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/aronu.webp",
     expertise: ["Business & Finance", "Entrepreneurship", "Web3 & Blockchain"],
     company: "Xend Finance, Wicrypt and AssetChain",
+    twitter: "https://x.com/AronuUgochukwu"
   },
 
   {
@@ -170,12 +185,14 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/obi.webp",
     expertise: ["Education", "Web3 & Blockchain"],
     company: "SuperteamNG",
+    twitter: "https://x.com/Harri_obi"
   },
   {
     name: "Chike Okonkwo",
     title: "Business Development, Marketing & Operations",
     image: "/images/speakers/chike.jpg",
     expertise: ["Business & Finance", "Marketing & Media"],
+    twitter: "https://x.com/Okonkwochike"
   },
   {
     name: "Adum Obinna Abraham",
@@ -192,12 +209,13 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/okoro.jpg",
     expertise: ["DeFi", "Entrepreneurship"],
     company: "Azza",
+    twitter: "https://x.com/ToochukwuOkoro2"
   },
   {
     name: "Gilchrist Emeremgini",
     title: "Co-founder & CEO, Tiva Finance",
     image: "/images/speakers/gilchrist.jpg",
-    expertise: ["Business & Finance", "Entrepreneurship"],
+    expertise: ["Business & Finance", "Entrepreneurship", "Fintech"],
     company: "Tiva Finance",
   },
   {
