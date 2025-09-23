@@ -646,9 +646,27 @@ export function PartnersSection() {
                   alt="Igadgetmart"
                   width={150}
                   height={64}
-                  className="h-16 w-auto object-contain "
+                  className="h-16 w-auto object-contain scale-[2] "
                 />
               </div>
+            </div>
+
+            <div className="flex justify-center">
+              <Link
+                href="https://siban.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                    src="/images/ecosystem/siban.png"
+                    alt="AMD"
+                    width={150}
+                    height={64}
+                    className="h-16 lg:h-14 w-auto object-contain scale-[2] "
+                  />
+                </div>
+              </Link>
             </div>
           </div>
         </div>
