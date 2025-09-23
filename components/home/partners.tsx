@@ -465,11 +465,11 @@ export function PartnersSection() {
             >
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
                 <Image
-                  src="/images/community/hive.png"
+                  src="/images/community/hive2.png"
                   alt="Insidethehive Image"
                   width={150}
                   height={64}
-                  className="h-16 w-auto object-contain"
+                  className="h-20 w-auto object-contain"
                 />
               </div>
             </Link>
@@ -573,7 +573,7 @@ export function PartnersSection() {
             </div> <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
-                  src="/images/media/punch.svg"
+                  src="/images/media/Punch.svg"
                   alt="punch newspaper"
                   width={150}
                   height={64}
@@ -632,11 +632,11 @@ export function PartnersSection() {
             <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
-                  src="/images/ecosystem/lsg.png"
+                  src="/images/ecosystem/lsg2.png"
                   alt="Lagos state government"
                   width={150}
                   height={64}
-                  className="h-16 w-auto object-contain "
+                  className="h-18 md:h-20 w-auto object-contain "
                 />
               </div>
             </div>
