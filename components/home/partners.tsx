@@ -483,7 +483,18 @@ export function PartnersSection() {
               📺 Media Partners
             </h3>
           </div>
-          <div className="flex flex-wrap justify-center gap-4 lg:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+            <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/media/ifemedia.png"
+                  alt="Ife Media "
+                  width={150}
+                  height={64}
+                  className="h-14 w-auto object-contain"
+                />
+              </div>
+            </div>
             <div className="flex justify-center">
               <Link
                 href="https://ambcrypto.com/"
@@ -518,17 +529,7 @@ export function PartnersSection() {
                 </div>
               </Link>
             </div>
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/ifemedia.png"
-                  alt="Ife Media "
-                  width={150}
-                  height={64}
-                  className="h-16 w-auto object-contain"
-                />
-              </div>
-            </div>
+
             <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
@@ -536,7 +537,7 @@ export function PartnersSection() {
                   alt="Arise"
                   width={150}
                   height={64}
-                  className="h-16 w-auto object-contain"
+                  className="h-14 w-auto object-contain"
                 />
               </div>
             </div> <div className="flex justify-center">
@@ -546,7 +547,7 @@ export function PartnersSection() {
                   alt="Business day"
                   width={150}
                   height={64}
-                  className="h-16 w-auto object-contain"
+                  className="h-14 w-auto object-contain"
                 />
               </div>
             </div> <div className="flex justify-center">
@@ -556,7 +557,7 @@ export function PartnersSection() {
                   alt="Guardian"
                   width={150}
                   height={64}
-                  className="h-16 w-auto object-contain"
+                  className="h-14 w-auto object-contain"
                 />
               </div>
             </div> <div className="flex justify-center">
@@ -566,7 +567,7 @@ export function PartnersSection() {
                   alt="legit"
                   width={150}
                   height={64}
-                  className="h-12 w-auto object-contain"
+                  className="h-10 w-auto object-contain"
                 />
               </div>
             </div> <div className="flex justify-center">
@@ -576,7 +577,7 @@ export function PartnersSection() {
                   alt="punch newspaper"
                   width={150}
                   height={64}
-                  className="h-12 w-auto object-contain"
+                  className="h-10 w-auto object-contain"
                 />
               </div>
             </div> <div className="flex justify-center">
@@ -586,7 +587,7 @@ export function PartnersSection() {
                   alt="techcabal"
                   width={150}
                   height={64}
-                  className="h-16 w-auto object-contain"
+                  className="h-14 w-auto object-contain"
                 />
               </div>
             </div> <div className="flex justify-center">
@@ -596,7 +597,7 @@ export function PartnersSection() {
                   alt="techpoint"
                   width={150}
                   height={64}
-                  className="h-16 w-auto object-contain"
+                  className="h-14 w-auto object-contain"
                 />
               </div>
             </div>
@@ -646,7 +647,7 @@ export function PartnersSection() {
                   alt="Igadgetmart"
                   width={150}
                   height={64}
-                  className="h-16 w-auto object-contain scale-[2] "
+                  className="h-16 w-auto object-contain scale-[2]"
                 />
               </div>
             </div>
