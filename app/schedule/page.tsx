@@ -95,7 +95,8 @@ export default function Schedule() {
     about: {
       "@type": "Event",
       name: "Blockfest Africa 2025",
-      description: "Premier blockchain and technology conference in Africa bringing together builders, founders, investors, and DeFi professionals.",
+      description:
+        "Premier blockchain and technology conference in Africa bringing together builders, founders, investors, and DeFi professionals.",
       startDate: "2025-10-11T08:00:00+01:00",
       endDate: "2025-10-11T18:00:00+01:00",
       eventStatus: "https://schema.org/EventScheduled",
