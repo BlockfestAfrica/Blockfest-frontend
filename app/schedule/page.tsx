@@ -37,11 +37,19 @@ export default function Schedule() {
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
       "@type": "Place",
-      name: "Lagos, Nigeria",
+      name: "Landmark Event Center",
       address: {
         "@type": "PostalAddress",
+        streetAddress: "Landmark Event Center",
         addressLocality: "Lagos",
+        addressRegion: "Lagos State",
+        postalCode: "101001",
         addressCountry: "NG",
+      },
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: "6.4474",
+        longitude: "3.4126",
       },
     },
     image: "https://blockfestafrica.com/images/og-image.jpg",
@@ -49,6 +57,14 @@ export default function Schedule() {
       "@type": "Organization",
       name: "Blockfest Africa",
       url: "https://blockfestafrica.com",
+      email: "partnership@blockfestafrica.com",
+      sameAs: [
+        "https://twitter.com/blockfestafrica",
+        "https://instagram.com/blockfestafrica",
+        "https://youtube.com/@blockfestafrica",
+        "https://linkedin.com/company/blockfest-africa",
+        "https://t.me/blockf3stafrica",
+      ],
     },
     offers: {
       "@type": "Offer",

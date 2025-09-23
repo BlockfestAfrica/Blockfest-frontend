@@ -35,11 +35,26 @@ export function SpeakersSchema({ speakers }: SpeakersSchemaProps) {
         performerIn: {
           "@type": "Event",
           name: "Blockfest Africa 2025",
+          description:
+            "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators.",
           startDate: "2025-10-11T08:00:00+01:00",
+          endDate: "2025-10-11T18:00:00+01:00",
+          eventStatus: "https://schema.org/EventScheduled",
           location: {
             "@type": "Place",
             name: "Landmark Event Center",
-            address: "Lagos, Nigeria",
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: "Landmark Event Center",
+              addressLocality: "Lagos",
+              addressRegion: "Lagos State",
+              addressCountry: "NG",
+            },
+          },
+          organizer: {
+            "@type": "Organization",
+            name: "Blockfest Africa",
+            url: "https://blockfestafrica.com",
           },
         },
       },
@@ -72,15 +87,26 @@ export function SpeakerSchema({ speaker }: SpeakerSchemaProps) {
     performerIn: {
       "@type": "Event",
       name: "Blockfest Africa 2025",
+      description:
+        "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators.",
       startDate: "2025-10-11T08:00:00+01:00",
+      endDate: "2025-10-11T18:00:00+01:00",
+      eventStatus: "https://schema.org/EventScheduled",
       location: {
         "@type": "Place",
         name: "Landmark Event Center",
-        address: "Lagos, Nigeria",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "Landmark Event Center",
+          addressLocality: "Lagos",
+          addressRegion: "Lagos State",
+          addressCountry: "NG",
+        },
       },
       organizer: {
         "@type": "Organization",
         name: "Blockfest Africa",
+        url: "https://blockfestafrica.com",
       },
     },
     knowsAbout: [
