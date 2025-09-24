@@ -39,7 +39,7 @@ export const SpeakersList: Speaker[] = [
   {
     name: "Idris Olubisi",
     title: "Developer Relations Engineer | Founder, Web3 Afrika",
-    image: "/images/speakers/idris.webp",
+    image: "/images/speakers/idris2.jpg",
     expertise: [
       "Web3 & Blockchain",
       "Education",
