@@ -53,7 +53,7 @@ export function PartnersSection() {
       window.open(
         "https://luma.com/gf1ye3cw?tk=AQAG9o",
         "_blank",
-        "noopener,noreferrer"
+        "noopener,noreferrer",
       );
     } else {
       // Show X Space invitation toast with dynamic date formatting
@@ -99,10 +99,10 @@ export function PartnersSection() {
               window.open(
                 "https://twitter.com/i/spaces/1kvJpMYEXALxE",
                 "_blank",
-                "noopener,noreferrer"
+                "noopener,noreferrer",
               ),
           },
-        }
+        },
       );
     }
   };
@@ -529,8 +529,7 @@ export function PartnersSection() {
                 </div>
               </Link>
             </div>
-
-            <div className="flex justify-center">
+            {/* <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
                   src="/images/media/arise.webp"
@@ -540,7 +539,8 @@ export function PartnersSection() {
                   className="h-14 w-auto object-contain"
                 />
               </div>
-            </div> <div className="flex justify-center">
+            </div>  */}
+            <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
                   src="/images/media/businessday.svg"
@@ -550,7 +550,8 @@ export function PartnersSection() {
                   className="h-14 w-auto object-contain scale-[2]"
                 />
               </div>
-            </div> <div className="flex justify-center">
+            </div>{" "}
+            <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
                   src="/images/media/guardian.svg"
@@ -560,7 +561,8 @@ export function PartnersSection() {
                   className="h-14 w-auto object-contain"
                 />
               </div>
-            </div> <div className="flex justify-center">
+            </div>{" "}
+            <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
                   src="/images/media/legit.svg"
@@ -570,7 +572,8 @@ export function PartnersSection() {
                   className="h-10 w-auto object-contain"
                 />
               </div>
-            </div> <div className="flex justify-center">
+            </div>{" "}
+            <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
                   src="/images/media/Punch.svg"
@@ -580,7 +583,8 @@ export function PartnersSection() {
                   className="h-10 w-auto object-contain"
                 />
               </div>
-            </div> <div className="flex justify-center">
+            </div>{" "}
+            <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
                   src="/images/media/tclogo.svg"
@@ -590,7 +594,8 @@ export function PartnersSection() {
                   className="h-16 w-auto object-contain "
                 />
               </div>
-            </div> <div className="flex justify-center">
+            </div>{" "}
+            <div className="flex justify-center">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
                 <Image
                   src="/images/media/techpoint.svg"
