@@ -102,15 +102,10 @@ export default function FAQPage() {
       ],
     },
     mainEntity: {
-      "@type": "FAQPage",
-      mainEntity: faqData.map((faq) => ({
-        "@type": "Question",
-        name: faq.question,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: faq.answer,
-        },
-      })),
+      "@type": "WebPage",
+      name: "Blockfest Africa 2025 FAQ",
+      description:
+        "Complete guide with all frequently asked questions about the premier Web3 conference in Africa",
     },
   };
 
