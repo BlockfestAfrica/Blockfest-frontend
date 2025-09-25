@@ -232,6 +232,13 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/ajayi.jpg",
     expertise: ["Education", "Web3 & Blockchain"],
   },
+  {
+    name: "Atinuke Oluwabamikemi Kayode",
+    title: "Community Marketing Specialist, AsyncAPI",
+    image: "/images/speakers/atinuke.webp",
+    expertise: ["Education", "Marketing & Media"],
+    company: "AsyncAPI"
+  },
 ];
 
 // Export unique expertise categories for filtering
