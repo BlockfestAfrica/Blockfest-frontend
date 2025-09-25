@@ -155,7 +155,7 @@ const Speakers: React.FC<PropType> = (props) => {
                         {speaker.title}
                       </p>
                     </div>
-                    <div className="md:basis-[40%] basis-auto w-[250px] h-[250px]  md:w-[250px] md:h-[250px] lg:w-[300px] lg:h-[300px]  xl:w-[320px] xl:h-[320px] aspect-square rounded-2xl overflow-hidden ring-4 ring-white/20 flex-shrink-0 mx-auto md:mx-0">
+                    <div className="md:basis-[40%] basis-auto w-[250px] h-[250px]  md:w-[250px] md:h-[250px] lg:w-[300px] lg:h-[300px]  xl:w-[350px] xl:h-[350px] aspect-square rounded-2xl overflow-hidden ring-4 ring-white/20 flex-shrink-0 mx-auto md:mx-0">
                       <Image
                         src={speaker.image}
                         alt={`Portrait of ${speaker.name}, ${speaker.title}`}

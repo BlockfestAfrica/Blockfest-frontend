@@ -13,7 +13,7 @@ export const SpeakersList: Speaker[] = [
   {
     name: "Samuel Olaoyenikan",
     title: "Convener BlockF3st Africa & Founder, Nirvana Academy",
-    image: "/images/speakers/samuel.jpg",
+    image: "/images/speakers/samuelo.jpg",
     expertise: ["Education", "Web3 & Blockchain"],
     company: "BlockF3st Africa & Nirvana Academy",
     twitter: "https://x.com/SamuelXeus"
@@ -24,7 +24,7 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/mobolaji.jpg",
     expertise: ["Government & Policy"],
     company: "Lagos State Government",
-    twitter:"https://x.com/mo_ogunlende?s=21&t=6lhy88Nx16NRD-zFs2-S9w"
+    twitter: "https://x.com/mo_ogunlende?s=21&t=6lhy88Nx16NRD-zFs2-S9w"
   },
 
   {
@@ -220,11 +220,11 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Obinna Iwuno",
-    title: "Strategy Lead, CBC Blockchain Services & Founder, Crypto Bootcamp ",
+    title: "President, SIBAN ",
     image: "/images/speakers/obinnaiw.jpg",
     expertise: ["Business & Finance", "Entrepreneurship", "Education", "Web3 & Blockchain"],
     company: "Crypto Bootcamp",
-    twitter:"https://twitter.com/iwuno_obinna"
+    twitter: "https://twitter.com/iwuno_obinna"
   },
   {
     name: "Zebulun Ajayi ",
