@@ -253,6 +253,13 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/matic.jpg",
     expertise: ["Education", "Web3 & Blockchain"],
   },
+  {
+    name: "David Adegoke",
+    title: "Mobile Engineer, Cake Wallet",
+    image: "/images/speakers/adegoke.jpg",
+    expertise: ["Education", "Development", "Web3 & Blockchain"],
+    company: "Cake Wallet"
+  },
 ];
 
 // Export unique expertise categories for filtering
