@@ -37,6 +37,14 @@ export const SpeakersList: Speaker[] = [
   },
 
   {
+    name: "Emomotimi Agama",
+    title: "Director General, Security and Exchange Commission, Nigeria",
+    image: "/images/speakers/agama.jpg",
+    expertise: ["Government & Policy", "Education"],
+    company: "Security and Exchange Commission, Nigeria",
+  },
+
+  {
     name: "Idris Olubisi",
     title: "Developer Relations Engineer | Founder, Web3 Afrika",
     image: "/images/speakers/idris2.jpg",
@@ -238,6 +246,12 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/atinuke.webp",
     expertise: ["Education", "Marketing & Media"],
     company: "AsyncAPI"
+  },
+  {
+    name: "Wisdom Matic",
+    title: "Crypto Investor, Trader and Coach",
+    image: "/images/speakers/matic.webp",
+    expertise: ["Education", "Web3 & Blockchain"],
   },
 ];
 
