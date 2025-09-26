@@ -250,7 +250,7 @@ export const SpeakersList: Speaker[] = [
   {
     name: "Wisdom Matic",
     title: "Crypto Investor, Trader and Coach",
-    image: "/images/speakers/matic.webp",
+    image: "/images/speakers/matic.jpg",
     expertise: ["Education", "Web3 & Blockchain"],
   },
 ];
