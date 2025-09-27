@@ -12,9 +12,10 @@ import {
   FiChevronUp,
 } from "react-icons/fi";
 import Link from "next/link";
-import { SpeakersList } from "@/lib/speakers";
+import { SpeakersList, Speaker } from "@/lib/speakers";
 import { gotham } from "@/lib/fonts";
 import { SpeakersGridSkeleton } from "./skeleton";
+import { SpeakerBioModal } from "./speaker-bio-modal";
 import "./animations.css";
 
 export function SpeakersGrid() {
@@ -24,6 +25,23 @@ export function SpeakersGrid() {
     null
   );
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedSpeaker, setSelectedSpeaker] = useState<Speaker | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openSpeakerModal = React.useCallback((speaker: Speaker) => {
+    setSelectedSpeaker(speaker);
+    setIsModalOpen(true);
+  }, []);
+
+  const closeSpeakerModal = React.useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedSpeaker(null);
+  }, []);
+
+  const clearAllFilters = React.useCallback(() => {
+    setSearchTerm("");
+    setSelectedExpertise(null);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -160,10 +178,22 @@ export function SpeakersGrid() {
         {filteredSpeakers.length > 0 ? (
           filteredSpeakers.map((speaker, index) => (
             <div
-              key={speaker.name}
-              className={`flex flex-col items-center bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-6 border border-[#D1D1D1] shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 ease-out gap-y-4 sm:gap-y-6 justify-around group animate-fade-in ${
+              key={`speaker-${speaker.name
+                .replace(/\s+/g, "-")
+                .toLowerCase()}-${index}`}
+              className={`flex flex-col items-center bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-6 border border-[#D1D1D1] shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 ease-out gap-y-4 sm:gap-y-6 justify-around group animate-fade-in cursor-pointer ${
                 index < 6 ? `animate-delay-${(index + 1) * 100}` : ""
               }`}
+              onClick={() => openSpeakerModal(speaker)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openSpeakerModal(speaker);
+                }
+              }}
+              aria-label={`View ${speaker.name}'s bio`}
             >
               <div className="relative shrink-0 w-[140px] h-[140px] xs:w-[160px] xs:h-[160px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px] lg:w-[280px] lg:h-[280px] rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-105">
                 <Image
@@ -201,13 +231,14 @@ export function SpeakersGrid() {
                         href={speaker.twitter}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[#1DA1F2] to-[#0ea5e9] text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-3 focus:ring-blue-500/50 focus:ring-offset-2"
+                        className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-[#1DA1F2] to-[#0ea5e9] text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 touch-manipulation"
                         aria-label={`Follow ${speaker.name} on Twitter`}
-                        title={`Follow ${speaker.name} on Twitter`}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <FaXTwitter size={18} />
+                        <FaXTwitter size={18} className="shrink-0" />
                       </Link>
-                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                      {/* Hide tooltip on mobile to prevent clipping */}
+                      <div className="hidden sm:block absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                         Follow on Twitter
                       </div>
                     </div>
@@ -219,13 +250,14 @@ export function SpeakersGrid() {
                         href={speaker.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[#3D7BE8] to-[#6597ED] text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-3 focus:ring-blue-500/50 focus:ring-offset-2"
+                        className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-[#3D7BE8] to-[#6597ED] text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 touch-manipulation"
                         aria-label={`Visit ${speaker.name}'s website`}
-                        title={`Visit ${speaker.name}'s website`}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <CiGlobe size={20} />
+                        <CiGlobe size={20} className="shrink-0" />
                       </Link>
-                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                      {/* Hide tooltip on mobile to prevent clipping */}
+                      <div className="hidden sm:block absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                         Visit Website
                       </div>
                     </div>
@@ -248,10 +280,7 @@ export function SpeakersGrid() {
             </p>
             <button
               type="button"
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedExpertise(null);
-              }}
+              onClick={clearAllFilters}
               className="mt-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white text-sm sm:text-base rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors touch-manipulation"
             >
               Clear All Filters
@@ -259,6 +288,15 @@ export function SpeakersGrid() {
           </div>
         )}
       </div>
+
+      {/* Speaker Bio Modal */}
+      {isModalOpen && selectedSpeaker && (
+        <SpeakerBioModal
+          speaker={selectedSpeaker}
+          isOpen={isModalOpen}
+          onClose={closeSpeakerModal}
+        />
+      )}
     </section>
   );
 }
