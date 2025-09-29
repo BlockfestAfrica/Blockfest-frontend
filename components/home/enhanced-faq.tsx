@@ -436,7 +436,7 @@ export function EnhancedFAQSection({
                 className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-[#1B64E4] hover:bg-[#1B64E4]/5 transition-all duration-200 group"
               >
                 <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
-                  �
+                  📅
                 </span>
                 <span className="font-medium text-gray-700 group-hover:text-[#1B64E4] transition-colors duration-200">
                   Schedule

@@ -12,12 +12,9 @@ import {
   FiChevronUp,
   FiExternalLink,
 } from "react-icons/fi";
-import Link from "next/link";
 import { SpeakersList } from "@/lib/speakers";
 import { gotham } from "@/lib/fonts";
 import { SpeakersGridSkeleton } from "./skeleton";
-// @ts-expect-error - CSS file import
-import "./animations.css";
 
 export function SpeakersGrid() {
   const [isLoading, setIsLoading] = useState(true);
@@ -175,7 +172,7 @@ export function SpeakersGrid() {
           filteredSpeakers.map((speaker, index) => {
             const speakerSlug = generateSpeakerSlug(speaker.name);
             return (
-              <Link
+              <a
                 key={`speaker-${speaker.name
                   .replace(/\s+/g, "-")
                   .toLowerCase()}-${index}`}
@@ -260,7 +257,7 @@ export function SpeakersGrid() {
                     <FiExternalLink className="w-3 h-3" />
                   </div>
                 </div>
-              </Link>
+              </a>
             );
           })
         ) : (

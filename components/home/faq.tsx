@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, ArrowUpIcon } from "lucide-react";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import "./subtle-animations.css";
 
@@ -127,6 +127,7 @@ interface FAQSectionProps {
 
 export function FAQSection({ hideHeader = false }: FAQSectionProps) {
   const [openItems, setOpenItems] = useState<Set<number>>(new Set());
+  const [showBackToTop, setShowBackToTop] = useState(false);
   useSubtleAnimations();
 
   const toggleItem = (id: number) => {
@@ -138,6 +139,19 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
     }
     setOpenItems(newOpenItems);
   };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Handle scroll for back to top button
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <section className="py-20 lg:py-28 px-4 lg:px-8 bg-gradient-to-b from-white to-gray-50">
@@ -208,6 +222,17 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
             </a>
           </div>
         </div>
+
+        {/* Back to Top Button */}
+        {showBackToTop && (
+          <button
+            onClick={scrollToTop}
+            className="fixed bottom-6 right-6 lg:bottom-8 lg:right-8 bg-[#1B64E4] text-white w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-lg hover:bg-[#3D7BE8] transition-all duration-200 z-50 flex items-center justify-center transform hover:scale-110"
+            aria-label="Back to top"
+          >
+            <ArrowUpIcon className="w-5 h-5 lg:w-6 lg:h-6" />
+          </button>
+        )}
       </div>
     </section>
   );
