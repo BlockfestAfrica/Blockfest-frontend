@@ -10,12 +10,12 @@ import {
   FiFilter,
   FiChevronDown,
   FiChevronUp,
+  FiExternalLink,
 } from "react-icons/fi";
 import Link from "next/link";
-import { SpeakersList, Speaker } from "@/lib/speakers";
+import { SpeakersList } from "@/lib/speakers";
 import { gotham } from "@/lib/fonts";
 import { SpeakersGridSkeleton } from "./skeleton";
-import { SpeakerBioModal } from "./speaker-bio-modal";
 import "./animations.css";
 
 export function SpeakersGrid() {
@@ -25,23 +25,18 @@ export function SpeakersGrid() {
     null
   );
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedSpeaker, setSelectedSpeaker] = useState<Speaker | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openSpeakerModal = React.useCallback((speaker: Speaker) => {
-    setSelectedSpeaker(speaker);
-    setIsModalOpen(true);
-  }, []);
-
-  const closeSpeakerModal = React.useCallback(() => {
-    setIsModalOpen(false);
-    setSelectedSpeaker(null);
-  }, []);
 
   const clearAllFilters = React.useCallback(() => {
     setSearchTerm("");
     setSelectedExpertise(null);
   }, []);
+
+  const generateSpeakerSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -176,96 +171,97 @@ export function SpeakersGrid() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full max-w-7xl">
         {filteredSpeakers.length > 0 ? (
-          filteredSpeakers.map((speaker, index) => (
-            <div
-              key={`speaker-${speaker.name
-                .replace(/\s+/g, "-")
-                .toLowerCase()}-${index}`}
-              className={`flex flex-col items-center bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-6 border border-[#D1D1D1] shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 ease-out gap-y-4 sm:gap-y-6 justify-around group animate-fade-in cursor-pointer ${
-                index < 6 ? `animate-delay-${(index + 1) * 100}` : ""
-              }`}
-              onClick={() => openSpeakerModal(speaker)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  openSpeakerModal(speaker);
-                }
-              }}
-              aria-label={`View ${speaker.name}'s bio`}
-            >
-              <div className="relative shrink-0 w-[140px] h-[140px] xs:w-[160px] xs:h-[160px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px] lg:w-[280px] lg:h-[280px] rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-105">
-                <Image
-                  src={speaker.image}
-                  alt={`${speaker.name} - ${speaker.title}`}
-                  fill
-                  className={`object-cover ${
-                    speaker.imagePosition || "object-top"
-                  }`}
-                  quality={85}
-                  loading="lazy"
-                  sizes="(min-width: 1024px) 280px, (min-width: 768px) 220px, (min-width: 640px) 180px, (min-width: 480px) 160px, 140px"
-                />
-              </div>
-
-              <div className="flex flex-col items-center gap-y-3 sm:gap-y-4 w-full">
-                <div className="flex flex-col gap-y-1 sm:gap-y-2 items-center text-center w-full">
-                  <h3
-                    className={`${gotham.className} text-lg xs:text-xl sm:text-2xl md:text-[26px] lg:text-[29px] font-bold md:font-semibold leading-tight`}
-                  >
-                    {speaker.name}
-                  </h3>
-                  <p
-                    className={`${gotham.className} text-sm xs:text-base sm:text-lg md:text-[18px] lg:text-[20px] font-medium text-[#A4A4A4] leading-relaxed px-2 sm:px-0`}
-                  >
-                    {speaker.title}
-                  </p>
+          filteredSpeakers.map((speaker, index) => {
+            const speakerSlug = generateSpeakerSlug(speaker.name);
+            return (
+              <Link
+                key={`speaker-${speaker.name
+                  .replace(/\s+/g, "-")
+                  .toLowerCase()}-${index}`}
+                href={`/speakers/${speakerSlug}`}
+                className={`flex flex-col items-center bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-6 border border-[#D1D1D1] shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 ease-out gap-y-4 sm:gap-y-6 justify-around group animate-fade-in cursor-pointer ${
+                  index < 6 ? `animate-delay-${(index + 1) * 100}` : ""
+                }`}
+                aria-label={`View ${speaker.name}'s profile`}
+              >
+                <div className="relative shrink-0 w-[140px] h-[140px] xs:w-[160px] xs:h-[160px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px] lg:w-[280px] lg:h-[280px] rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-105">
+                  <Image
+                    src={speaker.image}
+                    alt={`${speaker.name} - ${speaker.title}`}
+                    fill
+                    className={`object-cover ${
+                      speaker.imagePosition || "object-top"
+                    }`}
+                    quality={85}
+                    loading="lazy"
+                    sizes="(min-width: 1024px) 280px, (min-width: 768px) 220px, (min-width: 640px) 180px, (min-width: 480px) 160px, 140px"
+                  />
                 </div>
 
-                {/* Social links section */}
-                <div className="inline-flex gap-x-3 items-center">
-                  {speaker.twitter && (
-                    <div className="relative group/icon">
-                      <Link
-                        href={speaker.twitter}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-[#1DA1F2] to-[#0ea5e9] text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 touch-manipulation"
-                        aria-label={`Follow ${speaker.name} on Twitter`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <FaXTwitter size={18} className="shrink-0" />
-                      </Link>
-                      {/* Hide tooltip on mobile to prevent clipping */}
-                      <div className="hidden sm:block absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                        Follow on Twitter
-                      </div>
-                    </div>
-                  )}
+                <div className="flex flex-col items-center gap-y-3 sm:gap-y-4 w-full">
+                  <div className="flex flex-col gap-y-1 sm:gap-y-2 items-center text-center w-full">
+                    <h3
+                      className={`${gotham.className} text-lg xs:text-xl sm:text-2xl md:text-[26px] lg:text-[29px] font-bold md:font-semibold leading-tight`}
+                    >
+                      {speaker.name}
+                    </h3>
+                    <p
+                      className={`${gotham.className} text-sm xs:text-base sm:text-lg md:text-[18px] lg:text-[20px] font-medium text-[#A4A4A4] leading-relaxed px-2 sm:px-0`}
+                    >
+                      {speaker.title}
+                    </p>
+                  </div>
 
-                  {speaker.website && (
-                    <div className="relative group/icon">
-                      <Link
-                        href={speaker.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-[#3D7BE8] to-[#6597ED] text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 touch-manipulation"
-                        aria-label={`Visit ${speaker.name}'s website`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <CiGlobe size={20} className="shrink-0" />
-                      </Link>
-                      {/* Hide tooltip on mobile to prevent clipping */}
-                      <div className="hidden sm:block absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                        Visit Website
+                  {/* Social links section */}
+                  <div className="inline-flex gap-x-3 items-center">
+                    {speaker.twitter && (
+                      <div className="relative group/icon">
+                        <Link
+                          href={speaker.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-[#1DA1F2] to-[#0ea5e9] text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 touch-manipulation"
+                          aria-label={`Follow ${speaker.name} on Twitter`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <FaXTwitter size={18} className="shrink-0" />
+                        </Link>
+                        {/* Hide tooltip on mobile to prevent clipping */}
+                        <div className="hidden sm:block absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                          Follow on Twitter
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+
+                    {speaker.website && (
+                      <div className="relative group/icon">
+                        <Link
+                          href={speaker.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-[#3D7BE8] to-[#6597ED] text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 touch-manipulation"
+                          aria-label={`Visit ${speaker.name}'s website`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <CiGlobe size={20} className="shrink-0" />
+                        </Link>
+                        {/* Hide tooltip on mobile to prevent clipping */}
+                        <div className="hidden sm:block absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                          Visit Website
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* View Profile Indicator */}
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1 text-blue-600 text-sm font-medium">
+                    <span>View Profile</span>
+                    <FiExternalLink className="w-3 h-3" />
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))
+              </Link>
+            );
+          })
         ) : (
           <div className="col-span-full flex flex-col items-center justify-center py-8 sm:py-12 px-4">
             <div className="text-gray-400 mb-3 sm:mb-4">
@@ -288,15 +284,6 @@ export function SpeakersGrid() {
           </div>
         )}
       </div>
-
-      {/* Speaker Bio Modal */}
-      {isModalOpen && selectedSpeaker && (
-        <SpeakerBioModal
-          speaker={selectedSpeaker}
-          isOpen={isModalOpen}
-          onClose={closeSpeakerModal}
-        />
-      )}
     </section>
   );
 }
