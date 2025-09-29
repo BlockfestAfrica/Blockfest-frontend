@@ -23,6 +23,14 @@ export const SpeakersList: Speaker[] = [
     bio: "Often caught introducing himself as Wealth as vast as the Ocean, Samuel Oladokun Olaoyenikan alias XeusTheGreat, is best known as the Blockchain Connoisseur.\n\nSamuel is the seasoned visionary founder of NIRVANA Academy and Labs- Africa's foremost Web3 training institution.\n\nOver the last 5 years, through 12 impactful cohorts, NIRVANA Academy has directly trained over 20,000 students globally, with its ripple effect extending to countless others in the Web3 space.\n\nHis personal mantra, \"To know is to be free,\" has become a movement- inspiring a new generation of thinkers, builders, and believers in blockchain technology.\n\nBehind The Scenes, Samuel has and still plays a strategic role as marketing lead and project advisory for an impressive number of crypto projects that have launched successfully across the Web3 ecosystem. You just might be using one right now.\n\nBeyond tech, Samuel doesn't take a backseat in philanthropic efforts. Through his initiative, TEVAH Foundation, he has touched and transformed countless lives, staying true to his mission of using knowledge and technology as tools for empowerment.",
   },
   {
+    name: "Emomotimi Agama",
+    title: "Director General, Security and Exchange Commission, Nigeria",
+    image: "/images/speakers/agama.jpg",
+    expertise: ["Government & Policy", "Education"],
+    company: "Security and Exchange Commission, Nigeria",
+    bio: "",
+  },
+  {
     name: "Hon. Mobolaji Ogunlende Abubakre",
     title: "Commissioner for Youth & Social Development, LASG",
     image: "/images/speakers/mobolaji.jpg",
@@ -40,15 +48,6 @@ export const SpeakersList: Speaker[] = [
     company: "Blockchain Nigeria User Group",
     twitter: "https://x.com/chimeziechuta?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
     bio: "Chimezie Chuta is a pioneering figure in Nigeria's blockchain ecosystem and the Founder of Blockchain Nigeria User Group, one of the country's most influential blockchain communities.",
-  },
-
-  {
-    name: "Emomotimi Agama",
-    title: "Director General, Security and Exchange Commission, Nigeria",
-    image: "/images/speakers/agama.jpg",
-    expertise: ["Government & Policy", "Education"],
-    company: "Security and Exchange Commission, Nigeria",
-    bio: "",
   },
 
   {
