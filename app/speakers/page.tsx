@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { SpeakersGrid } from "@/components/speakers/main-speakers";
 import { SpeakersSchema } from "@/components/seo/speakers-schema";
 import { BreadcrumbSchema } from "@/components/seo/schema-markup";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { SpeakersList, type Speaker } from "@/lib/speakers";
 
 const Gotham = localFont({
@@ -78,6 +79,9 @@ const SpeakersPage = () => {
       <main className={`${Gotham.className}`}>
         <SpeakersGrid />
       </main>
+
+      {/* Scroll to Top Button */}
+      <ScrollToTop />
     </>
   );
 };
