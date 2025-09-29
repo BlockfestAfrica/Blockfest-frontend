@@ -16,6 +16,7 @@ import Link from "next/link";
 import { SpeakersList } from "@/lib/speakers";
 import { gotham } from "@/lib/fonts";
 import { SpeakersGridSkeleton } from "./skeleton";
+// @ts-expect-error - CSS file import
 import "./animations.css";
 
 export function SpeakersGrid() {
@@ -216,7 +217,7 @@ export function SpeakersGrid() {
                   <div className="inline-flex gap-x-3 items-center">
                     {speaker.twitter && (
                       <div className="relative group/icon">
-                        <Link
+                        <a
                           href={speaker.twitter}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -225,7 +226,7 @@ export function SpeakersGrid() {
                           onClick={(e) => e.stopPropagation()}
                         >
                           <FaXTwitter size={18} className="shrink-0" />
-                        </Link>
+                        </a>
                         {/* Hide tooltip on mobile to prevent clipping */}
                         <div className="hidden sm:block absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                           Follow on Twitter
@@ -235,7 +236,7 @@ export function SpeakersGrid() {
 
                     {speaker.website && (
                       <div className="relative group/icon">
-                        <Link
+                        <a
                           href={speaker.website}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -244,7 +245,7 @@ export function SpeakersGrid() {
                           onClick={(e) => e.stopPropagation()}
                         >
                           <CiGlobe size={20} className="shrink-0" />
-                        </Link>
+                        </a>
                         {/* Hide tooltip on mobile to prevent clipping */}
                         <div className="hidden sm:block absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                           Visit Website
