@@ -14,7 +14,7 @@ import {
   Calendar,
   Users,
 } from "lucide-react";
-import { SpeakersList, Speaker } from "@/lib/speakers";
+import  { SpeakersList,type Speaker } from "@/lib/speakers";
 import { gotham } from "@/lib/fonts";
 import { generateSEO } from "@/lib/seo";
 import { SpeakerSchema } from "@/components/seo/speakers-schema";
@@ -159,7 +159,7 @@ export default async function SpeakerPage({
       >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600"/>
           <svg
             className="absolute inset-0 w-full h-full"
             xmlns="http://www.w3.org/2000/svg"
@@ -209,8 +209,8 @@ export default async function SpeakerPage({
               </div>
 
               {/* Decorative Elements */}
-              <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full opacity-20 blur-xl"></div>
-              <div className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-20 blur-xl"></div>
+              <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full opacity-20 blur-xl"/>
+              <div className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-20 blur-xl"/>
             </div>
 
             {/* Speaker Info */}
@@ -298,7 +298,7 @@ export default async function SpeakerPage({
                 >
                   About {speaker.name.split(" ")[0]}
                 </h2>
-                <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 mx-auto rounded-full"></div>
+                <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 mx-auto rounded-full"/>
               </div>
 
               <article className="prose prose-lg max-w-none">
