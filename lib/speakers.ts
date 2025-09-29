@@ -308,6 +308,12 @@ export const SpeakersList: Speaker[] = [
     expertise: ["Education", "Web3 & Blockchain"],
     company: "Nillion",
   },
+  {
+    name: "NotEezzy",
+    title: "Digital Creator & KOL",
+    image: "/images/speakers/noteezy.jpg",
+    expertise: ["Education"],
+  },
 ];
 
 // Export unique expertise categories for filtering
