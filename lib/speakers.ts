@@ -300,6 +300,14 @@ export const SpeakersList: Speaker[] = [
     website: "https://www.blazebrain.me",
     bio: "David Adegoke is a skilled Mobile Engineer at Cake Wallet, where he contributes to building user-friendly mobile applications for cryptocurrency and blockchain interactions. With expertise in mobile development and Web3 technologies, David has been instrumental in creating accessible mobile solutions that make blockchain technology more approachable for everyday users.\n\nAs an educator and developer advocate, David actively shares his knowledge through various channels, helping to bridge the gap between complex blockchain concepts and practical mobile applications. His work focuses on creating intuitive user experiences that enable seamless interaction with cryptocurrency wallets and DeFi protocols.\n\nDavid's contributions to the mobile development and Web3 space have made him a respected figure in the African tech community, where he continues to inspire and educate the next generation of mobile developers and blockchain enthusiasts.",
   },
+
+  {
+    name: "Olayinka Oshidipe",
+    title: "DevRel Engineer, Nillion",
+    image: "/images/speakers/yinka.jpg",
+    expertise: ["Education", "Web3 & Blockchain"],
+    company: "Nillion",
+  },
 ];
 
 // Export unique expertise categories for filtering
