@@ -7,7 +7,6 @@ import { WhyAttendSection } from "@/components/home/why-attend";
 import { SpeakersSection } from "@/components/home/speakers";
 import { PartnersSection } from "@/components/home/partners";
 import { FAQSection } from "@/components/home/faq";
-import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import {
   EventSchema,
   OrganizationSchema,
@@ -75,9 +74,6 @@ const HomePage = () => {
         <PartnersSection />
         <FAQSection />
       </main>
-
-      {/* Scroll to Top Button */}
-      <ScrollToTop />
     </>
   );
 };
