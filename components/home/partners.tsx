@@ -202,7 +202,7 @@ export function PartnersSection() {
             </h3>
             <div className="flex flex-wrap justify-center gap-4 lg:gap-6">
               <Link
-                href="https://gidi.africa"
+                href="https://gidirealestateinvestment.com/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -264,7 +264,7 @@ export function PartnersSection() {
                 </div>
               </Link>
               <Link
-                href="https://x.com/avaxng?s=21&t=2kHrWD_DTFp7Yu9aXZPEOg"
+                href="https://x.com/team1ng?s=21&t=6lhy88Nx16NRD-zFs2-S9w"
                 target="_blank"
                 rel="noopener noreferrer"
               >
