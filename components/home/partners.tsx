@@ -278,6 +278,22 @@ export function PartnersSection() {
                   />
                 </div>
               </Link>
+
+              <Link
+                href="https://x.com/SuiNetwork?s=09"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                    src="/images/sponsors/sui.png"
+                    alt="Sui Network"
+                    width={200}
+                    height={80}
+                    className="h-12 w-auto object-contain"
+                  />
+                </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -674,6 +690,38 @@ export function PartnersSection() {
                 </div>
               </Link>
             </div>
+
+
+            <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/ecosystem/fan.png"
+                  alt="FanYogo"
+                  width={150}
+                  height={64}
+                  className="h-18 md:h-20 w-auto object-contain "
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <Link
+                href="https://x.com/BasedWestAfrica"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                  <Image
+                    src="/images/ecosystem/base.png"
+                    alt="Base West Africa"
+                    width={150}
+                    height={64}
+                    className="h-16 lg:h-14 w-fit object-contain  "
+                  />
+                </div>
+              </Link>
+            </div>
+
           </div>
         </div>
       </div>
