@@ -60,8 +60,8 @@ export default function Schedule() {
       email: "partnership@blockfestafrica.com",
       sameAs: [
         "https://twitter.com/blockfestafrica",
-        "https://instagram.com/blockfestafrica",
-        "https://youtube.com/@blockfestafrica",
+        "https://www.instagram.com/blockfestival_africa?igsh=NG1ma2p1aXV2OHk2&utm_source=qr",
+        "https://youtube.com/@blockchainfestivalafrica?si=UhSMNPr7GIfOzZk9",
         "https://linkedin.com/company/blockfest-africa",
         "https://t.me/blockf3stafrica",
       ],
@@ -125,8 +125,8 @@ export default function Schedule() {
         email: "partnership@blockfestafrica.com",
         sameAs: [
           "https://twitter.com/blockfestafrica",
-          "https://instagram.com/blockfestafrica",
-          "https://youtube.com/@blockfestafrica",
+          "https://www.instagram.com/blockfestival_africa?igsh=NG1ma2p1aXV2OHk2&utm_source=qr",
+          "https://youtube.com/@blockchainfestivalafrica?si=UhSMNPr7GIfOzZk9",
           "https://linkedin.com/company/blockfest-africa",
           "https://t.me/blockf3stafrica",
         ],
@@ -161,17 +161,18 @@ export default function Schedule() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <main className={`${gotham.className} min-h-screen bg-white`}>
-        <section className="flex flex-col items-center justify-center pt-4 sm:pt-6 lg:pt-8 pb-12 sm:pb-16 lg:pb-20 lg:px-[100px] md:px-[60px] px-4 sm:px-8 max-w-7xl mx-auto">
-          <header className="text-center mb-8 lg:mb-12">
-            <h1 className="font-medium text-3xl sm:text-4xl md:text-5xl lg:text-[69.65px] lg:leading-[82px] tracking-[-2%] sm:tracking-[-3%] lg:tracking-[-5%] mb-4 lg:mb-6 text-black">
+        <section className="flex flex-col items-center justify-center pt-4 sm:pt-6 lg:pt-8 pb-12 sm:pb-16 lg:pb-20 lg:px-[100px] md:px-[60px] px-4 sm:px-6 max-w-7xl mx-auto">
+          <header className="text-center mb-6 sm:mb-8 lg:mb-12">
+            <h1 className="font-medium text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[69.65px] xl:leading-[82px] tracking-[-2%] sm:tracking-[-3%] lg:tracking-[-5%] mb-3 sm:mb-4 lg:mb-6 text-black px-2">
               Schedule of Activities
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-2 leading-relaxed">
               Join us for an exciting day filled with insights from industry
               leaders, innovative workshops, and networking opportunities in AI,
               Blockchain, and emerging technologies.
             </p>
           </header>
+
           <Agenda />
         </section>
       </main>
