@@ -53,8 +53,8 @@ export default function GetDPPage() {
         email: "partnership@blockfestafrica.com",
         sameAs: [
           "https://twitter.com/blockfestafrica",
-          "https://instagram.com/blockfestafrica",
-          "https://youtube.com/@blockfestafrica",
+          "https://www.instagram.com/blockfestival_africa?igsh=NG1ma2p1aXV2OHk2&utm_source=qr",
+          "https://youtube.com/@blockchainfestivalafrica?si=UhSMNPr7GIfOzZk9",
           "https://linkedin.com/company/blockfest-africa",
           "https://t.me/blockf3stafrica",
         ],

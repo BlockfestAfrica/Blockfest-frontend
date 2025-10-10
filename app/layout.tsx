@@ -14,11 +14,11 @@ const siteDescription =
 const twitterHandle =
   process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica";
 const instagramHandle =
-  process.env.NEXT_PUBLIC_INSTAGRAM_HANDLE || "blockfestafrica";
+  process.env.NEXT_PUBLIC_INSTAGRAM_HANDLE || "blockfestival_africa";
 const linkedinPage =
   process.env.NEXT_PUBLIC_LINKEDIN_PAGE || "company/blockfestafrica";
 const youtubeChannel =
-  process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL || "@blockfestafrica";
+  process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL || "@blockchainfestivalafrica";
 const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
 
 export const metadata: Metadata = {
