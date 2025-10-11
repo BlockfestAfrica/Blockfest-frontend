@@ -102,7 +102,7 @@ export default async function AnalyticsPage() {
                       <FaXTwitter size={18} />
                     </Link>
                     <Link
-                      href="https://www.instagram.com/blockfestafrica"
+                      href="https://www.instagram.com/blockfestival_africa?igsh=NG1ma2p1aXV2OHk2&utm_source=qr"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 rounded-full hover:bg-white/10 text-gray-300 hover:text-[#E4405F] transition-all duration-300 transform hover:scale-110"
@@ -110,7 +110,7 @@ export default async function AnalyticsPage() {
                       <FaInstagram size={18} />
                     </Link>
                     <Link
-                      href="https://youtube.com/@blockfestafrica"
+                      href="https://youtube.com/@blockchainfestivalafrica?si=UhSMNPr7GIfOzZk9"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 rounded-full hover:bg-white/10 text-gray-300 hover:text-[#FF0000] transition-all duration-300 transform hover:scale-110"
