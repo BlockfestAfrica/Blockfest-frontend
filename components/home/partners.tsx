@@ -622,6 +622,17 @@ export function PartnersSection() {
                 />
               </div>
             </div>
+            <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
+                <Image
+                  src="/images/media/mona.png"
+                  alt="Mona the persona"
+                  width={150}
+                  height={64}
+                  className="h-12 w-auto object-contain"
+                />
+              </div>
+            </div> 
           </div>
         </div>
 
