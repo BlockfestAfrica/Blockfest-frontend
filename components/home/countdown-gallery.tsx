@@ -27,7 +27,7 @@ export function CountdownGallerySection() {
         {!expired ? (
           <Countdown targetDate={"2025-10-10T23:59:59"} onExpire={handleExpire} />
         ) : (
-            <div className="flex flex-col items-center justify-center text-[#3870D3] animate-bounce md:w-[70%] w-full mx-auto">
+            <div className="flex flex-col items-center justify-center text-[#3870D3]  md:w-[70%] w-full mx-auto">
               <h2 className="text-2xl md:text-5xl font-bold mb-3 text-center">
                 Thank You for Being Part of Blockfest Africa!
               </h2>
