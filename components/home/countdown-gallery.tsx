@@ -27,15 +27,15 @@ export function CountdownGallerySection() {
         {!expired ? (
           <Countdown targetDate={"2025-10-10T23:59:59"} onExpire={handleExpire} />
         ) : (
-          <div className="flex flex-col items-center text-[#3870D3] animate-bounce md:w-[70%] w-full mx-auto ">
-            <h2 className="text-2xl md:text-5xl font-bold mb-3">
-              Thank You for Being Part of Blockfest Africa!
-            </h2>
-            <p className="text-[15px] md:text-2xl text-gray-700 text-center">
-              Your energy, ideas, and passion made this event unforgettable.
-              See you at the next one!
-            </p>
-          </div>
+            <div className="flex flex-col items-center justify-center text-[#3870D3] animate-bounce md:w-[70%] w-full mx-auto">
+              <h2 className="text-2xl md:text-5xl font-bold mb-3 text-center">
+                Thank You for Being Part of Blockfest Africa!
+              </h2>
+              <p className="text-[15px] md:text-2xl text-gray-700 text-center">
+                Your energy, ideas, and passion made this event unforgettable.
+                See you at the next one!
+              </p>
+            </div>
         )}
       </div>
 
