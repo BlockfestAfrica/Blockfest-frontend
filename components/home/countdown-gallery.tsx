@@ -15,7 +15,7 @@ export function CountdownGallerySection() {
   const handleExpire = () => {
     setExpired(true);
     setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 10000); 
+    setTimeout(() => setShowConfetti(false), 10000);
   };
 
   return (
@@ -29,10 +29,11 @@ export function CountdownGallerySection() {
         ) : (
           <div className="flex flex-col items-center text-[#3870D3] animate-bounce">
             <h2 className="text-3xl md:text-5xl font-bold mb-3">
-              🎉 The Wait Is Over! 🎉
+              🎉 Thank You for Being Part of Blockfest Africa! 🎉
             </h2>
-            <p className="text-base md:text-2xl text-gray-700">
-              Blockfest Africa is happening — let’s make history together!
+            <p className="text-base md:text-2xl text-gray-700 text-center">
+              Your energy, ideas, and passion made this event unforgettable.
+              See you at the next one! 🚀
             </p>
           </div>
         )}
