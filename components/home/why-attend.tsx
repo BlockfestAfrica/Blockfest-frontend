@@ -31,32 +31,32 @@ export function WhyAttendSection() {
 function FeaturesComp() {
   const categories = [
     {
-      image: "/images/super.webp",
+      image: "/images/home/img4.jpg",
       header: "Africa's Web3 SuperBowl",
       text: "Blockchain Africa is not just an event, it's a movement. When Africa throws a party, the world tunes in. Get ready for Web3 like never before.",
     },
     {
-      image: "/images/img2.webp",
+      image: "/images/home/img9.jpg",
       header: "Live Panels & Masterclasses",
       text: "Hear from the continent's boldest builders, creators, and thinkers. Dive into sessions that go beyond talk but straight into action.",
     },
     {
-      image: "/images/founders.webp",
+      image: "/images/home/img10.jpg",
       header: "Founders, Creators & Communities",
       text: "From your first NFT to your next big Web3 project, Blockfest connects the minds shaping Africa’s digital frontier.",
     },
     {
-      image: "/images/become.webp",
+      image: "/images/home/img3.jpg",
       header: "Buidl • Bridge • Become",
       text: "These aren't just themes , they're a roadmap to unlocking Africa's blockchain potential.",
     },
     {
-      image: "/images/starts.webp",
+      image: "/images/home/img6.jpg",
       header: "Your Web3 Journey Starts Here",
       text: " Whether you're a curious newcomer or a seasoned pro, Blockfest is your gateway to the future of Africa's digital economy.",
     },
     {
-      image: "/images/builders.webp",
+      image: "/images/home/img5.jpg",
       header: "For Builders, Dreamers & Doers",
       text: "Web3 isn’t for someday. It’s now. Join a community of disruptors turning vision into products, code, and movements.",
     },
@@ -79,7 +79,7 @@ function FeaturesComp() {
                   fill
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 40vw, 300px"
                   loading="lazy"
-                  className="object-cover object-center scale-115"
+                  className="object-cover object-center "
                 />
               </div>
             </div>
