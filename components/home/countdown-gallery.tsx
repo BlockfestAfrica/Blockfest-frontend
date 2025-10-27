@@ -35,7 +35,6 @@ export function CountdownGallerySection() {
       {/* Confetti animation */}
       {showConfetti && <Confetti recycle={false} numberOfPieces={1000} />}
 
-      {/* Countdown or message */}
       <div className="scale-in text-center">
         {!expired ? (
           <Countdown
@@ -60,24 +59,24 @@ export function CountdownGallerySection() {
         <div className="flex flex-col md:flex-row gap-[7px] lg:gap-4">
           <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[180px] md:h-[250px] lg:h-[446px] flex-1 overflow-hidden">
             <Image
-              src="/images/img4.webp"
+              src="/images/home/img1.jpg"
               alt="Blockfest Africa event gallery image"
               width={500}
               height={446}
               sizes="(min-width: 1024px) 40vw, (min-width: 768px) 50vw, 100vw"
               priority
-              className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
+              className="w-full h-full object-cover object-center  rounded-[8px] lg:rounded-[24px]"
             />
           </div>
           <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[180px] md:h-[250px] lg:h-[446px] flex-1 overflow-hidden">
             <Image
-              src="/images/img7.webp"
+              src="/images/home/img2.jpg"
               alt="Blockfest Africa networking event"
               width={700}
               height={446}
               sizes="(min-width: 1024px) 60vw, (min-width: 768px) 50vw, 100vw"
               priority
-              className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
+              className="w-full h-full object-cover object-center  rounded-[8px] lg:rounded-[24px]"
             />
           </div>
         </div>
@@ -85,24 +84,24 @@ export function CountdownGallerySection() {
         <div className="flex flex-col md:flex-row gap-[7px] lg:gap-4">
           <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[180px] md:h-[250px] lg:h-[446px] flex-1 overflow-hidden">
             <Image
-              src="/images/img-3.webp"
+              src="/images/home/img4.jpg"
               alt="Blockfest Africa conference speakers"
               width={700}
               height={446}
               sizes="(min-width: 1024px) 60vw, (min-width: 768px) 50vw, 100vw"
               loading="lazy"
-              className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
+              className="w-full h-full object-cover object-center rounded-[8px] lg:rounded-[24px]"
             />
           </div>
           <div className="bg-gray-300 rounded-[8px] lg:rounded-[24px] h-[180px] md:h-[250px] lg:h-[446px] flex-1 overflow-hidden">
             <Image
-              src="/images/img1.webp"
+              src="/images/home/imgg.jpg"
               alt="Blockfest Africa community gathering"
               width={500}
               height={446}
               sizes="(min-width: 1024px) 40vw, (min-width: 768px) 50vw, 100vw"
               loading="lazy"
-              className="w-full h-full object-cover object-center scale-115 rounded-[8px] lg:rounded-[24px]"
+              className="w-full h-full object-cover object-center rounded-[8px] lg:rounded-[24px]"
             />
           </div>
         </div>
@@ -127,7 +126,7 @@ export function CountdownGallerySection() {
               className="group relative flex flex-col items-center justify-center bg-[#1B64E4] text-white py-6 px-6 rounded-2xl font-semibold text-lg md:text-xl shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
             >
               <span className="z-10">{gallery.title}</span>
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1B64E4] to-[#3870D3] opacity-0 group-hover:opacity-100 transition duration-300"/>
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1B64E4] to-[#3870D3] opacity-0 group-hover:opacity-100 transition duration-300" />
             </a>
           ))}
         </div>
