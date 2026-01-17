@@ -81,23 +81,25 @@ const Navbar = () => {
           About
         </button>
         <Link
+          href="/blockfest-2025"
+          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out inline-flex items-center gap-1.5"
+        >
+          2025 Recap <span className="text-sm">🇳🇬</span>
+        </Link>
+        <Link
           href="/speakers"
           className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
         >
           Speakers
         </Link>
-        <Link
-          href="/schedule"
-          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
-        >
-          Schedule
-        </Link>
-        <Link
-          href="/getdp"
-          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
-        >
-          Badge
-        </Link>
+        {pathname !== "/speakers" && (
+          <Link
+            href="#sponsorship"
+            className="text-base font-normal text-[#F2CB45] hover:text-white transition-colors duration-300 ease-in-out"
+          >
+            Sponsor
+          </Link>
+        )}
         <Link
           href={`mailto:${contactEmail}`}
           className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
@@ -109,10 +111,10 @@ const Navbar = () => {
       {/* Right Side */}
       <div className="flex items-center gap-x-5">
         <Link
-          href={`mailto:${contactEmail}`}
-          className="md:p-5 text-sm lg:text-base font-medium text-white w-fit p-3 bg-[#3D7BE8] hidden shadow-xs hover:bg-[#6597ED] h-9 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
+          href="#sponsorship"
+          className="md:p-5 text-sm lg:text-base font-medium text-black w-fit p-3 bg-[#F2CB45] hidden shadow-xs hover:bg-[#e8bc3d] h-9 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
         >
-          Sponsor
+          Become a Sponsor
         </Link>
         <div className="flex md:hidden">
           <Sheet>
@@ -188,6 +190,15 @@ const MobileMenu = () => {
 
         <SheetClose asChild>
           <Link
+            href="/blockfest-2025"
+            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
+          >
+            2025 Recap <span>🇳🇬</span>
+          </Link>
+        </SheetClose>
+
+        <SheetClose asChild>
+          <Link
             href="/speakers"
             className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
           >
@@ -197,19 +208,10 @@ const MobileMenu = () => {
 
         <SheetClose asChild>
           <Link
-            href="/schedule"
-            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
+            href="#sponsorship"
+            className="text-lg font-medium text-[#F2CB45] hover:text-white hover:underline transition w-fit"
           >
-            Schedule
-          </Link>
-        </SheetClose>
-
-        <SheetClose asChild>
-          <Link
-            href="/getdp"
-            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
-          >
-            Badge
+            Become a Sponsor
           </Link>
         </SheetClose>
 

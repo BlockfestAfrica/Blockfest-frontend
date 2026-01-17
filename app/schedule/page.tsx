@@ -161,19 +161,28 @@ export default function Schedule() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <main className={`${gotham.className} min-h-screen bg-white`}>
-        <section className="flex flex-col items-center justify-center pt-4 sm:pt-6 lg:pt-8 pb-12 sm:pb-16 lg:pb-20 lg:px-[100px] md:px-[60px] px-4 sm:px-6 max-w-7xl mx-auto">
-          <header className="text-center mb-6 sm:mb-8 lg:mb-12">
-            <h1 className="font-medium text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[69.65px] xl:leading-[82px] tracking-[-2%] sm:tracking-[-3%] lg:tracking-[-5%] mb-3 sm:mb-4 lg:mb-6 text-black px-2">
-              Schedule of Activities
+        {/* Header Section */}
+        <div className="bg-gradient-to-br from-[#1B64E4] via-[#0D3B8C] to-[#031940] py-12 lg:py-16">
+          <div className="max-w-6xl mx-auto px-4 lg:px-8 text-center">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 border border-white/20">
+              <span className="text-[#F2CB45] font-semibold text-sm">
+                2025 SCHEDULE
+              </span>
+            </div>
+            <h1 className="font-bold text-3xl lg:text-5xl mb-4 text-white">
+              Schedule of <span className="text-[#F2CB45]">Activities</span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-2 leading-relaxed">
+            <p className="text-base lg:text-lg text-white/80 max-w-2xl mx-auto">
               Join us for an exciting day filled with insights from industry
-              leaders, innovative workshops, and networking opportunities in AI,
-              Blockchain, and emerging technologies.
+              leaders, innovative workshops, and networking opportunities.
             </p>
-          </header>
+          </div>
+        </div>
 
-          <Agenda />
+        <section className="py-12 lg:py-16">
+          <div className="max-w-6xl mx-auto px-4 lg:px-8">
+            <Agenda />
+          </div>
         </section>
       </main>
     </>
