@@ -1,79 +1,59 @@
-# 🌍 Blockfest Africa 2025
+# 🌍 Blockf3st Africa 2026
 
-Africa's biggest Web3 festival website - A modern, responsive, and highly optimized Next.js application for the premier blockchain conference in Nigeria.
+Africa's biggest Web3 festival website - A modern, responsive, and highly optimized Next.js application for the premier blockchain conference expanding across Africa.
 
 ## 🚀 Project Overview
 
-Blockfest Africa is a comprehensive Web3 conference website featuring a fully responsive design, advanced SEO optimization, and dynamic content management. Built with modern web technologies for optimal performance and user experience.
+Blockf3st Africa is Africa's premier Web3 conference, now expanding to **two major events in 2026**:
 
-**Event Details:**
+**2026 Events:**
 
-- 📅 **Date:** October 11th, 2025
-- 📍 **Location:** Lagos,  Nigeria
-- 🌐 **Theme:** BUIDL • BRIDGE • BECOME
+- 🇿🇦 **Johannesburg, South Africa** - May 2026
+- 🇳🇬 **Lagos, Nigeria** - October 2026
+
+**Theme:** Web3 In Motion — From Pipelines to Platforms
 
 ## ✨ Features
 
 ### 🎨 Design & UX
 
 - **Fully Responsive:** Mobile-first design with smooth transitions across all devices
-- **Custom Typography:** Gotham and Bebas Neue fonts for consistent brand identity
+- **Custom Typography:** Gotham fonts for consistent brand identity
+- **Brand Colors:** Primary blue (#1B64E4) and gold (#F2CB45)
 - **Interactive Elements:** Smooth scroll navigation, hover effects, and touch-friendly controls
-- **Mobile Navigation:** Slide-out menu with optimized touch interactions
-- **Image Optimization:** WebP format with lazy loading and responsive sizing
+- **Image Optimization:** Next.js Image component with lazy loading and responsive sizing
 - **Accessibility:** Proper ARIA labels, keyboard navigation, and screen reader support
 
 ### 🔍 SEO & Performance
 
-- **Comprehensive SEO:** Complete meta tags, Open Graph, Twitter Cards for all platforms
-- **Structured Data:** JSON-LD schema for events, organizations, and websites
-- **Sitemap Generation:** Dynamic XML sitemap with automatic priority settings
-- **PWA Ready:** Full Progressive Web App support with offline capability
-- **Image SEO:** 13 different image formats generated programmatically from logo
-- **Social Media Optimization:** Platform-specific image sizing and metadata
-- **Performance Score:** 95+ Lighthouse score across all categories
+- **Comprehensive SEO:** Complete meta tags, Open Graph, Twitter Cards
+- **Structured Data:** JSON-LD schema for dual events, organizations, and website
+- **Dynamic Sitemap:** Auto-generated XML sitemap with proper priorities
+- **PWA Ready:** Progressive Web App support with offline capability
+- **Performance Score:** 95+ Lighthouse score
 
-### 📱 Mobile Responsiveness
+### 📱 Pages
 
-- **Breakpoint Strategy:** Mobile-first responsive design (320px to 1536px+)
-- **Touch Optimization:** Minimum 44px tap targets for all interactive elements
-- **Carousel Controls:** Touch-enabled carousel with mobile-optimized navigation
-- **Flexible Layouts:** Grid and flexbox layouts that adapt to all screen sizes
-- **Optimized Images:** Device-specific image sizing for optimal bandwidth usage
-
-### 🧩 Components
-
-- **Hero Section:** Dynamic countdown timer with responsive event highlights
-- **Speakers Carousel:** Touch-enabled carousel with autoplay and navigation controls
-- **Why Attend:** Interactive gallery with responsive image layouts
-- **Partners Section:** Dynamic sponsor showcase with environment-based configuration
-- **Contact Integration:** Smart email and social media links using environment variables
-- **Mobile Menu:** Full-screen navigation with smooth animations
-
-### 🛠️ Technical Features
-
-- **Environment Configuration:** Complete dynamic content through environment variables
-- **Type Safety:** Full TypeScript implementation with strict type checking
-- **Performance Optimized:** Next.js 14 with App Router and automatic code splitting
-- **Analytics Ready:** Umami Analytics integration with privacy-focused tracking
-- **Security Headers:** Comprehensive security configuration for production
-- **Error Handling:** Graceful error handling and fallback states
+- **Homepage:** 2026 dual-event hero, countdown timers, stats, why attend, speakers, partners, sponsorship, FAQ
+- **Blockfest 2025 Recap:** Complete 2025 event recap with stats, gallery, and highlights
+- **Speakers:** 2025 speaker grid with search/filter (2025 Edition badge)
+- **FAQ:** Comprehensive event FAQs
+- **Schedule:** Event schedule page
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 with App Router
+- **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **Package Manager**: pnpm
+- **Icons**: React Icons, Lucide React
+- **Package Manager**: npm
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- pnpm (recommended) or npm/yarn/bun
+- npm (or pnpm/yarn/bun)
 
 ### Installation
 
@@ -87,188 +67,104 @@ cd Blockfest-frontend
 2. Install dependencies
 
 ```bash
-pnpm install
-# or
 npm install
-# or
-yarn install
-# or
-bun install
 ```
 
 3. Start the development server
 
 ```bash
-pnpm dev
-# or
 npm run dev
-# or
-yarn dev
-# or
-bun dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ### Available Scripts
 
-- `pnpm dev` - Start development server
-- `pnpm build` - Build for production
-- `pnpm start` - Start production server
-- `pnpm lint` - Run ESLint
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
 
 ## Project Structure
 
 ```
 ├── app/
-│   ├── globals.css          # Global styles and Tailwind imports
-│   ├── layout.tsx           # Root layout component
-│   └── page.tsx             # Main landing page
+│   ├── blockfest-2025/      # 2025 event recap page
+│   ├── faq/                 # FAQ page
+│   ├── schedule/            # Schedule page
+│   ├── speakers/            # Speakers listing & individual pages
+│   ├── globals.css          # Global styles
+│   ├── layout.tsx           # Root layout
+│   ├── page.tsx             # Homepage (2026)
+│   └── sitemap.ts           # Dynamic sitemap
 ├── components/
-│   ├── home/                # Home page specific components
-│   │   ├── countdown-gallery.tsx
-│   │   ├── hero.tsx
-│   │   ├── partners.tsx
-│   │   ├── speakers.tsx
-│   │   ├── stat.tsx
-│   │   └── why-attend.tsx
+│   ├── home/                # Homepage components
+│   │   ├── hero-2026.tsx        # Dual-event hero
+│   │   ├── stats-2026.tsx       # 2025 success stats
+│   │   ├── countdown-2026.tsx   # Dual countdown timers
+│   │   ├── why-attend-2026.tsx  # Why attend section
+│   │   ├── speakers.tsx         # 2025 speakers carousel
+│   │   ├── partners.tsx         # Partners/sponsors
+│   │   ├── sponsorship.tsx      # Sponsorship CTA
+│   │   └── faq.tsx              # FAQ section
+│   ├── seo/                 # SEO schema components
+│   │   └── schema-markup-2026.tsx
 │   ├── shared/              # Shared components
-│   │   ├── footer.tsx
-│   │   └── navbar.tsx
-│   ├── ui/                  # UI components
-│   └── carousel components
+│   │   ├── navbar.tsx
+│   │   └── footer.tsx
+│   ├── speakers/            # Speaker components
+│   └── ui/                  # UI components
 ├── lib/
-│   └── utils.ts             # Utility functions and helpers
+│   ├── events.ts            # Event data & types
+│   ├── speakers.ts          # Speaker data
+│   ├── faq-data.ts          # FAQ data
+│   └── utils.ts             # Utility functions
 ├── public/
-│   ├── icons/               # SVG icons
-│   └── images/              # Static images
+│   ├── images/              # Static images
+│   └── icons/               # Icons
 └── types/
-    └── index.ts             # TypeScript type definitions
+    └── index.ts             # TypeScript types
 ```
 
-## Key Components
+## Key Data Files
 
-### Home Page Sections
+### `lib/events.ts`
 
-- **Hero Section**: Eye-catching landing with call-to-action
-- **Statistics**: Key metrics and numbers
-- **Why Attend**: Benefits and value propositions
-- **Speakers**: Showcase of industry experts
-- **Partners**: Partner and sponsor logos
-- **Countdown Gallery**: Dynamic countdown with event gallery
+Contains all event data including:
 
-### Shared Components
+- `blockfest2025Lagos` - Completed 2025 event with stats
+- `blockfest2026Johannesburg` - Upcoming Johannesburg event
+- `blockfest2026Lagos` - Upcoming Lagos event
+- Sponsorship packages and market opportunity data
 
-- **Navbar**: Responsive navigation with mobile menu
-- **Footer**: Links, contact info, and social media
+### `lib/speakers.ts`
 
-### UI Components
+Speaker data for the speakers page and carousel.
 
-- **Carousel**: Image/content slider with navigation
-- **Countdown**: Real-time countdown timer
-- **Buttons**: Consistent button styling
+## Environment Variables
 
-## Fonts
+Copy `.env.example` to `.env.local` and configure:
 
-This project uses custom fonts:
+```env
+NEXT_PUBLIC_SITE_URL=https://blockfestafrica.com
+NEXT_PUBLIC_CONTACT_EMAIL=partnerships@blockfestafrica.com
+NEXT_PUBLIC_TWITTER_HANDLE=@blockfestafrica
+NEXT_PUBLIC_INSTAGRAM_HANDLE=blockfestival_africa
+```
 
-- **Gotham Medium** - For headings and emphasis
-- **Gotham Thin** - For body text and lighter elements
+## Brand Guidelines
 
-Font files are located in `app/fonts/` and optimized using [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts).
-
-## SEO & Performance
-
-This project includes comprehensive SEO optimization for all platforms:
-
-### SEO Features
-
-- **Complete Meta Tags**: Title, description, keywords, and author information
-- **Open Graph Tags**: Optimized for Facebook, LinkedIn, and other social platforms
-- **Twitter Cards**: Enhanced Twitter sharing with large image cards
-- **Structured Data**: JSON-LD markup for events, organizations, and website data
-- **Canonical URLs**: Prevent duplicate content issues
-- **Sitemap**: Automatically generated XML sitemap
-- **Robots.txt**: Proper crawling instructions for search engines
-- **PWA Manifest**: Progressive Web App support with app icons
-- **Security Headers**: Enhanced security with proper HTTP headers
-
-### Social Media Optimization
-
-- **Facebook**: Open Graph tags for rich link previews
-- **Twitter**: Twitter Card meta tags for enhanced tweets
-- **LinkedIn**: Professional network sharing optimization
-- **WhatsApp**: Rich link previews for messaging
-- **Telegram**: Optimized content sharing
-- **Instagram**: Image optimization for stories and posts
-
-### Performance Features
-
-- **Image Optimization**: WebP and AVIF format support
-- **Font Optimization**: Custom font loading with next/font
-- **Code Splitting**: Automatic code splitting for better performance
-- **Lazy Loading**: Optimized resource loading
-
-### Analytics Ready
-
-- **Umami Analytics**: Privacy-focused, open-source analytics integration
-- **Event Tracking**: Custom event tracking for user interactions
-- **Performance Monitoring**: Core Web Vitals tracking with Umami
-
-### Configuration
-
-1. Copy `.env.example` to `.env.local`
-2. Update the environment variables with your actual values:
-   - Site URL
-   - Umami Analytics Website ID and Script URL
-   - Social media handles
-   - Site verification codes
-   - Event details
-
-### Required Assets for Full SEO
-
-✅ **All SEO images have been automatically generated!**
-
-The project includes a programmatic image generation script that creates all required SEO assets:
-
-**Generated Images:**
-
-- `og-image.jpg` (1200x630) - Main Open Graph image ✅
-- `twitter-image.jpg` (1200x630) - Twitter card image ✅
-- `apple-touch-icon.png` (180x180) - iOS app icon ✅
-- `favicon-32x32.png` & `favicon-16x16.png` - Browser favicons ✅
-- `icon-192.png` & `icon-512.png` - PWA icons ✅
-- `icon-maskable-192.png` & `icon-maskable-512.png` - PWA maskable icons ✅
-- `mstile-150x150.png` (150x150) - Windows tile icon ✅
-- `screenshot-wide.png` & `screenshot-narrow.png` - PWA screenshots ✅
-
-**Automated Image Generation:**
-Run `node scripts/generate-icons.mjs` to regenerate all SEO images from your logo. The script:
-
-- Uses your existing `logo.svg` as the source
-- Maintains transparent backgrounds
-- Creates properly sized images for all platforms
-- Generates both PNG and JPEG formats as needed
-- Provides detailed logging and error handling
-
-**Dependencies:** Requires Sharp (`npm install sharp`) for image processing.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Primary Blue:** #1B64E4
+- **Secondary Blue:** #0D3B8C
+- **Dark Blue:** #031940
+- **Gold Accent:** #F2CB45
+- **Gradients:** `from-[#1B64E4] via-[#0D3B8C] to-[#031940]`
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The easiest way to deploy is using [Vercel](https://vercel.com):
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new?utm_medium=default-template&filter=next.js)
 
 ## Contributing
 
@@ -282,6 +178,23 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 This project is licensed under the MIT License.
 
-## About Blockfest
+---
 
-Blockfest is Africa's premier blockchain conference, bringing together builders, founders, investors, and DeFi professionals in Africa.
+## About Blockf3st Africa
+
+Blockf3st Africa is the **Superbowl of Web3** - Africa's premier blockchain conference bringing together builders, founders, investors, government officials, and Web3 enthusiasts.
+
+**2025 Achievements:**
+
+- 15,000+ registrations
+- 12,000+ attendees
+- 20+ speakers
+- 54+ countries represented
+- 2.2M+ Twitter impressions
+
+**Connect with us:**
+
+- 🐦 Twitter: [@blockfestafrica](https://twitter.com/blockfestafrica)
+- 📸 Instagram: [@blockfestival_africa](https://instagram.com/blockfestival_africa)
+- 💼 LinkedIn: [Blockfest Africa](https://linkedin.com/company/blockfest-africa)
+- 📺 YouTube: [@blockchainfestivalafrica](https://youtube.com/@blockchainfestivalafrica)

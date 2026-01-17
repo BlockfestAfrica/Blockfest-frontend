@@ -41,19 +41,10 @@ const Navbar = () => {
 
   return (
     <div
-      className={`${gotham.className} bg-white md:bg-black px-5 lg:px-[70px] py-5 lg:py-10 flex items-center justify-between`}
+      className={`${gotham.className} bg-black px-5 lg:px-[70px] py-5 lg:py-10 flex items-center justify-between`}
     >
       {/* Logo */}
       <Link href="/" className="cursor-pointer">
-        <Image
-          src="/images/mobile-logo.svg"
-          alt="Blockfest Africa Logo"
-          width={140}
-          height={38}
-          sizes="(max-width: 768px) 124px, 140px"
-          priority
-          className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px] block md:hidden"
-        />
         <Image
           src="/images/logo.svg"
           alt="Blockfest Africa Logo"
@@ -61,7 +52,7 @@ const Navbar = () => {
           height={38}
           sizes="(max-width: 768px) 124px, 140px"
           priority
-          className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px] hidden md:block"
+          className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px]"
         />
       </Link>
 
@@ -81,23 +72,25 @@ const Navbar = () => {
           About
         </button>
         <Link
+          href="/blockfest-2025"
+          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out inline-flex items-center gap-1.5"
+        >
+          2025 Recap <span className="text-sm">🇳🇬</span>
+        </Link>
+        <Link
           href="/speakers"
           className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
         >
           Speakers
         </Link>
-        <Link
-          href="/schedule"
-          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
-        >
-          Schedule
-        </Link>
-        <Link
-          href="/getdp"
-          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
-        >
-          Badge
-        </Link>
+        {pathname !== "/speakers" && (
+          <Link
+            href="#sponsorship"
+            className="text-base font-normal text-[#F2CB45] hover:text-white transition-colors duration-300 ease-in-out"
+          >
+            Sponsor
+          </Link>
+        )}
         <Link
           href={`mailto:${contactEmail}`}
           className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
@@ -109,15 +102,15 @@ const Navbar = () => {
       {/* Right Side */}
       <div className="flex items-center gap-x-5">
         <Link
-          href={`mailto:${contactEmail}`}
-          className="md:p-5 text-sm lg:text-base font-medium text-white w-fit p-3 bg-[#3D7BE8] hidden shadow-xs hover:bg-[#6597ED] h-9 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
+          href="#sponsorship"
+          className="md:p-5 text-sm lg:text-base font-medium text-black w-fit p-3 bg-[#F2CB45] hidden shadow-xs hover:bg-[#e8bc3d] h-9 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
         >
-          Sponsor
+          Become a Sponsor
         </Link>
         <div className="flex md:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <BurgerIcon className="text-black" />
+              <BurgerIcon className="text-white" />
             </SheetTrigger>
             <SheetContent side="top">
               <MobileMenu />
@@ -188,6 +181,15 @@ const MobileMenu = () => {
 
         <SheetClose asChild>
           <Link
+            href="/blockfest-2025"
+            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
+          >
+            2025 Recap <span>🇳🇬</span>
+          </Link>
+        </SheetClose>
+
+        <SheetClose asChild>
+          <Link
             href="/speakers"
             className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
           >
@@ -197,19 +199,10 @@ const MobileMenu = () => {
 
         <SheetClose asChild>
           <Link
-            href="/schedule"
-            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
+            href="#sponsorship"
+            className="text-lg font-medium text-[#F2CB45] hover:text-white hover:underline transition w-fit"
           >
-            Schedule
-          </Link>
-        </SheetClose>
-
-        <SheetClose asChild>
-          <Link
-            href="/getdp"
-            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
-          >
-            Badge
+            Become a Sponsor
           </Link>
         </SheetClose>
 

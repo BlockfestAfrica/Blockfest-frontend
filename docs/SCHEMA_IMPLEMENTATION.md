@@ -1,151 +1,61 @@
-# Schema Markup Implementation - Blockfest Africa
+# Schema Markup Implementation - Blockf3st Africa 2026
 
-## 🎯 Why Schema Markup? (Beyond Next.js Defaults)
+## Overview
 
-### Next.js Provides by Default:
+This document outlines the JSON-LD structured data implementation for Blockf3st Africa's website, optimized for the 2026 dual-event format (Johannesburg & Lagos).
 
-- Basic meta tags (title, description, Open Graph, Twitter Cards)
-- Automatic sitemap generation
-- Basic SEO optimization
+## Schema Components
 
-### Schema Markup Adds:
+### Primary Schema File: `components/seo/schema-markup-2026.tsx`
 
-1. **Rich Search Results (SERP Features)**
+Contains all 2026-specific schemas:
 
-   - Event details displayed directly in Google search results
-   - FAQ sections that expand in search results
-   - Speaker profiles with roles and affiliations
-   - Organization knowledge panels
+1. **EventSchema** - Dual event markup for both Johannesburg and Lagos events
+2. **OrganizationSchema** - Blockfest Africa organization details with 2025 achievements
+3. **WebsiteSchema** - Website structure and search functionality
+4. **BreadcrumbSchema** - Navigation structure for subpages
+5. **Event2025Schema** - Archive schema for the 2025 Lagos event
 
-2. **Enhanced AI & Voice Search Understanding**
+### Legacy Schema File: `components/seo/schema-markup.tsx`
 
-   - Google Assistant, Alexa can better interpret your content
-   - AI search engines get structured context
-   - Better entity recognition and relationship mapping
+Maintained for backward compatibility, used by:
+- FAQ page (`BaseSchema`)
+- Schedule page (`BaseSchema`)
+- Badge generator page (`BaseSchema`)
+- Speaker pages (`BreadcrumbSchema`)
 
-3. **Google Knowledge Graph Integration**
-   - Your event can appear in Google's knowledge panels
-   - Improved search visibility and credibility
+## Page Implementation
 
-## 📊 Implementation Status
+| Page | Schema Components |
+|------|-------------------|
+| Homepage (`/`) | EventSchema, OrganizationSchema, WebsiteSchema |
+| 2025 Recap (`/blockfest-2025`) | Event2025Schema |
+| Speakers (`/speakers`) | BreadcrumbSchema, SpeakersSchema |
+| FAQ (`/faq`) | FAQSchema, BaseSchema |
+| Schedule (`/schedule`) | BaseSchema |
 
-### ✅ Pages with Schema Markup:
+## Key Event Data
 
-1. **Homepage** (`app/page.tsx`)
+All event data is centralized in `lib/events.ts`:
 
-   - **EventSchema**: Complete event details (date, location, organizer)
-   - **OrganizationSchema**: Blockfest Africa organization info
-   - **WebsiteSchema**: Website structure and search functionality
+```typescript
+// 2026 Events
+blockfest2026Johannesburg  // May 2026, South Africa
+blockfest2026Lagos         // October 2026, Nigeria
 
-2. **Speakers Page** (`app/speakers/page.tsx`)
+// 2025 Archive
+blockfest2025Lagos         // October 2025, Nigeria (completed)
+```
 
-   - **SpeakersSchema**: Real speaker data from `lib/speakers.ts`
-   - **BreadcrumbSchema**: Navigation structure
-   - ✅ **No dummy data** - Uses actual speaker information
+## Validation
 
-3. **FAQ Page** (`app/faq/page.tsx`)
+Test your schema markup at:
+- [Google Rich Results Test](https://search.google.com/test/rich-results)
+- [Schema.org Validator](https://validator.schema.org/)
 
-   - **FAQSchema**: Comprehensive Q&A from `lib/faq-data.ts`
-   - **BaseSchema**: Page structure
-   - ✅ **Shared data source** - Eliminates duplication
+## Best Practices
 
-4. **Analytics Page** (`app/analytics/page.tsx`)
-
-   - **AnalyticsSchema**: Dashboard metadata
-   - ✅ **Real environment variables** - No hardcoded values
-
-5. **Insights Page** (`app/insights/page.tsx`)
-
-   - **InsightsSchema**: Protected insights metadata
-
-6. **Badge Generator** (`app/getdp/page.tsx`)
-
-   - **BaseSchema**: Software application schema
-   - ✅ **Functional implementation** - Real badge generator tool
-
-7. **Schedule Page** (`app/schedule/page.tsx`)
-
-   - **BaseSchema**: Event schedule structure
-   - **Enhanced with EventSchedule entity**
-
-8. **Login Page** (`app/insights/login/page.tsx`)
-   - **BaseSchema**: Restricted access page schema
-
-### 🛠️ Schema Components Created:
-
-1. **`components/seo/schema-markup.tsx`**
-
-   - Core schema utilities (Event, Organization, Website, Base)
-   - Real event data with actual dates, location, contact info
-
-2. **`components/seo/speakers-schema.tsx`**
-
-   - Speaker-specific schemas using real speaker data
-   - Proper Person schema with roles and social links
-
-3. **`components/seo/analytics-schema.tsx`**
-
-   - Analytics and insights page schemas
-   - Dashboard and dataset markup
-
-4. **`components/seo/faq-schema.tsx`**
-
-   - FAQ page schema using shared data source
-   - Proper Question/Answer structure
-
-5. **`lib/faq-data.ts`**
-   - ✅ **Shared FAQ data source** - Eliminates duplication
-   - Comprehensive Q&A covering all event aspects
-
-## 🔍 Schema Types Implemented:
-
-- **Event**: Conference details, dates, venue, pricing
-- **Organization**: Company information, contact details, social links
-- **WebSite**: Site structure, search functionality
-- **Person**: Individual speaker profiles with expertise
-- **FAQPage**: Structured FAQ content for rich snippets
-- **WebPage**: Page hierarchy and context
-- **Dataset**: Analytics and insights data structure
-- **SoftwareApplication**: Badge generator tool
-- **EventSchedule**: Program and activities schedule
-
-## ✅ Data Quality Verification:
-
-### Real Data Sources:
-
-- **Speakers**: `lib/speakers.ts` with actual speaker information
-- **FAQ**: `lib/faq-data.ts` with comprehensive event Q&A
-- **Event Details**: Real dates (Oct 11, 2025), location (Landmark Event Center, Lagos)
-- **Organization**: Actual contact info (partnership@blockfestafrica.com)
-- **Social Links**: Real social media profiles
-
-### No Dummy Data:
-
-- ❌ Removed placeholder speaker data
-- ❌ Eliminated hardcoded dummy values
-- ❌ No "sample" or "example" content
-- ✅ All schema uses actual event information
-
-## 🚀 SEO Benefits Expected:
-
-1. **Rich Snippets**: Event details, dates, location in search results
-2. **FAQ Rich Results**: Expandable Q&A sections in SERPs
-3. **Knowledge Panel**: Organization information display
-4. **Speaker Cards**: Individual speaker profile snippets
-5. **Enhanced Voice Search**: Better AI understanding of content
-6. **Google Knowledge Graph**: Event entity recognition
-
-## 🔧 Technical Implementation:
-
-- **TypeScript**: Proper typing for all schema data
-- **Modular Design**: Reusable schema components
-- **Error Handling**: Proper validation and fallbacks
-- **Performance**: Minimal impact on page load
-- **Maintainability**: Shared data sources, no duplication
-
-## 📈 Next Steps:
-
-1. **Monitor Search Console**: Track rich snippet appearances
-2. **Test with Google's Rich Results Tool**: Validate schema markup
-3. **Analytics Tracking**: Monitor improved search visibility
-4. **Regular Updates**: Keep event data current
+1. Keep event dates updated in `lib/events.ts`
+2. Update social media links in OrganizationSchema when needed
+3. Add new speakers to `lib/speakers.ts` for SpeakersSchema
+4. Update FAQ content in `lib/faq-data.ts` for FAQSchema
