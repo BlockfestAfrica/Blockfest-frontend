@@ -8,9 +8,9 @@ import { gotham } from "@/lib/fonts";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
-const siteName = "Blockfest Africa";
+const siteName = "Blockf3st Africa 2026";
 const siteDescription =
-  "Africa's premier blockchain conference bringing together builders, founders, investors, and DeFi professionals in Africa.";
+  "The Superbowl of Web3 - Africa's premier blockchain conference. Join us in Johannesburg (May 2026) & Lagos (October 2026). Web3 In Motion: From Pipelines to Platforms.";
 const twitterHandle =
   process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica";
 const instagramHandle =
@@ -33,6 +33,10 @@ export const metadata: Metadata = {
     "web3",
     "cryptocurrency",
     "africa",
+    "south africa",
+    "nigeria",
+    "johannesburg",
+    "lagos",
     "conference",
     "bitcoin",
     "ethereum",
@@ -48,6 +52,8 @@ export const metadata: Metadata = {
     "venture capital",
     "developers",
     "builders",
+    "blockfest 2026",
+    "superbowl of web3",
   ],
   authors: [
     {

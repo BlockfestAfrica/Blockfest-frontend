@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import {
@@ -10,122 +10,18 @@ import {
   FaYoutube,
 } from "react-icons/fa6";
 import type { Menu } from "@/types";
-import { useUmami } from "@/lib/hooks/use-umami";
-import { toast } from "sonner";
 import { gotham } from "@/lib/fonts";
 
-// Footer menu (removed "Contacts" and "Sponsors" for special handling)
+// Footer menu for 2026
 const footerMenu: Menu[] = [
-  { path: "/schedule", title: "Schedule" },
+  { path: "/blockfest-2025", title: "2025 Recap" },
   { path: "about", title: "About" },
-  { path: "/blogs", title: "Blogs" },
-  { path: "speakers", title: "Speakers" },
+  { path: "/speakers", title: "Speakers" },
 ];
 
-// Smooth scroll helper
-const scrollToSection = (id: string) => {
-  const el = document.getElementById(id);
-  if (el) {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-};
-
 const Footer = () => {
-  const { trackButtonClick, trackRegistration } = useUmami();
   const contactEmail =
     process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
-
-  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
-
-  useEffect(() => {
-    const env = process.env.NEXT_PUBLIC_REGISTRATION_OPEN_AT;
-    const fallbackIso = "2025-09-07T17:15:00.000Z";
-    const parsed = Date.parse(env ?? fallbackIso);
-    const openAtMs = Number.isFinite(parsed) ? parsed : Date.parse(fallbackIso);
-
-    let timer: number | null = null;
-    const MAX_DELAY = 2_147_483_647; // ~24.8 days
-
-    const schedule = () => {
-      const now = Date.now();
-      if (now >= openAtMs) {
-        setIsRegistrationOpen(true);
-        return;
-      }
-      setIsRegistrationOpen(false);
-      const delay = Math.min(openAtMs - now, MAX_DELAY);
-      timer = window.setTimeout(schedule, delay);
-    };
-
-    schedule();
-    return () => {
-      if (timer !== null) window.clearTimeout(timer);
-    };
-  }, []);
-
-  const handleRegistrationClick = () => {
-    trackButtonClick("Register Now", "Footer Section");
-    trackRegistration("footer-cta");
-
-    if (isRegistrationOpen) {
-      // Registration is open - redirect to Luma
-      window.open(
-        "https://luma.com/gf1ye3cw?tk=AQAG9o",
-        "_blank",
-        "noopener,noreferrer"
-      );
-    } else {
-      // Show X Space invitation toast with dynamic date formatting
-      const openAtStr =
-        process.env.NEXT_PUBLIC_REGISTRATION_OPEN_AT ??
-        "2025-09-07T17:15:00.000Z";
-      const openAt = new Date(openAtStr);
-      const isValidOpenAt = !Number.isNaN(openAt.getTime());
-      const whenLagos = isValidOpenAt
-        ? openAt.toLocaleString("en-NG", {
-            timeZone: "Africa/Lagos",
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          })
-        : "soon";
-      toast(
-        `🎤 Join our X Space ${
-          isValidOpenAt ? `${whenLagos} WAT` : whenLagos
-        }!`,
-        {
-          description:
-            "The registration link will be posted here once it opens.",
-          style: {
-            background:
-              "linear-gradient(145deg, #000000 0%, #1DA1F2 15%, #000000 100%)",
-            border: "2px solid #1DA1F2",
-            color: "#FFFFFF",
-            borderRadius: "16px",
-            boxShadow:
-              "0 20px 40px rgba(29, 161, 242, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3)",
-            fontWeight: "600",
-            backdropFilter: "blur(12px)",
-          },
-          className:
-            "font-bold text-lg [&>div]:text-white [&>div>div]:text-gray-200",
-          duration: 7000,
-          action: {
-            label: "Join X Space",
-            onClick: () =>
-              window.open(
-                "https://twitter.com/i/spaces/1kvJpMYEXALxE",
-                "_blank",
-                "noopener,noreferrer"
-              ),
-          },
-        }
-      );
-    }
-  };
 
   const twitterHandle = (
     process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica"
@@ -178,30 +74,21 @@ const Footer = () => {
         {/* Navigation Menu */}
         <nav className="hidden lg:grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4 md:gap-x-12.5 md:gap-y-6">
           {footerMenu.map((item) => (
-            <button
-              type="button"
+            <Link
               key={item.title}
-              onClick={() => scrollToSection(item.path)}
+              href={item.path}
               className="text-base xl:text-2xl font-medium cursor-pointer text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out text-left"
             >
               {item.title}
-            </button>
+            </Link>
           ))}
 
-          {/* Sponsors mailto link */}
+          {/* Sponsors link */}
           <Link
-            href={`mailto:${contactEmail}`}
-            className="text-base xl:text-2xl font-medium cursor-pointer text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+            href="#sponsorship"
+            className="text-base xl:text-2xl font-medium cursor-pointer text-[#F2CB45] hover:text-white transition-colors duration-300 ease-in-out"
           >
-            Sponsors
-          </Link>
-
-          {/* Badge Generator link */}
-          <Link
-            href="/getdp"
-            className="text-base xl:text-2xl font-medium cursor-pointer text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
-          >
-            Badge
+            Sponsor 2026
           </Link>
 
           {/* FAQ Page link */}
@@ -239,14 +126,15 @@ const Footer = () => {
       </div>
 
       <div className="hidden md:block">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={handleRegistrationClick}
-          className="text-white border-2 px-[38px] py-5 text-lg font-semibold cursor-pointer rounded-[12px]"
-        >
-          Register
-        </Button>
+        <Link href="#sponsorship">
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-black bg-[#F2CB45] hover:bg-[#e8bc3d] border-0 px-[38px] py-5 text-lg font-semibold cursor-pointer rounded-[12px]"
+          >
+            Sponsor 2026
+          </Button>
+        </Link>
       </div>
     </footer>
   );
