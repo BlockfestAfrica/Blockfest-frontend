@@ -1,58 +1,61 @@
 import React from "react";
 import type { Metadata } from "next";
-import { HeroSection } from "@/components/home/hero";
-import { StatsSection } from "@/components/home/stat";
-import { CountdownGallerySection } from "@/components/home/countdown-gallery";
-import { WhyAttendSection } from "@/components/home/why-attend";
+import { HeroSection2026 } from "@/components/home/hero-2026";
+import { Stats2026Section } from "@/components/home/stats-2026";
+import { Countdown2026Section } from "@/components/home/countdown-2026";
+import { WhyAttend2026Section } from "@/components/home/why-attend-2026";
 import { SpeakersSection } from "@/components/home/speakers";
 import { PartnersSection } from "@/components/home/partners";
+import { SponsorshipSection } from "@/components/home/sponsorship";
 import { FAQSection } from "@/components/home/faq";
 import {
   EventSchema,
   OrganizationSchema,
   WebsiteSchema,
-} from "@/components/seo/schema-markup";
+} from "@/components/seo/schema-markup-2026";
 
 export const metadata: Metadata = {
-  title: "Home",
+  title: "Blockf3st Africa 2026 - The Superbowl of Web3",
   description:
-    "Join Africa's premier blockchain conference. Connect with builders, founders, investors, and DeFi professionals in Africa. Register now for Blockfest Africa 2025.",
+    "Join Africa's biggest Web3 festival in 2026! Johannesburg (May 6th) & Lagos (October). Connect with 200M+ potential web3 users. Web3 In Motion - From Pipelines to Platforms.",
   keywords: [
-    "blockfest africa",
+    "blockfest africa 2026",
+    "blockf3st africa",
     "blockchain conference africa",
-    "web3 africa",
+    "web3 africa 2026",
     "cryptocurrency conference",
+    "blockchain south africa",
+    "web3 johannesburg",
     "blockchain events nigeria",
-    "defi conference",
+    "defi conference africa",
     "nft event africa",
     "bitcoin conference",
     "ethereum africa",
-    "blockchain developers",
+    "blockchain developers africa",
     "crypto investors africa",
-    "fintech conference",
-    "blockchain startup",
+    "fintech conference south africa",
+    "blockchain startup africa",
     "web3 developers",
-    "blockfest africa faq",
-    "blockchain conference questions",
-    "web3 event nigeria registration",
+    "superbowl of web3",
+    "web3 in motion",
   ],
   openGraph: {
-    title: "Blockfest Africa 2025 - Africa's Premier Blockchain Conference",
+    title: "Blockf3st Africa 2026 - The Superbowl of Web3",
     description:
-      "Join builders, founders, investors, and enthusiasts shaping the future of Web3 in Africa. Register now!",
+      "Join Africa's biggest Web3 festival! 🇿🇦 Johannesburg (May 6th) & 🇳🇬 Lagos (October 2026). Web3 In Motion - From Pipelines to Platforms.",
     images: [
       {
         url: "/images/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Blockfest Africa 2025 Conference",
+        alt: "Blockf3st Africa 2026 - The Superbowl of Web3",
       },
     ],
   },
   twitter: {
-    title: "Blockfest Africa 2025 - Africa's Premier Blockchain Conference",
+    title: "Blockf3st Africa 2026 - The Superbowl of Web3",
     description:
-      "Join builders, founders, investors, and enthusiasts shaping the future of Web3 in Africa. Register now!",
+      "Join Africa's biggest Web3 festival! 🇿🇦 Johannesburg (May 6th) & 🇳🇬 Lagos (October 2026). Web3 In Motion - From Pipelines to Platforms.",
     images: ["/images/twitter-image.jpg"],
   },
 };
@@ -66,12 +69,28 @@ const HomePage = () => {
       <WebsiteSchema />
 
       <main>
-        <HeroSection />
-        <StatsSection />
-        <CountdownGallerySection />
-        <WhyAttendSection />
+        {/* New 2026 Hero with dual event cards */}
+        <HeroSection2026 />
+
+        {/* 2025 Stats - Building on Success */}
+        <Stats2026Section />
+
+        {/* Countdown to both 2026 events */}
+        <Countdown2026Section />
+
+        {/* Why Attend with market opportunity data */}
+        <WhyAttend2026Section />
+
+        {/* Sponsorship Packages */}
+        <SponsorshipSection />
+
+        {/* Previous Speakers - 2025 lineup */}
         <SpeakersSection />
+
+        {/* Previous Partners - 2025 sponsors */}
         <PartnersSection />
+
+        {/* FAQ */}
         <FAQSection />
       </main>
     </>

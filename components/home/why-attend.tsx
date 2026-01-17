@@ -1,8 +1,6 @@
 "use client";
 import { Montserrat } from "next/font/google";
-
 import Image from "next/image";
-import React from "react";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import "./subtle-animations.css";
 
@@ -15,10 +13,15 @@ export function WhyAttendSection() {
 
   return (
     <section
-      className="flex flex-col items-center justify-center px-2.5 py-20 lg:py-[80px] lg:px-[70px] bg-gradient-to-b from-[#1A3461] to-[#005DFF]"
+      className="flex flex-col items-center justify-center px-4 py-12 lg:py-16 lg:px-8 bg-gradient-to-b from-[#1B64E4] to-[#0D3B8C]"
       id="about"
     >
-      <h2 className="font-[350px] text-4xl lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] mb-[40px] lg:my-[50px] text-white fade-in-on-scroll">
+      <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 border border-white/20">
+        <span className="text-[#F2CB45] font-semibold text-sm">
+          WHY BLOCKF3ST
+        </span>
+      </div>
+      <h2 className="font-bold text-3xl lg:text-5xl mb-6 lg:mb-10 text-white fade-in-on-scroll">
         Why Attend<span className="text-[#F2CB45]">?</span>
       </h2>
       <div className="scale-in">
@@ -63,41 +66,39 @@ function FeaturesComp() {
   ];
 
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mx-10 md:mx-5 lg:mx-0">
-        {categories.map((category, index) => (
-          <div
-            key={`${category.header}-${index}`}
-            className="flex flex-col md:flex-row items-stretch gap-x-0 lg:gap-x-4 bg-white rounded-[11px] lg:rounded-[20px] shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden "
-          >
-            {/* Image Section */}
-            <div className="w-full md:w-[40%] flex">
-              <div className="relative w-full h-[200px] md:h-auto flex-1 overflow-hidden rounded-l-[11px] lg:rounded-l-[20px] md:rounded-r-none">
-                <Image
-                  src={category.image}
-                  alt={`${category.header} - Blockfest Africa benefit`}
-                  fill
-                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 40vw, 300px"
-                  loading="lazy"
-                  className="object-cover object-center "
-                />
-              </div>
-            </div>
-
-            {/* Content Section */}
-            <div className="flex flex-col  justify-center flex-1 text-left p-4 ">
-              <h3 className="text-[#1B64E4] font-medium text-[21px] xl:text-[41.03px] leading-[21.91px] xl:leading-[42.74px] xl:mb-2">
-                {category.header}
-              </h3>
-              <p
-                className={`${montserrat.className} text-[#808080] text-[9px] xl:text-[17.1px] xl:leading-[1.2] font-medium w-[90%]`}
-              >
-                {category.text}
-              </p>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 max-w-5xl w-full">
+      {categories.map((category, index) => (
+        <div
+          key={`${category.header}-${index}`}
+          className="flex flex-col md:flex-row items-stretch bg-white rounded-xl lg:rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+        >
+          {/* Image Section */}
+          <div className="w-full md:w-[40%]">
+            <div className="relative w-full h-[160px] md:h-full min-h-[160px] overflow-hidden">
+              <Image
+                src={category.image}
+                alt={`${category.header} - Blockfest Africa benefit`}
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 40vw, 300px"
+                loading="lazy"
+                className="object-cover object-center "
+              />
             </div>
           </div>
-        ))}
-      </div>
+
+          {/* Content Section */}
+          <div className="flex flex-col justify-center flex-1 text-left p-4">
+            <h3 className="text-[#1B64E4] font-medium text-lg md:text-xl lg:text-2xl leading-tight mb-1 lg:mb-2">
+              {category.header}
+            </h3>
+            <p
+              className={`${montserrat.className} text-[#808080] text-xs md:text-sm lg:text-base leading-relaxed`}
+            >
+              {category.text}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
