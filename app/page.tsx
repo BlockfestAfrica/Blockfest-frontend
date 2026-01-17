@@ -17,7 +17,7 @@ import {
 export const metadata: Metadata = {
   title: "Blockf3st Africa 2026 - The Superbowl of Web3",
   description:
-    "Join Africa's biggest Web3 festival in 2026! Johannesburg (May 6th) & Lagos (October). Connect with 200M+ potential web3 users. Web3 In Motion - From Pipelines to Platforms.",
+    "Join Africa's biggest Web3 festival in 2026! Johannesburg (May 2026) & Lagos (October 2026). Connect with 200M+ potential web3 users. Web3 In Motion - From Pipelines to Platforms.",
   keywords: [
     "blockfest africa 2026",
     "blockf3st africa",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Blockf3st Africa 2026 - The Superbowl of Web3",
     description:
-      "Join Africa's biggest Web3 festival! 🇿🇦 Johannesburg (May 6th) & 🇳🇬 Lagos (October 2026). Web3 In Motion - From Pipelines to Platforms.",
+      "Join Africa's biggest Web3 festival! 🇿🇦 Johannesburg (May 2026) & 🇳🇬 Lagos (October 2026). Web3 In Motion - From Pipelines to Platforms.",
     images: [
       {
         url: "/images/og-image.jpg",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   twitter: {
     title: "Blockf3st Africa 2026 - The Superbowl of Web3",
     description:
-      "Join Africa's biggest Web3 festival! 🇿🇦 Johannesburg (May 6th) & 🇳🇬 Lagos (October 2026). Web3 In Motion - From Pipelines to Platforms.",
+      "Join Africa's biggest Web3 festival! 🇿🇦 Johannesburg (May 2026) & 🇳🇬 Lagos (October 2026). Web3 In Motion - From Pipelines to Platforms.",
     images: ["/images/twitter-image.jpg"],
   },
 };
