@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { umamiTrack } from "@/lib/analytics";
+import { umamiTrack } from "@/lib/umami";
 
 // Extend PerformanceEntry to include optional value property for web vitals
 interface PerformanceEntryWithValue extends PerformanceEntry {
