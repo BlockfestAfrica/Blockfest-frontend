@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import crypto, { timingSafeEqual } from "crypto";
 
 // In-memory rate limiting storage (in production, use Redis or a database)
@@ -76,12 +75,16 @@ function clearFailedAttempts(ip: string): void {
   rateLimitStore.delete(ip);
 }
 
-// Server-side only password (NOT exposed to client)
-// Server-side only password (NOT exposed to client)
-const INSIGHTS_PASSWORD = process.env.INSIGHTS_PASSWORD;
-
-if (!INSIGHTS_PASSWORD) {
-  throw new Error("INSIGHTS_PASSWORD environment variable is not configured");
+/**
+ * Get the insights password from environment.
+ * Throws at runtime if not configured.
+ */
+function getInsightsPassword(): string {
+  const password = process.env.INSIGHTS_PASSWORD;
+  if (!password) {
+    throw new Error("INSIGHTS_PASSWORD environment variable is not configured");
+  }
+  return password;
 }
 
 // Generate secure session token
@@ -117,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     // Validate password server-side using constant-time comparison
     const passwordBuffer = Buffer.from(password);
-    const expectedBuffer = Buffer.from(INSIGHTS_PASSWORD!); // Already checked above
+    const expectedBuffer = Buffer.from(getInsightsPassword());
 
     if (
       passwordBuffer.length !== expectedBuffer.length ||
