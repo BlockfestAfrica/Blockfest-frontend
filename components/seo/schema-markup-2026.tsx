@@ -49,8 +49,10 @@ export function EventSchema() {
       name: "TBA - Johannesburg",
       address: {
         "@type": "PostalAddress",
+        streetAddress: "TBA",
         addressLocality: "Johannesburg",
         addressRegion: "Gauteng",
+        postalCode: "2000",
         addressCountry: "ZA",
       },
     },
@@ -69,9 +71,11 @@ export function EventSchema() {
     },
     offers: {
       "@type": "Offer",
+      url: "https://blockfestafrica.com",
       price: "0",
       priceCurrency: "ZAR",
       availability: "https://schema.org/PreOrder",
+      validFrom: "2026-01-01",
       description:
         "Registration opening soon for Blockf3st Africa 2026 - Johannesburg",
     },
@@ -112,8 +116,10 @@ export function EventSchema() {
       name: "TBA - Lagos",
       address: {
         "@type": "PostalAddress",
+        streetAddress: "TBA",
         addressLocality: "Lagos",
         addressRegion: "Lagos State",
+        postalCode: "100001",
         addressCountry: "NG",
       },
     },
@@ -125,9 +131,11 @@ export function EventSchema() {
     },
     offers: {
       "@type": "Offer",
+      url: "https://blockfestafrica.com",
       price: "0",
       priceCurrency: "NGN",
       availability: "https://schema.org/PreOrder",
+      validFrom: "2026-01-01",
       description:
         "Registration opening soon for Blockf3st Africa 2026 - Lagos",
     },
