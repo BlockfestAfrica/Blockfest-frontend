@@ -43,6 +43,9 @@ export const metadata: Metadata = {
       },
     ],
   },
+  alternates: {
+    canonical: "https://blockfestafrica.com/blockfest-2025",
+  },
 };
 
 const event = blockfest2025Lagos;

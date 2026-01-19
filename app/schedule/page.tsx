@@ -21,6 +21,9 @@ export const metadata: Metadata = {
     description:
       "Explore the full schedule of activities for Blockfest Africa. Join industry leaders, attend keynote sessions, and participate in workshops on AI, Blockchain, and emerging technologies.",
   },
+  alternates: {
+    canonical: "https://blockfestafrica.com/schedule",
+  },
 };
 
 export default function Schedule() {

@@ -5,33 +5,37 @@ import { BaseSchema } from "@/components/seo/schema-markup";
 import { faqData } from "@/lib/faq-data";
 
 export const metadata: Metadata = {
-  title: "FAQ - Blockfest Africa 2025 | Complete Guide",
+  title: "FAQ - Blockfest Africa 2026 | Complete Guide",
   description:
-    "Get answers to all your questions about Blockfest Africa 2025. Find information about registration, venue, schedule, accommodation, networking, prizes, and more.",
+    "Get answers to all your questions about Blockfest Africa 2026 in Johannesburg and Lagos. Find information about registration, venues, schedule, accommodation, networking, and more.",
   keywords: [
     "Blockfest Africa FAQ",
     "Web3 conference questions",
+    "blockchain event Johannesburg",
     "blockchain event Lagos",
+    "cryptocurrency conference South Africa",
     "cryptocurrency conference Nigeria",
     "DeFi event Africa",
     "Web3 registration",
-    "Landmark Event Center",
     "free blockchain conference",
-    "Web3 networking Lagos",
-    "blockchain prizes Nigeria",
+    "Web3 networking Africa",
+    "blockchain prizes Africa",
     "crypto event accommodation",
   ],
   openGraph: {
-    title: "FAQ - Blockfest Africa 2025 | Complete Guide",
+    title: "FAQ - Blockfest Africa 2026 | Complete Guide",
     description:
-      "Get answers to all your questions about Africa's premier Web3 conference. Registration, venue, schedule, accommodation, and more.",
+      "Get answers to all your questions about Africa's premier Web3 conference. Registration, venues, schedule, accommodation, and more.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "FAQ - Blockfest Africa 2025 | Complete Guide",
+    title: "FAQ - Blockfest Africa 2026 | Complete Guide",
     description:
-      "Get answers to all your questions about Africa's premier Web3 conference. Registration, venue, schedule, accommodation, and more.",
+      "Get answers to all your questions about Africa's premier Web3 conference. Registration, venues, schedule, accommodation, and more.",
+  },
+  alternates: {
+    canonical: "https://blockfestafrica.com/faq",
   },
 };
 

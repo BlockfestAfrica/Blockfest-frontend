@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description:
     "Generate your personalized Blockfest Africa 2025 conference badge",
   keywords: ["blockfest", "africa", "badge", "generator", "conference", "2025"],
+  alternates: {
+    canonical: "https://blockfestafrica.com/getdp",
+  },
 };
 
 export default function GetDPPage() {
