@@ -13,7 +13,7 @@ const Gotham = localFont({
 export const metadata: Metadata = {
   title: "Speakers",
   description:
-    "Meet the visionary speakers at Blockfest Africa 2025. Connect with blockchain pioneers, founders, investors, and Web3 leaders driving innovation across Africa.",
+    "Meet the visionary speakers at Blockfest Africa 2026. Connect with blockchain pioneers, founders, investors, and Web3 leaders driving innovation across Africa.",
   keywords: [
     "blockfest africa speakers",
     "blockchain experts africa",
@@ -31,23 +31,26 @@ export const metadata: Metadata = {
     "web3 developers africa",
   ],
   openGraph: {
-    title: "Blockfest Africa 2025 Speakers - Visionaries of Web3 in Africa",
+    title: "Blockfest Africa 2026 Speakers - Visionaries of Web3 in Africa",
     description:
-      "Discover the speakers shaping the future of blockchain, crypto, and Web3 in Africa at Blockfest Africa 2025.",
+      "Discover the speakers shaping the future of blockchain, crypto, and Web3 in Africa at Blockfest Africa 2026.",
     images: [
       {
         url: "/images/og-speakers.jpg",
         width: 1200,
         height: 630,
-        alt: "Blockfest Africa 2025 Speakers",
+        alt: "Blockfest Africa 2026 Speakers",
       },
     ],
   },
   twitter: {
-    title: "Blockfest Africa 2025 Speakers - Visionaries of Web3 in Africa",
+    title: "Blockfest Africa 2026 Speakers - Visionaries of Web3 in Africa",
     description:
-      "Meet the blockchain pioneers, founders, and innovators speaking at Blockfest Africa 2025.",
+      "Meet the blockchain pioneers, founders, and innovators speaking at Blockfest Africa 2026.",
     images: ["/images/twitter-speakers.jpg"],
+  },
+  alternates: {
+    canonical: "https://blockfestafrica.com/speakers",
   },
 };
 
