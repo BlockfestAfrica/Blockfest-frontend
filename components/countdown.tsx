@@ -19,6 +19,30 @@ interface TimeLeft {
   seconds: number;
 }
 
+const TIME_UNITS: { key: keyof TimeLeft; label: string }[] = [
+  { key: "days", label: "days" },
+  { key: "hours", label: "hours" },
+  { key: "minutes", label: "minutes" },
+  { key: "seconds", label: "seconds" },
+];
+
+const VALUE_CLASSES = "text-[#3870D3] font-normal text-[34px] md:text-4xl lg:text-[104.95px] lg:leading-[110px]";
+
+function TimeUnit({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex items-center flex-col">
+      <p className={`${VALUE_CLASSES} tabular-nums`}>{value}</p>
+      <p className="font-light text-[10px] md:text-lg lg:text-[31.98px] lg:leading-[120%] uppercase">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function Separator() {
+  return <span className={VALUE_CLASSES}>:</span>;
+}
+
 export function Countdown ({ targetDate, onExpire }: CountdownProps)  {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -36,6 +60,10 @@ export function Countdown ({ targetDate, onExpire }: CountdownProps)  {
       minutes: Math.floor((difference / 1000 / 60) % 60),
       seconds: Math.floor((difference / 1000) % 60),
     };
+  };
+
+  const formatNumber = (num: number): string => {
+    return num.toString().padStart(2, '0');
   };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -67,54 +95,17 @@ export function Countdown ({ targetDate, onExpire }: CountdownProps)  {
     };
   }, [targetDate, onExpire]);
 
-  const formatNumber = (num: number): string => {
-    return num.toString().padStart(2, '0');
-  };
-
   return (
-    <div className={`${bebasNeue.className} flex items-start justify-between lg:justify-center border-[1.44px] lg:border-4 border-[#3870D3] space-x-2 lg:w-fit lg:space-x-5 rounded-[8px] lg:rounded-[24px] py-2.5 px-5 md:px-10 lg:py-[30px] lg:px-[50px]`}>
-      <div className="flex items-center flex-col">
-        <p className="text-[#3870D3] font-normal text-[34px] md:text-4xl lg:text-[104.95px] lg:leading-[110px] tabular-nums">
-          {formatNumber(timeLeft.days)}
-        </p>
-        <p className="font-light text-[10px] md:text-lg lg:text-[31.98px] lg:leading-[120%] uppercase">
-          days
-        </p>
-      </div>
-
-      <span className="text-[#3870D3] font-normal text-[34px] md:text-4xl lg:text-[104.95px] lg:leading-[110px]">:</span>
-
-      <div className="flex items-center flex-col">
-        <p className="text-[#3870D3] font-normal text-[34px] md:text-4xl lg:text-[104.95px] lg:leading-[110px] tabular-nums">
-          {formatNumber(timeLeft.hours)}
-        </p>
-        <p className="font-light text-[10px] md:text-lg lg:text-[31.98px] lg:leading-[120%] uppercase">
-          hours
-        </p>
-      </div>
-
-      <span className="text-[#3870D3] font-normal text-[34px] md:text-4xl lg:text-[104.95px] lg:leading-[110px]">:</span>
-
-      <div className="flex items-center flex-col">
-        <p className="text-[#3870D3] font-normal text-[34px] md:text-4xl lg:text-[104.95px] lg:leading-[110px] tabular-nums">
-          {formatNumber(timeLeft.minutes)}
-        </p>
-        <p className="font-light text-[10px] md:text-lg lg:text-[31.98px] lg:leading-[120%] uppercase">
-          minutes
-        </p>
-      </div>
-
-      <span className="text-[#3870D3] font-normal text-[34px] md:text-4xl lg:text-[104.95px] lg:leading-[110px]">:</span>
-
-      <div className="flex items-center flex-col">
-        <p className="text-[#3870D3] font-normal text-[34px] md:text-4xl lg:text-[104.95px] lg:leading-[110px] tabular-nums">
-          {formatNumber(timeLeft.seconds)}
-        </p>
-        <p className="font-light text-[10px] md:text-lg lg:text-[31.98px] lg:leading-[120%] uppercase">
-          seconds
-        </p>
-      </div>
+    <div className={`${bebasNeue.className} flex items-start justify-between lg:justify-center border-[1.44px] lg:border-4 border-[#3870D3] space-x-2 lg:w-fit lg:space-x-5 rounded-lg lg:rounded-3xl py-2.5 px-5 md:px-10 lg:py-[30px] lg:px-[50px]`}>
+      {TIME_UNITS.map((unit, index) => (
+        <div key={unit.key} className="contents">
+          {index > 0 && <Separator />}
+          <TimeUnit
+            value={formatNumber(timeLeft[unit.key])}
+            label={unit.label}
+          />
+        </div>
+      ))}
     </div>
   );
 };
-

@@ -13,16 +13,16 @@ export function WhyAttendSection() {
 
   return (
     <section
-      className="flex flex-col items-center justify-center px-4 py-12 lg:py-16 lg:px-8 bg-gradient-to-b from-[#1B64E4] to-[#0D3B8C]"
+      className="flex flex-col items-center justify-center px-4 py-12 lg:py-16 lg:px-8 bg-gradient-to-b from-brand-blue to-brand-blue-dark"
       id="about"
     >
       <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 border border-white/20">
-        <span className="text-[#F2CB45] font-semibold text-sm">
+        <span className="text-brand-gold font-semibold text-sm">
           WHY BLOCKF3ST
         </span>
       </div>
       <h2 className="font-bold text-3xl lg:text-5xl mb-6 lg:mb-10 text-white fade-in-on-scroll">
-        Why Attend<span className="text-[#F2CB45]">?</span>
+        Why Attend<span className="text-brand-gold">?</span>
       </h2>
       <div className="scale-in">
         <FeaturesComp />
@@ -88,7 +88,7 @@ function FeaturesComp() {
 
           {/* Content Section */}
           <div className="flex flex-col justify-center flex-1 text-left p-4">
-            <h3 className="text-[#1B64E4] font-medium text-lg md:text-xl lg:text-2xl leading-tight mb-1 lg:mb-2">
+            <h3 className="text-brand-blue font-medium text-lg md:text-xl lg:text-2xl leading-tight mb-1 lg:mb-2">
               {category.header}
             </h3>
             <p

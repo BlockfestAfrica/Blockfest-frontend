@@ -50,7 +50,7 @@ export function WhyAttend2026Section() {
         {/* Header */}
         <div className="text-center mb-10">
           <h2 className="font-bold text-4xl lg:text-5xl xl:text-6xl mb-4 text-white fade-in-on-scroll">
-            Why Attend<span className="text-[#F2CB45]">?</span>
+            Why Attend<span className="text-brand-gold">?</span>
           </h2>
           <p className="text-white/80 text-base lg:text-lg max-w-3xl mx-auto px-5">
             Join over{" "}
@@ -62,7 +62,7 @@ export function WhyAttend2026Section() {
         {/* Market Opportunity Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-12">
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 lg:p-4 text-center border border-white/20">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#F2CB45]">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-gold">
               {marketOpportunity.unbankedPopulation.percentage}%
             </p>
             <p className="text-white/80 text-xs lg:text-sm mt-1">
@@ -73,7 +73,7 @@ export function WhyAttend2026Section() {
             </p>
           </div>
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 lg:p-4 text-center border border-white/20">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#F2CB45]">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-gold">
               {marketOpportunity.youngPopulation.percentage}%
             </p>
             <p className="text-white/80 text-xs lg:text-sm mt-1">Under 30</p>
@@ -82,7 +82,7 @@ export function WhyAttend2026Section() {
             </p>
           </div>
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 lg:p-4 text-center border border-white/20">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#F2CB45]">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-gold">
               ${marketOpportunity.globalWeb3Market.value}
             </p>
             <p className="text-white/80 text-xs lg:text-sm mt-1">
@@ -93,7 +93,7 @@ export function WhyAttend2026Section() {
             </p>
           </div>
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 lg:p-4 text-center border border-white/20">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#F2CB45]">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-gold">
               30+
             </p>
             <p className="text-white/80 text-xs lg:text-sm mt-1">
@@ -129,7 +129,7 @@ export function WhyAttend2026Section() {
 
                 {/* Content Section */}
                 <div className="flex flex-col justify-center flex-1 text-left p-5 md:p-4">
-                  <h3 className="text-[#1B64E4] font-semibold text-lg md:text-xl lg:text-2xl xl:text-[32px] leading-tight mb-2">
+                  <h3 className="text-brand-blue font-semibold text-lg md:text-xl lg:text-2xl xl:text-3xl leading-tight mb-2">
                     {category.header}
                   </h3>
                   <p

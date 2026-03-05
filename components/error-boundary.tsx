@@ -73,7 +73,7 @@ function DefaultErrorFallback({
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
         <div className="mb-8">
-          <h1 className="text-6xl font-bold text-[#1B64E4] mb-4">Oops!</h1>
+          <h1 className="text-6xl font-bold text-brand-blue mb-4">Oops!</h1>
           <h2 className="text-2xl font-semibold text-gray-900 mb-4">
             Something went wrong
           </h2>
@@ -97,7 +97,7 @@ function DefaultErrorFallback({
         <div className="space-y-4">
           <Button
             onClick={reset}
-            className="w-full bg-[#1B64E4] hover:bg-[#4F85EB] text-white"
+            className="w-full bg-brand-blue hover:bg-brand-blue-hover text-white"
           >
             Try Again
           </Button>
@@ -113,7 +113,7 @@ function DefaultErrorFallback({
           <Button
             onClick={() => (window.location.href = "/")}
             variant="ghost"
-            className="w-full text-[#1B64E4]"
+            className="w-full text-brand-blue"
           >
             Go Home
           </Button>
@@ -124,7 +124,7 @@ function DefaultErrorFallback({
             Need help?{" "}
             <a
               href="mailto:support@blockfestafrica.com"
-              className="text-[#1B64E4] hover:underline"
+              className="text-brand-blue hover:underline"
             >
               Contact Support
             </a>

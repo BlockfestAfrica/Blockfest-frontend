@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { blockfest2026Johannesburg, blockfest2026Lagos } from "@/lib/events";
+import { CONTACT_EMAIL } from "@/lib/constants";
 import "./subtle-animations.css";
 
 interface EventCardProps {
@@ -21,19 +22,19 @@ function EventCard({
   contactEmail,
 }: EventCardProps) {
   const { trackButtonClick } = useUmami();
-  const isJohannesburg = event.location.city === "Johannesburg";
+  const isJohannesburg = event.location.city === "Cape Town";
   const flagEmoji = isJohannesburg ? "🇿🇦" : "🇳🇬";
 
   return (
     <div
       className={`relative rounded-2xl lg:rounded-3xl p-6 lg:p-8 transition-all duration-300 hover:scale-[1.02] ${
         isPrimary
-          ? "bg-gradient-to-br from-[#1B64E4] via-[#1554C7] to-[#0D3A8C] border-2 border-[#F2CB45]"
-          : "bg-gradient-to-br from-[#F2CB45]/20 via-[#1B64E4]/30 to-[#0D1F3C] border-2 border-[#F2CB45]/50"
+          ? "bg-gradient-to-br from-brand-blue via-[#1554C7] to-[#0D3A8C] border-2 border-brand-gold"
+          : "bg-gradient-to-br from-brand-gold/20 via-brand-blue/30 to-[#0D1F3C] border-2 border-brand-gold/50"
       }`}
     >
       {isPrimary && (
-        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-[#F2CB45] text-black text-xs font-bold px-4 py-1 rounded-full">
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-brand-gold text-black text-xs font-bold px-4 py-1 rounded-full">
           NEXT EVENT
         </div>
       )}
@@ -47,7 +48,7 @@ function EventCard({
         <p className="text-white/70 text-sm mb-4">{event.location.country}</p>
 
         {/* Date */}
-        <div className="flex items-center justify-center gap-2 text-[#F2CB45] font-semibold mb-6">
+        <div className="flex items-center justify-center gap-2 text-brand-gold font-semibold mb-6">
           <IoCalendarClearOutline className="text-lg" />
           <span>{event.date.displayDate}</span>
         </div>
@@ -57,7 +58,7 @@ function EventCard({
           <Button
             className={`w-full font-semibold text-sm lg:text-base rounded-full py-5 ${
               isPrimary
-                ? "bg-[#F2CB45] text-black hover:bg-[#e8bc3d]"
+                ? "bg-brand-gold text-black hover:bg-brand-gold-hover"
                 : "bg-white/20 text-white hover:bg-white/30"
             }`}
             onClick={onRegisterClick}
@@ -87,14 +88,13 @@ function EventCard({
 
 export function HeroSection2026() {
   const { trackButtonClick, trackRegistration } = useUmami();
-  const contactEmail =
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
+  const contactEmail = CONTACT_EMAIL;
 
   useSubtleAnimations();
 
   const handleJohannesburgRegister = () => {
-    trackButtonClick("Register Now", "Hero Section - Johannesburg");
-    trackRegistration("hero-cta-johannesburg");
+    trackButtonClick("Register Now", "Hero Section - Cape Town");
+    trackRegistration("hero-cta-cape-town");
     if (blockfest2026Johannesburg.registrationUrl) {
       window.open(
         blockfest2026Johannesburg.registrationUrl,
@@ -132,21 +132,21 @@ export function HeroSection2026() {
         <div className="text-center mb-8 lg:mb-12">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-5 py-2.5 mb-6 border border-white/20 fade-in-on-scroll">
-            <span className="text-[#F2CB45] font-semibold text-sm lg:text-base">
+            <span className="text-brand-gold font-semibold text-sm lg:text-base">
               2026 AFRICA TOUR
             </span>
           </div>
 
           {/* Title */}
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4 scale-in">
-            Blockf<span className="text-[#1B64E4]">3</span>st Africa{" "}
-            <span className="text-[#F2CB45]">&apos;26</span>
+            Blockf<span className="text-brand-blue">3</span>st Africa{" "}
+            <span className="text-brand-gold">&apos;26</span>
           </h1>
 
           {/* Tagline */}
           <p className="text-lg sm:text-xl lg:text-2xl text-white/90 font-medium mb-4 lg:mb-6 fade-in-on-scroll">
             Web3 In Motion —{" "}
-            <span className="text-[#F2CB45]">From Pipelines to Platforms</span>
+            <span className="text-brand-gold">From Pipelines to Platforms</span>
           </p>
 
           {/* Description */}
@@ -155,8 +155,8 @@ export function HeroSection2026() {
             audience of over{" "}
             <span className="text-white font-semibold">200 million+</span> web3
             users of tomorrow. Join us in{" "}
-            <span className="text-[#F2CB45]">South Africa</span> and{" "}
-            <span className="text-[#F2CB45]">Nigeria</span> for Africa&apos;s
+            <span className="text-brand-gold">South Africa</span> and{" "}
+            <span className="text-brand-gold">Nigeria</span> for Africa&apos;s
             biggest Web3 festival.
           </p>
         </div>

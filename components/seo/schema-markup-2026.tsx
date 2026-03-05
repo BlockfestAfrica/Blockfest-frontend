@@ -33,11 +33,11 @@ export function BaseSchema({ type, data }: BaseSchemaProps) {
 
 // Event Schema for Blockfest Africa 2026 (Dual Events)
 export function EventSchema() {
-  // Primary event - Johannesburg 2026
+  // Primary event - Cape Town 2026
   const joburgEvent = {
     "@context": "https://schema.org",
     "@type": "Event",
-    name: "Blockf3st Africa 2026 - Johannesburg",
+    name: "Blockf3st Africa 2026 - Cape Town",
     description:
       "The Superbowl of Web3 - Africa's premier blockchain conference. Web3 In Motion: From Pipelines to Platforms. Connect with builders, founders, investors, and 200M+ potential web3 users.",
     startDate: blockfest2026Johannesburg.date.start,
@@ -46,13 +46,13 @@ export function EventSchema() {
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
       "@type": "Place",
-      name: "TBA - Johannesburg",
+      name: "TBA - Cape Town",
       address: {
         "@type": "PostalAddress",
         streetAddress: "TBA",
-        addressLocality: "Johannesburg",
-        addressRegion: "Gauteng",
-        postalCode: "2000",
+        addressLocality: "Cape Town",
+        addressRegion: "Western Cape",
+        postalCode: "8000",
         addressCountry: "ZA",
       },
     },
@@ -77,7 +77,7 @@ export function EventSchema() {
       availability: "https://schema.org/PreOrder",
       validFrom: "2026-01-01",
       description:
-        "Registration opening soon for Blockf3st Africa 2026 - Johannesburg",
+        "Registration opening soon for Blockf3st Africa 2026 - Cape Town",
     },
     performer: [
       {
@@ -93,7 +93,7 @@ export function EventSchema() {
         "Web3 builders, blockchain developers, crypto founders, DeFi enthusiasts, investors, government officials",
     },
     keywords:
-      "blockchain, Web3, DeFi, NFT, cryptocurrency, Africa, Johannesburg, South Africa, conference, networking, technology, innovation",
+      "blockchain, Web3, DeFi, NFT, cryptocurrency, Africa, Cape Town, South Africa, conference, networking, technology, innovation",
     category: "Technology Conference",
     inLanguage: "en-US",
     typicalAgeRange: "18-65",
@@ -244,7 +244,7 @@ export function WebsiteSchema() {
     alternateName: "Blockf3st Africa 2026",
     url: "https://blockfestafrica.com",
     description:
-      "Africa's premier Web3 conference - The Superbowl of Web3. Join us in Johannesburg (May 2026) and Lagos (October 2026). Connect with 200M+ potential web3 users.",
+      "Africa's premier Web3 conference - The Superbowl of Web3. Join us in Cape Town (May 2026) and Lagos (October 2026). Connect with 200M+ potential web3 users.",
     publisher: {
       "@type": "Organization",
       name: "Blockfest Africa",
@@ -261,12 +261,12 @@ export function WebsiteSchema() {
     mainEntity: [
       {
         "@type": "Event",
-        name: "Blockf3st Africa 2026 - Johannesburg",
-        description: "The Superbowl of Web3 - Johannesburg, South Africa",
+        name: "Blockf3st Africa 2026 - Cape Town",
+        description: "The Superbowl of Web3 - Cape Town, South Africa",
         startDate: blockfest2026Johannesburg.date.start,
         location: {
           "@type": "Place",
-          name: "Johannesburg, South Africa",
+          name: "Cape Town, South Africa",
         },
       },
       {

@@ -24,7 +24,7 @@ export default function InsightsPage() {
       >
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#F2CB45] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-gold rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-ping"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce"></div>
         </div>
@@ -35,7 +35,7 @@ export default function InsightsPage() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex items-center gap-4">
                 <Link href="/" aria-label="Home">
-                  <div className="w-12 h-12 bg-gradient-to-r from-[#F2CB45] to-yellow-300 rounded-xl flex items-center justify-center hover:scale-105 transition-transform duration-200">
+                  <div className="w-12 h-12 bg-gradient-to-r from-brand-gold to-yellow-300 rounded-xl flex items-center justify-center hover:scale-105 transition-transform duration-200">
                     <svg
                       aria-hidden="true"
                       focusable="false"
@@ -82,7 +82,7 @@ export default function InsightsPage() {
                   {/* Back to Site */}
                   <Link
                     href="/"
-                    className="flex items-center gap-1.5 sm:gap-2 bg-[#F2CB45] hover:bg-yellow-400 text-black px-3 sm:px-4 py-2 rounded-full font-medium transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm"
+                    className="flex items-center gap-1.5 sm:gap-2 bg-brand-gold hover:bg-yellow-400 text-black px-3 sm:px-4 py-2 rounded-full font-medium transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm"
                   >
                     <svg
                       className="w-3.5 h-3.5 sm:w-4 sm:h-4"

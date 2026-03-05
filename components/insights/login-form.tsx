@@ -13,7 +13,9 @@ export function LoginForm() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextUrl = searchParams.get("next") || "/insights";
+  const rawNext = searchParams.get("next") || "/insights";
+  // Prevent open redirect: only allow relative paths starting with /
+  const nextUrl = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/insights";
 
   // Check if already authenticated
   useEffect(() => {
@@ -78,7 +80,7 @@ export function LoginForm() {
       <div className="w-full max-w-md mx-auto">
         <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl p-8 shadow-2xl">
           <div className="text-center text-white">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F2CB45] mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-gold mx-auto"></div>
             <p className="mt-4">Checking authentication...</p>
           </div>
         </div>
@@ -95,7 +97,7 @@ export function LoginForm() {
             href="/"
             className="inline-block mb-4 hover:opacity-80 transition-opacity"
           >
-            <div className="w-16 h-16 bg-gradient-to-r from-[#F2CB45] to-yellow-300 rounded-xl flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 bg-gradient-to-r from-brand-gold to-yellow-300 rounded-xl flex items-center justify-center mx-auto">
               <svg
                 className="w-8 h-8 text-black"
                 fill="currentColor"
@@ -125,7 +127,7 @@ export function LoginForm() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#F2CB45] focus:border-transparent backdrop-blur-sm"
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent backdrop-blur-sm"
               placeholder="Enter your password"
               required
               disabled={isLoading}
@@ -142,7 +144,7 @@ export function LoginForm() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-[#F2CB45] to-yellow-300 text-black font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-brand-gold to-yellow-300 text-black font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>

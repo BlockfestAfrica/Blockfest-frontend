@@ -93,23 +93,23 @@ export const blockfest2025Lagos: BlockfestEvent = {
 
 // Blockfest 2026 - Johannesburg (Upcoming)
 export const blockfest2026Johannesburg: BlockfestEvent = {
-  id: "blockfest-2026-johannesburg",
+  id: "blockfest-2026-cape-town",
   year: 2026,
-  name: "Blockf3st Africa '26 - Johannesburg",
+  name: "Blockf3st Africa '26 - Cape Town",
   tagline: "Web3 In Motion - From Pipelines to Platforms",
   theme: "The Superbowl of Web3",
   location: {
-    city: "Johannesburg",
+    city: "Cape Town",
     country: "South Africa",
     countryCode: "ZA",
     venue: "TBA",
   },
   date: {
-    start: "2026-05-06T08:00:00+02:00",
-    end: "2026-05-06T18:00:00+02:00",
-    displayDate: "May 2026",
+    start: "2026-05-05T10:00:00+02:00",
+    end: "2026-05-11T18:00:00+02:00",
+    displayDate: "May 5-11, 2026",
   },
-  registrationUrl: "", // To be added
+  registrationUrl: "https://meetumo.ai/e/blockfest-south-africa-roadshow",
   status: "upcoming",
   sponsorshipPackages: [
     {

@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa6";
 import type { Menu } from "@/types";
 import { gotham } from "@/lib/fonts";
+import { CONTACT_EMAIL, SOCIAL_URLS } from "@/lib/constants";
 
 // Footer menu for 2026
 const footerMenu: Menu[] = [
@@ -20,43 +21,34 @@ const footerMenu: Menu[] = [
 ];
 
 const Footer = () => {
-  const contactEmail =
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
-
-  const twitterHandle = (
-    process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica"
-  ).replace("@", "");
-  const instagramHandle =
-    process.env.NEXT_PUBLIC_INSTAGRAM_HANDLE || "blockfestival_africa";
-  const youtubeChannel =
-    process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL || "@blockchainfestivalafrica";
-  const linkedinPage =
-    process.env.NEXT_PUBLIC_LINKEDIN_PAGE || "company/blockfest-africa";
+  const contactEmail = CONTACT_EMAIL;
 
   const socialIcons: Menu[] = [
     {
-      path: `https://x.com/${twitterHandle}`,
+      path: SOCIAL_URLS.twitter,
       icon: <FaXTwitter size={24} />,
     },
     {
-      path: `https://www.instagram.com/${instagramHandle}`,
+      path: SOCIAL_URLS.instagram,
       icon: <FaInstagram size={24} />,
     },
     {
-      path: `https://youtube.com/${youtubeChannel}`,
+      path: SOCIAL_URLS.youtube,
       icon: <FaYoutube size={24} />,
     },
     {
-      path: `https://www.linkedin.com/${linkedinPage}`,
+      path: SOCIAL_URLS.linkedin,
       icon: <FaLinkedin size={24} />,
     },
   ];
+  const socialLabels = ["Twitter / X", "Instagram", "YouTube", "LinkedIn"];
+
   return (
     <footer
-      className={`${gotham.className} bg-black px-10 py-10 pt-14 lg:p-[70px] flex gap-y-10  items-center md:items-end justify-between`}
+      className={`${gotham.className} bg-black px-6 py-10 pt-14 lg:px-[70px] lg:py-[70px] flex flex-col lg:flex-row gap-y-10 items-start lg:items-end justify-between`}
       id="contact"
     >
-      <div className="">
+      <div>
         <Link href="/" className="inline-block cursor-pointer">
           <Image
             src="/images/footer-logo.svg"
@@ -70,53 +62,52 @@ const Footer = () => {
         </Link>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-end md:gap-x-12.5 gap-y-10">
-        {/* Navigation Menu */}
-        <nav className="hidden lg:grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4 md:gap-x-12.5 md:gap-y-6">
+      <div className="flex flex-col md:flex-row md:items-end md:gap-x-12.5 gap-y-8">
+        {/* Navigation Menu - visible on all screen sizes */}
+        <nav className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-3 gap-x-6 gap-y-4 md:gap-x-12.5 md:gap-y-6">
           {footerMenu.map((item) => (
             <Link
               key={item.title}
               href={item.path}
-              className="text-base xl:text-2xl font-medium cursor-pointer text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out text-left"
+              className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded transition-colors duration-300 ease-in-out text-left"
             >
               {item.title}
             </Link>
           ))}
 
-          {/* Sponsors link */}
           <Link
             href="#sponsorship"
-            className="text-base xl:text-2xl font-medium cursor-pointer text-[#F2CB45] hover:text-white transition-colors duration-300 ease-in-out"
+            className="text-base xl:text-2xl font-medium cursor-pointer text-brand-gold hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded transition-colors duration-300 ease-in-out"
           >
             Sponsor 2026
           </Link>
 
-          {/* FAQ Page link */}
           <Link
             href="/faq"
-            className="text-base xl:text-2xl font-medium cursor-pointer text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded transition-colors duration-300 ease-in-out"
           >
             FAQ
           </Link>
 
-          {/* Contact mailto link */}
           <Link
             href={`mailto:${contactEmail}`}
-            className="text-base xl:text-2xl font-medium cursor-pointer text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded transition-colors duration-300 ease-in-out"
           >
             Contact
           </Link>
         </nav>
 
-        {/* Social Icons */}
-        <div className="flex items-center gap-x-3">
+        {/* Social Icons - min 44px tap targets with aria-labels */}
+        <div className="flex items-center gap-x-2">
           {socialIcons.map((item, index) =>
             item.icon ? (
               <Link
                 href={item.path}
                 key={index}
                 target="_blank"
-                className="cursor-pointer text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+                rel="noopener noreferrer"
+                aria-label={`Follow us on ${socialLabels[index]}`}
+                className="flex items-center justify-center w-11 h-11 rounded-full cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold transition-colors duration-300 ease-in-out"
               >
                 {item.icon}
               </Link>
@@ -130,7 +121,7 @@ const Footer = () => {
           <Button
             type="button"
             variant="ghost"
-            className="text-black bg-[#F2CB45] hover:bg-[#e8bc3d] border-0 px-[38px] py-5 text-lg font-semibold cursor-pointer rounded-[12px]"
+            className="text-black bg-brand-gold hover:bg-brand-gold-hover border-0 px-[38px] py-5 text-lg font-semibold cursor-pointer rounded-xl"
           >
             Sponsor 2026
           </Button>
