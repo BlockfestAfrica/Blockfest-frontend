@@ -65,8 +65,8 @@ function CountdownTimer({
       <div
         className={`${
           isPrimary
-            ? "bg-white/20 backdrop-blur-md border-white/30"
-            : "bg-gray-800/80 backdrop-blur-md border-gray-700"
+            ? "bg-white/20 border-white/30"
+            : "bg-gray-800/80 border-gray-700"
         } border rounded-lg lg:rounded-xl px-2 py-2 sm:px-3 lg:px-4 lg:py-3 min-w-[50px] sm:min-w-[60px] lg:min-w-[80px]`}
       >
         <span className="text-xl sm:text-2xl lg:text-4xl font-bold text-white">
@@ -83,7 +83,7 @@ function CountdownTimer({
     <div
       className={`rounded-2xl lg:rounded-3xl p-6 lg:p-8 ${
         isPrimary
-          ? "bg-gradient-to-br from-brand-blue to-brand-blue-deep border-2 border-brand-gold"
+          ? "bg-gradient-to-br from-brand-blue to-brand-blue-deep border-2 border-white/20"
           : "bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700"
       }`}
     >
@@ -104,7 +104,7 @@ function CountdownTimer({
 
       {isExpired ? (
         <div className="text-center py-4">
-          <p className="text-2xl lg:text-3xl font-bold text-brand-gold">
+          <p className="text-2xl lg:text-3xl font-bold text-white">
             Event Day! 🎉
           </p>
           <p className="text-white/80 mt-2">Join us today!</p>
@@ -132,14 +132,14 @@ export function Countdown2026Section() {
       {/* Background decorations */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-blue/20 rounded-full blur-[150px]" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-brand-gold/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-brand-blue-light/10 rounded-full blur-[120px]" />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-5 lg:px-10">
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4 fade-in-on-scroll">
-            Countdown to <span className="text-brand-gold">2026</span>
+            Countdown to <span className="text-brand-blue-light">2026</span>
           </h2>
           <p className="text-white/60 text-base lg:text-lg max-w-2xl mx-auto">
             Two epic events. Two incredible cities. One movement reshaping
@@ -173,7 +173,7 @@ export function Countdown2026Section() {
           </Link>
           <Link
             href="/blockfest-2025"
-            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md text-white px-6 py-3 rounded-full font-semibold hover:bg-white/20 transition-colors border border-white/20"
+            className="inline-flex items-center gap-2 bg-white/10 text-white px-6 py-3 rounded-full font-semibold hover:bg-white/20 transition-colors border border-white/20"
           >
             View 2025 Highlights
           </Link>

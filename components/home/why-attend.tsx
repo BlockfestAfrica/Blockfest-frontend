@@ -16,13 +16,13 @@ export function WhyAttendSection() {
       className="flex flex-col items-center justify-center px-4 py-12 lg:py-16 lg:px-8 bg-gradient-to-b from-brand-blue to-brand-blue-dark"
       id="about"
     >
-      <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 border border-white/20">
-        <span className="text-brand-gold font-semibold text-sm">
+      <div className="inline-flex items-center gap-2 bg-white/[0.07] rounded-full px-4 py-2 mb-4 border border-white/20">
+        <span className="text-white font-semibold text-sm">
           WHY BLOCKF3ST
         </span>
       </div>
       <h2 className="font-bold text-3xl lg:text-5xl mb-6 lg:mb-10 text-white fade-in-on-scroll">
-        Why Attend<span className="text-brand-gold">?</span>
+        Why Attend<span className="text-white">?</span>
       </h2>
       <div className="scale-in">
         <FeaturesComp />
