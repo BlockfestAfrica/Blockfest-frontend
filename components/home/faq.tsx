@@ -45,7 +45,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
         {!hideHeader && (
           <div className="text-center mb-8 lg:mb-12 fade-in-on-scroll">
             <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-4 lg:mb-6 text-white">
-              Frequently Asked <span className="text-brand-gold">Questions</span>
+              Frequently Asked <span className="text-brand-blue-light">Questions</span>
             </h2>
             <p className="text-base lg:text-xl text-white/70 max-w-2xl mx-auto px-2">
               Everything you need to know about Africa&apos;s premier Web3
@@ -58,7 +58,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
           {faqData.map((item) => (
             <div
               key={item.id}
-              className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
+              className="bg-white/[0.03] rounded-xl border border-white/[0.06] hover:bg-white/[0.06] transition-all duration-300"
             >
               <button
                 type="button"
@@ -71,7 +71,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
                 </h3>
                 <div className="flex-shrink-0">
                   {openItems.has(item.id) ? (
-                    <ChevronUpIcon className="w-5 h-5 text-brand-gold" />
+                    <ChevronUpIcon className="w-5 h-5 text-brand-blue-light" />
                   ) : (
                     <ChevronDownIcon className="w-5 h-5 text-white/50" />
                   )}
@@ -102,7 +102,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
             </p>
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="inline-flex items-center gap-2 bg-brand-gold text-black font-semibold px-6 py-3 rounded-lg hover:bg-brand-gold-hover transition-colors duration-200"
+              className="inline-flex items-center gap-2 bg-brand-gold text-black font-semibold px-6 py-3 rounded-full hover:bg-brand-gold-hover transition-colors duration-200"
             >
               Contact Us
             </a>

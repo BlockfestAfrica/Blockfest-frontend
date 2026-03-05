@@ -86,7 +86,7 @@ const Navbar = () => {
         {pathname !== "/speakers" && (
           <Link
             href="#sponsorship"
-            className="text-base font-normal text-brand-gold hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
+            className="text-base font-normal text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
           >
             Sponsor
           </Link>
@@ -202,7 +202,7 @@ const MobileMenu = () => {
         <SheetClose asChild>
           <Link
             href="#sponsorship"
-            className="text-lg font-medium text-brand-gold hover:text-white hover:underline transition w-fit"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
           >
             Become a Sponsor
           </Link>

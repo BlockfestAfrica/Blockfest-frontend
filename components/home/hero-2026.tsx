@@ -1,36 +1,73 @@
 "use client";
+import { useState, useEffect } from "react";
 import { IoCalendarClearOutline } from "react-icons/io5";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { blockfest2026Johannesburg, blockfest2026Lagos } from "@/lib/events";
-import { CONTACT_EMAIL } from "@/lib/constants";
 import "./subtle-animations.css";
+
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+function calculateTimeLeft(targetDate: string): TimeLeft {
+  const difference = new Date(targetDate).getTime() - new Date().getTime();
+  if (difference <= 0) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  }
+  return {
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / 1000 / 60) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+  };
+}
 
 interface EventCardProps {
   event: typeof blockfest2026Johannesburg;
   isPrimary?: boolean;
   onRegisterClick: () => void;
-  contactEmail: string;
 }
 
 function EventCard({
   event,
   isPrimary = false,
   onRegisterClick,
-  contactEmail,
 }: EventCardProps) {
-  const { trackButtonClick } = useUmami();
-  const isJohannesburg = event.location.city === "Cape Town";
-  const flagEmoji = isJohannesburg ? "🇿🇦" : "🇳🇬";
+  const isSouthAfrica = event.location.city === "Cape Town";
+  const flagEmoji = isSouthAfrica ? "🇿🇦" : "🇳🇬";
+
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(
+    calculateTimeLeft(event.date.start)
+  );
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft(event.date.start));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [event.date.start]);
+
+  const units = [
+    { val: timeLeft.days, label: "d" },
+    { val: timeLeft.hours, label: "h" },
+    { val: timeLeft.minutes, label: "m" },
+    { val: timeLeft.seconds, label: "s" },
+  ];
 
   return (
     <div
       className={`relative rounded-2xl lg:rounded-3xl p-6 lg:p-8 transition-all duration-300 hover:scale-[1.02] ${
         isPrimary
           ? "bg-gradient-to-br from-brand-blue via-[#1554C7] to-[#0D3A8C] border-2 border-brand-gold"
-          : "bg-gradient-to-br from-brand-gold/20 via-brand-blue/30 to-[#0D1F3C] border-2 border-brand-gold/50"
+          : "bg-gradient-to-br from-white/[0.08] via-brand-blue/20 to-[#0D1F3C] border border-white/20"
       }`}
     >
       {isPrimary && (
@@ -48,39 +85,37 @@ function EventCard({
         <p className="text-white/70 text-sm mb-4">{event.location.country}</p>
 
         {/* Date */}
-        <div className="flex items-center justify-center gap-2 text-brand-gold font-semibold mb-6">
+        <div className="flex items-center justify-center gap-2 text-white/80 font-semibold mb-4">
           <IoCalendarClearOutline className="text-lg" />
           <span>{event.date.displayDate}</span>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-3">
-          <Button
-            className={`w-full font-semibold text-sm lg:text-base rounded-full py-5 ${
-              isPrimary
-                ? "bg-brand-gold text-black hover:bg-brand-gold-hover"
-                : "bg-white/20 text-white hover:bg-white/30"
-            }`}
-            onClick={onRegisterClick}
-            disabled={!event.registrationUrl}
-          >
-            {event.registrationUrl ? "Register Now" : "Coming Soon"}
-          </Button>
-          <Link href={`mailto:${contactEmail}`} passHref>
-            <Button
-              asChild
-              className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-transparent border border-white/30 text-white hover:bg-white/10"
-              onClick={() => {
-                trackButtonClick(
-                  "Sponsor " + event.location.city,
-                  "Hero Event Card"
-                );
-              }}
-            >
-              <span>Become a Sponsor</span>
-            </Button>
-          </Link>
+        {/* Compact Countdown */}
+        <div className="flex justify-center gap-3 mb-6">
+          {units.map((unit) => (
+            <div key={unit.label} className="text-center">
+              <span className="text-lg lg:text-xl font-bold text-white tabular-nums">
+                {mounted ? String(unit.val).padStart(2, "0") : "--"}
+              </span>
+              <span className="text-[10px] text-white/50 ml-0.5">
+                {unit.label}
+              </span>
+            </div>
+          ))}
         </div>
+
+        {/* Register Button */}
+        <Button
+          className={`w-full font-semibold text-sm lg:text-base rounded-full py-5 ${
+            isPrimary
+              ? "bg-brand-gold text-black hover:bg-brand-gold-hover"
+              : "bg-white/20 text-white hover:bg-white/30"
+          }`}
+          onClick={onRegisterClick}
+          disabled={!event.registrationUrl}
+        >
+          {event.registrationUrl ? "Register Now" : "Coming Soon"}
+        </Button>
       </div>
     </div>
   );
@@ -88,11 +123,10 @@ function EventCard({
 
 export function HeroSection2026() {
   const { trackButtonClick, trackRegistration } = useUmami();
-  const contactEmail = CONTACT_EMAIL;
 
   useSubtleAnimations();
 
-  const handleJohannesburgRegister = () => {
+  const handleCapeTownRegister = () => {
     trackButtonClick("Register Now", "Hero Section - Cape Town");
     trackRegistration("hero-cta-cape-town");
     if (blockfest2026Johannesburg.registrationUrl) {
@@ -132,7 +166,7 @@ export function HeroSection2026() {
         <div className="text-center mb-8 lg:mb-12">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-5 py-2.5 mb-6 border border-white/20 fade-in-on-scroll">
-            <span className="text-brand-gold font-semibold text-sm lg:text-base">
+            <span className="text-white font-semibold text-sm lg:text-base">
               2026 AFRICA TOUR
             </span>
           </div>
@@ -146,7 +180,7 @@ export function HeroSection2026() {
           {/* Tagline */}
           <p className="text-lg sm:text-xl lg:text-2xl text-white/90 font-medium mb-4 lg:mb-6 fade-in-on-scroll">
             Web3 In Motion —{" "}
-            <span className="text-brand-gold">From Pipelines to Platforms</span>
+            <span className="text-white">From Pipelines to Platforms</span>
           </p>
 
           {/* Description */}
@@ -155,9 +189,9 @@ export function HeroSection2026() {
             audience of over{" "}
             <span className="text-white font-semibold">200 million+</span> web3
             users of tomorrow. Join us in{" "}
-            <span className="text-brand-gold">South Africa</span> and{" "}
-            <span className="text-brand-gold">Nigeria</span> for Africa&apos;s
-            biggest Web3 festival.
+            <span className="text-brand-blue-light">South Africa</span> and{" "}
+            <span className="text-brand-blue-light">Nigeria</span> for
+            Africa&apos;s biggest Web3 festival.
           </p>
         </div>
 
@@ -166,14 +200,12 @@ export function HeroSection2026() {
           <EventCard
             event={blockfest2026Johannesburg}
             isPrimary={true}
-            onRegisterClick={handleJohannesburgRegister}
-            contactEmail={contactEmail}
+            onRegisterClick={handleCapeTownRegister}
           />
           <EventCard
             event={blockfest2026Lagos}
             isPrimary={false}
             onRegisterClick={handleLagosRegister}
-            contactEmail={contactEmail}
           />
         </div>
 
@@ -183,9 +215,7 @@ export function HeroSection2026() {
             href="/blockfest-2025"
             className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
           >
-            <span>✨</span>
-            <span>Missed 2025? See what happened in Lagos</span>
-            <span>→</span>
+            <span>Missed 2025? See what happened in Lagos →</span>
           </Link>
         </div>
       </div>

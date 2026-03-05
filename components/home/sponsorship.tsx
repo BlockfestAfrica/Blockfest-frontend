@@ -21,19 +21,22 @@ export function SponsorshipSection() {
       <div className="relative z-10 max-w-3xl mx-auto px-4 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 lg:mb-10">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 border border-white/20">
-            <span className="text-brand-gold font-semibold text-sm">
+          <div className="inline-flex items-center gap-2 bg-white/[0.07] rounded-full px-4 py-2 mb-4 border border-white/10">
+            <span className="text-white font-semibold text-sm">
               PARTNERSHIP OPPORTUNITIES
             </span>
           </div>
           <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4 fade-in-on-scroll">
-            Become a <span className="text-brand-gold">Sponsor</span>
+            Become a Sponsor
           </h2>
           <p className="text-white/70 text-base lg:text-lg max-w-3xl mx-auto fade-in-on-scroll">
-            Position your brand at Africa&apos;s premier Web3 event. Reach over{" "}
-            <span className="font-semibold text-brand-gold">200 million+</span>{" "}
-            potential web3 users and connect with decision makers shaping the
-            future of blockchain in Africa.
+            Position your brand at Africa&apos;s premier Web3 event. Get direct
+            access to{" "}
+            <span className="font-semibold text-white">
+              15,000+ registered attendees
+            </span>
+            , decision makers, and founders shaping the future of blockchain in
+            Africa.
           </p>
         </div>
 

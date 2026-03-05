@@ -19,13 +19,11 @@ export function Stats2026Section() {
       <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6 lg:mb-10">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-3 py-1.5 sm:px-4 sm:py-2 mb-3 sm:mb-4 border border-white/20">
-            <span className="text-brand-gold font-semibold text-xs sm:text-sm">
-              2025 WAS MASSIVE
-            </span>
-          </div>
+          <p className="text-white/40 text-xs sm:text-sm uppercase tracking-[0.2em] mb-2 fade-in-on-scroll">
+            2025 was massive
+          </p>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white fade-in-on-scroll">
-            Building on Our <span className="text-brand-gold">Success</span>
+            Building on Our Success
           </h2>
         </div>
 
@@ -34,7 +32,7 @@ export function Stats2026Section() {
           {displayStats.map((stat, index) => (
             <div
               key={stat.label}
-              className={`bg-white/5 backdrop-blur-md rounded-lg lg:rounded-xl p-3 sm:p-4 lg:p-5 text-center border border-white/10 hover:bg-white/10 transition-all duration-300 stagger-animation stagger-${
+              className={`bg-white/[0.07] rounded-lg lg:rounded-xl p-3 sm:p-4 lg:p-5 text-center border border-white/10 hover:bg-white/[0.12] transition-all duration-300 stagger-animation stagger-${
                 index + 1
               }`}
             >
@@ -44,7 +42,7 @@ export function Stats2026Section() {
               <p className="font-medium text-xs sm:text-sm lg:text-base text-white/90">
                 {stat.label}
               </p>
-              <p className="text-[10px] sm:text-xs lg:text-sm text-brand-gold">
+              <p className="text-[10px] sm:text-xs lg:text-sm text-white/50">
                 {stat.subtext}
               </p>
             </div>
@@ -69,7 +67,7 @@ export function Stats2026Section() {
         <div className="text-center">
           <Link
             href="/blockfest-2025"
-            className="inline-flex items-center gap-2 text-brand-gold hover:text-white transition-colors font-semibold"
+            className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors font-semibold underline underline-offset-4"
           >
             <span>See Full 2025 Recap</span>
             <FaArrowRight className="text-sm" />
