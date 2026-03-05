@@ -95,7 +95,7 @@ export function EnhancedFAQSection({
         {!hideHeader && (
           <div className="text-center mb-12 lg:mb-16 fade-in-on-scroll">
             <h2 className="font-light text-3xl lg:text-7xl lg:leading-tight tracking-[-5%] mb-4 lg:mb-6 text-black">
-              Frequently Asked <span className="text-brand-gold">Questions</span>
+              Frequently Asked <span className="text-brand-blue">Questions</span>
             </h2>
             <p className="text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto">
               Everything you need to know about Africa&apos;s premier Web3
