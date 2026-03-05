@@ -43,63 +43,62 @@ export function WhyAttend2026Section() {
 
   return (
     <section
-      className="flex flex-col items-center justify-center px-5 py-16 lg:py-24 lg:px-10 bg-gradient-to-b from-[#1A3461] to-[#005DFF]"
+      className="flex flex-col items-center justify-center px-5 py-16 lg:py-24 lg:px-10 bg-gradient-to-b from-gray-50 to-white"
       id="about"
     >
       <div className="max-w-7xl mx-auto w-full">
         {/* Header */}
         <div className="text-center mb-10">
-          <h2 className="font-bold text-4xl lg:text-5xl xl:text-6xl mb-4 text-white fade-in-on-scroll">
-            Why Attend<span className="text-brand-gold">?</span>
+          <h2 className="font-bold text-4xl lg:text-5xl xl:text-6xl mb-4 text-gray-900 fade-in-on-scroll">
+            Why Attend?
           </h2>
-          <p className="text-white/80 text-base lg:text-lg max-w-3xl mx-auto px-5">
-            Join over{" "}
-            <span className="font-semibold text-white">200 million+</span>{" "}
-            potential web3 users at Africa&apos;s premier blockchain conference
+          <p className="text-gray-500 text-base lg:text-lg max-w-3xl mx-auto px-5">
+            Africa&apos;s premier blockchain conference bringing builders,
+            founders, and investors together
           </p>
         </div>
 
         {/* Market Opportunity Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-12">
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 lg:p-4 text-center border border-white/20">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-gold">
+          <div className="bg-white rounded-xl p-3 lg:p-4 text-center border border-gray-200 shadow-sm">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-blue">
               {marketOpportunity.unbankedPopulation.percentage}%
             </p>
-            <p className="text-white/80 text-xs lg:text-sm mt-1">
+            <p className="text-gray-700 text-xs lg:text-sm mt-1">
               Nigerians Unbanked
             </p>
-            <p className="text-white/60 text-[10px] lg:text-xs mt-1 hidden sm:block">
+            <p className="text-gray-500 text-[10px] lg:text-xs mt-1 hidden sm:block">
               Prime web3 adoption potential
             </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 lg:p-4 text-center border border-white/20">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-gold">
+          <div className="bg-white rounded-xl p-3 lg:p-4 text-center border border-gray-200 shadow-sm">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-blue">
               {marketOpportunity.youngPopulation.percentage}%
             </p>
-            <p className="text-white/80 text-xs lg:text-sm mt-1">Under 30</p>
-            <p className="text-white/60 text-[10px] lg:text-xs mt-1 hidden sm:block">
+            <p className="text-gray-700 text-xs lg:text-sm mt-1">Under 30</p>
+            <p className="text-gray-500 text-[10px] lg:text-xs mt-1 hidden sm:block">
               Prime web3 demographic
             </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 lg:p-4 text-center border border-white/20">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-gold">
+          <div className="bg-white rounded-xl p-3 lg:p-4 text-center border border-gray-200 shadow-sm">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-blue">
               ${marketOpportunity.globalWeb3Market.value}
             </p>
-            <p className="text-white/80 text-xs lg:text-sm mt-1">
+            <p className="text-gray-700 text-xs lg:text-sm mt-1">
               Global Web3 Market
             </p>
-            <p className="text-white/60 text-[10px] lg:text-xs mt-1 hidden sm:block">
+            <p className="text-gray-500 text-[10px] lg:text-xs mt-1 hidden sm:block">
               Africa holds a large piece
             </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 lg:p-4 text-center border border-white/20">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-gold">
+          <div className="bg-white rounded-xl p-3 lg:p-4 text-center border border-gray-200 shadow-sm">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-blue">
               30+
             </p>
-            <p className="text-white/80 text-xs lg:text-sm mt-1">
+            <p className="text-gray-700 text-xs lg:text-sm mt-1">
               African Countries
             </p>
-            <p className="text-white/60 text-[10px] lg:text-xs mt-1 hidden sm:block">
+            <p className="text-gray-500 text-[10px] lg:text-xs mt-1 hidden sm:block">
               Gateway to entire market
             </p>
           </div>
@@ -111,7 +110,7 @@ export function WhyAttend2026Section() {
             {categories.map((category, index) => (
               <div
                 key={`${category.header}-${index}`}
-                className="flex flex-col md:flex-row items-stretch bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+                className="flex flex-col md:flex-row items-stretch bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 transition-shadow duration-300 overflow-hidden"
               >
                 {/* Image Section */}
                 <div className="w-full md:w-[40%]">

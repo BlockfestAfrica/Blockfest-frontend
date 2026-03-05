@@ -2,7 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { HeroSection2026 } from "@/components/home/hero-2026";
 import { Stats2026Section } from "@/components/home/stats-2026";
-import { Countdown2026Section } from "@/components/home/countdown-2026";
+import { SocialProofStrip } from "@/components/home/social-proof-strip";
 import { WhyAttend2026Section } from "@/components/home/why-attend-2026";
 import { SpeakersSection } from "@/components/home/speakers";
 import { PartnersSection } from "@/components/home/partners";
@@ -75,8 +75,8 @@ const HomePage = () => {
         {/* 2025 Stats - Building on Success */}
         <Stats2026Section />
 
-        {/* Countdown to both 2026 events */}
-        <Countdown2026Section />
+        {/* Social proof photo strip */}
+        <SocialProofStrip />
 
         {/* Why Attend with market opportunity data */}
         <WhyAttend2026Section />
