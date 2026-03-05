@@ -335,7 +335,7 @@ export default async function SpeakerPage({
           >
             Don&apos;t Miss Out
           </h2>
-          <p className="text-blue-100 text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-white/80 text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
             Join {speaker.name.split(" ")[0]} and other industry leaders at
             Blockfest Africa 2025. Secure your spot at Africa&apos;s premier
             blockchain conference.
