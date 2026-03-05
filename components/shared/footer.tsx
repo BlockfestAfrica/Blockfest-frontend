@@ -77,7 +77,7 @@ const Footer = () => {
 
           <Link
             href="#sponsorship"
-            className="text-base xl:text-2xl font-medium cursor-pointer text-brand-gold hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded transition-colors duration-300 ease-in-out"
+            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded transition-colors duration-300 ease-in-out"
           >
             Sponsor 2026
           </Link>

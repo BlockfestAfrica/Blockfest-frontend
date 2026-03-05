@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function BadgeGenerator() {
   const [name, setName] = useState("");
@@ -66,12 +67,12 @@ export default function BadgeGenerator() {
 
   const handleGenerate = useCallback(async () => {
     if (!name.trim()) {
-      alert("Please enter your name");
+      toast("Please enter your name");
       return;
     }
 
     if (!preview) {
-      alert("Please upload your photo");
+      toast("Please upload your photo");
       return;
     }
 

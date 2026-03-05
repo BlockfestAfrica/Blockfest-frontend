@@ -122,7 +122,7 @@ export default function FAQPage() {
         <div className="bg-gradient-to-br from-brand-blue via-brand-blue-dark to-brand-blue-deep py-12 lg:py-16">
           <div className="max-w-6xl mx-auto px-4 lg:px-8 text-center">
             <h1 className="font-bold text-3xl lg:text-5xl mb-4 text-white">
-              Frequently Asked <span className="text-brand-gold">Questions</span>
+              Frequently Asked <span className="text-brand-blue-light">Questions</span>
             </h1>
             <p className="text-base lg:text-lg text-white/80 max-w-2xl mx-auto">
               Everything you need to know about Africa&apos;s premier Web3

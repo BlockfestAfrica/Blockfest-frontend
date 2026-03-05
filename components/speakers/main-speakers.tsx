@@ -78,13 +78,13 @@ export function SpeakersGrid() {
       <div className="max-w-6xl mx-auto px-4 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 lg:mb-10">
-          <div className="inline-flex items-center gap-2 bg-brand-blue/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 border border-brand-blue/20">
+          <div className="inline-flex items-center gap-2 bg-brand-blue/10 rounded-full px-4 py-2 mb-4 border border-brand-blue/20">
             <span className="text-brand-blue font-semibold text-sm">
-              <span className="text-brand-gold">2025</span> EDITION
+              2025 EDITION
             </span>
           </div>
           <h1 className="text-3xl lg:text-5xl font-bold mb-4 text-gray-900">
-            Speak<span className="text-brand-gold">3</span>rs
+            Speak<span className="text-brand-blue">3</span>rs
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Meet the visionary speakers who shared their insights at Blockfest
