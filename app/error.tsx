@@ -33,7 +33,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-[#1A3461] to-[#005DFF]">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-brand-blue-deep to-brand-blue">
       <div className="max-w-md w-full text-center text-white">
         <div className="mb-8">
           <h1 className="text-6xl font-bold text-white mb-4">500</h1>

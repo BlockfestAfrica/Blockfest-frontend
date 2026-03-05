@@ -97,14 +97,14 @@ export default function BadgeGenerator() {
             background: `
             radial-gradient(circle at 20% 80%, rgba(0, 93, 255, 0.15) 0%, transparent 50%),
             radial-gradient(circle at 80% 20%, rgba(27, 100, 228, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(242, 203, 69, 0.08) 0%, transparent 50%)
+            radial-gradient(circle at 40% 40%, rgba(27, 100, 228, 0.08) 0%, transparent 50%)
           `,
           }}
         ></div>
         {/* Floating shapes */}
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#005DFF]/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-gold/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-blue/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       {/* Header */}

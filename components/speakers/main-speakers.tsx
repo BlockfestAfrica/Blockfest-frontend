@@ -252,7 +252,7 @@ export function SpeakersGrid() {
                             href={speaker.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center w-11 h-11 rounded-full bg-brand-gold text-gray-900 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-brand-gold/25 focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:ring-offset-2 touch-manipulation"
+                            className="flex items-center justify-center w-11 h-11 rounded-full bg-brand-blue text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-brand-blue/25 focus:outline-none focus:ring-2 focus:ring-brand-blue/50 focus:ring-offset-2 touch-manipulation"
                             aria-label={`Visit ${speaker.name}'s website`}
                           >
                             <CiGlobe size={20} className="shrink-0" />
