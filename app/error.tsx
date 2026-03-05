@@ -36,7 +36,7 @@ export default function Error({
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-[#1A3461] to-[#005DFF]">
       <div className="max-w-md w-full text-center text-white">
         <div className="mb-8">
-          <h1 className="text-6xl font-bold text-brand-gold mb-4">500</h1>
+          <h1 className="text-6xl font-bold text-white mb-4">500</h1>
           <h2 className="text-2xl font-semibold mb-4">Server Error</h2>
           <p className="text-gray-200 mb-6">
             We&apos;re experiencing technical difficulties. Our team has been
@@ -47,7 +47,7 @@ export default function Error({
         <div className="space-y-4">
           <Button
             onClick={reset}
-            className="w-full bg-brand-gold hover:bg-brand-gold/90 text-black font-semibold"
+            className="w-full bg-brand-blue hover:bg-[#1555c5] text-white font-semibold"
           >
             Try Again
           </Button>
@@ -74,7 +74,7 @@ export default function Error({
             Need help?{" "}
             <a
               href="mailto:support@blockfestafrica.com"
-              className="text-brand-gold hover:underline"
+              className="text-white/70 hover:text-white hover:underline"
             >
               Contact Support
             </a>

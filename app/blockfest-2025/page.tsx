@@ -62,14 +62,14 @@ export default function Blockfest2025Page() {
         <div className="absolute inset-0 bg-[url('/images/home/img1.jpg')] bg-cover bg-center opacity-10" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-6 border border-white/20">
-            <span className="text-brand-gold font-semibold text-sm">
+          <div className="inline-flex items-center gap-2 bg-white/[0.07] rounded-full px-4 py-2 mb-6 border border-white/10">
+            <span className="text-white font-semibold text-sm">
               COMPLETED EVENT
             </span>
           </div>
 
           <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold mb-4">
-            Blockfest Africa <span className="text-brand-gold">2025</span>
+            Blockfest Africa <span className="text-white">2025</span>
           </h1>
 
           <p className="text-xl lg:text-2xl text-white/90 max-w-3xl mb-6">
@@ -78,18 +78,18 @@ export default function Blockfest2025Page() {
 
           <div className="flex flex-wrap gap-4 text-white/80 text-lg mb-8">
             <div className="flex items-center gap-2">
-              <FaMapMarkerAlt className="text-brand-gold" />
+              <FaMapMarkerAlt className="text-white/60" />
               <span>
                 {event.location.city}, {event.location.country}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <FaCalendarAlt className="text-brand-gold" />
+              <FaCalendarAlt className="text-white/60" />
               <span>{event.date.displayDate}</span>
             </div>
           </div>
 
-          <p className="text-2xl lg:text-3xl font-semibold text-brand-gold">
+          <p className="text-2xl lg:text-3xl font-semibold text-white/90">
             {event.tagline}
           </p>
         </div>
@@ -101,7 +101,7 @@ export default function Blockfest2025Page() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
             <div className="text-center text-white">
               <div className="flex items-center justify-center mb-2">
-                <FaUsers className="text-brand-gold text-2xl" />
+                <FaUsers className="text-white/60 text-2xl" />
               </div>
               <p className="text-3xl lg:text-5xl font-bold">
                 {stats.totalRegistrations?.toLocaleString()}+
@@ -110,7 +110,7 @@ export default function Blockfest2025Page() {
             </div>
             <div className="text-center text-white">
               <div className="flex items-center justify-center mb-2">
-                <FaUsers className="text-brand-gold text-2xl" />
+                <FaUsers className="text-white/60 text-2xl" />
               </div>
               <p className="text-3xl lg:text-5xl font-bold">
                 {stats.totalAttendees?.toLocaleString()}+
@@ -119,7 +119,7 @@ export default function Blockfest2025Page() {
             </div>
             <div className="text-center text-white">
               <div className="flex items-center justify-center mb-2">
-                <FaMicrophone className="text-brand-gold text-2xl" />
+                <FaMicrophone className="text-white/60 text-2xl" />
               </div>
               <p className="text-3xl lg:text-5xl font-bold">
                 {stats.speakers}+
@@ -128,7 +128,7 @@ export default function Blockfest2025Page() {
             </div>
             <div className="text-center text-white">
               <div className="flex items-center justify-center mb-2">
-                <FaGlobe className="text-brand-gold text-2xl" />
+                <FaGlobe className="text-white/60 text-2xl" />
               </div>
               <p className="text-3xl lg:text-5xl font-bold">
                 {stats.countriesRepresented}+
@@ -143,7 +143,7 @@ export default function Blockfest2025Page() {
       <section className="py-12 lg:py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 lg:px-8">
           <h2 className="text-3xl lg:text-5xl font-bold text-center mb-4 text-gray-900">
-            The BIG <span className="text-brand-gold">Impact</span>
+            The BIG <span className="text-brand-blue">Impact</span>
           </h2>
           <p className="text-gray-600 text-center max-w-2xl mx-auto mb-8 lg:mb-10">
             Blockfest Africa 2025 made waves across the continent and beyond
@@ -186,7 +186,7 @@ export default function Blockfest2025Page() {
       <section className="py-12 lg:py-16">
         <div className="max-w-6xl mx-auto px-4 lg:px-8">
           <h2 className="text-3xl lg:text-5xl font-bold text-center mb-8 lg:mb-10 text-gray-900">
-            Attendance <span className="text-brand-gold">Breakdown</span>
+            Attendance <span className="text-brand-blue">Breakdown</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl mx-auto">
@@ -218,7 +218,7 @@ export default function Blockfest2025Page() {
       <section className="py-12 lg:py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 lg:px-8">
           <h2 className="text-3xl lg:text-5xl font-bold text-center mb-4 text-gray-900">
-            Our <span className="text-brand-gold">Speakers</span>
+            Our <span className="text-brand-blue">Speakers</span>
           </h2>
           <p className="text-gray-600 text-center max-w-2xl mx-auto mb-8 lg:mb-10">
             We gathered some of the brightest minds in Web3 in Africa under one
@@ -268,7 +268,7 @@ export default function Blockfest2025Page() {
       <section className="py-12 lg:py-16">
         <div className="max-w-6xl mx-auto px-4 lg:px-8">
           <h2 className="text-3xl lg:text-5xl font-bold text-center mb-4 text-gray-900">
-            Event <span className="text-brand-gold">Gallery</span>
+            Event <span className="text-brand-blue">Gallery</span>
           </h2>
           <p className="text-gray-600 text-center max-w-2xl mx-auto mb-8 lg:mb-10">
             Relive the memorable moments from Blockfest Africa 2025
@@ -323,14 +323,14 @@ export default function Blockfest2025Page() {
       <section className="py-12 lg:py-16 bg-gradient-to-br from-brand-blue to-brand-blue-deep text-white">
         <div className="max-w-6xl mx-auto px-4 lg:px-8">
           <h2 className="text-3xl lg:text-5xl font-bold text-center mb-8 lg:mb-10">
-            Event <span className="text-brand-gold">Highlights</span>
+            Event Highlights
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             {event.highlights?.map((highlight, index) => (
               <div
                 key={index}
-                className="flex items-start gap-4 bg-white/10 backdrop-blur-md rounded-xl p-4 lg:p-5 border border-white/20 hover:bg-white/15 hover:border-brand-gold/50 transition-all duration-300 group"
+                className="flex items-start gap-4 bg-white/[0.07] rounded-xl p-4 lg:p-5 border border-white/10 hover:bg-white/[0.12] transition-all duration-300 group"
               >
                 <div className="w-8 h-8 shrink-0 bg-brand-gold rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <span className="text-brand-blue text-sm font-bold">✓</span>

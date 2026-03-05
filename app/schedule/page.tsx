@@ -167,13 +167,13 @@ export default function Schedule() {
         {/* Header Section */}
         <div className="bg-gradient-to-br from-brand-blue via-brand-blue-dark to-brand-blue-deep py-12 lg:py-16">
           <div className="max-w-6xl mx-auto px-4 lg:px-8 text-center">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 border border-white/20">
-              <span className="text-brand-gold font-semibold text-sm">
+            <div className="inline-flex items-center gap-2 bg-white/[0.07] rounded-full px-4 py-2 mb-4 border border-white/10">
+              <span className="text-white font-semibold text-sm">
                 2025 SCHEDULE
               </span>
             </div>
             <h1 className="font-bold text-3xl lg:text-5xl mb-4 text-white">
-              Schedule of <span className="text-brand-gold">Activities</span>
+              Schedule of <span className="text-white">Activities</span>
             </h1>
             <p className="text-base lg:text-lg text-white/80 max-w-2xl mx-auto">
               Join us for an exciting day filled with insights from industry
