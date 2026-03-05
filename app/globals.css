@@ -41,6 +41,17 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-4xl: 2rem;
+  --breakpoint-xs: 475px;
+  --color-brand-gold: #F2CB45;
+  --color-brand-gold-hover: #e8bc3d;
+  --color-brand-blue: #1B64E4;
+  --color-brand-blue-hover: #4F85EB;
+  --color-brand-blue-dark: #0D3B8C;
+  --color-brand-blue-deep: #031940;
+  --color-brand-blue-light: #3D7BE8;
+  --color-brand-blue-light-hover: #6597ED;
+  --color-nav-gray: #A4A4A4;
 }
 
 :root {

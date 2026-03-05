@@ -11,10 +11,10 @@ export function SpeakersSection() {
   useSubtleAnimations();
 
   return (
-    <section className="flex flex-col items-center justify-center py-12 lg:py-16 px-4 lg:px-8 bg-gradient-to-b from-[#0D3B8C] to-[#031940] relative overflow-hidden">
+    <section className="flex flex-col items-center justify-center py-12 lg:py-16 px-4 lg:px-8 bg-gradient-to-b from-brand-blue-dark to-brand-blue-deep relative overflow-hidden">
       <div className="relative z-10 text-center mb-8 w-full max-w-4xl px-2">
         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 border border-white/20">
-          <span className="text-[#F2CB45] font-semibold text-sm">
+          <span className="text-brand-gold font-semibold text-sm">
             2025 SPEAKERS
           </span>
         </div>
@@ -44,7 +44,7 @@ export function SpeakersSection() {
               "Speaker applications opening soon! Follow us on social media for updates."
             )
           }
-          className="inline-flex items-center gap-2 bg-[#F2CB45] text-black px-6 py-3 rounded-full font-semibold hover:bg-[#e8bc3d] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 bg-brand-gold text-black px-6 py-3 rounded-full font-semibold hover:bg-brand-gold-hover transition-colors cursor-pointer"
         >
           Apply to Speak
         </button>

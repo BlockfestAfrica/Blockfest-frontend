@@ -83,13 +83,13 @@ function CountdownTimer({
     <div
       className={`rounded-2xl lg:rounded-3xl p-6 lg:p-8 ${
         isPrimary
-          ? "bg-gradient-to-br from-[#1B64E4] to-[#031940] border-2 border-[#F2CB45]"
+          ? "bg-gradient-to-br from-brand-blue to-brand-blue-deep border-2 border-brand-gold"
           : "bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700"
       }`}
     >
       {isPrimary && (
         <div className="text-center mb-4">
-          <span className="bg-[#F2CB45] text-black text-xs font-bold px-3 py-1 rounded-full">
+          <span className="bg-brand-gold text-black text-xs font-bold px-3 py-1 rounded-full">
             NEXT EVENT
           </span>
         </div>
@@ -104,7 +104,7 @@ function CountdownTimer({
 
       {isExpired ? (
         <div className="text-center py-4">
-          <p className="text-2xl lg:text-3xl font-bold text-[#F2CB45]">
+          <p className="text-2xl lg:text-3xl font-bold text-brand-gold">
             Event Day! 🎉
           </p>
           <p className="text-white/80 mt-2">Join us today!</p>
@@ -131,15 +131,15 @@ export function Countdown2026Section() {
     <section className="py-16 lg:py-24 bg-black relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#1B64E4]/20 rounded-full blur-[150px]" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-[#F2CB45]/10 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-blue/20 rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-brand-gold/10 rounded-full blur-[120px]" />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-5 lg:px-10">
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4 fade-in-on-scroll">
-            Countdown to <span className="text-[#F2CB45]">2026</span>
+            Countdown to <span className="text-brand-gold">2026</span>
           </h2>
           <p className="text-white/60 text-base lg:text-lg max-w-2xl mx-auto">
             Two epic events. Two incredible cities. One movement reshaping
@@ -167,7 +167,7 @@ export function Countdown2026Section() {
         <div className="flex flex-wrap justify-center gap-4 mt-10">
           <Link
             href="#sponsorship"
-            className="inline-flex items-center gap-2 bg-[#F2CB45] text-black px-6 py-3 rounded-full font-semibold hover:bg-[#e8bc3d] transition-colors"
+            className="inline-flex items-center gap-2 bg-brand-gold text-black px-6 py-3 rounded-full font-semibold hover:bg-brand-gold-hover transition-colors"
           >
             Become a Sponsor
           </Link>

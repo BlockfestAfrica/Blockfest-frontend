@@ -15,17 +15,17 @@ export function Stats2026Section() {
   useSubtleAnimations();
 
   return (
-    <section className="relative bg-gradient-to-r from-[#1B64E4] via-[#0D3B8C] to-[#031940] py-12 lg:py-16 overflow-hidden">
+    <section className="relative bg-gradient-to-r from-brand-blue via-brand-blue-dark to-brand-blue-deep py-12 lg:py-16 overflow-hidden">
       <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6 lg:mb-10">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-3 py-1.5 sm:px-4 sm:py-2 mb-3 sm:mb-4 border border-white/20">
-            <span className="text-[#F2CB45] font-semibold text-xs sm:text-sm">
+            <span className="text-brand-gold font-semibold text-xs sm:text-sm">
               2025 WAS MASSIVE
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white fade-in-on-scroll">
-            Building on Our <span className="text-[#F2CB45]">Success</span>
+            Building on Our <span className="text-brand-gold">Success</span>
           </h2>
         </div>
 
@@ -44,7 +44,7 @@ export function Stats2026Section() {
               <p className="font-medium text-xs sm:text-sm lg:text-base text-white/90">
                 {stat.label}
               </p>
-              <p className="text-[10px] sm:text-xs lg:text-sm text-[#F2CB45]">
+              <p className="text-[10px] sm:text-xs lg:text-sm text-brand-gold">
                 {stat.subtext}
               </p>
             </div>
@@ -69,7 +69,7 @@ export function Stats2026Section() {
         <div className="text-center">
           <Link
             href="/blockfest-2025"
-            className="inline-flex items-center gap-2 text-[#F2CB45] hover:text-white transition-colors font-semibold"
+            className="inline-flex items-center gap-2 text-brand-gold hover:text-white transition-colors font-semibold"
           >
             <span>See Full 2025 Recap</span>
             <FaArrowRight className="text-sm" />

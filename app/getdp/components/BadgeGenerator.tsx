@@ -103,7 +103,7 @@ export default function BadgeGenerator() {
         {/* Floating shapes */}
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#005DFF]/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#F2CB45]/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-gold/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       {/* Header */}
@@ -239,7 +239,7 @@ export default function BadgeGenerator() {
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating || !name.trim() || !preview}
-                  className="w-full py-4 px-6 sm:py-5 sm:px-8 lg:py-6 lg:px-10 bg-gradient-to-r from-[#005DFF] to-[#1B64E4] text-white font-semibold rounded-xl hover:from-[#1B64E4] hover:to-[#005DFF] focus:ring-4 focus:ring-[#005DFF]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg text-base sm:text-lg lg:text-xl"
+                  className="w-full py-4 px-6 sm:py-5 sm:px-8 lg:py-6 lg:px-10 bg-gradient-to-r from-[#005DFF] to-brand-blue text-white font-semibold rounded-xl hover:from-brand-blue hover:to-[#005DFF] focus:ring-4 focus:ring-[#005DFF]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg text-base sm:text-lg lg:text-xl"
                   title={
                     !name.trim() || !preview
                       ? "Please add both your name and photo"

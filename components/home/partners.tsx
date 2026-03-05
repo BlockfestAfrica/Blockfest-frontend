@@ -5,27 +5,327 @@ import { Button } from "../ui/button";
 import React from "react";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
+import { CONTACT_EMAIL } from "@/lib/constants";
 import "./subtle-animations.css";
+
+interface PartnerInfo {
+  src: string;
+  alt: string;
+  href?: string;
+  width?: number;
+  height?: number;
+  imageClassName?: string;
+  cardClassName?: string;
+}
+
+const CARD_BASE =
+  "bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer";
+
+function PartnerCard({
+  src,
+  alt,
+  href,
+  width = 150,
+  height = 64,
+  imageClassName = "h-10 lg:h-12 w-auto object-contain",
+  cardClassName = "p-3 lg:p-4 h-18 lg:h-20",
+}: PartnerInfo) {
+  const card = (
+    <div className={`${CARD_BASE} ${cardClassName}`}>
+      <Image
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        className={imageClassName}
+      />
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} target="_blank" rel="noopener noreferrer">
+        {card}
+      </Link>
+    );
+  }
+
+  return card;
+}
+
+const diamondSponsors: PartnerInfo[] = [
+  {
+    src: "/images/sponsors/jeroid-logo.png",
+    alt: "Jeroid",
+    href: "https://jeroid.co",
+    width: 250,
+    height: 100,
+    imageClassName: "h-16 lg:h-20 w-auto object-contain",
+    cardClassName: "p-6 lg:p-8 h-24 lg:h-28 w-64 lg:w-80",
+  },
+];
+
+const goldSponsors: PartnerInfo[] = [
+  {
+    src: "/images/sponsors/hb-logo.png",
+    alt: "Hyperbridge",
+    href: "https://hyperbridge.network",
+    width: 1081,
+    height: 601,
+    imageClassName: "h-16 lg:h-20 w-auto object-contain",
+    cardClassName: "p-4 lg:p-6 h-20 lg:h-24 w-48 lg:w-56",
+  },
+  {
+    src: "/images/sponsors/cake-wallet-logo.png",
+    alt: "Cake Wallet",
+    href: "https://cakewallet.com",
+    width: 200,
+    height: 80,
+    imageClassName: "h-12 lg:h-16 w-auto object-contain",
+    cardClassName: "p-4 lg:p-6 h-20 lg:h-24 w-48 lg:w-56",
+  },
+];
+
+const silverSponsors: PartnerInfo[] = [
+  {
+    src: "/images/sponsors/gidi-logo.png",
+    alt: "Gidi",
+    href: "https://gidirealestateinvestment.com/",
+    width: 200,
+    height: 80,
+    imageClassName: "max-h-16 lg:max-h-18 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/sponsors/jupiter.png",
+    alt: "Jupiter",
+    href: "https://jup.ag/",
+    width: 200,
+    height: 80,
+    imageClassName: "h-12 lg:h-14 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/sponsors/hb.png",
+    alt: "Huele bien",
+    href: "https://linktr.ee/Huelebienbyprudent",
+    imageClassName: "h-16 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/sponsors/somnia.png",
+    alt: "Somnia africa",
+    href: "https://x.com/somniainafrica",
+    imageClassName: "h-16 w-auto object-contain",
+  },
+  {
+    src: "/images/sponsors/avalanche.png",
+    alt: "Avalanche",
+    href: "https://x.com/team1ng?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
+    imageClassName: "h-16 w-auto object-contain",
+  },
+  {
+    src: "/images/sponsors/sui.png",
+    alt: "Sui Network",
+    href: "https://x.com/SuiNetwork?s=09",
+    width: 200,
+    height: 80,
+    imageClassName: "h-12 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+];
+
+const communityPartners: PartnerInfo[] = [
+  {
+    src: "/images/community/web3bridge-logo.webp",
+    alt: "Web3Bridge",
+    href: "https://www.web3bridgeafrica.com/",
+  },
+  {
+    src: "/images/community/web3afrika-logo.png",
+    alt: "Web3Afrika",
+    href: "https://web3afrika.com",
+  },
+  {
+    src: "/images/community/bchain-logo.png",
+    alt: "Bchain",
+    href: "https://bchainafrica.com/",
+    imageClassName: "max-h-16 lg:max-h-18 w-auto object-contain",
+  },
+  {
+    src: "/images/community/wid-logo.png",
+    alt: "WID",
+    href: "https://womenindefi.org/",
+    width: 300,
+    height: 120,
+    imageClassName: "max-h-14 lg:max-h-16 w-auto object-contain",
+    cardClassName: "p-2 lg:p-3 h-18 lg:h-20 overflow-hidden",
+  },
+  {
+    src: "/images/community/web3unilag.png",
+    alt: "Web3 Unilag",
+    href: "https://x.com/web3unilag",
+    width: 200,
+    height: 80,
+    imageClassName: "max-h-14 lg:max-h-16 w-auto object-contain",
+    cardClassName: "p-2 lg:p-3 h-18 lg:h-20 overflow-hidden",
+  },
+  {
+    src: "/images/community/dtcsi-logo.png",
+    alt: "DTCSI",
+    href: "https://dtcsi.com",
+    imageClassName: "max-h-14 lg:max-h-16 w-auto object-contain",
+    cardClassName: "p-2 lg:p-3 h-18 lg:h-20 overflow-hidden",
+  },
+  {
+    src: "/images/community/mgsweb3-logo.png",
+    alt: "MGS Web3",
+    href: "https://x.com/mgs_web3",
+  },
+  {
+    src: "/images/community/polkadot-logo.png",
+    alt: "Polkadot Africa",
+    href: "https://polkadot.africa/",
+    imageClassName: "max-h-16 lg:max-h-18 w-auto object-contain",
+  },
+  {
+    src: "/images/community/webnig.png",
+    alt: "Web3 Nigeria",
+    href: "https://x.com/Web3Nigeria?s=09",
+  },
+  {
+    src: "/images/community/guild.png",
+    alt: "Guild Academy",
+    href: "https://x.com/GuildAcademy_",
+  },
+  {
+    src: "/images/community/bnug.png",
+    alt: "blockchain nigeria user group",
+    href: "https://x.com/blockchainNG",
+  },
+  {
+    src: "/images/community/hive2.png",
+    alt: "Insidethehive Image",
+    href: "https://x.com/InsideDHive",
+    imageClassName: "h-20 w-auto object-contain",
+  },
+];
+
+const mediaPartners: PartnerInfo[] = [
+  {
+    src: "/images/media/ifemedia.png",
+    alt: "Ife Media",
+    imageClassName: "h-14 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/media/amd-logo.webp",
+    alt: "AMD",
+    href: "https://ambcrypto.com/",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/media/3FBA.png",
+    alt: "Forex Blogger Ayo",
+    href: "https://x.com/forexbloggerayo?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
+    imageClassName: "h-16 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/media/businessday.svg",
+    alt: "Business day",
+    imageClassName: "max-h-16 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/media/guardian.svg",
+    alt: "Guardian",
+    imageClassName: "h-14 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/media/legit.svg",
+    alt: "legit",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/media/Punch.svg",
+    alt: "punch newspaper",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/media/tclogo.svg",
+    alt: "techcabal",
+    imageClassName: "h-16 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/media/techpoint.svg",
+    alt: "techpoint",
+    imageClassName: "h-16 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/media/mona.png",
+    alt: "Mona the persona",
+    imageClassName: "h-12 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+];
+
+const ecosystemPartners: PartnerInfo[] = [
+  {
+    src: "/images/ecosystem/lsg2.png",
+    alt: "Lagos state government",
+    imageClassName: "h-18 md:h-20 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/ecosystem/gadget2.png",
+    alt: "Igadgetmart",
+    imageClassName: "max-h-16 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/ecosystem/siban.png",
+    alt: "SIBAN",
+    href: "https://siban.org/",
+    imageClassName: "max-h-14 lg:max-h-16 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/ecosystem/fan.png",
+    alt: "FanYogo",
+    imageClassName: "h-18 md:h-20 w-auto object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+  {
+    src: "/images/ecosystem/base.png",
+    alt: "Base West Africa",
+    href: "https://x.com/BasedWestAfrica",
+    imageClassName: "h-16 lg:h-14 w-fit object-contain",
+    cardClassName: "p-3 lg:p-4 h-18 lg:h-20 w-40 lg:w-48",
+  },
+];
 
 export function PartnersSection() {
   const { trackButtonClick } = useUmami();
-  const contactEmail =
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
+  const contactEmail = CONTACT_EMAIL;
 
   useSubtleAnimations();
 
   return (
-    <section className="flex flex-col items-center justify-center px-5 py-16 lg:py-24 lg:px-10 bg-[#1B64E4]">
+    <section className="flex flex-col items-center justify-center px-5 py-16 lg:py-24 lg:px-10 bg-brand-blue">
       {/* Industry Partners Section */}
       <div className="flex flex-col items-center justify-center space-y-5 w-full max-w-7xl">
         {/* Header with 2025 badge */}
         <div className="text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 border border-white/20">
-            <span className="text-[#F2CB45] font-semibold text-sm">
+            <span className="text-brand-gold font-semibold text-sm">
               ✨ 2025 PARTNERS
             </span>
           </div>
-          <h2 className="font-medium text-[39px] lg:text-[69.65px] lg:leading-[82px] tracking-[-5%] text-center text-white fade-in-on-scroll">
+          <h2 className="font-medium text-4xl lg:text-7xl lg:leading-tight tracking-[-5%] text-center text-white fade-in-on-scroll">
             Previous Partners
           </h2>
           <p className="text-white/70 text-base lg:text-lg mt-4 max-w-2xl mx-auto">
@@ -38,25 +338,13 @@ export function PartnersSection() {
         <div className="w-full max-w-6xl mx-auto space-y-6 scale-in mt-8">
           {/* Diamond Sponsors */}
           <div className="text-center">
-            <h3 className="text-2xl lg:text-3xl font-bold text-[#F2CB45] mb-4">
+            <h3 className="text-2xl lg:text-3xl font-bold text-brand-gold mb-4">
               💎 Diamond Sponsors
             </h3>
             <div className="flex justify-center">
-              <Link
-                href="https://jeroid.co"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 lg:p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-24 lg:h-28 w-64 lg:w-80">
-                  <Image
-                    src="/images/sponsors/jeroid-logo.png"
-                    alt="Jeroid"
-                    width={250}
-                    height={100}
-                    className="h-16 lg:h-20 w-auto object-contain"
-                  />
-                </div>
-              </Link>
+              {diamondSponsors.map((partner) => (
+                <PartnerCard key={partner.alt} {...partner} />
+              ))}
             </div>
           </div>
 
@@ -66,36 +354,9 @@ export function PartnersSection() {
               🥇 Gold Sponsors
             </h3>
             <div className="flex flex-wrap justify-center gap-4 lg:gap-6">
-              <Link
-                href="https://hyperbridge.network"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-20 lg:h-24 w-48 lg:w-56">
-                  <Image
-                    src="/images/sponsors/hb-logo.png"
-                    alt="Hyperbridge"
-                    width={1081}
-                    height={601}
-                    className="h-12 lg:h-16 w-auto object-contain scale-[2]"
-                  />
-                </div>
-              </Link>
-              <Link
-                href="https://cakewallet.com"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-20 lg:h-24 w-48 lg:w-56">
-                  <Image
-                    src="/images/sponsors/cake-wallet-logo.png"
-                    alt="Cake Wallet"
-                    width={200}
-                    height={80}
-                    className="h-12 lg:h-16 w-auto object-contain"
-                  />
-                </div>
-              </Link>
+              {goldSponsors.map((partner) => (
+                <PartnerCard key={partner.alt} {...partner} />
+              ))}
             </div>
           </div>
 
@@ -105,99 +366,9 @@ export function PartnersSection() {
               🥈 Silver Sponsors
             </h3>
             <div className="flex flex-wrap justify-center gap-4 lg:gap-6">
-              <Link
-                href="https://gidirealestateinvestment.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                  <Image
-                    src="/images/sponsors/gidi-logo.png"
-                    alt="Gidi"
-                    width={200}
-                    height={80}
-                    className="h-12 lg:h-14 w-auto object-contain scale-[3]"
-                  />
-                </div>
-              </Link>
-
-              <Link
-                href="https://jup.ag/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                  <Image
-                    src="/images/sponsors/jupiter.png"
-                    alt="Jupiter"
-                    width={200}
-                    height={80}
-                    className="h-12 lg:h-14 w-auto object-contain"
-                  />
-                </div>
-              </Link>
-
-              <Link
-                href="https://linktr.ee/Huelebienbyprudent"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                  <Image
-                    src="/images/sponsors/hb.png"
-                    alt="Huele bien"
-                    width={150}
-                    height={64}
-                    className="h-16 w-auto object-contain"
-                  />
-                </div>
-              </Link>
-              <Link
-                href="https://x.com/somniainafrica"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                  <Image
-                    src="/images/sponsors/somnia.png"
-                    alt="Somnia africa"
-                    width={150}
-                    height={64}
-                    className="h-16 w-auto object-contain"
-                  />
-                </div>
-              </Link>
-              <Link
-                href="https://x.com/team1ng?s=21&t=6lhy88Nx16NRD-zFs2-S9w"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                  <Image
-                    src="/images/sponsors/avalanche.png"
-                    alt="Somnia africa"
-                    width={150}
-                    height={64}
-                    className="h-16 w-auto object-contain"
-                  />
-                </div>
-              </Link>
-
-              <Link
-                href="https://x.com/SuiNetwork?s=09"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                  <Image
-                    src="/images/sponsors/sui.png"
-                    alt="Sui Network"
-                    width={200}
-                    height={80}
-                    className="h-12 w-auto object-contain"
-                  />
-                </div>
-              </Link>
+              {silverSponsors.map((partner) => (
+                <PartnerCard key={partner.alt} {...partner} />
+              ))}
             </div>
           </div>
         </div>
@@ -210,189 +381,9 @@ export function PartnersSection() {
             </h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            <Link
-              href="https://www.web3bridgeafrica.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/web3bridge-logo.webp"
-                  alt="Web3Bridge"
-                  width={150}
-                  height={64}
-                  className="h-10 lg:h-12 w-auto object-contain"
-                />
-              </div>
-            </Link>
-
-            <Link
-              href="https://web3afrika.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/web3afrika-logo.png"
-                  alt="Web3Afrika"
-                  width={150}
-                  height={64}
-                  className="h-10 lg:h-12 w-auto object-contain"
-                />
-              </div>
-            </Link>
-            <Link
-              href="https://bchainafrica.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/bchain-logo.png"
-                  alt="Bchain"
-                  width={150}
-                  height={64}
-                  className="h-10 lg:h-12 w-auto object-contain scale-[2]"
-                />
-              </div>
-            </Link>
-            <Link
-              href="https://womenindefi.org/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-1 lg:p-1 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/wid-logo.png"
-                  alt="WID"
-                  width={300}
-                  height={120}
-                  className="h-full lg:h-full w-auto object-cover scale-170"
-                />
-              </div>
-            </Link>
-            <Link
-              href="https://x.com/web3unilag"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-1 lg:p-1 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/web3unilag.png"
-                  alt="Web3 Unilag"
-                  width={200}
-                  height={80}
-                  className="h-full lg:h-full w-auto object-cover scale-130"
-                />
-              </div>
-            </Link>
-            <Link
-              href="https://dtcsi.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-1 lg:p-1 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 overflow-hidden">
-                <Image
-                  src="/images/community/dtcsi-logo.png"
-                  alt="DTCSI"
-                  width={150}
-                  height={64}
-                  className="h-full lg:h-full w-auto object-cover scale-200"
-                />
-              </div>
-            </Link>
-            <Link
-              href="https://x.com/mgs_web3"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/mgsweb3-logo.png"
-                  alt="MGS Web3"
-                  width={150}
-                  height={64}
-                  className="h-10 lg:h-12 w-auto object-contain"
-                />
-              </div>
-            </Link>
-            <Link
-              href="https://polkadot.africa/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/polkadot-logo.png"
-                  alt="Polkadot Africa"
-                  width={150}
-                  height={64}
-                  className="h-10 lg:h-12 w-auto object-contain scale-[3]"
-                />
-              </div>
-            </Link>
-            <Link
-              href="https://x.com/Web3Nigeria?s=09"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/webnig.png"
-                  alt="Web3 Nigeria"
-                  width={150}
-                  height={64}
-                  className="h-10 lg:h-12 w-auto object-contain"
-                />
-              </div>
-            </Link>
-            <Link
-              href="https://x.com/GuildAcademy_"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/guild.png"
-                  alt="Guild Academy"
-                  width={150}
-                  height={64}
-                  className="h-10 lg:h-12 w-auto object-contain"
-                />
-              </div>
-            </Link>
-
-            <Link
-              href="https://x.com/blockchainNG"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/bnug.png"
-                  alt="blockchain nigeria user group"
-                  width={150}
-                  height={64}
-                  className="h-10 lg:h-12 w-auto object-contain"
-                />
-              </div>
-            </Link>
-
-            <Link
-              href="https://x.com/InsideDHive"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20">
-                <Image
-                  src="/images/community/hive2.png"
-                  alt="Insidethehive Image"
-                  width={150}
-                  height={64}
-                  className="h-20 w-auto object-contain"
-                />
-              </div>
-            </Link>
+            {communityPartners.map((partner) => (
+              <PartnerCard key={partner.alt} {...partner} />
+            ))}
           </div>
         </div>
 
@@ -404,139 +395,11 @@ export function PartnersSection() {
             </h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/ifemedia.png"
-                  alt="Ife Media "
-                  width={150}
-                  height={64}
-                  className="h-14 w-auto object-contain"
-                />
+            {mediaPartners.map((partner) => (
+              <div key={partner.alt} className="flex justify-center">
+                <PartnerCard {...partner} />
               </div>
-            </div>
-            <div className="flex justify-center">
-              <Link
-                href="https://ambcrypto.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                  <Image
-                    src="/images/media/amd-logo.webp"
-                    alt="AMD"
-                    width={150}
-                    height={64}
-                    className="h-10 lg:h-12 w-auto object-contain"
-                  />
-                </div>
-              </Link>
-            </div>
-            <div className="flex justify-center">
-              <Link
-                href="https://x.com/forexbloggerayo?s=21&t=6lhy88Nx16NRD-zFs2-S9w"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                  <Image
-                    src="/images/media/3FBA.png"
-                    alt="Forex Blogger Ayo"
-                    width={150}
-                    height={64}
-                    className="h-16 w-auto object-contain"
-                  />
-                </div>
-              </Link>
-            </div>
-            {/* <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/arise.webp"
-                  alt="Arise"
-                  width={150}
-                  height={64}
-                  className="h-14 w-auto object-contain"
-                />
-              </div>
-            </div>  */}
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/businessday.svg"
-                  alt="Business day"
-                  width={150}
-                  height={64}
-                  className="h-14 w-auto object-contain scale-[2]"
-                />
-              </div>
-            </div>{" "}
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/guardian.svg"
-                  alt="Guardian"
-                  width={150}
-                  height={64}
-                  className="h-14 w-auto object-contain"
-                />
-              </div>
-            </div>{" "}
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/legit.svg"
-                  alt="legit"
-                  width={150}
-                  height={64}
-                  className="h-10 w-auto object-contain"
-                />
-              </div>
-            </div>{" "}
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/Punch.svg"
-                  alt="punch newspaper"
-                  width={150}
-                  height={64}
-                  className="h-10 w-auto object-contain"
-                />
-              </div>
-            </div>{" "}
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/tclogo.svg"
-                  alt="techcabal"
-                  width={150}
-                  height={64}
-                  className="h-16 w-auto object-contain "
-                />
-              </div>
-            </div>{" "}
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/techpoint.svg"
-                  alt="techpoint"
-                  width={150}
-                  height={64}
-                  className="h-16 w-auto object-contain "
-                />
-              </div>
-            </div>
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/media/mona.png"
-                  alt="Mona the persona"
-                  width={150}
-                  height={64}
-                  className="h-12 w-auto object-contain"
-                />
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
@@ -548,103 +411,21 @@ export function PartnersSection() {
             </h3>
           </div>
           <div className="flex flex-wrap justify-center gap-4 lg:gap-6">
-            {/* <div className="flex justify-center">
-              <Link
-                href="https://x.com/_CryptoBootcamp?t=t4j6OitblQ_BEmduornOvQ&s=08"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                  <Image
-                    src="/images/ecosystem/bootcamp.png"
-                    alt="AMD"
-                    width={150}
-                    height={64}
-                    className="h-10 lg:h-12 w-auto object-contain "
-                  />
-                </div>
-              </Link>
-            </div> */}
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/ecosystem/lsg2.png"
-                  alt="Lagos state government"
-                  width={150}
-                  height={64}
-                  className="h-18 md:h-20 w-auto object-contain "
-                />
+            {ecosystemPartners.map((partner) => (
+              <div key={partner.alt} className="flex justify-center">
+                <PartnerCard {...partner} />
               </div>
-            </div>
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/ecosystem/gadget2.png"
-                  alt="Igadgetmart"
-                  width={150}
-                  height={64}
-                  className="h-16 w-auto object-contain scale-[2]"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <Link
-                href="https://siban.org/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                  <Image
-                    src="/images/ecosystem/siban.png"
-                    alt="AMD"
-                    width={150}
-                    height={64}
-                    className="h-16 lg:h-14 w-auto object-contain scale-[2] "
-                  />
-                </div>
-              </Link>
-            </div>
-
-            <div className="flex justify-center">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                <Image
-                  src="/images/ecosystem/fan.png"
-                  alt="FanYogo"
-                  width={150}
-                  height={64}
-                  className="h-18 md:h-20 w-auto object-contain "
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <Link
-                href="https://x.com/BasedWestAfrica"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center cursor-pointer h-18 lg:h-20 w-40 lg:w-48">
-                  <Image
-                    src="/images/ecosystem/base.png"
-                    alt="Base West Africa"
-                    width={150}
-                    height={64}
-                    className="h-16 lg:h-14 w-fit object-contain  "
-                  />
-                </div>
-              </Link>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
       <div className="flex flex-col items-center justify-center space-y-5 mt-12.5 lg:mt-[110px] text-white text-center">
-        <h1 className="font-medium text-[39px] leading-[45.13px] lg:text-[69.65px] lg:leading-[82.21px] tracking-[-5%] xl:w-[55%] md:w-[65%] ">
+        <h1 className="font-medium text-4xl leading-tight lg:text-7xl lg:leading-tight tracking-[-5%] xl:w-[55%] md:w-[65%]">
           Be part of 2026&apos;s Web3 Revolution
         </h1>
         <p className="font-medium text-sm lg:text-2xl lg:leading-[1.2] md:w-[75%] w-[90%] xl:w-[65%]">
-          We&apos;re going bigger in 2026 with TWO events - Johannesburg in May
+          We&apos;re going bigger in 2026 with TWO events - Cape Town in May
           and Lagos in October. Whether you want to attend, showcase your brand,
           or sponsor the future of Africa&apos;s web3 ecosystem, Blockfest
           Africa offers a front-row seat to innovation, culture, and community.
@@ -653,7 +434,7 @@ export function PartnersSection() {
         <div className="flex items-center justify-center gap-4 mt-5 mb-10 lg:mb-0">
           <Link href="#sponsorship">
             <Button
-              className="font-semibold text-sm lg:text-[22px] rounded-[13px] p-[21px] lg:p-[34px] w-fit bg-[#F2CB45] text-black hover:bg-[#e8bc3d]"
+              className="font-semibold text-sm lg:text-xl rounded-xl p-5 lg:p-8 w-fit bg-brand-gold text-black hover:bg-brand-gold-hover"
               onClick={() => {
                 trackButtonClick("View 2026 Packages", "Partners Section");
               }}
@@ -670,7 +451,7 @@ export function PartnersSection() {
           >
             <Button
               asChild
-              className="lg:p-[34px] font-semibold text-sm lg:text-[22px] rounded-[13px] p-[21px] w-fit  border border-white text-white bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50"
+              className="lg:p-8 font-semibold text-sm lg:text-xl rounded-xl p-5 w-fit  border border-white text-white bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50"
             >
               <p>Contact Us</p>
             </Button>

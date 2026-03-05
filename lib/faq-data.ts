@@ -5,18 +5,43 @@ export interface FAQItem {
   category: string;
 }
 
+export const faqCategories = [
+  { name: "Event Details", icon: "📅", color: "bg-blue-50 text-blue-700" },
+  {
+    name: "Registration & Tickets",
+    icon: "🎫",
+    color: "bg-green-50 text-green-700",
+  },
+  {
+    name: "Food & Accommodation",
+    icon: "🍽️",
+    color: "bg-orange-50 text-orange-700",
+  },
+  {
+    name: "Activities & Networking",
+    icon: "🤝",
+    color: "bg-purple-50 text-purple-700",
+  },
+  { name: "Safety & Security", icon: "🔒", color: "bg-red-50 text-red-700" },
+  {
+    name: "Community & Support",
+    icon: "💬",
+    color: "bg-indigo-50 text-indigo-700",
+  },
+] as const;
+
 export const faqData: FAQItem[] = [
   // Event Details
   {
     id: 1,
-    question: "When and where is Blockfest Africa 2025?",
+    question: "When and where is Blockf3st Africa 2026?",
     answer:
-      "Blockfest Africa 2025 will be held on October 11th, 2025, in Lagos, Nigeria at the Landmark Event Center. The event runs from 8:00 AM to 6:00 PM WAT.",
+      "Blockf3st Africa 2026 has TWO events! Cape Town, South Africa in May 2026 and Lagos, Nigeria in October 2026. Join us for the Superbowl of Web3!",
     category: "Event Details",
   },
   {
     id: 4,
-    question: "What should I expect at Blockfest Africa?",
+    question: "What should I expect at Blockf3st Africa?",
     answer:
       "Experience keynote sessions from industry leaders, interactive workshops, panel discussions, networking opportunities, and masterclasses covering AI, Blockchain, DeFi, NFTs, and emerging Web3 technologies.",
     category: "Event Details",
@@ -39,37 +64,37 @@ export const faqData: FAQItem[] = [
     id: 14,
     question: "Can I attend virtually or is it only in-person?",
     answer:
-      "While Blockfest Africa 2025 is primarily an in-person event, we understand not everyone can attend physically. The event will be live-streamed for those who cannot make it to Lagos. However, we strongly encourage in-person attendance for the best networking and learning experience.",
-    category: "Event Details",
-  },
-  {
-    id: 17,
-    question: "Is the venue accessible for people with physical challenges?",
-    answer:
-      "Yes! Accessibility for physically challenged attendees is provided at the Landmark Event Center. The venue includes wheelchair access, accessible restrooms, and designated seating areas. If you have specific accessibility needs, please mention them during registration so we can ensure proper accommodations.",
+      "We will be livestreaming on our YouTube channel and X (Twitter) so the global Web3 community can participate virtually. However, we strongly encourage in-person attendance for the best networking and learning experience.",
     category: "Event Details",
   },
 
   // Registration & Tickets
   {
     id: 2,
-    question: "Is Blockfest Africa free to attend?",
+    question: "Is Blockf3st Africa free to attend?",
     answer:
-      "Yes! Blockfest Africa is completely free to attend. Please do not pay anyone claiming to sell tickets - the event is 100% free. We believe in making Web3 education accessible to everyone.",
+      "Yes! Blockf3st Africa is completely free to attend. Please do not pay anyone claiming to sell tickets - the event is 100% free. We believe in making Web3 education accessible to everyone.",
     category: "Registration & Tickets",
   },
   {
     id: 3,
-    question: "How do I register and get approved?",
+    question: "How do I register for the events?",
     answer:
-      "Registration is done through our Luma platform. After registering, approval is still ongoing for all applicants. You'll receive an email confirmation if you've been approved to attend. Please be patient as we review all applications.",
+      "Registration opens closer to each event date. Follow us on social media and join our Telegram community to be the first to know when registration opens!",
     category: "Registration & Tickets",
   },
   {
     id: 5,
-    question: "Who should attend Blockfest Africa?",
+    question: "Who should attend Blockf3st Africa?",
     answer:
       "The event welcomes Web3 builders, blockchain developers, crypto founders, DeFi enthusiasts, students, creators, investors, and anyone interested in Africa's digital frontier and Web3 innovation.",
+    category: "Registration & Tickets",
+  },
+  {
+    id: 11,
+    question: "Can I attend both events?",
+    answer:
+      "Yes! We encourage attendees to join us at both Cape Town in May and Lagos in October. Register for each event separately and experience the full Blockf3st Africa world tour!",
     category: "Registration & Tickets",
   },
 
@@ -78,14 +103,14 @@ export const faqData: FAQItem[] = [
     id: 7,
     question: "Are meals provided during the event?",
     answer:
-      "Yes, lunch will be provided for all registered attendees. If you have dietary restrictions or special needs, please mention them during registration so we can accommodate you.",
+      "Yes, refreshments and lunch will be provided for all registered attendees. If you have dietary restrictions, please mention them during registration.",
     category: "Food & Accommodation",
   },
   {
     id: 12,
     question: "Is transportation provided to the venue?",
     answer:
-      "Yes! Free buses are provided for approved attendees from schools and specific locations in Lagos. If you've been approved, look out for our emails with transportation details and pickup points.",
+      "Transportation details will be announced closer to each event. Join our Telegram community to stay updated on logistics and pickup points.",
     category: "Food & Accommodation",
   },
   {
@@ -96,42 +121,58 @@ export const faqData: FAQItem[] = [
     category: "Food & Accommodation",
   },
 
-  // Community & Support
-  {
-    id: 15,
-    question: "How do I join the Telegram community?",
-    answer:
-      "Join our Telegram channel at https://t.me/blockf3stafrica for real-time updates, accommodation deals, networking, and community discussions. Stay connected with the Blockfest Africa community!",
-    category: "Community & Support",
-  },
-  {
-    id: 16,
-    question: "What if I have more questions?",
-    answer:
-      "For additional questions, contact us at partnership@blockfestafrica.com or join our Telegram community. Our team is here to help make your Blockfest Africa experience amazing!",
-    category: "Community & Support",
-  },
-
-  // Technical & Special Interest
+  // Activities & Networking
   {
     id: 6,
-    question: "Will there be hands-on technical workshops?",
+    question: "Will there be networking opportunities?",
     answer:
-      "Yes! We have hands-on workshops covering smart contract development, DeFi protocols, NFT creation, and Web3 development tools. Bring your laptop and be ready to build!",
-    category: "Technical & Special Interest",
+      "Absolutely! Blockf3st Africa is designed for maximum networking. You'll connect with founders, creators, communities, and like-minded individuals shaping Africa's Web3 ecosystem during dedicated networking sessions and breaks.",
+    category: "Activities & Networking",
   },
   {
     id: 10,
-    question: "Can I pitch my startup or project at the event?",
+    question: "Will the event be livestreamed?",
     answer:
-      "We have dedicated networking sessions and a startup showcase area. While there's no formal pitching session, you'll have plenty of opportunities to connect with investors and fellow builders.",
-    category: "Technical & Special Interest",
+      "Yes! We will be livestreaming the entire event on our YouTube channel and X (Twitter) so the global Web3 community can participate virtually. Follow our social media for livestream links.",
+    category: "Activities & Networking",
   },
   {
-    id: 11,
-    question: "Are there networking opportunities for investors?",
+    id: 17,
+    question: "Are there opportunities for startups to showcase?",
     answer:
-      "Absolutely! Blockfest Africa brings together crypto funds, angel investors, and VCs specifically interested in African Web3 projects. Special networking areas will be available.",
-    category: "Technical & Special Interest",
+      "Yes! Blockf3st Africa provides platforms for Web3 startups and projects to showcase their innovations. Contact our team at partnership@blockfestafrica.com for showcase opportunities.",
+    category: "Activities & Networking",
+  },
+
+  // Safety & Security
+  {
+    id: 16,
+    question: "What safety and security measures are in place?",
+    answer:
+      "Your safety is our priority! The venues will be guarded with professional security personnel throughout the events. We also have ambulance services and paramedics on standby for any medical emergencies.",
+    category: "Safety & Security",
+  },
+
+  // Community & Support
+  {
+    id: 15,
+    question: "How do I join the community?",
+    answer:
+      "Join our Telegram channel at t.me/blockf3stafrica for real-time updates, networking, and community discussions. Follow us on X (Twitter) @blockfestafrica for announcements.",
+    category: "Community & Support",
+  },
+  {
+    id: 18,
+    question: "How can I become a sponsor or partner?",
+    answer:
+      "We offer various partnership tiers for both Cape Town and Lagos events. Contact us at partnership@blockfestafrica.com to receive our sponsorship deck with all packages and benefits.",
+    category: "Community & Support",
+  },
+  {
+    id: 19,
+    question: "Can I speak at Blockf3st Africa 2026?",
+    answer:
+      "Speaker applications will open soon! Follow us on social media to be notified when applications open. We're looking for industry experts, founders, and thought leaders in the Web3 space.",
+    category: "Community & Support",
   },
 ];

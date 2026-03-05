@@ -6,11 +6,11 @@ import { AiOutlineClose } from "react-icons/ai";
 import Link from "next/link";
 import BurgerIcon from "../icons/burger-icon";
 import { gotham } from "@/lib/fonts";
+import { CONTACT_EMAIL } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
 
 const Navbar = () => {
-  const contactEmail =
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
+  const contactEmail = CONTACT_EMAIL;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -40,8 +40,8 @@ const Navbar = () => {
   }, []);
 
   return (
-    <div
-      className={`${gotham.className} bg-black px-5 lg:px-[70px] py-5 lg:py-10 flex items-center justify-between`}
+    <header
+      className={`${gotham.className} bg-black px-5 lg:px-[70px] py-4 lg:py-10 flex items-center justify-between sticky top-0 z-50`}
     >
       {/* Logo */}
       <Link href="/" className="cursor-pointer">
@@ -57,43 +57,43 @@ const Navbar = () => {
       </Link>
 
       {/* Desktop Nav */}
-      <nav className="hidden md:flex items-center gap-x-[28px]">
+      <nav className="hidden md:flex items-center gap-x-7" aria-label="Main navigation">
         <Link
           href="/"
-          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
         >
           Home
         </Link>
         <button
           type="button"
           onClick={handleAboutClick}
-          className="text-sm lg:text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+          className="text-sm lg:text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
         >
           About
         </button>
         <Link
           href="/blockfest-2025"
-          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out inline-flex items-center gap-1.5"
+          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out inline-flex items-center gap-1.5"
         >
           2025 Recap <span className="text-sm">🇳🇬</span>
         </Link>
         <Link
           href="/speakers"
-          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
         >
           Speakers
         </Link>
         {pathname !== "/speakers" && (
           <Link
             href="#sponsorship"
-            className="text-base font-normal text-[#F2CB45] hover:text-white transition-colors duration-300 ease-in-out"
+            className="text-base font-normal text-brand-gold hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
           >
             Sponsor
           </Link>
         )}
         <Link
           href={`mailto:${contactEmail}`}
-          className="text-base font-normal text-[#A4A4A4] hover:text-white transition-colors duration-300 ease-in-out"
+          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
         >
           Contact
         </Link>
@@ -103,14 +103,16 @@ const Navbar = () => {
       <div className="flex items-center gap-x-5">
         <Link
           href="#sponsorship"
-          className="md:p-5 text-sm lg:text-base font-medium text-black w-fit p-3 bg-[#F2CB45] hidden shadow-xs hover:bg-[#e8bc3d] h-9 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
+          className="md:p-5 text-sm lg:text-base font-medium text-black w-fit p-3 bg-brand-gold hidden shadow-xs hover:bg-brand-gold-hover h-9 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
         >
           Become a Sponsor
         </Link>
         <div className="flex md:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <BurgerIcon className="text-white" />
+              <button type="button" aria-label="Open menu" className="p-2 -m-2">
+                <BurgerIcon className="text-white" />
+              </button>
             </SheetTrigger>
             <SheetContent side="top">
               <MobileMenu />
@@ -118,13 +120,12 @@ const Navbar = () => {
           </Sheet>
         </div>
       </div>
-    </div>
+    </header>
   );
 };
 
 const MobileMenu = () => {
-  const contactEmail =
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnership@blockfestafrica.com";
+  const contactEmail = CONTACT_EMAIL;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -151,7 +152,8 @@ const MobileMenu = () => {
         <SheetClose asChild>
           <button
             type="button"
-            className="p-2 rounded-full hover:bg-gray-100 transition"
+            aria-label="Close menu"
+            className="flex items-center justify-center w-11 h-11 rounded-full hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
           >
             <AiOutlineClose size={28} className="text-white" />
           </button>
@@ -163,7 +165,7 @@ const MobileMenu = () => {
         <SheetClose asChild>
           <Link
             href="/"
-            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
           >
             Home
           </Link>
@@ -173,7 +175,7 @@ const MobileMenu = () => {
           <button
             type="button"
             onClick={handleAboutClick}
-            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
           >
             About
           </button>
@@ -182,7 +184,7 @@ const MobileMenu = () => {
         <SheetClose asChild>
           <Link
             href="/blockfest-2025"
-            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
           >
             2025 Recap <span>🇳🇬</span>
           </Link>
@@ -191,7 +193,7 @@ const MobileMenu = () => {
         <SheetClose asChild>
           <Link
             href="/speakers"
-            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
           >
             Speakers
           </Link>
@@ -200,7 +202,7 @@ const MobileMenu = () => {
         <SheetClose asChild>
           <Link
             href="#sponsorship"
-            className="text-lg font-medium text-[#F2CB45] hover:text-white hover:underline transition w-fit"
+            className="text-lg font-medium text-brand-gold hover:text-white hover:underline transition w-fit"
           >
             Become a Sponsor
           </Link>
@@ -210,7 +212,7 @@ const MobileMenu = () => {
         <SheetClose asChild>
           <a
             href={`mailto:${contactEmail}`}
-            className="text-lg font-medium text-[#A4A4A4] hover:text-white hover:underline transition w-fit"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
           >
             Contact
           </a>

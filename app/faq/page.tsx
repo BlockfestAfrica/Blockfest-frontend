@@ -7,11 +7,11 @@ import { faqData } from "@/lib/faq-data";
 export const metadata: Metadata = {
   title: "FAQ - Blockfest Africa 2026 | Complete Guide",
   description:
-    "Get answers to all your questions about Blockfest Africa 2026 in Johannesburg and Lagos. Find information about registration, venues, schedule, accommodation, networking, and more.",
+    "Get answers to all your questions about Blockfest Africa 2026 in Cape Town and Lagos. Find information about registration, venues, schedule, accommodation, networking, and more.",
   keywords: [
     "Blockfest Africa FAQ",
     "Web3 conference questions",
-    "blockchain event Johannesburg",
+    "blockchain event Cape Town",
     "blockchain event Lagos",
     "cryptocurrency conference South Africa",
     "cryptocurrency conference Nigeria",
@@ -119,10 +119,10 @@ export default function FAQPage() {
       <BaseSchema type="WebPage" data={faqPageData} />
       <div className="min-h-screen bg-white">
         {/* Header Section */}
-        <div className="bg-gradient-to-br from-[#1B64E4] via-[#0D3B8C] to-[#031940] py-12 lg:py-16">
+        <div className="bg-gradient-to-br from-brand-blue via-brand-blue-dark to-brand-blue-deep py-12 lg:py-16">
           <div className="max-w-6xl mx-auto px-4 lg:px-8 text-center">
             <h1 className="font-bold text-3xl lg:text-5xl mb-4 text-white">
-              Frequently Asked <span className="text-[#F2CB45]">Questions</span>
+              Frequently Asked <span className="text-brand-gold">Questions</span>
             </h1>
             <p className="text-base lg:text-lg text-white/80 max-w-2xl mx-auto">
               Everything you need to know about Africa&apos;s premier Web3

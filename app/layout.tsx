@@ -10,7 +10,7 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
 const siteName = "Blockf3st Africa 2026";
 const siteDescription =
-  "The Superbowl of Web3 - Africa's premier blockchain conference. Join us in Johannesburg (May 2026) & Lagos (October 2026). Web3 In Motion: From Pipelines to Platforms.";
+  "The Superbowl of Web3 - Africa's premier blockchain conference. Join us in Cape Town (May 2026) & Lagos (October 2026). Web3 In Motion: From Pipelines to Platforms.";
 const twitterHandle =
   process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica";
 const instagramHandle =
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     "africa",
     "south africa",
     "nigeria",
-    "johannesburg",
+    "cape town",
     "lagos",
     "conference",
     "bitcoin",

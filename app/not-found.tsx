@@ -10,7 +10,7 @@ export default function NotFound() {
     >
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#F2CB45] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-gold rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-ping"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce"></div>
       </div>
@@ -36,10 +36,10 @@ export default function NotFound() {
             <div className="mb-8">
               {/* 404 Number with gradient */}
               <div className="relative mb-6">
-                <h1 className="text-8xl md:text-9xl font-bold bg-gradient-to-r from-[#F2CB45] via-yellow-300 to-[#F2CB45] bg-clip-text text-transparent">
+                <h1 className="text-8xl md:text-9xl font-bold bg-gradient-to-r from-brand-gold via-yellow-300 to-brand-gold bg-clip-text text-transparent">
                   404
                 </h1>
-                <div className="absolute inset-0 text-8xl md:text-9xl font-bold text-[#F2CB45] opacity-20 blur-sm">
+                <div className="absolute inset-0 text-8xl md:text-9xl font-bold text-brand-gold opacity-20 blur-sm">
                   404
                 </div>
               </div>
@@ -58,7 +58,7 @@ export default function NotFound() {
             {/* Action Button */}
             <div className="mb-8">
               <Link href="/">
-                <Button className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#F2CB45] to-yellow-300 hover:from-yellow-300 hover:to-[#F2CB45] text-black font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                <Button className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-brand-gold to-yellow-300 hover:from-yellow-300 hover:to-brand-gold text-black font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
                   🏠 Return Home
                 </Button>
               </Link>
@@ -72,7 +72,7 @@ export default function NotFound() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center text-sm">
                 <a
                   href="mailto:partnership@blockfestafrica.com"
-                  className="inline-flex items-center gap-2 text-[#F2CB45] hover:text-yellow-300 transition-colors duration-300"
+                  className="inline-flex items-center gap-2 text-brand-gold hover:text-yellow-300 transition-colors duration-300"
                 >
                   <svg
                     className="w-4 h-4"
@@ -87,7 +87,7 @@ export default function NotFound() {
                 <span className="hidden sm:block text-white/30">•</span>
                 <Link
                   href="/#contact"
-                  className="text-[#F2CB45] hover:text-yellow-300 transition-colors duration-300"
+                  className="text-brand-gold hover:text-yellow-300 transition-colors duration-300"
                 >
                   Get in Touch
                 </Link>
