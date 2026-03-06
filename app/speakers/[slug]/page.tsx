@@ -245,7 +245,7 @@ export default async function SpeakerPage({
               {/* Cards Container */}
               <div className="flex flex-col gap-4 sm:gap-5 w-full px-2 sm:px-0">
                 {/* Event Info Card */}
-                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 sm:p-5 border border-white/40 shadow-lg flex-1 w-full">
+                <div className="bg-white/70 rounded-xl p-4 sm:p-5 border border-white/40 shadow-lg flex-1 w-full">
                   <div className="flex items-center justify-center lg:justify-start gap-2 text-gray-600 mb-2 flex-wrap">
                     <Calendar className="w-4 h-4 flex-shrink-0" />
                     <span className="text-sm sm:text-base font-medium text-center lg:text-left">
@@ -337,7 +337,7 @@ export default async function SpeakerPage({
           </h2>
           <p className="text-white/80 text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
             Join {speaker.name.split(" ")[0]} and other industry leaders at
-            Blockfest Africa 2025. Secure your spot at Africa&apos;s premier
+            Blockfest Africa 2026. Secure your spot at Africa&apos;s premier
             blockchain conference.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 justify-center items-center max-w-md mx-auto sm:max-w-none">

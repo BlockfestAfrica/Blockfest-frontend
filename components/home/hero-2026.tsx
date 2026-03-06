@@ -66,7 +66,7 @@ function EventCard({
     <div
       className={`relative rounded-2xl lg:rounded-3xl p-6 lg:p-8 transition-all duration-300 hover:scale-[1.02] ${
         isPrimary
-          ? "bg-gradient-to-br from-brand-blue via-[#1554C7] to-[#0D3A8C] border-2 border-brand-gold"
+          ? "bg-gradient-to-br from-brand-blue via-[#1554C7] to-[#0D3A8C] border-2 border-white/20"
           : "bg-gradient-to-br from-white/[0.08] via-brand-blue/20 to-[#0D1F3C] border border-white/20"
       }`}
     >

@@ -139,7 +139,7 @@ export function SpeakerBioModal({
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center text-blue-600 hover:text-blue-800 underline transition-colors font-medium"
+              className="inline-flex items-center text-brand-blue hover:text-brand-blue-dark underline transition-colors font-medium"
             >
               {getIcon()}
               {text}
@@ -215,7 +215,7 @@ export function SpeakerBioModal({
           {/* Speaker Info */}
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-4 md:gap-6 mb-4 sm:mb-6">
             <div className="flex-shrink-0 mx-auto sm:mx-0">
-              <div className="w-24 h-24 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full overflow-hidden bg-gray-200 ring-4 ring-blue-50">
+              <div className="w-24 h-24 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full overflow-hidden bg-gray-200 ring-4 ring-gray-100">
                 <Image
                   src={speaker.image}
                   alt={speaker.name}
@@ -236,7 +236,7 @@ export function SpeakerBioModal({
               <div className="space-y-3 mb-4">
                 {/* Job Title */}
                 <div className="flex items-start justify-center sm:justify-start">
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg px-3 sm:px-4 py-2 max-w-full">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 sm:px-4 py-2 max-w-full">
                     <p className="text-sm sm:text-base text-gray-800 font-medium leading-relaxed">
                       {speaker.title}
                     </p>
@@ -246,7 +246,7 @@ export function SpeakerBioModal({
                 {/* Company */}
                 {speaker.company && (
                   <div className="flex items-center justify-center sm:justify-start">
-                    <p className="text-sm sm:text-base text-blue-600 font-semibold">
+                    <p className="text-sm sm:text-base text-brand-blue font-semibold">
                       {speaker.company}
                     </p>
                   </div>
@@ -260,7 +260,7 @@ export function SpeakerBioModal({
                     href={speaker.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center w-11 h-11 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors touch-manipulation"
+                    className="flex items-center justify-center w-11 h-11 bg-brand-blue text-white rounded-lg hover:bg-brand-blue-dark transition-colors touch-manipulation"
                     aria-label={`Follow ${speaker.name} on Twitter`}
                   >
                     <Twitter className="w-5 h-5" />
@@ -271,7 +271,7 @@ export function SpeakerBioModal({
                     href={speaker.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center w-11 h-11 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors touch-manipulation"
+                    className="flex items-center justify-center w-11 h-11 bg-brand-blue text-white rounded-lg hover:bg-brand-blue-dark transition-colors touch-manipulation"
                     aria-label={`Connect with ${speaker.name} on LinkedIn`}
                   >
                     <Linkedin className="w-5 h-5" />
@@ -282,7 +282,7 @@ export function SpeakerBioModal({
                     href={speaker.youtube}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center w-11 h-11 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors touch-manipulation"
+                    className="flex items-center justify-center w-11 h-11 bg-brand-blue text-white rounded-lg hover:bg-brand-blue-dark transition-colors touch-manipulation"
                     aria-label={`Watch ${speaker.name} on YouTube`}
                   >
                     <Youtube className="w-5 h-5" />
@@ -293,7 +293,7 @@ export function SpeakerBioModal({
                     href={speaker.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center w-11 h-11 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors touch-manipulation"
+                    className="flex items-center justify-center w-11 h-11 bg-brand-blue text-white rounded-lg hover:bg-brand-blue-dark transition-colors touch-manipulation"
                     aria-label={`Visit ${speaker.name}'s website`}
                   >
                     <Globe className="w-5 h-5" />
@@ -321,9 +321,9 @@ export function SpeakerBioModal({
           {!speaker.bio && (
             <div className="border-t border-gray-100 pt-4 sm:pt-6 mt-6">
               <div className="flex flex-col items-center justify-center text-center py-8 sm:py-12">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-4">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                   <svg
-                    className="w-8 h-8 sm:w-10 sm:h-10 text-blue-500"
+                    className="w-8 h-8 sm:w-10 sm:h-10 text-brand-blue"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

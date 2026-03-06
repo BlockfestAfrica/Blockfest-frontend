@@ -228,7 +228,7 @@ export function EnhancedFAQSection({
                 href="https://t.me/blockf3stafrica"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-white/10 text-white font-semibold px-6 py-3 lg:py-4 rounded-xl hover:bg-white/20 transition-all duration-200 backdrop-blur-sm text-sm lg:text-base transform hover:scale-[1.02]"
+                className="inline-flex items-center justify-center gap-2 bg-white/10 text-white font-semibold px-6 py-3 lg:py-4 rounded-xl hover:bg-white/20 transition-all duration-200 text-sm lg:text-base transform hover:scale-[1.02]"
               >
                 💬 Join Telegram
               </a>
