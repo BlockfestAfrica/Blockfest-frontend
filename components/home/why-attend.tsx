@@ -92,7 +92,7 @@ function FeaturesComp() {
               {category.header}
             </h3>
             <p
-              className={`${montserrat.className} text-[#808080] text-xs md:text-sm lg:text-base leading-relaxed`}
+              className={`${montserrat.className} text-gray-500 text-xs md:text-sm lg:text-base leading-relaxed`}
             >
               {category.text}
             </p>

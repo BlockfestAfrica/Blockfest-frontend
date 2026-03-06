@@ -3,10 +3,10 @@ import { Metadata } from "next";
 import { BaseSchema } from "@/components/seo/schema-markup";
 
 export const metadata: Metadata = {
-  title: "Badge Generator - Blockfest Africa 2025",
+  title: "Badge Generator - Blockfest Africa 2026",
   description:
-    "Generate your personalized Blockfest Africa 2025 conference badge",
-  keywords: ["blockfest", "africa", "badge", "generator", "conference", "2025"],
+    "Generate your personalized Blockfest Africa 2026 conference badge",
+  keywords: ["blockfest", "africa", "badge", "generator", "conference", "2026"],
   alternates: {
     canonical: "https://blockfestafrica.com/getdp",
   },
@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 
 export default function GetDPPage() {
   const badgePageData = {
-    name: "Badge Generator - Blockfest Africa 2025",
+    name: "Badge Generator - Blockfest Africa 2026",
     description:
-      "Generate your personalized Blockfest Africa 2025 conference badge",
+      "Generate your personalized Blockfest Africa 2026 conference badge",
     url: "https://blockfestafrica.com/getdp",
     isPartOf: {
       "@type": "WebSite",
@@ -25,28 +25,21 @@ export default function GetDPPage() {
     },
     about: {
       "@type": "Event",
-      name: "Blockfest Africa 2025",
+      name: "Blockfest Africa 2026",
       description:
         "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators.",
-      startDate: "2025-10-11T08:00:00+01:00",
-      endDate: "2025-10-11T18:00:00+01:00",
+      startDate: "2026-05-05T10:00:00+02:00",
+      endDate: "2026-05-11T18:00:00+02:00",
       eventStatus: "https://schema.org/EventScheduled",
       eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
       location: {
         "@type": "Place",
-        name: "Landmark Event Center",
+        name: "TBA",
         address: {
           "@type": "PostalAddress",
-          streetAddress: "Landmark Event Center",
-          addressLocality: "Lagos",
-          addressRegion: "Lagos State",
-          postalCode: "101001",
-          addressCountry: "NG",
-        },
-        geo: {
-          "@type": "GeoCoordinates",
-          latitude: "6.4474",
-          longitude: "3.4126",
+          addressLocality: "Cape Town",
+          addressRegion: "Western Cape",
+          addressCountry: "ZA",
         },
       },
       organizer: {
@@ -68,7 +61,7 @@ export default function GetDPPage() {
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
         url: "https://luma.com/gf1ye3cw?tk=AQAG9o",
-        description: "Free admission to Blockfest Africa 2025",
+        description: "Free admission to Blockfest Africa 2026",
       },
       performer: [
         {
