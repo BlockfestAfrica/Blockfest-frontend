@@ -2,7 +2,7 @@
 
 Website for Africa's biggest Web3 conference. Built with Next.js 15, TypeScript, and Tailwind CSS.
 
-**2026 events:** Johannesburg (May) and Lagos (October).
+**2026 events:** South Africa / Cape Town (May) and Lagos (October).
 
 Live at [blockfestafrica.com](https://blockfestafrica.com)
 

@@ -91,8 +91,8 @@ export const blockfest2025Lagos: BlockfestEvent = {
   ],
 };
 
-// Blockfest 2026 - Johannesburg (Upcoming)
-export const blockfest2026Johannesburg: BlockfestEvent = {
+// Blockfest 2026 - South Africa / Cape Town (Upcoming)
+export const blockfest2026SouthAfrica: BlockfestEvent = {
   id: "blockfest-2026-cape-town",
   year: 2026,
   name: "Blockf3st Africa '26 - Cape Town",
@@ -269,7 +269,7 @@ export const uniqueSellingPoints = [
 
 // Helper functions
 export function getUpcomingEvents(): BlockfestEvent[] {
-  return [blockfest2026Johannesburg, blockfest2026Lagos].filter(
+  return [blockfest2026SouthAfrica, blockfest2026Lagos].filter(
     (e) => e.status === "upcoming"
   );
 }
