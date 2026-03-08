@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import Link from "next/link";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
-import { blockfest2026Johannesburg, blockfest2026Lagos } from "@/lib/events";
+import { blockfest2026SouthAfrica, blockfest2026Lagos } from "@/lib/events";
 import "./subtle-animations.css";
 
 interface TimeLeft {
@@ -29,7 +29,7 @@ function calculateTimeLeft(targetDate: string): TimeLeft {
 }
 
 interface EventCardProps {
-  event: typeof blockfest2026Johannesburg;
+  event: typeof blockfest2026SouthAfrica;
   isPrimary?: boolean;
   onRegisterClick: () => void;
 }
@@ -129,9 +129,9 @@ export function HeroSection2026() {
   const handleCapeTownRegister = () => {
     trackButtonClick("Register Now", "Hero Section - Cape Town");
     trackRegistration("hero-cta-cape-town");
-    if (blockfest2026Johannesburg.registrationUrl) {
+    if (blockfest2026SouthAfrica.registrationUrl) {
       window.open(
-        blockfest2026Johannesburg.registrationUrl,
+        blockfest2026SouthAfrica.registrationUrl,
         "_blank",
         "noopener,noreferrer"
       );
@@ -198,7 +198,7 @@ export function HeroSection2026() {
         {/* Dual Event Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto slide-in-right">
           <EventCard
-            event={blockfest2026Johannesburg}
+            event={blockfest2026SouthAfrica}
             isPrimary={true}
             onRegisterClick={handleCapeTownRegister}
           />

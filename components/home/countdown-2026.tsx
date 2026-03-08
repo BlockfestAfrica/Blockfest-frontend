@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { blockfest2026Johannesburg, blockfest2026Lagos } from "@/lib/events";
+import { blockfest2026SouthAfrica, blockfest2026Lagos } from "@/lib/events";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import "./subtle-animations.css";
 
@@ -124,7 +124,7 @@ function CountdownTimer({
 export function Countdown2026Section() {
   useSubtleAnimations();
 
-  const joburg = blockfest2026Johannesburg;
+  const joburg = blockfest2026SouthAfrica;
   const lagos = blockfest2026Lagos;
 
   return (

@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  blockfest2026Johannesburg,
+  blockfest2026SouthAfrica,
   blockfest2026Lagos,
   blockfest2025Lagos,
 } from "@/lib/events";
@@ -40,8 +40,8 @@ export function EventSchema() {
     name: "Blockf3st Africa 2026 - Cape Town",
     description:
       "The Superbowl of Web3 - Africa's premier blockchain conference. Web3 In Motion: From Pipelines to Platforms. Connect with builders, founders, investors, and 200M+ potential web3 users.",
-    startDate: blockfest2026Johannesburg.date.start,
-    endDate: blockfest2026Johannesburg.date.end,
+    startDate: blockfest2026SouthAfrica.date.start,
+    endDate: blockfest2026SouthAfrica.date.end,
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
@@ -263,7 +263,7 @@ export function WebsiteSchema() {
         "@type": "Event",
         name: "Blockf3st Africa 2026 - Cape Town",
         description: "The Superbowl of Web3 - Cape Town, South Africa",
-        startDate: blockfest2026Johannesburg.date.start,
+        startDate: blockfest2026SouthAfrica.date.start,
         location: {
           "@type": "Place",
           name: "Cape Town, South Africa",
