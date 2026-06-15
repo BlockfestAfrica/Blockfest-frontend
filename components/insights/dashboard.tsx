@@ -8,14 +8,16 @@ import { RegistrationStatus } from "./registration-status";
 import { RecentActivity } from "./recent-activity";
 import { TrafficSources } from "./traffic-sources";
 import { TopCompanies } from "./top-companies";
-import { TimeAnalysis } from "./time-analysis";
+// TimeAnalysis component ready for future use
+// import { TimeAnalysis } from "./time-analysis";
 import { GenderBreakdown } from "./gender-breakdown";
 import { EducationInsights } from "./education-insights";
 import { ApprovalInsights } from "./approval-insights";
 import { AnalyticsInsights } from "./analytics-insights";
 import { TransportationInsights } from "./transportation-insights";
 import { ProfessionalRoles } from "./professional-roles";
-import { CompanyRoles } from "./company-roles";
+// CompanyRoles component ready for future use
+// import { CompanyRoles } from "./company-roles";
 import { EducationalInstitutions } from "./educational-institutions";
 import { DietaryRequirements } from "./dietary-requirements";
 import { ConsentAnalytics } from "./consent-analytics";
