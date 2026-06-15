@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { umamiTrack, sanitizeStack } from "@/lib/analytics";
+import { umamiTrack, sanitizeStack } from "@/lib/umami";
 
 export default function Error({
   error,

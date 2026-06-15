@@ -1,0 +1,15 @@
+/**
+ * Vitest setup file
+ * Runs before all tests
+ */
+
+import { afterEach, vi } from "vitest";
+
+// Mock environment variables
+vi.stubEnv("NODE_ENV", "test");
+
+// Clean up after each test
+afterEach(() => {
+  // Reset any mocks
+  vi.unstubAllEnvs();
+});
