@@ -60,40 +60,46 @@ const Navbar = () => {
       <nav className="hidden md:flex items-center gap-x-7" aria-label="Main navigation">
         <Link
           href="/"
-          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
+          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out"
         >
           Home
         </Link>
         <button
           type="button"
           onClick={handleAboutClick}
-          className="text-sm lg:text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
+          className="text-sm lg:text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out"
         >
           About
         </button>
         <Link
+          href="/blockfest-south-africa-2026"
+          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out inline-flex items-center gap-1.5"
+        >
+          South Africa &apos;26 <span className="text-sm">🇿🇦</span>
+        </Link>
+        <Link
           href="/blockfest-2025"
-          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out inline-flex items-center gap-1.5"
+          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out inline-flex items-center gap-1.5"
         >
           2025 Recap <span className="text-sm">🇳🇬</span>
         </Link>
         <Link
           href="/speakers"
-          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
+          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out"
         >
           Speakers
         </Link>
         {pathname !== "/speakers" && (
           <Link
             href="#sponsorship"
-            className="text-base font-normal text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
+            className="text-base font-normal text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out"
           >
             Sponsor
           </Link>
         )}
         <Link
           href={`mailto:${contactEmail}`}
-          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded px-1 py-1 transition-colors duration-300 ease-in-out"
+          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out"
         >
           Contact
         </Link>
@@ -153,7 +159,7 @@ const MobileMenu = () => {
           <button
             type="button"
             aria-label="Close menu"
-            className="flex items-center justify-center w-11 h-11 rounded-full hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
+            className="flex items-center justify-center w-11 h-11 rounded-full hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light"
           >
             <AiOutlineClose size={28} className="text-white" />
           </button>
@@ -179,6 +185,15 @@ const MobileMenu = () => {
           >
             About
           </button>
+        </SheetClose>
+
+        <SheetClose asChild>
+          <Link
+            href="/blockfest-south-africa-2026"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
+          >
+            South Africa &apos;26 <span>🇿🇦</span>
+          </Link>
         </SheetClose>
 
         <SheetClose asChild>
