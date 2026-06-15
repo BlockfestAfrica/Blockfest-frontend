@@ -88,13 +88,13 @@ export function EnhancedFAQSection({
   return (
     <section
       className={`${
-        hideHeader ? "pt-8 lg:pt-12 pb-20 lg:pb-28" : "py-20 lg:py-28"
+        hideHeader ? "pt-8 lg:pt-12 pb-12 lg:pb-16" : "py-12 lg:py-16"
       } px-4 lg:px-8 bg-gradient-to-b from-white to-gray-50`}
     >
       <div className="max-w-4xl mx-auto">
         {!hideHeader && (
           <div className="text-center mb-12 lg:mb-16 fade-in-on-scroll">
-            <h2 className="font-light text-3xl lg:text-7xl lg:leading-tight tracking-[-5%] mb-4 lg:mb-6 text-black">
+            <h2 className="font-light text-3xl lg:text-5xl lg:leading-tight tracking-[-5%] mb-4 lg:mb-6 text-black">
               Frequently Asked <span className="text-brand-blue">Questions</span>
             </h2>
             <p className="text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto">

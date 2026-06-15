@@ -1,8 +1,10 @@
 import React from "react";
 import type { Metadata } from "next";
 import { HeroSection2026 } from "@/components/home/hero-2026";
+import { Lagos2026Section } from "@/components/home/lagos-2026";
 import { Stats2026Section } from "@/components/home/stats-2026";
 import { SocialProofStrip } from "@/components/home/social-proof-strip";
+import { SouthAfricaRecapSection } from "@/components/home/south-africa-recap";
 import { WhyAttend2026Section } from "@/components/home/why-attend-2026";
 import { SpeakersSection } from "@/components/home/speakers";
 import { PartnersSection } from "@/components/home/partners";
@@ -17,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "Blockf3st Africa 2026 - The Superbowl of Web3",
   description:
-    "Join Africa's biggest Web3 festival in 2026! Cape Town (May 2026) & Lagos (October 2026). Connect with 200M+ potential web3 users. Web3 In Motion - From Pipelines to Platforms.",
+    "Join Africa's biggest Web3 & AI festival in 2026! Lagos (October 22–23, 2026), following the South Africa roadshow. Connect with 200M+ potential web3 users. New Trade Routes: Bringing Africa Onchain.",
   keywords: [
     "blockfest africa 2026",
     "blockf3st africa",
@@ -42,7 +44,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Blockf3st Africa 2026 - The Superbowl of Web3",
     description:
-      "Join Africa's biggest Web3 festival! 🇿🇦 Cape Town (May 2026) & 🇳🇬 Lagos (October 2026). Web3 In Motion - From Pipelines to Platforms.",
+      "Join Africa's biggest Web3 & AI festival! 🇳🇬 Lagos (October 22–23, 2026) — fresh off the 🇿🇦 South Africa roadshow. New Trade Routes: Bringing Africa Onchain.",
     images: [
       {
         url: "/images/og-image.jpg",
@@ -55,7 +57,7 @@ export const metadata: Metadata = {
   twitter: {
     title: "Blockf3st Africa 2026 - The Superbowl of Web3",
     description:
-      "Join Africa's biggest Web3 festival! 🇿🇦 Cape Town (May 2026) & 🇳🇬 Lagos (October 2026). Web3 In Motion - From Pipelines to Platforms.",
+      "Join Africa's biggest Web3 & AI festival! 🇳🇬 Lagos (October 22–23, 2026) — fresh off the 🇿🇦 South Africa roadshow. New Trade Routes: Bringing Africa Onchain.",
     images: ["/images/twitter-image.jpg"],
   },
 };
@@ -69,14 +71,20 @@ const HomePage = () => {
       <WebsiteSchema />
 
       <main>
-        {/* New 2026 Hero with dual event cards */}
+        {/* 2026 Hero — Lagos next event + South Africa recap */}
         <HeroSection2026 />
+
+        {/* What Lagos '26 is centered around — theme, tracks, festival */}
+        <Lagos2026Section />
 
         {/* 2025 Stats - Building on Success */}
         <Stats2026Section />
 
-        {/* Social proof photo strip */}
+        {/* Social proof photo strip (South Africa roadshow) */}
         <SocialProofStrip />
+
+        {/* South Africa 2026 recap band */}
+        <SouthAfricaRecapSection />
 
         {/* Why Attend with market opportunity data */}
         <WhyAttend2026Section />
