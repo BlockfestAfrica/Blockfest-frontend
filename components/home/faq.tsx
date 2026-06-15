@@ -40,7 +40,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
   }, []);
 
   return (
-    <section className="py-12 lg:py-16 px-4 lg:px-8 bg-gradient-to-b from-black to-brand-blue-deep relative overflow-hidden">
+    <section className="py-12 lg:py-16 px-4 lg:px-8 bg-gradient-to-b from-brand-blue-deep to-black relative overflow-hidden">
       <div className="relative z-10 max-w-3xl mx-auto">
         {!hideHeader && (
           <div className="text-center mb-8 lg:mb-12 fade-in-on-scroll">
@@ -58,7 +58,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
           {faqData.map((item) => (
             <div
               key={item.id}
-              className="bg-white/[0.03] rounded-xl border border-white/[0.06] hover:bg-white/[0.06] transition-all duration-300"
+              className="bg-white/[0.03] rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
             >
               <button
                 type="button"

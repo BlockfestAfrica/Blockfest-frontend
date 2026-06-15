@@ -6,13 +6,13 @@ import { gotham } from "@/lib/fonts";
 export default function NotFound() {
   return (
     <div
-      className={`${gotham.className} min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 relative overflow-hidden`}
+      className={`${gotham.className} min-h-screen bg-gradient-to-br from-black via-brand-navy to-brand-navy-deep relative overflow-hidden`}
     >
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-ping"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-blue-light rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-blue rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-ping"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-brand-blue-dark rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce"></div>
       </div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
@@ -32,7 +32,7 @@ export default function NotFound() {
           </div>
 
           {/* Main Content */}
-          <div className="bg-white/[0.07] rounded-2xl border border-white/10 shadow-2xl p-8 md:p-12">
+          <div className="bg-white/10 rounded-2xl border border-white/10 shadow-2xl p-8 md:p-12">
             <div className="mb-8">
               {/* 404 Number with gradient */}
               <div className="relative mb-6">
@@ -58,7 +58,7 @@ export default function NotFound() {
             {/* Action Button */}
             <div className="mb-8">
               <Link href="/">
-                <Button className="w-full md:w-auto px-8 py-4 bg-brand-blue hover:bg-[#1555c5] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                <Button className="w-full md:w-auto px-8 py-4 bg-brand-blue hover:bg-brand-blue-pressed text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
                   🏠 Return Home
                 </Button>
               </Link>

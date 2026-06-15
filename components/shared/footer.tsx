@@ -15,6 +15,7 @@ import { CONTACT_EMAIL, SOCIAL_URLS } from "@/lib/constants";
 
 // Footer menu for 2026
 const footerMenu: Menu[] = [
+  { path: "/blockfest-south-africa-2026", title: "South Africa '26" },
   { path: "/blockfest-2025", title: "2025 Recap" },
   { path: "about", title: "About" },
   { path: "/speakers", title: "Speakers" },
@@ -69,7 +70,7 @@ const Footer = () => {
             <Link
               key={item.title}
               href={item.path}
-              className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded transition-colors duration-300 ease-in-out text-left"
+              className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out text-left"
             >
               {item.title}
             </Link>
@@ -77,21 +78,21 @@ const Footer = () => {
 
           <Link
             href="#sponsorship"
-            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded transition-colors duration-300 ease-in-out"
+            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out"
           >
             Sponsor 2026
           </Link>
 
           <Link
             href="/faq"
-            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded transition-colors duration-300 ease-in-out"
+            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out"
           >
             FAQ
           </Link>
 
           <Link
             href={`mailto:${contactEmail}`}
-            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded transition-colors duration-300 ease-in-out"
+            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out"
           >
             Contact
           </Link>
@@ -107,7 +108,7 @@ const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Follow us on ${socialLabels[index]}`}
-                className="flex items-center justify-center w-11 h-11 rounded-full cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold transition-colors duration-300 ease-in-out"
+                className="flex items-center justify-center w-11 h-11 rounded-full cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-300 ease-in-out"
               >
                 {item.icon}
               </Link>

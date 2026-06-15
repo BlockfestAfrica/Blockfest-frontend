@@ -10,7 +10,7 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
 const siteName = "Blockf3st Africa 2026";
 const siteDescription =
-  "The Superbowl of Web3 - Africa's premier blockchain conference. Join us in Cape Town (May 2026) & Lagos (October 2026). Web3 In Motion: From Pipelines to Platforms.";
+  "The Superbowl of Web3 - Africa's premier blockchain conference. After the South Africa roadshow, join us in Lagos (October 22–23, 2026). New Trade Routes: Bringing Africa Onchain.";
 const twitterHandle =
   process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica";
 const instagramHandle =
@@ -285,7 +285,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${gotham.className} antialiased w-full mx-auto [@media(min-width:1920px)]:max-w-[1440px]`}
+        className={`${gotham.className} ${gotham.variable} antialiased w-full mx-auto [@media(min-width:1920px)]:max-w-[1440px]`}
         suppressHydrationWarning={true}
       >
         <PerformanceMonitor />

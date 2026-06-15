@@ -7,7 +7,7 @@ import { faqData } from "@/lib/faq-data";
 export const metadata: Metadata = {
   title: "FAQ - Blockfest Africa 2026 | Complete Guide",
   description:
-    "Get answers to all your questions about Blockfest Africa 2026 in Cape Town and Lagos. Find information about registration, venues, schedule, accommodation, networking, and more.",
+    "Get answers to all your questions about Blockfest Africa 2026 in Lagos. Find information about registration, venues, schedule, accommodation, networking, and more.",
   keywords: [
     "Blockfest Africa FAQ",
     "Web3 conference questions",
@@ -55,18 +55,18 @@ export default function FAQPage() {
       name: "Blockfest Africa 2026",
       description:
         "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators.",
-      startDate: "2026-05-05T10:00:00+02:00",
-      endDate: "2026-05-11T18:00:00+02:00",
+      startDate: "2026-10-22T08:00:00+01:00",
+      endDate: "2026-10-23T18:00:00+01:00",
       eventStatus: "https://schema.org/EventScheduled",
       eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
       location: {
         "@type": "Place",
-        name: "TBA",
+        name: "Lagos, Nigeria",
         address: {
           "@type": "PostalAddress",
-          addressLocality: "Cape Town",
-          addressRegion: "Western Cape",
-          addressCountry: "ZA",
+          addressLocality: "Lagos",
+          addressRegion: "Lagos State",
+          addressCountry: "NG",
         },
       },
       organizer: {

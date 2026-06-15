@@ -43,7 +43,7 @@ export function WhyAttend2026Section() {
 
   return (
     <section
-      className="flex flex-col items-center justify-center px-5 py-16 lg:py-24 lg:px-10 bg-gradient-to-b from-gray-50 to-white"
+      className="flex flex-col items-center justify-center px-5 py-12 lg:py-16 lg:px-10 bg-gradient-to-b from-gray-50 to-white"
       id="about"
     >
       <div className="max-w-7xl mx-auto w-full">

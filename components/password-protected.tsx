@@ -111,14 +111,14 @@ export function PasswordProtected({ children }: PasswordProtectedProps) {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center relative overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-gold rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-blue rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-ping"></div>
         </div>
 
         <div className="relative z-10 max-w-md w-full mx-4">
           <div className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl p-8 shadow-2xl">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-r from-brand-gold to-yellow-300 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-gradient-to-r from-brand-blue to-brand-blue-light rounded-xl flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8 text-black"
                   fill="none"
@@ -157,7 +157,7 @@ export function PasswordProtected({ children }: PasswordProtectedProps) {
                     setPassword(e.target.value);
                     setError("");
                   }}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue-light focus:border-transparent"
                   placeholder="Enter password..."
                   required
                 />
@@ -171,7 +171,7 @@ export function PasswordProtected({ children }: PasswordProtectedProps) {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-brand-gold to-yellow-300 text-black font-semibold py-3 rounded-lg hover:from-yellow-300 hover:to-brand-gold transition-all duration-200"
+                className="w-full bg-brand-gold hover:bg-brand-gold-hover text-black font-semibold py-3 rounded-lg transition-all duration-200"
               >
                 Access Insights
               </Button>
