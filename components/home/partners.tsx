@@ -90,16 +90,16 @@ export function PartnersSection() {
   useSubtleAnimations();
 
   return (
-    <section className="flex flex-col items-center justify-center px-5 py-16 lg:py-24 lg:px-10 bg-brand-blue">
+    <section className="flex flex-col items-center justify-center px-5 py-12 lg:py-16 lg:px-10 bg-gradient-to-b from-brand-blue to-brand-blue-dark">
       <div className="w-full max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-white/[0.07] rounded-full px-4 py-2 mb-4 border border-white/10">
+          <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-4 border border-white/10">
             <span className="text-white font-semibold text-sm">
               2025 PARTNERS
             </span>
           </div>
-          <h2 className="font-medium text-4xl lg:text-7xl lg:leading-tight tracking-[-5%] text-center text-white fade-in-on-scroll">
+          <h2 className="font-medium text-3xl lg:text-5xl lg:leading-tight tracking-[-5%] text-center text-white fade-in-on-scroll">
             Previous Partners
           </h2>
           <p className="text-white/70 text-base lg:text-lg mt-4 max-w-2xl mx-auto">
@@ -122,9 +122,9 @@ export function PartnersSection() {
           Be part of 2026&apos;s Web3 Revolution
         </h3>
         <p className="text-white/80 text-sm lg:text-lg lg:leading-relaxed max-w-2xl">
-          We&apos;re going bigger in 2026 with TWO events — Cape Town in May
-          and Lagos in October. Attend, showcase your brand, or sponsor the
-          future of Africa&apos;s web3 ecosystem.
+          We took the movement across Africa in 2026 — after the South Africa
+          roadshow, the main event lands in Lagos this October. Attend, showcase
+          your brand, or sponsor the future of Africa&apos;s web3 ecosystem.
         </p>
 
         <div className="flex items-center justify-center gap-4 mt-5 mb-10 lg:mb-0">

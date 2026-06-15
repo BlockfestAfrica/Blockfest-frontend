@@ -41,7 +41,7 @@ export default async function AnalyticsPage() {
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 relative overflow-hidden">
           {/* Animated Background Elements */}
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-gold rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-blue rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
             <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-ping"></div>
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce"></div>
           </div>
@@ -52,7 +52,7 @@ export default async function AnalyticsPage() {
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <Link href="/" className="cursor-pointer">
-                    <div className="w-12 h-12 bg-gradient-to-r from-brand-gold to-yellow-300 rounded-xl flex items-center justify-center hover:scale-105 transition-transform duration-200">
+                    <div className="w-12 h-12 bg-gradient-to-r from-brand-blue to-brand-blue-light rounded-xl flex items-center justify-center hover:scale-105 transition-transform duration-200">
                       <svg
                         className="w-6 h-6 text-black"
                         fill="currentColor"
@@ -85,7 +85,7 @@ export default async function AnalyticsPage() {
                       Live Data
                     </span>
                     {process.env.NODE_ENV === "development" && (
-                      <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full border border-yellow-500/30">
+                      <span className="text-xs bg-brand-blue-light/20 text-brand-blue-light px-2 py-1 rounded-full border border-brand-blue-light/30">
                         Dev
                       </span>
                     )}
@@ -133,12 +133,12 @@ export default async function AnalyticsPage() {
 
           {/* Dashboard Content */}
           <div className="relative z-10 max-w-7xl mx-auto px-4 py-4">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden">
+            <div className="bg-white/10 rounded-2xl border border-white/20 shadow-2xl overflow-hidden">
               {/* Dashboard Header */}
               <div className="px-6 py-4 bg-gradient-to-r from-black/20 to-black/10 border-b border-white/10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-brand-gold to-yellow-300 rounded-lg flex items-center justify-center">
+                    <div className="w-8 h-8 bg-gradient-to-r from-brand-blue to-brand-blue-light rounded-lg flex items-center justify-center">
                       <svg
                         className="w-4 h-4 text-black"
                         fill="currentColor"

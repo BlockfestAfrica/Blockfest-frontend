@@ -28,18 +28,18 @@ export default function GetDPPage() {
       name: "Blockfest Africa 2026",
       description:
         "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators.",
-      startDate: "2026-05-05T10:00:00+02:00",
-      endDate: "2026-05-11T18:00:00+02:00",
+      startDate: "2026-10-22T08:00:00+01:00",
+      endDate: "2026-10-23T18:00:00+01:00",
       eventStatus: "https://schema.org/EventScheduled",
       eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
       location: {
         "@type": "Place",
-        name: "TBA",
+        name: "Lagos, Nigeria",
         address: {
           "@type": "PostalAddress",
-          addressLocality: "Cape Town",
-          addressRegion: "Western Cape",
-          addressCountry: "ZA",
+          addressLocality: "Lagos",
+          addressRegion: "Lagos State",
+          addressCountry: "NG",
         },
       },
       organizer: {

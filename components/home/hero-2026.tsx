@@ -1,11 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
 import { IoCalendarClearOutline } from "react-icons/io5";
+import { FaArrowRight } from "react-icons/fa";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
-import { blockfest2026SouthAfrica, blockfest2026Lagos } from "@/lib/events";
+import {
+  blockfest2026SouthAfrica,
+  blockfest2026Lagos,
+  type BlockfestEvent,
+} from "@/lib/events";
 import "./subtle-animations.css";
 
 interface TimeLeft {
@@ -28,20 +33,17 @@ function calculateTimeLeft(targetDate: string): TimeLeft {
   };
 }
 
-interface EventCardProps {
-  event: typeof blockfest2026SouthAfrica;
-  isPrimary?: boolean;
-  onRegisterClick: () => void;
-}
+const flagFor = (countryCode: string) =>
+  countryCode === "ZA" ? "🇿🇦" : "🇳🇬";
 
-function EventCard({
+/** Upcoming event card with a live countdown and a register CTA. */
+function UpcomingEventCard({
   event,
-  isPrimary = false,
   onRegisterClick,
-}: EventCardProps) {
-  const isSouthAfrica = event.location.city === "Cape Town";
-  const flagEmoji = isSouthAfrica ? "🇿🇦" : "🇳🇬";
-
+}: {
+  event: BlockfestEvent;
+  onRegisterClick: () => void;
+}) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(
     calculateTimeLeft(event.date.start)
   );
@@ -63,28 +65,18 @@ function EventCard({
   ];
 
   return (
-    <div
-      className={`relative rounded-2xl lg:rounded-3xl p-6 lg:p-8 transition-all duration-300 hover:scale-[1.02] ${
-        isPrimary
-          ? "bg-gradient-to-br from-brand-blue via-[#1554C7] to-[#0D3A8C] border-2 border-white/20"
-          : "bg-gradient-to-br from-white/[0.08] via-brand-blue/20 to-[#0D1F3C] border border-white/20"
-      }`}
-    >
-      {isPrimary && (
-        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-brand-gold text-black text-xs font-bold px-4 py-1 rounded-full">
-          NEXT EVENT
-        </div>
-      )}
+    <div className="relative rounded-2xl lg:rounded-3xl p-6 lg:p-8 transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-brand-blue via-brand-blue to-brand-blue-dark border-2 border-white/20">
+      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-brand-gold text-black text-xs font-bold px-4 py-1 rounded-full">
+        NEXT EVENT
+      </div>
 
       <div className="text-center">
-        {/* Flag and Location */}
-        <div className="text-4xl mb-3">{flagEmoji}</div>
+        <div className="text-4xl mb-3">{flagFor(event.location.countryCode)}</div>
         <h3 className="text-xl lg:text-2xl font-bold text-white mb-2">
           {event.location.city}
         </h3>
         <p className="text-white/70 text-sm mb-4">{event.location.country}</p>
 
-        {/* Date */}
         <div className="flex items-center justify-center gap-2 text-white/80 font-semibold mb-4">
           <IoCalendarClearOutline className="text-lg" />
           <span>{event.date.displayDate}</span>
@@ -104,18 +96,49 @@ function EventCard({
           ))}
         </div>
 
-        {/* Register Button */}
         <Button
-          className={`w-full font-semibold text-sm lg:text-base rounded-full py-5 ${
-            isPrimary
-              ? "bg-brand-gold text-black hover:bg-brand-gold-hover"
-              : "bg-white/20 text-white hover:bg-white/30"
-          }`}
+          className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-brand-gold text-black hover:bg-brand-gold-hover"
           onClick={onRegisterClick}
           disabled={!event.registrationUrl}
         >
-          {event.registrationUrl ? "Register Now" : "Coming Soon"}
+          {event.registrationUrl ? "Register Now" : "Tickets Coming Soon"}
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/** Completed event card — celebrates the edition and links to its recap. */
+function RecapEventCard({ event }: { event: BlockfestEvent }) {
+  return (
+    <div className="relative rounded-2xl lg:rounded-3xl p-6 lg:p-8 transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-white/10 via-brand-blue/20 to-brand-navy-deep border border-white/20">
+      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white/90 text-black text-xs font-bold px-4 py-1 rounded-full">
+        THAT&apos;S A WRAP
+      </div>
+
+      <div className="text-center">
+        <div className="text-4xl mb-3">{flagFor(event.location.countryCode)}</div>
+        <h3 className="text-xl lg:text-2xl font-bold text-white mb-2">
+          {event.location.city}
+        </h3>
+        <p className="text-white/70 text-sm mb-4">{event.location.country}</p>
+
+        <div className="flex items-center justify-center gap-2 text-white/80 font-semibold mb-4">
+          <IoCalendarClearOutline className="text-lg" />
+          <span>{event.date.displayDate}</span>
+        </div>
+
+        <p className="text-white/60 text-sm mb-6 min-h-[2.5rem]">
+          A wrap on the South Africa roadshow — relive the moments.
+        </p>
+
+        <Link href={event.recapUrl ?? "/"} className="block">
+          <Button className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-white/20 text-white hover:bg-white/30">
+            <span className="inline-flex items-center gap-2">
+              View Recap <FaArrowRight className="text-xs" />
+            </span>
+          </Button>
+        </Link>
       </div>
     </div>
   );
@@ -125,18 +148,6 @@ export function HeroSection2026() {
   const { trackButtonClick, trackRegistration } = useUmami();
 
   useSubtleAnimations();
-
-  const handleCapeTownRegister = () => {
-    trackButtonClick("Register Now", "Hero Section - Cape Town");
-    trackRegistration("hero-cta-cape-town");
-    if (blockfest2026SouthAfrica.registrationUrl) {
-      window.open(
-        blockfest2026SouthAfrica.registrationUrl,
-        "_blank",
-        "noopener,noreferrer"
-      );
-    }
-  };
 
   const handleLagosRegister = () => {
     trackButtonClick("Register Now", "Hero Section - Lagos");
@@ -151,7 +162,7 @@ export function HeroSection2026() {
   };
 
   return (
-    <section className="relative w-full flex items-center justify-center bg-gradient-to-b from-[#000000] via-[#0A1628] to-[#0D1F3C] py-12 lg:py-16 overflow-hidden">
+    <section className="relative w-full flex items-center justify-center bg-gradient-to-b from-[#000000] via-brand-navy to-brand-navy-deep py-12 lg:py-16 overflow-hidden">
       {/* Grid pattern overlay - subtle dots */}
       <div
         className="absolute inset-0 opacity-20"
@@ -165,9 +176,9 @@ export function HeroSection2026() {
         {/* Main Content */}
         <div className="text-center mb-8 lg:mb-12">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-5 py-2.5 mb-6 border border-white/20 fade-in-on-scroll">
+          <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-5 py-2.5 mb-6 border border-white/20 fade-in-on-scroll">
             <span className="text-white font-semibold text-sm lg:text-base">
-              2026 AFRICA TOUR
+              THE ROAD TO LAGOS &apos;26
             </span>
           </div>
 
@@ -179,43 +190,44 @@ export function HeroSection2026() {
 
           {/* Tagline */}
           <p className="text-lg sm:text-xl lg:text-2xl text-white/90 font-medium mb-4 lg:mb-6 fade-in-on-scroll">
-            Web3 In Motion —{" "}
-            <span className="text-white">From Pipelines to Platforms</span>
+            New Trade Routes —{" "}
+            <span className="text-white">Bringing Africa Onchain</span>
           </p>
 
           {/* Description */}
           <p className="text-white/60 text-sm sm:text-base lg:text-lg max-w-3xl mx-auto mb-6 lg:mb-8 fade-in-on-scroll">
             The singular event your brand needs to reach the eager African
             audience of over{" "}
-            <span className="text-white font-semibold">200 million+</span> web3
-            users of tomorrow. Join us in{" "}
-            <span className="text-brand-blue-light">South Africa</span> and{" "}
-            <span className="text-brand-blue-light">Nigeria</span> for
-            Africa&apos;s biggest Web3 festival.
+            <span className="text-white font-semibold">200 million+</span> Web3
+            and AI users of tomorrow. After an unforgettable roadshow in{" "}
+            <span className="text-brand-blue-light">South Africa</span>, the main
+            event lands in{" "}
+            <span className="text-brand-blue-light">Lagos this October</span>.
           </p>
         </div>
 
-        {/* Dual Event Cards */}
+        {/* Event Cards — Lagos (next) + South Africa (recap) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto slide-in-right">
-          <EventCard
-            event={blockfest2026SouthAfrica}
-            isPrimary={true}
-            onRegisterClick={handleCapeTownRegister}
-          />
-          <EventCard
+          <UpcomingEventCard
             event={blockfest2026Lagos}
-            isPrimary={false}
             onRegisterClick={handleLagosRegister}
           />
+          <RecapEventCard event={blockfest2026SouthAfrica} />
         </div>
 
-        {/* 2025 Recap Link */}
-        <div className="text-center mt-8">
+        {/* Recap Links */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mt-8">
+          <Link
+            href="/blockfest-south-africa-2026"
+            className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
+          >
+            <span>🇿🇦 South Africa &apos;26 recap →</span>
+          </Link>
           <Link
             href="/blockfest-2025"
             className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
           >
-            <span>Missed 2025? See what happened in Lagos →</span>
+            <span>🇳🇬 Lagos 2025 recap →</span>
           </Link>
         </div>
       </div>

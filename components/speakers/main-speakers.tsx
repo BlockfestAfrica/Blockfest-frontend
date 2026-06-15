@@ -289,7 +289,7 @@ export function SpeakersGrid() {
               <button
                 type="button"
                 onClick={clearAllFilters}
-                className="mt-2 px-6 py-3 bg-brand-blue text-white rounded-lg hover:bg-[#1553c7] active:bg-brand-blue-dark transition-colors touch-manipulation"
+                className="mt-2 px-6 py-3 bg-brand-blue text-white rounded-lg hover:bg-brand-blue-pressed active:bg-brand-blue-dark transition-colors touch-manipulation"
               >
                 Clear All Filters
               </button>

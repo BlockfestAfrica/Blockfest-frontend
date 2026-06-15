@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { blockfest2025Lagos } from "@/lib/events";
 import { SpeakersList } from "@/lib/speakers";
+import { EventHighlights } from "@/components/shared/event-highlights";
+import { EventCta } from "@/components/shared/event-cta";
 import {
   FaCalendarAlt,
   FaMapMarkerAlt,
@@ -62,7 +64,7 @@ export default function Blockfest2025Page() {
         <div className="absolute inset-0 bg-[url('/images/home/img1.jpg')] bg-cover bg-center opacity-10" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/[0.07] rounded-full px-4 py-2 mb-6 border border-white/10">
+          <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-6 border border-white/10">
             <span className="text-white font-semibold text-sm">
               COMPLETED EVENT
             </span>
@@ -200,15 +202,15 @@ export default function Blockfest2025Page() {
               <p className="text-xl text-white/90">Physical Attendees</p>
               <p className="text-white/70 mt-2">On-ground at Lagos, Nigeria</p>
             </div>
-            <div className="bg-gradient-to-br from-brand-gold to-[#E8B93D] rounded-3xl p-8 text-gray-900 text-center">
-              <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="bg-gradient-to-br from-brand-blue-deep to-brand-blue-dark rounded-3xl p-8 text-white text-center">
+              <div className="w-20 h-20 bg-white/15 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaGlobe className="text-4xl" />
               </div>
               <p className="text-5xl lg:text-6xl font-bold mb-2">
                 {stats.virtualAttendees?.toLocaleString()}
               </p>
-              <p className="text-xl">Virtual Attendees</p>
-              <p className="text-gray-700 mt-2">Joined from across the globe</p>
+              <p className="text-xl text-white/90">Virtual Attendees</p>
+              <p className="text-white/70 mt-2">Joined from across the globe</p>
             </div>
           </div>
         </div>
@@ -255,7 +257,7 @@ export default function Blockfest2025Page() {
           <div className="text-center mt-10">
             <Link
               href="/speakers"
-              className="inline-flex items-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-full font-semibold hover:bg-[#1555c5] transition-colors"
+              className="inline-flex items-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-full font-semibold hover:bg-brand-blue-pressed transition-colors"
             >
               View All Speakers
               <FaArrowRight />
@@ -303,7 +305,7 @@ export default function Blockfest2025Page() {
               href="https://drive.google.com/drive/folders/1qazNDRl38iq26pQP5YPsM1H8x9u1FcN7"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-full font-semibold hover:bg-[#1555c5] transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-full font-semibold hover:bg-brand-blue-pressed transition-colors"
             >
               📸 Main Event Photos
             </a>
@@ -320,49 +322,15 @@ export default function Blockfest2025Page() {
       </section>
 
       {/* Highlights */}
-      <section className="py-12 lg:py-16 bg-gradient-to-br from-brand-blue to-brand-blue-deep text-white">
-        <div className="max-w-6xl mx-auto px-4 lg:px-8">
-          <h2 className="text-3xl lg:text-5xl font-bold text-center mb-8 lg:mb-10">
-            Event Highlights
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {event.highlights?.map((highlight, index) => (
-              <div
-                key={index}
-                className="flex items-start gap-4 bg-white/[0.07] rounded-xl p-4 lg:p-5 border border-white/10 hover:bg-white/[0.12] transition-all duration-300 group"
-              >
-                <div className="w-8 h-8 shrink-0 bg-brand-gold rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <span className="text-brand-blue text-sm font-bold">✓</span>
-                </div>
-                <p className="text-white text-base font-medium leading-relaxed">
-                  {highlight}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <EventHighlights title="Event Highlights" highlights={event.highlights ?? []} />
 
       {/* CTA Section */}
-      <section className="py-12 lg:py-16 bg-brand-gold">
-        <div className="max-w-3xl mx-auto px-4 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-5xl font-bold mb-4 text-gray-900">
-            Don&apos;t Miss 2026!
-          </h2>
-          <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
-            We&apos;re going bigger in 2026 with TWO events - Cape Town in
-            May and Lagos in October. Be part of the movement!
-          </p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 bg-brand-blue text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-[#1555c5] transition-colors"
-          >
-            Explore 2026 Events
-            <FaArrowRight />
-          </Link>
-        </div>
-      </section>
+      <EventCta
+        title="Don't Miss 2026!"
+        description="We took the movement across Africa in 2026 — the South Africa roadshow is a wrap, and Lagos is next on October 22–23. Be part of it!"
+        ctaLabel="Explore Lagos '26"
+        ctaHref="/"
+      />
     </main>
   );
 }

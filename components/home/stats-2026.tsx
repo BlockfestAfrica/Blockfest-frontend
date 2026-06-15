@@ -32,7 +32,7 @@ export function Stats2026Section() {
           {displayStats.map((stat, index) => (
             <div
               key={stat.label}
-              className={`bg-white/[0.07] rounded-lg lg:rounded-xl p-3 sm:p-4 lg:p-5 text-center border border-white/10 hover:bg-white/[0.12] transition-all duration-300 stagger-animation stagger-${
+              className={`bg-white/10 rounded-lg lg:rounded-xl p-3 sm:p-4 lg:p-5 text-center border border-white/10 hover:bg-white/[0.12] transition-all duration-300 stagger-animation stagger-${
                 index + 1
               }`}
             >
