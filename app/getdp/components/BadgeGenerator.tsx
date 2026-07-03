@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function BadgeGenerator() {
   const [name, setName] = useState("");
@@ -66,12 +67,12 @@ export default function BadgeGenerator() {
 
   const handleGenerate = useCallback(async () => {
     if (!name.trim()) {
-      alert("Please enter your name");
+      toast("Please enter your name");
       return;
     }
 
     if (!preview) {
-      alert("Please upload your photo");
+      toast("Please upload your photo");
       return;
     }
 
@@ -86,7 +87,7 @@ export default function BadgeGenerator() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-brand-blue-deep to-slate-800 font-sans">
       {/* Decorative Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {/* Radial gradients for depth */}
@@ -96,14 +97,14 @@ export default function BadgeGenerator() {
             background: `
             radial-gradient(circle at 20% 80%, rgba(0, 93, 255, 0.15) 0%, transparent 50%),
             radial-gradient(circle at 80% 20%, rgba(27, 100, 228, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(242, 203, 69, 0.08) 0%, transparent 50%)
+            radial-gradient(circle at 40% 40%, rgba(27, 100, 228, 0.08) 0%, transparent 50%)
           `,
           }}
         ></div>
         {/* Floating shapes */}
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#005DFF]/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#F2CB45]/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-blue/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-blue/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-blue/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       {/* Header */}
@@ -146,7 +147,7 @@ export default function BadgeGenerator() {
                     placeholder="Enter your full name"
                     maxLength={50}
                     minLength={2}
-                    className="w-full px-4 py-4 sm:px-5 sm:py-4 lg:px-6 lg:py-5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#005DFF] focus:border-transparent transition-all duration-200 text-gray-800 placeholder-gray-400 text-base sm:text-lg"
+                    className="w-full px-4 py-4 sm:px-5 sm:py-4 lg:px-6 lg:py-5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all duration-200 text-gray-800 placeholder-gray-400 text-base sm:text-lg"
                     disabled={isGenerating}
                   />
                   {name.length > 40 && (
@@ -167,7 +168,7 @@ export default function BadgeGenerator() {
                       onClick={openFileDialog}
                       onDrop={handleDrop}
                       onDragOver={handleDragOver}
-                      className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 lg:p-10 text-center cursor-pointer hover:border-[#005DFF] hover:bg-[#005DFF]/5 active:bg-[#005DFF]/10 transition-all duration-200 group touch-manipulation min-h-[180px] sm:min-h-[200px] lg:min-h-[220px] flex items-center justify-center"
+                      className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 lg:p-10 text-center cursor-pointer hover:border-brand-blue hover:bg-brand-blue/5 active:bg-brand-blue/10 transition-all duration-200 group touch-manipulation min-h-[180px] sm:min-h-[200px] lg:min-h-[220px] flex items-center justify-center"
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
@@ -189,13 +190,13 @@ export default function BadgeGenerator() {
 
                       {isUploading ? (
                         <div className="flex flex-col items-center space-y-2">
-                          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                          <Loader2 className="w-8 h-8 text-brand-blue animate-spin" />
                           <p className="text-sm text-gray-600">Uploading...</p>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center space-y-4">
-                          <div className="p-4 sm:p-5 lg:p-6 bg-[#005DFF]/10 rounded-full group-hover:bg-[#005DFF]/20 transition-colors">
-                            <Camera className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-[#005DFF]" />
+                          <div className="p-4 sm:p-5 lg:p-6 bg-brand-blue/10 rounded-full group-hover:bg-brand-blue/20 transition-colors">
+                            <Camera className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-brand-blue" />
                           </div>
                           <div className="text-center">
                             <p className="text-sm sm:text-base lg:text-lg font-medium text-gray-700">
@@ -239,7 +240,7 @@ export default function BadgeGenerator() {
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating || !name.trim() || !preview}
-                  className="w-full py-4 px-6 sm:py-5 sm:px-8 lg:py-6 lg:px-10 bg-gradient-to-r from-[#005DFF] to-[#1B64E4] text-white font-semibold rounded-xl hover:from-[#1B64E4] hover:to-[#005DFF] focus:ring-4 focus:ring-[#005DFF]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg text-base sm:text-lg lg:text-xl"
+                  className="w-full py-4 px-6 sm:py-5 sm:px-8 lg:py-6 lg:px-10 bg-gradient-to-r from-brand-blue to-brand-blue-dark text-white font-semibold rounded-xl hover:from-brand-blue-dark hover:to-brand-blue focus:ring-4 focus:ring-brand-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg text-base sm:text-lg lg:text-xl"
                   title={
                     !name.trim() || !preview
                       ? "Please add both your name and photo"
@@ -325,7 +326,7 @@ export default function BadgeGenerator() {
                       Your Badge is Ready!
                     </h2>
                     <p className="text-sm sm:text-base lg:text-lg text-gray-600">
-                      Welcome to Blockfest Africa 2025, {userName}! 🎉
+                      Welcome to Blockfest Africa 2026, {userName}! 🎉
                     </p>
                   </div>
 

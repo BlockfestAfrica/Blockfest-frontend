@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the JSON-LD structured data implementation for Blockf3st Africa's website, optimized for the 2026 dual-event format (Johannesburg & Lagos).
+This document outlines the JSON-LD structured data implementation for Blockf3st Africa's website, optimized for the 2026 dual-event format (South Africa & Lagos).
 
 ## Schema Components
 
@@ -10,7 +10,7 @@ This document outlines the JSON-LD structured data implementation for Blockf3st 
 
 Contains all 2026-specific schemas:
 
-1. **EventSchema** - Dual event markup for both Johannesburg and Lagos events
+1. **EventSchema** - Dual event markup for both South Africa and Lagos events
 2. **OrganizationSchema** - Blockfest Africa organization details with 2025 achievements
 3. **WebsiteSchema** - Website structure and search functionality
 4. **BreadcrumbSchema** - Navigation structure for subpages
@@ -40,7 +40,7 @@ All event data is centralized in `lib/events.ts`:
 
 ```typescript
 // 2026 Events
-blockfest2026Johannesburg  // May 2026, South Africa
+blockfest2026South Africa  // May 2026, South Africa
 blockfest2026Lagos         // October 2026, Nigeria
 
 // 2025 Archive

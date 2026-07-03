@@ -19,18 +19,18 @@ export function Agenda() {
           <AccordionItem
             key={item.id}
             value={item.id}
-            className="relative border border-gray-200 rounded-xl bg-gradient-to-r from-white to-gray-50 hover:from-[#005DFF]/5 hover:to-[#1B64E4]/5 hover:border-[#3D7BE8] hover:shadow-lg transition-all duration-300 cursor-pointer"
+            className="relative border border-gray-200 rounded-xl bg-gradient-to-r from-white to-gray-50 hover:from-[#005DFF]/5 hover:to-brand-blue/5 hover:border-brand-blue-light hover:shadow-lg transition-all duration-300 cursor-pointer"
           >
             <AccordionTrigger className="flex justify-between items-start py-4 md:py-6 px-4 md:px-6 hover:no-underline group rounded-xl active:scale-[0.98] transition-transform duration-150">
               <div className="flex flex-col w-full gap-3 text-left pr-4 md:pr-8">
                 <div className="flex gap-3 md:flex-row flex-col md:items-center md:gap-3">
                   <time
-                    className="text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#3D7BE8] to-[#6597ED] px-3 py-1.5 rounded-full whitespace-nowrap shadow-md group-hover:shadow-lg transition-all duration-300 flex-shrink-0 w-fit"
+                    className="text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-brand-blue-light to-brand-blue-light-hover px-3 py-1.5 rounded-full whitespace-nowrap shadow-md group-hover:shadow-lg transition-all duration-300 flex-shrink-0 w-fit"
                     dateTime={item.time.replace(/\s/g, "")}
                   >
                     {item.time}
                   </time>
-                  <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-[#3D7BE8] group-hover:text-[#1B64E4] transition-colors duration-300 leading-tight flex-1">
+                  <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-brand-blue-light group-hover:text-brand-blue transition-colors duration-300 leading-tight flex-1">
                     {item.title}
                   </h3>
                 </div>
@@ -38,7 +38,7 @@ export function Agenda() {
                   {item.speaker && (
                     <p className="text-xs sm:text-sm md:text-base text-gray-700 font-medium order-1">
                       Presented by{" "}
-                      <span className="text-[#1B64E4] font-bold">
+                      <span className="text-brand-blue font-bold">
                         {item.speaker}
                       </span>
                     </p>
@@ -47,9 +47,9 @@ export function Agenda() {
                     <span
                       className={`text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm flex-shrink-0 ${
                         item.type === "keynote"
-                          ? "bg-gradient-to-r from-[#3D7BE8] to-[#6597ED] text-white"
+                          ? "bg-gradient-to-r from-brand-blue-light to-brand-blue-light-hover text-white"
                           : item.type === "panel"
-                          ? "bg-gradient-to-r from-[#1B64E4] to-[#4F85EB] text-white"
+                          ? "bg-gradient-to-r from-brand-blue to-brand-blue-hover text-white"
                           : item.type === "talk"
                           ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
                           : item.type === "sponsor"
@@ -78,7 +78,7 @@ export function Agenda() {
                       {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
                     </span>
                     {item.duration && (
-                      <span className="text-xs text-[#3D7BE8] font-semibold bg-[#3D7BE8]/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex-shrink-0">
+                      <span className="text-xs text-brand-blue-light font-semibold bg-brand-blue-light/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex-shrink-0">
                         {item.duration} min
                       </span>
                     )}
@@ -87,7 +87,7 @@ export function Agenda() {
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 sm:px-5 md:px-6 pb-4 sm:pb-6">
-              <div className="space-y-3 sm:space-y-4 text-gray-700 leading-relaxed bg-gradient-to-r from-[#3D7BE8]/5 to-[#6597ED]/5 p-3 sm:p-4 md:p-6 rounded-lg border-l-4 border-[#3D7BE8]">
+              <div className="space-y-3 sm:space-y-4 text-gray-700 leading-relaxed bg-gradient-to-r from-brand-blue-light/5 to-brand-blue-light-hover/5 p-3 sm:p-4 md:p-6 rounded-lg border-l-4 border-brand-blue-light">
                 {item.description.map((desc, i) => (
                   <p
                     key={`${item.id}-desc-${i}`}

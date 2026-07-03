@@ -2,7 +2,7 @@ import React from "react";
 
 export function SpeakerCardSkeleton() {
   return (
-    <div className="flex flex-col items-center bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 md:p-6 border border-[#D1D1D1] shadow-sm gap-y-4 sm:gap-y-6 justify-around animate-pulse">
+    <div className="flex flex-col items-center bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 border border-gray-300 shadow-sm gap-y-4 sm:gap-y-6 justify-around animate-pulse">
       {/* Image skeleton */}
       <div className="relative shrink-0 w-[140px] h-[140px] xs:w-[160px] xs:h-[160px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px] lg:w-[280px] lg:h-[280px] rounded-full bg-gray-200"></div>
 

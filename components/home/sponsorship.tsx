@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { FaTelegram, FaEnvelope } from "react-icons/fa";
+import { CONTACT_EMAIL } from "@/lib/constants";
 import "./subtle-animations.css";
 
 export function SponsorshipSection() {
@@ -10,35 +11,37 @@ export function SponsorshipSection() {
 
   useSubtleAnimations();
 
-  const contactEmail =
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL || "partnerships@blockfestafrica.com";
+  const contactEmail = CONTACT_EMAIL;
 
   return (
     <section
-      className="py-12 lg:py-16 bg-gradient-to-b from-[#031940] to-black relative overflow-hidden"
+      className="py-12 lg:py-16 bg-gradient-to-b from-brand-blue-deep to-black relative overflow-hidden"
       id="sponsorship"
     >
       <div className="relative z-10 max-w-3xl mx-auto px-4 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 lg:mb-10">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4 border border-white/20">
-            <span className="text-[#F2CB45] font-semibold text-sm">
+          <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-4 border border-white/10">
+            <span className="text-white font-semibold text-sm">
               PARTNERSHIP OPPORTUNITIES
             </span>
           </div>
           <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4 fade-in-on-scroll">
-            Become a <span className="text-[#F2CB45]">Sponsor</span>
+            Become a Sponsor
           </h2>
           <p className="text-white/70 text-base lg:text-lg max-w-3xl mx-auto fade-in-on-scroll">
-            Position your brand at Africa&apos;s premier Web3 event. Reach over{" "}
-            <span className="font-semibold text-[#F2CB45]">200 million+</span>{" "}
-            potential web3 users and connect with decision makers shaping the
-            future of blockchain in Africa.
+            Position your brand at Africa&apos;s premier Web3 event. Get direct
+            access to{" "}
+            <span className="font-semibold text-white">
+              15,000+ registered attendees
+            </span>
+            , decision makers, and founders shaping the future of blockchain in
+            Africa.
           </p>
         </div>
 
         {/* Contact CTA */}
-        <div className="bg-gradient-to-br from-[#1B64E4] to-[#0D3B8C] rounded-2xl lg:rounded-3xl p-6 lg:p-10 text-center scale-in border border-white/10">
+        <div className="bg-gradient-to-br from-brand-blue to-brand-blue-dark rounded-2xl lg:rounded-3xl p-6 lg:p-10 text-center scale-in border border-white/10">
           <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4">
             Get Our Sponsorship Deck
           </h3>
@@ -54,7 +57,7 @@ export function SponsorshipSection() {
               onClick={() =>
                 trackButtonClick("Email Sponsorship", "Sponsorship Section")
               }
-              className="inline-flex items-center gap-2 bg-[#F2CB45] text-black px-5 py-3 rounded-full font-semibold hover:bg-[#e8bc3d] transition-colors text-sm sm:text-base max-w-full"
+              className="inline-flex items-center gap-2 bg-brand-gold text-black px-5 py-3 rounded-full font-semibold hover:bg-brand-gold-hover transition-colors text-sm sm:text-base max-w-full"
             >
               <FaEnvelope className="flex-shrink-0" />
               <span className="truncate">{contactEmail}</span>

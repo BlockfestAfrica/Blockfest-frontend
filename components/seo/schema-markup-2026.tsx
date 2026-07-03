@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  blockfest2026Johannesburg,
+  blockfest2026SouthAfrica,
   blockfest2026Lagos,
   blockfest2025Lagos,
 } from "@/lib/events";
@@ -31,29 +31,28 @@ export function BaseSchema({ type, data }: BaseSchemaProps) {
   );
 }
 
-// Event Schema for Blockfest Africa 2026 (Dual Events)
+// Event Schema for Blockfest Africa 2026
 export function EventSchema() {
-  // Primary event - Johannesburg 2026
-  const joburgEvent = {
+  // Next event - Lagos 2026 (primary, upcoming)
+  const lagosEvent = {
     "@context": "https://schema.org",
     "@type": "Event",
-    name: "Blockf3st Africa 2026 - Johannesburg",
+    name: "Blockf3st Africa '26 - Lagos",
     description:
-      "The Superbowl of Web3 - Africa's premier blockchain conference. Web3 In Motion: From Pipelines to Platforms. Connect with builders, founders, investors, and 200M+ potential web3 users.",
-    startDate: blockfest2026Johannesburg.date.start,
-    endDate: blockfest2026Johannesburg.date.end,
+      "The Superbowl of Web3 returns to Lagos! New Trade Routes: Bringing Africa Onchain. Join Africa's biggest Web3 and AI festival, reaching 200M+ users of tomorrow.",
+    startDate: blockfest2026Lagos.date.start,
+    endDate: blockfest2026Lagos.date.end,
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
       "@type": "Place",
-      name: "TBA - Johannesburg",
+      name: "Lagos, Nigeria",
       address: {
         "@type": "PostalAddress",
-        streetAddress: "TBA",
-        addressLocality: "Johannesburg",
-        addressRegion: "Gauteng",
-        postalCode: "2000",
-        addressCountry: "ZA",
+        addressLocality: "Lagos",
+        addressRegion: "Lagos State",
+        postalCode: "100001",
+        addressCountry: "NG",
       },
     },
     organizer: {
@@ -73,54 +72,44 @@ export function EventSchema() {
       "@type": "Offer",
       url: "https://blockfestafrica.com",
       price: "0",
-      priceCurrency: "ZAR",
+      priceCurrency: "NGN",
       availability: "https://schema.org/PreOrder",
       validFrom: "2026-01-01",
-      description:
-        "Registration opening soon for Blockf3st Africa 2026 - Johannesburg",
+      description: "Tickets opening soon for Blockf3st Africa '26 - Lagos",
     },
-    performer: [
-      {
-        "@type": "Organization",
-        name: "Blockfest Africa",
-        description:
-          "Leading Web3 and blockchain conference organizer in Africa",
-      },
-    ],
     audience: {
       "@type": "Audience",
       audienceType:
-        "Web3 builders, blockchain developers, crypto founders, DeFi enthusiasts, investors, government officials",
+        "Web3 builders, blockchain developers, AI engineers, crypto founders, DeFi enthusiasts, investors, government officials",
     },
     keywords:
-      "blockchain, Web3, DeFi, NFT, cryptocurrency, Africa, Johannesburg, South Africa, conference, networking, technology, innovation",
+      "blockchain, Web3, AI, DeFi, NFT, cryptocurrency, Africa, Lagos, Nigeria, conference, networking, technology, innovation",
     category: "Technology Conference",
     inLanguage: "en-US",
     typicalAgeRange: "18-65",
     image: "https://blockfestafrica.com/images/og-image.jpg",
   };
 
-  // Second event - Lagos 2026
-  const lagosEvent = {
+  // Past event - South Africa 2026 (Cape Town roadshow, completed)
+  const southAfricaEvent = {
     "@context": "https://schema.org",
     "@type": "Event",
-    name: "Blockf3st Africa 2026 - Lagos",
+    name: "Blockf3st Africa '26 - South Africa",
     description:
-      "The Superbowl of Web3 returns to Lagos! Web3 In Motion: From Pipelines to Platforms. Join Africa's biggest Web3 festival.",
-    startDate: blockfest2026Lagos.date.start,
-    endDate: blockfest2026Lagos.date.end,
+      "Blockf3st Africa's South African roadshow — a week of builder meetups, sessions and experiences across Cape Town that brought Africa's Web3 community together.",
+    startDate: blockfest2026SouthAfrica.date.start,
+    endDate: blockfest2026SouthAfrica.date.end,
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
       "@type": "Place",
-      name: "TBA - Lagos",
+      name: "Cape Town, South Africa",
       address: {
         "@type": "PostalAddress",
-        streetAddress: "TBA",
-        addressLocality: "Lagos",
-        addressRegion: "Lagos State",
-        postalCode: "100001",
-        addressCountry: "NG",
+        addressLocality: "Cape Town",
+        addressRegion: "Western Cape",
+        postalCode: "8000",
+        addressCountry: "ZA",
       },
     },
     organizer: {
@@ -129,18 +118,8 @@ export function EventSchema() {
       url: "https://blockfestafrica.com",
       email: "partnerships@blockfestafrica.com",
     },
-    offers: {
-      "@type": "Offer",
-      url: "https://blockfestafrica.com",
-      price: "0",
-      priceCurrency: "NGN",
-      availability: "https://schema.org/PreOrder",
-      validFrom: "2026-01-01",
-      description:
-        "Registration opening soon for Blockf3st Africa 2026 - Lagos",
-    },
     keywords:
-      "blockchain, Web3, DeFi, NFT, cryptocurrency, Africa, Lagos, Nigeria, conference",
+      "blockchain, Web3, cryptocurrency, Africa, Cape Town, South Africa, roadshow, conference",
     category: "Technology Conference",
     inLanguage: "en-US",
     image: "https://blockfestafrica.com/images/og-image.jpg",
@@ -150,11 +129,11 @@ export function EventSchema() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(joburgEvent) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(lagosEvent) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(lagosEvent) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(southAfricaEvent) }}
       />
     </>
   );
@@ -244,7 +223,7 @@ export function WebsiteSchema() {
     alternateName: "Blockf3st Africa 2026",
     url: "https://blockfestafrica.com",
     description:
-      "Africa's premier Web3 conference - The Superbowl of Web3. Join us in Johannesburg (May 2026) and Lagos (October 2026). Connect with 200M+ potential web3 users.",
+      "Africa's premier Web3 conference - The Superbowl of Web3. After the South Africa roadshow, join us in Lagos (October 22–23, 2026). Connect with 200M+ potential web3 users.",
     publisher: {
       "@type": "Organization",
       name: "Blockfest Africa",
@@ -261,22 +240,22 @@ export function WebsiteSchema() {
     mainEntity: [
       {
         "@type": "Event",
-        name: "Blockf3st Africa 2026 - Johannesburg",
-        description: "The Superbowl of Web3 - Johannesburg, South Africa",
-        startDate: blockfest2026Johannesburg.date.start,
-        location: {
-          "@type": "Place",
-          name: "Johannesburg, South Africa",
-        },
-      },
-      {
-        "@type": "Event",
-        name: "Blockf3st Africa 2026 - Lagos",
+        name: "Blockf3st Africa '26 - Lagos",
         description: "The Superbowl of Web3 returns to Lagos, Nigeria",
         startDate: blockfest2026Lagos.date.start,
         location: {
           "@type": "Place",
           name: "Lagos, Nigeria",
+        },
+      },
+      {
+        "@type": "Event",
+        name: "Blockf3st Africa '26 - South Africa",
+        description: "The Superbowl of Web3 roadshow - Cape Town, South Africa",
+        startDate: blockfest2026SouthAfrica.date.start,
+        location: {
+          "@type": "Place",
+          name: "Cape Town, South Africa",
         },
       },
     ],
