@@ -19,10 +19,26 @@ export interface BlockfestEvent {
     displayDate: string;
   };
   registrationUrl?: string;
+  recapUrl?: string; // link to the post-event recap page, when completed
   status: "upcoming" | "completed" | "cancelled";
   stats?: EventStats;
   sponsorshipPackages?: SponsorshipPackage[];
   highlights?: string[];
+}
+
+// A programming track for an edition (e.g. Lagos '26 tracks).
+export interface EventTrack {
+  title: string;
+  description: string;
+  icon: string; // emoji used in the track grid
+}
+
+// A phase in the festival timeline (hackathon, conference day, mixer, ...).
+export interface FestivalPhase {
+  dates: string;
+  title: string;
+  location: string;
+  description: string;
 }
 
 export interface EventStats {
@@ -91,26 +107,32 @@ export const blockfest2025Lagos: BlockfestEvent = {
   ],
 };
 
-// Blockfest 2026 - Johannesburg (Upcoming)
-export const blockfest2026Johannesburg: BlockfestEvent = {
-  id: "blockfest-2026-johannesburg",
+// Blockfest 2026 - South Africa / Cape Town (Upcoming)
+export const blockfest2026SouthAfrica: BlockfestEvent = {
+  id: "blockfest-2026-cape-town",
   year: 2026,
-  name: "Blockf3st Africa '26 - Johannesburg",
+  name: "Blockf3st Africa '26 - Cape Town",
   tagline: "Web3 In Motion - From Pipelines to Platforms",
   theme: "The Superbowl of Web3",
   location: {
-    city: "Johannesburg",
+    city: "Cape Town",
     country: "South Africa",
     countryCode: "ZA",
     venue: "TBA",
   },
   date: {
-    start: "2026-05-06T08:00:00+02:00",
-    end: "2026-05-06T18:00:00+02:00",
-    displayDate: "May 2026",
+    start: "2026-05-05T10:00:00+02:00",
+    end: "2026-05-11T18:00:00+02:00",
+    displayDate: "May 5-11, 2026",
   },
-  registrationUrl: "", // To be added
-  status: "upcoming",
+  recapUrl: "/blockfest-south-africa-2026",
+  status: "completed",
+  // TODO: replace these placeholder figures with the final Cape Town roadshow numbers.
+  stats: {
+    physicalAttendees: 500,
+    countriesRepresented: 5,
+    speakers: 15,
+  },
   sponsorshipPackages: [
     {
       name: "Diamond",
@@ -170,12 +192,11 @@ export const blockfest2026Johannesburg: BlockfestEvent = {
     },
   ],
   highlights: [
-    "Expected 5,000+ physical attendees",
-    "5+ countries represented",
-    "Direct access to Africa's top web3 talent",
-    "Gateway to entire African market (30+ countries)",
-    "Government backing and policy influence",
-    "Year-round community engagement",
+    "Blockf3st Africa's first South African roadshow",
+    "A week of builder meetups, sessions and experiences across Cape Town",
+    "Connected African and global Web3 communities on the ground",
+    "Founders, builders and ecosystem partners from across the continent",
+    "Set the stage for the Lagos main event in October",
   ],
 };
 
@@ -184,22 +205,108 @@ export const blockfest2026Lagos: BlockfestEvent = {
   id: "blockfest-2026-lagos",
   year: 2026,
   name: "Blockf3st Africa '26 - Lagos",
-  tagline: "Web3 In Motion - From Pipelines to Platforms",
+  tagline: "New Trade Routes: Bringing Africa Onchain",
   theme: "The Superbowl of Web3",
   location: {
     city: "Lagos",
     country: "Nigeria",
     countryCode: "NG",
-    venue: "TBA",
+    venue: "Lagos, Nigeria",
   },
   date: {
-    start: "2026-10-01T08:00:00+01:00", // Placeholder - October 2026
-    end: "2026-10-01T18:00:00+01:00",
-    displayDate: "October 2026",
+    start: "2026-10-22T08:00:00+01:00",
+    end: "2026-10-23T18:00:00+01:00",
+    displayDate: "October 22–23, 2026",
   },
   registrationUrl: "", // To be added
   status: "upcoming",
+  highlights: [
+    "Two main days: Workshop + The Back Room (Oct 22) and the Conference & Convention (Oct 23)",
+    "Reaching Africa's 200M+ Web3 and AI users of tomorrow",
+    "Six tracks spanning AI, policy, funding, infrastructure, culture and talent",
+    "Part of a three-week festival of hackathons, co-working and programming",
+  ],
 };
+
+// Lagos '26 programming tracks (deck: "What We'll Be Talking About").
+export const lagos2026Tracks: EventTrack[] = [
+  {
+    title: "AI & Crypto",
+    description:
+      "Where intelligence meets ownership. Exploring the convergence reshaping the next decade.",
+    icon: "🤖",
+  },
+  {
+    title: "Government & Policy",
+    description:
+      "Direct dialogue with regulators, lawmakers, and ecosystem shapers.",
+    icon: "🏛️",
+  },
+  {
+    title: "Investment & Funding",
+    description:
+      "Bridging founders with the capital fueling Africa's next wave.",
+    icon: "💰",
+  },
+  {
+    title: "Technical Infrastructure",
+    description:
+      "The protocols, primitives, and rails powering what comes next.",
+    icon: "🛠️",
+  },
+  {
+    title: "Creative Economy",
+    description: "Music, art, fashion, and culture meeting Web3 and AI.",
+    icon: "🎨",
+  },
+  {
+    title: "Talent & Career Launchpad",
+    description:
+      "Where Africa's brightest builders meet their next opportunity.",
+    icon: "🚀",
+  },
+];
+
+// Lagos '26 festival timeline — three weeks of programming, one week in Lagos.
+export const lagos2026Festival: FestivalPhase[] = [
+  {
+    dates: "Sep 28 – Oct 12",
+    title: "Hackathon",
+    location: "Virtual",
+    description:
+      "Builders from across Africa shipping real products with real prizes.",
+  },
+  {
+    dates: "Oct 5 – Oct 9",
+    title: "Co-Working Week",
+    location: "Lagos",
+    description: "Open workspace for hackathon participants.",
+  },
+  {
+    dates: "Oct 13 – Oct 18",
+    title: "Hackathon Review",
+    location: "Virtual",
+    description: "Judging, demos, and finalist selection.",
+  },
+  {
+    dates: "Thu, Oct 22",
+    title: "Workshop + The Back Room",
+    location: "Lagos",
+    description: "Hands-on workshops and the Founders Corner.",
+  },
+  {
+    dates: "Fri, Oct 23",
+    title: "Main Conference & Convention",
+    location: "Lagos",
+    description: "The flagship day — keynotes, tracks and the expo floor.",
+  },
+  {
+    dates: "Sat, Oct 24",
+    title: "The Mixer",
+    location: "Lagos",
+    description: "Closing celebration. Deals get done here.",
+  },
+];
 
 // Market opportunity data for sponsorship materials
 export const marketOpportunity = {
@@ -269,7 +376,7 @@ export const uniqueSellingPoints = [
 
 // Helper functions
 export function getUpcomingEvents(): BlockfestEvent[] {
-  return [blockfest2026Johannesburg, blockfest2026Lagos].filter(
+  return [blockfest2026SouthAfrica, blockfest2026Lagos].filter(
     (e) => e.status === "upcoming"
   );
 }
@@ -283,7 +390,12 @@ export function getNextEvent(): BlockfestEvent | undefined {
 }
 
 export function getPastEvents(): BlockfestEvent[] {
-  return [blockfest2025Lagos].filter((e) => e.status === "completed");
+  return [blockfest2026SouthAfrica, blockfest2025Lagos]
+    .filter((e) => e.status === "completed")
+    .sort(
+      (a, b) =>
+        new Date(b.date.start).getTime() - new Date(a.date.start).getTime()
+    );
 }
 
 export function formatEventStats(

@@ -145,10 +145,10 @@ const Speakers: React.FC<PropType> = (props) => {
                 className="block group cursor-pointer w-full"
                 aria-label={`View all speakers including ${speaker.name}`}
               >
-                <div className="bg-gradient-to-b from-[#0F377E] to-[#1B64E4] rounded-3xl p-6 md:p-8 w-full max-w-4xl mx-auto shadow-2xl border border-white/10 transition-all duration-300 hover:shadow-3xl hover:scale-[1.02] hover:border-white/20 h-[500px] sm:h-[450px] md:h-[400px] lg:h-[400px] xl:h-[450px]">
+                <div className="bg-gradient-to-b from-[#0F377E] to-brand-blue rounded-3xl p-6 md:p-8 w-full max-w-4xl mx-auto shadow-2xl border border-white/10 transition-all duration-300 hover:shadow-3xl hover:scale-[1.02] hover:border-white/20 h-[500px] sm:h-[450px] md:h-[400px] lg:h-[400px] xl:h-[450px]">
                   <div className="flex items-center justify-center md:justify-between gap-6 flex-col-reverse md:flex-row text-center md:text-left h-full">
                     <div className="text-white flex-1 md:basis-[60%] basis-full flex flex-col justify-around items-center min-w-0 ">
-                      <h2 className="text-[25px] md:text-3xl lg:text-4xl xl:text-5xl font-medium mb-3 md:mb-4 uppercase tracking-tight leading-tight w-[70%] md:w-[85%]">
+                      <h2 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium mb-3 md:mb-4 uppercase tracking-tight leading-tight w-[70%] md:w-[85%]">
                         {speaker.name}
                       </h2>
                       <p className="text-[#E9EBF8] font-light text-sm md:text-lg lg:text-xl xl:text-2xl italic leading-relaxed w-[65%] md:w-[85%]">

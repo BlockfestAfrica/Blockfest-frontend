@@ -128,25 +128,25 @@ export default async function SpeakerPage({
       platform: "Twitter",
       url: speaker.twitter,
       icon: Twitter,
-      color: "bg-black hover:bg-gray-800",
+      color: "bg-brand-blue hover:bg-brand-blue-dark",
     },
     {
       platform: "LinkedIn",
       url: speaker.linkedin,
       icon: Linkedin,
-      color: "bg-blue-600 hover:bg-blue-700",
+      color: "bg-brand-blue hover:bg-brand-blue-dark",
     },
     {
       platform: "YouTube",
       url: speaker.youtube,
       icon: Youtube,
-      color: "bg-red-600 hover:bg-red-700",
+      color: "bg-brand-blue hover:bg-brand-blue-dark",
     },
     {
       platform: "Website",
       url: speaker.website,
       icon: Globe,
-      color: "bg-green-600 hover:bg-green-700",
+      color: "bg-brand-blue hover:bg-brand-blue-dark",
     },
   ].filter((link) => link.url);
 
@@ -154,12 +154,12 @@ export default async function SpeakerPage({
     <>
       {/* Hero Section */}
       <section
-        className="relative min-h-[40vh] sm:min-h-[45vh] lg:min-h-[50vh] flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 overflow-hidden"
+        className="relative min-h-[40vh] sm:min-h-[45vh] lg:min-h-[50vh] flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 overflow-hidden"
         aria-label={`${speaker.name} speaker profile`}
       >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600"/>
+          <div className="absolute inset-0 bg-brand-blue"/>
           <svg
             className="absolute inset-0 w-full h-full"
             xmlns="http://www.w3.org/2000/svg"
@@ -184,7 +184,7 @@ export default async function SpeakerPage({
           {/* Back Button */}
           <Link
             href="/speakers"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium mb-4 sm:mb-6 transition-colors duration-200 group touch-manipulation"
+            className="inline-flex items-center gap-2 text-brand-blue hover:text-brand-blue-dark font-medium mb-4 sm:mb-6 transition-colors duration-200 group touch-manipulation"
           >
             <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
             <span className="text-sm sm:text-base">Back to Speakers</span>
@@ -209,8 +209,8 @@ export default async function SpeakerPage({
               </div>
 
               {/* Decorative Elements */}
-              <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full opacity-20 blur-xl"/>
-              <div className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-20 blur-xl"/>
+              <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-16 h-16 sm:w-20 sm:h-20 bg-brand-blue rounded-full opacity-20 blur-xl"/>
+              <div className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 w-20 h-20 sm:w-24 sm:h-24 bg-brand-blue-light rounded-full opacity-20 blur-xl"/>
             </div>
 
             {/* Speaker Info */}
@@ -223,7 +223,7 @@ export default async function SpeakerPage({
                 </h1>
 
                 <div className="space-y-3 sm:space-y-4">
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl px-4 sm:px-6 py-3 sm:py-4 inline-block max-w-full">
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 sm:px-6 py-3 sm:py-4 inline-block max-w-full">
                     <p
                       className={`${gotham.className} text-base sm:text-lg md:text-xl text-gray-800 font-semibold break-words`}
                     >
@@ -232,7 +232,7 @@ export default async function SpeakerPage({
                   </div>
 
                   {speaker.company && (
-                    <div className="flex items-center justify-center lg:justify-start gap-2 text-blue-600 flex-wrap px-2 sm:px-0">
+                    <div className="flex items-center justify-center lg:justify-start gap-2 text-brand-blue flex-wrap px-2 sm:px-0">
                       <Building2 className="w-5 h-5 flex-shrink-0" />
                       <p className="text-base sm:text-lg font-semibold text-center lg:text-left break-words">
                         {speaker.company}
@@ -245,7 +245,7 @@ export default async function SpeakerPage({
               {/* Cards Container */}
               <div className="flex flex-col gap-4 sm:gap-5 w-full px-2 sm:px-0">
                 {/* Event Info Card */}
-                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 sm:p-5 border border-white/40 shadow-lg flex-1 w-full">
+                <div className="bg-white/70 rounded-xl p-4 sm:p-5 border border-white/40 shadow-lg flex-1 w-full">
                   <div className="flex items-center justify-center lg:justify-start gap-2 text-gray-600 mb-2 flex-wrap">
                     <Calendar className="w-4 h-4 flex-shrink-0" />
                     <span className="text-sm sm:text-base font-medium text-center lg:text-left">
@@ -298,7 +298,7 @@ export default async function SpeakerPage({
                 >
                   About {speaker.name.split(" ")[0]}
                 </h2>
-                <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 mx-auto rounded-full"/>
+                <div className="w-24 h-1 bg-brand-blue mx-auto rounded-full"/>
               </div>
 
               <article className="prose prose-lg max-w-none">
@@ -309,8 +309,8 @@ export default async function SpeakerPage({
             </>
           ) : (
             <div className="text-center py-12 sm:py-16">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Users className="w-10 h-10 text-blue-500" />
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Users className="w-10 h-10 text-brand-blue" />
               </div>
               <h2
                 className={`${gotham.className} text-xl sm:text-2xl font-bold text-gray-900 mb-4`}
@@ -328,28 +328,28 @@ export default async function SpeakerPage({
       </section>
 
       {/* CTA Section */}
-      <section className="py-8 sm:py-12 bg-gradient-to-r from-blue-600 to-indigo-700">
+      <section className="py-8 sm:py-12 bg-gradient-to-r from-brand-blue to-brand-blue-deep">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2
             className={`${gotham.className} text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4`}
           >
             Don&apos;t Miss Out
           </h2>
-          <p className="text-blue-100 text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-white/80 text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
             Join {speaker.name.split(" ")[0]} and other industry leaders at
-            Blockfest Africa 2025. Secure your spot at Africa&apos;s premier
+            Blockfest Africa 2026. Secure your spot at Africa&apos;s premier
             blockchain conference.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 justify-center items-center max-w-md mx-auto sm:max-w-none">
             <Link
               href="/#register"
-              className="bg-white text-blue-600 px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-gray-50 hover:shadow-lg transform hover:scale-105 transition-all duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
+              className="bg-brand-gold text-black px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-brand-gold-hover hover:shadow-lg transform hover:scale-105 transition-all duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
             >
               Register Now
             </Link>
             <Link
               href="/speakers"
-              className="border-2 border-white text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-white hover:text-blue-600 hover:shadow-lg transform hover:scale-105 transition-all duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
+              className="border-2 border-white text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-white hover:text-brand-blue hover:shadow-lg transform hover:scale-105 transition-all duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
             >
               View All Speakers
             </Link>

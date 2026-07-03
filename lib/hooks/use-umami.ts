@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { umamiTrack, umamiIdentify } from "../analytics";
+import { umamiTrack, umamiIdentify } from "../umami";
 
 export const useUmami = () => {
   const track = useCallback((event: string, data?: Record<string, unknown>) => {

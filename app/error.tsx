@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { umamiTrack, sanitizeStack } from "@/lib/analytics";
+import { umamiTrack, sanitizeStack } from "@/lib/umami";
 
 export default function Error({
   error,
@@ -33,10 +33,10 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-[#1A3461] to-[#005DFF]">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-brand-blue-deep to-brand-blue">
       <div className="max-w-md w-full text-center text-white">
         <div className="mb-8">
-          <h1 className="text-6xl font-bold text-[#F2CB45] mb-4">500</h1>
+          <h1 className="text-6xl font-bold text-white mb-4">500</h1>
           <h2 className="text-2xl font-semibold mb-4">Server Error</h2>
           <p className="text-gray-200 mb-6">
             We&apos;re experiencing technical difficulties. Our team has been
@@ -47,7 +47,7 @@ export default function Error({
         <div className="space-y-4">
           <Button
             onClick={reset}
-            className="w-full bg-[#F2CB45] hover:bg-[#F2CB45]/90 text-black font-semibold"
+            className="w-full bg-brand-blue hover:bg-brand-blue-pressed text-white font-semibold"
           >
             Try Again
           </Button>
@@ -55,7 +55,7 @@ export default function Error({
           <Button
             onClick={() => (window.location.href = "/")}
             variant="outline"
-            className="w-full border-white text-white hover:bg-white hover:text-[#1B64E4]"
+            className="w-full border-white text-white hover:bg-white hover:text-brand-blue"
           >
             Go Home
           </Button>
@@ -74,7 +74,7 @@ export default function Error({
             Need help?{" "}
             <a
               href="mailto:support@blockfestafrica.com"
-              className="text-[#F2CB45] hover:underline"
+              className="text-white/70 hover:text-white hover:underline"
             >
               Contact Support
             </a>
