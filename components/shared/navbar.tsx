@@ -1,19 +1,26 @@
 "use client";
 import Image from "next/image";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "../ui/sheet";
 import { AiOutlineClose } from "react-icons/ai";
+import { IoChevronDown } from "react-icons/io5";
 import Link from "next/link";
 import BurgerIcon from "../icons/burger-icon";
 import { gotham } from "@/lib/fonts";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
 
+const navLinkClasses =
+  "text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out";
+
 const Navbar = () => {
   const contactEmail = CONTACT_EMAIL;
 
   const router = useRouter();
   const pathname = usePathname();
+
+  const [pastEventsOpen, setPastEventsOpen] = useState(false);
+  const pastEventsRef = useRef<HTMLDivElement>(null);
 
   const handleAboutClick = () => {
     if (typeof window !== "undefined") {
@@ -39,6 +46,30 @@ const Navbar = () => {
     }
   }, []);
 
+  // Close the Past Events dropdown on outside click or Escape
+  useEffect(() => {
+    if (!pastEventsOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        pastEventsRef.current &&
+        !pastEventsRef.current.contains(e.target as Node)
+      ) {
+        setPastEventsOpen(false);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPastEventsOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [pastEventsOpen]);
+
   return (
     <header
       className={`${gotham.className} bg-black px-5 lg:px-[70px] py-4 lg:py-10 flex items-center justify-between sticky top-0 z-50`}
@@ -58,49 +89,63 @@ const Navbar = () => {
 
       {/* Desktop Nav */}
       <nav className="hidden md:flex items-center gap-x-7" aria-label="Main navigation">
-        <Link
-          href="/"
-          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out"
-        >
+        <Link href="/" className={navLinkClasses}>
           Home
         </Link>
-        <button
-          type="button"
-          onClick={handleAboutClick}
-          className="text-sm lg:text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out"
-        >
+        <button type="button" onClick={handleAboutClick} className={navLinkClasses}>
           About
         </button>
-        <Link
-          href="/blockfest-south-africa-2026"
-          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out inline-flex items-center gap-1.5"
-        >
-          South Africa &apos;26 <span className="text-sm">🇿🇦</span>
-        </Link>
-        <Link
-          href="/blockfest-2025"
-          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out inline-flex items-center gap-1.5"
-        >
-          2025 Recap <span className="text-sm">🇳🇬</span>
-        </Link>
-        <Link
-          href="/speakers"
-          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out"
-        >
+
+        {/* Past Events dropdown */}
+        <div className="relative" ref={pastEventsRef}>
+          <button
+            type="button"
+            onClick={() => setPastEventsOpen((open) => !open)}
+            aria-expanded={pastEventsOpen}
+            aria-haspopup="true"
+            className={`${navLinkClasses} inline-flex items-center gap-1`}
+          >
+            Past Events
+            <IoChevronDown
+              className={`text-sm transition-transform duration-200 ${pastEventsOpen ? "rotate-180" : ""
+                }`}
+            />
+          </button>
+
+          {pastEventsOpen && (
+            <div
+              role="menu"
+              className="absolute left-0 top-full mt-2 min-w-[190px] rounded-md bg-black border border-white/10 shadow-lg py-2 z-50"
+            >
+              <Link
+                href="/blockfest-south-africa-2026"
+                role="menuitem"
+                onClick={() => setPastEventsOpen(false)}
+                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white focus-visible:outline-none transition-colors duration-200 ease-in-out"
+              >
+                South Africa &apos;26 <span className="text-sm">🇿🇦</span>
+              </Link>
+              <Link
+                href="/blockfest-2025"
+                role="menuitem"
+                onClick={() => setPastEventsOpen(false)}
+                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white focus-visible:outline-none transition-colors duration-200 ease-in-out"
+              >
+                2025 Recap <span className="text-sm">🇳🇬</span>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        <Link href="/speakers" className={navLinkClasses}>
           Speakers
         </Link>
         {pathname !== "/speakers" && (
-          <Link
-            href="#sponsorship"
-            className="text-base font-normal text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out"
-          >
+          <Link href="#sponsorship" className={navLinkClasses}>
             Sponsor
           </Link>
         )}
-        <Link
-          href={`mailto:${contactEmail}`}
-          className="text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out"
-        >
+        <Link href={`mailto:${contactEmail}`} className={navLinkClasses}>
           Contact
         </Link>
       </nav>
@@ -135,6 +180,8 @@ const MobileMenu = () => {
 
   const router = useRouter();
   const pathname = usePathname();
+
+  const [pastEventsOpen, setPastEventsOpen] = useState(false);
 
   const handleAboutClick = () => {
     if (typeof window !== "undefined") {
@@ -187,23 +234,42 @@ const MobileMenu = () => {
           </button>
         </SheetClose>
 
-        <SheetClose asChild>
-          <Link
-            href="/blockfest-south-africa-2026"
-            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
+        {/* Past Events accordion (mobile) */}
+        <div className="flex flex-col">
+          <button
+            type="button"
+            onClick={() => setPastEventsOpen((open) => !open)}
+            aria-expanded={pastEventsOpen}
+            className="text-lg font-medium text-nav-gray hover:text-white transition w-fit inline-flex items-center gap-1.5"
           >
-            South Africa &apos;26 <span>🇿🇦</span>
-          </Link>
-        </SheetClose>
+            Past Events
+            <IoChevronDown
+              className={`text-base transition-transform duration-200 ${pastEventsOpen ? "rotate-180" : ""
+                }`}
+            />
+          </button>
 
-        <SheetClose asChild>
-          <Link
-            href="/blockfest-2025"
-            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
-          >
-            2025 Recap <span>🇳🇬</span>
-          </Link>
-        </SheetClose>
+          {pastEventsOpen && (
+            <div className="flex flex-col gap-y-4 mt-4 pl-4 border-l border-white/10">
+              <SheetClose asChild>
+                <Link
+                  href="/blockfest-south-africa-2026"
+                  className="text-base font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
+                >
+                  South Africa &apos;26 <span>🇿🇦</span>
+                </Link>
+              </SheetClose>
+              <SheetClose asChild>
+                <Link
+                  href="/blockfest-2025"
+                  className="text-base font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
+                >
+                  2025 Recap <span>🇳🇬</span>
+                </Link>
+              </SheetClose>
+            </div>
+          )}
+        </div>
 
         <SheetClose asChild>
           <Link
