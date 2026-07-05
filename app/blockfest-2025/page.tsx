@@ -51,7 +51,15 @@ export const metadata: Metadata = {
 };
 
 const event = blockfest2025Lagos;
-const stats = event.stats!;
+const stats = event.stats ?? {
+  totalRegistrations: 0,
+  totalAttendees: 0,
+  speakers: 0,
+  countriesRepresented: 0,
+  physicalAttendees: 0,
+  virtualAttendees: 0,
+};
+
 
 // Select featured speakers for display
 const featuredSpeakers = SpeakersList.slice(0, 8);

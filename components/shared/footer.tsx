@@ -1,7 +1,6 @@
 "use client";
 import Image from "next/image";
 import React from "react";
-import { Button } from "../ui/button";
 import Link from "next/link";
 import {
   FaInstagram,
@@ -12,121 +11,163 @@ import {
 import type { Menu } from "@/types";
 import { gotham } from "@/lib/fonts";
 import { CONTACT_EMAIL, SOCIAL_URLS } from "@/lib/constants";
+import { useRouter, usePathname } from "next/navigation";
+import { useUmami } from "@/lib/hooks/use-umami";
 
-// Footer menu for 2026
-const footerMenu: Menu[] = [
+
+const exploreMenu: Menu[] = [
+  { path: "/", title: "Home" },
+  { path: "/speakers", title: "Speakers" },
   { path: "/blockfest-south-africa-2026", title: "South Africa '26" },
   { path: "/blockfest-2025", title: "2025 Recap" },
-  { path: "about", title: "About" },
-  { path: "/speakers", title: "Speakers" },
 ];
 
+const infoMenu: Menu[] = [
+  { path: "/faq", title: "FAQ" },
+  { path: `mailto:${CONTACT_EMAIL}`, title: "Contact" },
+];
+
+const socialLabels = ["Twitter / X", "Instagram", "YouTube", "LinkedIn"];
+
 const Footer = () => {
-  const contactEmail = CONTACT_EMAIL;
+  const router = useRouter();
+  const pathname = usePathname();
+  const { trackButtonClick } = useUmami();
+  const handleAboutClick = () => {
+    if (typeof window !== "undefined") {
+      if (pathname === "/") {
+        document.getElementById("about")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      } else {
+        router.push("/#about");
+      }
+    }
+  };
 
   const socialIcons: Menu[] = [
-    {
-      path: SOCIAL_URLS.twitter,
-      icon: <FaXTwitter size={24} />,
-    },
-    {
-      path: SOCIAL_URLS.instagram,
-      icon: <FaInstagram size={24} />,
-    },
-    {
-      path: SOCIAL_URLS.youtube,
-      icon: <FaYoutube size={24} />,
-    },
-    {
-      path: SOCIAL_URLS.linkedin,
-      icon: <FaLinkedin size={24} />,
-    },
+    { path: SOCIAL_URLS.twitter, icon: <FaXTwitter size={18} /> },
+    { path: SOCIAL_URLS.instagram, icon: <FaInstagram size={18} /> },
+    { path: SOCIAL_URLS.youtube, icon: <FaYoutube size={18} /> },
+    { path: SOCIAL_URLS.linkedin, icon: <FaLinkedin size={18} /> },
   ];
-  const socialLabels = ["Twitter / X", "Instagram", "YouTube", "LinkedIn"];
+
+  const linkClasses =
+    "text-base font-medium text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out w-fit";
+
+  const columnLabelClasses =
+    "flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-nav-gray/50 mb-5";
+
+  const currentYear = new Date().getFullYear();
 
   return (
-    <footer
-      className={`${gotham.className} bg-black px-6 py-10 pt-14 lg:px-[70px] lg:py-[70px] flex flex-col lg:flex-row gap-y-10 items-start lg:items-end justify-between`}
-      id="contact"
-    >
-      <div>
-        <Link href="/" className="inline-block cursor-pointer">
-          <Image
-            src="/images/footer-logo.svg"
-            alt="Blockfest Africa Footer Logo"
-            width={150}
-            height={49}
-            sizes="(max-width: 768px) 124px, 150px"
-            loading="lazy"
-            className="xl:w-[150px] w-[124px] h-[42px] xl:h-[49px] aspect-[124/42] xl:aspect-[150/49] hover:opacity-80 transition-opacity duration-200"
-          />
-        </Link>
-      </div>
-
-      <div className="flex flex-col md:flex-row md:items-end md:gap-x-12.5 gap-y-8">
-        {/* Navigation Menu - visible on all screen sizes */}
-        <nav className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-3 gap-x-6 gap-y-4 md:gap-x-12.5 md:gap-y-6">
-          {footerMenu.map((item) => (
-            <Link
-              key={item.title}
-              href={item.path}
-              className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out text-left"
-            >
-              {item.title}
+    <footer className={`${gotham.className} bg-black`} id="contact">
+      <div className="px-6 lg:px-[70px] pt-14 lg:pt-20">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-10 lg:pb-14">
+          <div className="flex flex-col gap-4">
+            <Link href="/" className="inline-block w-fit cursor-pointer">
+              <Image
+                src="/images/logo.svg"
+                alt="Blockfest Africa Logo"
+                width={140}
+                height={38}
+                sizes="(max-width: 768px) 124px, 140px"
+                priority
+                className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px]"
+              />
             </Link>
-          ))}
+            <p className="text-nav-gray text-sm lg:text-base max-w-xs">
+              Africa&apos;s biggest Web3 festival
+            </p>
+          </div>
 
           <Link
-            href="#sponsorship"
-            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out"
+            href={`mailto:${CONTACT_EMAIL}?subject=Sponsorship Inquiry - Blockf3st Africa 2026`}
+            onClick={() =>
+              trackButtonClick("Email Sponsorship", "Sponsorship Section")
+            }
+            className="inline-flex items-center gap-2 bg-brand-gold text-black px-5 py-3 rounded-full font-semibold hover:bg-brand-gold-hover transition-colors text-sm sm:text-base max-w-full"
           >
-            Sponsor 2026
+            <span className="truncate"> 							Sponsor 2026
+            </span>
           </Link>
-
-          <Link
-            href="/faq"
-            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out"
-          >
-            FAQ
-          </Link>
-
-          <Link
-            href={`mailto:${contactEmail}`}
-            className="text-base xl:text-2xl font-medium cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out"
-          >
-            Contact
-          </Link>
-        </nav>
-
-        {/* Social Icons - min 44px tap targets with aria-labels */}
-        <div className="flex items-center gap-x-2">
-          {socialIcons.map((item, index) =>
-            item.icon ? (
-              <Link
-                href={item.path}
-                key={index}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Follow us on ${socialLabels[index]}`}
-                className="flex items-center justify-center w-11 h-11 rounded-full cursor-pointer text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-300 ease-in-out"
-              >
-                {item.icon}
-              </Link>
-            ) : null
-          )}
         </div>
+
+        <div className="border-t border-white/10" />
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-10 py-10 lg:py-14">
+          <div>
+            <p className={columnLabelClasses}>
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
+              Explore
+            </p>
+            <nav className="flex flex-col gap-y-4">
+              <Link href={exploreMenu[0].path} className={linkClasses}>
+                {exploreMenu[0].title}
+              </Link>
+              <button
+                type="button"
+                onClick={handleAboutClick}
+                className={linkClasses}
+              >
+                About
+              </button>
+              {exploreMenu.slice(1).map((item) => (
+                <Link key={item.title} href={item.path} className={linkClasses}>
+                  {item.title}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div>
+            <p className={columnLabelClasses}>
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
+              Info
+            </p>
+            <nav className="flex flex-col gap-y-4">
+              {infoMenu.map((item) => (
+                <Link key={item.title} href={item.path} className={linkClasses}>
+                  {item.title}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div className="col-span-2 sm:col-span-1">
+            <p className={columnLabelClasses}>
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
+              Connect
+            </p>
+            <div className="flex items-center gap-x-3">
+              {socialIcons.map((item, index) => (
+                <Link
+                  href={item.path}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                  key={index}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Follow us on ${socialLabels[index]}`}
+                  className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 text-nav-gray hover:text-white hover:border-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-300 ease-in-out"
+                >
+                  {item.icon}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-white/10" />
       </div>
 
-      <div className="hidden md:block">
-        <Link href="#sponsorship">
-          <Button
-            type="button"
-            variant="ghost"
-            className="text-black bg-brand-gold hover:bg-brand-gold-hover border-0 px-[38px] py-5 text-lg font-semibold cursor-pointer rounded-xl"
-          >
-            Sponsor 2026
-          </Button>
-        </Link>
+      <div className="px-6 lg:px-[70px] py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p className="text-nav-gray/60 text-sm order-2 sm:order-1">
+          © {currentYear} Blockfest Africa. All rights reserved.
+        </p>
+        <p className="text-nav-gray/60 text-sm order-1 sm:order-2">
+          partnership@blockfestafrica.com
+        </p>
       </div>
     </footer>
   );
