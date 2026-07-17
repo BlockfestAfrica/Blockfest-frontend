@@ -89,7 +89,7 @@ export function Lagos2026Section() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 place-items-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 place-items-center">
           {lagos2026Festival.map((phase) => (
             <div
               key={phase.title}

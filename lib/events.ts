@@ -288,12 +288,12 @@ export const lagos2026Festival: FestivalPhase[] = [
   //   location: "Virtual",
   //   description: "Judging, demos, and finalist selection.",
   // },
-  // {
-  //   dates: "Thu, Oct 22",
-  //   title: "Workshop + The Back Room",
-  //   location: "Lagos",
-  //   description: "Hands-on workshops and the Founders Corner.",
-  // },
+  {
+    dates: "Thu, Oct 22",
+    title: "Workshop + The Back Room",
+    location: "Lagos",
+    description: "Hands-on workshops and the Founders Corner.",
+  },
   {
     dates: "Fri, Oct 23",
     title: "Main Conference & Convention",
