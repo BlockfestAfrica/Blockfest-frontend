@@ -269,31 +269,31 @@ export const lagos2026Tracks: EventTrack[] = [
 
 // Lagos '26 festival timeline — three weeks of programming, one week in Lagos.
 export const lagos2026Festival: FestivalPhase[] = [
-  {
-    dates: "Sep 28 – Oct 12",
-    title: "Hackathon",
-    location: "Virtual",
-    description:
-      "Builders from across Africa shipping real products with real prizes.",
-  },
-  {
-    dates: "Oct 5 – Oct 9",
-    title: "Co-Working Week",
-    location: "Lagos",
-    description: "Open workspace for hackathon participants.",
-  },
-  {
-    dates: "Oct 13 – Oct 18",
-    title: "Hackathon Review",
-    location: "Virtual",
-    description: "Judging, demos, and finalist selection.",
-  },
-  {
-    dates: "Thu, Oct 22",
-    title: "Workshop + The Back Room",
-    location: "Lagos",
-    description: "Hands-on workshops and the Founders Corner.",
-  },
+  // {
+  //   dates: "Sep 28 – Oct 12",
+  //   title: "Hackathon",
+  //   location: "Virtual",
+  //   description:
+  //     "Builders from across Africa shipping real products with real prizes.",
+  // },
+  // {
+  //   dates: "Oct 5 – Oct 9",
+  //   title: "Co-Working Week",
+  //   location: "Lagos",
+  //   description: "Open workspace for hackathon participants.",
+  // },
+  // {
+  //   dates: "Oct 13 – Oct 18",
+  //   title: "Hackathon Review",
+  //   location: "Virtual",
+  //   description: "Judging, demos, and finalist selection.",
+  // },
+  // {
+  //   dates: "Thu, Oct 22",
+  //   title: "Workshop + The Back Room",
+  //   location: "Lagos",
+  //   description: "Hands-on workshops and the Founders Corner.",
+  // },
   {
     dates: "Fri, Oct 23",
     title: "Main Conference & Convention",
