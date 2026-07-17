@@ -81,12 +81,15 @@ export function Lagos2026Section() {
           <h3 className="text-2xl lg:text-3xl font-bold text-white mb-2">
             A Festival, Not Just an Event
           </h3>
-          <p className="text-white/60 text-base max-w-2xl mx-auto">
+          {/* <p className="text-white/60 text-base max-w-2xl mx-auto">
             Three weeks of programming. One unforgettable week in Lagos.
+          </p> */}
+          <p className="text-white/60 text-base max-w-2xl mx-auto">
+            One unforgettable weekend in Lagos.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 place-items-center">
           {lagos2026Festival.map((phase) => (
             <div
               key={phase.title}
