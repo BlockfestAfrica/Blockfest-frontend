@@ -15,9 +15,6 @@ import { calculateTimeLeft, type TimeLeft } from "@/lib/countdown";
 import { EARLY_BIRD_ENDS } from "@/lib/tickets";
 import "./subtle-animations.css";
 
-const flagFor = (countryCode: string) =>
-  countryCode === "ZA" ? "🇿🇦" : "🇳🇬";
-
 /** Upcoming event card with a live countdown and a tickets CTA. */
 function UpcomingEventCard({
   event,
@@ -47,19 +44,18 @@ function UpcomingEventCard({
   ];
 
   return (
-    <div className="relative rounded-2xl lg:rounded-3xl p-6 lg:p-8 transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-brand-blue via-brand-blue to-brand-blue-dark border-2 border-white/20">
+    <div className="relative rounded-xl lg:rounded-xl p-6 lg:p-8 transition-transform duration-300 hover:scale-[1.02] bg-brand-blue-dark border border-white/20">
       <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-brand-gold text-black text-xs font-bold px-4 py-1 rounded-full">
         NEXT EVENT
       </div>
 
       <div className="text-center">
-        <div className="text-4xl mb-3">{flagFor(event.location.countryCode)}</div>
-        <h3 className="text-xl lg:text-2xl font-bold text-white mb-2">
+        <h3 className="text-lg lg:text-2xl font-bold text-white mb-2">
           {event.location.city}
         </h3>
-        <p className="text-white/70 text-sm mb-4">{event.location.country}</p>
+        <p className="text-white/60 text-sm mb-4">{event.location.country}</p>
 
-        <div className="flex items-center justify-center gap-2 text-white/80 font-semibold mb-4">
+        <div className="flex items-center justify-center gap-2 text-white/90 font-semibold mb-4">
           <IoCalendarClearOutline className="text-lg" />
           <span>{event.date.displayDate}</span>
         </div>
@@ -68,10 +64,10 @@ function UpcomingEventCard({
         <div className="flex justify-center gap-3 mb-6">
           {units.map((unit) => (
             <div key={unit.label} className="text-center">
-              <span className="text-lg lg:text-xl font-bold text-white tabular-nums">
+              <span className="text-lg font-bold text-white tabular-nums">
                 {mounted ? String(unit.val).padStart(2, "0") : "--"}
               </span>
-              <span className="text-[10px] text-white/50 ml-0.5">
+              <span className="text-[10px] text-white/60 ml-0.5">
                 {unit.label}
               </span>
             </div>
@@ -84,7 +80,7 @@ function UpcomingEventCard({
           </Button>
         </Link>
 
-        <p className="mt-3 text-xs text-white/50">
+        <p className="mt-3 text-xs text-white/60">
           Early bird ends {EARLY_BIRD_ENDS.display}
         </p>
       </div>
@@ -95,19 +91,18 @@ function UpcomingEventCard({
 /** Completed event card — celebrates the edition and links to its recap. */
 function RecapEventCard({ event }: { event: BlockfestEvent }) {
   return (
-    <div className="relative rounded-2xl lg:rounded-3xl p-6 lg:p-8 transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-white/10 via-brand-blue/20 to-brand-navy-deep border border-white/20">
-      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white/90 text-black text-xs font-bold px-4 py-1 rounded-full">
+    <div className="relative rounded-xl lg:rounded-xl p-6 lg:p-8 transition-transform duration-300 hover:scale-[1.02] bg-white/5 border border-white/20">
+      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white/20 text-black text-xs font-bold px-4 py-1 rounded-full">
         THAT&apos;S A WRAP
       </div>
 
       <div className="text-center">
-        <div className="text-4xl mb-3">{flagFor(event.location.countryCode)}</div>
-        <h3 className="text-xl lg:text-2xl font-bold text-white mb-2">
+        <h3 className="text-lg lg:text-2xl font-bold text-white mb-2">
           {event.location.city}
         </h3>
-        <p className="text-white/70 text-sm mb-4">{event.location.country}</p>
+        <p className="text-white/60 text-sm mb-4">{event.location.country}</p>
 
-        <div className="flex items-center justify-center gap-2 text-white/80 font-semibold mb-4">
+        <div className="flex items-center justify-center gap-2 text-white/90 font-semibold mb-4">
           <IoCalendarClearOutline className="text-lg" />
           <span>{event.date.displayDate}</span>
         </div>
@@ -117,7 +112,7 @@ function RecapEventCard({ event }: { event: BlockfestEvent }) {
         </p>
 
         <Link href={event.recapUrl ?? "/"} className="block">
-          <Button className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-white/20 text-white hover:bg-white/30">
+          <Button className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-white/10 text-white hover:bg-white/20">
             <span className="inline-flex items-center gap-2">
               View Recap <FaArrowRight className="text-xs" />
             </span>
@@ -139,7 +134,7 @@ export function HeroSection2026() {
   };
 
   return (
-    <section className="relative w-full flex items-center justify-center bg-gradient-to-b from-[#000000] via-brand-navy to-brand-navy-deep py-12 lg:py-16 overflow-hidden">
+    <section className="relative w-full flex items-center justify-center bg-gradient-to-b from-black to-ground py-12 lg:py-16 overflow-hidden">
       {/* Grid pattern overlay - subtle dots */}
       <div
         className="absolute inset-0 opacity-20"
@@ -164,13 +159,13 @@ export function HeroSection2026() {
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4 scale-in">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 scale-in">
             Blockf<span className="text-brand-blue">3</span>st Africa{" "}
             <span className="text-brand-gold">&apos;26</span>
           </h1>
 
           {/* Tagline */}
-          <p className="text-lg sm:text-xl lg:text-2xl text-white/90 font-medium mb-4 lg:mb-6 fade-in-on-scroll">
+          <p className="text-lg lg:text-2xl text-white/90 font-medium mb-4 lg:mb-6 fade-in-on-scroll">
             New Trade Routes:{" "}
             <span className="text-white">Bringing Africa Onchain</span>
           </p>
@@ -201,13 +196,13 @@ export function HeroSection2026() {
             href="/blockfest-south-africa-2026"
             className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
           >
-            <span>🇿🇦 South Africa &apos;26 recap →</span>
+            <span>South Africa &apos;26 recap</span>
           </Link>
           <Link
             href="/blockfest-2025"
             className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
           >
-            <span>🇳🇬 Lagos 2025 recap →</span>
+            <span>Lagos 2025 recap</span>
           </Link>
         </div>
       </div>

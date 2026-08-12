@@ -40,7 +40,7 @@ function EarlyBirdCountdown() {
           <span className="block text-2xl sm:text-3xl font-bold text-white tabular-nums">
             {mounted ? String(unit.value).padStart(2, "0") : "--"}
           </span>
-          <span className="text-[10px] uppercase tracking-widest text-white/40">
+          <span className="text-[10px] uppercase tracking-widest text-white/60">
             {unit.label}
           </span>
         </div>
@@ -51,7 +51,7 @@ function EarlyBirdCountdown() {
 
 export function TicketHero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-black via-brand-navy to-brand-navy-deep py-14 lg:py-20">
+    <section className="relative overflow-hidden bg-gradient-to-b from-black to-ground py-14 lg:py-20">
       <div
         className="absolute inset-0 opacity-20"
         style={{
@@ -67,38 +67,38 @@ export function TicketHero() {
           </span>
         </div>
 
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
+        <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4">
           Secure Your Seat
         </h1>
 
-        <p className="text-white/70 text-base sm:text-lg lg:text-xl max-w-2xl mx-auto mb-8">
+        <p className="text-white/60 text-base sm:text-lg max-w-2xl mx-auto mb-8">
           Africa&apos;s leading convention across AI, Web3, venture capital,
           technology, culture and careers.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-white/60 text-sm mb-10">
           <span className="inline-flex items-center gap-2">
-            <IoCalendarClearOutline className="text-base text-brand-gold" />
+            <IoCalendarClearOutline className="text-base text-white/60" aria-hidden="true" />
             {blockfest2026Lagos.date.displayDate}
           </span>
-          <span className="hidden sm:inline text-white/20">·</span>
+          <span className="hidden sm:inline text-white/60">·</span>
           <span className="inline-flex items-center gap-2">
-            <IoLocationOutline className="text-base text-brand-gold" />
+            <IoLocationOutline className="text-base text-white/60" aria-hidden="true" />
             {blockfest2026Lagos.location.venue}
           </span>
-          <span className="hidden sm:inline text-white/20">·</span>
+          <span className="hidden sm:inline text-white/60">·</span>
           <span>Three days</span>
         </div>
 
-        <div className="inline-flex flex-col items-center gap-5 rounded-2xl border border-white/10 bg-white/[0.04] px-8 py-7">
-          <p className="text-xs uppercase tracking-[0.2em] text-white/40">
+        <div className="inline-flex flex-col items-center gap-5 rounded-xl border border-white/20 bg-white/5 px-8 py-7">
+          <p className="text-xs uppercase tracking-[0.2em] text-white/60">
             Early bird closes in
           </p>
           <EarlyBirdCountdown />
           <TicketCTA source="Tickets Hero" className="w-full sm:w-auto px-8">
             Get your ticket
           </TicketCTA>
-          <p className="text-white/40 text-xs">
+          <p className="text-white/60 text-xs">
             Passes from {formatNaira(lowestTicketPrice)}
           </p>
         </div>

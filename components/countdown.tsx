@@ -26,7 +26,7 @@ const TIME_UNITS: { key: keyof TimeLeft; label: string }[] = [
   { key: "seconds", label: "seconds" },
 ];
 
-const VALUE_CLASSES = "text-[#3870D3] font-normal text-[34px] md:text-4xl lg:text-[104.95px] lg:leading-[110px]";
+const VALUE_CLASSES = "text-[#1B64E4] font-normal text-[34px] md:text-3xl lg:text-[104.95px] lg:leading-[110px]";
 
 function TimeUnit({ value, label }: { value: string; label: string }) {
   return (
@@ -96,7 +96,7 @@ export function Countdown ({ targetDate, onExpire }: CountdownProps)  {
   }, [targetDate, onExpire]);
 
   return (
-    <div className={`${bebasNeue.className} flex items-start justify-between lg:justify-center border-[1.44px] lg:border-4 border-[#3870D3] space-x-2 lg:w-fit lg:space-x-5 rounded-lg lg:rounded-3xl py-2.5 px-5 md:px-10 lg:py-[30px] lg:px-[50px]`}>
+    <div className={`${bebasNeue.className} flex items-start justify-between lg:justify-center border-[1.44px] lg:border-4 border-[#1B64E4] space-x-2 lg:w-fit lg:space-x-5 rounded-md lg:rounded-xl py-2.5 px-5 md:px-10 lg:py-[30px] lg:px-[50px]`}>
       {TIME_UNITS.map((unit, index) => (
         <div key={unit.key} className="contents">
           {index > 0 && <Separator />}

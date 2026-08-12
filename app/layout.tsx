@@ -120,8 +120,8 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "apple-mobile-web-app-title": siteName,
     "application-name": siteName,
-    "msapplication-TileColor": "#7c3aed",
-    "theme-color": "#7c3aed",
+    "msapplication-TileColor": "#0A1628",
+    "theme-color": "#0A1628",
   },
 };
 
@@ -130,7 +130,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#7c3aed",
+  themeColor: "#0A1628",
 };
 
 export default function RootLayout({
@@ -263,7 +263,7 @@ export default function RootLayout({
           href="/favicon-16x16.png"
         />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7c3aed" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0A1628" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
 
         {/* Service Worker Registration */}
@@ -289,6 +289,9 @@ export default function RootLayout({
         className={`${gotham.className} ${gotham.variable} antialiased w-full mx-auto [@media(min-width:1920px)]:max-w-[1440px]`}
         suppressHydrationWarning={true}
       >
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
         <PerformanceMonitor />
         <AnnouncementBar />
         <Navbar />

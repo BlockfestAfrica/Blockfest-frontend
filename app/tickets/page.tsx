@@ -105,7 +105,7 @@ const TicketsPage = () => {
     <>
       <TicketOffersSchema />
 
-      <main>
+      <main id="main">
         {/* Secure your seat — early bird countdown + primary CTA */}
         <TicketHero />
 

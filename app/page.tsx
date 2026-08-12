@@ -73,7 +73,7 @@ const HomePage = () => {
       <OrganizationSchema />
       <WebsiteSchema />
 
-      <main>
+      <main id="main">
         {/* 2026 Hero — Lagos next event + South Africa recap */}
         <HeroSection2026 />
 
