@@ -184,11 +184,6 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//instagram.com" />
         <link rel="dns-prefetch" href="//youtube.com" />
 
-        {/* Preload critical images */}
-        <link rel="preload" as="image" href="/images/hero.webp" />
-        <link rel="preload" as="image" href="/images/logo.svg" />
-        <link rel="preload" as="image" href="/images/mobile-logo.svg" />
-
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

@@ -6,8 +6,13 @@ import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { toast } from "sonner";
 import "./subtle-animations.css";
 
+/* The homepage carousel is a taster; /speakers has the full list. Rendering all
+   33 was a third of the page's DOM and 33 portraits on first load. */
+const HOMEPAGE_SPEAKER_COUNT = 12;
+
 export function SpeakersSection() {
   const OPTIONS: EmblaOptionsType = { loop: true };
+  const featured = SpeakersList.slice(0, HOMEPAGE_SPEAKER_COUNT);
 
   useSubtleAnimations();
 
@@ -28,7 +33,7 @@ export function SpeakersSection() {
 
       {/* Speaker carousel */}
       <div className="relative z-10 scale-in">
-        <Speakers speakers={SpeakersList} options={OPTIONS} />
+        <Speakers speakers={featured} options={OPTIONS} />
       </div>
 
       {/* 2026 Speaker CTA */}
