@@ -106,19 +106,15 @@ export function EnhancedFAQSection({
   }, []);
 
   return (
-    <section
-      className={`${
-        hideHeader ? "pt-8 lg:pt-12 pb-12 lg:pb-16" : "py-12 lg:py-16"
-      } px-4 lg:px-8 bg-paper`}
-    >
-      <div className="max-w-4xl mx-auto">
+    <section className="section-y bg-paper">
+      <div className="container-page">
         {!hideHeader && (
-          <div className="text-center mb-12 lg:mb-16 fade-in-on-scroll">
-            <h2 className="font-light text-3xl lg:text-5xl lg:leading-tight tracking-[-5%] mb-4 lg:mb-6 text-black">
+          <div className="fade-in-on-scroll mb-10 lg:mb-14">
+            <h2 className="text-display-sm font-bold text-gray-900">
               Frequently Asked <span className="text-brand-blue">Questions</span>
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Everything you need to know about Africa&apos;s premier Web3
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-600">
+              Everything you need to know about Africa&apos;s premier Web3 and AI
               conference
             </p>
           </div>
@@ -126,15 +122,18 @@ export function EnhancedFAQSection({
 
         {/* Search Bar */}
         {showSearch && (
-          <div className="mb-8 lg:mb-12 fade-in-on-scroll">
-            <div className="relative max-w-lg mx-auto">
-              <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <div className="fade-in-on-scroll mb-10 lg:mb-14">
+            <div className="relative max-w-lg">
+              <SearchIcon
+                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500"
+                aria-hidden="true"
+              />
               <input
                 type="text"
                 placeholder="Search FAQs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 text-base border-2 border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:border-brand-blue outline-none transition-colors duration-200 shadow-sm hover:shadow-md"
+                className="min-h-11 w-full rounded-xl border border-gray-200 bg-white py-4 pl-12 pr-4 text-base text-gray-900 transition-colors duration-300 hover:border-brand-blue"
               />
             </div>
           </div>
@@ -142,22 +141,22 @@ export function EnhancedFAQSection({
 
         {/* Table of Contents */}
         {showTableOfContents && !searchTerm && (
-          <div className="mb-12 lg:mb-16 fade-in-on-scroll">
-            <h3 className="text-lg lg:text-2xl font-semibold mb-6 lg:mb-8 text-center text-gray-900">
+          <div className="fade-in-on-scroll mb-10 lg:mb-14">
+            <h2 className="mb-6 text-2xl font-semibold text-gray-900">
               Quick Navigation
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {categories.map((category) => (
                 <button
                   key={category.name}
                   onClick={() => scrollToCategory(category.name)}
-                  className="bg-paper-muted p-4 lg:p-5 rounded-xl text-left border border-gray-200 hover:border-brand-blue hover:bg-white transition-colors duration-200"
+                  className="min-h-11 rounded-xl border border-gray-200 bg-paper-muted p-6 text-left transition-colors duration-300 hover:border-brand-blue"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
                       {(() => { const Icon = categoryIcons[category.icon]; return <Icon className="h-5 w-5" aria-hidden="true" />; })()}
                     </span>
-                    <span className="font-medium text-sm lg:text-base">
+                    <span className="text-base font-medium text-gray-900">
                       {category.name}
                     </span>
                   </div>
@@ -179,7 +178,7 @@ export function EnhancedFAQSection({
                   id={`category-${categoryName
                     .replace(/\s+/g, "-")
                     .toLowerCase()}`}
-                  className="flex items-center gap-3 mb-6 scroll-mt-24"
+                  className="mb-6 flex scroll-mt-24 items-center gap-3"
                 >
                   {categoryInfo && (() => { const Icon = categoryIcons[categoryInfo.icon]; return <Icon className="h-6 w-6 text-brand-blue" aria-hidden="true" />; })()}
                   <h3 className="text-2xl font-semibold text-gray-900">
@@ -191,29 +190,35 @@ export function EnhancedFAQSection({
                   {faqs.map((item) => (
                     <div
                       key={item.id}
-                      className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-colors duration-300"
+                      className="rounded-xl border border-gray-200 bg-white transition-colors duration-300 hover:border-brand-blue"
                     >
                       <button
-                        className="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-gray-50 rounded-xl transition-colors duration-200"
+                        className="flex min-h-11 w-full items-center justify-between rounded-xl px-6 py-5 text-left"
                         onClick={() => toggleItem(item.id)}
                         aria-expanded={openItems.has(item.id)}
                       >
-                        <h4 className="font-semibold text-base lg:text-lg text-gray-900 pr-4">
+                        <h4 className="pr-4 text-base font-semibold text-gray-900 lg:text-lg">
                           {item.question}
                         </h4>
-                        <div className="flex-shrink-0">
+                        <span className="shrink-0">
                           {openItems.has(item.id) ? (
-                            <ChevronUpIcon className="w-5 h-5 text-brand-blue" />
+                            <ChevronUpIcon
+                              className="h-5 w-5 text-brand-blue"
+                              aria-hidden="true"
+                            />
                           ) : (
-                            <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+                            <ChevronDownIcon
+                              className="h-5 w-5 text-gray-500"
+                              aria-hidden="true"
+                            />
                           )}
-                        </div>
+                        </span>
                       </button>
 
                       {openItems.has(item.id) && (
-                        <div className="px-6 pb-5 transition-colors duration-300 ease-in-out">
-                          <div className="pt-2 border-t border-gray-100">
-                            <p className="text-gray-600 leading-relaxed">
+                        <div className="px-6 pb-5">
+                          <div className="border-t border-gray-200 pt-4">
+                            <p className="max-w-3xl text-base leading-relaxed text-gray-600">
                               {item.answer}
                             </p>
                           </div>
@@ -228,19 +233,19 @@ export function EnhancedFAQSection({
         </div>
 
         {/* Enhanced Contact Section */}
-        <div className="mt-16 lg:mt-20 space-y-6 lg:space-y-8">
-          <div className="bg-brand-blue-dark rounded-xl p-6 lg:p-10 text-white fade-in-on-scroll">
-            <h3 className="text-lg lg:text-2xl font-semibold mb-3 lg:mb-4">
+        <div className="mt-16 space-y-6 lg:mt-20 lg:space-y-8">
+          <div className="fade-in-on-scroll rounded-xl border border-gray-200 bg-white p-6">
+            <h3 className="text-2xl font-semibold text-gray-900">
               Still have questions?
             </h3>
-            <p className="text-white/90 mb-6 text-base lg:text-lg">
+            <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-600">
               Can&apos;t find the answer you&apos;re looking for? Our team is
               here to help.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex items-center justify-center gap-2 bg-brand-gold text-black font-semibold px-6 py-3 lg:py-4 rounded-xl hover:bg-brand-gold/90 transition-transform duration-200 text-sm lg:text-base transform hover:scale-[1.02]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
               >
                 <Mail className="h-4 w-4" aria-hidden="true" />
                 Email Us
@@ -249,7 +254,7 @@ export function EnhancedFAQSection({
                 href="https://t.me/blockf3stafrica"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-white/10 text-white font-semibold px-6 py-3 lg:py-4 rounded-xl hover:bg-white/20 transition-transform duration-200 text-sm lg:text-base transform hover:scale-[1.02]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-base font-semibold text-gray-900 transition-colors duration-300 hover:border-brand-blue"
               >
                 <MessageCircle className="h-4 w-4" aria-hidden="true" />
                 Join Telegram
@@ -258,35 +263,41 @@ export function EnhancedFAQSection({
           </div>
 
           {/* Related Links */}
-          <div className="bg-white rounded-xl p-6 lg:p-10 border-2 border-gray-100 shadow-sm fade-in-on-scroll">
-            <h3 className="text-lg lg:text-2xl font-semibold mb-6 text-gray-900">
+          <div className="fade-in-on-scroll rounded-xl border border-gray-200 bg-white p-6">
+            <h3 className="mb-6 text-2xl font-semibold text-gray-900">
               Explore More
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <Link
                 href="/"
-                className="flex items-center gap-3 p-4 rounded-md border border-gray-200 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors duration-200 group"
+                className="group flex min-h-11 items-center gap-3 rounded-md border border-gray-200 p-4 transition-colors duration-300 hover:border-brand-blue"
               >
-                <Home className="h-5 w-5 text-brand-blue" aria-hidden="true" />
-                <span className="font-medium text-gray-700 group-hover:text-brand-blue transition-colors duration-200">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
+                  <Home className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="text-base font-medium text-gray-600 transition-colors duration-300 group-hover:text-brand-blue">
                   Home
                 </span>
               </Link>
               <Link
                 href="/speakers"
-                className="flex items-center gap-3 p-4 rounded-md border border-gray-200 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors duration-200 group"
+                className="group flex min-h-11 items-center gap-3 rounded-md border border-gray-200 p-4 transition-colors duration-300 hover:border-brand-blue"
               >
-                <Mic className="h-5 w-5 text-brand-blue" aria-hidden="true" />
-                <span className="font-medium text-gray-700 group-hover:text-brand-blue transition-colors duration-200">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
+                  <Mic className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="text-base font-medium text-gray-600 transition-colors duration-300 group-hover:text-brand-blue">
                   Speakers
                 </span>
               </Link>
               <Link
                 href="/schedule"
-                className="flex items-center gap-3 p-4 rounded-md border border-gray-200 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors duration-200 group"
+                className="group flex min-h-11 items-center gap-3 rounded-md border border-gray-200 p-4 transition-colors duration-300 hover:border-brand-blue"
               >
-                <Calendar className="h-5 w-5 text-brand-blue" aria-hidden="true" />
-                <span className="font-medium text-gray-700 group-hover:text-brand-blue transition-colors duration-200">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
+                  <Calendar className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="text-base font-medium text-gray-600 transition-colors duration-300 group-hover:text-brand-blue">
                   Schedule
                 </span>
               </Link>
@@ -298,10 +309,10 @@ export function EnhancedFAQSection({
         {showBackToTop && (
           <button
             onClick={scrollToTop}
-            className="fixed bottom-6 right-6 lg:bottom-8 lg:right-8 bg-brand-blue text-white w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-lg hover:bg-brand-blue-light transition-transform duration-200 z-50 flex items-center justify-center transform hover:scale-110"
+            className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-brand-blue text-white transition-colors duration-300 hover:bg-brand-blue-light lg:bottom-8 lg:right-8"
             aria-label="Back to top"
           >
-            <ArrowUpIcon className="w-5 h-5 lg:w-6 lg:h-6" />
+            <ArrowUpIcon className="h-5 w-5" aria-hidden="true" />
           </button>
         )}
       </div>

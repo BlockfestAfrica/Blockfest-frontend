@@ -19,7 +19,7 @@ export function SpeakersSchema({ speakers }: SpeakersSchemaProps) {
     "@type": "ItemList",
     name: "Blockfest Africa 2025 Speakers",
     description:
-      "Industry leaders and Web3 experts speaking at Blockfest Africa 2025",
+      "Industry leaders, Web3 and AI experts speaking at Blockfest Africa 2025",
     numberOfItems: speakers.length,
     itemListElement: speakers.map((speaker, index) => ({
       "@type": "ListItem",
@@ -36,10 +36,9 @@ export function SpeakersSchema({ speakers }: SpeakersSchemaProps) {
           "@type": "Event",
           name: "Blockfest Africa 2025",
           description:
-            "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators.",
+            "Africa's premier Web3 and AI conference bringing together blockchain developers, AI engineers, crypto founders and Web3 innovators.",
           startDate: "2025-10-11T08:00:00+01:00",
           endDate: "2025-10-11T18:00:00+01:00",
-          eventStatus: "https://schema.org/EventScheduled",
           location: {
             "@type": "Place",
             name: "Landmark Event Center",
@@ -88,10 +87,9 @@ export function SpeakerSchema({ speaker }: SpeakerSchemaProps) {
       "@type": "Event",
       name: "Blockfest Africa 2025",
       description:
-        "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators.",
+        "Africa's premier Web3 and AI conference bringing together blockchain developers, AI engineers, crypto founders and Web3 innovators.",
       startDate: "2025-10-11T08:00:00+01:00",
       endDate: "2025-10-11T18:00:00+01:00",
-      eventStatus: "https://schema.org/EventScheduled",
       location: {
         "@type": "Place",
         name: "Landmark Event Center",

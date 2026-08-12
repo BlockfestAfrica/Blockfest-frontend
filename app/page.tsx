@@ -11,11 +11,6 @@ import { SpeakersSection } from "@/components/home/speakers";
 import { PartnersSection } from "@/components/home/partners";
 import { SponsorshipSection } from "@/components/home/sponsorship";
 import { FAQSection } from "@/components/home/faq";
-import {
-  EventSchema,
-  OrganizationSchema,
-  WebsiteSchema,
-} from "@/components/seo/schema-markup-2026";
 
 export const metadata: Metadata = {
   title: "Blockf3st Africa 2026 - The Superbowl of Web3",
@@ -43,6 +38,9 @@ export const metadata: Metadata = {
     "web3 in motion",
     "blockfest africa tickets",
     "blockfest 2026 tickets",
+    "ai conference africa 2026",
+    "artificial intelligence africa",
+    "ai and web3 africa",
   ],
   openGraph: {
     title: "Blockf3st Africa 2026 - The Superbowl of Web3",
@@ -68,44 +66,34 @@ export const metadata: Metadata = {
 const HomePage = () => {
   return (
     <>
-      {/* Schema Markup for SEO */}
-      <EventSchema />
-      <OrganizationSchema />
-      <WebsiteSchema />
 
       <main id="main">
-        {/* 2026 Hero — Lagos next event + South Africa recap */}
+        {/* Poster hero: what it is, when, and the one action */}
         <HeroSection2026 />
 
-        {/* What Lagos '26 is centered around — theme, tracks, festival */}
+        {/* What Lagos '26 is centered around */}
         <Lagos2026Section />
 
-        {/* Pass families and entry prices — full breakdown lives on /tickets */}
+        {/* The ask, while intent is high */}
         <Tickets2026Section />
 
-        {/* 2025 Stats - Building on Success */}
-        <Stats2026Section />
-
-        {/* Social proof photo strip (South Africa roadshow) */}
-        <SocialProofStrip />
-
-        {/* South Africa 2026 recap band */}
-        <SouthAfricaRecapSection />
-
-        {/* Why Attend with market opportunity data */}
-        <WhyAttend2026Section />
-
-        {/* Sponsorship Packages */}
-        <SponsorshipSection />
-
-        {/* Previous Speakers - 2025 lineup */}
+        {/* Credibility: who has stood on this stage */}
         <SpeakersSection />
 
-        {/* Previous Partners - 2025 sponsors */}
-        <PartnersSection />
+        {/* Proof, in three registers: the room, the numbers, the roadshow */}
+        <SocialProofStrip />
+        <Stats2026Section />
+        <SouthAfricaRecapSection />
 
-        {/* FAQ */}
+        {/* The argument for coming */}
+        <WhyAttend2026Section />
+
+        {/* Trust, then objections */}
+        <PartnersSection />
         <FAQSection />
+
+        {/* B2B ask last: a different audience to everything above */}
+        <SponsorshipSection />
       </main>
     </>
   );

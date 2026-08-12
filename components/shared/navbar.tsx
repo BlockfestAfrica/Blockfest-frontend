@@ -75,8 +75,9 @@ const Navbar = () => {
 
   return (
     <header
-      className={`${gotham.className} bg-black px-5 lg:px-[70px] py-4 lg:py-10 flex items-center justify-between sticky top-0 z-50`}
+      className={`${gotham.className} bg-ground sticky top-0 z-50 border-b border-white/10`}
     >
+      <div className="container-page flex items-center justify-between py-4 lg:py-5">
       {/* Logo */}
       <Link href="/" className="inline-flex items-center cursor-pointer min-h-11">
         <Image
@@ -124,7 +125,7 @@ const Navbar = () => {
           {pastEventsOpen && (
             <div
               role="menu"
-              className="absolute left-0 top-full mt-2 min-w-[190px] rounded-md bg-black border border-white/20 shadow-lg py-2 z-50"
+              className="absolute left-0 top-full mt-2 min-w-[190px] rounded-md bg-ground border border-white/20 shadow-lg py-2 z-50"
             >
               <Link
                 href="/blockfest-south-africa-2026"
@@ -195,6 +196,7 @@ const Navbar = () => {
           </Sheet>
         </div>
       </div>
+      </div>
     </header>
   );
 };
@@ -222,7 +224,7 @@ const MobileMenu = () => {
 
   return (
     <div
-      className={`${gotham.className} px-6 py-8 flex flex-col h-full bg-black`}
+      className={`${gotham.className} px-6 py-8 flex flex-col h-full bg-ground`}
     >
       {/* Close Button */}
       <div className="flex justify-end mb-8">

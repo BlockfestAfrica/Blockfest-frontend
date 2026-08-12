@@ -98,3 +98,18 @@
     transform: none;
   }
 }
+
+/* Without JavaScript the reveal class never arrives, so every element carrying
+   one stays at opacity 0 — a no-JS visitor, or a rendering scraper that does
+   not execute scripts, sees a page with holes in it. This makes the revealed
+   state the default and lets JS opt back into animating. */
+@media (scripting: none) {
+  .fade-in-on-scroll,
+  .slide-in-left,
+  .slide-in-right,
+  .scale-in,
+  .stagger-animation {
+    opacity: 1;
+    transform: none;
+  }
+}

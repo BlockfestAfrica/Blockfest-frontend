@@ -2,16 +2,15 @@
 User-agent: *
 Allow: /
 
-# Disallow admin and private areas
+# Private and internal areas
 Disallow: /admin/
 Disallow: /api/
-Disallow: /_next/
 Disallow: /private/
 Disallow: /insights/
 Disallow: /analytics/
 
-# Sitemap location
-Sitemap: https://blockfestafrica.com/sitemap.xml
+# /_next/ is deliberately NOT disallowed. It serves the CSS, JS and optimised
+# images the page needs to render; blocking it stops Google seeing the rendered
+# page at all and hides every next/image response from Google Images.
 
-# Crawl-delay for better server performance
-Crawl-delay: 1
+Sitemap: https://blockfestafrica.com/sitemap.xml

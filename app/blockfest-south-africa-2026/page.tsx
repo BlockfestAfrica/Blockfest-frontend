@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { blockfest2026SouthAfrica, blockfest2026Lagos } from "@/lib/events";
 import { saGallery } from "@/lib/sa-gallery";
+import { PhotoGallery } from "@/components/shared/photo-gallery";
 import { EventHighlights } from "@/components/shared/event-highlights";
 import { EventCta } from "@/components/shared/event-cta";
 
@@ -41,75 +42,73 @@ const event = blockfest2026SouthAfrica;
 
 export default function BlockfestSouthAfrica2026Page() {
   return (
-    <main id="main" className="min-h-screen bg-white">
+    <main id="main" className="min-h-screen bg-paper">
       {/* Hero Section */}
-      <section className="relative bg-ground text-white py-14 lg:py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/images/south-africa/gallery/sa-08.webp')] bg-cover bg-center opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-blue-deep/90 to-transparent" />
-        <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8">
-          {/* Badge */}
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-6">
-            SOUTH AFRICA ROADSHOW · THAT&apos;S A WRAP
-          </p>
+      <section className="section-y relative isolate overflow-hidden bg-ground">
+        <Image
+          src="/images/south-africa/gallery/sa-08.webp"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+        {/* Scrim: keeps the type legible without flattening the photograph. */}
+        <div
+          className="absolute inset-0 bg-ground/80 md:bg-gradient-to-r md:from-ground md:via-ground/85 md:to-ground/25"
+          aria-hidden="true"
+        />
 
-          <h1 className="text-3xl lg:text-5xl font-bold mb-4">
-            Blockf<span className="text-brand-gold">3</span>st Africa{" "}
-            <span className="text-white">&apos;26</span>
-            <span className="block text-2xl lg:text-3xl xl:text-5xl text-white/90 mt-2">
-              South Africa
-            </span>
-          </h1>
+        <div className="container-page relative">
+          <div className="max-w-3xl">
+            {/* Badge */}
+            <p className="eyebrow text-white/60">
+              SOUTH AFRICA ROADSHOW · THAT&apos;S A WRAP
+            </p>
 
-          <p className="text-lg lg:text-2xl text-white/90 max-w-3xl mb-6">
-            {event.tagline}
-          </p>
+            <h1 className="text-display-sm mt-5 font-bold uppercase text-white">
+              Blockf<span className="text-brand-blue-light">3</span>st Africa{" "}
+              <span className="text-brand-gold">&apos;26</span>
+              <span className="mt-2 block text-2xl text-white/90 sm:text-3xl">
+                South Africa
+              </span>
+            </h1>
 
-          <div className="flex flex-wrap gap-4 text-white/90 text-lg">
-            <div className="flex items-center gap-2">
-              <MapPin className="text-white/60" />
-              <span>
+            <p className="mt-6 max-w-xl text-lg text-white/90 sm:text-2xl">
+              {event.tagline}
+            </p>
+
+            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/60">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" aria-hidden="true" />
                 {event.location.city}, {event.location.country}
               </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="text-white/60" />
-              <span>{event.date.displayDate}</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" aria-hidden="true" />
+                {event.date.displayDate}
+              </span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Photo Gallery — the centerpiece */}
-      <section className="py-12 lg:py-16">
-        <div className="max-w-6xl mx-auto px-4 lg:px-8">
-          <h2 className="text-3xl lg:text-5xl font-bold text-center mb-4 text-gray-900">
-            Cape Town, <span className="text-brand-blue">In Frames</span>
-          </h2>
-          <p className="text-gray-600 text-center max-w-2xl mx-auto mb-8 lg:mb-12">
-            From the conference floor to mountain-top meetups and street-level
-            energy. A week of bringing Africa&apos;s Web3 community together in
-            South Africa.
-          </p>
-
-          {/* Masonry: larger frames, mixed orientation preserved */}
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 lg:gap-5 [column-fill:_balance]">
-            {saGallery.map((photo, index) => (
-              <div
-                key={photo.src}
-                className="mb-4 lg:mb-5 break-inside-avoid overflow-hidden rounded-xl bg-gray-100 group"
-              >
-                <Image
-                  src={photo.src}
-                  alt={`Blockfest Africa '26 South Africa roadshow, photo ${index + 1}`}
-                  width={photo.width}
-                  height={photo.height}
-                  loading={index < 6 ? "eager" : "lazy"}
-                  className="w-full h-auto group-hover:scale-[1.03] transition-transform duration-500"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-              </div>
-            ))}
+      <section className="section-y bg-paper border-t border-gray-200">
+        <div className="container-page">
+          <div className="mb-10 lg:mb-14">
+            <h2 className="text-display-sm font-bold text-gray-900">
+              Cape Town, <span className="text-brand-blue">In Frames</span>
+            </h2>
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-600">
+              Conference floor, mountain-top meetups, street-level energy. A week
+              of Web3 and AI across South Africa.
+            </p>
           </div>
+
+          <PhotoGallery
+            photos={saGallery}
+            altPrefix="Blockfest Africa &rsquo;26 South Africa roadshow"
+          />
         </div>
       </section>
 
@@ -121,11 +120,11 @@ export default function BlockfestSouthAfrica2026Page() {
         title="Next stop: Lagos"
         description={
           <>
-            The roadshow was just the warm-up. Join us for the main event,{" "}
+            Main event:{" "}
             <span className="font-semibold text-white">
               {blockfest2026Lagos.location.city},{" "}
               {blockfest2026Lagos.date.displayDate}
-            </span>{" "}
+            </span>
             . {blockfest2026Lagos.tagline}.
           </>
         }
