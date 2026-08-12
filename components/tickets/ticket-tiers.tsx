@@ -17,7 +17,7 @@ function TierCard({ tier }: { tier: TicketTier }) {
       }`}
     >
       {tier.featured && (
-        <span className="eyebrow absolute -top-3 left-6 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-brand-blue-light">
+        <span className="eyebrow absolute -top-3 left-6 rounded-full bg-brand-gold px-3 py-1 text-black">
           Most popular
         </span>
       )}
