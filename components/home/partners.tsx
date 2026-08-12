@@ -120,7 +120,7 @@ export function PartnersSection() {
         <div className="mt-10 rounded-xl border border-white/20 bg-white/5 p-6 lg:mt-14">
           <div className="max-w-2xl">
             <h3 className="text-3xl font-bold leading-tight text-white">
-              Be part of 2026&apos;s Web3 Revolution
+              Be part of 2026&apos;s Web3 &amp; AI Revolution
             </h3>
             <p className="mt-4 text-base leading-relaxed text-white/90">
               We took the movement across Africa in 2026. After the South Africa

@@ -207,7 +207,7 @@ export const blockfest2026Lagos: BlockfestEvent = {
   year: 2026,
   name: "Blockf3st Africa '26 - Lagos",
   tagline: "New Trade Routes: Bringing Africa Onchain",
-  theme: "The Superbowl of Web3",
+  theme: "The Superbowl of Web3 & AI",
   location: {
     city: "Lagos",
     country: "Nigeria",

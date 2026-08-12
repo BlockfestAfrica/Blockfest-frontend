@@ -13,7 +13,7 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
 const siteName = "Blockf3st Africa 2026";
 const siteDescription =
-  "The Superbowl of Web3 - Africa's premier blockchain conference. After the South Africa roadshow, join us in Lagos (October 22–24, 2026). New Trade Routes: Bringing Africa Onchain.";
+  "The Superbowl of Web3 & AI - Africa's premier Web3 and AI conference. After the South Africa roadshow, join us in Lagos (October 22–24, 2026). New Trade Routes: Bringing Africa Onchain.";
 const twitterHandle =
   process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica";
 const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
@@ -51,6 +51,9 @@ export const metadata: Metadata = {
     "builders",
     "blockfest 2026",
     "superbowl of web3",
+    "artificial intelligence",
+    "ai africa",
+    "ai conference africa",
   ],
   authors: [
     {

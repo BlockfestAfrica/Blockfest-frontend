@@ -13,7 +13,7 @@ import { SponsorshipSection } from "@/components/home/sponsorship";
 import { FAQSection } from "@/components/home/faq";
 
 export const metadata: Metadata = {
-  title: "Blockf3st Africa 2026 - The Superbowl of Web3",
+  title: "Blockf3st Africa 2026 - The Superbowl of Web3 & AI",
   description:
     "Tickets are live for Africa's biggest Web3 and AI festival. Lagos, October 22–24, 2026. Three days of building, networking and dealmaking. Passes from ₦7,500, early bird until August 30.",
   keywords: [
@@ -38,9 +38,12 @@ export const metadata: Metadata = {
     "web3 in motion",
     "blockfest africa tickets",
     "blockfest 2026 tickets",
+    "ai conference africa 2026",
+    "artificial intelligence africa",
+    "ai and web3 africa",
   ],
   openGraph: {
-    title: "Blockf3st Africa 2026 - The Superbowl of Web3",
+    title: "Blockf3st Africa 2026 - The Superbowl of Web3 & AI",
     description:
       "Tickets are live. 🇳🇬 Lagos, October 22–24, 2026. Three days with 5,000+ founders, engineers and investors. Passes from ₦7,500, early bird until August 30.",
     images: [
@@ -48,12 +51,12 @@ export const metadata: Metadata = {
         url: "/images/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Blockf3st Africa 2026 - The Superbowl of Web3",
+        alt: "Blockf3st Africa 2026 - The Superbowl of Web3 & AI",
       },
     ],
   },
   twitter: {
-    title: "Blockf3st Africa 2026 - The Superbowl of Web3",
+    title: "Blockf3st Africa 2026 - The Superbowl of Web3 & AI",
     description:
       "Tickets are live. 🇳🇬 Lagos, October 22–24, 2026. Three days with 5,000+ founders, engineers and investors. Passes from ₦7,500, early bird until August 30.",
     images: ["/images/twitter-image.jpg"],

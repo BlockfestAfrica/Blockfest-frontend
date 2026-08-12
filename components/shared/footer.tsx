@@ -76,7 +76,7 @@ const Footer = () => {
               />
             </Link>
             <p className="text-nav-gray text-sm lg:text-base max-w-xs">
-              Africa&apos;s biggest Web3 festival
+              Africa&apos;s biggest Web3 and AI festival
             </p>
           </div>
 

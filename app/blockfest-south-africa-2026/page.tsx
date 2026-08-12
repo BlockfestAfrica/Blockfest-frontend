@@ -101,7 +101,7 @@ export default function BlockfestSouthAfrica2026Page() {
             </h2>
             <p className="mt-4 text-base leading-relaxed text-gray-600">
               Conference floor, mountain-top meetups, street-level energy. A week
-              of Web3 across South Africa.
+              of Web3 and AI across South Africa.
             </p>
           </div>
 

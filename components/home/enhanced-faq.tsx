@@ -114,7 +114,7 @@ export function EnhancedFAQSection({
               Frequently Asked <span className="text-brand-blue">Questions</span>
             </h2>
             <p className="mt-4 text-base leading-relaxed text-gray-600">
-              Everything you need to know about Africa&apos;s premier Web3
+              Everything you need to know about Africa&apos;s premier Web3 and AI
               conference
             </p>
           </div>

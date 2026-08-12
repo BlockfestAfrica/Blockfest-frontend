@@ -50,7 +50,7 @@ export default function NotFound() {
               <p className="text-lg text-gray-300 leading-relaxed max-w-lg mx-auto">
                 Looks like you&apos;ve wandered off the blockchain! The page
                 you&apos;re looking for doesn&apos;t exist, but don&apos;t worry
-                – there&apos;s plenty to explore at Africa&apos;s premier Web3
+                – there&apos;s plenty to explore at Africa&apos;s premier Web3 and AI
                 conference.
               </p>
             </div>
@@ -98,7 +98,7 @@ export default function NotFound() {
 
           {/* Fun Message */}
           <p className="mt-6 text-gray-400 text-sm">
-            Building the future of Web3 in Africa, one block at a time
+            Building the future of Web3 and AI in Africa, one block at a time
           </p>
         </div>
       </div>
