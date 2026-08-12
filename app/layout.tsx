@@ -8,6 +8,11 @@ import { Toaster } from "@/components/ui/sonner";
 import { PerformanceMonitor } from "@/components/performance-monitor";
 import { gotham } from "@/lib/fonts";
 import { ORGANISATION, eventJsonLd } from "@/lib/seo-event";
+import {
+  SABILYTICS_DOMAIN,
+  SABILYTICS_SITE_ID,
+  SABILYTICS_SRC,
+} from "@/lib/sabilytics";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
@@ -171,42 +176,13 @@ export default function RootLayout({
           }}
         />
 
-        {/* Umami Analytics */}
-        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID &&
-          process.env.NEXT_PUBLIC_UMAMI_SRC && (
-            <script
-              async
-              src={process.env.NEXT_PUBLIC_UMAMI_SRC}
-              data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
-              data-auto-track="false"
-              {...(process.env.NODE_ENV === "production" && {
-                "data-domains":
-                  process.env.NEXT_PUBLIC_SITE_URL?.replace(
-                    /https?:\/\//,
-                    ""
-                  ) || "blockfestafrica.com",
-              })}
-            />
-          )}
-
-        {/* Manual Umami tracking initialization - excludes insights pages */}
-        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID &&
-          process.env.NEXT_PUBLIC_UMAMI_SRC && (
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  window.addEventListener('DOMContentLoaded', function() {
-                    // Only track if not on insights pages
-                    if (!window.location.pathname.startsWith('/insights')) {
-                      if (window.umami) {
-                        window.umami.pageView();
-                      }
-                    }
-                  });
-                `,
-              }}
-            />
-          )}
+        {/* Sabilytics — auto-tracks pageviews, no manual initialiser needed */}
+        <script
+          async
+          src={SABILYTICS_SRC}
+          data-site={SABILYTICS_SITE_ID}
+          data-domain={SABILYTICS_DOMAIN}
+        />
 
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />

@@ -5,7 +5,7 @@ import { InsightsDashboard } from "@/components/insights/dashboard";
 import { DashboardSkeleton } from "@/components/insights/skeleton";
 import { PasswordProtected } from "@/components/password-protected";
 import { LogoutButton } from "@/components/insights/logout-button";
-import { InsightsSchema } from "@/components/seo/analytics-schema";
+import { InsightsSchema } from "@/components/seo/insights-schema";
 
 export const metadata: Metadata = {
   title: "Event Insights | Blockfest Africa",
@@ -18,10 +18,7 @@ export default function InsightsPage() {
   return (
     <PasswordProtected>
       <InsightsSchema />
-      <div
-        className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 relative overflow-hidden"
-        data-umami-ignore="true"
-      >
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 relative overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-blue rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
@@ -109,23 +106,6 @@ export default function InsightsPage() {
           </Suspense>
         </div>
 
-        {/* Disable Umami tracking for this page */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if (typeof window !== 'undefined') {
-                // Disable Umami tracking for this page
-                if (typeof localStorage !== 'undefined') {
-                  localStorage.setItem('umami.disabled', 'true');
-                }
-                // Also disable via window object if available
-                if (window.umami) {
-                  window.umami.disabled = true;
-                }
-              }
-            `,
-          }}
-        />
       </div>
     </PasswordProtected>
   );

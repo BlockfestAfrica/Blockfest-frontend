@@ -5,7 +5,7 @@ import {
   type TicketTier,
 } from "@/lib/tickets";
 import { TicketCTA } from "./ticket-cta";
-import { Check, Crown, Presentation, Wrench } from "lucide-react";
+import { Check, Crown, Presentation, Wrench, X } from "lucide-react";
 
 function TierCard({ tier }: { tier: TicketTier }) {
   return (
@@ -39,7 +39,7 @@ function TierCard({ tier }: { tier: TicketTier }) {
         <p className="mt-2 text-xs font-semibold text-brand-gold">
           {tier.discountLabel
             ? `Early bird · ${tier.discountLabel}`
-            : "Discounted rate"}
+            : "Team discount · not an early bird rate"}
         </p>
       )}
 
@@ -52,6 +52,15 @@ function TierCard({ tier }: { tier: TicketTier }) {
             />
             <span className="text-sm leading-relaxed text-white/60">
               {item}
+            </span>
+          </li>
+        ))}
+        {tier.excludes?.map((item) => (
+          <li key={item} className="flex items-start gap-3">
+            <X className="mt-0.5 h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            <span className="text-sm leading-relaxed text-white/60">
+              <span className="sr-only">Not included: </span>
+              Does not include {item.charAt(0).toLowerCase() + item.slice(1)}
             </span>
           </li>
         ))}

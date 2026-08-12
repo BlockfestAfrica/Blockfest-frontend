@@ -71,6 +71,8 @@ export interface TicketTier {
   /** Which days the pass covers, e.g. "Day 2 · Conference". */
   days: string;
   includes: string[];
+  /** Stated plainly on the card. A day-limited pass must say what it is not. */
+  excludes?: string[];
   bestFor: string;
   /** Highlighted as the recommended pick within its group. */
   featured?: boolean;
@@ -190,6 +192,7 @@ export const ticketTiers: TicketTier[] = [
     ],
     bestFor:
       "Builders and creators who want the hands-on workshop plus the full conference day, merch and lunch included.",
+    featured: true,
   },
   {
     id: "founder-circle",
@@ -204,9 +207,9 @@ export const ticketTiers: TicketTier[] = [
       "Direct access to investors and high-growth startups",
       "A personalised experience away from the crowd",
     ],
+    excludes: ["The Day 2 conference and exhibition floor"],
     bestFor:
       "Founders, angel investors, fund managers and ecosystem operators. The closed room where funding conversations happen.",
-    featured: true,
   },
 
   // ——— VIP & All Access ———
@@ -363,3 +366,13 @@ export const lowestTicketPrice = Math.min(
 export function tiersInGroup(groupId: TicketGroupId): TicketTier[] {
   return ticketTiers.filter((tier) => tier.group === groupId);
 }
+
+/**
+ * Passes that actually carry the 25% early-bird cut.
+ *
+ * CORPORATE CIRCLE is discounted off its standard rate but is not an early
+ * bird, and the four VIP passes have one price, so "early bird" copy must say
+ * how many passes it covers rather than implying all ten.
+ */
+export const earlyBirdTiers = ticketTiers.filter((tier) => tier.discountLabel);
+export const EARLY_BIRD_COUNT = earlyBirdTiers.length;
