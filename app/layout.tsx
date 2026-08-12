@@ -7,6 +7,7 @@ import { AnnouncementBar } from "@/components/shared/announcement-bar";
 import { Toaster } from "@/components/ui/sonner";
 import { PerformanceMonitor } from "@/components/performance-monitor";
 import { gotham } from "@/lib/fonts";
+import { ORGANISATION, eventJsonLd } from "@/lib/seo-event";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
@@ -15,12 +16,6 @@ const siteDescription =
   "The Superbowl of Web3 - Africa's premier blockchain conference. After the South Africa roadshow, join us in Lagos (October 22–24, 2026). New Trade Routes: Bringing Africa Onchain.";
 const twitterHandle =
   process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica";
-const instagramHandle =
-  process.env.NEXT_PUBLIC_INSTAGRAM_HANDLE || "blockfestival_africa";
-const linkedinPage =
-  process.env.NEXT_PUBLIC_LINKEDIN_PAGE || "company/blockfestafrica";
-const youtubeChannel =
-  process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL || "@blockchainfestivalafrica";
 const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
 
 export const metadata: Metadata = {
@@ -90,12 +85,6 @@ export const metadata: Metadata = {
         height: 630,
         alt: "Blockfest Africa - Premier Blockchain Conference",
       },
-      {
-        url: `${siteUrl}/images/og-image-square.jpg`,
-        width: 1200,
-        height: 1200,
-        alt: "Blockfest Africa Logo",
-      },
     ],
   },
   twitter: {
@@ -139,36 +128,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // One graph for the whole site: the organisation and the current edition are
+  // defined here and referenced by @id from every page, so no page can restate
+  // a date, venue or price and drift out of sync.
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
-      {
-        "@type": "Organization",
-        "@id": `${siteUrl}/#organization`,
-        name: siteName,
-        url: siteUrl,
-        logo: {
-          "@type": "ImageObject",
-          url: `${siteUrl}/images/logo.svg`,
-        },
-        sameAs: [
-          `https://twitter.com/${twitterHandle.replace("@", "")}`,
-          `https://linkedin.com/${linkedinPage}`,
-          `https://instagram.com/${instagramHandle}`,
-          `https://youtube.com/${youtubeChannel}`,
-        ],
-      },
+      ORGANISATION,
       {
         "@type": "WebSite",
         "@id": `${siteUrl}/#website`,
         url: siteUrl,
         name: siteName,
         description: siteDescription,
-        publisher: {
-          "@id": `${siteUrl}/#organization`,
-        },
-        inLanguage: "en-US",
+        publisher: { "@id": `${siteUrl}/#organization` },
+        inLanguage: "en",
       },
+      eventJsonLd(),
     ],
   };
 

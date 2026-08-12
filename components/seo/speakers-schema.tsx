@@ -39,7 +39,6 @@ export function SpeakersSchema({ speakers }: SpeakersSchemaProps) {
             "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators.",
           startDate: "2025-10-11T08:00:00+01:00",
           endDate: "2025-10-11T18:00:00+01:00",
-          eventStatus: "https://schema.org/EventScheduled",
           location: {
             "@type": "Place",
             name: "Landmark Event Center",
@@ -91,7 +90,6 @@ export function SpeakerSchema({ speaker }: SpeakerSchemaProps) {
         "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators.",
       startDate: "2025-10-11T08:00:00+01:00",
       endDate: "2025-10-11T18:00:00+01:00",
-      eventStatus: "https://schema.org/EventScheduled",
       location: {
         "@type": "Place",
         name: "Landmark Event Center",
