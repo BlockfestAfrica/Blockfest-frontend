@@ -19,31 +19,23 @@ export function Tickets2026Section() {
   return (
     <section
       id="tickets"
-      className="relative overflow-hidden bg-ground border-t border-white/20 py-12 lg:py-16"
+      className="section-y bg-ground border-t border-white/20"
     >
-      <div
-        className="absolute inset-0 opacity-15"
-        style={{
-          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)`,
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      <div className="relative z-10 mx-auto max-w-6xl px-4 lg:px-8">
-        <div className="mb-8 text-center lg:mb-10">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+      <div className="container-page">
+        <div className="mb-10 max-w-2xl lg:mb-14">
+          <p className="eyebrow text-white/60">
             EARLY BIRD · ENDS {EARLY_BIRD_ENDS.display.toUpperCase()}
           </p>
-          <h2 className="mb-3 text-3xl font-bold text-white lg:text-5xl">
+          <h2 className="text-display-sm mt-3 font-bold text-white">
             Three Days. Ten Passes.
           </h2>
-          <p className="mx-auto max-w-2xl text-base text-white/60">
+          <p className="mt-4 text-base leading-relaxed text-white/60">
             Come for the conference, add the workshops, or take the room where
             deals get done.
           </p>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {ticketGroups.map((group) => {
             const tiers = tiersInGroup(group.id);
             const from = Math.min(...tiers.map((tier) => tier.price));
@@ -52,14 +44,12 @@ export function Tickets2026Section() {
             return (
               <div
                 key={group.id}
-                className="flex flex-col rounded-xl border border-white/20 bg-white/5 p-5 transition-colors duration-300 hover:bg-white/10 lg:p-6"
+                className="flex flex-col rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10"
               >
                 <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
-                <h3 className="text-lg font-bold text-white">
-                  {group.title}
-                </h3>
+                <h3 className="text-lg font-bold text-white">{group.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-white/60">
                   {group.description}
                 </p>
@@ -70,34 +60,39 @@ export function Tickets2026Section() {
                       key={tier.id}
                       className="flex items-center gap-2 text-sm text-white/60"
                     >
-                      <Check className="h-4 w-4 shrink-0 text-brand-blue-light" aria-hidden="true" />
+                      <Check
+                        className="h-4 w-4 shrink-0 text-brand-blue-light"
+                        aria-hidden="true"
+                      />
                       {tier.name}
                     </li>
                   ))}
                 </ul>
 
-                <div className="mt-5 flex-grow" />
+                <div className="mt-6 flex-grow" />
 
-                <p className="text-xs uppercase tracking-wide text-white/60">
-                  From
-                </p>
-                <p className="text-2xl font-bold tabular-nums text-brand-gold">
-                  {formatNaira(from)}
-                </p>
+                <div className="mt-6 border-t border-white/20 pt-4">
+                  <p className="text-xs uppercase tracking-wide text-white/60">
+                    From
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-brand-gold">
+                    {formatNaira(from)}
+                  </p>
+                </div>
               </div>
             );
           })}
         </div>
 
-        <div className="text-center">
+        <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
           <Link
             href="/tickets"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-gold px-8 py-3.5 font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
           >
             See all passes
-            <ArrowRight className="h-3.5 w-3.5" />
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
-          <p className="mt-3 text-xs text-white/60">
+          <p className="text-sm text-white/60">
             Non-refundable · transferable until {TRANSFER_DEADLINE.displayShort}
           </p>
         </div>

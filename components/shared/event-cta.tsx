@@ -17,24 +17,26 @@ export function EventCta({
   ctaHref: string;
 }) {
   return (
-    <section className="py-12 lg:py-16 bg-ground">
-      <div className="max-w-3xl mx-auto px-4 lg:px-8 text-center">
-        <h2 className="text-3xl lg:text-5xl font-bold mb-4 text-white">
-          {title}
-        </h2>
-        <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
-          {description}
-        </p>
-        <Button
-          asChild
-          variant="gold"
-          className="rounded-full px-8 py-6 text-base lg:text-lg font-bold"
-        >
-          <Link href={ctaHref}>
-            {ctaLabel}
-            <ArrowRight />
-          </Link>
-        </Button>
+    <section className="section-y bg-ground border-t border-white/20">
+      <div className="container-page">
+        <div className="max-w-2xl">
+          <h2 className="text-display-sm font-bold text-white">{title}</h2>
+          <p className="mt-4 text-base leading-relaxed text-white/90">
+            {description}
+          </p>
+          <div className="mt-8">
+            <Button
+              asChild
+              variant="gold"
+              className="rounded-full px-7 text-base font-semibold"
+            >
+              <Link href={ctaHref}>
+                {ctaLabel}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
+        </div>
       </div>
     </section>
   );

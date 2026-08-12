@@ -57,8 +57,11 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className={`${gotham.className} bg-black`} id="contact">
-      <div className="px-6 lg:px-[70px] pt-14 lg:pt-20">
+    <footer
+      className={`${gotham.className} bg-ground border-t border-white/20`}
+      id="contact"
+    >
+      <div className="container-page pt-14 lg:pt-20">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-10 lg:pb-14">
           <div className="flex flex-col gap-4">
             <Link href="/" className="inline-flex items-center w-fit cursor-pointer min-h-11">
@@ -153,7 +156,7 @@ const Footer = () => {
         <div className="border-t border-white/20" />
       </div>
 
-      <div className="px-6 lg:px-[70px] py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="container-page py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
         <p className="text-nav-gray/60 text-sm order-2 sm:order-1">
           © {currentYear} Blockfest Africa. All rights reserved.
         </p>

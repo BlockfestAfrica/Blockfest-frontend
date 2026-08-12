@@ -43,7 +43,7 @@ export function TicketCTA({
       )}
     >
       {children}
-      <ArrowRight className="h-3.5 w-3.5" />
+      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
     </a>
   );
 }

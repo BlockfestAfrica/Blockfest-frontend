@@ -5,16 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Twitter,
-  Linkedin,
+  ArrowRight,
   Globe,
-  Youtube,
   MapPin,
   Building2,
   Calendar,
   Users,
 } from "lucide-react";
+import { FaXTwitter, FaLinkedin, FaYoutube } from "react-icons/fa6";
 import  { SpeakersList,type Speaker } from "@/lib/speakers";
+import { Button } from "@/components/ui/button";
 import { gotham } from "@/lib/fonts";
 import { generateSEO } from "@/lib/seo";
 import { SpeakerSchema } from "@/components/seo/speakers-schema";
@@ -123,30 +123,30 @@ export default async function SpeakerPage({
     notFound();
   }
 
-  const socialLinks = [
+  const socialLinks: {
+    platform: string;
+    url?: string;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  }[] = [
     {
       platform: "Twitter",
       url: speaker.twitter,
-      icon: Twitter,
-      color: "bg-brand-blue hover:bg-brand-blue-dark",
+      icon: FaXTwitter,
     },
     {
       platform: "LinkedIn",
       url: speaker.linkedin,
-      icon: Linkedin,
-      color: "bg-brand-blue hover:bg-brand-blue-dark",
+      icon: FaLinkedin,
     },
     {
       platform: "YouTube",
       url: speaker.youtube,
-      icon: Youtube,
-      color: "bg-brand-blue hover:bg-brand-blue-dark",
+      icon: FaYoutube,
     },
     {
       platform: "Website",
       url: speaker.website,
       icon: Globe,
-      color: "bg-brand-blue hover:bg-brand-blue-dark",
     },
   ].filter((link) => link.url);
 
@@ -155,46 +155,26 @@ export default async function SpeakerPage({
       <main id="main">
       {/* Hero Section */}
       <section
-        className="relative min-h-[40vh] sm:min-h-[45vh] lg:min-h-[50vh] flex items-center justify-center bg-paper overflow-hidden"
+        className="section-y bg-paper"
         aria-label={`${speaker.name} speaker profile`}
       >
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0 bg-brand-blue"/>
-          <svg
-            className="absolute inset-0 w-full h-full"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <pattern
-                id="speaker-pattern"
-                x="0"
-                y="0"
-                width="100"
-                height="100"
-                patternUnits="userSpaceOnUse"
-              >
-                <circle cx="50" cy="50" r="2" fill="currentColor" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#speaker-pattern)" />
-          </svg>
-        </div>
-
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="container-page">
           {/* Back Button */}
           <Link
             href="/speakers"
-            className="inline-flex min-h-11 items-center gap-2 text-brand-blue hover:text-brand-blue-dark font-medium mb-4 sm:mb-6 transition-colors duration-200 group touch-manipulation"
+            className="group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-brand-blue transition-colors duration-200 hover:text-brand-blue-dark touch-manipulation"
           >
-            <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
-            <span className="text-sm sm:text-base">Back to Speakers</span>
+            <ArrowLeft
+              className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1"
+              aria-hidden="true"
+            />
+            <span className="text-sm">Back to Speakers</span>
           </Link>
 
-          <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 sm:gap-8 lg:gap-10">
+          <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:flex-row lg:items-start lg:gap-12">
             {/* Speaker Image */}
-            <div className="relative flex-shrink-0">
-              <div className="relative w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 lg:w-80 lg:h-80 rounded-xl lg:rounded-xl overflow-hidden bg-white shadow-xl ring-2 sm:ring-4 ring-white/20">
+            <div className="shrink-0">
+              <div className="relative h-48 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white sm:h-60 sm:w-60 md:h-72 md:w-72 lg:h-80 lg:w-80">
                 <Image
                   src={speaker.image}
                   alt={`${speaker.name} - ${speaker.title}`}
@@ -208,117 +188,93 @@ export default async function SpeakerPage({
                   blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                 />
               </div>
-
-              {/* Decorative Elements */}
-              <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-16 h-16 sm:w-20 sm:h-20 bg-brand-blue rounded-full opacity-20 blur-xl"/>
-              <div className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 w-20 h-20 sm:w-24 sm:h-24 bg-brand-blue-light rounded-full opacity-20 blur-xl"/>
             </div>
 
             {/* Speaker Info */}
-            <div className="flex-1 text-center lg:text-left w-full max-w-2xl lg:max-w-none">
-              <div className="mb-4 sm:mb-6">
-                <h1
-                  className={`${gotham.className} text-3xl md:text-5xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight px-2 sm:px-0`}
-                >
-                  {speaker.name}
-                </h1>
+            <div className="w-full max-w-2xl lg:max-w-none">
+              <h1
+                className={`${gotham.className} text-display-sm font-bold text-gray-900`}
+              >
+                {speaker.name}
+              </h1>
 
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 sm:px-6 py-3 sm:py-4 inline-block max-w-full">
-                    <p
-                      className={`${gotham.className} text-base sm:text-lg text-gray-800 font-semibold break-words`}
+              <p
+                className={`${gotham.className} mt-4 text-lg font-semibold text-gray-600`}
+              >
+                {speaker.title}
+              </p>
+
+              {speaker.company && (
+                <p className="mt-3 flex flex-wrap items-center gap-2 text-base font-semibold text-brand-blue">
+                  <Building2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {speaker.company}
+                </p>
+              )}
+
+              {/* Event Info Card */}
+              <div className="mt-8 rounded-xl border border-gray-200 bg-paper-muted p-6">
+                <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-600">
+                  <Calendar className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Speaking at Blockfest Africa 2025
+                </p>
+                <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                  <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Lagos, Nigeria • October 11th, 2025
+                </p>
+              </div>
+
+              {/* Social Links */}
+              {socialLinks.length > 0 && (
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  {socialLinks.map(({ platform, url, icon: Icon }) => (
+                    <a
+                      key={platform}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 touch-manipulation"
+                      aria-label={`Follow ${speaker.name} on ${platform}`}
                     >
-                      {speaker.title}
-                    </p>
-                  </div>
-
-                  {speaker.company && (
-                    <div className="flex items-center justify-center lg:justify-start gap-2 text-brand-blue flex-wrap px-2 sm:px-0">
-                      <Building2 className="w-5 h-5 flex-shrink-0" />
-                      <p className="text-base sm:text-lg font-semibold text-center lg:text-left break-words">
-                        {speaker.company}
-                      </p>
-                    </div>
-                  )}
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </a>
+                  ))}
                 </div>
-              </div>
-
-              {/* Cards Container */}
-              <div className="flex flex-col gap-4 sm:gap-5 w-full px-2 sm:px-0">
-                {/* Event Info Card */}
-                <div className="bg-white/20 rounded-xl p-4 sm:p-5 border border-white/20 shadow-lg flex-1 w-full">
-                  <div className="flex items-center justify-center lg:justify-start gap-2 text-gray-600 mb-2 flex-wrap">
-                    <Calendar className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm sm:text-base font-medium text-center lg:text-left">
-                      Speaking at Blockfest Africa 2025
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center lg:justify-start gap-2 text-gray-600 flex-wrap">
-                    <MapPin className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm sm:text-base text-center lg:text-left">
-                      Lagos, Nigeria • October 11th, 2025
-                    </span>
-                  </div>
-                </div>
-
-                {/* Social Links */}
-                {socialLinks.length > 0 && (
-                  <div className="w-full">
-                    <div className="flex items-center justify-center lg:justify-start gap-3 sm:gap-4 flex-wrap">
-                      {socialLinks.map(
-                        ({ platform, url, icon: Icon, color }) => (
-                          <a
-                            key={platform}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full text-white transition-transform duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${color} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/50 touch-manipulation shadow-md`}
-                            aria-label={`Follow ${speaker.name} on ${platform}`}
-                          >
-                            <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                          </a>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
       {/* Biography Section */}
-      <section className="py-8 sm:py-10 lg:py-12 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="section-y bg-paper border-t border-gray-200">
+        <div className="container-page">
           {speaker.bio ? (
             <>
-              <div className="text-center mb-6 sm:mb-8">
+              <div className="mb-10 max-w-2xl lg:mb-14">
                 <h2
-                  className={`${gotham.className} text-2xl sm:text-3xl font-bold text-gray-900 mb-2`}
+                  className={`${gotham.className} text-display-sm font-bold text-gray-900`}
                 >
                   About {speaker.name.split(" ")[0]}
                 </h2>
-                <div className="w-24 h-1 bg-brand-blue mx-auto rounded-full"/>
               </div>
 
-              <article className="prose prose-lg max-w-none">
-                <div className="text-gray-700 leading-relaxed text-base sm:text-lg space-y-6">
+              <article className="max-w-3xl">
+                <div className="space-y-6 text-base leading-relaxed text-gray-600">
                   {formatBio(speaker.bio)}
                 </div>
               </article>
             </>
           ) : (
-            <div className="text-center py-12 sm:py-16">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Users className="w-10 h-10 text-brand-blue" />
-              </div>
+            <div className="max-w-2xl">
+              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
+                <Users className="h-5 w-5" aria-hidden="true" />
+              </span>
               <h2
-                className={`${gotham.className} text-lg sm:text-2xl font-bold text-gray-900 mb-4`}
+                className={`${gotham.className} mt-4 text-2xl font-bold text-gray-900`}
               >
                 Biography Coming Soon
               </h2>
-              <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
+              <p className="mt-3 text-base leading-relaxed text-gray-600">
                 We&apos;re currently crafting a comprehensive biography for{" "}
                 {speaker.name.split(" ")[0]}. Check back soon for their
                 inspiring story and professional journey.
@@ -329,30 +285,36 @@ export default async function SpeakerPage({
       </section>
 
       {/* CTA Section */}
-      <section className="py-8 sm:py-12 bg-ground">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2
-            className={`${gotham.className} text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4`}
-          >
-            Don&apos;t Miss Out
-          </h2>
-          <p className="text-white/90 text-base sm:text-lg mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
-            Join {speaker.name.split(" ")[0]} and other industry leaders in Lagos,
-            October 22&ndash;24, 2026.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 justify-center items-center max-w-md mx-auto sm:max-w-none">
-            <Link
-              href="/tickets"
-              className="bg-brand-gold text-black px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-brand-gold-hover hover:shadow-lg transform hover:scale-105 transition-transform duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
+      <section className="section-y bg-ground">
+        <div className="container-page">
+          <div className="max-w-2xl">
+            <h2
+              className={`${gotham.className} text-display-sm font-bold text-white`}
             >
-              Get Tickets
-            </Link>
-            <Link
-              href="/speakers"
-              className="border-2 border-white text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-white hover:text-brand-blue hover:shadow-lg transform hover:scale-105 transition-transform duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
-            >
-              View All Speakers
-            </Link>
+              Don&apos;t Miss Out
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-white/60">
+              Join {speaker.name.split(" ")[0]} and other industry leaders in Lagos,
+              October 22&ndash;24, 2026.
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <Button
+                asChild
+                variant="gold"
+                className="rounded-full px-7 text-base font-semibold"
+              >
+                <Link href="/tickets">
+                  Get Tickets
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                className="rounded-full border border-white/20 bg-white/10 px-7 text-base font-semibold text-white hover:bg-white/20"
+              >
+                <Link href="/speakers">View All Speakers</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
