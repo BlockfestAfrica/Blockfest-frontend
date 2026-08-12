@@ -253,6 +253,9 @@ export default function RootLayout({
         className={`${gotham.className} ${gotham.variable} antialiased w-full mx-auto [@media(min-width:1920px)]:max-w-[1440px]`}
         suppressHydrationWarning={true}
       >
+        <noscript>
+          <style>{`.fade-in-on-scroll,.slide-in-left,.slide-in-right,.scale-in,.stagger-animation{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
         <a href="#main" className="skip-link">
           Skip to content
         </a>
