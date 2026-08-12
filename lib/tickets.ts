@@ -45,8 +45,6 @@ export interface TicketTier {
   days: string;
   includes: string[];
   bestFor: string;
-  /** Marks copy drafted in-house and pending sign-off. */
-  bestForIsDraft?: boolean;
   /** Highlighted as the recommended pick within its group. */
   featured?: boolean;
 }
@@ -100,7 +98,6 @@ export const ticketTiers: TicketTier[] = [
     includes: ["Access to the main stage and exhibition area", "Lunch"],
     bestFor:
       "Operators, engineers and marketers past the basics, who want the sessions that move their work forward and the lunch where conversations start.",
-    bestForIsDraft: true,
   },
   {
     id: "become-pass",
@@ -117,7 +114,6 @@ export const ticketTiers: TicketTier[] = [
     ],
     bestFor:
       "Professionals, creators and growth operators who want the complete conference day without the VIP price.",
-    bestForIsDraft: true,
     featured: true,
   },
   {
@@ -135,7 +131,6 @@ export const ticketTiers: TicketTier[] = [
     ],
     bestFor:
       "Companies sending a delegation. One purchase covers five people.",
-    bestForIsDraft: true,
   },
 
   // ——— Day 1: Workshop & The Back Room ———
@@ -203,7 +198,6 @@ export const ticketTiers: TicketTier[] = [
     ],
     bestFor:
       "Executives and investors coming for Day 2 alone who want priority entry and the speakers lounge.",
-    bestForIsDraft: true,
   },
   {
     id: "exec-pass",
@@ -240,7 +234,6 @@ export const ticketTiers: TicketTier[] = [
     ],
     bestFor:
       "Founders, investors and senior operators who plan to be in Lagos for all three days.",
-    bestForIsDraft: true,
     featured: true,
   },
 ];
@@ -280,7 +273,6 @@ export const idealAudience = [
     icon: "trending-up",
     description:
       "Deploying capital into Africa's fastest-growing companies, before the round is announced.",
-    isDraft: true,
   },
   {
     title: "Corporate Leaders & Professionals",
