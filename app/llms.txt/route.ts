@@ -5,6 +5,7 @@ import {
   tiersInGroup,
   formatNaira,
   EARLY_BIRD_ENDS,
+  EARLY_BIRD_COUNT,
   TRANSFER_DEADLINE,
   TICKET_PLATFORM_URL,
 } from "@/lib/tickets";
@@ -31,10 +32,19 @@ export function GET() {
     .map((group) => {
       const rows = tiersInGroup(group.id)
         .map((t) => {
-          const price = t.standardPrice
-            ? `${formatNaira(t.price)} early bird, ${formatNaira(t.standardPrice)} standard`
-            : formatNaira(t.price);
-          return `  - ${t.name} — ${price}. ${t.days}. ${t.bestFor}`;
+          // Only tiers with a discountLabel are early bird. CORPORATE CIRCLE is
+          // discounted off its standard rate year-round, and saying otherwise
+          // would have an AI client quote a deadline that does not apply.
+          let price = formatNaira(t.price);
+          if (t.discountLabel && t.standardPrice) {
+            price = `${formatNaira(t.price)} early bird, ${formatNaira(t.standardPrice)} standard`;
+          } else if (t.standardPrice) {
+            price = `${formatNaira(t.price)}, a standing discount off ${formatNaira(t.standardPrice)}, not an early bird rate`;
+          }
+          const excludes = t.excludes?.length
+            ? ` Does not include ${t.excludes.map((x) => x.charAt(0).toLowerCase() + x.slice(1)).join(", ")}.`
+            : "";
+          return `  - ${t.name} — ${price}. ${t.days}. ${t.bestFor}${excludes}`;
         })
         .join("\n");
       return `${group.title}: ${group.description}\n${rows}`;
@@ -60,7 +70,9 @@ export function GET() {
 
 ## Tickets
 
-Early bird pricing ends ${EARLY_BIRD_ENDS.display}. Prices are in Nigerian naira.
+Early bird takes 25% off ${EARLY_BIRD_COUNT} of the ${ticketTiers.length} passes and ends
+${EARLY_BIRD_ENDS.display}. The CORPORATE CIRCLE team discount and the VIP passes are
+priced independently of it. Prices are in Nigerian naira.
 Tickets are non-refundable but transferable until ${TRANSFER_DEADLINE.display}.
 
 ${tiers}

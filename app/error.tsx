@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { umamiTrack, sanitizeStack } from "@/lib/umami";
+import { track, sanitizeStack } from "@/lib/sabilytics";
 
 export default function Error({
   error,
@@ -15,10 +15,10 @@ export default function Error({
     // Log the error to an error reporting service
     console.error("Global error:", error);
 
-    // Log to Umami analytics (production-only, guarded)
+    // Report to analytics, production only and guarded
     try {
       if (process.env.NODE_ENV === "production") {
-        umamiTrack("error", {
+        track("error", {
           errorMessage: error.message?.slice(0, 500),
           errorType: "global",
           fatal: true,
@@ -28,7 +28,7 @@ export default function Error({
       }
     } catch (analyticsErr) {
       // Never let analytics throw inside an error handler
-      console.warn("umamiTrack failed:", analyticsErr);
+      console.warn("analytics track failed:", analyticsErr);
     }
   }, [error]);
 

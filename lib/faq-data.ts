@@ -58,14 +58,14 @@ export const faqData: FAQItem[] = [
     id: 2,
     question: "How much does it cost to attend Blockf3st Africa '26?",
     answer:
-      "Passes run from ₦7,500 (BUIDL PASS) to ₦185,000 (ALL ACCESS PASS), with early bird pricing until August 30, 2026. See all ten on our tickets page. Only buy through our official ticket link, and please do not pay anyone else claiming to sell tickets.",
+      "Passes run from ₦7,500 (BUIDL PASS) to ₦185,000 (ALL ACCESS PASS). Six passes are 25% off as early bird until August 30, 2026; the CORPORATE CIRCLE carries a separate team discount and the VIP passes have one price. See all ten on our tickets page. Only buy through our official ticket link, and please do not pay anyone else claiming to sell tickets.",
     category: "Registration & Tickets",
   },
   {
     id: 3,
     question: "How do I get a ticket?",
     answer:
-      "Pick your pass on the tickets page and you will be taken to our official ticket platform to check out. Early bird pricing ends August 30, 2026.",
+      "Pick your pass on the tickets page and you will be taken to our official ticket platform to check out. Early bird pricing on the six discounted passes ends August 30, 2026.",
     category: "Registration & Tickets",
   },
   {
@@ -93,7 +93,7 @@ export const faqData: FAQItem[] = [
     id: 23,
     question: "Can I buy tickets for my team?",
     answer:
-      "Yes. The CORPORATE CIRCLE is ₦150,000 (down from ₦175,000) and covers five people with BECOME PASS access: main stage, exhibition area, lunch and event merch for each.",
+      "Yes. The CORPORATE CIRCLE covers five people with BECOME PASS access: main stage, exhibition area, lunch and event merch for each. It is ₦150,000, a standing team discount off ₦175,000 rather than an early-bird rate, so the price does not change after August 30.",
     category: "Registration & Tickets",
   },
   {

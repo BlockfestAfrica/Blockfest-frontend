@@ -1,6 +1,6 @@
 "use client";
 
-import { useUmami } from "@/lib/hooks/use-umami";
+import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
 import { ArrowRight } from "lucide-react";
 import { ticketUrl } from "@/lib/tickets";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,6 @@ export function TicketCTA({
   variant = "gold",
   className,
 }: TicketCTAProps) {
-  const { trackButtonClick, trackRegistration } = useUmami();
 
   const styles =
     variant === "gold"
@@ -34,7 +33,7 @@ export function TicketCTA({
       rel="noopener noreferrer"
       onClick={() => {
         trackButtonClick("Get Ticket", source);
-        trackRegistration(source);
+        trackTicketIntent(source);
       }}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light",

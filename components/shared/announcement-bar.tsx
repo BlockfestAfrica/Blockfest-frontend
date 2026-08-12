@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useUmami } from "@/lib/hooks/use-umami";
+import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
 import { hasPassed } from "@/lib/countdown";
 import { EARLY_BIRD_ENDS, formatNaira, lowestTicketPrice } from "@/lib/tickets";
 
@@ -14,7 +14,6 @@ import { EARLY_BIRD_ENDS, formatNaira, lowestTicketPrice } from "@/lib/tickets";
  */
 export function AnnouncementBar() {
   const pathname = usePathname();
-  const { trackButtonClick } = useUmami();
 
   // Resolved after mount so the server and client render the same first pass.
   const [earlyBirdOver, setEarlyBirdOver] = useState(false);
