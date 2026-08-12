@@ -1,8 +1,35 @@
 // Blockf3st Africa '26 — Lagos ticketing.
 // Single source of truth for tier pricing, inclusions and the checkout link.
 
-/** Every "Get ticket" CTA on the site points here. */
+/**
+ * Every "Get ticket" CTA points here. Keep this bare: it is the canonical URL
+ * used in JSON-LD, /llms.txt and the event data. Use ticketUrl() for links a
+ * human clicks, so the sale can be attributed.
+ */
 export const TICKET_PLATFORM_URL = "https://meetumo.ai/e/blockfest-africa-2026";
+
+/**
+ * The same URL, tagged so the ticket platform can tell which surface earned the
+ * click. Without this every sale looks identical whether it came from the
+ * announcement bar, the hero or a specific tier card.
+ *
+ * `source` is the human label already passed to TicketCTA for on-site
+ * analytics, so the two systems agree on naming.
+ */
+export function ticketUrl(source: string): string {
+  const url = new URL(TICKET_PLATFORM_URL);
+  url.searchParams.set("utm_source", "blockfestafrica.com");
+  url.searchParams.set("utm_medium", "website");
+  url.searchParams.set("utm_campaign", "lagos-2026");
+  url.searchParams.set(
+    "utm_content",
+    source
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+  );
+  return url.toString();
+}
 
 /** Early bird pricing ends at the close of this day (WAT). */
 export const EARLY_BIRD_ENDS = {
