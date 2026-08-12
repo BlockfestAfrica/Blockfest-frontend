@@ -154,9 +154,6 @@ export default function Blockfest2025Page() {
             <h2 className="text-display-sm font-bold text-gray-900">
               The BIG <span className="text-brand-blue">Impact</span>
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-gray-600">
-              Blockfest Africa 2025 made waves across the continent and beyond
-            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -245,10 +242,6 @@ export default function Blockfest2025Page() {
             <h2 className="text-display-sm font-bold text-gray-900">
               Our <span className="text-brand-blue">Speakers</span>
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-gray-600">
-              We gathered some of the brightest minds in Web3 in Africa under one
-              roof
-            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
@@ -297,9 +290,6 @@ export default function Blockfest2025Page() {
             <h2 className="text-display-sm font-bold text-gray-900">
               Event <span className="text-brand-blue">Gallery</span>
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-gray-600">
-              Relive the memorable moments from Blockfest Africa 2025
-            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -353,7 +343,7 @@ export default function Blockfest2025Page() {
       {/* CTA Section */}
       <EventCta
         title="Don't Miss 2026!"
-        description="The South Africa roadshow is a wrap. Lagos is next, October 22–24. Be part of it."
+        description="The South Africa roadshow is a wrap. Lagos is next, October 22–24."
         ctaLabel="Explore Lagos '26"
         ctaHref="/"
       />

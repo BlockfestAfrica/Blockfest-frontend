@@ -27,13 +27,11 @@ export function SponsorshipSection() {
             Become a Sponsor
           </h2>
           <p className="mt-4 text-base leading-relaxed text-white/60">
-            Position your brand at Africa&apos;s premier Web3 event. Get direct
-            access to{" "}
+            Reach{" "}
             <span className="font-semibold text-white">
               15,000+ registered attendees
             </span>
-            , decision makers, and founders shaping the future of blockchain in
-            Africa.
+            , decision makers, and founders across Africa.
           </p>
         </div>
 
@@ -43,9 +41,8 @@ export function SponsorshipSection() {
             Get Our Sponsorship Deck
           </h3>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/90">
-            Interested in sponsoring Blockf3st Africa 2026? Reach out to us and
-            we&apos;ll share our comprehensive sponsorship deck with all
-            available packages and benefits.
+            Email or message us and we&apos;ll send the Blockf3st Africa 2026
+            deck with all packages and benefits.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">

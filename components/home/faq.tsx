@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { ChevronDownIcon, ChevronUpIcon, ArrowUpIcon } from "lucide-react";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { faqData } from "@/lib/faq-data";
+
+/* The homepage answers the common questions; /faq carries all of them. */
+const HOMEPAGE_FAQ_COUNT = 6;
 import { CONTACT_EMAIL } from "@/lib/constants";
 import "./subtle-animations.css";
 
@@ -48,15 +51,11 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
               Frequently Asked{" "}
               <span className="text-brand-blue-light">Questions</span>
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
-              Everything you need to know about Africa&apos;s premier Web3
-              conference
-            </p>
           </div>
         )}
 
         <div className="space-y-3 scale-in">
-          {faqData.map((item) => (
+          {faqData.slice(0, HOMEPAGE_FAQ_COUNT).map((item) => (
             <div
               key={item.id}
               className="rounded-xl border border-white/20 bg-white/5 transition-colors duration-300 hover:bg-white/10"
@@ -102,8 +101,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
               Still have questions?
             </h3>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/90">
-              Can&apos;t find the answer you&apos;re looking for? Our team is
-              here to help.
+              Our team is here to help.
             </p>
             <a
               href={`mailto:${CONTACT_EMAIL}`}

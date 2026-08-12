@@ -46,7 +46,8 @@ export function Stats2026Section() {
           ))}
         </div>
 
-        {/* Social Proof Row */}
+        {/* Social Proof Row. Sole source of these three figures on the
+            homepage, so it stays visible at every width. */}
         <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/60">
           <div className="flex items-center gap-2">
             <FaXTwitter className="h-4 w-4" aria-hidden="true" />

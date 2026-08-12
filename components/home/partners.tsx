@@ -104,13 +104,13 @@ export function PartnersSection() {
             Previous Partners
           </h2>
           <p className="mt-4 text-base leading-relaxed text-white/60">
-            These incredible companies shared our vision at Blockfest Africa
-            2025 and brought many new eyes to their brand
+            These companies shared our vision at Blockfest Africa 2025, and
+            brought new eyes to their brand.
           </p>
         </div>
 
         {/* Single unified grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 lg:gap-4 scale-in">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 lg:gap-4 scale-in">
           {allPartners.map((partner) => (
             <PartnerCard key={partner.alt} {...partner} />
           ))}
@@ -124,8 +124,8 @@ export function PartnersSection() {
             </h3>
             <p className="mt-4 text-base leading-relaxed text-white/90">
               We took the movement across Africa in 2026. After the South Africa
-              roadshow, the main event lands in Lagos this October. Attend, showcase
-              your brand, or sponsor the future of Africa&apos;s web3 ecosystem.
+              roadshow, the main event lands in Lagos this October. Attend,
+              showcase your brand, or sponsor.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">

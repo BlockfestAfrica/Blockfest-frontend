@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { blockfest2026SouthAfrica, blockfest2026Lagos } from "@/lib/events";
 import { saGallery } from "@/lib/sa-gallery";
+import { PhotoGallery } from "@/components/shared/photo-gallery";
 import { EventHighlights } from "@/components/shared/event-highlights";
 import { EventCta } from "@/components/shared/event-cta";
 
@@ -99,31 +100,15 @@ export default function BlockfestSouthAfrica2026Page() {
               Cape Town, <span className="text-brand-blue">In Frames</span>
             </h2>
             <p className="mt-4 text-base leading-relaxed text-gray-600">
-              From the conference floor to mountain-top meetups and street-level
-              energy. A week of bringing Africa&apos;s Web3 community together in
-              South Africa.
+              Conference floor, mountain-top meetups, street-level energy. A week
+              of Web3 across South Africa.
             </p>
           </div>
 
-          {/* Masonry: larger frames, mixed orientation preserved */}
-          <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 lg:gap-5 [column-fill:_balance]">
-            {saGallery.map((photo, index) => (
-              <div
-                key={photo.src}
-                className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-gray-200 bg-paper-muted lg:mb-5"
-              >
-                <Image
-                  src={photo.src}
-                  alt={`Blockfest Africa '26 South Africa roadshow, photo ${index + 1}`}
-                  width={photo.width}
-                  height={photo.height}
-                  loading={index < 6 ? "eager" : "lazy"}
-                  className="h-auto w-full transition-transform duration-500 group-hover:scale-[1.03]"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-              </div>
-            ))}
-          </div>
+          <PhotoGallery
+            photos={saGallery}
+            altPrefix="Blockfest Africa &rsquo;26 South Africa roadshow"
+          />
         </div>
       </section>
 
@@ -135,11 +120,11 @@ export default function BlockfestSouthAfrica2026Page() {
         title="Next stop: Lagos"
         description={
           <>
-            The roadshow was just the warm-up. Join us for the main event,{" "}
+            Main event:{" "}
             <span className="font-semibold text-white">
               {blockfest2026Lagos.location.city},{" "}
               {blockfest2026Lagos.date.displayDate}
-            </span>{" "}
+            </span>
             . {blockfest2026Lagos.tagline}.
           </>
         }

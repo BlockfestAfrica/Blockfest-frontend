@@ -78,7 +78,7 @@ const SpeakersPage = () => {
       <main id="main" className={gotham.className}>
         <ComingSoonNotice
           title="2026 lineup coming soon"
-          description="Speakers for Lagos '26 are being announced in the coming weeks. Below are the voices who have graced our stage so far."
+          description="Lagos '26 speakers are announced in the coming weeks. Below, the voices who have graced our stage."
         />
         <SpeakersGrid />
       </main>

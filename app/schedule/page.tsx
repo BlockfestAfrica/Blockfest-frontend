@@ -66,7 +66,7 @@ export default function Schedule() {
       <main id="main" className={`${gotham.className} min-h-screen bg-paper`}>
         <ComingSoonNotice
           title="2026 schedule coming soon"
-          description="The three-day Lagos '26 programme is published in the coming weeks. Below is the 2025 schedule for reference."
+          description="The three-day Lagos '26 programme is published in the coming weeks. The 2025 schedule is below."
         />
 
         {/* Header Section */}
@@ -81,8 +81,7 @@ export default function Schedule() {
                 Schedule of <span className="text-white">Activities</span>
               </h1>
               <p className="mt-4 text-base leading-relaxed text-white/60">
-                How the 2025 edition ran, hour by hour. The Lagos &apos;26
-                programme spans three days and is published soon.
+                How the 2025 edition ran, hour by hour.
               </p>
             </div>
           </div>
