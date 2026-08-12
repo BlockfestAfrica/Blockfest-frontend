@@ -13,7 +13,7 @@ export function Tickets2026Section() {
   return (
     <section
       id="tickets"
-      className="relative overflow-hidden bg-gradient-to-b from-black via-brand-navy-deep to-brand-navy py-12 lg:py-16"
+      className="relative overflow-hidden bg-ground border-t border-white/20 py-12 lg:py-16"
     >
       <div
         className="absolute inset-0 opacity-15"
@@ -25,12 +25,10 @@ export function Tickets2026Section() {
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 lg:px-8">
         <div className="mb-8 text-center lg:mb-10">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-gold/30 bg-brand-gold/15 px-4 py-2">
-            <span className="text-xs font-semibold tracking-wide text-brand-gold sm:text-sm">
-              EARLY BIRD · ENDS {EARLY_BIRD_ENDS.display.toUpperCase()}
-            </span>
-          </div>
-          <h2 className="mb-3 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+            EARLY BIRD · ENDS {EARLY_BIRD_ENDS.display.toUpperCase()}
+          </p>
+          <h2 className="mb-3 text-3xl font-bold text-white lg:text-5xl">
             Three Days. Ten Passes.
           </h2>
           <p className="mx-auto max-w-2xl text-base text-white/60">
@@ -47,12 +45,12 @@ export function Tickets2026Section() {
             return (
               <div
                 key={group.id}
-                className="flex flex-col rounded-xl border border-white/10 bg-white/[0.04] p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.07] lg:p-6"
+                className="flex flex-col rounded-xl border border-white/20 bg-white/5 p-5 transition-colors duration-300 hover:bg-white/10 lg:p-6"
               >
-                <h3 className="text-lg font-bold text-white lg:text-xl">
+                <h3 className="text-lg font-bold text-white">
                   {group.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/50">
+                <p className="mt-2 text-sm leading-relaxed text-white/60">
                   {group.description}
                 </p>
 
@@ -60,7 +58,7 @@ export function Tickets2026Section() {
                   {tiers.map((tier) => (
                     <li
                       key={tier.id}
-                      className="flex items-center gap-2 text-sm text-white/65"
+                      className="flex items-center gap-2 text-sm text-white/60"
                     >
                       <FaCheck className="shrink-0 text-[10px] text-brand-blue-light" />
                       {tier.name}
@@ -70,7 +68,7 @@ export function Tickets2026Section() {
 
                 <div className="mt-5 flex-grow" />
 
-                <p className="text-xs uppercase tracking-wide text-white/35">
+                <p className="text-xs uppercase tracking-wide text-white/60">
                   From
                 </p>
                 <p className="text-2xl font-bold tabular-nums text-brand-gold">
@@ -89,7 +87,7 @@ export function Tickets2026Section() {
             See all passes
             <FaArrowRight className="text-xs" />
           </Link>
-          <p className="mt-3 text-xs text-white/40">
+          <p className="mt-3 text-xs text-white/60">
             Non-refundable · transferable until {TRANSFER_DEADLINE.displayShort}
           </p>
         </div>

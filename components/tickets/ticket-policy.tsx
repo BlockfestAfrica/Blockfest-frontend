@@ -8,10 +8,10 @@ import { TicketCTA } from "./ticket-cta";
 
 export function TicketPolicy() {
   return (
-    <section className="relative bg-gradient-to-b from-brand-navy to-black py-14 lg:py-20">
+    <section className="relative bg-ground border-t border-white/20 py-14 lg:py-20">
       <div className="relative z-10 mx-auto max-w-4xl px-4 lg:px-8">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 lg:p-8">
-          <h2 className="text-xl font-bold text-white lg:text-2xl">
+        <div className="rounded-xl border border-white/20 bg-white/5 p-6 lg:p-8">
+          <h2 className="text-lg font-bold text-white lg:text-2xl">
             Ticket Policy
           </h2>
           <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-white/60 lg:text-base">
@@ -39,8 +39,8 @@ export function TicketPolicy() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-6 lg:p-8">
-          <h2 className="text-xl font-bold text-white lg:text-2xl">
+        <div className="mt-5 rounded-xl border border-white/20 bg-white/5 p-6 lg:p-8">
+          <h2 className="text-lg font-bold text-white lg:text-2xl">
             Photography &amp; Media Notice
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-white/60 lg:text-base">

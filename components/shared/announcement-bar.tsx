@@ -25,24 +25,25 @@ export function AnnouncementBar() {
   if (pathname === "/tickets") return null;
 
   return (
-    <div className="bg-brand-gold text-black">
+    <div className="bg-black border-b border-white/20">
       <Link
         href="/tickets"
         onClick={() => trackButtonClick("Announcement Bar", "Site Header")}
-        className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 px-4 py-2.5 text-center text-xs font-semibold transition-opacity hover:opacity-80 sm:text-sm"
+        className="group flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 px-4 py-2.5 text-center text-xs font-semibold text-white sm:text-sm"
       >
+        <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
         <span>
           {earlyBirdOver
             ? "Tickets are live for Lagos '26"
             : "Early bird tickets are live"}
         </span>
-        <span className="hidden text-black/40 sm:inline">·</span>
-        <span className="font-normal text-black/70">
+        <span className="hidden text-white/20 sm:inline">·</span>
+        <span className="font-normal text-white/60">
           {earlyBirdOver
             ? `Passes from ${formatNaira(lowestTicketPrice)}`
             : `Save up to 25% until ${EARLY_BIRD_ENDS.display}`}
         </span>
-        <span className="inline-flex items-center gap-1 underline underline-offset-2">
+        <span className="inline-flex items-center gap-1 text-brand-gold underline underline-offset-2 group-hover:text-brand-gold-hover">
           Get yours
           <FaArrowRight className="text-[10px]" />
         </span>

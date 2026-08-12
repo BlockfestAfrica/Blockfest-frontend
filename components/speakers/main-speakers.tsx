@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CiGlobe } from "react-icons/ci";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { FaXTwitter } from "react-icons/fa6";
 import {
   FiSearch,
@@ -14,10 +14,8 @@ import {
   FiExternalLink,
 } from "react-icons/fi";
 import { SpeakersList } from "@/lib/speakers";
-import { SpeakersGridSkeleton } from "./skeleton";
 
 export function SpeakersGrid() {
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedExpertise, setSelectedExpertise] = useState<string | null>(
     null
@@ -35,14 +33,6 @@ export function SpeakersGrid() {
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
   };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   const filteredSpeakers = useMemo(() => {
     return SpeakersList.filter((speaker) => {
@@ -69,20 +59,14 @@ export function SpeakersGrid() {
     return Array.from(new Set(allExpertise)).sort();
   }, []);
 
-  if (isLoading) {
-    return <SpeakersGridSkeleton />;
-  }
-
   return (
     <section className="py-12 lg:py-16 bg-white">
       <div className="max-w-6xl mx-auto px-4 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 lg:mb-10">
-          <div className="inline-flex items-center gap-2 bg-brand-blue/10 rounded-full px-4 py-2 mb-4 border border-brand-blue/20">
-            <span className="text-brand-blue font-semibold text-sm">
-              2025 EDITION
-            </span>
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-blue mb-4">
+            2025 EDITION
+          </p>
           <h1 className="text-3xl lg:text-5xl font-bold mb-4 text-gray-900">
             Speak<span className="text-brand-blue">3</span>rs
           </h1>
@@ -101,7 +85,7 @@ export function SpeakersGrid() {
               placeholder="Search speakers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-10 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue focus:border-transparent focus:shadow-lg outline-none transition-all duration-300 hover:border-gray-400"
+              className="w-full pl-12 pr-10 py-3 text-base border border-gray-300 rounded-xl focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:border-transparent focus:shadow-lg outline-none transition-colors duration-300 hover:border-gray-400"
             />
             {searchTerm && (
               <button
@@ -120,7 +104,7 @@ export function SpeakersGrid() {
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-lg text-sm font-medium text-gray-700 transition-all duration-200 touch-manipulation"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md text-sm font-medium text-gray-700 transition-colors duration-200 touch-manipulation"
               aria-label={showFilters ? "Hide filters" : "Show filters"}
             >
               <FiFilter className="w-4 h-4" />
@@ -135,7 +119,7 @@ export function SpeakersGrid() {
 
           {/* Filter Section - Hidden on mobile by default, always visible on desktop */}
           <div
-            className={`space-y-3 transition-all duration-300 ease-in-out overflow-hidden ${
+            className={`space-y-3 transition-colors duration-300 ease-in-out overflow-hidden ${
               showFilters
                 ? "block opacity-100 max-h-96"
                 : "hidden opacity-0 max-h-0"
@@ -149,7 +133,7 @@ export function SpeakersGrid() {
                 type="button"
                 onClick={() => setSelectedExpertise(null)}
                 aria-pressed={selectedExpertise === null}
-                className={`px-4 py-2.5 min-h-[44px] rounded-full text-sm font-medium transition-all duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
+                className={`px-4 py-2.5 min-h-[44px] rounded-full text-sm font-medium transition-colors duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
                   selectedExpertise === null
                     ? "bg-brand-blue text-white shadow-sm"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300 active:bg-gray-400"
@@ -163,7 +147,7 @@ export function SpeakersGrid() {
                   key={expertise}
                   onClick={() => setSelectedExpertise(expertise)}
                   aria-pressed={selectedExpertise === expertise}
-                  className={`px-4 py-2.5 min-h-[44px] rounded-full text-sm font-medium transition-all duration-200 touch-manipulation whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
+                  className={`px-4 py-2.5 min-h-[44px] rounded-full text-sm font-medium transition-colors duration-200 touch-manipulation whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${
                     selectedExpertise === expertise
                       ? "bg-brand-blue text-white shadow-sm"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300 active:bg-gray-400"
@@ -193,7 +177,7 @@ export function SpeakersGrid() {
                   key={`speaker-${speaker.name
                     .replace(/\s+/g, "-")
                     .toLowerCase()}-${index}`}
-                  className="relative flex flex-col items-center bg-white rounded-2xl p-6 border border-gray-200 shadow-lg hover:shadow-xl hover:shadow-brand-blue/10 hover:-translate-y-2 transition-all duration-500 ease-out gap-y-4 group"
+                  className="relative flex flex-col items-center bg-white rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl hover:shadow-brand-blue/10 hover:-translate-y-2 transition-colors duration-500 ease-out gap-y-4 group"
                 >
                   {/* Make card clickable via Link overlay */}
                   <Link
@@ -218,7 +202,7 @@ export function SpeakersGrid() {
 
                   <div className="flex flex-col items-center gap-y-3 w-full z-10 pointer-events-none">
                     <div className="flex flex-col gap-y-1 items-center text-center w-full">
-                      <h3 className="text-xl lg:text-2xl font-bold text-gray-900">
+                      <h3 className="text-lg lg:text-2xl font-bold text-gray-900">
                         {speaker.name}
                       </h3>
                       <p className="text-sm lg:text-base text-gray-600">
@@ -234,7 +218,7 @@ export function SpeakersGrid() {
                             href={speaker.twitter}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center w-11 h-11 rounded-full bg-brand-blue text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-brand-blue/25 focus:outline-none focus:ring-2 focus:ring-brand-blue/50 focus:ring-offset-2 touch-manipulation"
+                            className="flex items-center justify-center w-11 h-11 rounded-full bg-brand-blue text-white transition-transform duration-300 hover:scale-110 hover:shadow-lg hover:shadow-brand-blue/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/50 focus-visible:ring-offset-2 touch-manipulation"
                             aria-label={`Follow ${speaker.name} on Twitter`}
                           >
                             <FaXTwitter size={18} className="shrink-0" />
@@ -252,7 +236,7 @@ export function SpeakersGrid() {
                             href={speaker.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center w-11 h-11 rounded-full bg-brand-blue text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-brand-blue/25 focus:outline-none focus:ring-2 focus:ring-brand-blue/50 focus:ring-offset-2 touch-manipulation"
+                            className="flex items-center justify-center w-11 h-11 rounded-full bg-brand-blue text-white transition-transform duration-300 hover:scale-110 hover:shadow-lg hover:shadow-brand-blue/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/50 focus-visible:ring-offset-2 touch-manipulation"
                             aria-label={`Visit ${speaker.name}'s website`}
                           >
                             <CiGlobe size={20} className="shrink-0" />
@@ -279,7 +263,7 @@ export function SpeakersGrid() {
               <div className="text-gray-400 mb-3 sm:mb-4">
                 <FiSearch className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4" />
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-600 mb-2 text-center">
+              <h3 className="text-lg font-semibold text-gray-600 mb-2 text-center">
                 No speakers found
               </h3>
               <p className="text-sm sm:text-base text-gray-500 text-center max-w-sm sm:max-w-md mb-4">
@@ -289,7 +273,7 @@ export function SpeakersGrid() {
               <button
                 type="button"
                 onClick={clearAllFilters}
-                className="mt-2 px-6 py-3 bg-brand-blue text-white rounded-lg hover:bg-brand-blue-pressed active:bg-brand-blue-dark transition-colors touch-manipulation"
+                className="mt-2 px-6 py-3 bg-brand-blue text-white rounded-md hover:bg-brand-blue-pressed active:bg-brand-blue-dark transition-colors touch-manipulation"
               >
                 Clear All Filters
               </button>

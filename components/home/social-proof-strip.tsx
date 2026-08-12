@@ -31,7 +31,7 @@ export function SocialProofStrip() {
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/60 pointer-events-none" />
       <div className="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
-        <p className="text-white/70 text-xs sm:text-sm font-medium tracking-wider uppercase">
+        <p className="text-white/60 text-xs sm:text-sm font-medium tracking-wider uppercase">
           Fresh from the South Africa roadshow · next stop Lagos
         </p>
       </div>

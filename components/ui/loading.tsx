@@ -31,7 +31,7 @@ export function LoadingPage({ message = "Loading..." }: LoadingPageProps) {
     <div className="min-h-screen flex flex-col items-center justify-center px-4">
       <div className="text-center">
         <LoadingSpinner size="lg" className="mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">{message}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">{message}</h2>
         <p className="text-gray-600">
           Please wait while we load your content...
         </p>
@@ -47,7 +47,7 @@ interface LoadingCardProps {
 export function LoadingCard({ className = "" }: LoadingCardProps) {
   return (
     <div className={`animate-pulse ${className}`}>
-      <div className="bg-gray-300 rounded-lg h-48 w-full mb-4"></div>
+      <div className="bg-gray-300 rounded-md h-48 w-full mb-4"></div>
       <div className="space-y-2">
         <div className="bg-gray-300 rounded h-4 w-3/4"></div>
         <div className="bg-gray-300 rounded h-4 w-1/2"></div>

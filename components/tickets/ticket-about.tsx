@@ -4,14 +4,14 @@ export function TicketAbout() {
   return (
     <section
       id="about-2026"
-      className="relative bg-gradient-to-b from-black via-brand-navy-deep to-brand-navy py-14 lg:py-20"
+      className="relative bg-ground border-t border-white/20 py-14 lg:py-20"
     >
       <div className="relative z-10 mx-auto max-w-4xl px-4 lg:px-8">
-        <h2 className="mb-6 text-center text-3xl font-bold text-white sm:text-4xl">
+        <h2 className="mb-6 text-center text-3xl font-bold text-white">
           The Super Bowl of African Innovation
         </h2>
 
-        <div className="flex flex-col gap-5 text-base leading-relaxed text-white/65 lg:text-lg">
+        <div className="flex flex-col gap-5 text-base leading-relaxed text-white/60 lg:text-lg">
           <p>
             Join over{" "}
             <span className="font-semibold text-white">5,000 founders</span>,
@@ -28,16 +28,16 @@ export function TicketAbout() {
         </div>
 
         <div className="mt-12">
-          <p className="mb-6 text-center text-sm uppercase tracking-[0.2em] text-white/40">
+          <p className="mb-6 text-center text-sm uppercase tracking-[0.2em] text-white/60">
             Built for people who want to
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {ticketPillars.map((pillar) => (
               <div
                 key={pillar.word}
-                className="rounded-xl border border-white/10 bg-white/[0.04] p-5 text-center"
+                className="rounded-xl border border-white/20 bg-white/5 p-5 text-center"
               >
-                <p className="text-xl font-bold text-brand-gold">
+                <p className="text-lg font-bold text-white">
                   {pillar.word}
                 </p>
                 <p className="mt-2 text-sm leading-relaxed text-white/60">

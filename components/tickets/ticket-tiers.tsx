@@ -10,11 +10,11 @@ import { TicketCTA } from "./ticket-cta";
 function TierCard({ tier }: { tier: TicketTier }) {
   return (
     <div
-      className={`relative flex flex-col rounded-2xl p-6 lg:p-7 transition-all duration-300 ${
-        tier.featured
-          ? "bg-gradient-to-br from-brand-blue/25 via-white/[0.06] to-white/[0.03] border-2 border-brand-gold/40"
-          : "bg-white/[0.04] border border-white/10 hover:border-white/20 hover:bg-white/[0.07]"
-      }`}
+      className={`relative flex flex-col rounded-xl p-6 lg:p-7 transition-colors duration-300 ${
+  tier.featured
+   ? "bg-white/10 border border-brand-gold/40"
+   : "bg-white/5 border border-white/20 hover:bg-white/20"
+  }`}
     >
       {tier.featured && (
         <span className="absolute -top-3 left-6 rounded-full bg-brand-gold px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-black">
@@ -22,8 +22,8 @@ function TierCard({ tier }: { tier: TicketTier }) {
         </span>
       )}
 
-      <h3 className="text-xl lg:text-2xl font-bold text-white">{tier.name}</h3>
-      <p className="mt-1 text-xs uppercase tracking-wide text-brand-gold/80">
+      <h3 className="text-lg lg:text-2xl font-bold text-white">{tier.name}</h3>
+      <p className="mt-1 text-xs uppercase tracking-wide text-white/60">
         {tier.days}
       </p>
 
@@ -32,7 +32,7 @@ function TierCard({ tier }: { tier: TicketTier }) {
           {formatNaira(tier.price)}
         </span>
         {tier.standardPrice && (
-          <span className="text-base text-white/35 line-through tabular-nums">
+          <span className="text-base text-white/60 line-through tabular-nums">
             {formatNaira(tier.standardPrice)}
           </span>
         )}
@@ -49,15 +49,15 @@ function TierCard({ tier }: { tier: TicketTier }) {
         {tier.includes.map((item) => (
           <li key={item} className="flex items-start gap-2.5">
             <FaCheck className="mt-1 shrink-0 text-[11px] text-brand-blue-light" />
-            <span className="text-sm leading-relaxed text-white/70">
+            <span className="text-sm leading-relaxed text-white/60">
               {item}
             </span>
           </li>
         ))}
       </ul>
 
-      <div className="mt-6 border-t border-white/10 pt-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/35">
+      <div className="mt-6 border-t border-white/20 pt-4">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/60">
           Best for
         </p>
         <p className="mt-2 text-sm leading-relaxed text-white/60">
@@ -82,11 +82,11 @@ export function TicketTiers() {
   return (
     <section
       id="tiers"
-      className="relative bg-gradient-to-b from-brand-navy-deep via-brand-navy to-black py-14 lg:py-20"
+      className="relative bg-ground border-t border-white/20 py-14 lg:py-20"
     >
       <div className="relative z-10 mx-auto max-w-6xl px-4 lg:px-8">
         <div className="mb-12 text-center">
-          <h2 className="mb-3 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
+          <h2 className="mb-3 text-3xl font-bold text-white lg:text-5xl">
             Choose Your Pass
           </h2>
           <p className="mx-auto max-w-2xl text-base text-white/60">
@@ -101,7 +101,7 @@ export function TicketTiers() {
                 <h3 className="text-2xl font-bold text-white lg:text-3xl">
                   {group.title}
                 </h3>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/50">
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/60">
                   {group.description}
                 </p>
               </div>

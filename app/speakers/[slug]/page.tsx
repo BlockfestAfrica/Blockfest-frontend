@@ -154,7 +154,7 @@ export default async function SpeakerPage({
     <>
       {/* Hero Section */}
       <section
-        className="relative min-h-[40vh] sm:min-h-[45vh] lg:min-h-[50vh] flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 overflow-hidden"
+        className="relative min-h-[40vh] sm:min-h-[45vh] lg:min-h-[50vh] flex items-center justify-center bg-paper overflow-hidden"
         aria-label={`${speaker.name} speaker profile`}
       >
         {/* Background Pattern */}
@@ -193,7 +193,7 @@ export default async function SpeakerPage({
           <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 sm:gap-8 lg:gap-10">
             {/* Speaker Image */}
             <div className="relative flex-shrink-0">
-              <div className="relative w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 lg:w-80 lg:h-80 rounded-2xl lg:rounded-3xl overflow-hidden bg-white shadow-xl ring-2 sm:ring-4 ring-white/50">
+              <div className="relative w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 lg:w-80 lg:h-80 rounded-xl lg:rounded-xl overflow-hidden bg-white shadow-xl ring-2 sm:ring-4 ring-white/20">
                 <Image
                   src={speaker.image}
                   alt={`${speaker.name} - ${speaker.title}`}
@@ -217,7 +217,7 @@ export default async function SpeakerPage({
             <div className="flex-1 text-center lg:text-left w-full max-w-2xl lg:max-w-none">
               <div className="mb-4 sm:mb-6">
                 <h1
-                  className={`${gotham.className} text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight px-2 sm:px-0`}
+                  className={`${gotham.className} text-3xl md:text-5xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight px-2 sm:px-0`}
                 >
                   {speaker.name}
                 </h1>
@@ -225,7 +225,7 @@ export default async function SpeakerPage({
                 <div className="space-y-3 sm:space-y-4">
                   <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 sm:px-6 py-3 sm:py-4 inline-block max-w-full">
                     <p
-                      className={`${gotham.className} text-base sm:text-lg md:text-xl text-gray-800 font-semibold break-words`}
+                      className={`${gotham.className} text-base sm:text-lg text-gray-800 font-semibold break-words`}
                     >
                       {speaker.title}
                     </p>
@@ -245,7 +245,7 @@ export default async function SpeakerPage({
               {/* Cards Container */}
               <div className="flex flex-col gap-4 sm:gap-5 w-full px-2 sm:px-0">
                 {/* Event Info Card */}
-                <div className="bg-white/70 rounded-xl p-4 sm:p-5 border border-white/40 shadow-lg flex-1 w-full">
+                <div className="bg-white/20 rounded-xl p-4 sm:p-5 border border-white/20 shadow-lg flex-1 w-full">
                   <div className="flex items-center justify-center lg:justify-start gap-2 text-gray-600 mb-2 flex-wrap">
                     <Calendar className="w-4 h-4 flex-shrink-0" />
                     <span className="text-sm sm:text-base font-medium text-center lg:text-left">
@@ -271,7 +271,7 @@ export default async function SpeakerPage({
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full text-white transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${color} focus:outline-none focus:ring-4 focus:ring-blue-500/50 touch-manipulation shadow-md`}
+                            className={`flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full text-white transition-transform duration-300 hover:scale-110 hover:shadow-lg active:scale-95 ${color} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/50 touch-manipulation shadow-md`}
                             aria-label={`Follow ${speaker.name} on ${platform}`}
                           >
                             <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -294,7 +294,7 @@ export default async function SpeakerPage({
             <>
               <div className="text-center mb-6 sm:mb-8">
                 <h2
-                  className={`${gotham.className} text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2`}
+                  className={`${gotham.className} text-2xl sm:text-3xl font-bold text-gray-900 mb-2`}
                 >
                   About {speaker.name.split(" ")[0]}
                 </h2>
@@ -313,7 +313,7 @@ export default async function SpeakerPage({
                 <Users className="w-10 h-10 text-brand-blue" />
               </div>
               <h2
-                className={`${gotham.className} text-xl sm:text-2xl font-bold text-gray-900 mb-4`}
+                className={`${gotham.className} text-lg sm:text-2xl font-bold text-gray-900 mb-4`}
               >
                 Biography Coming Soon
               </h2>
@@ -328,27 +328,27 @@ export default async function SpeakerPage({
       </section>
 
       {/* CTA Section */}
-      <section className="py-8 sm:py-12 bg-gradient-to-r from-brand-blue to-brand-blue-deep">
+      <section className="py-8 sm:py-12 bg-ground">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2
-            className={`${gotham.className} text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4`}
+            className={`${gotham.className} text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4`}
           >
             Don&apos;t Miss Out
           </h2>
-          <p className="text-white/80 text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-white/90 text-base sm:text-lg mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
             Join {speaker.name.split(" ")[0]} and other industry leaders in Lagos,
             October 22&ndash;24, 2026.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 justify-center items-center max-w-md mx-auto sm:max-w-none">
             <Link
               href="/tickets"
-              className="bg-brand-gold text-black px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-brand-gold-hover hover:shadow-lg transform hover:scale-105 transition-all duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
+              className="bg-brand-gold text-black px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-brand-gold-hover hover:shadow-lg transform hover:scale-105 transition-transform duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
             >
               Get Tickets
             </Link>
             <Link
               href="/speakers"
-              className="border-2 border-white text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-white hover:text-brand-blue hover:shadow-lg transform hover:scale-105 transition-all duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
+              className="border-2 border-white text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-white hover:text-brand-blue hover:shadow-lg transform hover:scale-105 transition-transform duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
             >
               View All Speakers
             </Link>

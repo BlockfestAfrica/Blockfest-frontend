@@ -115,23 +115,23 @@ const Navbar = () => {
           {pastEventsOpen && (
             <div
               role="menu"
-              className="absolute left-0 top-full mt-2 min-w-[190px] rounded-md bg-black border border-white/10 shadow-lg py-2 z-50"
+              className="absolute left-0 top-full mt-2 min-w-[190px] rounded-md bg-black border border-white/20 shadow-lg py-2 z-50"
             >
               <Link
                 href="/blockfest-south-africa-2026"
                 role="menuitem"
                 onClick={() => setPastEventsOpen(false)}
-                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white focus-visible:outline-none transition-colors duration-200 ease-in-out"
+                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white transition-colors duration-200 ease-in-out"
               >
-                South Africa &apos;26 <span className="text-sm">🇿🇦</span>
+                South Africa &apos;26
               </Link>
               <Link
                 href="/blockfest-2025"
                 role="menuitem"
                 onClick={() => setPastEventsOpen(false)}
-                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white focus-visible:outline-none transition-colors duration-200 ease-in-out"
+                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white transition-colors duration-200 ease-in-out"
               >
-                2025 Recap <span className="text-sm">🇳🇬</span>
+                2025 Recap
               </Link>
             </div>
           )}
@@ -251,13 +251,13 @@ const MobileMenu = () => {
           </button>
 
           {pastEventsOpen && (
-            <div className="flex flex-col gap-y-4 mt-4 pl-4 border-l border-white/10">
+            <div className="flex flex-col gap-y-4 mt-4 pl-4 border-l border-white/20">
               <SheetClose asChild>
                 <Link
                   href="/blockfest-south-africa-2026"
                   className="text-base font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
                 >
-                  South Africa &apos;26 <span>🇿🇦</span>
+                  South Africa &apos;26
                 </Link>
               </SheetClose>
               <SheetClose asChild>
@@ -265,7 +265,7 @@ const MobileMenu = () => {
                   href="/blockfest-2025"
                   className="text-base font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
                 >
-                  2025 Recap <span>🇳🇬</span>
+                  2025 Recap
                 </Link>
               </SheetClose>
             </div>

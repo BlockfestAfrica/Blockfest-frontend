@@ -41,33 +41,30 @@ const event = blockfest2026SouthAfrica;
 
 export default function BlockfestSouthAfrica2026Page() {
   return (
-    <main className="min-h-screen bg-white">
+    <main id="main" className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-brand-blue via-brand-blue-dark to-brand-blue-deep text-white py-14 lg:py-20 overflow-hidden">
+      <section className="relative bg-ground text-white py-14 lg:py-20 overflow-hidden">
         <div className="absolute inset-0 bg-[url('/images/south-africa/gallery/sa-08.webp')] bg-cover bg-center opacity-20" />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-blue-deep/90 to-transparent" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-6 border border-white/10">
-            <span className="text-lg">🇿🇦</span>
-            <span className="text-white font-semibold text-sm tracking-wide">
-              SOUTH AFRICA ROADSHOW · THAT&apos;S A WRAP
-            </span>
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-6">
+            SOUTH AFRICA ROADSHOW · THAT&apos;S A WRAP
+          </p>
 
-          <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold mb-4">
+          <h1 className="text-3xl lg:text-5xl font-bold mb-4">
             Blockf<span className="text-brand-gold">3</span>st Africa{" "}
             <span className="text-white">&apos;26</span>
-            <span className="block text-2xl lg:text-4xl xl:text-5xl text-white/90 mt-2">
+            <span className="block text-2xl lg:text-3xl xl:text-5xl text-white/90 mt-2">
               South Africa
             </span>
           </h1>
 
-          <p className="text-xl lg:text-2xl text-white/90 max-w-3xl mb-6">
+          <p className="text-lg lg:text-2xl text-white/90 max-w-3xl mb-6">
             {event.tagline}
           </p>
 
-          <div className="flex flex-wrap gap-4 text-white/80 text-lg">
+          <div className="flex flex-wrap gap-4 text-white/90 text-lg">
             <div className="flex items-center gap-2">
               <FaMapMarkerAlt className="text-white/60" />
               <span>
@@ -99,7 +96,7 @@ export default function BlockfestSouthAfrica2026Page() {
             {saGallery.map((photo, index) => (
               <div
                 key={photo.src}
-                className="mb-4 lg:mb-5 break-inside-avoid overflow-hidden rounded-2xl bg-gray-100 group"
+                className="mb-4 lg:mb-5 break-inside-avoid overflow-hidden rounded-xl bg-gray-100 group"
               >
                 <Image
                   src={photo.src}
@@ -121,7 +118,6 @@ export default function BlockfestSouthAfrica2026Page() {
 
       {/* CTA → Lagos */}
       <EventCta
-        flag="🇳🇬"
         title="Next stop: Lagos"
         description={
           <>

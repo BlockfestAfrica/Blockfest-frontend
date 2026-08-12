@@ -79,7 +79,7 @@ const SpeakersPage = () => {
       <SpeakersSchema speakers={speakers} />
       <BreadcrumbSchema items={breadcrumbItems} />
 
-      <main className={`${Gotham.className}`}>
+      <main id="main" className={`${Gotham.className}`}>
         <ComingSoonNotice
           title="2026 lineup coming soon"
           description="Speakers for Lagos '26 are being announced in the coming weeks. Below are the voices who have graced our stage so far."

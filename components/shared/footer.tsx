@@ -95,12 +95,11 @@ const Footer = () => {
           </Link>
         </div>
 
-        <div className="border-t border-white/10" />
+        <div className="border-t border-white/20" />
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-10 py-10 lg:py-14">
           <div>
             <p className={columnLabelClasses}>
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
               Explore
             </p>
             <nav className="flex flex-col gap-y-4">
@@ -124,7 +123,6 @@ const Footer = () => {
 
           <div>
             <p className={columnLabelClasses}>
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
               Info
             </p>
             <nav className="flex flex-col gap-y-4">
@@ -138,7 +136,6 @@ const Footer = () => {
 
           <div className="col-span-2 sm:col-span-1">
             <p className={columnLabelClasses}>
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
               Connect
             </p>
             <div className="flex items-center gap-x-3">
@@ -150,7 +147,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`Follow us on ${socialLabels[index]}`}
-                  className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 text-nav-gray hover:text-white hover:border-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-300 ease-in-out"
+                  className="flex items-center justify-center w-10 h-10 rounded-full border border-white/20 text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-300 ease-in-out"
                 >
                   {item.icon}
                 </Link>
@@ -159,7 +156,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/10" />
+        <div className="border-t border-white/20" />
       </div>
 
       <div className="px-6 lg:px-[70px] py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
