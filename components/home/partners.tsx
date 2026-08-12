@@ -98,12 +98,12 @@ export function PartnersSection() {
     <section className="section-y bg-ground border-t border-white/20">
       <div className="container-page">
         {/* Header */}
-        <div className="mb-10 max-w-2xl lg:mb-14">
+        <div className="mb-10 lg:mb-14">
           <p className="eyebrow text-white/60">2025 PARTNERS</p>
           <h2 className="text-display-sm mt-3 font-bold text-white fade-in-on-scroll">
             Previous Partners
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
             These companies shared our vision at Blockfest Africa 2025, and
             brought new eyes to their brand.
           </p>

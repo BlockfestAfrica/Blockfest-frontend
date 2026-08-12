@@ -27,7 +27,7 @@ export function Lagos2026Section() {
     >
       <div className="container-page">
         {/* Theme banner */}
-        <div className="mb-10 max-w-2xl lg:mb-14">
+        <div className="mb-10 lg:mb-14">
           <p className="eyebrow text-white/60">LAGOS · OCTOBER 22–24, 2026</p>
           <h2 className="text-display-sm mt-3 font-bold text-white">
             New Trade Routes:{" "}
@@ -35,7 +35,7 @@ export function Lagos2026Section() {
               Bringing Africa Onchain
             </span>
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
             Six tracks across African tech, Web3 and AI.
           </p>
         </div>
@@ -70,10 +70,10 @@ export function Lagos2026Section() {
           <h3 className="text-3xl font-bold text-white">
             A Festival, Not Just an Event
           </h3>
-          {/* <p className="mt-4 text-base leading-relaxed text-white/60">
+          {/* <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
             Three weeks of programming. One unforgettable week in Lagos.
           </p> */}
-          <p className="mt-4 text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
             One weekend in Lagos.
           </p>
         </div>

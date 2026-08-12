@@ -95,11 +95,11 @@ export default function BlockfestSouthAfrica2026Page() {
       {/* Photo Gallery — the centerpiece */}
       <section className="section-y bg-paper border-t border-gray-200">
         <div className="container-page">
-          <div className="mb-10 max-w-2xl lg:mb-14">
+          <div className="mb-10 lg:mb-14">
             <h2 className="text-display-sm font-bold text-gray-900">
               Cape Town, <span className="text-brand-blue">In Frames</span>
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-gray-600">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-600">
               Conference floor, mountain-top meetups, street-level energy. A week
               of Web3 and AI across South Africa.
             </p>

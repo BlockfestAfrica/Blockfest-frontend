@@ -71,11 +71,11 @@ export function WhyAttend2026Section() {
     <section className="section-y bg-paper border-t border-gray-200" id="about">
       <div className="container-page">
         {/* Header — left-aligned, on the same edge as the hero headline */}
-        <div className="mb-10 max-w-2xl lg:mb-14">
+        <div className="mb-10 lg:mb-14">
           <h2 className="text-display-sm fade-in-on-scroll font-bold text-gray-900">
             Why Attend?
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-gray-600">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-600">
             Three days across AI, Web3, venture capital, technology, culture and
             careers
           </p>

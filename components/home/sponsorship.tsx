@@ -21,12 +21,12 @@ export function SponsorshipSection() {
     >
       <div className="container-page">
         {/* Header */}
-        <div className="mb-10 max-w-2xl lg:mb-14 fade-in-on-scroll">
+        <div className="mb-10 lg:mb-14 fade-in-on-scroll">
           <p className="eyebrow text-white/60">PARTNERSHIP OPPORTUNITIES</p>
           <h2 className="text-display-sm mt-3 font-bold text-white">
             Become a Sponsor
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
             Reach{" "}
             <span className="font-semibold text-white">
               15,000+ registered attendees

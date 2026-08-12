@@ -87,11 +87,11 @@ export function TicketTiers() {
   return (
     <section id="tiers" className="section-y bg-ground border-t border-white/20">
       <div className="container-page">
-        <div className="mb-10 max-w-2xl lg:mb-14">
+        <div className="mb-10 lg:mb-14">
           <h2 className="text-display-sm font-bold text-white">
             Choose Your Pass
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
             Ten passes across three days.
           </p>
         </div>

@@ -46,7 +46,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
     <section className="section-y bg-ground border-t border-white/20">
       <div className="container-page">
         {!hideHeader && (
-          <div className="mb-10 max-w-2xl lg:mb-14 fade-in-on-scroll">
+          <div className="mb-10 lg:mb-14 fade-in-on-scroll">
             <h2 className="text-display-sm font-bold text-white">
               Frequently Asked{" "}
               <span className="text-brand-blue-light">Questions</span>

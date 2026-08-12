@@ -22,14 +22,14 @@ export function Tickets2026Section() {
       className="section-y bg-ground border-t border-white/20"
     >
       <div className="container-page">
-        <div className="mb-10 max-w-2xl lg:mb-14">
+        <div className="mb-10 lg:mb-14">
           <p className="eyebrow text-white/60">
             EARLY BIRD · ENDS {EARLY_BIRD_ENDS.display.toUpperCase()}
           </p>
           <h2 className="text-display-sm mt-3 font-bold text-white">
             Three Days. Ten Passes.
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
             Come for the conference, add the workshops, or take the room where
             deals get done.
           </p>

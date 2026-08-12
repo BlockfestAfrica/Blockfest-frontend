@@ -68,12 +68,12 @@ export function SpeakersGrid() {
     <section className="section-y bg-paper">
       <div className="container-page">
         {/* Header */}
-        <div className="mb-10 max-w-2xl lg:mb-14">
+        <div className="mb-10 lg:mb-14">
           <p className="eyebrow text-brand-blue">2025 EDITION</p>
           <h1 className="text-display-sm mt-3 font-bold text-gray-900">
             Speak<span className="text-brand-blue">3</span>rs
           </h1>
-          <p className="mt-4 text-base leading-relaxed text-gray-600">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-600">
             Meet the visionary speakers who shared their insights at Blockfest
             Africa 2025
           </p>

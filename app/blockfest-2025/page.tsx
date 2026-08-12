@@ -150,7 +150,7 @@ export default function Blockfest2025Page() {
       {/* Impact Section */}
       <section className="section-y bg-paper-muted border-t border-gray-200">
         <div className="container-page">
-          <div className="mb-10 max-w-2xl lg:mb-14">
+          <div className="mb-10 lg:mb-14">
             <h2 className="text-display-sm font-bold text-gray-900">
               The BIG <span className="text-brand-blue">Impact</span>
             </h2>
@@ -196,7 +196,7 @@ export default function Blockfest2025Page() {
       {/* Attendance Breakdown */}
       <section className="section-y bg-paper border-t border-gray-200">
         <div className="container-page">
-          <div className="mb-10 max-w-2xl lg:mb-14">
+          <div className="mb-10 lg:mb-14">
             <h2 className="text-display-sm font-bold text-gray-900">
               Attendance <span className="text-brand-blue">Breakdown</span>
             </h2>
@@ -238,7 +238,7 @@ export default function Blockfest2025Page() {
       {/* Featured Speakers */}
       <section className="section-y bg-paper-muted border-t border-gray-200">
         <div className="container-page">
-          <div className="mb-10 max-w-2xl lg:mb-14">
+          <div className="mb-10 lg:mb-14">
             <h2 className="text-display-sm font-bold text-gray-900">
               Our <span className="text-brand-blue">Speakers</span>
             </h2>
@@ -286,7 +286,7 @@ export default function Blockfest2025Page() {
       {/* Photo Gallery */}
       <section className="section-y bg-paper border-t border-gray-200">
         <div className="container-page">
-          <div className="mb-10 max-w-2xl lg:mb-14">
+          <div className="mb-10 lg:mb-14">
             <h2 className="text-display-sm font-bold text-gray-900">
               Event <span className="text-brand-blue">Gallery</span>
             </h2>
