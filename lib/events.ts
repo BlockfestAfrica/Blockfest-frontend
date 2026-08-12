@@ -1,5 +1,7 @@
 // Event types and data for Blockfest Africa events
 
+import { TICKET_PLATFORM_URL } from "./tickets";
+
 export interface BlockfestEvent {
   id: string;
   year: number;
@@ -118,7 +120,7 @@ export const blockfest2026SouthAfrica: BlockfestEvent = {
     city: "Cape Town",
     country: "South Africa",
     countryCode: "ZA",
-    venue: "TBA",
+    venue: "Cape Town, South Africa",
   },
   date: {
     start: "2026-05-05T10:00:00+02:00",
@@ -211,17 +213,17 @@ export const blockfest2026Lagos: BlockfestEvent = {
     city: "Lagos",
     country: "Nigeria",
     countryCode: "NG",
-    venue: "Lagos, Nigeria",
+    venue: "National Art Theatre, Lagos",
   },
   date: {
     start: "2026-10-22T08:00:00+01:00",
-    end: "2026-10-23T18:00:00+01:00",
-    displayDate: "October 22–23, 2026",
+    end: "2026-10-24T22:00:00+01:00",
+    displayDate: "October 22–24, 2026",
   },
-  registrationUrl: "", // To be added
+  registrationUrl: TICKET_PLATFORM_URL,
   status: "upcoming",
   highlights: [
-    "Two main days: Workshop + The Back Room (Oct 22) and the Conference & Convention (Oct 23)",
+    "Three days: Workshop + The Back Room (Oct 22), the Conference & Convention (Oct 23) and the Mixer (Oct 24)",
     "Reaching Africa's 200M+ Web3 and AI users of tomorrow",
     "Six tracks spanning AI, policy, funding, infrastructure, culture and talent",
     "Part of a three-week festival of hackathons, co-working and programming",
@@ -298,7 +300,7 @@ export const lagos2026Festival: FestivalPhase[] = [
     dates: "Fri, Oct 23",
     title: "Main Conference & Convention",
     location: "Lagos",
-    description: "The flagship day — keynotes, tracks and the expo floor.",
+    description: "Keynotes, tracks and the expo floor.",
   },
   {
     dates: "Sat, Oct 24",

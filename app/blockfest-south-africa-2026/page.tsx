@@ -10,7 +10,7 @@ import { FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
 export const metadata: Metadata = {
   title: "Blockfest Africa '26 South Africa - Cape Town Roadshow Recap",
   description:
-    "That's a wrap on Blockf3st Africa '26 in South Africa! Relive the Cape Town roadshow — builder meetups, sessions and experiences that brought Africa's Web3 community together ahead of Lagos.",
+    "That's a wrap on Blockf3st Africa '26 in South Africa! Relive the Cape Town roadshow. Builder meetups, sessions and experiences that brought Africa's Web3 community together ahead of Lagos.",
   keywords: [
     "blockfest africa south africa",
     "blockfest cape town 2026",
@@ -90,7 +90,7 @@ export default function BlockfestSouthAfrica2026Page() {
           </h2>
           <p className="text-gray-600 text-center max-w-2xl mx-auto mb-8 lg:mb-12">
             From the conference floor to mountain-top meetups and street-level
-            energy — a week of bringing Africa&apos;s Web3 community together in
+            energy. A week of bringing Africa&apos;s Web3 community together in
             South Africa.
           </p>
 
@@ -103,7 +103,7 @@ export default function BlockfestSouthAfrica2026Page() {
               >
                 <Image
                   src={photo.src}
-                  alt={`Blockfest Africa '26 South Africa roadshow — photo ${index + 1}`}
+                  alt={`Blockfest Africa '26 South Africa roadshow, photo ${index + 1}`}
                   width={photo.width}
                   height={photo.height}
                   loading={index < 6 ? "eager" : "lazy"}
@@ -125,12 +125,12 @@ export default function BlockfestSouthAfrica2026Page() {
         title="Next stop: Lagos"
         description={
           <>
-            The roadshow was just the warm-up. Join us for the main event —{" "}
+            The roadshow was just the warm-up. Join us for the main event,{" "}
             <span className="font-semibold text-white">
               {blockfest2026Lagos.location.city},{" "}
               {blockfest2026Lagos.date.displayDate}
             </span>{" "}
-            — {blockfest2026Lagos.tagline}.
+            . {blockfest2026Lagos.tagline}.
           </>
         }
         ctaLabel="Explore Lagos '26"

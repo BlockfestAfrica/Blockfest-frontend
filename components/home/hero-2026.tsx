@@ -11,38 +11,20 @@ import {
   blockfest2026Lagos,
   type BlockfestEvent,
 } from "@/lib/events";
+import { calculateTimeLeft, type TimeLeft } from "@/lib/countdown";
+import { EARLY_BIRD_ENDS } from "@/lib/tickets";
 import "./subtle-animations.css";
-
-interface TimeLeft {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
-function calculateTimeLeft(targetDate: string): TimeLeft {
-  const difference = new Date(targetDate).getTime() - new Date().getTime();
-  if (difference <= 0) {
-    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  }
-  return {
-    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((difference / 1000 / 60) % 60),
-    seconds: Math.floor((difference / 1000) % 60),
-  };
-}
 
 const flagFor = (countryCode: string) =>
   countryCode === "ZA" ? "🇿🇦" : "🇳🇬";
 
-/** Upcoming event card with a live countdown and a register CTA. */
+/** Upcoming event card with a live countdown and a tickets CTA. */
 function UpcomingEventCard({
   event,
-  onRegisterClick,
+  onTicketsClick,
 }: {
   event: BlockfestEvent;
-  onRegisterClick: () => void;
+  onTicketsClick: () => void;
 }) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(
     calculateTimeLeft(event.date.start)
@@ -96,13 +78,15 @@ function UpcomingEventCard({
           ))}
         </div>
 
-        <Button
-          className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-brand-gold text-black hover:bg-brand-gold-hover"
-          onClick={onRegisterClick}
-          disabled={!event.registrationUrl}
-        >
-          {event.registrationUrl ? "Register Now" : "Tickets Coming Soon"}
-        </Button>
+        <Link href="/tickets" className="block" onClick={onTicketsClick}>
+          <Button className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-brand-gold text-black hover:bg-brand-gold-hover">
+            Get Tickets
+          </Button>
+        </Link>
+
+        <p className="mt-3 text-xs text-white/50">
+          Early bird ends {EARLY_BIRD_ENDS.display}
+        </p>
       </div>
     </div>
   );
@@ -129,7 +113,7 @@ function RecapEventCard({ event }: { event: BlockfestEvent }) {
         </div>
 
         <p className="text-white/60 text-sm mb-6 min-h-[2.5rem]">
-          A wrap on the South Africa roadshow — relive the moments.
+          A wrap on the South Africa roadshow. Relive the moments.
         </p>
 
         <Link href={event.recapUrl ?? "/"} className="block">
@@ -149,16 +133,9 @@ export function HeroSection2026() {
 
   useSubtleAnimations();
 
-  const handleLagosRegister = () => {
-    trackButtonClick("Register Now", "Hero Section - Lagos");
+  const handleLagosTickets = () => {
+    trackButtonClick("Get Tickets", "Hero Section - Lagos");
     trackRegistration("hero-cta-lagos");
-    if (blockfest2026Lagos.registrationUrl) {
-      window.open(
-        blockfest2026Lagos.registrationUrl,
-        "_blank",
-        "noopener,noreferrer"
-      );
-    }
   };
 
   return (
@@ -176,9 +153,13 @@ export function HeroSection2026() {
         {/* Main Content */}
         <div className="text-center mb-8 lg:mb-12">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-5 py-2.5 mb-6 border border-white/20 fade-in-on-scroll">
-            <span className="text-white font-semibold text-sm lg:text-base">
-              THE ROAD TO LAGOS &apos;26
+          <div className="inline-flex items-center gap-2 bg-brand-gold/15 rounded-full px-5 py-2.5 mb-6 border border-brand-gold/30 fade-in-on-scroll">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-gold opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-gold" />
+            </span>
+            <span className="text-brand-gold font-semibold text-sm lg:text-base">
+              TICKETS ARE LIVE
             </span>
           </div>
 
@@ -190,18 +171,17 @@ export function HeroSection2026() {
 
           {/* Tagline */}
           <p className="text-lg sm:text-xl lg:text-2xl text-white/90 font-medium mb-4 lg:mb-6 fade-in-on-scroll">
-            New Trade Routes —{" "}
+            New Trade Routes:{" "}
             <span className="text-white">Bringing Africa Onchain</span>
           </p>
 
           {/* Description */}
           <p className="text-white/60 text-sm sm:text-base lg:text-lg max-w-3xl mx-auto mb-6 lg:mb-8 fade-in-on-scroll">
-            The singular event your brand needs to reach the eager African
-            audience of over{" "}
-            <span className="text-white font-semibold">200 million+</span> Web3
-            and AI users of tomorrow. After an unforgettable roadshow in{" "}
-            <span className="text-brand-blue-light">South Africa</span>, the main
-            event lands in{" "}
+            Three days of building, networking and dealmaking with{" "}
+            <span className="text-white font-semibold">5,000+</span> founders,
+            engineers, investors and policymakers. Fresh off the{" "}
+            <span className="text-brand-blue-light">South Africa</span> roadshow,
+            the main event lands in{" "}
             <span className="text-brand-blue-light">Lagos this October</span>.
           </p>
         </div>
@@ -210,7 +190,7 @@ export function HeroSection2026() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto slide-in-right">
           <UpcomingEventCard
             event={blockfest2026Lagos}
-            onRegisterClick={handleLagosRegister}
+            onTicketsClick={handleLagosTickets}
           />
           <RecapEventCard event={blockfest2026SouthAfrica} />
         </div>

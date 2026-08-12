@@ -336,16 +336,15 @@ export default async function SpeakerPage({
             Don&apos;t Miss Out
           </h2>
           <p className="text-white/80 text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
-            Join {speaker.name.split(" ")[0]} and other industry leaders at
-            Blockfest Africa 2026. Secure your spot at Africa&apos;s premier
-            blockchain conference.
+            Join {speaker.name.split(" ")[0]} and other industry leaders in Lagos,
+            October 22&ndash;24, 2026.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 justify-center items-center max-w-md mx-auto sm:max-w-none">
             <Link
-              href="/#register"
+              href="/tickets"
               className="bg-brand-gold text-black px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold hover:bg-brand-gold-hover hover:shadow-lg transform hover:scale-105 transition-all duration-300 touch-manipulation text-base sm:text-lg w-full sm:w-auto text-center"
             >
-              Register Now
+              Get Tickets
             </Link>
             <Link
               href="/speakers"

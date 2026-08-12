@@ -7,7 +7,7 @@ import { faqData } from "@/lib/faq-data";
 export const metadata: Metadata = {
   title: "FAQ - Blockfest Africa 2026 | Complete Guide",
   description:
-    "Get answers to all your questions about Blockfest Africa 2026 in Lagos. Find information about registration, venues, schedule, accommodation, networking, and more.",
+    "Answers about Blockfest Africa 2026 in Lagos: tickets and pricing, the venue, schedule, accommodation, transport and networking.",
   keywords: [
     "Blockfest Africa FAQ",
     "Web3 conference questions",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "cryptocurrency conference Nigeria",
     "DeFi event Africa",
     "Web3 registration",
-    "free blockchain conference",
+    "blockfest africa tickets",
     "Web3 networking Africa",
     "blockchain prizes Africa",
     "crypto event accommodation",

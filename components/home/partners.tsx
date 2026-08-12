@@ -122,13 +122,13 @@ export function PartnersSection() {
           Be part of 2026&apos;s Web3 Revolution
         </h3>
         <p className="text-white/80 text-sm lg:text-lg lg:leading-relaxed max-w-2xl">
-          We took the movement across Africa in 2026 — after the South Africa
+          We took the movement across Africa in 2026. After the South Africa
           roadshow, the main event lands in Lagos this October. Attend, showcase
           your brand, or sponsor the future of Africa&apos;s web3 ecosystem.
         </p>
 
         <div className="flex items-center justify-center gap-4 mt-5 mb-10 lg:mb-0">
-          <Link href="#sponsorship">
+          <Link href="/#sponsorship">
             <Button
               className="font-semibold text-sm lg:text-base rounded-full px-6 py-5 lg:px-8 bg-brand-gold text-black hover:bg-brand-gold-hover"
               onClick={() => {

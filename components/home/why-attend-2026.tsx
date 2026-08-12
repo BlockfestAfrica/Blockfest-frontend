@@ -1,7 +1,10 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
+import { FaArrowRight } from "react-icons/fa";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { marketOpportunity } from "@/lib/events";
+import { EARLY_BIRD_ENDS } from "@/lib/tickets";
 import { gotham } from "@/lib/fonts";
 import "./subtle-animations.css";
 
@@ -53,8 +56,8 @@ export function WhyAttend2026Section() {
             Why Attend?
           </h2>
           <p className="text-gray-500 text-base lg:text-lg max-w-3xl mx-auto px-5">
-            Africa&apos;s premier blockchain conference bringing builders,
-            founders, and investors together
+            Three days across AI, Web3, venture capital, technology, culture
+            and careers
           </p>
         </div>
 
@@ -140,6 +143,20 @@ export function WhyAttend2026Section() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Straight from "why" into "how much" */}
+        <div className="mt-10 text-center">
+          <Link
+            href="/tickets"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-blue px-8 py-3.5 font-semibold text-white transition-colors duration-300 hover:bg-brand-blue-pressed"
+          >
+            Get your ticket
+            <FaArrowRight className="text-xs" />
+          </Link>
+          <p className="mt-3 text-sm text-gray-500">
+            Early bird pricing until {EARLY_BIRD_ENDS.display}
+          </p>
         </div>
       </div>
     </section>
