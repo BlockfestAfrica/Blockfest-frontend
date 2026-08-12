@@ -37,7 +37,7 @@ export function WhyAttend2026Section() {
   const categories = [
     {
       image: "/images/home/img1.jpg",
-      header: "The Superbowl of Web3 & AI",
+      header: "The Superbowl of Web3",
       text: "Blockf3st Africa is the continent's biggest gathering of Web3 and AI minds, where the next generation of builders gets inspired.",
     },
     {
