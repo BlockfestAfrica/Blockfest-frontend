@@ -1,7 +1,10 @@
 "use client";
 import Image from "next/image";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { marketOpportunity } from "@/lib/events";
+import { EARLY_BIRD_ENDS } from "@/lib/tickets";
 import { gotham } from "@/lib/fonts";
 import "./subtle-animations.css";
 
@@ -43,25 +46,25 @@ export function WhyAttend2026Section() {
 
   return (
     <section
-      className="flex flex-col items-center justify-center px-5 py-12 lg:py-16 lg:px-10 bg-gradient-to-b from-gray-50 to-white"
+      className="flex flex-col items-center justify-center px-5 py-12 lg:py-16 lg:px-10 bg-paper border-t border-gray-200"
       id="about"
     >
-      <div className="max-w-7xl mx-auto w-full">
+      <div className="max-w-6xl mx-auto w-full">
         {/* Header */}
         <div className="text-center mb-10">
-          <h2 className="font-bold text-4xl lg:text-5xl xl:text-6xl mb-4 text-gray-900 fade-in-on-scroll">
+          <h2 className="font-bold text-3xl lg:text-5xl mb-4 text-gray-900 fade-in-on-scroll">
             Why Attend?
           </h2>
           <p className="text-gray-500 text-base lg:text-lg max-w-3xl mx-auto px-5">
-            Africa&apos;s premier blockchain conference bringing builders,
-            founders, and investors together
+            Three days across AI, Web3, venture capital, technology, culture
+            and careers
           </p>
         </div>
 
         {/* Market Opportunity Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-12">
           <div className="bg-white rounded-xl p-3 lg:p-4 text-center border border-gray-200 shadow-sm">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-blue">
+            <p className="text-2xl sm:text-3xl font-bold text-brand-blue">
               {marketOpportunity.unbankedPopulation.percentage}%
             </p>
             <p className="text-gray-700 text-xs lg:text-sm mt-1">
@@ -72,7 +75,7 @@ export function WhyAttend2026Section() {
             </p>
           </div>
           <div className="bg-white rounded-xl p-3 lg:p-4 text-center border border-gray-200 shadow-sm">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-blue">
+            <p className="text-2xl sm:text-3xl font-bold text-brand-blue">
               {marketOpportunity.youngPopulation.percentage}%
             </p>
             <p className="text-gray-700 text-xs lg:text-sm mt-1">Under 30</p>
@@ -81,7 +84,7 @@ export function WhyAttend2026Section() {
             </p>
           </div>
           <div className="bg-white rounded-xl p-3 lg:p-4 text-center border border-gray-200 shadow-sm">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-blue">
+            <p className="text-2xl sm:text-3xl font-bold text-brand-blue">
               ${marketOpportunity.globalWeb3Market.value}
             </p>
             <p className="text-gray-700 text-xs lg:text-sm mt-1">
@@ -92,7 +95,7 @@ export function WhyAttend2026Section() {
             </p>
           </div>
           <div className="bg-white rounded-xl p-3 lg:p-4 text-center border border-gray-200 shadow-sm">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-blue">
+            <p className="text-2xl sm:text-3xl font-bold text-brand-blue">
               30+
             </p>
             <p className="text-gray-700 text-xs lg:text-sm mt-1">
@@ -110,7 +113,7 @@ export function WhyAttend2026Section() {
             {categories.map((category, index) => (
               <div
                 key={`${category.header}-${index}`}
-                className="flex flex-col md:flex-row items-stretch bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 transition-shadow duration-300 overflow-hidden"
+                className="flex flex-col md:flex-row items-stretch bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 transition-shadow duration-300 overflow-hidden"
               >
                 {/* Image Section */}
                 <div className="w-full md:w-[40%]">
@@ -128,7 +131,7 @@ export function WhyAttend2026Section() {
 
                 {/* Content Section */}
                 <div className="flex flex-col justify-center flex-1 text-left p-5 md:p-4">
-                  <h3 className="text-brand-blue font-semibold text-lg md:text-xl lg:text-2xl xl:text-3xl leading-tight mb-2">
+                  <h3 className="text-brand-blue font-semibold text-lg lg:text-2xl xl:text-3xl leading-tight mb-2">
                     {category.header}
                   </h3>
                   <p
@@ -140,6 +143,20 @@ export function WhyAttend2026Section() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Straight from "why" into "how much" */}
+        <div className="mt-10 text-center">
+          <Link
+            href="/tickets"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-blue px-8 py-3.5 font-semibold text-white transition-colors duration-300 hover:bg-brand-blue-pressed"
+          >
+            Get your ticket
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+          <p className="mt-3 text-sm text-gray-500">
+            Early bird pricing until {EARLY_BIRD_ENDS.display}
+          </p>
         </div>
       </div>
     </section>

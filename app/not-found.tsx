@@ -6,7 +6,7 @@ import { gotham } from "@/lib/fonts";
 export default function NotFound() {
   return (
     <div
-      className={`${gotham.className} min-h-screen bg-gradient-to-br from-black via-brand-navy to-brand-navy-deep relative overflow-hidden`}
+      className={`${gotham.className} min-h-screen bg-ground relative overflow-hidden`}
     >
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
@@ -32,7 +32,7 @@ export default function NotFound() {
           </div>
 
           {/* Main Content */}
-          <div className="bg-white/10 rounded-2xl border border-white/10 shadow-2xl p-8 md:p-12">
+          <div className="bg-white/10 rounded-xl border border-white/20 shadow-2xl p-8 md:p-12">
             <div className="mb-8">
               {/* 404 Number with gradient */}
               <div className="relative mb-6">
@@ -44,7 +44,7 @@ export default function NotFound() {
                 </div>
               </div>
 
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              <h2 className="text-3xl font-bold text-white mb-4">
                 Page Not Found
               </h2>
               <p className="text-lg text-gray-300 leading-relaxed max-w-lg mx-auto">
@@ -57,22 +57,23 @@ export default function NotFound() {
 
             {/* Action Button */}
             <div className="mb-8">
-              <Link href="/">
-                <Button className="w-full md:w-auto px-8 py-4 bg-brand-blue hover:bg-brand-blue-pressed text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                  🏠 Return Home
-                </Button>
-              </Link>
+              <Button
+                asChild
+                className="w-full md:w-auto px-8 py-4 bg-brand-blue hover:bg-brand-blue-pressed text-white font-bold text-lg rounded-xl transition-colors duration-300"
+              >
+                <Link href="/">Return Home</Link>
+              </Button>
             </div>
 
             {/* Help Section */}
-            <div className="pt-6 border-t border-white/10">
+            <div className="pt-6 border-t border-white/20">
               <p className="text-gray-400 mb-4">
                 Need help finding something specific?
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center text-sm">
                 <a
                   href="mailto:partnership@blockfestafrica.com"
-                  className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-300"
+                  className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors duration-300"
                 >
                   <svg
                     className="w-4 h-4"
@@ -84,10 +85,10 @@ export default function NotFound() {
                   </svg>
                   Contact Support
                 </a>
-                <span className="hidden sm:block text-white/30">•</span>
+                <span className="hidden sm:block text-white/60">•</span>
                 <Link
                   href="/#contact"
-                  className="text-white/70 hover:text-white transition-colors duration-300"
+                  className="text-white/60 hover:text-white transition-colors duration-300"
                 >
                   Get in Touch
                 </Link>
@@ -97,7 +98,7 @@ export default function NotFound() {
 
           {/* Fun Message */}
           <p className="mt-6 text-gray-400 text-sm">
-            🌍 Building the future of Web3 in Africa, one block at a time
+            Building the future of Web3 in Africa, one block at a time
           </p>
         </div>
       </div>

@@ -87,7 +87,7 @@ export default function BadgeGenerator() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-brand-blue-deep to-slate-800 font-sans">
+    <div className="min-h-screen bg-ground font-sans">
       {/* Decorative Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {/* Radial gradients for depth */}
@@ -109,7 +109,7 @@ export default function BadgeGenerator() {
 
       {/* Header */}
       <div className="relative z-10 pt-8 sm:pt-12 pb-6 sm:pb-8 text-center px-4">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">
+        <h1 className="text-3xl md:text-5xl font-bold text-white mb-3 tracking-tight">
           Create Your Blockfest Africa Badge
         </h1>
         <p className="text-gray-300 font-medium text-base sm:text-lg max-w-lg mx-auto px-2">
@@ -123,13 +123,13 @@ export default function BadgeGenerator() {
         <div
           className={`mx-auto ${
             success
-              ? "max-w-7xl lg:grid lg:grid-cols-5 lg:gap-8 lg:items-start"
+              ? "max-w-6xl lg:grid lg:grid-cols-5 lg:gap-8 lg:items-start"
               : "max-w-md"
           }`}
         >
           {/* Form Section */}
           <div className={success ? "lg:col-span-2" : ""}>
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 p-6 sm:p-8 lg:p-10">
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl shadow-2xl border border-white/20 p-6 sm:p-8 lg:p-10">
               <div className="space-y-6 sm:space-y-7 lg:space-y-8">
                 {/* Name Input */}
                 <div className="space-y-2">
@@ -147,7 +147,7 @@ export default function BadgeGenerator() {
                     placeholder="Enter your full name"
                     maxLength={50}
                     minLength={2}
-                    className="w-full px-4 py-4 sm:px-5 sm:py-4 lg:px-6 lg:py-5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all duration-200 text-gray-800 placeholder-gray-400 text-base sm:text-lg"
+                    className="w-full px-4 py-4 sm:px-5 sm:py-4 lg:px-6 lg:py-5 rounded-xl border border-gray-200 focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:border-transparent transition-colors duration-200 text-gray-800 placeholder-gray-400 text-base sm:text-lg"
                     disabled={isGenerating}
                   />
                   {name.length > 40 && (
@@ -168,7 +168,7 @@ export default function BadgeGenerator() {
                       onClick={openFileDialog}
                       onDrop={handleDrop}
                       onDragOver={handleDragOver}
-                      className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 lg:p-10 text-center cursor-pointer hover:border-brand-blue hover:bg-brand-blue/5 active:bg-brand-blue/10 transition-all duration-200 group touch-manipulation min-h-[180px] sm:min-h-[200px] lg:min-h-[220px] flex items-center justify-center"
+                      className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 lg:p-10 text-center cursor-pointer hover:border-brand-blue hover:bg-brand-blue/5 active:bg-brand-blue/10 transition-colors duration-200 group touch-manipulation min-h-[180px] sm:min-h-[200px] lg:min-h-[220px] flex items-center justify-center"
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
@@ -240,7 +240,7 @@ export default function BadgeGenerator() {
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating || !name.trim() || !preview}
-                  className="w-full py-4 px-6 sm:py-5 sm:px-8 lg:py-6 lg:px-10 bg-gradient-to-r from-brand-blue to-brand-blue-dark text-white font-semibold rounded-xl hover:from-brand-blue-dark hover:to-brand-blue focus:ring-4 focus:ring-brand-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg text-base sm:text-lg lg:text-xl"
+                  className="w-full py-4 px-6 sm:py-5 sm:px-8 lg:py-6 lg:px-10 bg-brand-blue text-white font-semibold rounded-xl hover:from-brand-blue-dark hover:to-brand-blue focus-visible:ring-4 focus-visible:ring-brand-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg text-base sm:text-lg"
                   title={
                     !name.trim() || !preview
                       ? "Please add both your name and photo"
@@ -262,8 +262,8 @@ export default function BadgeGenerator() {
                     <>
                       <ChevronDown className="w-5 h-5 flex-shrink-0 animate-bounce lg:hidden" />
                       <ChevronRight className="w-5 h-5 flex-shrink-0 animate-bounce hidden lg:block" />
-                      <span className="lg:hidden">Ready! 👇</span>
-                      <span className="hidden lg:inline">Ready! 👉</span>
+                      <span className="lg:hidden">Ready</span>
+                      <span className="hidden lg:inline">Ready</span>
                     </>
                   ) : (
                     <>
@@ -280,7 +280,7 @@ export default function BadgeGenerator() {
 
                 {/* Error Display */}
                 {generationError && (
-                  <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-md">
                     <p className="text-sm text-red-600 break-words leading-relaxed">
                       {generationError}
                     </p>
@@ -301,8 +301,8 @@ export default function BadgeGenerator() {
           {success && generatedBadge && (
             <div className="lg:col-span-1 hidden lg:flex lg:items-end lg:justify-center lg:min-h-[400px] lg:pb-16">
               <div className="flex flex-col items-center space-y-3 animate-bounce">
-                <ChevronRight className="w-10 h-10 text-white/80" />
-                <p className="text-white/80 text-base font-medium text-center">
+                <ChevronRight className="w-10 h-10 text-white/90" />
+                <p className="text-white/90 text-base font-medium text-center">
                   Your badge
                   <br />
                   is ready!
@@ -315,18 +315,18 @@ export default function BadgeGenerator() {
           {/* Result Section */}
           {success && generatedBadge && (
             <div className="lg:col-span-2 mt-6 lg:mt-0">
-              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 p-6 sm:p-8 lg:p-10 w-full">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl shadow-2xl border border-white/20 p-6 sm:p-8 lg:p-10 w-full">
                 <div className="text-center space-y-6">
                   {/* Success Header */}
                   <div className="space-y-3">
                     <div className="flex justify-center">
                       <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 lg:w-18 lg:h-18 text-green-500" />
                     </div>
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
+                    <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800">
                       Your Badge is Ready!
                     </h2>
                     <p className="text-sm sm:text-base lg:text-lg text-gray-600">
-                      Welcome to Blockfest Africa 2026, {userName}! 🎉
+                      Welcome to Blockfest Africa 2026, {userName}
                     </p>
                   </div>
 
@@ -344,7 +344,7 @@ export default function BadgeGenerator() {
                     {/* Share on X Button */}
                     <button
                       onClick={shareOnX}
-                      className="w-full py-4 px-8 lg:py-3 lg:px-6 bg-gradient-to-r from-[#1DA1F2] to-[#0d8bd4] text-white font-semibold rounded-xl hover:from-[#0d8bd4] hover:to-[#1DA1F2] focus:ring-4 focus:ring-[#1DA1F2]/20 transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg text-lg lg:text-base"
+                      className="w-full py-4 px-8 lg:py-3 lg:px-6 bg-[#1DA1F2] text-white font-semibold rounded-xl hover:from-[#0d8bd4] hover:to-[#1DA1F2] focus-visible:ring-4 focus-visible:ring-[#1DA1F2]/20 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-lg text-lg lg:text-base"
                     >
                       <Share className="w-5 h-5 lg:w-4 lg:h-4 flex-shrink-0" />
                       <span>Share on X</span>
@@ -354,7 +354,7 @@ export default function BadgeGenerator() {
                     <div className="flex gap-3 lg:gap-4">
                       <button
                         onClick={downloadBadge}
-                        className="flex-1 py-3 px-4 lg:py-3 lg:px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 text-base"
+                        className="flex-1 py-3 px-4 lg:py-3 lg:px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2 text-base"
                       >
                         <Download className="w-4 h-4 flex-shrink-0" />
                         <span>Download</span>
@@ -362,7 +362,7 @@ export default function BadgeGenerator() {
 
                       <button
                         onClick={resetBadge}
-                        className="flex-1 py-3 px-4 lg:py-3 lg:px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 text-base"
+                        className="flex-1 py-3 px-4 lg:py-3 lg:px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2 text-base"
                       >
                         <RotateCcw className="w-4 h-4 flex-shrink-0" />
                         <span>Create New</span>

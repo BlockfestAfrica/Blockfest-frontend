@@ -1,4 +1,5 @@
 import React from "react";
+import { ArrowRight, Calendar, Globe, MapPin, Mic, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,18 +7,7 @@ import { blockfest2025Lagos } from "@/lib/events";
 import { SpeakersList } from "@/lib/speakers";
 import { EventHighlights } from "@/components/shared/event-highlights";
 import { EventCta } from "@/components/shared/event-cta";
-import {
-  FaCalendarAlt,
-  FaMapMarkerAlt,
-  FaUsers,
-  FaGlobe,
-  FaMicrophone,
-  FaTwitter,
-  FaTiktok,
-  FaInstagram,
-  FaYoutube,
-  FaArrowRight,
-} from "react-icons/fa";
+import { FaInstagram, FaTiktok, FaXTwitter, FaYoutube } from "react-icons/fa6";
 
 export const metadata: Metadata = {
   title: "Blockfest Africa 2025 - Event Recap",
@@ -60,41 +50,38 @@ const stats = event.stats ?? {
   virtualAttendees: 0,
 };
 
-
 // Select featured speakers for display
 const featuredSpeakers = SpeakersList.slice(0, 8);
 
 export default function Blockfest2025Page() {
   return (
-    <main className="min-h-screen bg-white">
+    <main id="main" className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-brand-blue via-brand-blue-dark to-brand-blue-deep text-white py-12 lg:py-16">
+      <section className="relative bg-ground text-white py-12 lg:py-16">
         <div className="absolute inset-0 bg-[url('/images/home/img1.jpg')] bg-cover bg-center opacity-10" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-6 border border-white/10">
-            <span className="text-white font-semibold text-sm">
-              COMPLETED EVENT
-            </span>
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-6">
+            COMPLETED EVENT
+          </p>
 
-          <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold mb-4">
+          <h1 className="text-3xl lg:text-5xl font-bold mb-4">
             Blockfest Africa <span className="text-white">2025</span>
           </h1>
 
-          <p className="text-xl lg:text-2xl text-white/90 max-w-3xl mb-6">
+          <p className="text-lg lg:text-2xl text-white/90 max-w-3xl mb-6">
             {event.theme}
           </p>
 
-          <div className="flex flex-wrap gap-4 text-white/80 text-lg mb-8">
+          <div className="flex flex-wrap gap-4 text-white/90 text-lg mb-8">
             <div className="flex items-center gap-2">
-              <FaMapMarkerAlt className="text-white/60" />
+              <MapPin className="text-white/60" />
               <span>
                 {event.location.city}, {event.location.country}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <FaCalendarAlt className="text-white/60" />
+              <Calendar className="text-white/60" />
               <span>{event.date.displayDate}</span>
             </div>
           </div>
@@ -106,44 +93,44 @@ export default function Blockfest2025Page() {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-gradient-to-r from-brand-blue to-brand-blue-deep py-12 lg:py-16">
+      <section className="bg-ground py-12 lg:py-16">
         <div className="max-w-6xl mx-auto px-4 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
             <div className="text-center text-white">
               <div className="flex items-center justify-center mb-2">
-                <FaUsers className="text-white/60 text-2xl" />
+                <Users className="text-white/60 h-6 w-6" />
               </div>
               <p className="text-3xl lg:text-5xl font-bold">
                 {stats.totalRegistrations?.toLocaleString()}+
               </p>
-              <p className="text-white/80">Total Registrations</p>
+              <p className="text-white/90">Total Registrations</p>
             </div>
             <div className="text-center text-white">
               <div className="flex items-center justify-center mb-2">
-                <FaUsers className="text-white/60 text-2xl" />
+                <Users className="text-white/60 h-6 w-6" />
               </div>
               <p className="text-3xl lg:text-5xl font-bold">
                 {stats.totalAttendees?.toLocaleString()}+
               </p>
-              <p className="text-white/80">Total Attendees</p>
+              <p className="text-white/90">Total Attendees</p>
             </div>
             <div className="text-center text-white">
               <div className="flex items-center justify-center mb-2">
-                <FaMicrophone className="text-white/60 text-2xl" />
+                <Mic className="text-white/60 h-6 w-6" />
               </div>
               <p className="text-3xl lg:text-5xl font-bold">
                 {stats.speakers}+
               </p>
-              <p className="text-white/80">Speakers</p>
+              <p className="text-white/90">Speakers</p>
             </div>
             <div className="text-center text-white">
               <div className="flex items-center justify-center mb-2">
-                <FaGlobe className="text-white/60 text-2xl" />
+                <Globe className="text-white/60 h-6 w-6" />
               </div>
               <p className="text-3xl lg:text-5xl font-bold">
                 {stats.countriesRepresented}+
               </p>
-              <p className="text-white/80">Countries</p>
+              <p className="text-white/90">Countries</p>
             </div>
           </div>
         </div>
@@ -160,30 +147,30 @@ export default function Blockfest2025Page() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-2xl p-6 shadow-lg text-center hover:shadow-xl transition-shadow">
-              <FaTwitter className="text-[#1DA1F2] text-4xl mx-auto mb-4" />
-              <p className="text-3xl lg:text-4xl font-bold text-gray-900">
+            <div className="bg-white rounded-xl p-6 shadow-lg text-center hover:shadow-xl transition-shadow">
+              <FaXTwitter className="text-[#1DA1F2] text-3xl mx-auto mb-4" />
+              <p className="text-3xl font-bold text-gray-900">
                 2.2M+
               </p>
               <p className="text-gray-600">Twitter (X) Impressions</p>
             </div>
-            <div className="bg-white rounded-2xl p-6 shadow-lg text-center hover:shadow-xl transition-shadow">
-              <FaTiktok className="text-black text-4xl mx-auto mb-4" />
-              <p className="text-3xl lg:text-4xl font-bold text-gray-900">
+            <div className="bg-white rounded-xl p-6 shadow-lg text-center hover:shadow-xl transition-shadow">
+              <FaTiktok className="text-black text-3xl mx-auto mb-4" />
+              <p className="text-3xl font-bold text-gray-900">
                 400K+
               </p>
               <p className="text-gray-600">TikTok Impressions</p>
             </div>
-            <div className="bg-white rounded-2xl p-6 shadow-lg text-center hover:shadow-xl transition-shadow">
-              <FaInstagram className="text-[#E4405F] text-4xl mx-auto mb-4" />
-              <p className="text-3xl lg:text-4xl font-bold text-gray-900">
+            <div className="bg-white rounded-xl p-6 shadow-lg text-center hover:shadow-xl transition-shadow">
+              <FaInstagram className="text-[#E4405F] text-3xl mx-auto mb-4" />
+              <p className="text-3xl font-bold text-gray-900">
                 100K+
               </p>
               <p className="text-gray-600">Instagram Impressions</p>
             </div>
-            <div className="bg-white rounded-2xl p-6 shadow-lg text-center hover:shadow-xl transition-shadow">
-              <FaYoutube className="text-[#FF0000] text-4xl mx-auto mb-4" />
-              <p className="text-3xl lg:text-4xl font-bold text-gray-900">
+            <div className="bg-white rounded-xl p-6 shadow-lg text-center hover:shadow-xl transition-shadow">
+              <FaYoutube className="text-[#FF0000] text-3xl mx-auto mb-4" />
+              <p className="text-3xl font-bold text-gray-900">
                 7.2K+
               </p>
               <p className="text-gray-600">YouTube Livestream Viewers</p>
@@ -200,25 +187,25 @@ export default function Blockfest2025Page() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl mx-auto">
-            <div className="bg-gradient-to-br from-brand-blue to-brand-blue-light rounded-3xl p-8 text-white text-center">
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FaUsers className="text-4xl" />
+            <div className="bg-brand-blue-dark rounded-xl p-8 text-white text-center">
+              <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-7 w-7" />
               </div>
-              <p className="text-5xl lg:text-6xl font-bold mb-2">
+              <p className="text-5xl font-bold mb-2">
                 {stats.physicalAttendees?.toLocaleString()}+
               </p>
-              <p className="text-xl text-white/90">Physical Attendees</p>
-              <p className="text-white/70 mt-2">On-ground at Lagos, Nigeria</p>
+              <p className="text-lg text-white/90">Physical Attendees</p>
+              <p className="text-white/60 mt-2">On-ground at Lagos, Nigeria</p>
             </div>
-            <div className="bg-gradient-to-br from-brand-blue-deep to-brand-blue-dark rounded-3xl p-8 text-white text-center">
-              <div className="w-20 h-20 bg-white/15 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FaGlobe className="text-4xl" />
+            <div className="bg-white/5 rounded-xl p-8 text-white text-center">
+              <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Globe className="h-7 w-7" />
               </div>
-              <p className="text-5xl lg:text-6xl font-bold mb-2">
+              <p className="text-5xl font-bold mb-2">
                 {stats.virtualAttendees?.toLocaleString()}
               </p>
-              <p className="text-xl text-white/90">Virtual Attendees</p>
-              <p className="text-white/70 mt-2">Joined from across the globe</p>
+              <p className="text-lg text-white/90">Virtual Attendees</p>
+              <p className="text-white/60 mt-2">Joined from across the globe</p>
             </div>
           </div>
         </div>
@@ -239,7 +226,7 @@ export default function Blockfest2025Page() {
             {featuredSpeakers.map((speaker) => (
               <div
                 key={speaker.name}
-                className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-colors duration-300 hover:-translate-y-1"
               >
                 <div className="relative h-48 lg:h-56">
                   <Image
@@ -268,7 +255,7 @@ export default function Blockfest2025Page() {
               className="inline-flex items-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-full font-semibold hover:bg-brand-blue-pressed transition-colors"
             >
               View All Speakers
-              <FaArrowRight />
+              <ArrowRight />
             </Link>
           </div>
         </div>
@@ -295,7 +282,7 @@ export default function Blockfest2025Page() {
             ].map((img, index) => (
               <div
                 key={img}
-                className="relative aspect-[4/3] rounded-2xl overflow-hidden"
+                className="relative aspect-[4/3] rounded-xl overflow-hidden"
               >
                 <Image
                   src={img}
@@ -315,7 +302,7 @@ export default function Blockfest2025Page() {
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-full font-semibold hover:bg-brand-blue-pressed transition-colors"
             >
-              📸 Main Event Photos
+              Main Event Photos
             </a>
             <a
               href="https://drive.google.com/drive/folders/1QcTYo1xr6h8A6HHQvU0gwxbyL_BoWBSE"
@@ -323,7 +310,7 @@ export default function Blockfest2025Page() {
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 bg-brand-gold text-gray-900 px-6 py-3 rounded-full font-semibold hover:bg-brand-gold-hover transition-colors"
             >
-              🎉 Mixer & Networking Event
+              Mixer & Networking Event
             </a>
           </div>
         </div>
@@ -335,7 +322,7 @@ export default function Blockfest2025Page() {
       {/* CTA Section */}
       <EventCta
         title="Don't Miss 2026!"
-        description="We took the movement across Africa in 2026 — the South Africa roadshow is a wrap, and Lagos is next on October 22–23. Be part of it!"
+        description="The South Africa roadshow is a wrap. Lagos is next, October 22–24. Be part of it."
         ctaLabel="Explore Lagos '26"
         ctaHref="/"
       />

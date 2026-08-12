@@ -4,6 +4,7 @@ import {
   blockfest2026Lagos,
   blockfest2025Lagos,
 } from "@/lib/events";
+import { EARLY_BIRD_ENDS, lowestTicketPrice } from "@/lib/tickets";
 
 interface BaseSchemaProps {
   type:
@@ -46,7 +47,7 @@ export function EventSchema() {
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
       "@type": "Place",
-      name: "Lagos, Nigeria",
+      name: "National Art Theatre, Lagos",
       address: {
         "@type": "PostalAddress",
         addressLocality: "Lagos",
@@ -70,12 +71,14 @@ export function EventSchema() {
     },
     offers: {
       "@type": "Offer",
-      url: "https://blockfestafrica.com",
-      price: "0",
+      url: "https://blockfestafrica.com/tickets",
+      price: lowestTicketPrice,
       priceCurrency: "NGN",
-      availability: "https://schema.org/PreOrder",
+      availability: "https://schema.org/InStock",
       validFrom: "2026-01-01",
-      description: "Tickets opening soon for Blockf3st Africa '26 - Lagos",
+      priceValidUntil: EARLY_BIRD_ENDS.iso.slice(0, 10),
+      description:
+        "Passes for Blockf3st Africa '26 - Lagos, from the BUIDL Pass through to All Access",
     },
     audience: {
       "@type": "Audience",
@@ -96,7 +99,7 @@ export function EventSchema() {
     "@type": "Event",
     name: "Blockf3st Africa '26 - South Africa",
     description:
-      "Blockf3st Africa's South African roadshow — a week of builder meetups, sessions and experiences across Cape Town that brought Africa's Web3 community together.",
+      "Blockf3st Africa's South African roadshow. A week of builder meetups, sessions and experiences across Cape Town that brought Africa's Web3 community together.",
     startDate: blockfest2026SouthAfrica.date.start,
     endDate: blockfest2026SouthAfrica.date.end,
     eventStatus: "https://schema.org/EventScheduled",
@@ -154,7 +157,7 @@ export function OrganizationSchema() {
     foundingDate: "2024",
     foundingLocation: {
       "@type": "Place",
-      name: "Lagos, Nigeria",
+      name: "National Art Theatre, Lagos",
     },
     contactPoint: {
       "@type": "ContactPoint",
@@ -223,7 +226,7 @@ export function WebsiteSchema() {
     alternateName: "Blockf3st Africa 2026",
     url: "https://blockfestafrica.com",
     description:
-      "Africa's premier Web3 conference - The Superbowl of Web3. After the South Africa roadshow, join us in Lagos (October 22–23, 2026). Connect with 200M+ potential web3 users.",
+      "Africa's premier Web3 conference - The Superbowl of Web3. After the South Africa roadshow, join us in Lagos (October 22–24, 2026). Connect with 200M+ potential web3 users.",
     publisher: {
       "@type": "Organization",
       name: "Blockfest Africa",

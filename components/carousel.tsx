@@ -110,14 +110,14 @@ const Speakers: React.FC<PropType> = (props) => {
           <PrevButton
             onClick={onPrevButtonClick}
             disabled={prevBtnDisabled}
-            className="w-12 h-12 xl:w-16 xl:h-16 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
+            className="w-12 h-12 xl:w-16 xl:h-16 bg-[#D1D5DB] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
           />
         </div>
         <div className="absolute right-0 xl:right-4 top-1/2 -translate-y-1/2 z-10 pointer-events-auto">
           <NextButton
             onClick={onNextButtonClick}
             disabled={nextBtnDisabled}
-            className="w-12 h-12 xl:w-16 xl:h-16 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
+            className="w-12 h-12 xl:w-16 xl:h-16 bg-[#D1D5DB] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
           />
         </div>
       </div>
@@ -145,28 +145,29 @@ const Speakers: React.FC<PropType> = (props) => {
                 className="block group cursor-pointer w-full"
                 aria-label={`View all speakers including ${speaker.name}`}
               >
-                <div className="bg-gradient-to-b from-[#0F377E] to-brand-blue rounded-3xl p-6 md:p-8 w-full max-w-4xl mx-auto shadow-2xl border border-white/10 transition-all duration-300 hover:shadow-3xl hover:scale-[1.02] hover:border-white/20 h-[500px] sm:h-[450px] md:h-[400px] lg:h-[400px] xl:h-[450px]">
+                <div className="bg-brand-blue-dark rounded-xl p-6 md:p-8 w-full max-w-4xl mx-auto shadow-2xl border border-white/20 transition-transform duration-300 hover:shadow-3xl hover:scale-[1.02] h-[500px] sm:h-[450px] md:h-[400px] lg:h-[400px] xl:h-[450px]">
                   <div className="flex items-center justify-center md:justify-between gap-6 flex-col-reverse md:flex-row text-center md:text-left h-full">
                     <div className="text-white flex-1 md:basis-[60%] basis-full flex flex-col justify-around items-center min-w-0 ">
-                      <h2 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium mb-3 md:mb-4 uppercase tracking-tight leading-tight w-[70%] md:w-[85%]">
+                      <h2 className="text-2xl md:text-3xl xl:text-5xl font-medium mb-3 md:mb-4 uppercase tracking-tight leading-tight w-[70%] md:w-[85%]">
                         {speaker.name}
                       </h2>
-                      <p className="text-[#E9EBF8] font-light text-sm md:text-lg lg:text-xl xl:text-2xl italic leading-relaxed w-[65%] md:w-[85%]">
+                      <p className="text-[#F6F7F9] font-light text-sm md:text-lg xl:text-2xl italic leading-relaxed w-[65%] md:w-[85%]">
                         {speaker.title}
                       </p>
                     </div>
-                    <div className="md:basis-[40%] basis-auto w-[250px] h-[250px]  md:w-[250px] md:h-[250px] lg:w-[300px] lg:h-[300px]  xl:w-[350px] xl:h-[350px] aspect-square rounded-2xl overflow-hidden ring-4 ring-white/20 flex-shrink-0 mx-auto md:mx-0">
+                    <div className="md:basis-[40%] basis-auto w-[250px] h-[250px]  md:w-[250px] md:h-[250px] lg:w-[300px] lg:h-[300px]  xl:w-[350px] xl:h-[350px] aspect-square rounded-xl overflow-hidden ring-4 ring-white/20 flex-shrink-0 mx-auto md:mx-0">
                       <Image
                         src={speaker.image}
                         alt={`Portrait of ${speaker.name}, ${speaker.title}`}
                         width={640}
                         height={640}
-                        quality={100}
                         sizes="(max-width: 640px) 250px, (max-width: 768px) 250px, (max-width: 1024px) 300px, (max-width: 1280px) 320px, 320px"
                         className="w-full h-full object-cover object-center transition-transform duration-300 hover:scale-105"
                         style={{ objectPosition: "center 15%" }}
                         aria-describedby={`speaker-${index}-name speaker-${index}-title`}
-                        priority
+                        // Only the first slide is above the fold; the rest wait.
+                        priority={index === 0}
+                        loading={index === 0 ? "eager" : "lazy"}
                       />
                     </div>
                   </div>
@@ -189,15 +190,20 @@ const Speakers: React.FC<PropType> = (props) => {
               type="button"
               // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               key={index}
-              className={`w-3 h-3 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${index === selectedIndex
-                ? "bg-blue-600 scale-125"
-                : "bg-gray-300 hover:bg-gray-400"
-                }`}
+              // The dot stays 12px; the hit area around it is a full 44px.
+              className="flex min-h-11 w-6 shrink-0 items-center justify-center"
               onClick={() => scrollTo(index)}
               role="tab"
               aria-selected={index === selectedIndex}
               aria-label={`Go to slide ${index + 1}: ${speakers[index]?.name}`}
-            />
+            >
+              <span
+                className={`block h-3 w-3 rounded-full transition-colors duration-300 ${index === selectedIndex
+                  ? "bg-brand-blue scale-125"
+                  : "bg-white/20 hover:bg-white/60"
+                  }`}
+              />
+            </button>
           ))}
         </div>
       )}
@@ -208,12 +214,12 @@ const Speakers: React.FC<PropType> = (props) => {
           <PrevButton
             onClick={onPrevButtonClick}
             disabled={prevBtnDisabled}
-            className="w-12 h-12 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-12 h-12 bg-[#D1D5DB] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <NextButton
             onClick={onNextButtonClick}
             disabled={nextBtnDisabled}
-            className="w-12 h-12 bg-[#D9D9D9] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-12 h-12 bg-[#D1D5DB] hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>

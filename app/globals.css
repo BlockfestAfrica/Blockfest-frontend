@@ -55,6 +55,13 @@
   --color-brand-navy: #0A1628; /* dark section gradient step */
   --color-brand-navy-deep: #0D1F3C; /* dark section gradient step */
   --color-nav-gray: #A4A4A4;
+
+  /* Section grounds. The site alternates between exactly these two.
+     Sections set a ground and nothing else — depth comes from the cards
+     inside them, not from a per-section gradient. */
+  --color-ground: #0A1628; /* every dark section */
+  --color-paper: #FFFFFF; /* every light section */
+  --color-paper-muted: #F6F7F9; /* light cards and inset panels */
 }
 
 :root {
@@ -141,11 +148,75 @@
     @apply !min-w-full;
     @apply bg-background text-foreground;
   }
+
+  /* Kill the 300ms tap delay and the grey flash on touch devices. */
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  label {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* One focus ring for the whole site. Individual components no longer
+     declare their own, and none may use outline-none without a replacement. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-blue-light);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Headings break on sense rather than on width. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+/* Respect the OS setting. Every keyframe and transition on the site is
+   decorative, so there is nothing to preserve when motion is turned down. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 html {
   scroll-behavior: smooth;
+  /* Form controls and scrollbars inherit the site's dark ground. */
+  color-scheme: dark;
   @apply overflow-x-hidden;
+}
+
+/* Keyboard-only shortcut past the navigation. */
+.skip-link {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  transform: translateY(-120%);
+  background: var(--color-brand-gold);
+  color: #000;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  border-bottom-right-radius: 0.5rem;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
 }
 
 html,

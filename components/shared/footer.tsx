@@ -2,21 +2,16 @@
 import Image from "next/image";
 import React from "react";
 import Link from "next/link";
-import {
-  FaInstagram,
-  FaLinkedin,
-  FaXTwitter,
-  FaYoutube,
-} from "react-icons/fa6";
+import { FaInstagram, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
 import type { Menu } from "@/types";
 import { gotham } from "@/lib/fonts";
 import { CONTACT_EMAIL, SOCIAL_URLS } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
 import { useUmami } from "@/lib/hooks/use-umami";
 
-
 const exploreMenu: Menu[] = [
   { path: "/", title: "Home" },
+  { path: "/tickets", title: "Tickets" },
   { path: "/speakers", title: "Speakers" },
   { path: "/blockfest-south-africa-2026", title: "South Africa '26" },
   { path: "/blockfest-2025", title: "2025 Recap" },
@@ -54,7 +49,7 @@ const Footer = () => {
   ];
 
   const linkClasses =
-    "text-base font-medium text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out w-fit";
+    "text-base font-medium text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out w-fit inline-flex items-center min-h-11";
 
   const columnLabelClasses =
     "flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-nav-gray/50 mb-5";
@@ -66,14 +61,14 @@ const Footer = () => {
       <div className="px-6 lg:px-[70px] pt-14 lg:pt-20">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-10 lg:pb-14">
           <div className="flex flex-col gap-4">
-            <Link href="/" className="inline-block w-fit cursor-pointer">
+            <Link href="/" className="inline-flex items-center w-fit cursor-pointer min-h-11">
               <Image
                 src="/images/logo.svg"
                 alt="Blockfest Africa Logo"
                 width={140}
                 height={38}
                 sizes="(max-width: 768px) 124px, 140px"
-                priority
+                loading="lazy"
                 className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px]"
               />
             </Link>
@@ -87,19 +82,18 @@ const Footer = () => {
             onClick={() =>
               trackButtonClick("Email Sponsorship", "Sponsorship Section")
             }
-            className="inline-flex items-center gap-2 bg-brand-gold text-black px-5 py-3 rounded-full font-semibold hover:bg-brand-gold-hover transition-colors text-sm sm:text-base max-w-full"
+            className="inline-flex items-center gap-2 bg-brand-gold text-black px-5 py-3.5 rounded-full font-semibold min-h-11 hover:bg-brand-gold-hover transition-colors text-sm sm:text-base max-w-full"
           >
             <span className="truncate"> 							Sponsor 2026
             </span>
           </Link>
         </div>
 
-        <div className="border-t border-white/10" />
+        <div className="border-t border-white/20" />
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-10 py-10 lg:py-14">
           <div>
             <p className={columnLabelClasses}>
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
               Explore
             </p>
             <nav className="flex flex-col gap-y-4">
@@ -123,7 +117,6 @@ const Footer = () => {
 
           <div>
             <p className={columnLabelClasses}>
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
               Info
             </p>
             <nav className="flex flex-col gap-y-4">
@@ -137,7 +130,6 @@ const Footer = () => {
 
           <div className="col-span-2 sm:col-span-1">
             <p className={columnLabelClasses}>
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
               Connect
             </p>
             <div className="flex items-center gap-x-3">
@@ -149,7 +141,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`Follow us on ${socialLabels[index]}`}
-                  className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 text-nav-gray hover:text-white hover:border-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-300 ease-in-out"
+                  className="flex items-center justify-center w-11 h-11 rounded-full border border-white/20 text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-300 ease-in-out"
                 >
                   {item.icon}
                 </Link>
@@ -158,7 +150,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/10" />
+        <div className="border-t border-white/20" />
       </div>
 
       <div className="px-6 lg:px-[70px] py-6 flex flex-col sm:flex-row items-center justify-between gap-3">

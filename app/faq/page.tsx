@@ -7,7 +7,7 @@ import { faqData } from "@/lib/faq-data";
 export const metadata: Metadata = {
   title: "FAQ - Blockfest Africa 2026 | Complete Guide",
   description:
-    "Get answers to all your questions about Blockfest Africa 2026 in Lagos. Find information about registration, venues, schedule, accommodation, networking, and more.",
+    "Answers about Blockfest Africa 2026 in Lagos: tickets and pricing, the venue, schedule, accommodation, transport and networking.",
   keywords: [
     "Blockfest Africa FAQ",
     "Web3 conference questions",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "cryptocurrency conference Nigeria",
     "DeFi event Africa",
     "Web3 registration",
-    "free blockchain conference",
+    "blockfest africa tickets",
     "Web3 networking Africa",
     "blockchain prizes Africa",
     "crypto event accommodation",
@@ -110,14 +110,14 @@ export default function FAQPage() {
     <>
       <FAQSchema faqs={faqData} />
       <BaseSchema type="WebPage" data={faqPageData} />
-      <div className="min-h-screen bg-white">
+      <main id="main" className="min-h-screen bg-white">
         {/* Header Section */}
-        <div className="bg-gradient-to-br from-brand-blue via-brand-blue-dark to-brand-blue-deep py-12 lg:py-16">
+        <div className="bg-ground py-12 lg:py-16">
           <div className="max-w-6xl mx-auto px-4 lg:px-8 text-center">
             <h1 className="font-bold text-3xl lg:text-5xl mb-4 text-white">
               Frequently Asked <span className="text-brand-blue-light">Questions</span>
             </h1>
-            <p className="text-base lg:text-lg text-white/80 max-w-2xl mx-auto">
+            <p className="text-base lg:text-lg text-white/90 max-w-2xl mx-auto">
               Everything you need to know about Africa&apos;s premier Web3
               conference
             </p>
@@ -126,7 +126,7 @@ export default function FAQPage() {
 
         {/* Enhanced FAQ Content */}
         <EnhancedFAQSection hideHeader={true} />
-      </div>
+      </main>
     </>
   );
 }
