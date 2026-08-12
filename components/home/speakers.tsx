@@ -6,23 +6,26 @@ import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { toast } from "sonner";
 import "./subtle-animations.css";
 
+/* The homepage carousel is a taster; /speakers has the full list. Rendering all
+   33 was a third of the page's DOM and 33 portraits on first load. */
+const HOMEPAGE_SPEAKER_COUNT = 12;
+
 export function SpeakersSection() {
   const OPTIONS: EmblaOptionsType = { loop: true };
+  const featured = SpeakersList.slice(0, HOMEPAGE_SPEAKER_COUNT);
 
   useSubtleAnimations();
 
   return (
-    <section className="flex flex-col items-center justify-center py-12 lg:py-16 px-4 lg:px-8 bg-gradient-to-b from-brand-blue-deep to-black relative overflow-hidden">
+    <section className="flex flex-col items-center justify-center py-12 lg:py-16 px-4 lg:px-8 bg-ground border-t border-white/20 relative overflow-hidden">
       <div className="relative z-10 text-center mb-8 w-full max-w-4xl px-2">
-        <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-4 border border-white/10">
-          <span className="text-white font-semibold text-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-4">
             OUR SPEAKERS
-          </span>
-        </div>
-        <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl xl:text-6xl text-white fade-in-on-scroll">
+          </p>
+        <h2 className="font-bold text-3xl lg:text-5xl text-white fade-in-on-scroll">
           They&apos;ve Graced Our Stage
         </h2>
-        <p className="text-white/70 text-base lg:text-lg mt-4 max-w-2xl mx-auto">
+        <p className="text-white/60 text-base lg:text-lg mt-4 max-w-2xl mx-auto">
           World-class thought leaders, founders, and policymakers who have shaped
           the conversation at Blockfest Africa
         </p>
@@ -30,12 +33,12 @@ export function SpeakersSection() {
 
       {/* Speaker carousel */}
       <div className="relative z-10 scale-in">
-        <Speakers speakers={SpeakersList} options={OPTIONS} />
+        <Speakers speakers={featured} options={OPTIONS} />
       </div>
 
       {/* 2026 Speaker CTA */}
       <div className="relative z-10 mt-10 text-center">
-        <p className="text-white/80 text-lg mb-4">
+        <p className="text-white/90 text-lg mb-4">
           Want to speak at Blockf3st Africa 2026?
         </p>
         <button

@@ -1,8 +1,8 @@
 "use client"
+import { Plus } from "lucide-react";
 
 import type * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
-import { FiPlus } from "react-icons/fi";
 import { cn } from "@/lib/utils"
 
 function Accordion({
@@ -40,7 +40,7 @@ function AccordionTrigger({
         {...props}
       >
         {children}
-        <FiPlus className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
+        <Plus className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   )

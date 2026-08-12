@@ -280,7 +280,7 @@ export const SpeakersList: Speaker[] = [
     linkedin:
       "https://www.linkedin.com/in/atinuke-oluwabamikemi-kayode-5b838b1b7",
     youtube: "https://youtube.com/@oluwabamikemikayode-n5f",
-    bio: "**Oluwabamikemi Kayode** is a Community Marketing Specialist at AsyncAPI, an open-source initiative building event-driven architectures. With a background in Python development, technical writing, and community management, she has worked with organizations like Tunga and actively contributes to SheCodeAfrica, Layer5, GDG Lagos, CHAOSS, and Web3Afrika.\n\nShe is passionate about empowering young people—especially women—to thrive in tech, and she regularly shares insights on community building, open source, and career growth through her blog and speaking engagements. Bamikemi has spoken at events like API Conference Lagos, OSCAFEST, and the Community Manager Festival.",
+    bio: "**Oluwabamikemi Kayode** is a Community Marketing Specialist at AsyncAPI, an open-source initiative building event-driven architectures. With a background in Python development, technical writing, and community management, she has worked with organizations like Tunga and actively contributes to SheCodeAfrica, Layer5, GDG Lagos, CHAOSS, and Web3Afrika.\n\nShe is passionate about empowering young people, especially women, to thrive in tech, and she regularly shares insights on community building, open source, and career growth through her blog and speaking engagements. Bamikemi has spoken at events like API Conference Lagos, OSCAFEST, and the Community Manager Festival.",
   },
   {
     name: "Wisdom Matic",

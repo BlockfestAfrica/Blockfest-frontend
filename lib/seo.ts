@@ -170,7 +170,7 @@ export function generateEventStructuredData({
       price,
       priceCurrency: currency,
       availability: "https://schema.org/InStock",
-      url: `${siteUrl}/register`,
+      url: `${siteUrl}/tickets`,
     },
   };
 }

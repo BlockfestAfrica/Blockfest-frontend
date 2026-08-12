@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { HeroSection2026 } from "@/components/home/hero-2026";
 import { Lagos2026Section } from "@/components/home/lagos-2026";
+import { Tickets2026Section } from "@/components/home/tickets-2026";
 import { Stats2026Section } from "@/components/home/stats-2026";
 import { SocialProofStrip } from "@/components/home/social-proof-strip";
 import { SouthAfricaRecapSection } from "@/components/home/south-africa-recap";
@@ -19,7 +20,7 @@ import {
 export const metadata: Metadata = {
   title: "Blockf3st Africa 2026 - The Superbowl of Web3",
   description:
-    "Join Africa's biggest Web3 & AI festival in 2026! Lagos (October 22–23, 2026), following the South Africa roadshow. Connect with 200M+ potential web3 users. New Trade Routes: Bringing Africa Onchain.",
+    "Tickets are live for Africa's biggest Web3 and AI festival. Lagos, October 22–24, 2026. Three days of building, networking and dealmaking. Passes from ₦7,500, early bird until August 30.",
   keywords: [
     "blockfest africa 2026",
     "blockf3st africa",
@@ -40,11 +41,13 @@ export const metadata: Metadata = {
     "web3 developers",
     "superbowl of web3",
     "web3 in motion",
+    "blockfest africa tickets",
+    "blockfest 2026 tickets",
   ],
   openGraph: {
     title: "Blockf3st Africa 2026 - The Superbowl of Web3",
     description:
-      "Join Africa's biggest Web3 & AI festival! 🇳🇬 Lagos (October 22–23, 2026) — fresh off the 🇿🇦 South Africa roadshow. New Trade Routes: Bringing Africa Onchain.",
+      "Tickets are live. 🇳🇬 Lagos, October 22–24, 2026. Three days with 5,000+ founders, engineers and investors. Passes from ₦7,500, early bird until August 30.",
     images: [
       {
         url: "/images/og-image.jpg",
@@ -57,7 +60,7 @@ export const metadata: Metadata = {
   twitter: {
     title: "Blockf3st Africa 2026 - The Superbowl of Web3",
     description:
-      "Join Africa's biggest Web3 & AI festival! 🇳🇬 Lagos (October 22–23, 2026) — fresh off the 🇿🇦 South Africa roadshow. New Trade Routes: Bringing Africa Onchain.",
+      "Tickets are live. 🇳🇬 Lagos, October 22–24, 2026. Three days with 5,000+ founders, engineers and investors. Passes from ₦7,500, early bird until August 30.",
     images: ["/images/twitter-image.jpg"],
   },
 };
@@ -70,12 +73,15 @@ const HomePage = () => {
       <OrganizationSchema />
       <WebsiteSchema />
 
-      <main>
+      <main id="main">
         {/* 2026 Hero — Lagos next event + South Africa recap */}
         <HeroSection2026 />
 
         {/* What Lagos '26 is centered around — theme, tracks, festival */}
         <Lagos2026Section />
+
+        {/* Pass families and entry prices — full breakdown lives on /tickets */}
+        <Tickets2026Section />
 
         {/* 2025 Stats - Building on Success */}
         <Stats2026Section />

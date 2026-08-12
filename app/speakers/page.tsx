@@ -5,6 +5,7 @@ import { SpeakersGrid } from "@/components/speakers/main-speakers";
 import { SpeakersSchema } from "@/components/seo/speakers-schema";
 import { BreadcrumbSchema } from "@/components/seo/schema-markup";
 import { SpeakersList, type Speaker } from "@/lib/speakers";
+import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
 
 const Gotham = localFont({
   src: "../../app/fonts/Gotham-Medium.otf",
@@ -13,7 +14,7 @@ const Gotham = localFont({
 export const metadata: Metadata = {
   title: "Speakers",
   description:
-    "Meet the visionary speakers at Blockfest Africa 2026. Connect with blockchain pioneers, founders, investors, and Web3 leaders driving innovation across Africa.",
+    "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, founders, investors and Web3 leaders who have spoken at Blockfest Africa.",
   keywords: [
     "blockfest africa speakers",
     "blockchain experts africa",
@@ -31,9 +32,9 @@ export const metadata: Metadata = {
     "web3 developers africa",
   ],
   openGraph: {
-    title: "Blockfest Africa 2026 Speakers - Visionaries of Web3 in Africa",
+    title: "Blockfest Africa Speakers - 2026 Lineup Coming Soon",
     description:
-      "Discover the speakers shaping the future of blockchain, crypto, and Web3 in Africa at Blockfest Africa 2026.",
+      "The Lagos '26 lineup lands soon. Meet the speakers who have shaped the conversation at Blockfest Africa.",
     images: [
       {
         url: "/images/og-speakers.jpg",
@@ -44,9 +45,9 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    title: "Blockfest Africa 2026 Speakers - Visionaries of Web3 in Africa",
+    title: "Blockfest Africa Speakers - 2026 Lineup Coming Soon",
     description:
-      "Meet the blockchain pioneers, founders, and innovators speaking at Blockfest Africa 2026.",
+      "The Lagos '26 lineup lands soon. Meet the speakers who have shaped the conversation at Blockfest Africa.",
     images: ["/images/twitter-speakers.jpg"],
   },
   alternates: {
@@ -78,7 +79,11 @@ const SpeakersPage = () => {
       <SpeakersSchema speakers={speakers} />
       <BreadcrumbSchema items={breadcrumbItems} />
 
-      <main className={`${Gotham.className}`}>
+      <main id="main" className={`${Gotham.className}`}>
+        <ComingSoonNotice
+          title="2026 lineup coming soon"
+          description="Speakers for Lagos '26 are being announced in the coming weeks. Below are the voices who have graced our stage so far."
+        />
         <SpeakersGrid />
       </main>
     </>

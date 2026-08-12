@@ -40,14 +40,14 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
   }, []);
 
   return (
-    <section className="py-12 lg:py-16 px-4 lg:px-8 bg-gradient-to-b from-brand-blue-deep to-black relative overflow-hidden">
+    <section className="py-12 lg:py-16 px-4 lg:px-8 bg-ground border-t border-white/20 relative overflow-hidden">
       <div className="relative z-10 max-w-3xl mx-auto">
         {!hideHeader && (
           <div className="text-center mb-8 lg:mb-12 fade-in-on-scroll">
-            <h2 className="font-bold text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-4 lg:mb-6 text-white">
+            <h2 className="font-bold text-3xl lg:text-5xl mb-4 lg:mb-6 text-white">
               Frequently Asked <span className="text-brand-blue-light">Questions</span>
             </h2>
-            <p className="text-base lg:text-xl text-white/70 max-w-2xl mx-auto px-2">
+            <p className="text-base lg:text-lg text-white/60 max-w-2xl mx-auto px-2">
               Everything you need to know about Africa&apos;s premier Web3
               conference
             </p>
@@ -58,7 +58,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
           {faqData.map((item) => (
             <div
               key={item.id}
-              className="bg-white/[0.03] rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
+              className="bg-white/5 rounded-xl border border-white/20 hover:bg-white/10 transition-colors duration-300"
             >
               <button
                 type="button"
@@ -73,15 +73,15 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
                   {openItems.has(item.id) ? (
                     <ChevronUpIcon className="w-5 h-5 text-brand-blue-light" />
                   ) : (
-                    <ChevronDownIcon className="w-5 h-5 text-white/50" />
+                    <ChevronDownIcon className="w-5 h-5 text-white/60" />
                   )}
                 </div>
               </button>
 
               {openItems.has(item.id) && (
-                <div className="px-6 pb-5 transition-all duration-300 ease-in-out">
-                  <div className="pt-2 border-t border-white/10">
-                    <p className="text-white/70 leading-relaxed">
+                <div className="px-6 pb-5 transition-colors duration-300 ease-in-out">
+                  <div className="pt-2 border-t border-white/20">
+                    <p className="text-white/60 leading-relaxed">
                       {item.answer}
                     </p>
                   </div>
@@ -92,11 +92,11 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
         </div>
 
         <div className="mt-8 lg:mt-12 text-center fade-in-on-scroll">
-          <div className="bg-gradient-to-br from-brand-blue to-brand-blue-dark rounded-2xl p-6 lg:p-10 text-white border border-white/10">
-            <h3 className="text-xl lg:text-2xl font-semibold mb-4">
+          <div className="bg-white/5 rounded-xl p-6 lg:p-10 text-white border border-white/20">
+            <h3 className="text-lg lg:text-2xl font-semibold mb-4">
               Still have questions?
             </h3>
-            <p className="text-white/80 mb-6 lg:text-lg">
+            <p className="text-white/90 mb-6 lg:text-lg">
               Can&apos;t find the answer you&apos;re looking for? Our team is
               here to help.
             </p>
@@ -113,7 +113,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
         {showBackToTop && (
           <button
             onClick={scrollToTop}
-            className="fixed bottom-6 right-6 lg:bottom-8 lg:right-8 bg-brand-blue text-white w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-lg hover:bg-brand-blue-light transition-all duration-200 z-50 flex items-center justify-center transform hover:scale-110"
+            className="fixed bottom-6 right-6 lg:bottom-8 lg:right-8 bg-brand-blue text-white w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-lg hover:bg-brand-blue-light transition-transform duration-200 z-50 flex items-center justify-center transform hover:scale-110"
             aria-label="Back to top"
           >
             <ArrowUpIcon className="w-5 h-5 lg:w-6 lg:h-6" />

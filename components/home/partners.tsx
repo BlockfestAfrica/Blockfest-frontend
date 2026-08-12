@@ -18,7 +18,7 @@ interface PartnerInfo {
 
 function PartnerCard({ src, alt, href, width = 150, height = 64 }: PartnerInfo) {
   const card = (
-    <div className="bg-white/10 rounded-2xl border border-white/20 hover:bg-white/15 transition-all duration-300 flex items-center justify-center p-4 h-20 lg:h-24">
+    <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/20 transition-colors duration-300 flex items-center justify-center p-4 h-20 lg:h-24">
       <Image
         src={src}
         alt={alt}
@@ -90,19 +90,17 @@ export function PartnersSection() {
   useSubtleAnimations();
 
   return (
-    <section className="flex flex-col items-center justify-center px-5 py-12 lg:py-16 lg:px-10 bg-gradient-to-b from-brand-blue to-brand-blue-dark">
+    <section className="flex flex-col items-center justify-center px-5 py-12 lg:py-16 lg:px-10 bg-ground border-t border-white/20">
       <div className="w-full max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-4 border border-white/10">
-            <span className="text-white font-semibold text-sm">
-              2025 PARTNERS
-            </span>
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-4">
+            2025 PARTNERS
+          </p>
           <h2 className="font-medium text-3xl lg:text-5xl lg:leading-tight tracking-[-5%] text-center text-white fade-in-on-scroll">
             Previous Partners
           </h2>
-          <p className="text-white/70 text-base lg:text-lg mt-4 max-w-2xl mx-auto">
+          <p className="text-white/60 text-base lg:text-lg mt-4 max-w-2xl mx-auto">
             These incredible companies shared our vision at Blockfest Africa
             2025 and brought many new eyes to their brand
           </p>
@@ -121,23 +119,22 @@ export function PartnersSection() {
         <h3 className="font-medium text-3xl lg:text-5xl leading-tight">
           Be part of 2026&apos;s Web3 Revolution
         </h3>
-        <p className="text-white/80 text-sm lg:text-lg lg:leading-relaxed max-w-2xl">
-          We took the movement across Africa in 2026 — after the South Africa
+        <p className="text-white/90 text-sm lg:text-lg lg:leading-relaxed max-w-2xl">
+          We took the movement across Africa in 2026. After the South Africa
           roadshow, the main event lands in Lagos this October. Attend, showcase
           your brand, or sponsor the future of Africa&apos;s web3 ecosystem.
         </p>
 
         <div className="flex items-center justify-center gap-4 mt-5 mb-10 lg:mb-0">
-          <Link href="#sponsorship">
-            <Button
-              className="font-semibold text-sm lg:text-base rounded-full px-6 py-5 lg:px-8 bg-brand-gold text-black hover:bg-brand-gold-hover"
-              onClick={() => {
-                trackButtonClick("View 2026 Packages", "Partners Section");
-              }}
-            >
-              View 2026 Packages
-            </Button>
-          </Link>
+          <Button
+            asChild
+            className="font-semibold text-sm lg:text-base rounded-full px-6 py-5 lg:px-8 bg-brand-gold text-black hover:bg-brand-gold-hover"
+            onClick={() => {
+              trackButtonClick("View 2026 Packages", "Partners Section");
+            }}
+          >
+            <Link href="/#sponsorship">View 2026 Packages</Link>
+          </Button>
           <Link
             href={`mailto:${contactEmail}`}
             passHref

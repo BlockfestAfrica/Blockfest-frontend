@@ -5,29 +5,14 @@ export interface FAQItem {
   category: string;
 }
 
+/** Icon keys resolve to lucide components in the FAQ component. */
 export const faqCategories = [
-  { name: "Event Details", icon: "📅", color: "bg-blue-50 text-blue-700" },
-  {
-    name: "Registration & Tickets",
-    icon: "🎫",
-    color: "bg-green-50 text-green-700",
-  },
-  {
-    name: "Food & Accommodation",
-    icon: "🍽️",
-    color: "bg-orange-50 text-orange-700",
-  },
-  {
-    name: "Activities & Networking",
-    icon: "🤝",
-    color: "bg-purple-50 text-purple-700",
-  },
-  { name: "Safety & Security", icon: "🔒", color: "bg-red-50 text-red-700" },
-  {
-    name: "Community & Support",
-    icon: "💬",
-    color: "bg-indigo-50 text-indigo-700",
-  },
+  { name: "Event Details", icon: "calendar" },
+  { name: "Registration & Tickets", icon: "ticket" },
+  { name: "Food & Accommodation", icon: "utensils" },
+  { name: "Activities & Networking", icon: "handshake" },
+  { name: "Safety & Security", icon: "shield" },
+  { name: "Community & Support", icon: "message" },
 ] as const;
 
 export const faqData: FAQItem[] = [
@@ -36,14 +21,14 @@ export const faqData: FAQItem[] = [
     id: 1,
     question: "When and where is Blockf3st Africa 2026?",
     answer:
-      "Blockf3st Africa 2026 has TWO events! Cape Town, South Africa in May 2026 and Lagos, Nigeria in October 2026. Join us for the Superbowl of Web3!",
+      "October 22–24, 2026 at the National Art Theatre, Lagos. Three days: the workshop and The Back Room, the main conference, then the closing mixer.",
     category: "Event Details",
   },
   {
     id: 4,
     question: "What should I expect at Blockf3st Africa?",
     answer:
-      "Experience keynote sessions from industry leaders, interactive workshops, panel discussions, networking opportunities, and masterclasses covering AI, Blockchain, DeFi, NFTs, and emerging Web3 technologies.",
+      "Keynotes, workshops, panels, founder and investor sessions, startup showcases and networking across AI, Web3, fintech, infrastructure, media and culture. The full schedule lands in the coming weeks.",
     category: "Event Details",
   },
   {
@@ -71,30 +56,58 @@ export const faqData: FAQItem[] = [
   // Registration & Tickets
   {
     id: 2,
-    question: "Is Blockf3st Africa free to attend?",
+    question: "How much does it cost to attend Blockf3st Africa '26?",
     answer:
-      "Yes! Blockf3st Africa is completely free to attend. Please do not pay anyone claiming to sell tickets - the event is 100% free. We believe in making Web3 education accessible to everyone.",
+      "Passes run from ₦7,500 (BUIDL PASS) to ₦185,000 (ALL ACCESS PASS), with early bird pricing until August 30, 2026. See all ten on our tickets page. Only buy through our official ticket link, and please do not pay anyone else claiming to sell tickets.",
     category: "Registration & Tickets",
   },
   {
     id: 3,
-    question: "How do I register for the events?",
+    question: "How do I get a ticket?",
     answer:
-      "Registration opens closer to each event date. Follow us on social media and join our Telegram community to be the first to know when registration opens!",
+      "Pick your pass on the tickets page and you will be taken to our official ticket platform to check out. Early bird pricing ends August 30, 2026.",
+    category: "Registration & Tickets",
+  },
+  {
+    id: 20,
+    question: "Can I get a refund or transfer my ticket?",
+    answer:
+      "Tickets are non-refundable but transferable until October 16, 2026 at 6:00 PM WAT. Refunds are not provided for no-shows.",
+    category: "Registration & Tickets",
+  },
+  {
+    id: 21,
+    question: "What happens at the Day 1 workshop?",
+    answer:
+      "A curated room of hands-on sessions with leading experts across development, design, marketing and community. It runs on the morning of October 22 and comes with breakfast. BUIDL PLUS, BECOME PLUS, EXEC PASS and ALL ACCESS PASS all include it.",
+    category: "Registration & Tickets",
+  },
+  {
+    id: 22,
+    question: "What is The Back Room?",
+    answer:
+      "A closed-door room on the evening of October 22, away from the main crowd, where founders pitch for funding and meet angel investors, fund managers and VCs directly. Access comes with the FOUNDER CIRCLE and ALL ACCESS PASS.",
+    category: "Registration & Tickets",
+  },
+  {
+    id: 23,
+    question: "Can I buy tickets for my team?",
+    answer:
+      "Yes. The CORPORATE CIRCLE is ₦150,000 (down from ₦175,000) and covers five people with BECOME PASS access: main stage, exhibition area, lunch and event merch for each.",
     category: "Registration & Tickets",
   },
   {
     id: 5,
     question: "Who should attend Blockf3st Africa?",
     answer:
-      "The event welcomes Web3 builders, blockchain developers, crypto founders, DeFi enthusiasts, students, creators, investors, and anyone interested in Africa's digital frontier and Web3 innovation.",
+      "Founders, engineers, investors, creators, corporate leaders, policymakers, designers, marketers, students and emerging talent. See the full breakdown on our tickets page.",
     category: "Registration & Tickets",
   },
   {
     id: 11,
-    question: "Can I attend both events?",
+    question: "Which pass should I get?",
     answer:
-      "Yes! We encourage attendees to join us at both Cape Town in May and Lagos in October. Register for each event separately and experience the full Blockf3st Africa world tour!",
+      "It depends on which days you want. Conference day alone starts with the BUIDL PASS. Add the Day 1 workshop with BUIDL PLUS or BECOME PLUS. FOUNDER CIRCLE gets you into The Back Room. PRIME, EXEC and ALL ACCESS add VIP entry and the speakers lounge, and ALL ACCESS adds the Day 3 mixer.",
     category: "Registration & Tickets",
   },
 
@@ -103,14 +116,14 @@ export const faqData: FAQItem[] = [
     id: 7,
     question: "Are meals provided during the event?",
     answer:
-      "Yes, refreshments and lunch will be provided for all registered attendees. If you have dietary restrictions, please mention them during registration.",
+      "It depends on your pass. Breakfast on Day 1 comes with every workshop pass. Lunch is included from the BRIDGE PASS upwards, and PRIME, EXEC and ALL ACCESS get the buffet lunch. Note any dietary restrictions at checkout.",
     category: "Food & Accommodation",
   },
   {
     id: 12,
     question: "Is transportation provided to the venue?",
     answer:
-      "Transportation details will be announced closer to each event. Join our Telegram community to stay updated on logistics and pickup points.",
+      "Transportation may be provided within Lagos. At checkout you will be asked which area you are travelling from (Ikeja, Surulere, Yaba, Ikorodu, Festac, Iyana Ipaja, Berger or Ajah) so we can plan pickup points. Join our Telegram community for logistics updates.",
     category: "Food & Accommodation",
   },
   {
@@ -149,7 +162,7 @@ export const faqData: FAQItem[] = [
     id: 16,
     question: "What safety and security measures are in place?",
     answer:
-      "Your safety is our priority! The venues will be guarded with professional security personnel throughout the events. We also have ambulance services and paramedics on standby for any medical emergencies.",
+      "The venue is guarded by professional security personnel throughout the event, with ambulance services and paramedics on standby.",
     category: "Safety & Security",
   },
 
@@ -165,14 +178,14 @@ export const faqData: FAQItem[] = [
     id: 18,
     question: "How can I become a sponsor or partner?",
     answer:
-      "We offer various partnership tiers for both Cape Town and Lagos events. Contact us at partnership@blockfestafrica.com to receive our sponsorship deck with all packages and benefits.",
+      "We offer several partnership tiers for Lagos '26. Contact us at partnership@blockfestafrica.com for the sponsorship deck.",
     category: "Community & Support",
   },
   {
     id: 19,
     question: "Can I speak at Blockf3st Africa 2026?",
     answer:
-      "Speaker applications will open soon! Follow us on social media to be notified when applications open. We're looking for industry experts, founders, and thought leaders in the Web3 space.",
+      "Speaker applications open in the coming weeks. Follow us on social media to be notified. We are looking for industry experts, founders and thought leaders across AI and Web3.",
     category: "Community & Support",
   },
 ];

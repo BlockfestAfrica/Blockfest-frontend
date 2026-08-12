@@ -2,24 +2,25 @@ import { Agenda } from "@/components/agenda";
 import { gotham } from "@/lib/fonts";
 import type { Metadata } from "next";
 import { BaseSchema } from "@/components/seo/schema-markup";
+import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
 
 export const metadata: Metadata = {
   title: "Schedule | Blockfest Africa - Event Program & Activities",
   description:
-    "Explore the full schedule of activities for Blockfest Africa. Join industry leaders, attend keynote sessions, and participate in workshops on AI, Blockchain, and emerging technologies.",
+    "The Lagos '26 three-day programme is published in the coming weeks. Meanwhile, see how the 2025 edition ran: keynotes, workshops, panels and networking.",
   keywords:
     "Blockfest Africa schedule, event program, blockchain conference schedule, tech conference activities, AI workshops",
   openGraph: {
     title: "Schedule | Blockfest Africa - Event Program & Activities",
     description:
-      "Explore the full schedule of activities for Blockfest Africa. Join industry leaders, attend keynote sessions, and participate in workshops on AI, Blockchain, and emerging technologies.",
+      "The Lagos '26 three-day programme is published in the coming weeks. Meanwhile, see how the 2025 edition ran: keynotes, workshops, panels and networking.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Schedule | Blockfest Africa - Event Program & Activities",
     description:
-      "Explore the full schedule of activities for Blockfest Africa. Join industry leaders, attend keynote sessions, and participate in workshops on AI, Blockchain, and emerging technologies.",
+      "The Lagos '26 three-day programme is published in the coming weeks. Meanwhile, see how the 2025 edition ran: keynotes, workshops, panels and networking.",
   },
   alternates: {
     canonical: "https://blockfestafrica.com/schedule",
@@ -88,7 +89,7 @@ export default function Schedule() {
   const schedulePageData = {
     name: "Schedule - Blockfest Africa 2025",
     description:
-      "Explore the full schedule of activities for Blockfest Africa. Join industry leaders, attend keynote sessions, and participate in workshops on AI, Blockchain, and emerging technologies.",
+      "The Lagos '26 three-day programme is published in the coming weeks. Meanwhile, see how the 2025 edition ran: keynotes, workshops, panels and networking.",
     url: "https://blockfestafrica.com/schedule",
     isPartOf: {
       "@type": "WebSite",
@@ -163,21 +164,24 @@ export default function Schedule() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <main className={`${gotham.className} min-h-screen bg-white`}>
+      <main id="main" className={`${gotham.className} min-h-screen bg-white`}>
+        <ComingSoonNotice
+          title="2026 schedule coming soon"
+          description="The three-day Lagos '26 programme is published in the coming weeks. Below is the 2025 schedule for reference."
+        />
+
         {/* Header Section */}
-        <div className="bg-gradient-to-br from-brand-blue via-brand-blue-dark to-brand-blue-deep py-12 lg:py-16">
+        <div className="bg-ground py-12 lg:py-16">
           <div className="max-w-6xl mx-auto px-4 lg:px-8 text-center">
-            <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-4 border border-white/10">
-              <span className="text-white font-semibold text-sm">
-                2025 SCHEDULE
-              </span>
-            </div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-4">
+            2025 SCHEDULE
+          </p>
             <h1 className="font-bold text-3xl lg:text-5xl mb-4 text-white">
               Schedule of <span className="text-white">Activities</span>
             </h1>
-            <p className="text-base lg:text-lg text-white/80 max-w-2xl mx-auto">
-              Join us for an exciting day filled with insights from industry
-              leaders, innovative workshops, and networking opportunities.
+            <p className="text-base lg:text-lg text-white/90 max-w-2xl mx-auto">
+              How the 2025 edition ran, hour by hour. The Lagos &apos;26
+              programme spans three days and is published soon.
             </p>
           </div>
         </div>

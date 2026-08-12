@@ -1,6 +1,6 @@
 import Image from "next/image";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { FaArrowRight } from "react-icons/fa";
 import { blockfest2026SouthAfrica } from "@/lib/events";
 
 // A small teaser of the freshest roadshow frames for the homepage.
@@ -15,23 +15,20 @@ export function SouthAfricaRecapSection() {
   const event = blockfest2026SouthAfrica;
 
   return (
-    <section className="py-12 lg:py-16 bg-gradient-to-b from-white to-gray-50">
+    <section className="py-12 lg:py-16 bg-paper">
       <div className="max-w-6xl mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Copy */}
           <div>
-            <div className="inline-flex items-center gap-2 bg-brand-blue/10 rounded-full px-4 py-2 mb-5 border border-brand-blue/20">
-              <span className="text-lg">🇿🇦</span>
-              <span className="text-brand-blue font-semibold text-sm tracking-wide">
-                SOUTH AFRICA · THAT&apos;S A WRAP
-              </span>
-            </div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-blue mb-5">
+            SOUTH AFRICA · THAT&apos;S A WRAP
+          </p>
             <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-4">
               We took it to{" "}
               <span className="text-brand-blue">Cape Town</span>
             </h2>
             <p className="text-gray-600 text-base lg:text-lg mb-6 max-w-xl">
-              {event.date.displayDate} — a week of builder meetups, sessions and
+              {event.date.displayDate}. A week of builder meetups, sessions and
               experiences that brought Africa&apos;s Web3 community together
               across South Africa. The roadshow set the stage for the main event
               in Lagos.
@@ -41,7 +38,7 @@ export function SouthAfricaRecapSection() {
               className="inline-flex items-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-full font-semibold hover:bg-brand-blue-pressed transition-colors"
             >
               View the South Africa recap
-              <FaArrowRight />
+              <ArrowRight />
             </Link>
           </div>
 
@@ -50,7 +47,7 @@ export function SouthAfricaRecapSection() {
             {teaser.map((img, index) => (
               <div
                 key={img}
-                className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100"
+                className="relative aspect-square rounded-xl overflow-hidden bg-gray-100"
               >
                 <Image
                   src={img}

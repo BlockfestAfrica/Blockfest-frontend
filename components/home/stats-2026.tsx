@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
-import { FaArrowRight } from "react-icons/fa";
 import "./subtle-animations.css";
 
 const displayStats = [
@@ -15,14 +15,14 @@ export function Stats2026Section() {
   useSubtleAnimations();
 
   return (
-    <section className="relative bg-gradient-to-r from-brand-blue via-brand-blue-dark to-brand-blue-deep py-12 lg:py-16 overflow-hidden">
+    <section className="relative bg-ground border-t border-white/20 py-12 lg:py-16 overflow-hidden">
       <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6 lg:mb-10">
-          <p className="text-white/40 text-xs sm:text-sm uppercase tracking-[0.2em] mb-2 fade-in-on-scroll">
+          <p className="text-white/60 text-xs sm:text-sm uppercase tracking-[0.2em] mb-2 fade-in-on-scroll">
             2025 was massive
           </p>
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white fade-in-on-scroll">
+          <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold text-white fade-in-on-scroll">
             Building on Our Success
           </h2>
         </div>
@@ -32,17 +32,17 @@ export function Stats2026Section() {
           {displayStats.map((stat, index) => (
             <div
               key={stat.label}
-              className={`bg-white/10 rounded-lg lg:rounded-xl p-3 sm:p-4 lg:p-5 text-center border border-white/10 hover:bg-white/[0.12] transition-all duration-300 stagger-animation stagger-${
-                index + 1
-              }`}
+              className={`bg-white/10 rounded-md lg:rounded-xl p-3 sm:p-4 lg:p-5 text-center border border-white/20 hover:bg-white/20 transition-colors duration-300 stagger-animation stagger-${
+        index + 1
+       }`}
             >
-              <p className="font-bold text-xl sm:text-2xl lg:text-3xl xl:text-4xl text-white mb-0.5">
+              <p className="font-bold text-lg sm:text-2xl lg:text-3xl text-white mb-0.5">
                 {stat.value}
               </p>
               <p className="font-medium text-xs sm:text-sm lg:text-base text-white/90">
                 {stat.label}
               </p>
-              <p className="text-[10px] sm:text-xs lg:text-sm text-white/50">
+              <p className="text-[10px] sm:text-xs lg:text-sm text-white/60">
                 {stat.subtext}
               </p>
             </div>
@@ -50,7 +50,7 @@ export function Stats2026Section() {
         </div>
 
         {/* Social Proof Row */}
-        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-6 text-white/70 text-xs sm:text-sm lg:text-base mb-4 lg:mb-6">
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-6 text-white/60 text-xs sm:text-sm lg:text-base mb-4 lg:mb-6">
           <div className="flex items-center gap-2">
             <span className="text-[#1DA1F2]">𝕏</span>
             <span>2.2M+ Impressions</span>
@@ -67,10 +67,10 @@ export function Stats2026Section() {
         <div className="text-center">
           <Link
             href="/blockfest-2025"
-            className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors font-semibold underline underline-offset-4"
+            className="inline-flex items-center gap-2 py-2.5 text-white/60 hover:text-white transition-colors font-semibold underline underline-offset-4"
           >
             <span>See Full 2025 Recap</span>
-            <FaArrowRight className="text-sm" />
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>

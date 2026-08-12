@@ -87,7 +87,9 @@ export default function GetDPPage() {
   return (
     <>
       <BaseSchema type="WebPage" data={badgePageData} />
-      <BadgeGenerator />
+      <main id="main">
+        <BadgeGenerator />
+      </main>
     </>
   );
 }

@@ -1,9 +1,8 @@
 "use client";
 import Image from "next/image";
+import { ChevronDown, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "../ui/sheet";
-import { AiOutlineClose } from "react-icons/ai";
-import { IoChevronDown } from "react-icons/io5";
 import Link from "next/link";
 import BurgerIcon from "../icons/burger-icon";
 import { gotham } from "@/lib/fonts";
@@ -11,7 +10,11 @@ import { CONTACT_EMAIL } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
 
 const navLinkClasses =
-  "text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out";
+  "text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-2.5 inline-flex items-center min-h-11 transition-colors duration-300 ease-in-out";
+
+/** Current page gets a gold underline, so you can always see where you are. */
+const activeNavClasses =
+  "text-white relative after:absolute after:left-1 after:right-1 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-brand-gold";
 
 const Navbar = () => {
   const contactEmail = CONTACT_EMAIL;
@@ -75,7 +78,7 @@ const Navbar = () => {
       className={`${gotham.className} bg-black px-5 lg:px-[70px] py-4 lg:py-10 flex items-center justify-between sticky top-0 z-50`}
     >
       {/* Logo */}
-      <Link href="/" className="cursor-pointer">
+      <Link href="/" className="inline-flex items-center cursor-pointer min-h-11">
         <Image
           src="/images/logo.svg"
           alt="Blockfest Africa Logo"
@@ -89,7 +92,11 @@ const Navbar = () => {
 
       {/* Desktop Nav */}
       <nav className="hidden md:flex items-center gap-x-7" aria-label="Main navigation">
-        <Link href="/" className={navLinkClasses}>
+        <Link
+          href="/"
+          aria-current={pathname === "/" ? "page" : undefined}
+          className={`${navLinkClasses} ${pathname === "/" ? activeNavClasses : ""}`}
+        >
           Home
         </Link>
         <button type="button" onClick={handleAboutClick} className={navLinkClasses}>
@@ -103,10 +110,12 @@ const Navbar = () => {
             onClick={() => setPastEventsOpen((open) => !open)}
             aria-expanded={pastEventsOpen}
             aria-haspopup="true"
-            className={`${navLinkClasses} inline-flex items-center gap-1`}
+            className={`${navLinkClasses} inline-flex items-center gap-1 ${
+              pathname.startsWith("/blockfest-") ? activeNavClasses : ""
+            }`}
           >
             Past Events
-            <IoChevronDown
+            <ChevronDown
               className={`text-sm transition-transform duration-200 ${pastEventsOpen ? "rotate-180" : ""
                 }`}
             />
@@ -115,36 +124,47 @@ const Navbar = () => {
           {pastEventsOpen && (
             <div
               role="menu"
-              className="absolute left-0 top-full mt-2 min-w-[190px] rounded-md bg-black border border-white/10 shadow-lg py-2 z-50"
+              className="absolute left-0 top-full mt-2 min-w-[190px] rounded-md bg-black border border-white/20 shadow-lg py-2 z-50"
             >
               <Link
                 href="/blockfest-south-africa-2026"
                 role="menuitem"
+                aria-current={pathname === "/blockfest-south-africa-2026" ? "page" : undefined}
                 onClick={() => setPastEventsOpen(false)}
-                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white focus-visible:outline-none transition-colors duration-200 ease-in-out"
+                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white transition-colors duration-200 ease-in-out"
               >
-                South Africa &apos;26 <span className="text-sm">🇿🇦</span>
+                South Africa &apos;26
               </Link>
               <Link
                 href="/blockfest-2025"
                 role="menuitem"
+                aria-current={pathname === "/blockfest-2025" ? "page" : undefined}
                 onClick={() => setPastEventsOpen(false)}
-                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white focus-visible:outline-none transition-colors duration-200 ease-in-out"
+                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white transition-colors duration-200 ease-in-out"
               >
-                2025 Recap <span className="text-sm">🇳🇬</span>
+                2025 Recap
               </Link>
             </div>
           )}
         </div>
 
-        <Link href="/speakers" className={navLinkClasses}>
+        <Link
+          href="/speakers"
+          aria-current={pathname.startsWith("/speakers") ? "page" : undefined}
+          className={`${navLinkClasses} ${pathname.startsWith("/speakers") ? activeNavClasses : ""}`}
+        >
           Speakers
         </Link>
-        {pathname !== "/speakers" && (
-          <Link href="#sponsorship" className={navLinkClasses}>
-            Sponsor
-          </Link>
-        )}
+        <Link
+          href="/tickets"
+          aria-current={pathname === "/tickets" ? "page" : undefined}
+          className={`${navLinkClasses} ${pathname === "/tickets" ? activeNavClasses : ""}`}
+        >
+          Tickets
+        </Link>
+        <Link href="/#sponsorship" className={navLinkClasses}>
+          Sponsor
+        </Link>
         <Link href={`mailto:${contactEmail}`} className={navLinkClasses}>
           Contact
         </Link>
@@ -153,15 +173,19 @@ const Navbar = () => {
       {/* Right Side */}
       <div className="flex items-center gap-x-5">
         <Link
-          href="#sponsorship"
-          className="md:p-5 text-sm lg:text-base font-medium text-black w-fit p-3 bg-brand-gold hidden shadow-xs hover:bg-brand-gold-hover h-9 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
+          href="/tickets"
+          className="text-sm lg:text-base font-medium text-black w-fit bg-brand-gold hidden shadow-xs hover:bg-brand-gold-hover min-h-11 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
         >
-          Become a Sponsor
+          Get Tickets
         </Link>
         <div className="flex md:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <button type="button" aria-label="Open menu" className="p-2 -m-2">
+              <button
+                type="button"
+                aria-label="Open menu"
+                className="-mr-2 flex h-11 w-11 items-center justify-center"
+              >
                 <BurgerIcon className="text-white" />
               </button>
             </SheetTrigger>
@@ -208,7 +232,7 @@ const MobileMenu = () => {
             aria-label="Close menu"
             className="flex items-center justify-center w-11 h-11 rounded-full hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light"
           >
-            <AiOutlineClose size={28} className="text-white" />
+            <X size={28} className="text-white" />
           </button>
         </SheetClose>
       </div>
@@ -218,7 +242,12 @@ const MobileMenu = () => {
         <SheetClose asChild>
           <Link
             href="/"
-            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
+            aria-current={pathname === "/" ? "page" : undefined}
+            className={`text-lg font-medium transition w-fit min-h-11 inline-flex items-center ${
+              pathname === "/"
+                ? "text-white underline decoration-brand-gold decoration-2 underline-offset-8"
+                : "text-nav-gray hover:text-white hover:underline"
+            }`}
           >
             Home
           </Link>
@@ -228,7 +257,7 @@ const MobileMenu = () => {
           <button
             type="button"
             onClick={handleAboutClick}
-            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit min-h-11 inline-flex items-center"
           >
             About
           </button>
@@ -243,20 +272,20 @@ const MobileMenu = () => {
             className="text-lg font-medium text-nav-gray hover:text-white transition w-fit inline-flex items-center gap-1.5"
           >
             Past Events
-            <IoChevronDown
+            <ChevronDown
               className={`text-base transition-transform duration-200 ${pastEventsOpen ? "rotate-180" : ""
                 }`}
             />
           </button>
 
           {pastEventsOpen && (
-            <div className="flex flex-col gap-y-4 mt-4 pl-4 border-l border-white/10">
+            <div className="flex flex-col gap-y-4 mt-4 pl-4 border-l border-white/20">
               <SheetClose asChild>
                 <Link
                   href="/blockfest-south-africa-2026"
                   className="text-base font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
                 >
-                  South Africa &apos;26 <span>🇿🇦</span>
+                  South Africa &apos;26
                 </Link>
               </SheetClose>
               <SheetClose asChild>
@@ -264,7 +293,7 @@ const MobileMenu = () => {
                   href="/blockfest-2025"
                   className="text-base font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
                 >
-                  2025 Recap <span>🇳🇬</span>
+                  2025 Recap
                 </Link>
               </SheetClose>
             </div>
@@ -274,7 +303,12 @@ const MobileMenu = () => {
         <SheetClose asChild>
           <Link
             href="/speakers"
-            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
+            aria-current={pathname === "/speakers" ? "page" : undefined}
+            className={`text-lg font-medium transition w-fit min-h-11 inline-flex items-center ${
+              pathname === "/speakers"
+                ? "text-white underline decoration-brand-gold decoration-2 underline-offset-8"
+                : "text-nav-gray hover:text-white hover:underline"
+            }`}
           >
             Speakers
           </Link>
@@ -282,8 +316,22 @@ const MobileMenu = () => {
 
         <SheetClose asChild>
           <Link
-            href="#sponsorship"
-            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
+            href="/tickets"
+            aria-current={pathname === "/tickets" ? "page" : undefined}
+            className={`text-lg font-medium transition w-fit min-h-11 inline-flex items-center ${
+              pathname === "/tickets"
+                ? "text-white underline decoration-brand-gold decoration-2 underline-offset-8"
+                : "text-nav-gray hover:text-white hover:underline"
+            }`}
+          >
+            Tickets
+          </Link>
+        </SheetClose>
+
+        <SheetClose asChild>
+          <Link
+            href="/#sponsorship"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit min-h-11 inline-flex items-center"
           >
             Become a Sponsor
           </Link>
@@ -293,10 +341,19 @@ const MobileMenu = () => {
         <SheetClose asChild>
           <a
             href={`mailto:${contactEmail}`}
-            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit min-h-11 inline-flex items-center"
           >
             Contact
           </a>
+        </SheetClose>
+
+        <SheetClose asChild>
+          <Link
+            href="/tickets"
+            className="mt-2 inline-flex w-fit items-center justify-center rounded-md bg-brand-gold px-6 py-3 text-base font-semibold text-black transition-colors hover:bg-brand-gold-hover"
+          >
+            Get Tickets
+          </Link>
         </SheetClose>
       </div>
     </div>
