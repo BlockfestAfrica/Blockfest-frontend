@@ -7,7 +7,7 @@ import type { Menu } from "@/types";
 import { gotham } from "@/lib/fonts";
 import { CONTACT_EMAIL, SOCIAL_URLS } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
-import { useUmami } from "@/lib/hooks/use-umami";
+import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
 
 const exploreMenu: Menu[] = [
   { path: "/", title: "Home" },
@@ -27,7 +27,6 @@ const socialLabels = ["Twitter / X", "Instagram", "YouTube", "LinkedIn"];
 const Footer = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { trackButtonClick } = useUmami();
   const handleAboutClick = () => {
     if (typeof window !== "undefined") {
       if (pathname === "/") {

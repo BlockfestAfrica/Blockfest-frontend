@@ -69,3 +69,8 @@ registrations.csv
 *-pii.csv
 
 .midnight-expert
+# Isolated build output (NEXT_DIST_DIR), see next.config.ts
+.next-build/
+
+# Local Claude Code config, not project state
+.claude/

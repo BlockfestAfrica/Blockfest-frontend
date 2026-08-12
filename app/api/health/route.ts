@@ -62,7 +62,7 @@ export async function GET() {
  */
 function checkEnvironmentVariables(): HealthStatus["checks"][0] {
   const required = ["GOOGLE_SHEETS_CSV_URL"];
-  const optional = ["INSIGHTS_PASSWORD", "NEXT_PUBLIC_UMAMI_WEBSITE_ID"];
+  const optional = ["INSIGHTS_PASSWORD"];
 
   const missingRequired = required.filter((key) => !process.env[key]);
   const missingOptional = optional.filter((key) => !process.env[key]);

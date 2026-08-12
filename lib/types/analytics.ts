@@ -1,5 +1,5 @@
 /**
- * Umami Analytics Event Types
+ * Analytics Event Types
  * Define common event structures for consistent tracking
  */
 

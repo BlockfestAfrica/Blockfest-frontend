@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Calendar, CalendarPlus, MapPin } from "lucide-react";
 import { Button } from "../ui/button";
-import { useUmami } from "@/lib/hooks/use-umami";
+import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
 import { blockfest2026Lagos } from "@/lib/events";
 import { calculateTimeLeft, type TimeLeft } from "@/lib/countdown";
-import { EARLY_BIRD_ENDS, formatNaira, lowestTicketPrice } from "@/lib/tickets";
+import { EARLY_BIRD_ENDS } from "@/lib/tickets";
 import { ICS_PATH } from "@/lib/calendar";
 
 /** Days remaining until early bird closes, rendered as a line of type. */
@@ -37,11 +37,10 @@ function EarlyBirdLine() {
 }
 
 export function HeroSection2026() {
-  const { trackButtonClick, trackRegistration } = useUmami();
 
   const handleTickets = () => {
     trackButtonClick("Get Tickets", "Hero");
-    trackRegistration("hero-cta");
+    trackTicketIntent("hero-cta");
   };
 
   return (
@@ -100,7 +99,7 @@ export function HeroSection2026() {
               className="rounded-full px-7 text-base font-semibold"
             >
               <Link href="/tickets" onClick={handleTickets}>
-                Get tickets from {formatNaira(lowestTicketPrice)}
+                Get Tickets
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
