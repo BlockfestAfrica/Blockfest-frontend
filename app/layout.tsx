@@ -175,12 +175,6 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* Performance optimization: preconnect to external domains */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin=""
-        />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
 
@@ -194,9 +188,6 @@ export default function RootLayout({
         <link rel="preload" as="image" href="/images/hero.webp" />
         <link rel="preload" as="image" href="/images/logo.svg" />
         <link rel="preload" as="image" href="/images/mobile-logo.svg" />
-
-        {/* Prefetch likely next pages */}
-        <link rel="prefetch" href="/analytics" />
 
         <script
           type="application/ld+json"
@@ -262,8 +253,6 @@ export default function RootLayout({
           sizes="16x16"
           href="/favicon-16x16.png"
         />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0A1628" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
 
         {/* Service Worker Registration */}
