@@ -68,7 +68,7 @@ const Footer = () => {
                 width={140}
                 height={38}
                 sizes="(max-width: 768px) 124px, 140px"
-                priority
+                loading="lazy"
                 className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px]"
               />
             </Link>

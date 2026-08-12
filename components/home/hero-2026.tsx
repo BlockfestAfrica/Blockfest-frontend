@@ -49,9 +49,9 @@ function UpcomingEventCard({
       </div>
 
       <div className="text-center">
-        <h3 className="text-lg lg:text-2xl font-bold text-white mb-2">
+        <h2 className="text-lg lg:text-2xl font-bold text-white mb-2">
           {event.location.city}
-        </h3>
+        </h2>
         <p className="text-white/60 text-sm mb-4">{event.location.country}</p>
 
         <div className="flex items-center justify-center gap-2 text-white/90 font-semibold mb-4">
@@ -99,9 +99,9 @@ function RecapEventCard({ event }: { event: BlockfestEvent }) {
       </div>
 
       <div className="text-center">
-        <h3 className="text-lg lg:text-2xl font-bold text-white mb-2">
+        <h2 className="text-lg lg:text-2xl font-bold text-white mb-2">
           {event.location.city}
-        </h3>
+        </h2>
         <p className="text-white/60 text-sm mb-4">{event.location.country}</p>
 
         <div className="flex items-center justify-center gap-2 text-white/90 font-semibold mb-4">

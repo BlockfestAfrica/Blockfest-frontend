@@ -161,12 +161,13 @@ const Speakers: React.FC<PropType> = (props) => {
                         alt={`Portrait of ${speaker.name}, ${speaker.title}`}
                         width={640}
                         height={640}
-                        quality={100}
                         sizes="(max-width: 640px) 250px, (max-width: 768px) 250px, (max-width: 1024px) 300px, (max-width: 1280px) 320px, 320px"
                         className="w-full h-full object-cover object-center transition-transform duration-300 hover:scale-105"
                         style={{ objectPosition: "center 15%" }}
                         aria-describedby={`speaker-${index}-name speaker-${index}-title`}
-                        priority
+                        // Only the first slide is above the fold; the rest wait.
+                        priority={index === 0}
+                        loading={index === 0 ? "eager" : "lazy"}
                       />
                     </div>
                   </div>
