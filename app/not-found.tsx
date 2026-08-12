@@ -57,11 +57,12 @@ export default function NotFound() {
 
             {/* Action Button */}
             <div className="mb-8">
-              <Link href="/">
-                <Button className="w-full md:w-auto px-8 py-4 bg-brand-blue hover:bg-brand-blue-pressed text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-transform duration-300">
-                  🏠 Return Home
-                </Button>
-              </Link>
+              <Button
+                asChild
+                className="w-full md:w-auto px-8 py-4 bg-brand-blue hover:bg-brand-blue-pressed text-white font-bold text-lg rounded-xl transition-colors duration-300"
+              >
+                <Link href="/">Return Home</Link>
+              </Button>
             </div>
 
             {/* Help Section */}

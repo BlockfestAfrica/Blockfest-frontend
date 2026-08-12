@@ -149,6 +149,18 @@
     @apply bg-background text-foreground;
   }
 
+  /* Kill the 300ms tap delay and the grey flash on touch devices. */
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  label {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   /* One focus ring for the whole site. Individual components no longer
      declare their own, and none may use outline-none without a replacement. */
   :focus-visible {

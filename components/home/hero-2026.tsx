@@ -74,11 +74,14 @@ function UpcomingEventCard({
           ))}
         </div>
 
-        <Link href="/tickets" className="block" onClick={onTicketsClick}>
-          <Button className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-brand-gold text-black hover:bg-brand-gold-hover">
+        <Button
+          asChild
+          className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-brand-gold text-black hover:bg-brand-gold-hover"
+        >
+          <Link href="/tickets" onClick={onTicketsClick}>
             Get Tickets
-          </Button>
-        </Link>
+          </Link>
+        </Button>
 
         <p className="mt-3 text-xs text-white/60">
           Early bird ends {EARLY_BIRD_ENDS.display}
@@ -111,13 +114,14 @@ function RecapEventCard({ event }: { event: BlockfestEvent }) {
           A wrap on the South Africa roadshow. Relive the moments.
         </p>
 
-        <Link href={event.recapUrl ?? "/"} className="block">
-          <Button className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-white/10 text-white hover:bg-white/20">
-            <span className="inline-flex items-center gap-2">
-              View Recap <FaArrowRight className="text-xs" />
-            </span>
-          </Button>
-        </Link>
+        <Button
+          asChild
+          className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-white/10 text-white hover:bg-white/20"
+        >
+          <Link href={event.recapUrl ?? "/"}>
+            View Recap <FaArrowRight className="text-xs" />
+          </Link>
+        </Button>
       </div>
     </div>
   );
@@ -194,13 +198,13 @@ export function HeroSection2026() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mt-8">
           <Link
             href="/blockfest-south-africa-2026"
-            className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
+            className="inline-flex items-center gap-2 py-3 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
           >
             <span>South Africa &apos;26 recap</span>
           </Link>
           <Link
             href="/blockfest-2025"
-            className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
+            className="inline-flex items-center gap-2 py-3 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
           >
             <span>Lagos 2025 recap</span>
           </Link>

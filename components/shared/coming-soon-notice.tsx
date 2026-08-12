@@ -25,7 +25,7 @@ export function ComingSoonNotice({ title, description }: ComingSoonNoticeProps) 
         </div>
         <Link
           href="/tickets"
-          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-brand-blue px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-blue-pressed"
+          className="inline-flex shrink-0 items-center gap-2 min-h-11 rounded-full bg-brand-blue px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-blue-pressed"
         >
           Get your ticket
           <FaArrowRight className="text-xs" />
