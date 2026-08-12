@@ -49,7 +49,7 @@ export const faqData: FAQItem[] = [
     id: 14,
     question: "Can I attend virtually or is it only in-person?",
     answer:
-      "We will be livestreaming on our YouTube channel and X (Twitter) so the global Web3 community can participate virtually. However, we strongly encourage in-person attendance for the best networking and learning experience.",
+      "We will be livestreaming on our YouTube channel and X (Twitter) so the global Web3 and AI community can participate virtually. However, we strongly encourage in-person attendance for the best networking and learning experience.",
     category: "Event Details",
   },
 
@@ -146,14 +146,14 @@ export const faqData: FAQItem[] = [
     id: 10,
     question: "Will the event be livestreamed?",
     answer:
-      "Yes! We will be livestreaming the entire event on our YouTube channel and X (Twitter) so the global Web3 community can participate virtually. Follow our social media for livestream links.",
+      "Yes! We will be livestreaming the entire event on our YouTube channel and X (Twitter) so the global Web3 and AI community can participate virtually. Follow our social media for livestream links.",
     category: "Activities & Networking",
   },
   {
     id: 17,
     question: "Are there opportunities for startups to showcase?",
     answer:
-      "Yes! Blockf3st Africa provides platforms for Web3 startups and projects to showcase their innovations. Contact our team at partnership@blockfestafrica.com for showcase opportunities.",
+      "Yes! Blockf3st Africa provides platforms for Web3 and AI startups and projects to showcase their innovations. Contact our team at partnership@blockfestafrica.com for showcase opportunities.",
     category: "Activities & Networking",
   },
 

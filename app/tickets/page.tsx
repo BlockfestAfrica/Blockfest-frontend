@@ -26,6 +26,7 @@ export const metadata: Metadata = {
     "bridge pass",
     "become pass",
     "africa tech conference tickets",
+    "ai conference tickets lagos",
   ],
   openGraph: {
     title: "Tickets - Blockf3st Africa '26 Lagos",

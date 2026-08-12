@@ -44,7 +44,7 @@ export function GET() {
   const body = `# Blockf3st Africa
 
 > Africa's convention and festival across AI, Web3, venture capital, technology,
-> culture and careers. Held annually. ${e.date.displayDate} is the current edition.
+> culture and careers. AI and Web3 are the two pillars of the programme. Held annually. ${e.date.displayDate} is the current edition.
 
 ## Current edition
 

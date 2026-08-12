@@ -37,18 +37,18 @@ export function WhyAttend2026Section() {
   const categories = [
     {
       image: "/images/home/img1.jpg",
-      header: "The Superbowl of Web3",
-      text: "Blockf3st Africa is the continent's biggest gathering of Web3 minds, where the next generation of builders gets inspired.",
+      header: "The Superbowl of Web3 & AI",
+      text: "Blockf3st Africa is the continent's biggest gathering of Web3 and AI minds, where the next generation of builders gets inspired.",
     },
     {
       image: "/images/home/img9.jpg",
       header: "Connect",
-      text: "Meet founders, investors and government officials changing what web3 offers Africa.",
+      text: "Meet founders, investors and government officials changing what Web3 and AI offer Africa.",
     },
     {
       image: "/images/home/img10.jpg",
       header: "Learn",
-      text: "Live panels and masterclasses cover the cutting edge technologies web3 companies use around the world.",
+      text: "Live panels and masterclasses cover the cutting edge technologies Web3 and AI companies use around the world.",
     },
     {
       image: "/images/home/img3.jpg",

@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Blockfest Africa",
     short_name: "Blockfest",
     description:
-      "Africa's premier blockchain conference bringing together builders, founders, investors, and enthusiasts to shape the future of Web3 in Africa.",
+      "Africa's premier Web3 and AI conference bringing together builders, founders, investors and enthusiasts shaping the future of Web3 in Africa.",
     start_url: "/",
     display: "standalone",
     background_color: "#0A1628",

@@ -22,18 +22,20 @@ export const metadata: Metadata = {
     "Web3 networking Africa",
     "blockchain prizes Africa",
     "crypto event accommodation",
+    "AI conference questions",
+    "AI event Africa",
   ],
   openGraph: {
     title: "FAQ - Blockfest Africa 2026 | Complete Guide",
     description:
-      "Get answers to all your questions about Africa's premier Web3 conference. Registration, venues, schedule, accommodation, and more.",
+      "Get answers to all your questions about Africa's premier Web3 and AI conference. Registration, venues, schedule, accommodation, and more.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "FAQ - Blockfest Africa 2026 | Complete Guide",
     description:
-      "Get answers to all your questions about Africa's premier Web3 conference. Registration, venues, schedule, accommodation, and more.",
+      "Get answers to all your questions about Africa's premier Web3 and AI conference. Registration, venues, schedule, accommodation, and more.",
   },
   alternates: {
     canonical: "https://blockfestafrica.com/faq",
@@ -44,7 +46,7 @@ export default function FAQPage() {
   const faqPageData = {
     name: "Frequently Asked Questions - Blockfest Africa 2026",
     description:
-      "Everything you need to know about Africa's premier Web3 conference",
+      "Everything you need to know about Africa's premier Web3 and AI conference",
     url: "https://blockfestafrica.com/faq",
     isPartOf: {
       "@type": "WebSite",
