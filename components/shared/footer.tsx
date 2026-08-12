@@ -55,7 +55,7 @@ const Footer = () => {
   ];
 
   const linkClasses =
-    "text-base font-medium text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out w-fit";
+    "text-base font-medium text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out w-fit inline-flex items-center min-h-11";
 
   const columnLabelClasses =
     "flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-nav-gray/50 mb-5";
@@ -67,7 +67,7 @@ const Footer = () => {
       <div className="px-6 lg:px-[70px] pt-14 lg:pt-20">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-10 lg:pb-14">
           <div className="flex flex-col gap-4">
-            <Link href="/" className="inline-block w-fit cursor-pointer">
+            <Link href="/" className="inline-flex items-center w-fit cursor-pointer min-h-11">
               <Image
                 src="/images/logo.svg"
                 alt="Blockfest Africa Logo"
@@ -88,7 +88,7 @@ const Footer = () => {
             onClick={() =>
               trackButtonClick("Email Sponsorship", "Sponsorship Section")
             }
-            className="inline-flex items-center gap-2 bg-brand-gold text-black px-5 py-3 rounded-full font-semibold hover:bg-brand-gold-hover transition-colors text-sm sm:text-base max-w-full"
+            className="inline-flex items-center gap-2 bg-brand-gold text-black px-5 py-3.5 rounded-full font-semibold min-h-11 hover:bg-brand-gold-hover transition-colors text-sm sm:text-base max-w-full"
           >
             <span className="truncate"> 							Sponsor 2026
             </span>
@@ -147,7 +147,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`Follow us on ${socialLabels[index]}`}
-                  className="flex items-center justify-center w-10 h-10 rounded-full border border-white/20 text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-300 ease-in-out"
+                  className="flex items-center justify-center w-11 h-11 rounded-full border border-white/20 text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-300 ease-in-out"
                 >
                   {item.icon}
                 </Link>

@@ -29,7 +29,7 @@ export function AnnouncementBar() {
       <Link
         href="/tickets"
         onClick={() => trackButtonClick("Announcement Bar", "Site Header")}
-        className="group flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 px-4 py-2.5 text-center text-xs font-semibold text-white sm:text-sm"
+        className="group flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 px-4 py-3 text-center text-xs font-semibold text-white sm:text-sm min-h-11"
       >
         <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
         <span>

@@ -25,17 +25,16 @@ export function EventCta({
         <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
           {description}
         </p>
-        <Link href={ctaHref}>
-          <Button
-            variant="gold"
-            className="rounded-full px-8 py-6 text-base lg:text-lg font-bold"
-          >
-            <span className="inline-flex items-center gap-2">
-              {ctaLabel}
-              <FaArrowRight />
-            </span>
-          </Button>
-        </Link>
+        <Button
+          asChild
+          variant="gold"
+          className="rounded-full px-8 py-6 text-base lg:text-lg font-bold"
+        >
+          <Link href={ctaHref}>
+            {ctaLabel}
+            <FaArrowRight />
+          </Link>
+        </Button>
       </div>
     </section>
   );

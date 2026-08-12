@@ -55,7 +55,7 @@ export function SponsorshipSection() {
               onClick={() =>
                 trackButtonClick("Email Sponsorship", "Sponsorship Section")
               }
-              className="inline-flex items-center gap-2 bg-brand-gold text-black px-5 py-3 rounded-full font-semibold hover:bg-brand-gold-hover transition-colors text-sm sm:text-base max-w-full"
+              className="inline-flex items-center gap-2 bg-brand-gold text-black px-5 py-3.5 rounded-full font-semibold min-h-11 hover:bg-brand-gold-hover transition-colors text-sm sm:text-base max-w-full"
             >
               <FaEnvelope className="flex-shrink-0" />
               <span className="truncate">{contactEmail}</span>
@@ -68,7 +68,7 @@ export function SponsorshipSection() {
               onClick={() =>
                 trackButtonClick("Telegram Sponsorship", "Sponsorship Section")
               }
-              className="inline-flex items-center justify-center gap-2 bg-[#0088cc] text-white px-6 py-3 rounded-full font-semibold hover:bg-[#0077b5] transition-colors text-sm sm:text-base whitespace-nowrap"
+              className="inline-flex items-center justify-center gap-2 bg-[#0088cc] text-white px-6 py-3.5 rounded-full font-semibold min-h-11 hover:bg-[#0077b5] transition-colors text-sm sm:text-base whitespace-nowrap"
             >
               <FaTelegram className="flex-shrink-0 text-lg" />
               <span>Message on Telegram</span>

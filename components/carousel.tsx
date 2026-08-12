@@ -189,15 +189,20 @@ const Speakers: React.FC<PropType> = (props) => {
               type="button"
               // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               key={index}
-              className={`w-3 h-3 rounded-full transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${index === selectedIndex
-                ? "bg-blue-600 scale-125"
-                : "bg-gray-300 hover:bg-gray-400"
-                }`}
+              // The dot stays 12px; the hit area around it is a full 44px.
+              className="flex min-h-11 w-6 shrink-0 items-center justify-center"
               onClick={() => scrollTo(index)}
               role="tab"
               aria-selected={index === selectedIndex}
               aria-label={`Go to slide ${index + 1}: ${speakers[index]?.name}`}
-            />
+            >
+              <span
+                className={`block h-3 w-3 rounded-full transition-colors duration-300 ${index === selectedIndex
+                  ? "bg-brand-blue scale-125"
+                  : "bg-white/20 hover:bg-white/60"
+                  }`}
+              />
+            </button>
           ))}
         </div>
       )}

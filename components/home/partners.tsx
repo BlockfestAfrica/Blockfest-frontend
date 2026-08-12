@@ -126,16 +126,15 @@ export function PartnersSection() {
         </p>
 
         <div className="flex items-center justify-center gap-4 mt-5 mb-10 lg:mb-0">
-          <Link href="/#sponsorship">
-            <Button
-              className="font-semibold text-sm lg:text-base rounded-full px-6 py-5 lg:px-8 bg-brand-gold text-black hover:bg-brand-gold-hover"
-              onClick={() => {
-                trackButtonClick("View 2026 Packages", "Partners Section");
-              }}
-            >
-              View 2026 Packages
-            </Button>
-          </Link>
+          <Button
+            asChild
+            className="font-semibold text-sm lg:text-base rounded-full px-6 py-5 lg:px-8 bg-brand-gold text-black hover:bg-brand-gold-hover"
+            onClick={() => {
+              trackButtonClick("View 2026 Packages", "Partners Section");
+            }}
+          >
+            <Link href="/#sponsorship">View 2026 Packages</Link>
+          </Button>
           <Link
             href={`mailto:${contactEmail}`}
             passHref

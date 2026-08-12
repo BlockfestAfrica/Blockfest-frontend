@@ -184,7 +184,7 @@ export default async function SpeakerPage({
           {/* Back Button */}
           <Link
             href="/speakers"
-            className="inline-flex items-center gap-2 text-brand-blue hover:text-brand-blue-dark font-medium mb-4 sm:mb-6 transition-colors duration-200 group touch-manipulation"
+            className="inline-flex min-h-11 items-center gap-2 text-brand-blue hover:text-brand-blue-dark font-medium mb-4 sm:mb-6 transition-colors duration-200 group touch-manipulation"
           >
             <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
             <span className="text-sm sm:text-base">Back to Speakers</span>

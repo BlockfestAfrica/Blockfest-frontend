@@ -11,7 +11,7 @@ import { CONTACT_EMAIL } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
 
 const navLinkClasses =
-  "text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-1 transition-colors duration-300 ease-in-out";
+  "text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-2.5 inline-flex items-center min-h-11 transition-colors duration-300 ease-in-out";
 
 const Navbar = () => {
   const contactEmail = CONTACT_EMAIL;
@@ -75,7 +75,7 @@ const Navbar = () => {
       className={`${gotham.className} bg-black px-5 lg:px-[70px] py-4 lg:py-10 flex items-center justify-between sticky top-0 z-50`}
     >
       {/* Logo */}
-      <Link href="/" className="cursor-pointer">
+      <Link href="/" className="inline-flex items-center cursor-pointer min-h-11">
         <Image
           src="/images/logo.svg"
           alt="Blockfest Africa Logo"
@@ -155,14 +155,18 @@ const Navbar = () => {
       <div className="flex items-center gap-x-5">
         <Link
           href="/tickets"
-          className="md:p-5 text-sm lg:text-base font-medium text-black w-fit p-3 bg-brand-gold hidden shadow-xs hover:bg-brand-gold-hover h-9 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
+          className="text-sm lg:text-base font-medium text-black w-fit bg-brand-gold hidden shadow-xs hover:bg-brand-gold-hover min-h-11 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
         >
           Get Tickets
         </Link>
         <div className="flex md:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <button type="button" aria-label="Open menu" className="p-2 -m-2">
+              <button
+                type="button"
+                aria-label="Open menu"
+                className="-mr-2 flex h-11 w-11 items-center justify-center"
+              >
                 <BurgerIcon className="text-white" />
               </button>
             </SheetTrigger>
