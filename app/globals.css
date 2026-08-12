@@ -201,6 +201,28 @@ html {
   @apply overflow-x-hidden;
 }
 
+/* One step above the Tailwind scale, for poster-scale headlines only.
+   Deliberately not a Tailwind token so it cannot leak into body copy. */
+.text-display {
+  font-size: clamp(2.75rem, 8.5vw, 6.5rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+.text-display-sm {
+  font-size: clamp(2rem, 5.5vw, 3.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+
+/* Letterspaced uppercase label used above section headings. */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
 /* Keyboard-only shortcut past the navigation. */
 .skip-link {
   position: absolute;
