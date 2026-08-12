@@ -55,7 +55,7 @@ export const ticketGroups: TicketGroup[] = [
     title: "Conference Day",
     icon: "presentation",
     description:
-      "Friday, October 23. Main stage, exhibition floor, 3,500 people.",
+      "Friday, October 23. Main stage and exhibition floor.",
   },
   {
     id: "workshop",
