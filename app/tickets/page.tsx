@@ -5,7 +5,7 @@ import { TicketAbout } from "@/components/tickets/ticket-about";
 import { TicketTiers } from "@/components/tickets/ticket-tiers";
 import { IdealAudience } from "@/components/tickets/ideal-audience";
 import { TicketPolicy } from "@/components/tickets/ticket-policy";
-import { blockfest2026Lagos } from "@/lib/events";
+import { EVENT_ID } from "@/lib/seo-event";
 import {
   EARLY_BIRD_ENDS,
   TICKET_PLATFORM_URL,
@@ -26,6 +26,7 @@ export const metadata: Metadata = {
     "bridge pass",
     "become pass",
     "africa tech conference tickets",
+    "ai conference tickets lagos",
   ],
   openGraph: {
     title: "Tickets - Blockf3st Africa '26 Lagos",
@@ -51,33 +52,15 @@ export const metadata: Metadata = {
   },
 };
 
-/** Event schema carrying one Offer per ticket tier. */
+/**
+ * The Event itself is defined once in the root layout. This adds the itemised
+ * per-tier offers to that same node by @id, so consumers merge them instead of
+ * seeing two competing Event descriptions.
+ */
 function TicketOffersSchema() {
   const schema = {
     "@context": "https://schema.org",
-    "@type": "Event",
-    name: blockfest2026Lagos.name,
-    description:
-      "BlockFest Africa 2026 is Africa's leading convention and festival of frontiers across AI, Web3, venture capital, investment, technology, culture and careers.",
-    startDate: blockfest2026Lagos.date.start,
-    endDate: blockfest2026Lagos.date.end,
-    eventStatus: "https://schema.org/EventScheduled",
-    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    location: {
-      "@type": "Place",
-      name: "National Art Theatre, Lagos",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: "Lagos",
-        addressRegion: "Lagos State",
-        addressCountry: "NG",
-      },
-    },
-    organizer: {
-      "@type": "Organization",
-      name: "Blockfest Africa",
-      url: "https://blockfestafrica.com",
-    },
+    "@id": EVENT_ID,
     offers: ticketTiers.map((tier) => ({
       "@type": "Offer",
       name: tier.name,

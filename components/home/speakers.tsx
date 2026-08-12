@@ -1,6 +1,7 @@
 "use client";
 import type { EmblaOptionsType } from "embla-carousel";
 import Speakers from "../carousel";
+import { Button } from "../ui/button";
 import { SpeakersList } from "@/lib/speakers";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { toast } from "sonner";
@@ -17,38 +18,39 @@ export function SpeakersSection() {
   useSubtleAnimations();
 
   return (
-    <section className="flex flex-col items-center justify-center py-12 lg:py-16 px-4 lg:px-8 bg-ground border-t border-white/20 relative overflow-hidden">
-      <div className="relative z-10 text-center mb-8 w-full max-w-4xl px-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-4">
-            OUR SPEAKERS
+    <section className="section-y bg-ground border-t border-white/20">
+      <div className="container-page">
+        {/* Header sits on the same left edge as the hero headline. */}
+        <div className="mb-10 lg:mb-14">
+          <p className="eyebrow text-white/60">OUR SPEAKERS</p>
+          <h2 className="text-display-sm mt-3 font-bold text-white fade-in-on-scroll">
+            They&apos;ve Graced Our Stage
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            Founders, policymakers and thought leaders who have shaped the
+            conversation at Blockfest Africa
           </p>
-        <h2 className="font-bold text-3xl lg:text-5xl text-white fade-in-on-scroll">
-          They&apos;ve Graced Our Stage
-        </h2>
-        <p className="text-white/60 text-base lg:text-lg mt-4 max-w-2xl mx-auto">
-          World-class thought leaders, founders, and policymakers who have shaped
-          the conversation at Blockfest Africa
-        </p>
-      </div>
+        </div>
 
-      {/* Speaker carousel */}
-      <div className="relative z-10 scale-in">
-        <Speakers speakers={featured} options={OPTIONS} />
-      </div>
+        {/* Speaker carousel */}
+        <div className="scale-in">
+          <Speakers speakers={featured} options={OPTIONS} />
+        </div>
 
-      {/* 2026 Speaker CTA */}
-      <div className="relative z-10 mt-10 text-center">
-        <p className="text-white/90 text-lg mb-4">
-          Want to speak at Blockf3st Africa 2026?
-        </p>
-        <button
-          type="button"
-          onClick={() => toast("Coming soon!")}
-
-          className="inline-flex items-center gap-2 bg-brand-gold text-black px-6 py-3 rounded-full font-semibold hover:bg-brand-gold-hover transition-colors cursor-pointer"
-        >
-          Apply to Speak
-        </button>
+        {/* 2026 Speaker CTA */}
+        <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-lg text-white/90">
+            Want to speak at Blockf3st Africa 2026?
+          </p>
+          <Button
+            type="button"
+            variant="gold"
+            onClick={() => toast("Coming soon!")}
+            className="cursor-pointer rounded-full px-7 text-base font-semibold"
+          >
+            Apply to Speak
+          </Button>
+        </div>
       </div>
     </section>
   );

@@ -201,6 +201,60 @@ html {
   @apply overflow-x-hidden;
 }
 
+/* One step above the Tailwind scale, for poster-scale headlines only.
+   Deliberately not a Tailwind token so it cannot leak into body copy. */
+.text-display {
+  font-size: clamp(2.75rem, 8.5vw, 6.5rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+.text-display-sm {
+  font-size: clamp(1.875rem, 4.6vw, 3.125rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+/* The page grid. Chrome and content both sit on it, so the logo, the hero
+   headline and every section heading share one left edge. */
+.container-page {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .container-page {
+    padding-inline: 2rem;
+  }
+}
+
+/* One vertical rhythm for every section on the site. */
+.section-y {
+  padding-block: 3rem;
+}
+
+@media (min-width: 640px) {
+  .section-y {
+    padding-block: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-y {
+    padding-block: 6rem;
+  }
+}
+
+/* Letterspaced uppercase label used above section headings. */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
 /* Keyboard-only shortcut past the navigation. */
 .skip-link {
   position: absolute;

@@ -3,6 +3,7 @@ import { EnhancedFAQSection } from "@/components/home/enhanced-faq";
 import { FAQSchema } from "@/components/seo/faq-schema";
 import { BaseSchema } from "@/components/seo/schema-markup";
 import { faqData } from "@/lib/faq-data";
+import { EVENT_ID } from "@/lib/seo-event";
 
 export const metadata: Metadata = {
   title: "FAQ - Blockfest Africa 2026 | Complete Guide",
@@ -21,18 +22,20 @@ export const metadata: Metadata = {
     "Web3 networking Africa",
     "blockchain prizes Africa",
     "crypto event accommodation",
+    "AI conference questions",
+    "AI event Africa",
   ],
   openGraph: {
     title: "FAQ - Blockfest Africa 2026 | Complete Guide",
     description:
-      "Get answers to all your questions about Africa's premier Web3 conference. Registration, venues, schedule, accommodation, and more.",
+      "Get answers to all your questions about Africa's premier Web3 and AI conference. Registration, venues, schedule, accommodation, and more.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "FAQ - Blockfest Africa 2026 | Complete Guide",
     description:
-      "Get answers to all your questions about Africa's premier Web3 conference. Registration, venues, schedule, accommodation, and more.",
+      "Get answers to all your questions about Africa's premier Web3 and AI conference. Registration, venues, schedule, accommodation, and more.",
   },
   alternates: {
     canonical: "https://blockfestafrica.com/faq",
@@ -43,61 +46,16 @@ export default function FAQPage() {
   const faqPageData = {
     name: "Frequently Asked Questions - Blockfest Africa 2026",
     description:
-      "Everything you need to know about Africa's premier Web3 conference",
+      "Everything you need to know about Africa's premier Web3 and AI conference",
     url: "https://blockfestafrica.com/faq",
     isPartOf: {
       "@type": "WebSite",
       name: "Blockfest Africa",
       url: "https://blockfestafrica.com",
     },
-    about: {
-      "@type": "Event",
-      name: "Blockfest Africa 2026",
-      description:
-        "Africa's premier Web3 conference bringing together blockchain developers, crypto founders, DeFi enthusiasts, and Web3 innovators.",
-      startDate: "2026-10-22T08:00:00+01:00",
-      endDate: "2026-10-23T18:00:00+01:00",
-      eventStatus: "https://schema.org/EventScheduled",
-      eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-      location: {
-        "@type": "Place",
-        name: "Lagos, Nigeria",
-        address: {
-          "@type": "PostalAddress",
-          addressLocality: "Lagos",
-          addressRegion: "Lagos State",
-          addressCountry: "NG",
-        },
-      },
-      organizer: {
-        "@type": "Organization",
-        name: "Blockfest Africa",
-        url: "https://blockfestafrica.com",
-        email: "partnership@blockfestafrica.com",
-        sameAs: [
-          "https://twitter.com/blockfestafrica",
-          "https://www.instagram.com/blockfestival_africa?igsh=NG1ma2p1aXV2OHk2&utm_source=qr",
-          "https://youtube.com/@blockchainfestivalafrica?si=UhSMNPr7GIfOzZk9",
-          "https://linkedin.com/company/blockfest-africa",
-          "https://t.me/blockf3stafrica",
-        ],
-      },
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "USD",
-        availability: "https://schema.org/InStock",
-        url: "https://luma.com/gf1ye3cw?tk=AQAG9o",
-        description: "Free admission to Blockfest Africa 2026",
-      },
-      performer: [
-        {
-          "@type": "Organization",
-          name: "Blockfest Africa",
-          url: "https://blockfestafrica.com",
-        },
-      ],
-    },
+    // The event is defined once in lib/seo-event.ts; reference it by @id
+    // so the price, dates and venue can never drift between pages.
+    about: { "@id": EVENT_ID },
     mainEntity: {
       "@type": "WebPage",
       name: "Blockfest Africa 2026 FAQ",
@@ -110,19 +68,18 @@ export default function FAQPage() {
     <>
       <FAQSchema faqs={faqData} />
       <BaseSchema type="WebPage" data={faqPageData} />
-      <main id="main" className="min-h-screen bg-white">
+      <main id="main" className="min-h-screen bg-paper">
         {/* Header Section */}
-        <div className="bg-ground py-12 lg:py-16">
-          <div className="max-w-6xl mx-auto px-4 lg:px-8 text-center">
-            <h1 className="font-bold text-3xl lg:text-5xl mb-4 text-white">
-              Frequently Asked <span className="text-brand-blue-light">Questions</span>
-            </h1>
-            <p className="text-base lg:text-lg text-white/90 max-w-2xl mx-auto">
-              Everything you need to know about Africa&apos;s premier Web3
-              conference
-            </p>
+        <section className="section-y bg-ground">
+          <div className="container-page">
+            <div className="max-w-2xl">
+              <h1 className="text-display-sm font-bold text-white">
+                Frequently Asked{" "}
+                <span className="text-brand-blue-light">Questions</span>
+              </h1>
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* Enhanced FAQ Content */}
         <EnhancedFAQSection hideHeader={true} />

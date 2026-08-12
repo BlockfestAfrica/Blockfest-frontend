@@ -1,212 +1,144 @@
 "use client";
 import { useState, useEffect } from "react";
-import { ArrowRight, Calendar } from "lucide-react";
-import { Button } from "../ui/button";
+import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight, Calendar, MapPin } from "lucide-react";
+import { Button } from "../ui/button";
 import { useUmami } from "@/lib/hooks/use-umami";
-import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
-import {
-  blockfest2026SouthAfrica,
-  blockfest2026Lagos,
-  type BlockfestEvent,
-} from "@/lib/events";
+import { blockfest2026Lagos } from "@/lib/events";
 import { calculateTimeLeft, type TimeLeft } from "@/lib/countdown";
-import { EARLY_BIRD_ENDS } from "@/lib/tickets";
-import "./subtle-animations.css";
+import { EARLY_BIRD_ENDS, formatNaira, lowestTicketPrice } from "@/lib/tickets";
 
-/** Upcoming event card with a live countdown and a tickets CTA. */
-function UpcomingEventCard({
-  event,
-  onTicketsClick,
-}: {
-  event: BlockfestEvent;
-  onTicketsClick: () => void;
-}) {
+/** Days remaining until early bird closes, rendered as a line of type. */
+function EarlyBirdLine() {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(
-    calculateTimeLeft(event.date.start)
+    calculateTimeLeft(EARLY_BIRD_ENDS.iso)
   );
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft(event.date.start));
-    }, 1000);
+    const timer = setInterval(
+      () => setTimeLeft(calculateTimeLeft(EARLY_BIRD_ENDS.iso)),
+      60_000
+    );
     return () => clearInterval(timer);
-  }, [event.date.start]);
-
-  const units = [
-    { val: timeLeft.days, label: "d" },
-    { val: timeLeft.hours, label: "h" },
-    { val: timeLeft.minutes, label: "m" },
-    { val: timeLeft.seconds, label: "s" },
-  ];
+  }, []);
 
   return (
-    <div className="relative rounded-xl lg:rounded-xl p-6 lg:p-8 transition-transform duration-300 hover:scale-[1.02] bg-brand-blue-dark border border-white/20">
-      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-brand-gold text-black text-xs font-bold px-4 py-1 rounded-full">
-        NEXT EVENT
-      </div>
-
-      <div className="text-center">
-        <h2 className="text-lg lg:text-2xl font-bold text-white mb-2">
-          {event.location.city}
-        </h2>
-        <p className="text-white/60 text-sm mb-4">{event.location.country}</p>
-
-        <div className="flex items-center justify-center gap-2 text-white/90 font-semibold mb-4">
-          <Calendar className="h-5 w-5" />
-          <span>{event.date.displayDate}</span>
-        </div>
-
-        {/* Compact Countdown */}
-        <div className="flex justify-center gap-3 mb-6">
-          {units.map((unit) => (
-            <div key={unit.label} className="text-center">
-              <span className="text-lg font-bold text-white tabular-nums">
-                {mounted ? String(unit.val).padStart(2, "0") : "--"}
-              </span>
-              <span className="text-[10px] text-white/60 ml-0.5">
-                {unit.label}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <Button
-          asChild
-          className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-brand-gold text-black hover:bg-brand-gold-hover"
-        >
-          <Link href="/tickets" onClick={onTicketsClick}>
-            Get Tickets
-          </Link>
-        </Button>
-
-        <p className="mt-3 text-xs text-white/60">
-          Early bird ends {EARLY_BIRD_ENDS.display}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/** Completed event card — celebrates the edition and links to its recap. */
-function RecapEventCard({ event }: { event: BlockfestEvent }) {
-  return (
-    <div className="relative rounded-xl lg:rounded-xl p-6 lg:p-8 transition-transform duration-300 hover:scale-[1.02] bg-white/5 border border-white/20">
-      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white/20 text-black text-xs font-bold px-4 py-1 rounded-full">
-        THAT&apos;S A WRAP
-      </div>
-
-      <div className="text-center">
-        <h2 className="text-lg lg:text-2xl font-bold text-white mb-2">
-          {event.location.city}
-        </h2>
-        <p className="text-white/60 text-sm mb-4">{event.location.country}</p>
-
-        <div className="flex items-center justify-center gap-2 text-white/90 font-semibold mb-4">
-          <Calendar className="h-5 w-5" />
-          <span>{event.date.displayDate}</span>
-        </div>
-
-        <p className="text-white/60 text-sm mb-6 min-h-[2.5rem]">
-          A wrap on the South Africa roadshow. Relive the moments.
-        </p>
-
-        <Button
-          asChild
-          className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-white/10 text-white hover:bg-white/20"
-        >
-          <Link href={event.recapUrl ?? "/"}>
-            View Recap <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </Button>
-      </div>
-    </div>
+    <p className="text-sm text-white/60">
+      <span className="font-semibold tabular-nums text-brand-gold">
+        {mounted ? timeLeft.days : "--"} days
+      </span>{" "}
+      left on early bird pricing
+    </p>
   );
 }
 
 export function HeroSection2026() {
   const { trackButtonClick, trackRegistration } = useUmami();
 
-  useSubtleAnimations();
-
-  const handleLagosTickets = () => {
-    trackButtonClick("Get Tickets", "Hero Section - Lagos");
-    trackRegistration("hero-cta-lagos");
+  const handleTickets = () => {
+    trackButtonClick("Get Tickets", "Hero");
+    trackRegistration("hero-cta");
   };
 
   return (
-    <section className="relative w-full flex items-center justify-center bg-gradient-to-b from-black to-ground py-12 lg:py-16 overflow-hidden">
-      {/* Grid pattern overlay - subtle dots */}
+    <section className="relative isolate overflow-hidden bg-ground">
+      {/* The room, on the night. Everything else sits on top of it. */}
+      <Image
+        src="/images/home/img4.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center"
+      />
+      {/* Scrim: keeps the type legible without flattening the photograph. */}
       <div
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)`,
-          backgroundSize: "40px 40px",
-        }}
+        className="absolute inset-0 bg-ground/80 md:bg-gradient-to-r md:from-ground/95 md:via-ground/60 md:to-transparent"
+        aria-hidden="true"
       />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8 py-8 lg:py-12">
-        {/* Main Content */}
-        <div className="text-center mb-8 lg:mb-12">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-brand-gold/15 rounded-full px-5 py-2.5 mb-6 border border-brand-gold/30 fade-in-on-scroll">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-gold opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-gold" />
+      <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-16 sm:pb-20 sm:pt-24 lg:px-8 lg:pb-28 lg:pt-32">
+        <div className="max-w-3xl">
+          {/* Where and when, before anything else */}
+          <p className="eyebrow flex flex-wrap items-center gap-x-3 gap-y-1 text-white/60">
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+              {blockfest2026Lagos.location.venue}
             </span>
-            <span className="text-brand-gold font-semibold text-sm lg:text-base">
-              TICKETS ARE LIVE
+            <span className="hidden text-white/20 sm:inline" aria-hidden="true">
+              /
             </span>
-          </div>
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+              {blockfest2026Lagos.date.displayDate}
+            </span>
+          </p>
 
-          {/* Title */}
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 scale-in">
-            Blockf<span className="text-brand-blue">3</span>st Africa{" "}
-            <span className="text-brand-gold">&apos;26</span>
+          <h1 className="text-display mt-5 font-bold uppercase text-white">
+            Blockf<span className="text-brand-blue-light">3</span>st
+            <br />
+            Africa <span className="text-brand-gold">&rsquo;26</span>
           </h1>
 
-          {/* Tagline */}
-          <p className="text-lg lg:text-2xl text-white/90 font-medium mb-4 lg:mb-6 fade-in-on-scroll">
-            New Trade Routes:{" "}
-            <span className="text-white">Bringing Africa Onchain</span>
+          <p className="mt-6 max-w-xl text-lg text-white/90 sm:text-2xl">
+            New Trade Routes: Bringing Africa Onchain
           </p>
 
-          {/* Description */}
-          <p className="text-white/60 text-sm sm:text-base lg:text-lg max-w-3xl mx-auto mb-6 lg:mb-8 fade-in-on-scroll">
-            Three days of building, networking and dealmaking with{" "}
-            <span className="text-white font-semibold">5,000+</span> founders,
-            engineers, investors and policymakers. Fresh off the{" "}
-            <span className="text-brand-blue-light">South Africa</span> roadshow,
-            the main event lands in{" "}
-            <span className="text-brand-blue-light">Lagos this October</span>.
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-white/60">
+            Three days of building, networking and dealmaking with 5,000+
+            founders, engineers, investors and policymakers.
           </p>
-        </div>
 
-        {/* Event Cards — Lagos (next) + South Africa (recap) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto slide-in-right">
-          <UpcomingEventCard
-            event={blockfest2026Lagos}
-            onTicketsClick={handleLagosTickets}
-          />
-          <RecapEventCard event={blockfest2026SouthAfrica} />
-        </div>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <Button
+              asChild
+              variant="gold"
+              className="rounded-full px-7 text-base font-semibold"
+            >
+              <Link href="/tickets" onClick={handleTickets}>
+                Get tickets from {formatNaira(lowestTicketPrice)}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="rounded-full border border-white/20 bg-white/10 px-7 text-base font-semibold text-white hover:bg-white/20"
+            >
+              <Link href="#lagos-2026">See the programme</Link>
+            </Button>
+          </div>
 
-        {/* Recap Links */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mt-8">
-          <Link
-            href="/blockfest-south-africa-2026"
-            className="inline-flex items-center gap-2 py-3 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
-          >
-            <span>South Africa &apos;26 recap</span>
-          </Link>
-          <Link
-            href="/blockfest-2025"
-            className="inline-flex items-center gap-2 py-3 text-white/60 hover:text-white transition-colors text-sm lg:text-base"
-          >
-            <span>Lagos 2025 recap</span>
-          </Link>
+          <div className="mt-6">
+            <EarlyBirdLine />
+          </div>
+        </div>
+      </div>
+
+      {/* Cape Town is history now, so it gets a line rather than equal billing. */}
+      <div className="relative border-t border-white/20">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 lg:px-8">
+          <p className="text-sm text-white/60">
+            The South Africa roadshow is a wrap.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-6">
+            <Link
+              href="/blockfest-south-africa-2026"
+              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-white/90 hover:text-white"
+            >
+              Cape Town &rsquo;26 recap
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+            <Link
+              href="/blockfest-2025"
+              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white"
+            >
+              Lagos 2025 recap
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </div>
         </div>
       </div>
     </section>

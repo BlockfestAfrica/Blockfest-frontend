@@ -11,10 +11,10 @@ interface ComingSoonNoticeProps {
 /** Banner for pages showing last year's content while this year's is prepared. */
 export function ComingSoonNotice({ title, description }: ComingSoonNoticeProps) {
   return (
-    <div className="bg-gray-50 border-b border-gray-200">
-      <div className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-4 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+    <div className="border-b border-gray-200 bg-paper-muted">
+      <div className="container-page flex flex-col items-start gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="flex items-center gap-2 font-semibold text-gray-900">
+          <p className="flex items-center gap-2 text-base font-semibold text-gray-900">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-blue opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-blue" />
@@ -25,10 +25,10 @@ export function ComingSoonNotice({ title, description }: ComingSoonNoticeProps) 
         </div>
         <Link
           href="/tickets"
-          className="inline-flex shrink-0 items-center gap-2 min-h-11 rounded-full bg-brand-blue px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-blue-pressed"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-brand-blue px-6 py-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-brand-blue-dark"
         >
           Get your ticket
-          <ArrowRight className="h-3.5 w-3.5" />
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
     </div>

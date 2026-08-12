@@ -16,52 +16,47 @@ export function SponsorshipSection() {
 
   return (
     <section
-      className="py-12 lg:py-16 bg-ground relative overflow-hidden"
+      className="section-y bg-ground border-t border-white/20"
       id="sponsorship"
     >
-      <div className="relative z-10 max-w-3xl mx-auto px-4 lg:px-8">
+      <div className="container-page">
         {/* Header */}
-        <div className="text-center mb-8 lg:mb-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-4">
-            PARTNERSHIP OPPORTUNITIES
-          </p>
-          <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4 fade-in-on-scroll">
+        <div className="mb-10 lg:mb-14 fade-in-on-scroll">
+          <p className="eyebrow text-white/60">PARTNERSHIP OPPORTUNITIES</p>
+          <h2 className="text-display-sm mt-3 font-bold text-white">
             Become a Sponsor
           </h2>
-          <p className="text-white/60 text-base lg:text-lg max-w-3xl mx-auto fade-in-on-scroll">
-            Position your brand at Africa&apos;s premier Web3 event. Get direct
-            access to{" "}
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            Reach{" "}
             <span className="font-semibold text-white">
               15,000+ registered attendees
             </span>
-            , decision makers, and founders shaping the future of blockchain in
-            Africa.
+            , decision makers, and founders across Africa.
           </p>
         </div>
 
         {/* Contact CTA */}
-        <div className="bg-white/5 rounded-xl lg:rounded-xl p-6 lg:p-10 text-center scale-in border border-white/20">
-          <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4">
+        <div className="rounded-xl border border-white/20 bg-white/5 p-6 scale-in lg:p-10">
+          <h3 className="text-2xl font-bold text-white lg:text-3xl">
             Get Our Sponsorship Deck
           </h3>
-          <p className="text-white/90 mb-8 max-w-2xl mx-auto">
-            Interested in sponsoring Blockf3st Africa 2026? Reach out to us and
-            we&apos;ll share our comprehensive sponsorship deck with all
-            available packages and benefits.
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/90">
+            Email or message us and we&apos;ll send the Blockf3st Africa 2026
+            deck with all packages and benefits.
           </p>
 
-          <div className="flex flex-col gap-4 justify-center items-center">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <Link
               href={`mailto:${contactEmail}?subject=Sponsorship Inquiry - Blockf3st Africa 2026`}
               onClick={() =>
                 trackButtonClick("Email Sponsorship", "Sponsorship Section")
               }
-              className="inline-flex items-center gap-2 bg-brand-gold text-black px-5 py-3.5 rounded-full font-semibold min-h-11 hover:bg-brand-gold-hover transition-colors text-sm sm:text-base max-w-full"
+              className="inline-flex min-h-12 max-w-full items-center justify-center gap-2 rounded-full bg-brand-gold px-7 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover sm:text-base"
             >
-              <Mail className="flex-shrink-0" />
+              <Mail className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
               <span className="truncate">{contactEmail}</span>
             </Link>
-            <span className="text-white/60">or</span>
+            <span className="self-center text-sm text-white/60">or</span>
             <Link
               href="https://t.me/Olanetsoft"
               target="_blank"
@@ -69,9 +64,9 @@ export function SponsorshipSection() {
               onClick={() =>
                 trackButtonClick("Telegram Sponsorship", "Sponsorship Section")
               }
-              className="inline-flex items-center justify-center gap-2 bg-[#0088cc] text-white px-6 py-3.5 rounded-full font-semibold min-h-11 hover:bg-[#0077b5] transition-colors text-sm sm:text-base whitespace-nowrap"
+              className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/20 bg-white/10 px-7 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/20 sm:text-base"
             >
-              <FaTelegram className="flex-shrink-0 text-lg" />
+              <FaTelegram className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
               <span>Message on Telegram</span>
             </Link>
           </div>

@@ -34,13 +34,13 @@ function EarlyBirdCountdown() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center gap-4 sm:gap-6">
+    <div className="flex items-end gap-5 sm:gap-7">
       {units(timeLeft).map((unit) => (
-        <div key={unit.label} className="text-center">
-          <span className="block text-2xl sm:text-3xl font-bold text-white tabular-nums">
+        <div key={unit.label}>
+          <span className="block text-2xl font-bold tabular-nums text-white sm:text-3xl">
             {mounted ? String(unit.value).padStart(2, "0") : "--"}
           </span>
-          <span className="text-[10px] uppercase tracking-widest text-white/60">
+          <span className="eyebrow mt-1 block text-white/60">
             {unit.label}
           </span>
         </div>
@@ -51,56 +51,79 @@ function EarlyBirdCountdown() {
 
 export function TicketHero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-black to-ground py-14 lg:py-20">
-      <div
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)`,
-          backgroundSize: "40px 40px",
-        }}
-      />
+    <section className="section-y bg-ground">
+      <div className="container-page">
+        <div className="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-12">
+          {/* Where and when, before anything else */}
+          <div className="max-w-2xl lg:col-span-7">
+            <p className="eyebrow flex flex-wrap items-center gap-x-3 gap-y-1 text-white/60">
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" aria-hidden="true" />
+                {blockfest2026Lagos.date.displayDate}
+              </span>
+              <span className="hidden text-white/20 sm:inline" aria-hidden="true">
+                ·
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" aria-hidden="true" />
+                {blockfest2026Lagos.location.venue}
+              </span>
+              <span className="hidden text-white/20 sm:inline" aria-hidden="true">
+                ·
+              </span>
+              <span>Three days</span>
+            </p>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8 text-center">
-        <div className="inline-flex items-center gap-2 bg-brand-gold/15 border border-brand-gold/30 rounded-full px-5 py-2 mb-6">
-          <span className="text-brand-gold font-semibold text-xs sm:text-sm tracking-wide uppercase">
-            Early bird ends {EARLY_BIRD_ENDS.display}
-          </span>
-        </div>
+            <h1 className="text-display mt-5 font-bold uppercase text-white">
+              Secure Your Seat
+            </h1>
 
-        <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4">
-          Secure Your Seat
-        </h1>
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/60 sm:text-lg">
+              Africa&apos;s leading convention across AI, Web3, venture capital,
+              technology, culture and careers.
+            </p>
 
-        <p className="text-white/60 text-base sm:text-lg max-w-2xl mx-auto mb-8">
-          Africa&apos;s leading convention across AI, Web3, venture capital,
-          technology, culture and careers.
-        </p>
+            <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 py-2">
+              <span className="eyebrow text-white/90">
+                Early bird ends {EARLY_BIRD_ENDS.display}
+              </span>
+            </div>
+          </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-white/60 text-sm mb-10">
-          <span className="inline-flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-white/60" aria-hidden="true" />
-            {blockfest2026Lagos.date.displayDate}
-          </span>
-          <span className="hidden sm:inline text-white/60">·</span>
-          <span className="inline-flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-white/60" aria-hidden="true" />
-            {blockfest2026Lagos.location.venue}
-          </span>
-          <span className="hidden sm:inline text-white/60">·</span>
-          <span>Three days</span>
-        </div>
+          {/*
+            The clock and the action, kept as one platform-grade panel.
 
-        <div className="inline-flex flex-col items-center gap-5 rounded-xl border border-white/20 bg-white/5 px-8 py-7">
-          <p className="text-xs uppercase tracking-[0.2em] text-white/60">
-            Early bird closes in
-          </p>
-          <EarlyBirdCountdown />
-          <TicketCTA source="Tickets Hero" className="w-full sm:w-auto px-8">
-            Get your ticket
-          </TicketCTA>
-          <p className="text-white/60 text-xs">
-            Passes from {formatNaira(lowestTicketPrice)}
-          </p>
+            Panel, not a card: it wraps the primary CTA rather than being
+            clickable itself, so it deliberately omits the card recipe's
+            `transition-colors duration-300 hover:bg-white/10` tail — a
+            container that lights up on hover but does nothing is a phantom
+            affordance. Same treatment as the CTA panels in home/sponsorship,
+            home/partners and home/faq. The hover tail belongs to repeating
+            grid cards (ticket-about, ticket-policy, ideal-audience).
+          */}
+          <div className="lg:col-span-5">
+            <div className="rounded-xl border border-white/20 bg-white/5 p-6">
+              <p className="eyebrow text-white/60">Early bird closes in</p>
+
+              <div className="mt-4">
+                <EarlyBirdCountdown />
+              </div>
+
+              <TicketCTA
+                source="Tickets Hero"
+                className="mt-6 w-full sm:w-auto px-8"
+              >
+                Get your ticket
+              </TicketCTA>
+
+              <p className="mt-4 text-xs text-white/60">
+                Passes from{" "}
+                <span className="font-semibold text-brand-gold">
+                  {formatNaira(lowestTicketPrice)}
+                </span>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>

@@ -19,7 +19,7 @@ const siteName = "Blockfest Africa";
 const twitterHandle =
   process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica";
 const defaultDescription =
-  "Africa's premier blockchain conference bringing together builders, founders, investors, and enthusiasts to shape the future of Web3 in Africa.";
+  "Africa's premier Web3 and AI conference bringing together builders, founders, investors and enthusiasts shaping the future of Web3 and AI in Africa.";
 const defaultImage = `${siteUrl}/images/og-image.jpg`;
 
 export function generateSEO({

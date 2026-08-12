@@ -18,7 +18,7 @@ interface PartnerInfo {
 
 function PartnerCard({ src, alt, href, width = 150, height = 64 }: PartnerInfo) {
   const card = (
-    <div className="bg-white/10 rounded-xl border border-white/20 hover:bg-white/20 transition-colors duration-300 flex items-center justify-center p-4 h-20 lg:h-24">
+    <div className="flex h-20 items-center justify-center rounded-xl border border-white/20 bg-white/5 p-4 transition-colors duration-300 hover:bg-white/10 lg:h-24">
       <Image
         src={src}
         alt={alt}
@@ -31,7 +31,12 @@ function PartnerCard({ src, alt, href, width = 150, height = 64 }: PartnerInfo) 
 
   if (href) {
     return (
-      <Link href={href} target="_blank" rel="noopener noreferrer">
+      <Link
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-xl"
+      >
         {card}
       </Link>
     );
@@ -90,65 +95,66 @@ export function PartnersSection() {
   useSubtleAnimations();
 
   return (
-    <section className="flex flex-col items-center justify-center px-5 py-12 lg:py-16 lg:px-10 bg-ground border-t border-white/20">
-      <div className="w-full max-w-6xl mx-auto">
+    <section className="section-y bg-ground border-t border-white/20">
+      <div className="container-page">
         {/* Header */}
-        <div className="text-center mb-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-4">
-            2025 PARTNERS
-          </p>
-          <h2 className="font-medium text-3xl lg:text-5xl lg:leading-tight tracking-[-5%] text-center text-white fade-in-on-scroll">
+        <div className="mb-10 lg:mb-14">
+          <p className="eyebrow text-white/60">2025 PARTNERS</p>
+          <h2 className="text-display-sm mt-3 font-bold text-white fade-in-on-scroll">
             Previous Partners
           </h2>
-          <p className="text-white/60 text-base lg:text-lg mt-4 max-w-2xl mx-auto">
-            These incredible companies shared our vision at Blockfest Africa
-            2025 and brought many new eyes to their brand
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            These companies shared our vision at Blockfest Africa 2025, and
+            brought new eyes to their brand.
           </p>
         </div>
 
         {/* Single unified grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 lg:gap-4 scale-in">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 lg:gap-4 scale-in">
           {allPartners.map((partner) => (
             <PartnerCard key={partner.alt} {...partner} />
           ))}
         </div>
-      </div>
 
-      {/* CTA */}
-      <div className="flex flex-col items-center justify-center space-y-5 mt-16 lg:mt-24 text-white text-center max-w-4xl">
-        <h3 className="font-medium text-3xl lg:text-5xl leading-tight">
-          Be part of 2026&apos;s Web3 Revolution
-        </h3>
-        <p className="text-white/90 text-sm lg:text-lg lg:leading-relaxed max-w-2xl">
-          We took the movement across Africa in 2026. After the South Africa
-          roadshow, the main event lands in Lagos this October. Attend, showcase
-          your brand, or sponsor the future of Africa&apos;s web3 ecosystem.
-        </p>
+        {/* CTA */}
+        <div className="mt-10 rounded-xl border border-white/20 bg-white/5 p-6 lg:mt-14">
+          <div className="max-w-2xl">
+            <h3 className="text-3xl font-bold leading-tight text-white">
+              Be part of 2026&apos;s Web3 &amp; AI Revolution
+            </h3>
+            <p className="mt-4 text-base leading-relaxed text-white/90">
+              We took the movement across Africa in 2026. After the South Africa
+              roadshow, the main event lands in Lagos this October. Attend,
+              showcase your brand, or sponsor.
+            </p>
 
-        <div className="flex items-center justify-center gap-4 mt-5 mb-10 lg:mb-0">
-          <Button
-            asChild
-            className="font-semibold text-sm lg:text-base rounded-full px-6 py-5 lg:px-8 bg-brand-gold text-black hover:bg-brand-gold-hover"
-            onClick={() => {
-              trackButtonClick("View 2026 Packages", "Partners Section");
-            }}
-          >
-            <Link href="/#sponsorship">View 2026 Packages</Link>
-          </Button>
-          <Link
-            href={`mailto:${contactEmail}`}
-            passHref
-            onClick={() => {
-              trackButtonClick("Become a sponsor", "Partners Section");
-            }}
-          >
-            <Button
-              asChild
-              className="font-semibold text-sm lg:text-base rounded-full px-6 py-5 lg:px-8 border border-white text-white bg-transparent hover:bg-white/10"
-            >
-              <p>Contact Us</p>
-            </Button>
-          </Link>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <Button
+                asChild
+                variant="gold"
+                className="rounded-full px-7 text-base font-semibold"
+                onClick={() => {
+                  trackButtonClick("View 2026 Packages", "Partners Section");
+                }}
+              >
+                <Link href="/#sponsorship">View 2026 Packages</Link>
+              </Button>
+              <Link
+                href={`mailto:${contactEmail}`}
+                passHref
+                onClick={() => {
+                  trackButtonClick("Become a sponsor", "Partners Section");
+                }}
+              >
+                <Button
+                  asChild
+                  className="w-full rounded-full border border-white/20 bg-white/10 px-7 text-base font-semibold text-white hover:bg-white/20 sm:w-auto"
+                >
+                  <p>Contact Us</p>
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </section>

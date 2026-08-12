@@ -1,20 +1,16 @@
 import React from "react";
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import { SpeakersGrid } from "@/components/speakers/main-speakers";
 import { SpeakersSchema } from "@/components/seo/speakers-schema";
 import { BreadcrumbSchema } from "@/components/seo/schema-markup";
 import { SpeakersList, type Speaker } from "@/lib/speakers";
 import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
-
-const Gotham = localFont({
-  src: "../../app/fonts/Gotham-Medium.otf",
-});
+import { gotham } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: "Speakers",
   description:
-    "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, founders, investors and Web3 leaders who have spoken at Blockfest Africa.",
+    "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa.",
   keywords: [
     "blockfest africa speakers",
     "blockchain experts africa",
@@ -30,6 +26,8 @@ export const metadata: Metadata = {
     "fintech leaders africa",
     "blockchain startup mentors",
     "web3 developers africa",
+    "ai speakers africa",
+    "artificial intelligence leaders",
   ],
   openGraph: {
     title: "Blockfest Africa Speakers - 2026 Lineup Coming Soon",
@@ -79,10 +77,10 @@ const SpeakersPage = () => {
       <SpeakersSchema speakers={speakers} />
       <BreadcrumbSchema items={breadcrumbItems} />
 
-      <main id="main" className={`${Gotham.className}`}>
+      <main id="main" className={gotham.className}>
         <ComingSoonNotice
           title="2026 lineup coming soon"
-          description="Speakers for Lagos '26 are being announced in the coming weeks. Below are the voices who have graced our stage so far."
+          description="Lagos '26 speakers are announced in the coming weeks. Below, the voices who have graced our stage."
         />
         <SpeakersGrid />
       </main>
