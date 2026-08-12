@@ -2,13 +2,12 @@
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
-import { useUmami } from "@/lib/hooks/use-umami";
+import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
 import { FaTelegram } from "react-icons/fa6";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import "./subtle-animations.css";
 
 export function SponsorshipSection() {
-  const { trackButtonClick } = useUmami();
 
   useSubtleAnimations();
 

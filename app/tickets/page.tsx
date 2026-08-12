@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { TicketHero } from "@/components/tickets/ticket-hero";
 import { TicketAbout } from "@/components/tickets/ticket-about";
+import { TicketProof } from "@/components/tickets/ticket-proof";
 import { TicketTiers } from "@/components/tickets/ticket-tiers";
 import { IdealAudience } from "@/components/tickets/ideal-audience";
 import { TicketPolicy } from "@/components/tickets/ticket-policy";
@@ -68,7 +69,10 @@ function TicketOffersSchema() {
       priceCurrency: "NGN",
       availability: "https://schema.org/InStock",
       url: TICKET_PLATFORM_URL,
-      ...(tier.standardPrice
+      // Only the early-bird tiers expire on that date. CORPORATE CIRCLE is a
+      // standing team discount and the VIP passes have a single price, so
+      // neither should tell a consumer the price stops being valid.
+      ...(tier.discountLabel
         ? { priceValidUntil: EARLY_BIRD_ENDS.iso.slice(0, 10) }
         : {}),
     })),
@@ -94,6 +98,9 @@ const TicketsPage = () => {
 
         {/* Overview and the buidl / bridge / become framing */}
         <TicketAbout />
+
+        {/* Proof it happened, before the price */}
+        <TicketProof />
 
         {/* The ten passes, grouped by which days they cover */}
         <TicketTiers />

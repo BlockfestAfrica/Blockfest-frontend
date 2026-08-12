@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // A production build and a running `npm run dev` cannot share one output
+  // directory: the build replaces chunks the dev server still has open and
+  // every route starts throwing MODULE_NOT_FOUND until dev is restarted.
+  // Set NEXT_DIST_DIR to build somewhere else while dev keeps running, e.g.
+  //   NEXT_DIST_DIR=.next-build npx next build
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+
   // Enable experimental features for better SEO
   experimental: {
     optimizePackageImports: ["lucide-react", "react-icons"],
@@ -46,7 +53,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://cloud.umami.is; frame-src 'self' https://cloud.umami.is; frame-ancestors 'none';",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.sabilytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.sabilytics.com; frame-src 'self'; frame-ancestors 'none';",
           },
         ],
       },

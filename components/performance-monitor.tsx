@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { umamiTrack } from "@/lib/umami";
+import { track } from "@/lib/sabilytics";
 
 // Extend PerformanceEntry to include optional value property for web vitals
 interface PerformanceEntryWithValue extends PerformanceEntry {
@@ -17,7 +17,7 @@ export function PerformanceMonitor() {
     if (typeof window !== "undefined" && "PerformanceObserver" in window) {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          // Log performance metrics to Umami
+          // Report Core Web Vitals to analytics
           const entryWithValue = entry as PerformanceEntryWithValue;
           let value: number;
           switch (entry.entryType) {
@@ -36,7 +36,7 @@ export function PerformanceMonitor() {
                 entryWithValue.value ?? entry.duration ?? entry.startTime ?? 0
               );
           }
-          umamiTrack("web_vital", {
+          track("web_vital", {
             category: "Web Vitals",
             name: entry.name,
             value,
@@ -61,7 +61,7 @@ export function PerformanceMonitor() {
         )[0] as PerformanceNavigationTiming;
 
         if (navigation) {
-          umamiTrack("page_load_time", {
+          track("page_load_time", {
             category: "Performance",
             value: Math.round(
               navigation.loadEventEnd - navigation.loadEventStart
