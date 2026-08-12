@@ -11,11 +11,6 @@ import { SpeakersSection } from "@/components/home/speakers";
 import { PartnersSection } from "@/components/home/partners";
 import { SponsorshipSection } from "@/components/home/sponsorship";
 import { FAQSection } from "@/components/home/faq";
-import {
-  EventSchema,
-  OrganizationSchema,
-  WebsiteSchema,
-} from "@/components/seo/schema-markup-2026";
 
 export const metadata: Metadata = {
   title: "Blockf3st Africa 2026 - The Superbowl of Web3",
@@ -68,10 +63,6 @@ export const metadata: Metadata = {
 const HomePage = () => {
   return (
     <>
-      {/* Schema Markup for SEO */}
-      <EventSchema />
-      <OrganizationSchema />
-      <WebsiteSchema />
 
       <main id="main">
         {/* Poster hero: what it is, when, and the one action */}
