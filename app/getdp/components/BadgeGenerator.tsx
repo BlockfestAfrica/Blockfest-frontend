@@ -123,7 +123,7 @@ export default function BadgeGenerator() {
         <div
           className={`mx-auto ${
             success
-              ? "max-w-7xl lg:grid lg:grid-cols-5 lg:gap-8 lg:items-start"
+              ? "max-w-6xl lg:grid lg:grid-cols-5 lg:gap-8 lg:items-start"
               : "max-w-md"
           }`}
         >
@@ -262,8 +262,8 @@ export default function BadgeGenerator() {
                     <>
                       <ChevronDown className="w-5 h-5 flex-shrink-0 animate-bounce lg:hidden" />
                       <ChevronRight className="w-5 h-5 flex-shrink-0 animate-bounce hidden lg:block" />
-                      <span className="lg:hidden">Ready! 👇</span>
-                      <span className="hidden lg:inline">Ready! 👉</span>
+                      <span className="lg:hidden">Ready</span>
+                      <span className="hidden lg:inline">Ready</span>
                     </>
                   ) : (
                     <>
@@ -326,7 +326,7 @@ export default function BadgeGenerator() {
                       Your Badge is Ready!
                     </h2>
                     <p className="text-sm sm:text-base lg:text-lg text-gray-600">
-                      Welcome to Blockfest Africa 2026, {userName}! 🎉
+                      Welcome to Blockfest Africa 2026, {userName}
                     </p>
                   </div>
 

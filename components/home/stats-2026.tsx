@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
-import { FaArrowRight } from "react-icons/fa";
 import "./subtle-animations.css";
 
 const displayStats = [
@@ -70,7 +70,7 @@ export function Stats2026Section() {
             className="inline-flex items-center gap-2 py-2.5 text-white/60 hover:text-white transition-colors font-semibold underline underline-offset-4"
           >
             <span>See Full 2025 Recap</span>
-            <FaArrowRight className="text-sm" />
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import { FaArrowRight } from "react-icons/fa";
 import { useUmami } from "@/lib/hooks/use-umami";
+import { ArrowRight } from "lucide-react";
 import { TICKET_PLATFORM_URL } from "@/lib/tickets";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +43,7 @@ export function TicketCTA({
       )}
     >
       {children}
-      <FaArrowRight className="text-xs" />
+      <ArrowRight className="h-3.5 w-3.5" />
     </a>
   );
 }

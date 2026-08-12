@@ -1,18 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import { ChevronDown, ChevronUp, ExternalLink, Globe, Search, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
-import { CiGlobe } from "react-icons/ci";
 import React, { useState, useMemo } from "react";
 import { FaXTwitter } from "react-icons/fa6";
-import {
-  FiSearch,
-  FiX,
-  FiFilter,
-  FiChevronDown,
-  FiChevronUp,
-  FiExternalLink,
-} from "react-icons/fi";
 import { SpeakersList } from "@/lib/speakers";
 
 export function SpeakersGrid() {
@@ -79,7 +71,7 @@ export function SpeakersGrid() {
         {/* Search and Filter Section */}
         <div className="max-w-4xl mx-auto mb-8 lg:mb-10 space-y-4">
           <div className="relative group">
-            <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-brand-blue transition-colors duration-200" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-brand-blue transition-colors duration-200" />
             <input
               type="text"
               placeholder="Search speakers..."
@@ -94,7 +86,7 @@ export function SpeakersGrid() {
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
                 aria-label="Clear search"
               >
-                <FiX className="w-5 h-5" />
+                <X className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -107,12 +99,12 @@ export function SpeakersGrid() {
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-md text-sm font-medium text-gray-700 transition-colors duration-200 touch-manipulation"
               aria-label={showFilters ? "Hide filters" : "Show filters"}
             >
-              <FiFilter className="w-4 h-4" />
+              <SlidersHorizontal className="w-4 h-4" />
               <span>Filter by expertise</span>
               {showFilters ? (
-                <FiChevronUp className="w-4 h-4" />
+                <ChevronUp className="w-4 h-4" />
               ) : (
-                <FiChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-4 h-4" />
               )}
             </button>
           </div>
@@ -239,7 +231,7 @@ export function SpeakersGrid() {
                             className="flex items-center justify-center w-11 h-11 rounded-full bg-brand-blue text-white transition-transform duration-300 hover:scale-110 hover:shadow-lg hover:shadow-brand-blue/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/50 focus-visible:ring-offset-2 touch-manipulation"
                             aria-label={`Visit ${speaker.name}'s website`}
                           >
-                            <CiGlobe size={20} className="shrink-0" />
+                            <Globe size={20} className="shrink-0" />
                           </a>
                           {/* Hide tooltip on mobile to prevent clipping */}
                           <div className="hidden sm:block absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
@@ -252,7 +244,7 @@ export function SpeakersGrid() {
                     {/* View Profile Indicator */}
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1 text-brand-blue text-sm font-medium">
                       <span>View Profile</span>
-                      <FiExternalLink className="w-3 h-3" />
+                      <ExternalLink className="w-3 h-3" />
                     </div>
                   </div>
                 </div>
@@ -261,7 +253,7 @@ export function SpeakersGrid() {
           ) : (
             <div className="col-span-full flex flex-col items-center justify-center py-8 sm:py-12 px-4">
               <div className="text-gray-400 mb-3 sm:mb-4">
-                <FiSearch className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4" />
+                <Search className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4" />
               </div>
               <h3 className="text-lg font-semibold text-gray-600 mb-2 text-center">
                 No speakers found

@@ -11,7 +11,7 @@ const BurgerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   >
     <path
       d="M2 19.5416H25.9167M2 10.9999H25.9167M2 2.45825H25.9167"
-      stroke="currentColor" // ✅ makes stroke inherit text color
+      stroke="currentColor" // makes stroke inherit text color
       strokeWidth="4"
       strokeLinecap="round"
       strokeLinejoin="round"

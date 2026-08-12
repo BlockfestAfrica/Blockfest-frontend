@@ -32,7 +32,6 @@ export interface BlockfestEvent {
 export interface EventTrack {
   title: string;
   description: string;
-  icon: string; // emoji used in the track grid
 }
 
 // A phase in the festival timeline (hackathon, conference day, mixer, ...).
@@ -236,36 +235,30 @@ export const lagos2026Tracks: EventTrack[] = [
     title: "AI & Crypto",
     description:
       "Where intelligence meets ownership. Exploring the convergence reshaping the next decade.",
-    icon: "🤖",
   },
   {
     title: "Government & Policy",
     description:
       "Direct dialogue with regulators, lawmakers, and ecosystem shapers.",
-    icon: "🏛️",
   },
   {
     title: "Investment & Funding",
     description:
       "Bridging founders with the capital fueling Africa's next wave.",
-    icon: "💰",
   },
   {
     title: "Technical Infrastructure",
     description:
       "The protocols, primitives, and rails powering what comes next.",
-    icon: "🛠️",
   },
   {
     title: "Creative Economy",
     description: "Music, art, fashion, and culture meeting Web3 and AI.",
-    icon: "🎨",
   },
   {
     title: "Talent & Career Launchpad",
     description:
       "Where Africa's brightest builders meet their next opportunity.",
-    icon: "🚀",
   },
 ];
 
@@ -346,7 +339,6 @@ export const sponsorBenefits = [
     title: "Increased Onboarding Rate",
     description:
       "Triple your onboarding, awareness and promotion of your product or protocol",
-    icon: "🚀",
   },
   {
     title: "The Untapped Market",

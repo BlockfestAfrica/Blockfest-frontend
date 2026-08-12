@@ -1,22 +1,15 @@
 import type { ComponentType } from "react";
-import {
-  LuBrainCircuit,
-  LuLandmark,
-  LuTrendingUp,
-  LuServer,
-  LuPalette,
-  LuRocket,
-} from "react-icons/lu";
+import { BrainCircuit, Landmark, Palette, Rocket, Server, TrendingUp } from "lucide-react";
 import { lagos2026Tracks, lagos2026Festival } from "@/lib/events";
 
 // Icons paired to lagos2026Tracks by order (kept here so the data stays plain).
 const trackIcons: ComponentType<{ className?: string }>[] = [
-  LuBrainCircuit,
-  LuLandmark,
-  LuTrendingUp,
-  LuServer,
-  LuPalette,
-  LuRocket,
+  BrainCircuit,
+  Landmark,
+  TrendingUp,
+  Server,
+  Palette,
+  Rocket,
 ];
 
 export function Lagos2026Section() {

@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
+import { Mail } from "lucide-react";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { useUmami } from "@/lib/hooks/use-umami";
-import { FaTelegram, FaEnvelope } from "react-icons/fa";
+import { FaTelegram } from "react-icons/fa6";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import "./subtle-animations.css";
 
@@ -57,7 +58,7 @@ export function SponsorshipSection() {
               }
               className="inline-flex items-center gap-2 bg-brand-gold text-black px-5 py-3.5 rounded-full font-semibold min-h-11 hover:bg-brand-gold-hover transition-colors text-sm sm:text-base max-w-full"
             >
-              <FaEnvelope className="flex-shrink-0" />
+              <Mail className="flex-shrink-0" />
               <span className="truncate">{contactEmail}</span>
             </Link>
             <span className="text-white/60">or</span>

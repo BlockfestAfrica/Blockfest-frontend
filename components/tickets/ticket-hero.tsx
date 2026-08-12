@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IoCalendarClearOutline, IoLocationOutline } from "react-icons/io5";
+import { Calendar, MapPin } from "lucide-react";
 import { calculateTimeLeft, type TimeLeft } from "@/lib/countdown";
 import { blockfest2026Lagos } from "@/lib/events";
 import {
@@ -60,7 +60,7 @@ export function TicketHero() {
         }}
       />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 lg:px-8 text-center">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8 text-center">
         <div className="inline-flex items-center gap-2 bg-brand-gold/15 border border-brand-gold/30 rounded-full px-5 py-2 mb-6">
           <span className="text-brand-gold font-semibold text-xs sm:text-sm tracking-wide uppercase">
             Early bird ends {EARLY_BIRD_ENDS.display}
@@ -78,12 +78,12 @@ export function TicketHero() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-white/60 text-sm mb-10">
           <span className="inline-flex items-center gap-2">
-            <IoCalendarClearOutline className="text-base text-white/60" aria-hidden="true" />
+            <Calendar className="h-4 w-4 text-white/60" aria-hidden="true" />
             {blockfest2026Lagos.date.displayDate}
           </span>
           <span className="hidden sm:inline text-white/60">·</span>
           <span className="inline-flex items-center gap-2">
-            <IoLocationOutline className="text-base text-white/60" aria-hidden="true" />
+            <MapPin className="h-4 w-4 text-white/60" aria-hidden="true" />
             {blockfest2026Lagos.location.venue}
           </span>
           <span className="hidden sm:inline text-white/60">·</span>

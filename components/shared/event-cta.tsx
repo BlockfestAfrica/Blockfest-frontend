@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { FaArrowRight } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 
 // Shared closing call-to-action band on the site's dark ground, with the one
@@ -32,7 +32,7 @@ export function EventCta({
         >
           <Link href={ctaHref}>
             {ctaLabel}
-            <FaArrowRight />
+            <ArrowRight />
           </Link>
         </Button>
       </div>

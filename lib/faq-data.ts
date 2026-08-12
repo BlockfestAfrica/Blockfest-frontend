@@ -5,29 +5,14 @@ export interface FAQItem {
   category: string;
 }
 
+/** Icon keys resolve to lucide components in the FAQ component. */
 export const faqCategories = [
-  { name: "Event Details", icon: "📅", color: "bg-blue-50 text-blue-700" },
-  {
-    name: "Registration & Tickets",
-    icon: "🎫",
-    color: "bg-green-50 text-green-700",
-  },
-  {
-    name: "Food & Accommodation",
-    icon: "🍽️",
-    color: "bg-orange-50 text-orange-700",
-  },
-  {
-    name: "Activities & Networking",
-    icon: "🤝",
-    color: "bg-purple-50 text-purple-700",
-  },
-  { name: "Safety & Security", icon: "🔒", color: "bg-red-50 text-red-700" },
-  {
-    name: "Community & Support",
-    icon: "💬",
-    color: "bg-indigo-50 text-indigo-700",
-  },
+  { name: "Event Details", icon: "calendar" },
+  { name: "Registration & Tickets", icon: "ticket" },
+  { name: "Food & Accommodation", icon: "utensils" },
+  { name: "Activities & Networking", icon: "handshake" },
+  { name: "Safety & Security", icon: "shield" },
+  { name: "Community & Support", icon: "message" },
 ] as const;
 
 export const faqData: FAQItem[] = [

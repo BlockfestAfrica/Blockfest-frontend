@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { IoCalendarClearOutline } from "react-icons/io5";
-import { FaArrowRight } from "react-icons/fa";
+import { ArrowRight, Calendar } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { useUmami } from "@/lib/hooks/use-umami";
@@ -56,7 +55,7 @@ function UpcomingEventCard({
         <p className="text-white/60 text-sm mb-4">{event.location.country}</p>
 
         <div className="flex items-center justify-center gap-2 text-white/90 font-semibold mb-4">
-          <IoCalendarClearOutline className="text-lg" />
+          <Calendar className="h-5 w-5" />
           <span>{event.date.displayDate}</span>
         </div>
 
@@ -106,7 +105,7 @@ function RecapEventCard({ event }: { event: BlockfestEvent }) {
         <p className="text-white/60 text-sm mb-4">{event.location.country}</p>
 
         <div className="flex items-center justify-center gap-2 text-white/90 font-semibold mb-4">
-          <IoCalendarClearOutline className="text-lg" />
+          <Calendar className="h-5 w-5" />
           <span>{event.date.displayDate}</span>
         </div>
 
@@ -119,7 +118,7 @@ function RecapEventCard({ event }: { event: BlockfestEvent }) {
           className="w-full font-semibold text-sm lg:text-base rounded-full py-5 bg-white/10 text-white hover:bg-white/20"
         >
           <Link href={event.recapUrl ?? "/"}>
-            View Recap <FaArrowRight className="text-xs" />
+            View Recap <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
       </div>

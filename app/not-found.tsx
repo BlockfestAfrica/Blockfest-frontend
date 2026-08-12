@@ -98,7 +98,7 @@ export default function NotFound() {
 
           {/* Fun Message */}
           <p className="mt-6 text-gray-400 text-sm">
-            🌍 Building the future of Web3 in Africa, one block at a time
+            Building the future of Web3 in Africa, one block at a time
           </p>
         </div>
       </div>

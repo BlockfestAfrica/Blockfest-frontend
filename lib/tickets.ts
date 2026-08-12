@@ -28,6 +28,7 @@ export interface TicketGroup {
   id: TicketGroupId;
   title: string;
   description: string;
+  icon: "presentation" | "wrench" | "crown";
 }
 
 export interface TicketTier {
@@ -54,18 +55,21 @@ export const ticketGroups: TicketGroup[] = [
   {
     id: "conference",
     title: "Conference Day",
+    icon: "presentation",
     description:
       "Friday, October 23. Main stage, exhibition floor, 3,500 people.",
   },
   {
     id: "workshop",
     title: "Workshop & The Back Room",
+    icon: "wrench",
     description:
       "Thursday, October 22. Workshops in the morning, the closed-door founder and investor room in the evening.",
   },
   {
     id: "vip",
     title: "VIP & All Access",
+    icon: "crown",
     description:
       "Priority entry, the speakers lounge, and the rooms where introductions happen.",
   },
@@ -257,60 +261,71 @@ export const ticketPillars = [
   },
 ] as const;
 
-/** Who the room is built for. */
+/** Who the room is built for. Icon keys resolve to lucide components. */
 export const idealAudience = [
   {
     title: "Founders",
+    icon: "rocket",
     description:
       "Building global companies and ready to raise from anyone, anywhere.",
   },
   {
     title: "Engineers",
+    icon: "code",
     description:
       "Building AI, Web3 and infrastructure products that compete on a global stage.",
   },
   {
     title: "Investors",
+    icon: "trending-up",
     description:
       "Deploying capital into Africa's fastest-growing companies, before the round is announced.",
     isDraft: true,
   },
   {
     title: "Corporate Leaders & Professionals",
+    icon: "briefcase",
     description:
       "Breaking into global careers, high-growth companies and the rooms where opportunities are created.",
   },
   {
     title: "Ecosystem Operators",
+    icon: "network",
     description: "Scaling teams, products, and revenue across multiple markets.",
   },
   {
     title: "Creators & Artistes",
+    icon: "palette",
     description:
       "Turning culture into capital through music, media, fashion and digital ownership.",
   },
   {
     title: "Policymakers & Regulators",
+    icon: "landmark",
     description:
       "Designing frameworks for innovation, investment and cross-border digital trade.",
   },
   {
     title: "Marketers & Growth Operators",
+    icon: "megaphone",
     description:
       "Driving adoption, distribution and revenue for products, startups and global brands.",
   },
   {
     title: "Designers",
+    icon: "pen-tool",
     description:
       "Shaping the interfaces and experiences defining the next generation of African technology.",
   },
   {
     title: "Media & Storytellers",
+    icon: "mic",
     description:
       "Documenting the people and companies shaping Africa's next technology chapter.",
   },
   {
     title: "Students & Emerging Talent",
+    icon: "graduation-cap",
     description:
       "Building the skills and network needed to compete globally.",
   },

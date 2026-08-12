@@ -1,11 +1,11 @@
 import React from "react";
+import { Calendar, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { blockfest2026SouthAfrica, blockfest2026Lagos } from "@/lib/events";
 import { saGallery } from "@/lib/sa-gallery";
 import { EventHighlights } from "@/components/shared/event-highlights";
 import { EventCta } from "@/components/shared/event-cta";
-import { FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
 
 export const metadata: Metadata = {
   title: "Blockfest Africa '26 South Africa - Cape Town Roadshow Recap",
@@ -66,13 +66,13 @@ export default function BlockfestSouthAfrica2026Page() {
 
           <div className="flex flex-wrap gap-4 text-white/90 text-lg">
             <div className="flex items-center gap-2">
-              <FaMapMarkerAlt className="text-white/60" />
+              <MapPin className="text-white/60" />
               <span>
                 {event.location.city}, {event.location.country}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <FaCalendarAlt className="text-white/60" />
+              <Calendar className="text-white/60" />
               <span>{event.date.displayDate}</span>
             </div>
           </div>
@@ -81,7 +81,7 @@ export default function BlockfestSouthAfrica2026Page() {
 
       {/* Photo Gallery — the centerpiece */}
       <section className="py-12 lg:py-16">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 lg:px-8">
           <h2 className="text-3xl lg:text-5xl font-bold text-center mb-4 text-gray-900">
             Cape Town, <span className="text-brand-blue">In Frames</span>
           </h2>
