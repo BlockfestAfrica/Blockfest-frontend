@@ -2,12 +2,13 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Calendar, MapPin } from "lucide-react";
+import { ArrowRight, Calendar, CalendarPlus, MapPin } from "lucide-react";
 import { Button } from "../ui/button";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { blockfest2026Lagos } from "@/lib/events";
 import { calculateTimeLeft, type TimeLeft } from "@/lib/countdown";
 import { EARLY_BIRD_ENDS, formatNaira, lowestTicketPrice } from "@/lib/tickets";
+import { ICS_PATH } from "@/lib/calendar";
 
 /** Days remaining until early bird closes, rendered as a line of type. */
 function EarlyBirdLine() {
@@ -111,8 +112,16 @@ export function HeroSection2026() {
             </Button>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
             <EarlyBirdLine />
+            <a
+              href={ICS_PATH}
+              onClick={() => trackButtonClick("Add to calendar", "Hero")}
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-white/60 hover:text-white"
+            >
+              <CalendarPlus className="h-4 w-4" aria-hidden="true" />
+              Add to calendar
+            </a>
           </div>
         </div>
       </div>

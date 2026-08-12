@@ -2,7 +2,7 @@
 
 import { useUmami } from "@/lib/hooks/use-umami";
 import { ArrowRight } from "lucide-react";
-import { TICKET_PLATFORM_URL } from "@/lib/tickets";
+import { ticketUrl } from "@/lib/tickets";
 import { cn } from "@/lib/utils";
 
 interface TicketCTAProps {
@@ -29,7 +29,7 @@ export function TicketCTA({
 
   return (
     <a
-      href={TICKET_PLATFORM_URL}
+      href={ticketUrl(source)}
       target="_blank"
       rel="noopener noreferrer"
       onClick={() => {
