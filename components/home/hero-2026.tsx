@@ -47,16 +47,16 @@ export function HeroSection2026() {
     <section className="relative isolate overflow-hidden bg-ground">
       {/* The room, on the night. Everything else sits on top of it. */}
       <Image
-        src="/images/home/img1.jpg"
+        src="/images/home/img4.jpg"
         alt=""
         fill
         priority
         sizes="100vw"
-        className="object-cover object-[center_35%]"
+        className="object-cover object-center"
       />
       {/* Scrim: keeps the type legible without flattening the photograph. */}
       <div
-        className="absolute inset-0 bg-ground/80 md:bg-gradient-to-r md:from-ground md:via-ground/85 md:to-ground/25"
+        className="absolute inset-0 bg-ground/80 md:bg-gradient-to-r md:from-ground/95 md:via-ground/60 md:to-transparent"
         aria-hidden="true"
       />
 
