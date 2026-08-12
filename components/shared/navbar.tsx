@@ -140,11 +140,12 @@ const Navbar = () => {
         <Link href="/speakers" className={navLinkClasses}>
           Speakers
         </Link>
-        {pathname !== "/speakers" && (
-          <Link href="#sponsorship" className={navLinkClasses}>
-            Sponsor
-          </Link>
-        )}
+        <Link href="/tickets" className={navLinkClasses}>
+          Tickets
+        </Link>
+        <Link href="/#sponsorship" className={navLinkClasses}>
+          Sponsor
+        </Link>
         <Link href={`mailto:${contactEmail}`} className={navLinkClasses}>
           Contact
         </Link>
@@ -153,10 +154,10 @@ const Navbar = () => {
       {/* Right Side */}
       <div className="flex items-center gap-x-5">
         <Link
-          href="#sponsorship"
+          href="/tickets"
           className="md:p-5 text-sm lg:text-base font-medium text-black w-fit p-3 bg-brand-gold hidden shadow-xs hover:bg-brand-gold-hover h-9 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
         >
-          Become a Sponsor
+          Get Tickets
         </Link>
         <div className="flex md:hidden">
           <Sheet>
@@ -282,7 +283,16 @@ const MobileMenu = () => {
 
         <SheetClose asChild>
           <Link
-            href="#sponsorship"
+            href="/tickets"
+            className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
+          >
+            Tickets
+          </Link>
+        </SheetClose>
+
+        <SheetClose asChild>
+          <Link
+            href="/#sponsorship"
             className="text-lg font-medium text-nav-gray hover:text-white hover:underline transition w-fit"
           >
             Become a Sponsor
@@ -297,6 +307,15 @@ const MobileMenu = () => {
           >
             Contact
           </a>
+        </SheetClose>
+
+        <SheetClose asChild>
+          <Link
+            href="/tickets"
+            className="mt-2 inline-flex w-fit items-center justify-center rounded-md bg-brand-gold px-6 py-3 text-base font-semibold text-black transition-colors hover:bg-brand-gold-hover"
+          >
+            Get Tickets
+          </Link>
         </SheetClose>
       </div>
     </div>

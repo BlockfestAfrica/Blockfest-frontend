@@ -31,7 +31,7 @@ export function SouthAfricaRecapSection() {
               <span className="text-brand-blue">Cape Town</span>
             </h2>
             <p className="text-gray-600 text-base lg:text-lg mb-6 max-w-xl">
-              {event.date.displayDate} — a week of builder meetups, sessions and
+              {event.date.displayDate}. A week of builder meetups, sessions and
               experiences that brought Africa&apos;s Web3 community together
               across South Africa. The roadshow set the stage for the main event
               in Lagos.

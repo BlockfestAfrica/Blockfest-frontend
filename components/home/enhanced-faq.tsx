@@ -264,7 +264,7 @@ export function EnhancedFAQSection({
                 </span>
               </Link>
               <Link
-                href="/#schedule"
+                href="/schedule"
                 className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-brand-blue hover:bg-brand-blue/5 transition-all duration-200 group"
               >
                 <span className="text-2xl group-hover:scale-110 transition-transform duration-200">

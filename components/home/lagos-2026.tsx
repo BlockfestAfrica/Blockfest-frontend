@@ -39,7 +39,7 @@ export function Lagos2026Section() {
         <div className="text-center mb-8 lg:mb-10">
           <div className="inline-flex items-center gap-2 bg-brand-gold/15 rounded-full px-4 py-2 mb-4 border border-brand-gold/30">
             <span className="text-brand-gold font-semibold text-sm tracking-wide">
-              LAGOS · OCTOBER 22–23, 2026
+              LAGOS · OCTOBER 22–24, 2026
             </span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">

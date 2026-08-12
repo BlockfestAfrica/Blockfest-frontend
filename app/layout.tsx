@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Footer from "@/components/shared/footer";
 import Navbar from "@/components/shared/navbar";
+import { AnnouncementBar } from "@/components/shared/announcement-bar";
 import { Toaster } from "@/components/ui/sonner";
 import { PerformanceMonitor } from "@/components/performance-monitor";
 import { gotham } from "@/lib/fonts";
@@ -10,7 +11,7 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
 const siteName = "Blockf3st Africa 2026";
 const siteDescription =
-  "The Superbowl of Web3 - Africa's premier blockchain conference. After the South Africa roadshow, join us in Lagos (October 22–23, 2026). New Trade Routes: Bringing Africa Onchain.";
+  "The Superbowl of Web3 - Africa's premier blockchain conference. After the South Africa roadshow, join us in Lagos (October 22–24, 2026). New Trade Routes: Bringing Africa Onchain.";
 const twitterHandle =
   process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@blockfestafrica";
 const instagramHandle =
@@ -289,6 +290,7 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <PerformanceMonitor />
+        <AnnouncementBar />
         <Navbar />
         {children}
         <Footer />

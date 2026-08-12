@@ -335,7 +335,7 @@ export default function Blockfest2025Page() {
       {/* CTA Section */}
       <EventCta
         title="Don't Miss 2026!"
-        description="We took the movement across Africa in 2026 — the South Africa roadshow is a wrap, and Lagos is next on October 22–23. Be part of it!"
+        description="The South Africa roadshow is a wrap. Lagos is next, October 22–24. Be part of it."
         ctaLabel="Explore Lagos '26"
         ctaHref="/"
       />
