@@ -164,7 +164,6 @@ const Speakers: React.FC<PropType> = (props) => {
                         sizes="(max-width: 640px) 250px, (max-width: 768px) 250px, (max-width: 1024px) 300px, (max-width: 1280px) 320px, 320px"
                         className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
                         style={{ objectPosition: "center 15%" }}
-                        aria-describedby={`speaker-${index}-name speaker-${index}-title`}
                         // Only the first slide is above the fold; the rest wait.
                         priority={index === 0}
                         loading={index === 0 ? "eager" : "lazy"}
