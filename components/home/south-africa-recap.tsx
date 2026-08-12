@@ -1,6 +1,6 @@
 import Image from "next/image";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { FaArrowRight } from "react-icons/fa";
 import { blockfest2026SouthAfrica } from "@/lib/events";
 
 // A small teaser of the freshest roadshow frames for the homepage.
@@ -38,7 +38,7 @@ export function SouthAfricaRecapSection() {
               className="inline-flex items-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-full font-semibold hover:bg-brand-blue-pressed transition-colors"
             >
               View the South Africa recap
-              <FaArrowRight />
+              <ArrowRight />
             </Link>
           </div>
 

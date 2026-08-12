@@ -9,6 +9,26 @@ import {
 } from "lucide-react";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { faqData, faqCategories, type FAQItem } from "@/lib/faq-data";
+import {
+  Calendar,
+  Handshake,
+  Home,
+  Mail,
+  MessageCircle,
+  Mic,
+  Shield,
+  Ticket,
+  Utensils,
+} from "lucide-react";
+
+const categoryIcons = {
+  calendar: Calendar,
+  ticket: Ticket,
+  utensils: Utensils,
+  handshake: Handshake,
+  shield: Shield,
+  message: MessageCircle,
+} as const;
 import { CONTACT_EMAIL } from "@/lib/constants";
 import "./subtle-animations.css";
 
@@ -131,11 +151,11 @@ export function EnhancedFAQSection({
                 <button
                   key={category.name}
                   onClick={() => scrollToCategory(category.name)}
-                  className={`${category.color} p-4 lg:p-5 rounded-xl text-left hover:shadow-lg transform hover:scale-[1.02] transition-transform duration-200 border border-gray-100`}
+                  className="bg-paper-muted p-4 lg:p-5 rounded-xl text-left border border-gray-200 hover:border-brand-blue hover:bg-white transition-colors duration-200"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl lg:text-3xl">
-                      {category.icon}
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
+                      {(() => { const Icon = categoryIcons[category.icon]; return <Icon className="h-5 w-5" aria-hidden="true" />; })()}
                     </span>
                     <span className="font-medium text-sm lg:text-base">
                       {category.name}
@@ -161,7 +181,7 @@ export function EnhancedFAQSection({
                     .toLowerCase()}`}
                   className="flex items-center gap-3 mb-6 scroll-mt-24"
                 >
-                  <span className="text-3xl">{categoryInfo?.icon}</span>
+                  {categoryInfo && (() => { const Icon = categoryIcons[categoryInfo.icon]; return <Icon className="h-6 w-6 text-brand-blue" aria-hidden="true" />; })()}
                   <h3 className="text-2xl font-semibold text-gray-900">
                     {categoryName}
                   </h3>
@@ -222,7 +242,8 @@ export function EnhancedFAQSection({
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="inline-flex items-center justify-center gap-2 bg-brand-gold text-black font-semibold px-6 py-3 lg:py-4 rounded-xl hover:bg-brand-gold/90 transition-transform duration-200 text-sm lg:text-base transform hover:scale-[1.02]"
               >
-                📧 Email Us
+                <Mail className="h-4 w-4" aria-hidden="true" />
+                Email Us
               </a>
               <a
                 href="https://t.me/blockf3stafrica"
@@ -230,7 +251,8 @@ export function EnhancedFAQSection({
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-white/10 text-white font-semibold px-6 py-3 lg:py-4 rounded-xl hover:bg-white/20 transition-transform duration-200 text-sm lg:text-base transform hover:scale-[1.02]"
               >
-                💬 Join Telegram
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                Join Telegram
               </a>
             </div>
           </div>
@@ -245,9 +267,7 @@ export function EnhancedFAQSection({
                 href="/"
                 className="flex items-center gap-3 p-4 rounded-md border border-gray-200 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors duration-200 group"
               >
-                <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
-                  🏠
-                </span>
+                <Home className="h-5 w-5 text-brand-blue" aria-hidden="true" />
                 <span className="font-medium text-gray-700 group-hover:text-brand-blue transition-colors duration-200">
                   Home
                 </span>
@@ -256,9 +276,7 @@ export function EnhancedFAQSection({
                 href="/speakers"
                 className="flex items-center gap-3 p-4 rounded-md border border-gray-200 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors duration-200 group"
               >
-                <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
-                  🎤
-                </span>
+                <Mic className="h-5 w-5 text-brand-blue" aria-hidden="true" />
                 <span className="font-medium text-gray-700 group-hover:text-brand-blue transition-colors duration-200">
                   Speakers
                 </span>
@@ -267,9 +285,7 @@ export function EnhancedFAQSection({
                 href="/schedule"
                 className="flex items-center gap-3 p-4 rounded-md border border-gray-200 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors duration-200 group"
               >
-                <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
-                  📅
-                </span>
+                <Calendar className="h-5 w-5 text-brand-blue" aria-hidden="true" />
                 <span className="font-medium text-gray-700 group-hover:text-brand-blue transition-colors duration-200">
                   Schedule
                 </span>

@@ -2,18 +2,12 @@
 import Image from "next/image";
 import React from "react";
 import Link from "next/link";
-import {
-  FaInstagram,
-  FaLinkedin,
-  FaXTwitter,
-  FaYoutube,
-} from "react-icons/fa6";
+import { FaInstagram, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
 import type { Menu } from "@/types";
 import { gotham } from "@/lib/fonts";
 import { CONTACT_EMAIL, SOCIAL_URLS } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
 import { useUmami } from "@/lib/hooks/use-umami";
-
 
 const exploreMenu: Menu[] = [
   { path: "/", title: "Home" },

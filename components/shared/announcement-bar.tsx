@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FaArrowRight } from "react-icons/fa";
 import { useUmami } from "@/lib/hooks/use-umami";
 import { hasPassed } from "@/lib/countdown";
 import { EARLY_BIRD_ENDS, formatNaira, lowestTicketPrice } from "@/lib/tickets";
@@ -45,7 +45,7 @@ export function AnnouncementBar() {
         </span>
         <span className="inline-flex items-center gap-1 text-brand-gold underline underline-offset-2 group-hover:text-brand-gold-hover">
           Get yours
-          <FaArrowRight className="text-[10px]" />
+          <ArrowRight className="h-3 w-3" />
         </span>
       </Link>
     </div>

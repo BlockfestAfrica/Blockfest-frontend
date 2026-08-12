@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FaArrowRight, FaCheck } from "react-icons/fa6";
+import { ArrowRight, Check, Crown, Presentation, Wrench } from "lucide-react";
 import {
   EARLY_BIRD_ENDS,
   formatNaira,
@@ -9,6 +9,12 @@ import {
 } from "@/lib/tickets";
 
 /** Homepage ticket teaser — one entry point per pass family, priced from. */
+const groupIcons = {
+  presentation: Presentation,
+  wrench: Wrench,
+  crown: Crown,
+} as const;
+
 export function Tickets2026Section() {
   return (
     <section
@@ -41,12 +47,16 @@ export function Tickets2026Section() {
           {ticketGroups.map((group) => {
             const tiers = tiersInGroup(group.id);
             const from = Math.min(...tiers.map((tier) => tier.price));
+            const Icon = groupIcons[group.icon];
 
             return (
               <div
                 key={group.id}
                 className="flex flex-col rounded-xl border border-white/20 bg-white/5 p-5 transition-colors duration-300 hover:bg-white/10 lg:p-6"
               >
+                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
                 <h3 className="text-lg font-bold text-white">
                   {group.title}
                 </h3>
@@ -60,7 +70,7 @@ export function Tickets2026Section() {
                       key={tier.id}
                       className="flex items-center gap-2 text-sm text-white/60"
                     >
-                      <FaCheck className="shrink-0 text-[10px] text-brand-blue-light" />
+                      <Check className="h-4 w-4 shrink-0 text-brand-blue-light" aria-hidden="true" />
                       {tier.name}
                     </li>
                   ))}
@@ -85,7 +95,7 @@ export function Tickets2026Section() {
             className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-gold px-8 py-3.5 font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
           >
             See all passes
-            <FaArrowRight className="text-xs" />
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
           <p className="mt-3 text-xs text-white/60">
             Non-refundable · transferable until {TRANSFER_DEADLINE.displayShort}

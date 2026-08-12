@@ -1,4 +1,3 @@
-import { FaCheck } from "react-icons/fa6";
 import {
   formatNaira,
   ticketGroups,
@@ -6,6 +5,7 @@ import {
   type TicketTier,
 } from "@/lib/tickets";
 import { TicketCTA } from "./ticket-cta";
+import { Check, Crown, Presentation, Wrench } from "lucide-react";
 
 function TierCard({ tier }: { tier: TicketTier }) {
   return (
@@ -48,7 +48,7 @@ function TierCard({ tier }: { tier: TicketTier }) {
       <ul className="mt-6 flex flex-col gap-2.5">
         {tier.includes.map((item) => (
           <li key={item} className="flex items-start gap-2.5">
-            <FaCheck className="mt-1 shrink-0 text-[11px] text-brand-blue-light" />
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-blue-light" aria-hidden="true" />
             <span className="text-sm leading-relaxed text-white/60">
               {item}
             </span>
@@ -78,6 +78,12 @@ function TierCard({ tier }: { tier: TicketTier }) {
   );
 }
 
+const groupIcons = {
+  presentation: Presentation,
+  wrench: Wrench,
+  crown: Crown,
+} as const;
+
 export function TicketTiers() {
   return (
     <section
@@ -95,10 +101,15 @@ export function TicketTiers() {
         </div>
 
         <div className="flex flex-col gap-14 lg:gap-16">
-          {ticketGroups.map((group) => (
+          {ticketGroups.map((group) => {
+            const Icon = groupIcons[group.icon];
+            return (
             <div key={group.id}>
               <div className="mb-7">
-                <h3 className="text-2xl font-bold text-white lg:text-3xl">
+                <h3 className="flex items-center gap-3 text-2xl font-bold text-white lg:text-3xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
                   {group.title}
                 </h3>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/60">
@@ -112,7 +123,8 @@ export function TicketTiers() {
                 ))}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

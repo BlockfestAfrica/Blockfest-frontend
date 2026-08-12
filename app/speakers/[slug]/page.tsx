@@ -152,6 +152,7 @@ export default async function SpeakerPage({
 
   return (
     <>
+      <main id="main">
       {/* Hero Section */}
       <section
         className="relative min-h-[40vh] sm:min-h-[45vh] lg:min-h-[50vh] flex items-center justify-center bg-paper overflow-hidden"
@@ -382,6 +383,7 @@ export default async function SpeakerPage({
           { name: speaker.name, url: `/speakers/${slug}` },
         ]}
       />
+      </main>
     </>
   );
 }

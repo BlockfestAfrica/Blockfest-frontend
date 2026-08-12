@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { FaArrowRight } from "react-icons/fa";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { marketOpportunity } from "@/lib/events";
 import { EARLY_BIRD_ENDS } from "@/lib/tickets";
@@ -49,7 +49,7 @@ export function WhyAttend2026Section() {
       className="flex flex-col items-center justify-center px-5 py-12 lg:py-16 lg:px-10 bg-paper border-t border-gray-200"
       id="about"
     >
-      <div className="max-w-7xl mx-auto w-full">
+      <div className="max-w-6xl mx-auto w-full">
         {/* Header */}
         <div className="text-center mb-10">
           <h2 className="font-bold text-3xl lg:text-5xl mb-4 text-gray-900 fade-in-on-scroll">
@@ -152,7 +152,7 @@ export function WhyAttend2026Section() {
             className="inline-flex items-center gap-2 rounded-full bg-brand-blue px-8 py-3.5 font-semibold text-white transition-colors duration-300 hover:bg-brand-blue-pressed"
           >
             Get your ticket
-            <FaArrowRight className="text-xs" />
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
           <p className="mt-3 text-sm text-gray-500">
             Early bird pricing until {EARLY_BIRD_ENDS.display}

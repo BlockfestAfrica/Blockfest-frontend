@@ -110,7 +110,7 @@ export default function FAQPage() {
     <>
       <FAQSchema faqs={faqData} />
       <BaseSchema type="WebPage" data={faqPageData} />
-      <div className="min-h-screen bg-white">
+      <main id="main" className="min-h-screen bg-white">
         {/* Header Section */}
         <div className="bg-ground py-12 lg:py-16">
           <div className="max-w-6xl mx-auto px-4 lg:px-8 text-center">
@@ -126,7 +126,7 @@ export default function FAQPage() {
 
         {/* Enhanced FAQ Content */}
         <EnhancedFAQSection hideHeader={true} />
-      </div>
+      </main>
     </>
   );
 }

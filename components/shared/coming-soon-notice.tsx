@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FaArrowRight } from "react-icons/fa";
+import { ArrowRight } from "lucide-react";
 
 interface ComingSoonNoticeProps {
   /** What is being announced, e.g. "2026 lineup coming soon". */
@@ -28,7 +28,7 @@ export function ComingSoonNotice({ title, description }: ComingSoonNoticeProps) 
           className="inline-flex shrink-0 items-center gap-2 min-h-11 rounded-full bg-brand-blue px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-blue-pressed"
         >
           Get your ticket
-          <FaArrowRight className="text-xs" />
+          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>
