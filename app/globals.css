@@ -210,8 +210,8 @@ html {
 }
 
 .text-display-sm {
-  font-size: clamp(2rem, 5.5vw, 3.75rem);
-  line-height: 0.98;
+  font-size: clamp(1.875rem, 4.6vw, 3.125rem);
+  line-height: 1.02;
   letter-spacing: -0.02em;
 }
 

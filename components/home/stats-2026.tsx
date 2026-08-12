@@ -19,7 +19,7 @@ export function Stats2026Section() {
     <section className="section-y bg-ground border-t border-white/20">
       <div className="container-page">
         {/* Header */}
-        <div className="mb-10 max-w-2xl lg:mb-14">
+        <div className="mb-10 lg:mb-14">
           <p className="eyebrow fade-in-on-scroll text-white/60">
             2025 was massive
           </p>

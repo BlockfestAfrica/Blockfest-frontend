@@ -80,7 +80,7 @@ export default function Schedule() {
               >
                 Schedule of <span className="text-white">Activities</span>
               </h1>
-              <p className="mt-4 text-base leading-relaxed text-white/60">
+              <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
                 How the 2025 edition ran, hour by hour.
               </p>
             </div>

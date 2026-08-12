@@ -61,7 +61,7 @@ export function TicketPolicy() {
           <h2 className="text-display-sm font-bold text-white">
             Lagos, October 2026.
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
             Early bird pricing runs until {EARLY_BIRD_ENDS.display}.
           </p>
           <div className="mt-8">

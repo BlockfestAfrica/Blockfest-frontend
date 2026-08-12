@@ -7,7 +7,7 @@ export function TicketAbout() {
       className="section-y bg-ground border-t border-white/20"
     >
       <div className="container-page">
-        <div className="mb-10 max-w-2xl lg:mb-14">
+        <div className="mb-10 lg:mb-14">
           <h2 className="text-display-sm font-bold text-white">
             The Super Bowl of African Innovation
           </h2>

@@ -250,7 +250,7 @@ export default async function SpeakerPage({
         <div className="container-page">
           {speaker.bio ? (
             <>
-              <div className="mb-10 max-w-2xl lg:mb-14">
+              <div className="mb-10 lg:mb-14">
                 <h2
                   className={`${gotham.className} text-display-sm font-bold text-gray-900`}
                 >
@@ -293,7 +293,7 @@ export default async function SpeakerPage({
             >
               Don&apos;t Miss Out
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
               Join {speaker.name.split(" ")[0]} and other industry leaders in Lagos,
               October 22&ndash;24, 2026.
             </p>

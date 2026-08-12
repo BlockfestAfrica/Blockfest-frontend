@@ -34,11 +34,11 @@ export function IdealAudience() {
       className="section-y bg-ground border-t border-white/20"
     >
       <div className="container-page">
-        <div className="mb-10 max-w-2xl lg:mb-14">
+        <div className="mb-10 lg:mb-14">
           <h2 className="text-display-sm font-bold text-white">
             Who It&apos;s For
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
             The people shaping what Africa ships next.
           </p>
         </div>

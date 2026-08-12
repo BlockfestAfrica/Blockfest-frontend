@@ -109,11 +109,11 @@ export function EnhancedFAQSection({
     <section className="section-y bg-paper">
       <div className="container-page">
         {!hideHeader && (
-          <div className="fade-in-on-scroll mb-10 max-w-2xl lg:mb-14">
+          <div className="fade-in-on-scroll mb-10 lg:mb-14">
             <h2 className="text-display-sm font-bold text-gray-900">
               Frequently Asked <span className="text-brand-blue">Questions</span>
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-gray-600">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-600">
               Everything you need to know about Africa&apos;s premier Web3 and AI
               conference
             </p>
