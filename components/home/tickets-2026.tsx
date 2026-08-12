@@ -5,10 +5,19 @@ import {
   formatNaira,
   ticketGroups,
   tiersInGroup,
+  ticketTiers,
   TRANSFER_DEADLINE,
 } from "@/lib/tickets";
 
-/** Homepage ticket teaser — one entry point per pass family, priced from. */
+/**
+ * Homepage ticket teaser.
+ *
+ * The three cards group passes by which DAYS they cover, not by price, so a
+ * per-card "from" figure misleads: the Conference card starts at ₦7,500 but
+ * contains CORPORATE CIRCLE at ₦150,000, and sat beside a VIP card whose "from"
+ * was that same ₦150,000. The cards now answer "which days am I coming?" and a
+ * single range answers "what does it cost?". /tickets owns the real pricing.
+ */
 const groupIcons = {
   presentation: Presentation,
   wrench: Wrench,
@@ -16,6 +25,10 @@ const groupIcons = {
 } as const;
 
 export function Tickets2026Section() {
+  const prices = ticketTiers.map((tier) => tier.price);
+  const lowest = Math.min(...prices);
+  const highest = Math.max(...prices);
+
   return (
     <section
       id="tickets"
@@ -33,12 +46,17 @@ export function Tickets2026Section() {
             Come for the conference, add the workshops, or take the room where
             deals get done.
           </p>
+          <p className="mt-4 text-base text-white/90">
+            <span className="font-semibold text-brand-gold">
+              {formatNaira(lowest)} to {formatNaira(highest)}
+            </span>{" "}
+            across {ticketTiers.length} passes.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {ticketGroups.map((group) => {
             const tiers = tiersInGroup(group.id);
-            const from = Math.min(...tiers.map((tier) => tier.price));
             const Icon = groupIcons[group.icon];
 
             return (
@@ -68,17 +86,6 @@ export function Tickets2026Section() {
                     </li>
                   ))}
                 </ul>
-
-                <div className="mt-6 flex-grow" />
-
-                <div className="mt-6 border-t border-white/20 pt-4">
-                  <p className="text-xs uppercase tracking-wide text-white/60">
-                    From
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-brand-gold">
-                    {formatNaira(from)}
-                  </p>
-                </div>
               </div>
             );
           })}
@@ -89,7 +96,7 @@ export function Tickets2026Section() {
             href="/tickets"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
           >
-            See all passes
+            See all passes and prices
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           <p className="text-sm text-white/60">
