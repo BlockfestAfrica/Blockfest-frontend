@@ -232,7 +232,13 @@ html {
 
 /* One vertical rhythm for every section on the site. */
 .section-y {
-  padding-block: 4rem;
+  padding-block: 3rem;
+}
+
+@media (min-width: 640px) {
+  .section-y {
+    padding-block: 4rem;
+  }
 }
 
 @media (min-width: 1024px) {

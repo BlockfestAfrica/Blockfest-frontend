@@ -45,8 +45,7 @@ export function TicketPolicy() {
               Photography &amp; Media Notice
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-white/60 lg:text-base">
-              {PHOTOGRAPHY_NOTICE} If you have any concerns, please contact us
-              at{" "}
+              {PHOTOGRAPHY_NOTICE} Concerns? Contact{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="inline-flex min-h-11 items-center text-brand-blue-light underline underline-offset-2 hover:text-white"

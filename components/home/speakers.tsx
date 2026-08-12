@@ -27,8 +27,8 @@ export function SpeakersSection() {
             They&apos;ve Graced Our Stage
           </h2>
           <p className="mt-4 text-base leading-relaxed text-white/60">
-            World-class thought leaders, founders, and policymakers who have shaped
-            the conversation at Blockfest Africa
+            Founders, policymakers and thought leaders who have shaped the
+            conversation at Blockfest Africa
           </p>
         </div>
 

@@ -28,9 +28,7 @@ export function SouthAfricaRecapSection() {
             </h2>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-600">
               {event.date.displayDate}. A week of builder meetups, sessions and
-              experiences that brought Africa&apos;s Web3 community together
-              across South Africa. The roadshow set the stage for the main event
-              in Lagos.
+              experiences across South Africa, before the main event in Lagos.
             </p>
             <Link
               href="/blockfest-south-africa-2026"

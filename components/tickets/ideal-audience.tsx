@@ -39,7 +39,7 @@ export function IdealAudience() {
             Who It&apos;s For
           </h2>
           <p className="mt-4 text-base leading-relaxed text-white/60">
-            The room is built for people shaping what Africa ships next.
+            The people shaping what Africa ships next.
           </p>
         </div>
 

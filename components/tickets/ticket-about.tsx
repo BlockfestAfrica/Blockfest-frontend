@@ -17,7 +17,7 @@ export function TicketAbout() {
               Join over{" "}
               <span className="font-semibold text-white">5,000 founders</span>,
               engineers, investors, creators, policymakers and emerging talent
-              from across Africa and the diaspora for{" "}
+              from Africa and the diaspora for{" "}
               <span className="font-semibold text-white">three days</span> of
               building, networking and dealmaking.
             </p>

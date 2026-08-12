@@ -75,10 +75,6 @@ export default function FAQPage() {
                 Frequently Asked{" "}
                 <span className="text-brand-blue-light">Questions</span>
               </h1>
-              <p className="mt-4 text-base leading-relaxed text-white/60">
-                Everything you need to know about Africa&apos;s premier Web3
-                conference
-              </p>
             </div>
           </div>
         </section>

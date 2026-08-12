@@ -38,32 +38,32 @@ export function WhyAttend2026Section() {
     {
       image: "/images/home/img1.jpg",
       header: "The Superbowl of Web3",
-      text: "Blockf3st Africa represents the biggest gathering of Web3 minds on the continent. It is where the next generation of builders are inspired.",
+      text: "Blockf3st Africa is the continent's biggest gathering of Web3 minds, where the next generation of builders gets inspired.",
     },
     {
       image: "/images/home/img9.jpg",
       header: "Connect",
-      text: "Connect with amazing like minds who want to change what web3 offers to Africa. Network with founders, investors, and government officials.",
+      text: "Meet founders, investors and government officials changing what web3 offers Africa.",
     },
     {
       image: "/images/home/img10.jpg",
       header: "Learn",
-      text: "Learn about various cutting edge technologies utilized by web3 companies around the world through live panels and masterclasses.",
+      text: "Live panels and masterclasses cover the cutting edge technologies web3 companies use around the world.",
     },
     {
       image: "/images/home/img3.jpg",
       header: "Build",
-      text: "Be inspired by sessions, and go on to build the next unicorn solution for a ready African and global market.",
+      text: "Turn sessions into the next unicorn, built for a ready African and global market.",
     },
     {
       image: "/images/home/img6.jpg",
       header: "Access Africa's $3.3Tn Web3 Market",
-      text: "70% of attendees are decision makers from founders to government officials. Direct access to Africa's top web3 talent pool.",
+      text: "70% of attendees are decision makers, from founders to government officials. Direct access to Africa's top web3 talent pool.",
     },
     {
       image: "/images/home/img5.jpg",
       header: "Government Backing",
-      text: "Blockf3st Africa has policy influence and government backing. Year-round community engagement, not just a single day event.",
+      text: "Blockf3st Africa has policy influence and government backing, with year-round community engagement, not just a single day event.",
     },
   ];
 
@@ -108,7 +108,7 @@ export function WhyAttend2026Section() {
                 className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors duration-300 hover:border-brand-blue md:flex-row md:items-stretch"
               >
                 {/* Image Section */}
-                <div className="relative h-44 w-full overflow-hidden md:h-auto md:w-2/5 md:min-h-44">
+                <div className="relative h-32 w-full overflow-hidden sm:h-44 md:h-auto md:w-2/5 md:min-h-44">
                   <Image
                     src={category.image}
                     alt={`${category.header} - Blockfest Africa benefit`}

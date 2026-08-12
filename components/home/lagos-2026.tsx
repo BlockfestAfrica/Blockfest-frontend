@@ -36,7 +36,7 @@ export function Lagos2026Section() {
             </span>
           </h2>
           <p className="mt-4 text-base leading-relaxed text-white/60">
-            Six tracks shaping the future of African tech, Web3 and AI.
+            Six tracks across African tech, Web3 and AI.
           </p>
         </div>
 
@@ -74,7 +74,7 @@ export function Lagos2026Section() {
             Three weeks of programming. One unforgettable week in Lagos.
           </p> */}
           <p className="mt-4 text-base leading-relaxed text-white/60">
-            One unforgettable weekend in Lagos.
+            One weekend in Lagos.
           </p>
         </div>
 

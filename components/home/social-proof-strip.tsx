@@ -51,7 +51,7 @@ export function SocialProofStrip() {
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-4 px-4 text-center lg:px-8">
         <p className="eyebrow text-white/90">
-          Fresh from the South Africa roadshow · next stop Lagos
+          South Africa roadshow · next stop Lagos
         </p>
       </div>
     </section>
