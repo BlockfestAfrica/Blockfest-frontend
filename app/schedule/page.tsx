@@ -164,30 +164,33 @@ export default function Schedule() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <main id="main" className={`${gotham.className} min-h-screen bg-white`}>
+      <main id="main" className={`${gotham.className} min-h-screen bg-paper`}>
         <ComingSoonNotice
           title="2026 schedule coming soon"
           description="The three-day Lagos '26 programme is published in the coming weeks. Below is the 2025 schedule for reference."
         />
 
         {/* Header Section */}
-        <div className="bg-ground py-12 lg:py-16">
-          <div className="max-w-6xl mx-auto px-4 lg:px-8 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-4">
-            2025 SCHEDULE
-          </p>
-            <h1 className="font-bold text-3xl lg:text-5xl mb-4 text-white">
-              Schedule of <span className="text-white">Activities</span>
-            </h1>
-            <p className="text-base lg:text-lg text-white/90 max-w-2xl mx-auto">
-              How the 2025 edition ran, hour by hour. The Lagos &apos;26
-              programme spans three days and is published soon.
-            </p>
+        <section className="section-y bg-ground">
+          <div className="container-page">
+            <div className="max-w-2xl">
+              <p className="eyebrow text-white/60">2025 SCHEDULE</p>
+              <h1
+                id="schedule-heading"
+                className="text-display-sm mt-3 font-bold text-white"
+              >
+                Schedule of <span className="text-white">Activities</span>
+              </h1>
+              <p className="mt-4 text-base leading-relaxed text-white/60">
+                How the 2025 edition ran, hour by hour. The Lagos &apos;26
+                programme spans three days and is published soon.
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <section className="py-12 lg:py-16">
-          <div className="max-w-6xl mx-auto px-4 lg:px-8">
+        <section className="section-y bg-paper">
+          <div className="container-page">
             <Agenda />
           </div>
         </section>

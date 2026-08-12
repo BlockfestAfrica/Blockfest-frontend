@@ -215,6 +215,32 @@ html {
   letter-spacing: -0.02em;
 }
 
+/* The page grid. Chrome and content both sit on it, so the logo, the hero
+   headline and every section heading share one left edge. */
+.container-page {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .container-page {
+    padding-inline: 2rem;
+  }
+}
+
+/* One vertical rhythm for every section on the site. */
+.section-y {
+  padding-block: 4rem;
+}
+
+@media (min-width: 1024px) {
+  .section-y {
+    padding-block: 6rem;
+  }
+}
+
 /* Letterspaced uppercase label used above section headings. */
 .eyebrow {
   font-size: 0.75rem;

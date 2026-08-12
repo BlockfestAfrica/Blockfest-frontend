@@ -15,19 +15,18 @@ export function SouthAfricaRecapSection() {
   const event = blockfest2026SouthAfrica;
 
   return (
-    <section className="py-12 lg:py-16 bg-paper">
-      <div className="max-w-6xl mx-auto px-4 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+    <section className="section-y bg-paper border-t border-gray-200">
+      <div className="container-page">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
           {/* Copy */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-blue mb-5">
-            SOUTH AFRICA · THAT&apos;S A WRAP
-          </p>
-            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-4">
-              We took it to{" "}
-              <span className="text-brand-blue">Cape Town</span>
+            <p className="eyebrow text-brand-blue">
+              SOUTH AFRICA · THAT&apos;S A WRAP
+            </p>
+            <h2 className="text-display-sm mt-3 font-bold text-gray-900">
+              We took it to <span className="text-brand-blue">Cape Town</span>
             </h2>
-            <p className="text-gray-600 text-base lg:text-lg mb-6 max-w-xl">
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-600">
               {event.date.displayDate}. A week of builder meetups, sessions and
               experiences that brought Africa&apos;s Web3 community together
               across South Africa. The roadshow set the stage for the main event
@@ -35,26 +34,26 @@ export function SouthAfricaRecapSection() {
             </p>
             <Link
               href="/blockfest-south-africa-2026"
-              className="inline-flex items-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-full font-semibold hover:bg-brand-blue-pressed transition-colors"
+              className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-full bg-brand-blue px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-blue-dark"
             >
               View the South Africa recap
-              <ArrowRight />
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
 
           {/* Photo teaser */}
-          <div className="grid grid-cols-2 gap-3 lg:gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {teaser.map((img, index) => (
               <div
                 key={img}
-                className="relative aspect-square rounded-xl overflow-hidden bg-gray-100"
+                className="relative aspect-square overflow-hidden rounded-xl border border-gray-200 bg-paper-muted"
               >
                 <Image
                   src={img}
                   alt={`Blockfest Africa South Africa roadshow ${index + 1}`}
                   fill
                   loading="lazy"
-                  className="object-cover hover:scale-105 transition-transform duration-500"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
                   sizes="(max-width: 1024px) 50vw, 25vw"
                 />
               </div>

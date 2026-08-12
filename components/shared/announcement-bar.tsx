@@ -25,7 +25,7 @@ export function AnnouncementBar() {
   if (pathname === "/tickets") return null;
 
   return (
-    <div className="bg-black border-b border-white/20">
+    <div className="bg-black">
       <Link
         href="/tickets"
         onClick={() => trackButtonClick("Announcement Bar", "Site Header")}
