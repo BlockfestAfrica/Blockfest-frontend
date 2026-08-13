@@ -232,7 +232,7 @@ export const blockfest2026Lagos: BlockfestEvent = {
 // Lagos '26 programming tracks (deck: "What We'll Be Talking About").
 export const lagos2026Tracks: EventTrack[] = [
   {
-    title: "AI & Crypto",
+    title: "AI & Blockchain",
     description:
       "Where intelligence meets ownership. Exploring the convergence reshaping the next decade.",
   },
