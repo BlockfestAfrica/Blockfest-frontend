@@ -76,13 +76,18 @@ export function Tickets2026Section() {
                   {tiers.map((tier) => (
                     <li
                       key={tier.id}
-                      className="flex items-center gap-2 text-sm text-white/60"
+                      className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/60"
                     >
                       <Check
                         className="h-4 w-4 shrink-0 text-brand-blue-light"
                         aria-hidden="true"
                       />
                       {tier.name}
+                      {tier.bestSeller && (
+                        <span className="rounded-full bg-brand-gold px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-black">
+                          Best seller
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>

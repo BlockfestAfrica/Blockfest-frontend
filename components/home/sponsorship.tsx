@@ -50,10 +50,10 @@ export function SponsorshipSection() {
               onClick={() =>
                 trackButtonClick("Email Sponsorship", "Sponsorship Section")
               }
-              className="inline-flex min-h-12 max-w-full items-center justify-center gap-2 rounded-full bg-brand-gold px-7 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover sm:text-base"
+              className="inline-flex min-h-12 max-w-full items-center justify-center gap-2 rounded-full bg-brand-gold px-4 py-2 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover sm:px-7 sm:text-base"
             >
               <Mail className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-              <span className="truncate">{contactEmail}</span>
+              <span className="break-all text-center">{contactEmail}</span>
             </Link>
             <span className="self-center text-sm text-white/60">or</span>
             <Link
