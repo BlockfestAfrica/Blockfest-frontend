@@ -155,7 +155,9 @@ const Footer = () => {
         <div className="border-t border-white/20" />
       </div>
 
-      <div className="container-page py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* pb-20 reserves room for the fixed back-to-top button, which sat on
+          the end of the copyright line. */}
+      <div className="container-page py-6 pb-20 lg:pb-6 flex flex-col sm:flex-row items-center justify-between gap-3">
         <p className="text-nav-gray/60 text-sm order-2 sm:order-1">
           © {currentYear} Blockfest Africa. All rights reserved.
         </p>

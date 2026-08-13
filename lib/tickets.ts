@@ -73,6 +73,8 @@ export interface TicketTier {
   includes: string[];
   /** Stated plainly on the card. A day-limited pass must say what it is not. */
   excludes?: string[];
+  /** Sells the most. Distinct from `featured`, which marks the pick of a group. */
+  bestSeller?: boolean;
   bestFor: string;
   /** Highlighted as the recommended pick within its group. */
   featured?: boolean;
@@ -119,6 +121,7 @@ export const ticketTiers: TicketTier[] = [
   {
     id: "bridge-pass",
     name: "BRIDGE PASS",
+    bestSeller: true,
     group: "conference",
     price: 15_000,
     standardPrice: 20_000,
