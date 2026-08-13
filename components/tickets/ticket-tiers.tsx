@@ -11,15 +11,26 @@ function TierCard({ tier }: { tier: TicketTier }) {
   return (
     <div
       className={`relative flex flex-col rounded-xl border p-6 transition-colors duration-300 ${
-        tier.featured
+        tier.featured || tier.bestSeller
           ? "border-brand-blue bg-white/10 hover:bg-white/20"
           : "border-white/20 bg-white/5 hover:bg-white/20"
       }`}
     >
-      {tier.featured && (
-        <span className="eyebrow absolute -top-3 left-6 rounded-full bg-brand-gold px-3 py-1 text-black">
-          Most popular
-        </span>
+      {/* A row rather than one absolute badge, so a tier carrying both labels
+          sets them side by side instead of stacking them on top of each other. */}
+      {(tier.featured || tier.bestSeller) && (
+        <div className="absolute -top-3 left-6 right-6 flex flex-wrap items-center gap-2">
+          {tier.featured && (
+            <span className="eyebrow rounded-full bg-brand-gold px-3 py-1 text-black">
+              Most popular
+            </span>
+          )}
+          {tier.bestSeller && (
+            <span className="eyebrow rounded-full bg-brand-blue px-3 py-1 text-white">
+              Best seller
+            </span>
+          )}
+        </div>
       )}
 
       <h3 className="text-lg font-bold text-white lg:text-2xl">{tier.name}</h3>
