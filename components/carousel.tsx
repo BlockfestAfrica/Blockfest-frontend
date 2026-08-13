@@ -1,6 +1,6 @@
 "use client";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { EmblaOptionsType, EmblaCarouselType } from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
@@ -31,12 +31,75 @@ const Speakers: React.FC<PropType> = (props) => {
     autoplayDelay = 4000,
   } = props;
 
+  const rootRef = useRef<HTMLElement>(null);
+
+  /**
+   * Respect prefers-reduced-motion. Read once on mount rather than in render so
+   * server and first client paint agree; autoplay is a client-only concern.
+   */
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   const [emblaRef, emblaApi] = useEmblaCarousel(options, [
-    Autoplay({ delay: autoplayDelay, stopOnInteraction: false }),
+    Autoplay({
+      delay: autoplayDelay,
+      stopOnInteraction: false,
+      // Stop advancing while someone is reading or tabbing through a card.
+      stopOnMouseEnter: true,
+      stopOnFocusIn: true,
+    }),
   ]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  /**
+   * Auto-advancing content needs a way to stop it (WCAG 2.2.2).
+   *
+   * Intent is tracked separately from the plugin's own state. The plugin also
+   * stops itself on hover and focus, so a toggle that read `isPlaying()` would
+   * invert: pressing Pause while focus sat on a nav button found autoplay
+   * already stopped and started it instead.
+   */
+  const userPausedRef = useRef(false);
+
+  useEffect(() => {
+    const autoplay = emblaApi?.plugins()?.autoplay;
+    if (!autoplay || !reducedMotion) return;
+    userPausedRef.current = true;
+    autoplay.stop();
+    setIsPlaying(false);
+  }, [emblaApi, reducedMotion]);
+
+  // Hover-out and focus-out ask the plugin to resume. Honour the user's pause.
+  useEffect(() => {
+    const autoplay = emblaApi?.plugins()?.autoplay;
+    if (!emblaApi || !autoplay) return;
+    const enforce = () => {
+      if (userPausedRef.current) autoplay.stop();
+    };
+    emblaApi.on("autoplay:play", enforce);
+    return () => {
+      emblaApi.off("autoplay:play", enforce);
+    };
+  }, [emblaApi]);
+
+  const toggleAutoplay = useCallback(() => {
+    const autoplay = emblaApi?.plugins()?.autoplay;
+    if (!autoplay) return;
+    const pausing = !userPausedRef.current;
+    userPausedRef.current = pausing;
+    setIsPlaying(!pausing);
+    if (pausing) autoplay.stop();
+    else autoplay.play();
+  }, [emblaApi]);
 
   const onNavButtonClick = useCallback((emblaApi: EmblaCarouselType) => {
     const autoplay = emblaApi?.plugins()?.autoplay;
@@ -78,10 +141,20 @@ const Speakers: React.FC<PropType> = (props) => {
     emblaApi.on("reInit", onInit).on("reInit", onSelect).on("select", onSelect);
   }, [emblaApi, onInit, onSelect]);
 
+  /**
+   * Arrow keys move the carousel only while focus is inside it.
+   *
+   * This was bound to `document` and called preventDefault unconditionally, so
+   * pressing Left or Right anywhere on the page scrolled the carousel and ate
+   * the keystroke — including caret movement inside form fields.
+   */
   useEffect(() => {
-    if (!emblaApi) return;
+    const root = rootRef.current;
+    if (!emblaApi || !root) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
+        return;
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         emblaApi.scrollPrev();
@@ -91,18 +164,19 @@ const Speakers: React.FC<PropType> = (props) => {
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    root.addEventListener("keydown", handleKeyDown);
+    return () => root.removeEventListener("keydown", handleKeyDown);
   }, [emblaApi]);
 
   return (
     <section
+      ref={rootRef}
       className={`embla w-full flex items-center justify-center flex-col relative ${className}`}
       // biome-ignore lint/a11y/noRedundantRoles: <explanation>
       // biome-ignore lint/a11y/useSemanticElements: <explanation>
       role="region"
       aria-label="Speaker carousel"
-      aria-live="polite"
+      aria-roledescription="carousel"
     >
       {/* Navigation Buttons - Positioned absolutely */}
       <div className="hidden lg:block absolute inset-0 pointer-events-none">
@@ -133,7 +207,9 @@ const Speakers: React.FC<PropType> = (props) => {
         <div className="flex touch-pan-y touch-pinch-zoom">
           {speakers.map((speaker, index) => (
             <div
-              className="md:flex-[0_0_75%] flex-[0_0_50%] lg:flex-[0_0_90%] xl:flex-[0_0_100%] min-w-0 flex items-stretch justify-center px-2 md:px-8"
+              // Phones get one card, near full width. At 50% the card content
+              // box was 91px and everything inside it overflowed.
+              className="flex-[0_0_88%] md:flex-[0_0_75%] lg:flex-[0_0_90%] xl:flex-[0_0_100%] min-w-0 flex items-stretch justify-center px-1.5 md:px-8"
               key={`${speaker.name}-${index}`}
               // biome-ignore lint/a11y/useSemanticElements: <explanation>
               role="group"
@@ -147,21 +223,32 @@ const Speakers: React.FC<PropType> = (props) => {
               >
                 <div className="mx-auto flex h-full w-full max-w-4xl flex-col justify-center rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10 md:p-8">
                   <div className="flex items-center justify-center md:justify-between gap-6 flex-col-reverse md:flex-row text-center md:text-left">
-                    <div className="flex min-w-0 flex-1 basis-full flex-col items-center text-white md:basis-[60%] md:items-start">
-                      <h2 className="text-2xl md:text-3xl xl:text-5xl font-bold uppercase tracking-tight leading-tight">
+                    {/* basis-0 + flex-1 so the text takes whatever the portrait
+                        leaves. The old md:basis-[60%] against the portrait's
+                        42% over-committed the row by 8% plus the gap. */}
+                    <div className="flex w-full min-w-0 flex-1 basis-full flex-col items-center text-white md:w-auto md:basis-0 md:items-start">
+                      {/* 3xl moved from md to lg: at 768px the widest names were
+                          wider than their own column. */}
+                      <h2 className="text-xl min-[360px]:text-2xl lg:text-3xl xl:text-5xl font-bold uppercase tracking-tight leading-tight break-words">
                         {speaker.name}
                       </h2>
                       <p className="mt-3 text-sm md:text-lg xl:text-2xl leading-relaxed text-white/60 md:mt-4">
                         {speaker.title}
                       </p>
                     </div>
-                    <div className="md:basis-[40%] basis-auto w-[250px] h-[250px]  md:w-[250px] md:h-[250px] lg:w-[300px] lg:h-[300px]  xl:w-[350px] xl:h-[350px] aspect-square rounded-xl overflow-hidden border border-white/20 flex-shrink-0 mx-auto md:mx-0">
+                    {/* Sized fluidly and capped, never pinned. The old fixed
+                        250px frame was wider than the card that held it, so the
+                        portrait spilled across its neighbours on phones. Height
+                        comes from aspect-square, so the frame is always square:
+                        the previous fixed w/h pairs fought basis-[40%] and left
+                        it 147x238 at md and 315x333 at xl. */}
+                    <div className="basis-auto w-full max-w-[240px] md:basis-[46%] md:w-auto md:max-w-[300px] xl:max-w-[340px] aspect-square shrink-0 overflow-hidden rounded-xl border border-white/20 mx-auto md:mx-0">
                       <Image
                         src={speaker.image}
                         alt={`Portrait of ${speaker.name}, ${speaker.title}`}
                         width={640}
                         height={640}
-                        sizes="(max-width: 640px) 250px, (max-width: 768px) 250px, (max-width: 1024px) 300px, (max-width: 1280px) 320px, 320px"
+                        sizes="(max-width: 767px) 240px, (max-width: 1279px) 300px, 340px"
                         className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
                         style={{ objectPosition: "center 15%" }}
                         // Only the first slide is above the fold; the rest wait.
@@ -179,10 +266,12 @@ const Speakers: React.FC<PropType> = (props) => {
 
       {/* Dot Indicators */}
       {showDots && scrollSnaps.length > 1 && (
+        // Plain buttons in a group, not a tablist: there are no tabpanels here,
+        // and the tab pattern promises a keyboard model this does not implement.
         <div
           className="hidden md:flex justify-center gap-2 mt-5"
-          role="tablist"
-          aria-label="Speaker slides"
+          role="group"
+          aria-label="Choose speaker slide"
         >
           {scrollSnaps.map((_, index) => (
             <button
@@ -192,8 +281,7 @@ const Speakers: React.FC<PropType> = (props) => {
               // The dot stays 12px; the hit area around it is a full 44px.
               className="flex min-h-11 w-6 shrink-0 items-center justify-center"
               onClick={() => scrollTo(index)}
-              role="tab"
-              aria-selected={index === selectedIndex}
+              aria-current={index === selectedIndex}
               aria-label={`Go to slide ${index + 1}: ${speakers[index]?.name}`}
             >
               <span
@@ -207,20 +295,40 @@ const Speakers: React.FC<PropType> = (props) => {
         </div>
       )}
 
-      {/* Mobile Navigation Buttons - Below the card */}
-      <div className="block lg:hidden w-full mt-4">
-        <div className="flex justify-center gap-4">
+      {/* Below-card controls. Dots don't fit on a phone with 12 slides, so
+          phones get a counter instead and are otherwise left with no sense of
+          position at all. */}
+      <div className="mt-4 flex w-full items-center justify-center gap-4">
+        <div className="flex items-center gap-4 lg:hidden">
           <PrevButton
             onClick={onPrevButtonClick}
             disabled={prevBtnDisabled}
             className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition-colors duration-300 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
           />
+          {scrollSnaps.length > 1 && (
+            <p className="text-sm tabular-nums text-white/60 md:hidden">
+              <span className="sr-only">Slide </span>
+              {selectedIndex + 1} of {scrollSnaps.length}
+            </p>
+          )}
           <NextButton
             onClick={onNextButtonClick}
             disabled={nextBtnDisabled}
             className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition-colors duration-300 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
+
+        {!reducedMotion && (
+          <button
+            type="button"
+            onClick={toggleAutoplay}
+            aria-pressed={!isPlaying}
+            className="flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-white/20 px-4 text-xs font-semibold text-white/60 transition-colors duration-300 hover:bg-white/10 hover:text-white"
+          >
+            {isPlaying ? "Pause" : "Play"}
+            <span className="sr-only"> automatic slideshow</span>
+          </button>
+        )}
       </div>
     </section>
   );
