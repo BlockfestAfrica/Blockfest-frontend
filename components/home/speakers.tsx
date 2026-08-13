@@ -38,7 +38,7 @@ export function SpeakersSection() {
         </div>
 
         {/* 2026 Speaker CTA */}
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-lg text-white/90">
             Want to speak at Blockf3st Africa 2026?
           </p>
