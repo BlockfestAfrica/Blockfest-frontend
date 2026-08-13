@@ -190,7 +190,14 @@ const Navbar = () => {
                 <BurgerIcon className="text-white" />
               </button>
             </SheetTrigger>
-            <SheetContent side="top">
+            {/* The panel grows with its content and is fixed, so on a short
+                viewport the lower items were unreachable. Cap it and let it
+                scroll. This has to land with the taller tap targets below,
+                which push the panel further past the fold. */}
+            <SheetContent
+              side="top"
+              className="max-h-[100dvh] overflow-y-auto overscroll-contain"
+            >
               <MobileMenu />
             </SheetContent>
           </Sheet>
@@ -224,7 +231,7 @@ const MobileMenu = () => {
 
   return (
     <div
-      className={`${gotham.className} px-6 py-8 flex flex-col h-full bg-ground`}
+      className={`${gotham.className} px-6 py-8 flex min-h-full flex-col bg-ground`}
     >
       {/* Close Button */}
       <div className="flex justify-end mb-8">
@@ -271,7 +278,7 @@ const MobileMenu = () => {
             type="button"
             onClick={() => setPastEventsOpen((open) => !open)}
             aria-expanded={pastEventsOpen}
-            className="text-lg font-medium text-nav-gray hover:text-white transition w-fit inline-flex items-center gap-1.5"
+            className="text-lg font-medium text-nav-gray hover:text-white transition w-fit min-h-11 inline-flex items-center gap-1.5"
           >
             Past Events
             <ChevronDown
@@ -285,7 +292,7 @@ const MobileMenu = () => {
               <SheetClose asChild>
                 <Link
                   href="/blockfest-south-africa-2026"
-                  className="text-base font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
+                  className="text-base font-medium text-nav-gray hover:text-white hover:underline transition w-fit min-h-11 inline-flex items-center gap-1.5"
                 >
                   South Africa &apos;26
                 </Link>
@@ -293,7 +300,7 @@ const MobileMenu = () => {
               <SheetClose asChild>
                 <Link
                   href="/blockfest-2025"
-                  className="text-base font-medium text-nav-gray hover:text-white hover:underline transition w-fit inline-flex items-center gap-1.5"
+                  className="text-base font-medium text-nav-gray hover:text-white hover:underline transition w-fit min-h-11 inline-flex items-center gap-1.5"
                 >
                   2025 Recap
                 </Link>
