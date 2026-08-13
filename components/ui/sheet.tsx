@@ -70,10 +70,11 @@ function SheetContent({
         )}
         {...props}
       >
+        {/* No default close button. The upstream one holds only an sr-only
+            span with no icon, so it renders 0x0 — a keyboard-focusable control
+            nobody can see or tap, sitting on top of the visible close the
+            content already provides. Sheets supply their own SheetClose. */}
         {children}
-        <SheetPrimitive.Close className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none">
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>
   )
