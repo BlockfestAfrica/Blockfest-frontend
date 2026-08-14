@@ -39,7 +39,7 @@ export const ORGANISATION = {
   name: "Blockfest Africa",
   alternateName: ["Blockf3st Africa", "Blockfest"],
   url: SITE_URL,
-  logo: `${SITE_URL}/images/logo.svg`,
+  logo: `${SITE_URL}/images/logo.png`,
   email: "partnership@blockfestafrica.com",
   sameAs: [
     "https://x.com/blockfestafrica",

@@ -21,7 +21,7 @@ export default function NotFound() {
           <div className="mb-8">
             <Link href="/" className="inline-block cursor-pointer">
               <Image
-                src="/images/logo.svg"
+                src="/images/logo.png"
                 alt="Blockfest Africa Logo"
                 width={180}
                 height={60}

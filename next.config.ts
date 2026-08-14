@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
   // Enable experimental features for better SEO
   experimental: {
     optimizePackageImports: ["lucide-react", "react-icons"],
+    // The stylesheet is the single largest thing gating first paint: blocking
+    // it in a test dropped LCP from 1700ms to 592ms at 600kbps. Its cost is the
+    // extra round trip, not its contents (92.8% of the rules are used), so
+    // inline it rather than trying to purge it.
+    inlineCss: true,
   },
 
   // Image optimization for mobile devices
