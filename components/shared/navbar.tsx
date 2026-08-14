@@ -81,12 +81,12 @@ const Navbar = () => {
       {/* Logo */}
       <Link href="/" className="inline-flex items-center cursor-pointer min-h-11">
         <Image
-          src="/images/logo.svg"
+          src="/images/logo.png"
           alt="Blockfest Africa Logo"
           width={140}
           height={38}
           sizes="(max-width: 768px) 124px, 140px"
-          priority
+          unoptimized
           className="xl:w-[140px] xl:h-[38px] xl:aspect-[140/38] aspect-[124/24] w-[124px] h-[24px]"
         />
       </Link>
