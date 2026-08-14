@@ -22,6 +22,8 @@ export interface NewsletterPost {
   date: string;
   displayDate: string;
   excerpt: string;
+  /** Longer, for the featured card, which has the room for it. */
+  longExcerpt: string;
   coverImage?: string;
   readingMinutes: number;
 }
@@ -71,13 +73,13 @@ function cardSizedImage(url: string): string {
 }
 
 /** Excerpt from the body, because Substack's own subtitle field is empty. */
-function buildExcerpt(body: string, fallback?: string): string {
+function buildExcerpt(body: string, limit: number, fallback?: string): string {
   const text = toPlainText(body).replace(/^Hey Blockers,\s*/i, "");
   const source = text || (fallback ? toPlainText(fallback) : "");
-  if (source.length <= 180) return source;
-  const cut = source.slice(0, 180);
+  if (source.length <= limit) return source;
+  const cut = source.slice(0, limit);
   const lastSpace = cut.lastIndexOf(" ");
-  return `${cut.slice(0, lastSpace > 120 ? lastSpace : cut.length)}…`;
+  return `${cut.slice(0, lastSpace > limit * 0.65 ? lastSpace : cut.length)}…`;
 }
 
 /**
@@ -127,10 +129,14 @@ export async function getNewsletterPosts(): Promise<NewsletterPost[]> {
           year: "numeric",
           timeZone: "UTC",
         }),
-        excerpt: buildExcerpt(body, tag(item, "description")),
+        excerpt: buildExcerpt(body, 180, tag(item, "description")),
+        longExcerpt: buildExcerpt(body, 320, tag(item, "description")),
         ...(cover ? { coverImage: cardSizedImage(cover) } : {}),
         readingMinutes: Math.max(1, Math.round(words / 200)),
       };
     })
-    .filter((post): post is NewsletterPost => post !== null);
+    .filter((post): post is NewsletterPost => post !== null)
+    // Newest first. The feed already arrives in this order, but the page leads
+    // with "latest" and that claim should not depend on Substack's ordering.
+    .sort((a, b) => b.date.localeCompare(a.date));
 }
