@@ -8,6 +8,7 @@ import { gotham } from "@/lib/fonts";
 import { CONTACT_EMAIL, SOCIAL_URLS } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
 import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
+import { Newsletter } from "./newsletter";
 
 const exploreMenu: Menu[] = [
   { path: "/", title: "Home" },
@@ -151,6 +152,10 @@ const Footer = () => {
                   {item.icon}
                 </Link>
               ))}
+            </div>
+
+            <div className="mt-10">
+              <Newsletter />
             </div>
           </div>
         </div>

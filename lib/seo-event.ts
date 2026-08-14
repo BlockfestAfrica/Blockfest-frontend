@@ -44,7 +44,7 @@ export const ORGANISATION = {
   sameAs: [
     "https://x.com/blockfestafrica",
     "https://www.instagram.com/blockfestival_africa",
-    "https://youtube.com/@blockchainfestivalafrica",
+    "https://youtube.com/@BlockFestivalAfrica",
     "https://www.linkedin.com/company/blockfest-africa",
     "https://t.me/blockf3stafrica",
   ],
@@ -83,28 +83,19 @@ export function eventJsonLd() {
     startDate: e.date.start,
     endDate: e.date.end,
     eventStatus: "https://schema.org/EventScheduled",
-    // Mixed, not offline. The main stage is livestreamed free on YouTube and X,
-    // and in 2025 more people watched from home than were in the room. Declaring
-    // it offline-only hid that from search and from AI clients.
-    eventAttendanceMode: "https://schema.org/MixedEventAttendanceMode",
-    location: [
-      {
-        "@type": "Place",
-        name: e.location.venue,
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: e.location.venue,
-          addressLocality: e.location.city,
-          addressRegion: "Lagos State",
-          addressCountry: e.location.countryCode,
-        },
+    // In person only. The 2025 edition was livestreamed; this one is not.
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: {
+      "@type": "Place",
+      name: e.location.venue,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: e.location.venue,
+        addressLocality: e.location.city,
+        addressRegion: "Lagos State",
+        addressCountry: e.location.countryCode,
       },
-      {
-        "@type": "VirtualLocation",
-        name: "Free livestream on YouTube and X",
-        url: "https://youtube.com/@blockchainfestivalafrica",
-      },
-    ],
+    },
     organizer: { "@id": ORGANISATION_ID },
     performer: { "@id": ORGANISATION_ID },
     offers: ticketOffer(),
