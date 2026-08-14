@@ -251,9 +251,11 @@ const Speakers: React.FC<PropType> = (props) => {
                         sizes="(max-width: 767px) 240px, (max-width: 1279px) 300px, 340px"
                         className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
                         style={{ objectPosition: "center 15%" }}
-                        // Only the first slide is above the fold; the rest wait.
-                        priority={index === 0}
-                        loading={index === 0 ? "eager" : "lazy"}
+                        // Nothing here is preloaded. This carousel sits four
+                        // sections below the fold on the homepage, and marking
+                        // the first slide priority put a second image preload
+                        // in the head competing with the actual LCP element.
+                        loading="lazy"
                       />
                     </div>
                   </div>
