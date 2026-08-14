@@ -59,13 +59,14 @@ function TierCard({ tier }: { tier: TicketTier }) {
             sit above the price as an eyebrow where it read as a subtitle
             rather than as part of what the ticket gets you. */}
         {tier.days.map((day) => (
-          <li key={day} className="flex items-start gap-3">
+          <li key={day.label} className="flex items-start gap-3">
             <CalendarDays
               className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold"
               aria-hidden="true"
             />
-            <span className="text-sm font-semibold leading-relaxed text-white/90">
-              {day}
+            <span className="text-sm leading-relaxed">
+              <span className="font-semibold text-white/90">{day.label}</span>
+              <span className="block text-white/60">{day.date}</span>
             </span>
           </li>
         ))}
@@ -90,6 +91,12 @@ function TierCard({ tier }: { tier: TicketTier }) {
           </li>
         ))}
       </ul>
+
+      {tier.note && (
+        <p className="mt-5 rounded-md border border-white/20 bg-white/5 p-3 text-xs leading-relaxed text-white/60">
+          {tier.note}
+        </p>
+      )}
 
       <div className="mt-6 border-t border-white/20 pt-4">
         <p className="eyebrow text-white/60">Best for</p>
