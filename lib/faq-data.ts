@@ -90,6 +90,13 @@ export const faqData: FAQItem[] = [
     category: "Registration & Tickets",
   },
   {
+    id: 24,
+    question: "Can I come to the Mixer on October 24?",
+    answer:
+      "The Mixer is invitation only, so it is not sold as its own ticket. Speakers, invited guests, partners and KOLs are admitted automatically. The ALL ACCESS PASS is the way to buy in. The workshop on October 22 and the conference on October 23 are the two days open to everyone.",
+    category: "Registration & Tickets",
+  },
+  {
     id: 23,
     question: "Can I buy tickets for my team?",
     answer:
