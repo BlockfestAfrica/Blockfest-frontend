@@ -20,6 +20,7 @@ const exploreMenu: Menu[] = [
 ];
 
 const infoMenu: Menu[] = [
+  { path: "/newsletter", title: "Newsletter" },
   { path: "/faq", title: "FAQ" },
   { path: "/travel", title: "Travel & Visa" },
   { path: "/code-of-conduct", title: "Code of Conduct" },

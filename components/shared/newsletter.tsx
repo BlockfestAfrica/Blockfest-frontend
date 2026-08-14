@@ -1,4 +1,7 @@
-export const SUBSTACK_URL = "https://blockfest.substack.com";
+import Link from "next/link";
+
+export { SUBSTACK_URL } from "@/lib/newsletter";
+import { SUBSTACK_URL } from "@/lib/newsletter";
 
 /**
  * Substack signup.
@@ -35,14 +38,12 @@ export function Newsletter() {
 
       <p className="mt-3 text-sm text-nav-gray">
         Or{" "}
-        <a
-          href={SUBSTACK_URL}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/newsletter"
           className="text-brand-blue-light underline underline-offset-2 hover:text-white"
         >
-          read it on Substack
-        </a>
+          read past issues
+        </Link>
         .
       </p>
     </div>
