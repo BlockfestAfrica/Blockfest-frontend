@@ -55,7 +55,7 @@ export function VenueVideo() {
               Your browser cannot play this video.{" "}
               <a
                 href={VENUE_VIDEO.src}
-                className="text-brand-blue-light underline underline-offset-2"
+                className="text-link underline underline-offset-2"
               >
                 Download it instead
               </a>
