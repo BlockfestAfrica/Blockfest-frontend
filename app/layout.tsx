@@ -5,7 +5,6 @@ import Footer from "@/components/shared/footer";
 import Navbar from "@/components/shared/navbar";
 import { AnnouncementBar } from "@/components/shared/announcement-bar";
 import { Toaster } from "@/components/ui/sonner";
-import { PerformanceMonitor } from "@/components/performance-monitor";
 import { gotham } from "@/lib/fonts";
 import { ORGANISATION, eventJsonLd } from "@/lib/seo-event";
 import {
@@ -159,15 +158,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Performance optimization: preconnect to external domains */}
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://www.google-analytics.com" />
-
-        {/* DNS prefetch for social media domains */}
-        <link rel="dns-prefetch" href="//twitter.com" />
-        <link rel="dns-prefetch" href="//linkedin.com" />
-        <link rel="dns-prefetch" href="//instagram.com" />
-        <link rel="dns-prefetch" href="//youtube.com" />
+        {/* No preconnects. The Google Analytics ones were left over from a
+            tool this site does not use and the CSP blocks them anyway, and the
+            social domains are only ever outbound link targets. Speculative
+            handshakes cost a mobile radio real battery for nothing. */}
 
         <script
           type="application/ld+json"
@@ -235,7 +229,6 @@ export default function RootLayout({
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <PerformanceMonitor />
         <AnnouncementBar />
         <Navbar />
         {children}

@@ -65,7 +65,7 @@ const Footer = () => {
           <div className="flex flex-col gap-4">
             <Link href="/" className="inline-flex items-center w-fit cursor-pointer min-h-11">
               <Image
-                src="/images/logo.svg"
+                src="/images/logo.png"
                 alt="Blockfest Africa Logo"
                 width={140}
                 height={38}
