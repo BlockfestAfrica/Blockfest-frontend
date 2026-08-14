@@ -44,7 +44,9 @@ export function GET() {
           const excludes = t.excludes?.length
             ? ` Does not include ${t.excludes.map((x) => x.charAt(0).toLowerCase() + x.slice(1)).join(", ")}.`
             : "";
-          return `  - ${t.name} — ${price}. ${t.days.join("; ")}. ${t.bestFor}${excludes}`;
+          const days = t.days.map((d) => `${d.label} (${d.date})`).join("; ");
+          const note = t.note ? ` ${t.note}` : "";
+          return `  - ${t.name} — ${price}. ${days}. ${t.bestFor}${excludes}${note}`;
         })
         .join("\n");
       return `${group.title}: ${group.description}\n${rows}`;
@@ -64,8 +66,11 @@ export function GET() {
 - Venue: ${e.location.venue}, ${e.location.country}
 - Expected attendance: 5,000+ founders, engineers, investors, creators, corporate
   leaders, policymakers and emerging talent
-- Format: in person. Day 1 workshops and The Back Room, Day 2 main conference and
-  exhibition, Day 3 industry mixer.
+- Format: in person. Day 1 (Thu 22 Oct) workshops and The Back Room, Day 2
+  (Fri 23 Oct) main conference and exhibition, Day 3 (Sat 24 Oct) the Mixer.
+- Days 1 and 2 are open to anyone with a ticket. Day 3, the Mixer, is invitation
+  only and is not sold separately: speakers, invited guests, partners and KOLs
+  are admitted automatically, and the ALL ACCESS PASS also includes it.
 - Official ticket platform: ${TICKET_PLATFORM_URL}
 
 ## Tickets
