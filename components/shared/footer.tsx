@@ -8,17 +8,21 @@ import { gotham } from "@/lib/fonts";
 import { CONTACT_EMAIL, SOCIAL_URLS } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
 import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
+import { Newsletter } from "./newsletter";
 
 const exploreMenu: Menu[] = [
   { path: "/", title: "Home" },
   { path: "/tickets", title: "Tickets" },
   { path: "/speakers", title: "Speakers" },
+  { path: "/schedule", title: "Schedule" },
   { path: "/blockfest-south-africa-2026", title: "South Africa '26" },
   { path: "/blockfest-2025", title: "2025 Recap" },
 ];
 
 const infoMenu: Menu[] = [
   { path: "/faq", title: "FAQ" },
+  { path: "/travel", title: "Travel & Visa" },
+  { path: "/code-of-conduct", title: "Code of Conduct" },
   { path: `mailto:${CONTACT_EMAIL}`, title: "Contact" },
 ];
 
@@ -148,6 +152,10 @@ const Footer = () => {
                   {item.icon}
                 </Link>
               ))}
+            </div>
+
+            <div className="mt-10">
+              <Newsletter />
             </div>
           </div>
         </div>

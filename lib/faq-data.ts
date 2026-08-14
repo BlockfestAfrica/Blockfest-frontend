@@ -49,7 +49,7 @@ export const faqData: FAQItem[] = [
     id: 14,
     question: "Can I attend virtually or is it only in-person?",
     answer:
-      "We will be livestreaming on our YouTube channel and X (Twitter) so the global Web3 and AI community can participate virtually. However, we strongly encourage in-person attendance for the best networking and learning experience.",
+      "In person only. There is no livestream or virtual ticket for Lagos '26, so a pass and being in the room are the only way to take part. Highlights go up on our YouTube and X afterwards.",
     category: "Event Details",
   },
 
@@ -153,7 +153,7 @@ export const faqData: FAQItem[] = [
     id: 10,
     question: "Will the event be livestreamed?",
     answer:
-      "Yes! We will be livestreaming the entire event on our YouTube channel and X (Twitter) so the global Web3 and AI community can participate virtually. Follow our social media for livestream links.",
+      "Not this year. Lagos '26 is a paid, in-person event and is not being streamed. We publish highlights and session recordings on our YouTube channel after the event.",
     category: "Activities & Networking",
   },
   {
