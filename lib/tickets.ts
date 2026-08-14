@@ -69,7 +69,11 @@ export interface TicketTier {
   /** Badge copy for the discount, e.g. "25% OFF". Omitted when there is none. */
   discountLabel?: string;
   /** Which days the pass covers, e.g. "Day 2 · Conference". */
-  days: string;
+  /**
+   * Which days the pass covers, one entry per day. These lead the card's list
+   * because "when am I coming?" is the first thing a buyer needs to settle.
+   */
+  days: string[];
   includes: string[];
   /** Stated plainly on the card. A day-limited pass must say what it is not. */
   excludes?: string[];
@@ -113,7 +117,7 @@ export const ticketTiers: TicketTier[] = [
     price: 7_500,
     standardPrice: 10_000,
     discountLabel: "25% OFF",
-    days: "Day 2 · Conference Day",
+    days: ["Day 2 · Conference Day"],
     includes: ["Access to the main stage and exhibition area"],
     bestFor:
       "Students, beginners, career switchers, and anyone exploring Web3, AI or tech for the first time.",
@@ -126,7 +130,7 @@ export const ticketTiers: TicketTier[] = [
     price: 15_000,
     standardPrice: 20_000,
     discountLabel: "25% OFF",
-    days: "Day 2 · Conference Day",
+    days: ["Day 2 · Conference Day"],
     includes: ["Access to the main stage and exhibition area", "Lunch"],
     bestFor:
       "Operators, engineers and marketers past the basics, who want the sessions that move their work forward and the lunch where conversations start.",
@@ -138,7 +142,7 @@ export const ticketTiers: TicketTier[] = [
     price: 26_250,
     standardPrice: 35_000,
     discountLabel: "25% OFF",
-    days: "Day 2 · Conference Day",
+    days: ["Day 2 · Conference Day"],
     includes: [
       "Access to the main stage and exhibition area",
       "Lunch",
@@ -154,12 +158,12 @@ export const ticketTiers: TicketTier[] = [
     group: "conference",
     price: 150_000,
     standardPrice: 175_000,
-    days: "Day 2 · Conference Day · 5 BECOME PASS tickets",
+    days: ["Day 2 · Conference Day"],
     includes: [
+      "Five tickets, covering five people",
       "Access to the main stage and exhibition area",
       "Lunch",
       "Event merch",
-      "5 × BECOME PASS tickets",
     ],
     bestFor:
       "Companies sending a delegation. One purchase covers five people.",
@@ -173,10 +177,10 @@ export const ticketTiers: TicketTier[] = [
     price: 11_250,
     standardPrice: 15_000,
     discountLabel: "25% OFF",
-    days: "Day 1 Morning · Workshop + Day 2 · Conference",
+    days: ["Day 1 Morning · Workshop", "Day 2 · Conference Day"],
     includes: [
-      "Everything in the BUIDL PASS",
       "Access to the workshop and breakfast on Day 1",
+      "Access to the main stage and exhibition area",
     ],
     bestFor:
       "Developers, designers, marketers, technical founders and community managers who learn best by doing.",
@@ -188,10 +192,12 @@ export const ticketTiers: TicketTier[] = [
     price: 30_000,
     standardPrice: 40_000,
     discountLabel: "25% OFF",
-    days: "Day 1 Morning · Workshop + Day 2 · Conference",
+    days: ["Day 1 Morning · Workshop", "Day 2 · Conference Day"],
     includes: [
-      "Everything in the BECOME PASS",
       "Access to the workshop and breakfast on Day 1",
+      "Access to the main stage and exhibition area",
+      "Lunch",
+      "Event merch",
     ],
     bestFor:
       "Builders and creators who want the hands-on workshop plus the full conference day, merch and lunch included.",
@@ -204,7 +210,7 @@ export const ticketTiers: TicketTier[] = [
     price: 33_750,
     standardPrice: 45_000,
     discountLabel: "25% OFF",
-    days: "Day 1 Evening · The Back Room only",
+    days: ["Day 1 Evening · The Back Room"],
     includes: [
       "Access to pitch for funding",
       "Direct access to investors and high-growth startups",
@@ -221,7 +227,7 @@ export const ticketTiers: TicketTier[] = [
     name: "PRIME PASS",
     group: "vip",
     price: 150_000,
-    days: "Day 2 VIP · Conference Day only",
+    days: ["Day 2 · Conference Day, VIP"],
     includes: [
       "Access to the main stage and exhibition area",
       "Event merch",
@@ -237,7 +243,7 @@ export const ticketTiers: TicketTier[] = [
     name: "EXEC PASS",
     group: "vip",
     price: 160_000,
-    days: "Day 1 Morning · Workshop + Day 2 VIP · Conference",
+    days: ["Day 1 Morning · Workshop", "Day 2 · Conference Day, VIP"],
     includes: [
       "Access to the workshop and breakfast on Day 1",
       "Access to the main stage and exhibition area on Day 2",
@@ -254,7 +260,11 @@ export const ticketTiers: TicketTier[] = [
     name: "ALL ACCESS PASS",
     group: "vip",
     price: 185_000,
-    days: "Day 1 Workshop & Back Room + Day 2 VIP Conference + Day 3 Mixer",
+    days: [
+      "Day 1 · Workshop and The Back Room",
+      "Day 2 · Conference Day, VIP",
+      "Day 3 · Industry mixer",
+    ],
     includes: [
       "Access to the workshop and breakfast on Day 1",
       "Access to the main conference and exhibition area on Day 2",

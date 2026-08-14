@@ -5,7 +5,7 @@ import {
   type TicketTier,
 } from "@/lib/tickets";
 import { TicketCTA } from "./ticket-cta";
-import { Check, Crown, Presentation, Wrench, X } from "lucide-react";
+import { CalendarDays, Check, Crown, Presentation, Wrench, X } from "lucide-react";
 
 function TierCard({ tier }: { tier: TicketTier }) {
   return (
@@ -34,7 +34,6 @@ function TierCard({ tier }: { tier: TicketTier }) {
       )}
 
       <h3 className="text-lg font-bold text-white lg:text-2xl">{tier.name}</h3>
-      <p className="eyebrow mt-1 text-white/60">{tier.days}</p>
 
       <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="text-3xl font-bold tabular-nums text-white">
@@ -55,6 +54,21 @@ function TierCard({ tier }: { tier: TicketTier }) {
       )}
 
       <ul className="mt-6 flex flex-col gap-3">
+        {/* Days lead, and in brighter type than the rest: which days a pass
+            covers is the first thing a buyer needs to settle, and it used to
+            sit above the price as an eyebrow where it read as a subtitle
+            rather than as part of what the ticket gets you. */}
+        {tier.days.map((day) => (
+          <li key={day} className="flex items-start gap-3">
+            <CalendarDays
+              className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold"
+              aria-hidden="true"
+            />
+            <span className="text-sm font-semibold leading-relaxed text-white/90">
+              {day}
+            </span>
+          </li>
+        ))}
         {tier.includes.map((item) => (
           <li key={item} className="flex items-start gap-3">
             <Check

@@ -44,7 +44,7 @@ export function GET() {
           const excludes = t.excludes?.length
             ? ` Does not include ${t.excludes.map((x) => x.charAt(0).toLowerCase() + x.slice(1)).join(", ")}.`
             : "";
-          return `  - ${t.name} — ${price}. ${t.days}. ${t.bestFor}${excludes}`;
+          return `  - ${t.name} — ${price}. ${t.days.join("; ")}. ${t.bestFor}${excludes}`;
         })
         .join("\n");
       return `${group.title}: ${group.description}\n${rows}`;
