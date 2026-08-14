@@ -53,7 +53,7 @@ export default function InsightsLoginPage() {
         sameAs: [
           "https://twitter.com/blockfestafrica",
           "https://www.instagram.com/blockfestival_africa?igsh=NG1ma2p1aXV2OHk2&utm_source=qr",
-          "https://youtube.com/@blockchainfestivalafrica?si=UhSMNPr7GIfOzZk9",
+          "https://youtube.com/@BlockFestivalAfrica",
           "https://linkedin.com/company/blockfest-africa",
           "https://t.me/blockf3stafrica",
         ],

@@ -6,7 +6,6 @@ import {
   Mail,
   MapPin,
   Plane,
-  Radio,
   Send,
 } from "lucide-react";
 import { CONTACT_EMAIL, SOCIAL_URLS } from "@/lib/constants";
@@ -145,44 +144,6 @@ export default function TravelPage() {
                   the event.
                 </p>
               </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Not travelling is a real option here, and it was buried in an FAQ. */}
-        <section className="section-y bg-ground border-t border-white/20">
-          <div className="container-page">
-            <div className="max-w-2xl">
-              <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
-                <Radio className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <h2 className="text-display-sm font-bold text-white">
-                Cannot make it to Lagos?
-              </h2>
-              <p className="mt-4 text-base leading-relaxed text-white/60">
-                The main stage is livestreamed free on YouTube and X. More
-                people watched the 2025 edition from home than were in the room.
-                Nothing to buy, and no ticket needed.
-              </p>
-              <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
-                <a
-                  href={SOCIAL_URLS.youtube}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 px-6 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-                >
-                  <Radio className="h-4 w-4" aria-hidden="true" />
-                  Watch on YouTube
-                </a>
-                <a
-                  href={SOCIAL_URLS.twitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-blue-light underline underline-offset-4 hover:text-white"
-                >
-                  Follow on X for the stream link
-                </a>
-              </div>
             </div>
           </div>
         </section>
