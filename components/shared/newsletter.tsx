@@ -40,7 +40,7 @@ export function Newsletter() {
         Or{" "}
         <Link
           href="/newsletter"
-          className="text-brand-blue-light underline underline-offset-2 hover:text-white"
+          className="text-link underline underline-offset-2 hover:text-white"
         >
           read past issues
         </Link>

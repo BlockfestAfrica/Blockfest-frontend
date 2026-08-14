@@ -53,7 +53,7 @@ export function TicketPolicy() {
               {PHOTOGRAPHY_NOTICE} Concerns? Contact{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex min-h-11 items-center text-brand-blue-light underline underline-offset-2 hover:text-white"
+                className="inline-flex min-h-11 items-center text-link underline underline-offset-2 hover:text-white"
               >
                 {CONTACT_EMAIL}
               </a>
@@ -75,7 +75,7 @@ export function TicketPolicy() {
             </TicketCTA>
             <Link
               href="/faq"
-              className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-blue-light underline underline-offset-4 hover:text-white"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
             >
               Still deciding? Read the FAQ
               <ArrowRight className="h-4 w-4" aria-hidden="true" />

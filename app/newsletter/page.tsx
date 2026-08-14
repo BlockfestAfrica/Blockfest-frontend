@@ -163,7 +163,7 @@ export default async function NewsletterPage() {
                     href={SUBSTACK_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-brand-blue-light underline underline-offset-2 hover:text-white"
+                    className="text-link underline underline-offset-2 hover:text-white"
                   >
                     {posts.length === 0
                       ? "Read them on Substack"
@@ -234,7 +234,7 @@ export default async function NewsletterPage() {
                 href={SUBSTACK_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-brand-blue-light underline underline-offset-2 hover:text-white"
+                className="text-link underline underline-offset-2 hover:text-white"
               >
                 blockfest.substack.com
               </a>

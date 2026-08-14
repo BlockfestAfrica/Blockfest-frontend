@@ -50,6 +50,12 @@ export function HeroSection2026() {
         alt=""
         fill
         priority
+        // priority alone did not put fetchpriority on the preload, so the LCP
+        // image queued behind everything else the browser found first.
+        fetchPriority="high"
+        // The photograph sits under a heavy scrim, so detail that costs bytes
+        // is never seen. 60 keeps it clean and drops ~45KB at phone widths.
+        quality={60}
         sizes="100vw"
         className="object-cover object-center"
       />
