@@ -119,7 +119,7 @@ export default function CodeOfConductPage() {
                   You can also email{" "}
                   <a
                     href={`mailto:${CONTACT_EMAIL}?subject=Code of Conduct report`}
-                    className="text-brand-blue-light underline underline-offset-2 hover:text-white"
+                    className="text-link underline underline-offset-2 hover:text-white"
                   >
                     {CONTACT_EMAIL}
                   </a>
@@ -158,14 +158,14 @@ export default function CodeOfConductPage() {
               Questions about this policy:{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="text-brand-blue-light underline underline-offset-2 hover:text-white"
+                className="text-link underline underline-offset-2 hover:text-white"
               >
                 {CONTACT_EMAIL}
               </a>{" "}
               ·{" "}
               <Link
                 href="/faq"
-                className="text-brand-blue-light underline underline-offset-2 hover:text-white"
+                className="text-link underline underline-offset-2 hover:text-white"
               >
                 Read the FAQ
               </Link>

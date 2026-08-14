@@ -83,7 +83,7 @@ export default function TravelPage() {
                 <p>
                   <Link
                     href="/tickets#venue"
-                    className="text-brand-blue-light underline underline-offset-2 hover:text-white"
+                    className="text-link underline underline-offset-2 hover:text-white"
                   >
                     Watch the venue walkthrough
                   </Link>{" "}
@@ -101,7 +101,7 @@ export default function TravelPage() {
                   If your application needs an invitation letter, email{" "}
                   <a
                     href={`mailto:${CONTACT_EMAIL}?subject=Invitation letter request - Blockf3st Africa '26`}
-                    className="text-brand-blue-light underline underline-offset-2 hover:text-white"
+                    className="text-link underline underline-offset-2 hover:text-white"
                   >
                     {CONTACT_EMAIL}
                   </a>{" "}
@@ -123,7 +123,7 @@ export default function TravelPage() {
                     href={SOCIAL_URLS.telegram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-11 items-center gap-2 text-brand-blue-light underline underline-offset-2 hover:text-white"
+                    className="inline-flex min-h-11 items-center gap-2 text-link underline underline-offset-2 hover:text-white"
                   >
                     <Send className="h-4 w-4" aria-hidden="true" />
                     Join the Telegram community
@@ -164,7 +164,7 @@ export default function TravelPage() {
                 </TicketCTA>
                 <Link
                   href="/faq"
-                  className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-blue-light underline underline-offset-4 hover:text-white"
+                  className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
                 >
                   Read the FAQ
                 </Link>
@@ -174,7 +174,7 @@ export default function TravelPage() {
                 Anything not answered here:{" "}
                 <a
                   href={`mailto:${CONTACT_EMAIL}`}
-                  className="text-brand-blue-light underline underline-offset-2 hover:text-white"
+                  className="text-link underline underline-offset-2 hover:text-white"
                 >
                   {CONTACT_EMAIL}
                 </a>

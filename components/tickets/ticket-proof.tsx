@@ -46,14 +46,14 @@ export function TicketProof() {
         <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-8">
           <Link
             href="/blockfest-2025"
-            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-blue-light underline underline-offset-4 hover:text-white"
+            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
           >
             See last year in Lagos
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           <Link
             href="/blockfest-south-africa-2026"
-            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-blue-light underline underline-offset-4 hover:text-white"
+            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
           >
             And Cape Town this year
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
