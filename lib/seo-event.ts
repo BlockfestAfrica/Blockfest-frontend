@@ -44,7 +44,7 @@ export const ORGANISATION = {
   sameAs: [
     "https://x.com/blockfestafrica",
     "https://www.instagram.com/blockfestival_africa",
-    "https://youtube.com/@blockchainfestivalafrica",
+    "https://youtube.com/@BlockFestivalAfrica",
     "https://www.linkedin.com/company/blockfest-africa",
     "https://t.me/blockf3stafrica",
   ],
@@ -83,6 +83,7 @@ export function eventJsonLd() {
     startDate: e.date.start,
     endDate: e.date.end,
     eventStatus: "https://schema.org/EventScheduled",
+    // In person only. The 2025 edition was livestreamed; this one is not.
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
       "@type": "Place",

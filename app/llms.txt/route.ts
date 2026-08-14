@@ -66,7 +66,9 @@ export function GET() {
 - Venue: ${e.location.venue}, ${e.location.country}
 - Expected attendance: 5,000+ founders, engineers, investors, creators, corporate
   leaders, policymakers and emerging talent
-- Format: in person. Day 1 (Thu 22 Oct) workshops and The Back Room, Day 2
+- Format: in person only. There is no livestream and no virtual ticket for this
+  edition; a paid pass and attendance in Lagos are the only way to take part.
+  Day 1 (Thu 22 Oct) workshops and The Back Room, Day 2
   (Fri 23 Oct) main conference and exhibition, Day 3 (Sat 24 Oct) the Mixer.
 - Days 1 and 2 are open to anyone with a ticket. Day 3, the Mixer, is invitation
   only and is not sold separately: speakers, invited guests, partners and KOLs

@@ -10,7 +10,7 @@ export const SOCIAL_HANDLES = {
   instagram:
     process.env.NEXT_PUBLIC_INSTAGRAM_HANDLE || "blockfestival_africa",
   youtube:
-    process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL || "@blockchainfestivalafrica",
+    process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL || "@BlockFestivalAfrica",
   linkedin:
     process.env.NEXT_PUBLIC_LINKEDIN_PAGE || "company/blockfest-africa",
 } as const;

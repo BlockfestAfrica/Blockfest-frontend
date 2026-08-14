@@ -40,16 +40,26 @@ export function SpeakersSection() {
         {/* 2026 Speaker CTA */}
         <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-lg text-white/90">
-            Want to speak at Blockf3st Africa 2026?
+            Want to speak at or help run Blockf3st Africa 2026?
           </p>
-          <Button
-            type="button"
-            variant="gold"
-            onClick={() => toast("Coming soon!")}
-            className="cursor-pointer rounded-full px-7 text-base font-semibold"
-          >
-            Apply to Speak
-          </Button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button
+              type="button"
+              variant="gold"
+              onClick={() => toast("Coming soon!")}
+              className="cursor-pointer rounded-full px-7 text-base font-semibold"
+            >
+              Apply to Speak
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => toast("Coming soon!")}
+              className="cursor-pointer rounded-full px-7 text-base font-semibold"
+            >
+              Apply to Volunteer
+            </Button>
+          </div>
         </div>
       </div>
     </section>
