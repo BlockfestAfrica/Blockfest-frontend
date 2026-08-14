@@ -230,20 +230,27 @@ html {
   }
 }
 
-/* One vertical rhythm for every section on the site. */
+/* One vertical rhythm for every section on the site.
+   Defined here only. A second copy in section-system.css used to override this
+   one and had no small-screen step, so phones got the 4rem tablet value.
+
+   The gap a reader actually sees between two sections is twice these numbers,
+   because one section's bottom padding meets the next one's top. At 6rem that
+   was 192px of nothing on a desktop, and the homepage spent 16% of its height
+   on section padding alone. */
 .section-y {
-  padding-block: 3rem;
+  padding-block: 2.5rem;
 }
 
 @media (min-width: 640px) {
   .section-y {
-    padding-block: 4rem;
+    padding-block: 3.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .section-y {
-    padding-block: 6rem;
+    padding-block: 4.5rem;
   }
 }
 

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "./section-system.css";
 import Footer from "@/components/shared/footer";
 import Navbar from "@/components/shared/navbar";
 import { AnnouncementBar } from "@/components/shared/announcement-bar";
