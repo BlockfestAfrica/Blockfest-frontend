@@ -35,6 +35,9 @@ export const metadata: Metadata = {
  */
 export default async function NewsletterPage() {
   const posts = await getNewsletterPosts();
+  // Newest gets the featured treatment; the rest are the archive. Repeating the
+  // latest in both places on one screen reads as a bug rather than emphasis.
+  const [latest, ...earlier] = posts;
 
   return (
     <>
@@ -90,30 +93,88 @@ export default async function NewsletterPage() {
           </div>
         </section>
 
+        {/* The most recent issue, given its own treatment. Someone landing here
+            should be able to read the newest thing without working out which
+            row of a list is newest. */}
+        {latest && (
+          <section className="section-y bg-ground border-t border-white/20">
+            <div className="container-page">
+              <a
+                href={latest.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group grid grid-cols-1 gap-6 rounded-xl border border-brand-blue bg-white/10 p-5 transition-colors duration-300 hover:bg-white/20 sm:p-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-10 lg:p-8"
+              >
+                {latest.coverImage ? (
+                  <img
+                    src={latest.coverImage}
+                    alt=""
+                    width={640}
+                    height={360}
+                    className="aspect-video w-full rounded-lg border border-white/20 bg-brand-blue/15 object-cover lg:order-2"
+                  />
+                ) : (
+                  <span
+                    className="flex aspect-video w-full items-center justify-center rounded-lg border border-white/20 bg-brand-blue/15 text-brand-blue-light lg:order-2"
+                    aria-hidden="true"
+                  >
+                    <Mail className="h-8 w-8" />
+                  </span>
+                )}
+
+                <div className="min-w-0 lg:order-1">
+                  <span className="eyebrow inline-flex rounded-full bg-brand-gold px-3 py-1 text-black">
+                    Latest issue
+                  </span>
+                  <p className="eyebrow mt-4 text-white/60">
+                    <time dateTime={latest.date}>{latest.displayDate}</time>
+                    {" · "}
+                    {latest.readingMinutes} min read
+                  </p>
+                  <h2 className="text-display-sm mt-2 font-bold text-white">
+                    {latest.title}
+                  </h2>
+                  <p className="mt-4 text-base leading-relaxed text-white/60">
+                    {latest.longExcerpt}
+                  </p>
+                  <span className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors group-hover:bg-brand-gold-hover">
+                    Read this issue
+                    <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                </div>
+              </a>
+            </div>
+          </section>
+        )}
+
         <section className="section-y bg-ground border-t border-white/20">
           <div className="container-page">
             <h2 className="text-display-sm mb-10 font-bold text-white lg:mb-14">
               Past issues
             </h2>
 
-            {posts.length === 0 ? (
+            {earlier.length === 0 ? (
               <div className="rounded-xl border border-white/20 bg-white/5 p-6">
                 <p className="text-base leading-relaxed text-white/60">
-                  Past issues are not loading right now.{" "}
+                  {posts.length === 0
+                    ? "Past issues are not loading right now. "
+                    : "This is the first issue. Earlier ones will appear here. "}
                   <a
                     href={SUBSTACK_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-brand-blue-light underline underline-offset-2 hover:text-white"
                   >
-                    Read them on Substack
+                    {posts.length === 0
+                      ? "Read them on Substack"
+                      : "Visit the Substack"}
                   </a>
                   .
                 </p>
               </div>
             ) : (
               <ul className="flex flex-col gap-6">
-                {posts.map((post, index) => (
+                {earlier.map((post, index) => (
                   <li key={post.url}>
                     <a
                       href={post.url}
