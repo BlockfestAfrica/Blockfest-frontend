@@ -66,7 +66,9 @@ export function GET() {
 - Venue: ${e.location.venue}, ${e.location.country}
 - Expected attendance: 5,000+ founders, engineers, investors, creators, corporate
   leaders, policymakers and emerging talent
-- Format: in person. Day 1 (Thu 22 Oct) workshops and The Back Room, Day 2
+- Format: in person, with the main stage livestreamed free on YouTube and X.
+  No ticket is needed to watch: in 2025, 7,200 of 12,000 attendees took part
+  remotely. Day 1 (Thu 22 Oct) workshops and The Back Room, Day 2
   (Fri 23 Oct) main conference and exhibition, Day 3 (Sat 24 Oct) the Mixer.
 - Days 1 and 2 are open to anyone with a ticket. Day 3, the Mixer, is invitation
   only and is not sold separately: speakers, invited guests, partners and KOLs
