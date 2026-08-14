@@ -1,9 +1,9 @@
-import { Agenda } from "@/components/agenda";
+import { PastAgenda } from "@/components/schedule/past-agenda";
 import { gotham } from "@/lib/fonts";
 import type { Metadata } from "next";
 import { BaseSchema } from "@/components/seo/schema-markup";
 import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
-import { EVENT_ID } from "@/lib/seo-event";
+import { EVENT_ID, CURRENT_EDITION } from "@/lib/seo-event";
 
 export const metadata: Metadata = {
   title: "Schedule | Blockfest Africa - Event Program & Activities",
@@ -39,7 +39,7 @@ export default function Schedule() {
   };
 
   const schedulePageData = {
-    name: "Schedule - Blockfest Africa 2025",
+    name: `Schedule - ${CURRENT_EDITION.name}`,
     description:
       "The Lagos '26 three-day programme is published in the coming weeks. Meanwhile, see how the 2025 edition ran: keynotes, workshops, panels and networking.",
     url: "https://blockfestafrica.com/schedule",
@@ -49,10 +49,12 @@ export default function Schedule() {
       url: "https://blockfestafrica.com",
     },
     about: { "@id": EVENT_ID },
+    // The page is about the current edition. It said 2025, which told crawlers
+    // this route was last year's programme.
     mainEntity: {
       "@type": "EventSchedule",
-      name: "Blockfest Africa 2025 Schedule",
-      description: "Complete program of activities for Blockfest Africa 2025",
+      name: `${CURRENT_EDITION.name} Schedule`,
+      description: `Programme of activities for ${CURRENT_EDITION.name} on ${CURRENT_EDITION.date.displayDate}. Times are published closer to the event.`,
     },
   };
 
@@ -66,14 +68,14 @@ export default function Schedule() {
       <main id="main" className={`${gotham.className} min-h-screen bg-paper`}>
         <ComingSoonNotice
           title="2026 schedule coming soon"
-          description="The three-day Lagos '26 programme is published in the coming weeks. The 2025 schedule is below."
+          description="The Lagos '26 programme is published in the coming weeks. October 22 is the workshop and The Back Room, October 23 the main conference, October 24 the invitation-only Mixer."
         />
 
         {/* Header Section */}
         <section className="section-y bg-ground">
           <div className="container-page">
             <div className="max-w-2xl">
-              <p className="eyebrow text-white/60">2025 SCHEDULE</p>
+              <p className="eyebrow text-white/60">Lagos &apos;26</p>
               <h1
                 id="schedule-heading"
                 className="text-display-sm mt-3 font-bold text-white"
@@ -81,7 +83,9 @@ export default function Schedule() {
                 Schedule of <span className="text-white">Activities</span>
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
-                How the 2025 edition ran, hour by hour.
+                Times for October 22 to 24 land in the coming weeks.
+                Last year&apos;s programme is a good guide to the shape of the
+                days.
               </p>
             </div>
           </div>
@@ -89,7 +93,7 @@ export default function Schedule() {
 
         <section className="section-y bg-paper">
           <div className="container-page">
-            <Agenda />
+            <PastAgenda />
           </div>
         </section>
       </main>
