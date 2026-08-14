@@ -39,7 +39,6 @@ function EarlyBirdLine() {
 export function HeroSection2026() {
 
   const handleTickets = () => {
-    trackButtonClick("Get Tickets", "Hero");
     trackTicketIntent("hero-cta");
   };
 
