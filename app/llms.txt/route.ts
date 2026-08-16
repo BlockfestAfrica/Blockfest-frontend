@@ -10,6 +10,7 @@ import {
   TICKET_PLATFORM_URL,
 } from "@/lib/tickets";
 import { SITE_URL } from "@/lib/seo-event";
+import { volunteerTeams } from "@/lib/volunteer";
 
 /**
  * /llms.txt — a plain-text brief for AI clients and agents.
@@ -74,6 +75,9 @@ export function GET() {
   only and is not sold separately: speakers, invited guests, partners and KOLs
   are admitted automatically, and the ALL ACCESS PASS also includes it.
 - Official ticket platform: ${TICKET_PLATFORM_URL}
+- Volunteering: applications are open across ${volunteerTeams.length} departments for
+  22 and 23 October. Roles, what each team does and the application form are at
+  ${SITE_URL}/volunteer
 
 ## Tickets
 
