@@ -23,6 +23,7 @@ const infoMenu: Menu[] = [
   { path: "/newsletter", title: "Newsletter" },
   { path: "/faq", title: "FAQ" },
   { path: "/travel", title: "Travel & Visa" },
+  { path: "/volunteer", title: "Volunteer" },
   { path: "/code-of-conduct", title: "Code of Conduct" },
   { path: `mailto:${CONTACT_EMAIL}`, title: "Contact" },
 ];
