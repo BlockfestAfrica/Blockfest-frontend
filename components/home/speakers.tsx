@@ -5,7 +5,6 @@ import { Button } from "../ui/button";
 import Link from "next/link";
 import { SpeakersList } from "@/lib/speakers";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
-import { toast } from "sonner";
 import "./subtle-animations.css";
 
 /* The homepage carousel is a taster; /speakers has the full list. Rendering all
@@ -45,12 +44,11 @@ export function SpeakersSection() {
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button
-              type="button"
+              asChild
               variant="gold"
-              onClick={() => toast("Coming soon!")}
-              className="cursor-pointer rounded-full px-7 text-base font-semibold"
+              className="rounded-full px-7 text-base font-semibold"
             >
-              Apply to Speak
+              <Link href="/call-for-speakers">Apply to Speak</Link>
             </Button>
             <Button
               asChild
