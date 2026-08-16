@@ -19,7 +19,7 @@ export interface SessionFormat {
   description: string;
 }
 
-/** The four formats the application asks you to pick between. */
+/** The formats the application asks you to pick between. */
 export const sessionFormats: SessionFormat[] = [
   {
     name: "Keynote",
@@ -44,6 +44,18 @@ export const sessionFormats: SessionFormat[] = [
     length: "Under 7 minutes",
     description:
       "One idea, sharply made, no room to warm up. Often the most memorable thing on a programme.",
+  },
+  {
+    name: "Technical workshop",
+    length: "Day 1, hands on",
+    description:
+      "People leave having built something. Bring the repo, the dataset or the contract, and expect a room that wants to follow along rather than watch.",
+  },
+  {
+    name: "Non-technical workshop",
+    length: "Day 1, hands on",
+    description:
+      "The same shape without the terminal. Fundraising, go to market, design, policy, storytelling: anything people can practise in the room and use on Monday.",
   },
 ];
 

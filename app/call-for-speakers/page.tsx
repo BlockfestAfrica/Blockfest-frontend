@@ -16,7 +16,7 @@ const EVENT = CURRENT_EDITION;
 
 export const metadata: Metadata = {
   title: "Call for Speakers | Blockf3st Africa '26 Lagos",
-  description: `Speaker applications for ${EVENT.name}, ${EVENT.date.displayDate}. Keynotes, panels, fireside chats and lightning talks across six tracks spanning AI, blockchain, policy, capital, infrastructure, culture and careers.`,
+  description: `Speaker applications for ${EVENT.name}, ${EVENT.date.displayDate}. Keynotes, panels, fireside chats, lightning talks and hands-on workshops across six tracks spanning AI, blockchain, policy, capital, infrastructure, culture and careers.`,
   keywords: [
     "blockfest africa call for speakers",
     "speak at blockfest",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Call for Speakers | Blockf3st Africa '26 Lagos",
-    description: `Pitch a session for ${EVENT.name}. Six tracks, four formats, one stage in Lagos.`,
+    description: `Pitch a session for ${EVENT.name}. Six tracks, six formats, two days in Lagos.`,
   },
   alternates: { canonical: `${SITE_URL}/call-for-speakers` },
 };
@@ -61,24 +61,37 @@ export default function CallForSpeakersPage() {
         {/* ---------- The ask ---------- */}
         <section className="section-y bg-ground">
           <div className="container-page">
-            <p className="eyebrow text-white/60">Call for speakers</p>
-            <h1 className="text-display-sm mt-3 max-w-3xl font-bold text-white">
-              Take the stage in Lagos
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
-              {speakingDays}. This year&rsquo;s theme is{" "}
-              <span className="font-semibold text-white">
-                {EVENT.tagline}
-              </span>{" "}
-              — what it takes to move African work onto open rails, and what
-              changes once it is there.
-            </p>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
-              We are looking for builders, operators, investors, policymakers
-              and creators with something specific to say. A talk about one
-              thing you have actually done beats a survey of a field, and we
-              would rather hear a real disagreement than a safe consensus.
-            </p>
+            {/* One column on a phone, two from lg. Capping the copy at
+                max-w-2xl and stacking it left leaves half a desktop empty,
+                and widening the column instead would push line length past
+                what is comfortable to read. Same 12-column shape the ticket
+                hero uses. */}
+            <div className="grid gap-x-12 gap-y-6 lg:grid-cols-12 lg:items-start">
+              <div className="lg:col-span-6">
+                <p className="eyebrow text-white/60">Call for speakers</p>
+                <h1 className="text-display-sm mt-3 font-bold text-white">
+                  Take the stage in Lagos
+                </h1>
+              </div>
+
+              <div className="lg:col-span-6 lg:pt-2">
+                <p className="max-w-xl text-base leading-relaxed text-white/60 lg:max-w-none">
+                  {speakingDays}. This year&rsquo;s theme is{" "}
+                  <span className="font-semibold text-white">
+                    {EVENT.tagline}
+                  </span>
+                  . What it takes to move African work onto open rails, and
+                  what changes once it is there.
+                </p>
+                <p className="mt-4 max-w-xl text-base leading-relaxed text-white/60 lg:max-w-none">
+                  We are looking for builders, operators, investors,
+                  policymakers and creators with something specific to say. A
+                  talk about one thing you have actually done beats a survey of
+                  a field, and we would rather hear a real disagreement than a
+                  safe consensus.
+                </p>
+              </div>
+            </div>
 
             {/* The form asks for a bio, a headshot and a written session
                 description in one sitting. The apply control sits at the foot
@@ -102,12 +115,13 @@ export default function CallForSpeakersPage() {
         >
           <div className="container-page">
             <h2 className="text-display-sm font-bold text-white">
-              Four formats
+              {sessionFormats.length} formats
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
               Pick the one that fits the idea, not the one that sounds most
               senior. A sharp seven minutes is often worth more than a keynote
-              stretched to fill its slot.
+              stretched to fill its slot, and a workshop people leave having
+              built something beats both.
             </p>
 
             <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
