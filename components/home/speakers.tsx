@@ -2,6 +2,7 @@
 import type { EmblaOptionsType } from "embla-carousel";
 import Speakers from "../carousel";
 import { Button } from "../ui/button";
+import Link from "next/link";
 import { SpeakersList } from "@/lib/speakers";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { toast } from "sonner";
@@ -52,12 +53,11 @@ export function SpeakersSection() {
               Apply to Speak
             </Button>
             <Button
-              type="button"
+              asChild
               variant="outline"
-              onClick={() => toast("Coming soon!")}
-              className="cursor-pointer rounded-full px-7 text-base font-semibold"
+              className="rounded-full px-7 text-base font-semibold"
             >
-              Apply to Volunteer
+              <Link href="/volunteer">Apply to Volunteer</Link>
             </Button>
           </div>
         </div>
