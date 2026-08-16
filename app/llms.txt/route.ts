@@ -48,7 +48,7 @@ export function GET() {
             : "";
           const days = t.days.map((d) => `${d.label} (${d.date})`).join("; ");
           const note = t.note ? ` ${t.note}` : "";
-          return `  - ${t.name} — ${price}. ${days}. ${t.bestFor}${excludes}${note}`;
+          return `  - ${t.name}: ${price}. ${days}. ${t.bestFor}${excludes}${note}`;
         })
         .join("\n");
       return `${group.title}: ${group.description}\n${rows}`;
@@ -95,13 +95,13 @@ ${TICKET_PLATFORM_URL} is the official ticket platform.
 
 ## Pages
 
-- ${SITE_URL}/ — the event, the programme and how to get in
-- ${SITE_URL}/tickets — all ${ticketTiers.length} passes, prices and inclusions
-- ${SITE_URL}/faq — pricing, refunds, meals, transport, accessibility
-- ${SITE_URL}/speakers — past speakers; the ${e.year} lineup is announced in the coming weeks
-- ${SITE_URL}/schedule — the ${past.year} programme; the ${e.year} schedule is published in the coming weeks
-- ${SITE_URL}/blockfest-2025 — recap of ${past.name}
-- ${SITE_URL}/blockfest-south-africa-2026 — recap of the Cape Town roadshow, May 2026
+- ${SITE_URL}/: the event, the programme and how to get in
+- ${SITE_URL}/tickets: all ${ticketTiers.length} passes, prices and inclusions
+- ${SITE_URL}/faq: pricing, refunds, meals, transport, accessibility
+- ${SITE_URL}/speakers: past speakers; the ${e.year} lineup is announced in the coming weeks
+- ${SITE_URL}/schedule: the ${past.year} programme; the ${e.year} schedule is published in the coming weeks
+- ${SITE_URL}/blockfest-2025: recap of ${past.name}
+- ${SITE_URL}/blockfest-south-africa-2026: recap of the Cape Town roadshow, May 2026
 
 ## Previous editions
 
