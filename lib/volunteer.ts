@@ -1,9 +1,9 @@
 /**
  * Volunteering for the current edition.
  *
- * Kept as data so the page stays readable and the departments can be checked
- * against the application form. The form's dropdown and this list must agree:
- * a department described here that a reader then cannot select is a dead end.
+ * Kept as data so the page stays readable and the departments stay in step with
+ * the application form. A department described here that a reader then cannot
+ * select on the form is a dead end, so the two lists must agree.
  */
 
 export const VOLUNTEER_FORM_URL = "https://forms.gle/wBenVpKTA3uqHuyt9";
@@ -55,12 +55,6 @@ export interface VolunteerTeam {
   idealFor: string;
   /** Which extra section of the form this team's applicants answer. */
   assessment: "creative" | "operations";
-  /**
-   * Whether the application form currently lets someone pick this team. The
-   * roles document describes Registration; the form's dropdown does not offer
-   * it, so the page says so rather than sending people looking for it.
-   */
-  selectableInForm: boolean;
 }
 
 export const volunteerTeams: VolunteerTeam[] = [
@@ -83,7 +77,6 @@ export const volunteerTeams: VolunteerTeam[] = [
     idealFor:
       "Organised people who stay calm under pressure, are happy on their feet and notice detail.",
     assessment: "operations",
-    selectableInForm: true,
   },
   {
     id: "hospitality",
@@ -104,7 +97,6 @@ export const volunteerTeams: VolunteerTeam[] = [
     ],
     idealFor: "Friendly, confident communicators with strong people skills.",
     assessment: "operations",
-    selectableInForm: true,
   },
   {
     id: "registration",
@@ -121,7 +113,6 @@ export const volunteerTeams: VolunteerTeam[] = [
     idealFor:
       "Fast learners who communicate well, stay organised and are comfortable with a crowd.",
     assessment: "operations",
-    selectableInForm: false,
   },
   {
     id: "technical",
@@ -139,7 +130,6 @@ export const volunteerTeams: VolunteerTeam[] = [
     idealFor:
       "Technically inclined volunteers with AV, streaming or production experience.",
     assessment: "operations",
-    selectableInForm: true,
   },
   {
     id: "editorial",
@@ -164,7 +154,6 @@ export const volunteerTeams: VolunteerTeam[] = [
     idealFor:
       "Fast writers, skilled creators, community managers and social media natives.",
     assessment: "creative",
-    selectableInForm: true,
   },
   {
     id: "media",
@@ -188,7 +177,6 @@ export const volunteerTeams: VolunteerTeam[] = [
     ],
     idealFor: "Skilled videographers, editors and cinematographers.",
     assessment: "creative",
-    selectableInForm: true,
   },
   {
     id: "design",
@@ -208,7 +196,6 @@ export const volunteerTeams: VolunteerTeam[] = [
     idealFor:
       "Skilled graphic, animation, motion, illustration and brand designers.",
     assessment: "creative",
-    selectableInForm: true,
   },
   {
     id: "exhibition",
@@ -229,7 +216,6 @@ export const volunteerTeams: VolunteerTeam[] = [
     idealFor:
       "Highly organised, professional and well-spoken people who can coordinate across teams and stay ahead of detail.",
     assessment: "operations",
-    selectableInForm: true,
   },
 ];
 

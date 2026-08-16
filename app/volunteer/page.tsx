@@ -13,7 +13,6 @@ import {
   volunteerDays,
   volunteerExpectations,
   volunteerTeams,
-  VOLUNTEER_CONTACT_EMAILS,
   VOLUNTEER_FORM_URL,
   VOLUNTEER_ROLES_DOC_URL,
 } from "@/lib/volunteer";
@@ -88,20 +87,18 @@ export default function VolunteerPage() {
               actually needs.
             </p>
 
-            <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
+            {/* No apply link up here on purpose. The form asks people to read
+                the roles before filling it in, so the only link to it sits at
+                the foot of the page — a reader reaches it having passed the
+                departments rather than instead of them. */}
+            <div className="mt-8">
               <a
-                href={VOLUNTEER_FORM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
+                href="#departments"
+                className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-7 text-base font-semibold text-white transition-colors duration-300 hover:bg-white/10"
               >
-                Apply to volunteer
-                <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                See the {volunteerTeams.length} departments
+                <ChevronDown className="h-4 w-4" aria-hidden="true" />
               </a>
-              <p className="text-sm text-white/60">
-                Read the roles below first. The form asks which department you
-                want.
-              </p>
             </div>
           </div>
         </section>
@@ -154,7 +151,10 @@ export default function VolunteerPage() {
         </section>
 
         {/* ---------- Departments ---------- */}
-        <section className="section-y bg-ground border-t border-white/20">
+        <section
+          id="departments"
+          className="section-y bg-ground border-t border-white/20"
+        >
           <div className="container-page">
             <h2 className="text-display-sm font-bold text-white">
               {volunteerTeams.length} departments
@@ -180,11 +180,6 @@ export default function VolunteerPage() {
                       <span className="mt-2 block text-sm leading-relaxed text-white/60 lg:text-base">
                         {team.purpose}
                       </span>
-                      {!team.selectableInForm && (
-                        <span className="eyebrow mt-3 inline-flex rounded-full border border-white/20 px-3 py-1 text-white/60">
-                          Not yet on the form
-                        </span>
-                      )}
                     </span>
                     <ChevronDown
                       className="mt-1 h-5 w-5 shrink-0 text-brand-gold transition-transform duration-200 group-open:rotate-180"
@@ -215,21 +210,6 @@ export default function VolunteerPage() {
                       </p>
                     </div>
 
-                    {!team.selectableInForm && (
-                      <p className="mt-4 rounded-md border border-white/20 bg-white/5 p-3 text-xs leading-relaxed text-white/60">
-                        This department is not currently one of the options in
-                        the application form. Apply under Logistics and
-                        operations and say Registration in your answers, or
-                        email{" "}
-                        <a
-                          href={`mailto:${VOLUNTEER_CONTACT_EMAILS[1]}?subject=Volunteering - Registration team`}
-                          className="text-link underline underline-offset-2 hover:text-white"
-                        >
-                          {VOLUNTEER_CONTACT_EMAILS[1]}
-                        </a>
-                        .
-                      </p>
-                    )}
                   </div>
                 </details>
               ))}
@@ -312,11 +292,14 @@ export default function VolunteerPage() {
               understand this before you submit.
             </p>
 
-            <ul className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {/* Columns, not a grid. A two-column grid stretched every
+                one-line item to the height of its two-line neighbour and left
+                a hole in the last row; flowing them balances instead. */}
+            <ul className="mt-8 columns-1 gap-x-10 md:columns-2">
               {volunteerExpectations.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-3 rounded-xl border border-white/20 bg-white/5 p-4"
+                  className="mb-3 flex break-inside-avoid items-start gap-3"
                 >
                   <span
                     className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-gold"
@@ -340,21 +323,10 @@ export default function VolunteerPage() {
               </h2>
               <p className="mt-4 text-base leading-relaxed text-white/60">
                 Shortlisted volunteers are contacted for the next stage of
-                selection. The email will come from one of these addresses, so
-                check your spam folder for them:
+                selection. The email comes from a blockfestafrica.com address,
+                so check your spam folder for it, and everything after that
+                happens on WhatsApp.
               </p>
-              <ul className="mt-4 flex flex-col gap-1.5">
-                {VOLUNTEER_CONTACT_EMAILS.map((email) => (
-                  <li key={email} className="text-sm text-white/90">
-                    <a
-                      href={`mailto:${email}`}
-                      className="text-link underline underline-offset-2 hover:text-white"
-                    >
-                      {email}
-                    </a>
-                  </li>
-                ))}
-              </ul>
 
               <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
                 <a
