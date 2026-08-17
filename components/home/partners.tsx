@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import React from "react";
-import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
+import { trackButtonClick } from "@/lib/sabilytics";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import "./subtle-animations.css";
