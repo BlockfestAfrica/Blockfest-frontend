@@ -19,10 +19,3 @@ export const gotham = localFont({
   // preload cost 304ms of LCP.
   preload: false,
 });
-
-export const gothamThin = localFont({
-  src: "../app/fonts/Gotham-Thin.woff2",
-  display: "swap",
-  variable: "--font-gotham-thin",
-  preload: false, // Load on demand
-});
