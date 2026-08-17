@@ -97,17 +97,21 @@ export default function TravelPage() {
                   processing can take several weeks and a letter will not speed
                   up a late application.
                 </p>
+                {/* No document details asked for here. A public page is the
+                    wrong place to tell people to send passport numbers, and
+                    what an embassy wants varies, so this opens the
+                    conversation rather than prescribing it. */}
                 <p>
-                  If your application needs an invitation letter, email{" "}
+                  Whatever your application needs from us, email{" "}
                   <a
-                    href={`mailto:${CONTACT_EMAIL}?subject=Invitation letter request - Blockf3st Africa '26`}
+                    href={`mailto:${CONTACT_EMAIL}?subject=Visa and travel - Blockf3st Africa '26`}
                     className="text-link underline underline-offset-2 hover:text-white"
                   >
                     {CONTACT_EMAIL}
                   </a>{" "}
-                  with your full name as it appears on your passport, passport
-                  number, nationality, travel dates and the pass you have
-                  bought. Letters are issued to confirmed ticket holders only.
+                  and tell us what your embassy has asked for. Do not send
+                  passport details until we reply and tell you where they
+                  should go.
                 </p>
               </Card>
 
