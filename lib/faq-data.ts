@@ -1,3 +1,5 @@
+import { isSpeakerFormOpen } from "@/lib/speaking";
+
 export interface FAQItem {
   id: number;
   question: string;
@@ -191,8 +193,14 @@ export const faqData: FAQItem[] = [
   {
     id: 19,
     question: "Can I speak at Blockf3st Africa 2026?",
-    answer:
-      "Speaker applications open in the coming weeks. Follow us on social media to be notified. We are looking for industry experts, founders and thought leaders across AI and Web3.",
+    // Driven off the same switch as the rest of the site. This answer is
+    // rendered on /faq, in the homepage FAQ and inside the FAQPage JSON-LD, so
+    // hardcoding it once meant telling Google applications were shut while the
+    // form was live. Plain text, not markup: the answer is emitted into the
+    // structured data verbatim and rendered as a text node.
+    answer: isSpeakerFormOpen
+      ? "Yes. The call for speakers is open. The session formats, the tracks and everything the application asks for are at blockfestafrica.com/call-for-speakers, and you can apply from there. We are looking for industry experts, founders and thought leaders across AI and Web3."
+      : "Speaker applications open in the coming weeks. Follow us on social media to be notified. We are looking for industry experts, founders and thought leaders across AI and Web3.",
     category: "Community & Support",
   },
 ];
