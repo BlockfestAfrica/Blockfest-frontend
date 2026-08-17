@@ -11,7 +11,11 @@ import {
 } from "@/lib/tickets";
 import { SITE_URL } from "@/lib/seo-event";
 import { volunteerTeams } from "@/lib/volunteer";
-import { isSpeakerFormOpen } from "@/lib/speaking";
+import {
+  isSpeakerFormOpen,
+  sessionFormats,
+  SPEAKER_FORM_URL,
+} from "@/lib/speaking";
 
 /**
  * /llms.txt — a plain-text brief for AI clients and agents.
@@ -79,8 +83,10 @@ export function GET() {
 - Volunteering: applications are open across ${volunteerTeams.length} departments for
   22 and 23 October. Roles, what each team does and the application form are at
   ${SITE_URL}/volunteer
-- Speaking: the call for speakers is at ${SITE_URL}/call-for-speakers. Four session
-  formats across ${lagos2026Tracks.length} tracks. ${isSpeakerFormOpen ? "Applications are open." : "The application form is not open yet."}
+- Speaking: the call for speakers is at ${SITE_URL}/call-for-speakers.
+  ${sessionFormats.length} session formats across ${lagos2026Tracks.length} tracks. Workshops and
+  masterclasses run on 22 October, panels and lightning talks on 23 October.
+  ${isSpeakerFormOpen ? `Applications are open; the form is at ${SPEAKER_FORM_URL}.` : "The application form is not open yet."}
 
 ## Tickets
 
@@ -99,6 +105,8 @@ ${TICKET_PLATFORM_URL} is the official ticket platform.
 - ${SITE_URL}/tickets: all ${ticketTiers.length} passes, prices and inclusions
 - ${SITE_URL}/faq: pricing, refunds, meals, transport, accessibility
 - ${SITE_URL}/speakers: past speakers; the ${e.year} lineup is announced in the coming weeks
+- ${SITE_URL}/call-for-speakers: session formats, tracks and what the speaker application asks for
+- ${SITE_URL}/volunteer: volunteer departments, roles and the application form
 - ${SITE_URL}/schedule: the ${past.year} programme; the ${e.year} schedule is published in the coming weeks
 - ${SITE_URL}/blockfest-2025: recap of ${past.name}
 - ${SITE_URL}/blockfest-south-africa-2026: recap of the Cape Town roadshow, May 2026
