@@ -60,6 +60,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
     {
+      url: `${baseUrl}/call-for-speakers`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/volunteer`,
       lastModified: new Date(),
       changeFrequency: "weekly",
