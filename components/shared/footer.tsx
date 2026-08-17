@@ -7,7 +7,7 @@ import type { Menu } from "@/types";
 import { gotham } from "@/lib/fonts";
 import { CONTACT_EMAIL, SOCIAL_URLS } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
-import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
+import { trackButtonClick } from "@/lib/sabilytics";
 import { Newsletter } from "./newsletter";
 
 const exploreMenu: Menu[] = [
