@@ -136,16 +136,21 @@ export default function VolunteerPage() {
               ))}
             </div>
 
+            {/* The sentence is one flex item, not three. Left unwrapped, the
+                icon, the label and the link each become their own column and
+                the link gets squeezed to a few characters wide on a phone. */}
             <p className="mt-6 flex items-start gap-2 text-sm text-white/60">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-              Travelling in?{" "}
-              <Link
-                href="/travel"
-                className="text-link underline underline-offset-2 hover:text-white"
-              >
-                Getting to Lagos
-              </Link>{" "}
-              covers the venue, accommodation and moving around the city.
+              <span>
+                Travelling in?{" "}
+                <Link
+                  href="/travel"
+                  className="text-link underline underline-offset-2 hover:text-white"
+                >
+                  Getting to Lagos
+                </Link>{" "}
+                covers the venue, accommodation and moving around the city.
+              </span>
             </p>
           </div>
         </section>
