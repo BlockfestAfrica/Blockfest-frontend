@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Calendar, CalendarPlus, MapPin } from "lucide-react";
 import { Button } from "../ui/button";
-import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
+import { trackButtonClick } from "@/lib/sabilytics";
 import { blockfest2026Lagos } from "@/lib/events";
 import { calculateTimeLeft, type TimeLeft } from "@/lib/countdown";
 import { EARLY_BIRD_ENDS } from "@/lib/tickets";
@@ -37,10 +37,6 @@ function EarlyBirdLine() {
 }
 
 export function HeroSection2026() {
-
-  const handleTickets = () => {
-    trackTicketIntent("hero-cta");
-  };
 
   return (
     <section className="relative isolate overflow-hidden bg-ground">
@@ -103,7 +99,7 @@ export function HeroSection2026() {
               variant="gold"
               className="rounded-full px-7 text-base font-semibold"
             >
-              <Link href="/tickets" onClick={handleTickets}>
+              <Link href="/tickets">
                 Get Tickets
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>

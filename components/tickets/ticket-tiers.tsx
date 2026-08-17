@@ -108,6 +108,7 @@ function TierCard({ tier }: { tier: TicketTier }) {
       <div className="mt-auto pt-6">
         <TicketCTA
           source={`Tickets Page - ${tier.name}`}
+          pass={tier.id}
           variant={tier.featured ? "gold" : "outline"}
           className="w-full"
         >

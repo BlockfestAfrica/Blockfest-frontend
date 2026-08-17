@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { trackButtonClick, trackTicketIntent } from "@/lib/sabilytics";
+import { trackButtonClick } from "@/lib/sabilytics";
 import { hasPassed } from "@/lib/countdown";
 import { EARLY_BIRD_ENDS, formatNaira, lowestTicketPrice } from "@/lib/tickets";
 

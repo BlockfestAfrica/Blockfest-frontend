@@ -1,6 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import { TicketHero } from "@/components/tickets/ticket-hero";
+import { TicketsPageView } from "@/components/tickets/tickets-page-view";
 import { TicketAbout } from "@/components/tickets/ticket-about";
 import { VenueVideo, VENUE_VIDEO } from "@/components/tickets/venue-video";
 import { TicketProof } from "@/components/tickets/ticket-proof";
@@ -105,6 +106,8 @@ const TicketsPage = () => {
   return (
     <>
       <TicketOffersSchema />
+
+      <TicketsPageView />
 
       <main id="main">
         {/* Secure your seat — early bird countdown + primary CTA */}
