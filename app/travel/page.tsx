@@ -173,15 +173,21 @@ export default function TravelPage() {
                   Read the FAQ
                 </Link>
               </div>
-              <p className="mt-6 flex items-center gap-2 text-sm text-white/60">
-                <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Anything not answered here:{" "}
-                <a
-                  href={`mailto:${CONTACT_EMAIL}`}
-                  className="text-link underline underline-offset-2 hover:text-white"
-                >
-                  {CONTACT_EMAIL}
-                </a>
+              {/* Same shape as the volunteer page: the sentence is a single
+                  flex item so the address wraps as prose instead of being
+                  squeezed into its own column. items-start because a wrapped
+                  line should not push the icon to the vertical middle. */}
+              <p className="mt-6 flex items-start gap-2 text-sm text-white/60">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>
+                  Anything not answered here:{" "}
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    className="break-words text-link underline underline-offset-2 hover:text-white"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
+                </span>
               </p>
             </div>
           </div>

@@ -31,6 +31,9 @@ export function SpeakerApplyCTA({
         className={`${base} ${className}`}
       >
         {children}
+        {/* The arrow signals the new tab to sighted users; this says the same
+            thing to a screen reader, which cannot see it. */}
+        <span className="sr-only"> (opens in a new tab)</span>
         <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
       </a>
     );

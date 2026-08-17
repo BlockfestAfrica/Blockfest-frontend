@@ -5,12 +5,14 @@ import { SpeakersSchema } from "@/components/seo/speakers-schema";
 import { BreadcrumbSchema } from "@/components/seo/schema-markup";
 import { SpeakersList, type Speaker } from "@/lib/speakers";
 import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
+import { isSpeakerFormOpen } from "@/lib/speaking";
 import { gotham } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: "Speakers",
-  description:
-    "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa.",
+  description: isSpeakerFormOpen
+    ? "The Lagos '26 speaker lineup is announced in the coming weeks, and the call for speakers is open until then. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa."
+    : "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa.",
   keywords: [
     "blockfest africa speakers",
     "blockchain experts africa",
@@ -78,9 +80,21 @@ const SpeakersPage = () => {
       <BreadcrumbSchema items={breadcrumbItems} />
 
       <main id="main" className={gotham.className}>
+        {/* The lineup is unannounced because the programme is still being
+            selected — which makes this the one page where "coming soon" has a
+            better call to action than a ticket: you could be on it. */}
         <ComingSoonNotice
           title="2026 lineup coming soon"
-          description="Lagos '26 speakers are announced in the coming weeks. Below, the voices who have graced our stage."
+          description={
+            isSpeakerFormOpen
+              ? "Lagos '26 speakers are announced in the coming weeks, and the call for speakers is open until then. Below, the voices who have graced our stage."
+              : "Lagos '26 speakers are announced in the coming weeks. Below, the voices who have graced our stage."
+          }
+          action={
+            isSpeakerFormOpen
+              ? { href: "/call-for-speakers", label: "Apply to speak" }
+              : undefined
+          }
         />
         <SpeakersGrid />
       </main>
