@@ -86,7 +86,7 @@ function TicketOffersSchema() {
       description: `A walk through ${CURRENT_EDITION.location.venue}, the venue for ${CURRENT_EDITION.name} on ${CURRENT_EDITION.date.displayDate}.`,
       thumbnailUrl: `${SITE_URL}${VENUE_VIDEO.poster}`,
       contentUrl: `${SITE_URL}${VENUE_VIDEO.src}`,
-      uploadDate: "2026-08-14",
+      uploadDate: VENUE_VIDEO.uploadedAt,
       duration: `PT${VENUE_VIDEO.durationSeconds}S`,
       width: VENUE_VIDEO.width,
       height: VENUE_VIDEO.height,
