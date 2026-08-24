@@ -7,6 +7,15 @@ export const VENUE_VIDEO = {
   poster: "/videos/venue-announcement-poster.webp",
   /** Seconds. Used for the VideoObject duration and the visible run time. */
   durationSeconds: 96,
+  /**
+   * When the video went up, as the VideoObject uploadDate.
+   *
+   * Google reads this as a datetime and wants a timezone on it, so a bare
+   * calendar date is rejected — that is what Search Console flagged. The value
+   * is the commit that added the file, in the event's own +01:00, rather than a
+   * time invented to satisfy the format.
+   */
+  uploadedAt: "2026-08-14T12:24:36+01:00",
   width: 1280,
   height: 720,
 } as const;

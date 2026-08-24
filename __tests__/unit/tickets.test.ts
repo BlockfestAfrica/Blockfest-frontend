@@ -21,6 +21,7 @@ import {
   ticketUrl,
   tiersInGroup,
 } from "@/lib/tickets";
+import { VENUE_VIDEO } from "@/components/tickets/venue-video";
 
 describe("ticketUrl", () => {
   it("keeps the checkout destination intact", () => {
@@ -41,7 +42,7 @@ describe("ticketUrl", () => {
     const content = (s: string) =>
       new URL(ticketUrl(s)).searchParams.get("utm_content");
     expect(content("Tickets Page - BUIDL PASS")).toBe(
-      "tickets-page-buidl-pass"
+      "tickets-page-buidl-pass",
     );
     expect(content("Hero")).toBe("hero");
     expect(content("  Footer  CTA  ")).toBe("footer-cta");
@@ -50,7 +51,7 @@ describe("ticketUrl", () => {
   it("never leaves a leading or trailing separator in utm_content", () => {
     for (const source of ["- Hero -", "!!!", "Tickets — Footer"]) {
       const content = new URL(ticketUrl(source)).searchParams.get(
-        "utm_content"
+        "utm_content",
       );
       expect(content).not.toMatch(/^-|-$/);
     }
@@ -70,7 +71,7 @@ describe("ticketUrl", () => {
       ...ticketTiers.map((t) => `Tickets Page - ${t.name}`),
     ];
     const contents = sources.map((s) =>
-      new URL(ticketUrl(s)).searchParams.get("utm_content")
+      new URL(ticketUrl(s)).searchParams.get("utm_content"),
     );
     expect(new Set(contents).size).toBe(sources.length);
   });
@@ -121,13 +122,15 @@ describe("early bird derivation", () => {
 describe("tier data", () => {
   it("prices every tier above zero, with the lowest exposed correctly", () => {
     for (const tier of ticketTiers) expect(tier.price).toBeGreaterThan(0);
-    expect(lowestTicketPrice).toBe(Math.min(...ticketTiers.map((t) => t.price)));
+    expect(lowestTicketPrice).toBe(
+      Math.min(...ticketTiers.map((t) => t.price)),
+    );
   });
 
   it("gives every tier a unique id and name", () => {
     expect(new Set(ticketTiers.map((t) => t.id)).size).toBe(ticketTiers.length);
     expect(new Set(ticketTiers.map((t) => t.name)).size).toBe(
-      ticketTiers.length
+      ticketTiers.length,
     );
   });
 
@@ -144,9 +147,13 @@ describe("tier data", () => {
 
   it("uses only the three real event dates", () => {
     const dates = new Set(
-      ticketTiers.flatMap((t) => t.days.map((d) => d.date))
+      ticketTiers.flatMap((t) => t.days.map((d) => d.date)),
     );
-    expect([...dates].sort()).toEqual(["Fri 23 Oct", "Sat 24 Oct", "Thu 22 Oct"]);
+    expect([...dates].sort()).toEqual([
+      "Fri 23 Oct",
+      "Sat 24 Oct",
+      "Thu 22 Oct",
+    ]);
   });
 
   it("says what each pass includes instead of naming another pass", () => {
@@ -193,5 +200,31 @@ describe("tiersInGroup", () => {
     const grouped = ticketGroups.flatMap((g) => tiersInGroup(g.id));
     expect(grouped).toHaveLength(ticketTiers.length);
     expect(new Set(grouped.map((t) => t.id)).size).toBe(ticketTiers.length);
+  });
+});
+
+describe("the venue video", () => {
+  it("gives uploadDate a full datetime with a timezone", () => {
+    // Search Console rejected a bare "2026-08-14" here twice over: once for not
+    // being a datetime, once for carrying no timezone. Schema.org accepts a
+    // plain Date for many properties, which is what makes this easy to get
+    // wrong, but Google reads VideoObject.uploadDate strictly.
+    expect(VENUE_VIDEO.uploadedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)$/,
+    );
+  });
+
+  it("names a real instant", () => {
+    // The pattern above would accept 2026-13-45T99:99:99+01:00.
+    const parsed = new Date(VENUE_VIDEO.uploadedAt);
+    expect(Number.isNaN(parsed.getTime())).toBe(false);
+  });
+
+  it("was not uploaded in the future", () => {
+    // An uploadDate ahead of now is a sign the value was typed rather than
+    // taken from the file, and Google treats it as suspect.
+    expect(new Date(VENUE_VIDEO.uploadedAt).getTime()).toBeLessThanOrEqual(
+      Date.now(),
+    );
   });
 });
