@@ -116,7 +116,7 @@ export function PartnersSection2026() {
             Our Partners
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
-            The brands, communities, and media backing Blockfest Africa 2026 —
+            The brands, communities, and media backing Blockfest Africa 2026
             from South Africa to Lagos this October.
           </p>
         </div>
