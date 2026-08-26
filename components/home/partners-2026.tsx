@@ -1,4 +1,3 @@
-// components/shared/partners-section.tsx
 "use client";
 import Link from "next/link";
 import Image from "next/image";
@@ -44,23 +43,23 @@ function HeadlineSpotlight({ headline }: { headline: PartnerLogo[] }) {
   if (headline.length === 0) return null;
 
   return (
-    <div className="mb-14 lg:mb-20">
+    <div className="mt-8 flex w-full lg:w-[60%] md:w-[70%] flex-col items-center justify-center">
       <p className="eyebrow text-center text-white">
         HEADLINE{" "}
         <span className="text-brand-gold px-1 ">
           {headline.length === 1 ? "SPONSOR" : "SPONSORS"}
         </span>
       </p>
-      <div className={`mt-4 grid gap-4 ${headline.length > 1 ? "lg:grid-cols-2" : "grid-cols-1"}`}>
+      <div className={`mt-4 grid w-full gap-4 px-1 ${headline.length > 1 ? "md:grid-cols-2" : "grid-cols-1"}`}>
         {headline.map((sponsor) => {
           const inner = (
-            <div className="flex h-20 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/2 p-6 transition-colors duration-300 hover:bg-white/8 sm:h-32">
+            <div className="flex h-24 w-full items-center justify-center rounded-2xl border border-white/15 bg-white p-4 transition-colors duration-300 hover:bg-white/90 md:h-32 md:p-6">
               <Image
                 src={sponsor.logo}
                 alt="Headline sponsor logo"
                 width={800}
                 height={220}
-                className="h-full w-auto max-w-full object-contain"
+                className="h-full w-auto object-contain"
                 priority
               />
             </div>
@@ -95,7 +94,7 @@ function PartnerGroup({ label, items = [] }: { label: string; items?: PartnerLog
         <h3 className="text-xl font-bold text-white lg:text-2xl">{label}</h3>
         <span className="text-sm font-medium text-white/40">{items.length}</span>
       </div>
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 lg:gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6 lg:gap-4">
         {items.map((item) => (
           <PartnerCard key={item.logo} {...item} />
         ))}
@@ -108,14 +107,14 @@ export function PartnersSection2026() {
   useSubtleAnimations();
 
   return (
-    <section className="section-y bg-ground border-t border-white/20">
-      <div className="container-page">
-        <div className="mb-10 lg:mb-14">
+    <section className="section-y border-t border-white/20 bg-ground">
+      <div className="container-page flex flex-col justify-center md:items-center">
+        <div className="mb-10 flex w-full flex-col items-center justify-center text-center lg:mb-14">
           <p className="eyebrow text-white/60">2026 PARTNERS</p>
           <h2 className="text-display-sm mt-3 font-bold text-white fade-in-on-scroll">
             Our Partners
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+          <p className="mt-4 w-full lg:w-[50%] md:w-[70%] px-2 text-base leading-relaxed text-white/60 md:px-0">
             The brands, communities, and media backing Blockfest Africa 2026
             from South Africa to Lagos this October.
           </p>
@@ -123,12 +122,11 @@ export function PartnersSection2026() {
 
         <HeadlineSpotlight headline={partners.headline} />
 
-        <div className="scale-in">
+        <div className="scale-in w-full">
           <PartnerGroup label="Community Partners" items={partners.community} />
           <PartnerGroup label="Media Partners" items={partners.media} />
           <PartnerGroup label="Ecosystem Partners" items={partners.ecosystem} />
         </div>
-
       </div>
     </section>
   );
