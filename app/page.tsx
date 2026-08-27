@@ -11,6 +11,7 @@ import { SpeakersSection } from "@/components/home/speakers";
 import { PartnersSection } from "@/components/home/partners";
 import { SponsorshipSection } from "@/components/home/sponsorship";
 import { FAQSection } from "@/components/home/faq";
+import { PartnersSection2026 } from "@/components/home/partners-2026";
 
 export const metadata: Metadata = {
   title: "Blockf3st Africa 2026 - The Superbowl of Web3",
@@ -89,6 +90,7 @@ const HomePage = () => {
         <WhyAttend2026Section />
 
         {/* Trust, then objections */}
+        <PartnersSection2026/>
         <PartnersSection />
         <FAQSection />
 
