@@ -85,6 +85,51 @@ function HeadlineSpotlight({ headline }: { headline: PartnerLogo[] }) {
   );
 }
 
+function SilverSpotlight({ silver }: { silver: PartnerLogo[] }) {
+  if (silver.length === 0) return null;
+
+  return (
+    <div className="mt-6 flex w-full lg:w-[55%] md:w-[65%] flex-col items-center justify-center">
+      <p className="eyebrow text-center text-white">
+        SILVER{" "}
+        <span className="text-white/70 px-1">
+          {silver.length === 1 ? "SPONSOR" : "SPONSORS"}
+        </span>
+      </p>
+      <div className={`mt-4 grid w-full gap-4 px-1 ${silver.length > 1 ? "sm:grid-cols-2" : "grid-cols-1"}`}>
+        {silver.map((sponsor) => {
+          const inner = (
+            <div className="flex h-20 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/95 p-4 transition-colors duration-300 hover:bg-white/90 md:h-28 md:p-5">
+              <Image
+                src={sponsor.logo}
+                alt="Silver sponsor logo"
+                width={640}
+                height={180}
+                className="h-full w-auto object-contain"
+              />
+            </div>
+          );
+
+          return sponsor.twitter ? (
+            <Link
+              key={sponsor.logo}
+              href={sponsor.twitter}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+              aria-label="Silver sponsor logo"
+            >
+              {inner}
+            </Link>
+          ) : (
+            <div key={sponsor.logo}>{inner}</div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function PartnerGroup({ label, items = [] }: { label: string; items?: PartnerLogo[] }) {
   if (items.length === 0) return null;
 
@@ -121,6 +166,7 @@ export function PartnersSection2026() {
         </div>
 
         <HeadlineSpotlight headline={partners.headline} />
+        <SilverSpotlight silver={partners.silver ?? []} />
 
         <div className="scale-in w-full">
           <PartnerGroup label="Community Partners" items={partners.community} />
