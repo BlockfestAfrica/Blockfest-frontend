@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, Copy, Lock } from "lucide-react";
 import { hasPassed } from "@/lib/countdown";
 import { monicaRoutes } from "@/lib/campaigns";
@@ -124,6 +124,10 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
     referralCode: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  /** Filled only by something that fills every input it finds. */
+  const [website, setWebsite] = useState("");
+  /** When the form became fillable, for the timing check on the server. */
+  const shownAt = useRef<number>(0);
 
   useEffect(() => {
     // ?preview=open unlocks the form before the campaign starts, so the flow
@@ -138,6 +142,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
 
     setOpen(preview || hasPassed(opensAt));
     setChecked(true);
+    shownAt.current = Date.now();
   }, [opensAt]);
 
   const set = (field: Field) => (value: string) => {
@@ -296,6 +301,26 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       noValidate
       className="flex flex-col gap-10 rounded-2xl border border-white/20 bg-white/5 p-6 sm:p-8"
     >
+      {/* Not display:none, which some scripts skip, and not visibility:hidden
+          either. It is pushed off-screen, taken out of the tab order and
+          hidden from assistive technology, so a person never meets it and a
+          script filling every input it finds does. */}
+      <div
+        aria-hidden="true"
+        className="absolute left-[-9999px] h-0 w-0 overflow-hidden"
+      >
+        <label htmlFor="website">Website</label>
+        <input
+          id="website"
+          name="website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+        />
+      </div>
+
       <Section title="About you">
         <div className="grid gap-5 sm:grid-cols-2">
           <Labelled

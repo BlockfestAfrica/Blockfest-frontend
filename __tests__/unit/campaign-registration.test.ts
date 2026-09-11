@@ -14,6 +14,8 @@ import {
   canonicalEmail,
   canonicalHandle,
   canonicalPhone,
+  looksAutomated,
+  MIN_HUMAN_FILL_MS,
   registrationSchema,
 } from "@/lib/campaign-registration";
 
@@ -175,5 +177,54 @@ describe("the registration form", () => {
       x: "not a handle!",
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("looksAutomated", () => {
+  it("says nothing about a normal submission", () => {
+    expect(looksAutomated({ website: "", elapsedMs: 45_000 })).toBeNull();
+  });
+
+  it("catches anything that filled the hidden field", () => {
+    // No person can see or tab to it, so a value came from something filling
+    // every input it found.
+    expect(looksAutomated({ website: "https://spam.example" })).toBe(
+      "honeypot",
+    );
+  });
+
+  it("ignores whitespace in the hidden field", () => {
+    // A stray space is not a bot, and treating it as one silently drops a real
+    // registration.
+    expect(looksAutomated({ website: "   ", elapsedMs: 30_000 })).toBeNull();
+  });
+
+  it("catches a form completed faster than a person could type it", () => {
+    expect(looksAutomated({ elapsedMs: 40 })).toMatch(/^too-fast/);
+  });
+
+  it("allows a fast but plausible human", () => {
+    // The threshold is deliberately low. Turning away a quick typist who pastes
+    // from notes is worse than letting through a bot that waits.
+    expect(looksAutomated({ elapsedMs: MIN_HUMAN_FILL_MS + 1 })).toBeNull();
+  });
+
+  it("does not punish a submission with no timing at all", () => {
+    // Timing can be missing for reasons that are not a bot's fault: a restored
+    // tab, a hydration that ran late. Absence is not evidence.
+    expect(looksAutomated({})).toBeNull();
+  });
+
+  it("reports the reason rather than a bare true, so it can be logged", () => {
+    expect(looksAutomated({ elapsedMs: 10 })).toContain("10ms");
+  });
+});
+
+describe("the honeypot in the parsed form", () => {
+  it("is accepted as an ordinary optional field", () => {
+    // It has to parse, not be rejected by validation, or the bot check never
+    // runs and the schema does the rejecting with a visible error instead.
+    const result = registrationSchema.safeParse({ ...valid, website: "x" });
+    expect(result.success).toBe(true);
   });
 });
