@@ -1,14 +1,7 @@
 import { randomBytes } from "node:crypto";
-import { and, eq, gt, or, sql } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
-import {
-  campaignCreators,
-  campaigns,
-  creators,
-  creatorSocialHandles,
-  getDb,
-  referrals,
-} from "@/lib/db/client";
+import { campaigns, creators, getDb } from "@/lib/db/client";
 import {
   canonicalise,
   looksAutomated,
@@ -53,9 +46,32 @@ function fail(message: string, status = 400, field?: string) {
  * act on.
  */
 export async function POST(request: NextRequest) {
+  /**
+   * A registration is well under a kilobyte. Anything larger is not a form.
+   *
+   * The App Router has no body size limit for route handlers: the
+   * bodyParser.sizeLimit option belongs to the Pages Router, and
+   * experimental.serverActions.bodySizeLimit covers Server Actions only. So
+   * without this, request.json() will buffer whatever is sent into the memory
+   * of a serverless function, which is a cheap way to make the endpoint
+   * expensive. Content-Length is checked first because it rejects the common
+   * case without reading anything, and the body is measured again after
+   * reading because that header is advisory and can simply be wrong.
+   */
+  const MAX_BODY_BYTES = 8 * 1024;
+
+  const declared = Number(request.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY_BYTES) {
+    return fail("That request is too large.", 413);
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    const raw = await request.text();
+    if (raw.length > MAX_BODY_BYTES) {
+      return fail("That request is too large.", 413);
+    }
+    body = JSON.parse(raw);
   } catch {
     return fail("We could not read that. Please try again.");
   }
@@ -150,115 +166,57 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Who sent them, if anyone. An unknown code is discarded rather than
-  // rejected: the visitor did nothing wrong and should not be blocked by
-  // somebody else's bad link.
+  // The referral code arrives as a cookie from /join. It is passed straight
+  // through to the database function, which resolves it, ignores one that
+  // belongs to nobody, and ignores one that belongs to the person registering.
   const ref = request.cookies.get(REFERRAL_COOKIE)?.value?.trim() ?? "";
-  const referrer = ref
-    ? await db.query.campaignCreators.findFirst({
-        where: and(
-          eq(campaignCreators.campaignId, campaign.id),
-          eq(campaignCreators.referralCode, ref),
-        ),
-      })
-    : undefined;
-
-  // Self-referral, caught before the insert because the identifiers are the
-  // same person's rather than a database-level clash.
-  if (referrer) {
-    const self = await db.query.creators.findFirst({
-      where: or(
-        eq(creators.emailCanonical, emailCanonical),
-        eq(creators.phoneE164, phoneE164),
-      ),
-    });
-    if (self && self.id === referrer.creatorId) {
-      return fail("You cannot refer yourself.", 400, "ref");
-    }
-  }
 
   try {
-    const [creator] = await db
-      .insert(creators)
-      .values({
-        fullName: input.fullName,
-        email: input.email,
-        emailCanonical,
-        phone: input.phone,
-        phoneE164,
-        contentNiche: input.contentNiche,
-        audienceSize: input.audienceSize ?? null,
-        location: input.location ?? null,
-        registrationIp: ip,
-        registrationUserAgent: userAgent,
-      })
-      .returning();
+    // One round trip, one transaction. This was four separate inserts over a
+    // driver with no interactive transactions, which meant the creators row
+    // committed before the handle rows were attempted: a collision on the
+    // second left the first behind, holding an email and a phone number that
+    // could never be released. Sending somebody else's email together with a
+    // handle already taken was enough to stop that person registering.
+    const result = await db.execute(sql`
+      SELECT * FROM register_creator(
+        ${MONICA_SLUG},
+        ${input.fullName}, ${input.email}, ${emailCanonical},
+        ${input.phone}, ${phoneE164}, ${input.contentNiche},
+        ${input.audienceSize ?? null}, ${input.location ?? null},
+        ${handles.x}, ${handles.instagram}, ${handles.tiktok},
+        ${ref || null}, ${ip}, ${userAgent},
+        ${newReferralCode()}
+      )
+    `);
 
-    const entries = Object.entries(handles).filter(([, v]) => v) as [
-      "x" | "instagram" | "tiktok",
-      string,
-    ][];
-    if (entries.length > 0) {
-      await db.insert(creatorSocialHandles).values(
-        entries.map(([platform, handle]) => ({
-          creatorId: creator.id,
-          platform,
-          handle,
-          handleNormalized: handle,
-        })),
-      );
-    }
-
-    const [enrolment] = await db
-      .insert(campaignCreators)
-      .values({
-        campaignId: campaign.id,
-        creatorId: creator.id,
-        referralCode: newReferralCode(),
-      })
-      .returning();
-
-    if (referrer && referrer.id !== enrolment.id) {
-      // Recorded now, paid later. Points land only once the referred creator
-      // has an approved entry, so that fifty throwaway signups are worth
-      // nothing until fifty real pieces of content exist.
-      await db.insert(referrals).values({
-        campaignId: campaign.id,
-        referrerCampaignCreatorId: referrer.id,
-        referredCampaignCreatorId: enrolment.id,
-        // The code as it was actually used, so a dispute about who referred
-        // whom can be answered from the row rather than from inference.
-        codeUsed: ref,
-      });
-    }
+    const row = (result.rows?.[0] ?? {}) as {
+      referral_code?: string;
+      full_name?: string;
+    };
 
     return NextResponse.json({
       ok: true,
-      referralCode: enrolment.referralCode,
-      name: creator.fullName,
+      referralCode: row.referral_code ?? null,
+      name: row.full_name ?? input.fullName,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
 
-    // Translate the constraint that fired into the field a person can fix.
-    if (/social_handle_unique/.test(message)) {
-      return fail(
-        "One of those accounts is already registered. If it is yours, you have already entered.",
-        409,
-        "x",
-      );
-    }
-    if (
-      /creator_email_canonical|email/.test(message) &&
-      /unique|duplicate/i.test(message)
-    ) {
+    // The function raises these deliberately, so the field a person has to
+    // change can be named without reading constraint names out of a driver
+    // error. Every one of them rolled the whole registration back.
+    if (message.includes("email_taken")) {
       return fail("That email address is already registered.", 409, "email");
     }
-    if (/phone/.test(message) && /unique|duplicate/i.test(message)) {
+    if (message.includes("phone_taken")) {
       return fail("That phone number is already registered.", 409, "phone");
     }
-    if (/unique|duplicate/i.test(message)) {
-      return fail("Some of those details are already registered.", 409);
+    if (message.includes("campaign_not_found")) {
+      return fail("That campaign does not exist.", 404);
+    }
+    if (/social_handle_one_per_creator_platform/.test(message)) {
+      return fail("You can only add one account per platform.", 400, "x");
     }
 
     console.error("[campaign/register]", message);
