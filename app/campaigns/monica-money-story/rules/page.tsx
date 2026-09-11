@@ -29,6 +29,20 @@ export const metadata: Metadata = {
  * disqualifying, or ask a winner for identity documents nobody mentioned, or
  * repost their work under a licence they were never offered.
  *
+ * Laid out as a document rather than a marketing page, because that is what it
+ * is and it is read differently: one column at a comfortable measure, contents
+ * in a block at the top, and a body set at higher contrast and a longer line
+ * height than the rest of the site uses. Everywhere else the reader is
+ * skimming; here they are reading every word, possibly while annoyed.
+ *
+ * A sticky sidebar would suit a document this long and is deliberately not
+ * used. globals.css sets overflow-x: hidden on html and body, which makes them
+ * scroll containers and breaks position: sticky against the viewport anywhere
+ * on the site. Switching that to overflow-x: clip would fix it in one word, but
+ * that rule is there to stop horizontal scroll somewhere and changing it
+ * globally to buy a sidebar on one page is not a trade worth making days before
+ * a launch.
+ *
  * Each clause carries an id so it can be linked to directly, which is what you
  * want the moment a decision is questioned.
  */
@@ -62,80 +76,89 @@ export default function MonicaRulesPage() {
             </p>
           </div>
 
-          {monicaRulesOpenPoints.length > 0 && (
-            <div className="mt-8 max-w-2xl rounded-xl border border-brand-gold/30 bg-brand-gold/5 p-5">
-              <p className="text-sm font-semibold text-brand-gold">
-                Still being finalised
-              </p>
-              <ul className="mt-3 flex flex-col gap-2">
-                {monicaRulesOpenPoints.map((point) => (
-                  <li
-                    key={point}
-                    className="text-sm leading-relaxed text-white/70"
-                  >
-                    {point}
+          <div className="mt-12 max-w-2xl">
+            {monicaRulesOpenPoints.length > 0 && (
+              <div className="rounded-xl border border-brand-gold/30 bg-brand-gold/5 p-5 sm:p-6">
+                <p className="text-sm font-semibold text-brand-gold">
+                  Still being finalised
+                </p>
+                <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 marker:text-white/30">
+                  {monicaRulesOpenPoints.map((point) => (
+                    <li
+                      key={point}
+                      className="text-sm leading-relaxed text-white/70"
+                    >
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-4 text-sm leading-relaxed text-white/50">
+                  These will be confirmed here before they affect anyone, and
+                  announced on the campaign page.
+                </p>
+              </div>
+            )}
+
+            {/* Two columns so twelve items read as a tidy block rather than
+                the ragged wrapped line of underlined links this was. */}
+            <nav
+              aria-label="Rules contents"
+              className="mt-10 rounded-xl border border-white/15 p-5 sm:p-6"
+            >
+              <p className="eyebrow text-white/50">Contents</p>
+              <ol className="mt-4 grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
+                {monicaRules.map((section, i) => (
+                  <li key={section.id}>
+                    <a
+                      href={`#${section.id}`}
+                      className="flex gap-2.5 text-sm leading-snug text-white/70 transition-colors duration-200 hover:text-white"
+                    >
+                      <span className="tabular-nums text-white/30">
+                        {i + 1}
+                      </span>
+                      {section.title}
+                    </a>
                   </li>
                 ))}
-              </ul>
-              <p className="mt-3 text-sm leading-relaxed text-white/50">
-                These will be confirmed here before they affect anyone, and
-                announced on the campaign page.
-              </p>
-            </div>
-          )}
+              </ol>
+            </nav>
 
-          {/* A contents list, because the clause somebody needs is usually one
-              specific clause and this page is long. */}
-          <nav aria-label="Rules contents" className="mt-12 max-w-2xl">
-            <ol className="flex flex-wrap gap-x-5 gap-y-2">
+            <div className="mt-14 flex flex-col gap-12">
               {monicaRules.map((section, i) => (
-                <li key={section.id}>
-                  <a
-                    href={`#${section.id}`}
-                    className="text-sm text-link underline underline-offset-4 hover:text-white"
-                  >
-                    {i + 1}. {section.title}
-                  </a>
-                </li>
+                <section
+                  key={section.id}
+                  id={section.id}
+                  className="scroll-mt-24"
+                >
+                  <h2 className="flex gap-3 text-xl font-bold text-white">
+                    <span className="tabular-nums text-white/30">{i + 1}</span>
+                    {section.title}
+                  </h2>
+                  <div className="mt-4 flex flex-col gap-4">
+                    {section.paragraphs.map((paragraph) => (
+                      <p
+                        key={paragraph}
+                        className="max-w-prose text-base leading-7 text-white/75"
+                      >
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </section>
               ))}
-            </ol>
-          </nav>
+            </div>
 
-          <div className="mt-12 flex max-w-2xl flex-col gap-10">
-            {monicaRules.map((section, i) => (
-              <section
-                key={section.id}
-                id={section.id}
-                className="scroll-mt-24"
+            <p className="mt-14 text-sm leading-relaxed text-white/50">
+              Questions about these rules go to{" "}
+              <a
+                href="mailto:partnership@blockfestafrica.com"
+                className="text-link underline underline-offset-2 hover:text-white"
               >
-                <h2 className="text-xl font-bold text-white">
-                  <span className="tabular-nums text-white/40">{i + 1}. </span>
-                  {section.title}
-                </h2>
-                <div className="mt-4 flex flex-col gap-4">
-                  {section.paragraphs.map((paragraph) => (
-                    <p
-                      key={paragraph}
-                      className="text-base leading-relaxed text-white/60"
-                    >
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              </section>
-            ))}
+                partnership@blockfestafrica.com
+              </a>
+              .
+            </p>
           </div>
-
-          <p className="mt-14 max-w-2xl text-sm leading-relaxed text-white/50">
-            Questions about these rules go to{" "}
-            <a
-              href="mailto:partnership@blockfestafrica.com"
-              className="text-link underline underline-offset-2 hover:text-white"
-            >
-              partnership@blockfestafrica.com
-            </a>
-            .
-          </p>
         </div>
       </section>
     </main>
