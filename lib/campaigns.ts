@@ -77,6 +77,21 @@ export const liveCampaigns = campaigns.filter((c) => c.status === "live");
 // Monica: The Money Story
 // ---------------------------------------------------------------------------
 
+/** The slug lives here so the routes are built from one string. */
+export const MONICA_SLUG = "monica-money-story";
+
+export const monicaRoutes = {
+  landing: `/campaigns/${MONICA_SLUG}`,
+  /** Where the CTA sends people. Never /register: next.config.ts 308-redirects
+   *  that to the homepage permanently, and browsers cache permanent redirects,
+   *  so the breakage would outlive the fix. */
+  register: `/campaigns/${MONICA_SLUG}/register`,
+  /** Referral entry point. Sets the ref cookie, then forwards to register. */
+  join: `/campaigns/${MONICA_SLUG}/join`,
+  rules: `/campaigns/${MONICA_SLUG}/rules`,
+  pack: `/campaigns/${MONICA_SLUG}/pack`,
+} as const;
+
 export interface CampaignSkill {
   name: string;
   description: string;
@@ -236,3 +251,93 @@ export const monicaFinalTotal = sum(monicaFinalPrizes);
  * checks this equals the advertised pool.
  */
 export const monicaRewardPool = monicaWeeklyTotal + monicaFinalTotal;
+
+export interface HowItWorksStep {
+  title: string;
+  detail: string;
+}
+
+/** The loop a creator repeats for the length of the campaign. */
+export const monicaHowItWorks: HowItWorksStep[] = [
+  {
+    title: "Join",
+    detail:
+      "Register once with your handles. You get the Creator Pack: brand assets, product facts, the claims you may and may not make, hashtags and handles.",
+  },
+  {
+    title: "Take the challenge",
+    detail:
+      "A new brief drops each weekend. How you answer it is yours: a thread, a reel, a skit, a carousel, an explainer, a street interview, an animation.",
+  },
+  {
+    title: "Publish and submit",
+    detail:
+      "Post it on your own account, then submit the link. Post the same piece on more than one platform and it still counts as one entry, worth more points.",
+  },
+  {
+    title: "Earn and climb",
+    detail:
+      "Approved entries score. Bonuses go to work that is genuinely good, gets featured, or brings another creator in. The leaderboard updates every Saturday.",
+  },
+];
+
+export interface CampaignFaq {
+  question: string;
+  answer: string;
+}
+
+/**
+ * Questions a creator asks before entering.
+ *
+ * Deliberately narrow. Everything here is answerable from the campaign brief;
+ * anything turning on legal wording, eligibility or how prize money is paid is
+ * left to the rules page rather than half-answered here, because a wrong answer
+ * about ₦5,000,000 is worse than a pointer to the page that governs it.
+ */
+export const monicaFaqs: CampaignFaq[] = [
+  {
+    question: "Who can enter?",
+    answer:
+      "Any creator with an audience on X, Instagram or TikTok. You do not need a large following. Judging weighs creativity, storytelling, relevance, consistency and reach together, so the competition is not simply won by the biggest account.",
+  },
+  {
+    question: "Does it cost anything?",
+    answer: "No. Entering is free, and you keep everything you make.",
+  },
+  {
+    question: "What counts as an entry?",
+    answer:
+      "One piece of content answering the current challenge, published on your own account and submitted as a link. We review it, and once approved it scores.",
+  },
+  {
+    question: "What if I post the same thing on all three platforms?",
+    answer:
+      "That is encouraged and it is worth more. Each approved platform is worth 100 points, so the same piece across X, Instagram and TikTok earns 300. It still counts as one challenge entry, not three.",
+  },
+  {
+    question: "How do referrals work?",
+    answer:
+      "You get a link that brings other creators into the campaign. Points are credited once the creator you brought in has their first approved entry, so you are rewarded for bringing in people who actually take part.",
+  },
+  {
+    question: "Is this the same as Monica's referral bonus?",
+    answer:
+      "No, and the two are kept entirely separate. Monica runs its own customer referral bonus as a product. It has nothing to do with campaign points, the leaderboard or the prize pool.",
+  },
+  {
+    question: "Do I have to say it is an ad?",
+    answer:
+      "Yes. Disclose the partnership on every entry. The Creator Pack tells you how, and which claims you may and may not make about a financial product.",
+  },
+  {
+    question: "Who owns the content I make?",
+    answer:
+      "You do. By entering you allow Blockfest Africa and Monica to reshare it with credit. The full terms are on the rules page.",
+  },
+];
+
+/** When the first standings are published. Day 1 has nobody on the board. */
+export const MONICA_FIRST_LEADERBOARD = "Saturday 19 September";
+
+/** Where campaign conversation happens, and how entries are found. */
+export const MONICA_HASHTAGS = ["#TheMoneyStory", "#AreYouSkillful"] as const;
