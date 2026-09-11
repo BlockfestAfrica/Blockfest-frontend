@@ -142,3 +142,94 @@ describe("when the server returns no referral code", () => {
     expect(document.body.innerHTML).not.toContain("ref=null");
   });
 });
+
+/**
+ * A 400 from the server names the field it belongs to, and the form shows the
+ * message against that field. That only works if something on the page is
+ * watching the name. Three of them were not: the social inputs shared a single
+ * slot bound to errors.x, and Location was passed no error prop at all. A
+ * creator whose Instagram handle contained a space got a submit button that
+ * flipped back to its resting state and nothing else, with no way to find out
+ * why.
+ */
+describe("a field error the server sends back", () => {
+  function respondWith(field: string, message: string) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        json: async () => ({ ok: false, field, message }),
+      })) as unknown as typeof fetch,
+    );
+  }
+
+  it.each([
+    ["instagram", "Use just the username, for example yourname."],
+    ["tiktok", "Use just the username, for example yourname."],
+    ["location", "That is too long."],
+    ["email", "That email address is already registered."],
+  ])("is shown to the creator when it names %s", async (field, message) => {
+    respondWith(field, message);
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("alert").some((n) => n.textContent === message),
+      ).toBe(true),
+    );
+  });
+
+  it("still says something when the field is one no input owns", async () => {
+    // Nothing can be shown against a field that is not on the page, but the
+    // one outcome that must never happen is silence.
+    respondWith("somethingNew", "Please check the form.");
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() =>
+      expect(document.body.innerHTML).toContain("Please check the form."),
+    );
+  });
+});
+
+/**
+ * The form sets noValidate so it can word its own messages, which means the
+ * required attribute on the input enforces nothing at all. Without a check
+ * here, an empty name reached the server and came back as a 400, so a creator
+ * waited a round trip to be told something the page already knew.
+ */
+describe("a required field left empty", () => {
+  it.each([
+    ["Full name", "Add your name."],
+    ["Email", "Add your email address."],
+    ["Phone number", "Add your phone number"],
+    ["What do you make?", "Tell us what kind of content you make."],
+  ])("stops the submission and says so for %s", async (label, message) => {
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.change(screen.getByLabelText(label), { target: { value: "" } });
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("alert").some((n) => n.textContent?.includes(message)),
+      ).toBe(true),
+    );
+    expect(sent).toBeNull();
+  });
+
+  it("marks those fields as required in the markup too", () => {
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    for (const label of [
+      "Full name",
+      "Email",
+      "Phone number",
+      "What do you make?",
+    ]) {
+      expect(screen.getByLabelText(label).hasAttribute("required")).toBe(true);
+    }
+  });
+});

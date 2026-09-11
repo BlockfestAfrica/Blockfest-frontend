@@ -262,6 +262,53 @@ describe("referrals", () => {
     expect(await count(`SELECT count(*)::int AS n FROM referrals`)).toBe(1);
   });
 
+  /**
+   * Codes are minted from an uppercase alphabet with no O, 0, I or 1, chosen so
+   * one can be read aloud over a voice note and typed back. A lower-case code
+   * is therefore the expected shape of a hand-typed referral, and matching it
+   * case-sensitively silently credited nobody: registration still succeeded and
+   * neither party was told the referral had been dropped.
+   */
+  it("credits the referrer when the code was typed in lower case", async () => {
+    await register({
+      email: "shouter@example.com",
+      phone: "+2348050000011",
+      x: "shouter",
+      code: "REFCODE9",
+    });
+    await register({
+      email: "typer@example.com",
+      phone: "+2348050000012",
+      x: "typer",
+      ref: "refcode9",
+    });
+    expect(await count(`SELECT count(*)::int AS n FROM referrals`)).toBe(1);
+  });
+
+  it("stores the code folded, so it joins back to the referrer", async () => {
+    await register({
+      email: "r2@example.com",
+      phone: "+2348050000013",
+      x: "rtwo",
+      code: "REFCODE8",
+    });
+    await register({
+      email: "t2@example.com",
+      phone: "+2348050000014",
+      x: "ttwo",
+      ref: "RefCode8",
+    });
+    expect(
+      await count(
+        `SELECT count(*)::int AS n
+           FROM referrals r
+           JOIN campaign_creators cc
+             ON cc.referral_code = r.code_used
+          WHERE cc.id = r.referrer_campaign_creator_id`,
+      ),
+    ).toBe(1);
+  });
+
   it("ignores a code that belongs to nobody rather than failing", async () => {
     // The person registering did nothing wrong and should not be stopped by
     // somebody else's broken link.

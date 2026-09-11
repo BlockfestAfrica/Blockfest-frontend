@@ -20,6 +20,29 @@ type Field =
   | "location"
   | "acceptedRules";
 
+/**
+ * The fields that actually render an error when one is set against them.
+ *
+ * The server names the field a 400 belongs to and the client shows it there.
+ * That only works if something on the page is watching that name: three of
+ * these once were not, so a creator whose Instagram handle contained a space
+ * got a silent form and no way to discover why. Anything not listed here falls
+ * back to the form-level message, which is worse placement but is never
+ * nothing.
+ */
+const FIELDS_WITH_VISIBLE_ERRORS: ReadonlySet<Field> = new Set<Field>([
+  "fullName",
+  "email",
+  "phone",
+  "x",
+  "instagram",
+  "tiktok",
+  "contentNiche",
+  "audienceSize",
+  "location",
+  "acceptedRules",
+]);
+
 const EMPTY: Record<Field, string> = {
   fullName: "",
   email: "",
@@ -62,22 +85,45 @@ function Labelled({
   hint,
   error,
   htmlFor,
+  required = false,
   children,
 }: {
   label: string;
   hint?: string;
   error?: string;
   htmlFor: string;
+  /** Marks the field visibly, not just in the markup. */
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex h-full flex-col">
-      <label
-        htmlFor={htmlFor}
-        className="block text-sm font-semibold text-white"
-      >
-        {label}
-      </label>
+      {/* The asterisk sits beside the label rather than inside it. Inside, it
+          becomes part of the field's accessible name, so the control announces
+          itself as "Full name star" and every lookup by label has to know that.
+          It is aria-hidden for the same reason: the input already carries the
+          required attribute, which is what assistive technology reads, so this
+          is purely the visible half and repeating it would be noise.
+
+          Visible at all because the form sets noValidate to word its own
+          messages, so the browser enforces nothing and nothing on screen told a
+          creator which fields they could skip. */}
+      <div className="flex items-baseline gap-1">
+        <label
+          htmlFor={htmlFor}
+          className="block text-sm font-semibold text-white"
+        >
+          {label}
+        </label>
+        {required && (
+          <span
+            className="text-base font-bold leading-none text-red-400"
+            aria-hidden="true"
+          >
+            *
+          </span>
+        )}
+      </div>
       {hint && <p className="mt-1 text-sm text-white/50">{hint}</p>}
       {/* mt-auto so two fields side by side line up even when one hint wraps
           to two lines and the other does not. Trimming the copy to match would
@@ -161,6 +207,27 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
     setFormError("");
     setErrors({});
 
+    // Checked here as well as on the server. noValidate means the browser
+    // enforces nothing, so without this an empty name costs a round trip to be
+    // told something the page already knew. The server still refuses the same
+    // things; this only saves the wait.
+    const missing = (
+      [
+        ["fullName", "Add your name."],
+        ["email", "Add your email address."],
+        [
+          "phone",
+          "Add your phone number, with country code if you are outside Nigeria.",
+        ],
+        ["contentNiche", "Tell us what kind of content you make."],
+      ] as const
+    ).find(([field]) => !values[field].trim());
+
+    if (missing) {
+      setErrors({ [missing[0]]: missing[1] });
+      return;
+    }
+
     if (!accepted) {
       setErrors({ acceptedRules: "You need to accept the campaign rules." });
       return;
@@ -203,9 +270,16 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       const result = await response.json();
 
       if (!response.ok || !result.ok) {
-        if (result.field)
-          setErrors({ [result.field as Field]: result.message });
-        else setFormError(result.message ?? "Something went wrong.");
+        const field = result.field as Field | undefined;
+        if (field && FIELDS_WITH_VISIBLE_ERRORS.has(field)) {
+          setErrors({ [field]: result.message });
+        } else {
+          // Either the server named no field, or it named one nothing on this
+          // page displays. Both have to say something: a submit that returns
+          // the button to its resting state and changes nothing else reads as
+          // a broken site, and the creator leaves.
+          setFormError(result.message ?? "Something went wrong.");
+        }
         return;
       }
 
@@ -365,6 +439,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
           <Labelled
             label="Full name"
             htmlFor="fullName"
+            required
             error={errors.fullName}
           >
             <input
@@ -378,7 +453,12 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               placeholder="Ada Obi"
             />
           </Labelled>
-          <Labelled label="Email" htmlFor="email" error={errors.email}>
+          <Labelled
+            label="Email"
+            htmlFor="email"
+            error={errors.email}
+            required
+          >
             <input
               id="email"
               name="email"
@@ -398,6 +478,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
           <Labelled
             label="Phone number"
             htmlFor="phone"
+            required
             hint="Country code if you are outside Nigeria."
             error={errors.phone}
           >
@@ -417,6 +498,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
           <Labelled
             label="What do you make?"
             htmlFor="contentNiche"
+            required
             hint="Comedy, finance, tech, lifestyle."
             error={errors.contentNiche}
           >
@@ -448,33 +530,35 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
             // The platform sits inside the field rather than in a label column
             // beside it, so the three rows line up as one control instead of
             // three mismatched ones.
-            <div
-              key={field}
-              className="flex items-center gap-0 overflow-hidden rounded-lg border border-white/15 bg-ground focus-within:border-brand-gold"
-            >
-              <span className="w-24 shrink-0 border-r border-white/15 px-3 py-3 text-sm text-white/60">
-                {label}
-              </span>
-              <span className="pl-3 text-white/30" aria-hidden="true">
-                @
-              </span>
-              <input
-                id={field}
-                name={field}
-                aria-label={`${label} username`}
-                value={values[field]}
-                onChange={(e) => set(field)(e.target.value)}
-                className="w-full bg-transparent px-2 py-3 text-base text-white placeholder:text-white/30 focus:outline-none"
-                placeholder="yourhandle"
-              />
+            <div key={field}>
+              <div className="flex items-center gap-0 overflow-hidden rounded-lg border border-white/15 bg-ground focus-within:border-brand-gold">
+                <span className="w-24 shrink-0 border-r border-white/15 px-3 py-3 text-sm text-white/60">
+                  {label}
+                </span>
+                <span className="pl-3 text-white/30" aria-hidden="true">
+                  @
+                </span>
+                <input
+                  id={field}
+                  name={field}
+                  aria-label={`${label} username`}
+                  value={values[field]}
+                  onChange={(e) => set(field)(e.target.value)}
+                  className="w-full bg-transparent px-2 py-3 text-base text-white placeholder:text-white/30 focus:outline-none"
+                  placeholder="yourhandle"
+                />
+              </div>
+              {/* Each row owns its own error. One shared slot showing only
+                  errors.x meant a bad Instagram or TikTok handle was rejected
+                  by the server and reported nowhere. */}
+              {errors[field] && (
+                <p role="alert" className="mt-2 text-sm text-red-300">
+                  {errors[field]}
+                </p>
+              )}
             </div>
           ))}
         </div>
-        {errors.x && (
-          <p role="alert" className="text-sm text-red-300">
-            {errors.x}
-          </p>
-        )}
       </Section>
 
       <Section title="Optional" hint="Helps us understand who is taking part.">
@@ -497,7 +581,11 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               placeholder="5000"
             />
           </Labelled>
-          <Labelled label="Where you are" htmlFor="location">
+          <Labelled
+            label="Where you are"
+            htmlFor="location"
+            error={errors.location}
+          >
             <input
               id="location"
               name="location"
