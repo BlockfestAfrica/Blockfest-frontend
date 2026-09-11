@@ -1,7 +1,7 @@
 import "server-only";
 
 import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
 
 /**
@@ -31,16 +31,33 @@ import * as schema from "./schema";
  * And every route that imports this must set `export const runtime = "nodejs"`.
  */
 
-const url = process.env.NETLIFY_DATABASE_URL ?? process.env.DATABASE_URL;
+let cached: NeonHttpDatabase<typeof schema> | null = null;
 
-if (!url) {
-  // Loud rather than a confusing null-reference further in. This is a
-  // deployment misconfiguration, and it should read like one.
-  throw new Error(
-    "No database URL. Expected NETLIFY_DATABASE_URL (set by Netlify DB) or DATABASE_URL.",
-  );
+/**
+ * The database handle, built on first use.
+ *
+ * Deliberately not a module-level constant. Next evaluates every route module
+ * during the build, so a client constructed at import time needs the connection
+ * string to exist at build time too, and the build fails on any environment
+ * that does not have one: a fresh clone, CI, and every preview built before the
+ * database was provisioned. Constructing on first call moves the requirement to
+ * the moment a request actually needs the database, which is when it is a real
+ * problem rather than an inherited one.
+ */
+export function getDb(): NeonHttpDatabase<typeof schema> {
+  if (cached) return cached;
+
+  const url = process.env.NETLIFY_DATABASE_URL ?? process.env.DATABASE_URL;
+  if (!url) {
+    // Loud, and phrased as what it is: a deployment that is missing a variable,
+    // not a bug in whatever called this.
+    throw new Error(
+      "No database URL. Expected NETLIFY_DATABASE_URL (set by Netlify DB) or DATABASE_URL.",
+    );
+  }
+
+  cached = drizzle(neon(url), { schema });
+  return cached;
 }
-
-export const db = drizzle(neon(url), { schema });
 
 export * from "./schema";
