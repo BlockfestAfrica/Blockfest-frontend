@@ -6,6 +6,7 @@ import { ArrowRight, Check, Copy, Lock } from "lucide-react";
 import { hasPassed } from "@/lib/countdown";
 import { CAMPAIGN_GATE_FORCED_OPEN, monicaRoutes } from "@/lib/campaigns";
 import { MONICA_RULES_VERSION } from "@/lib/monica-rules";
+import { toast } from "sonner";
 import { track } from "@/lib/sabilytics";
 
 type Field =
@@ -97,7 +98,26 @@ function Labelled({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full flex-col">
+    /*
+     * Four rows, shared with the field beside it.
+     *
+     * Two fields sit side by side and their labels, hints, inputs and errors
+     * have to line up across the pair even though each part is a different
+     * height in each column. This used to bottom-align the input with mt-auto,
+     * which worked until an error appeared: the column carrying it grew, and
+     * because the error sits below the input, that column's input ended up
+     * higher than its neighbour's. The phone message wraps to two lines in a
+     * half-width column, so the gap was visible rather than theoretical.
+     *
+     * Subgrid makes the two columns share the parent's row tracks, so each part
+     * aligns with its opposite number whatever either one contains. The empty
+     * divs matter: they hold a field's place in the hint and error rows so the
+     * rows stay in step when only one column has either.
+     *
+     * Below sm the fields stack and none of this applies, so it is a plain
+     * flex column there.
+     */
+    <div className="flex flex-col sm:row-span-4 sm:grid sm:grid-rows-subgrid sm:gap-0">
       {/* The asterisk sits beside the label rather than inside it. Inside, it
           becomes part of the field's accessible name, so the control announces
           itself as "Full name star" and every lookup by label has to know that.
@@ -124,16 +144,18 @@ function Labelled({
           </span>
         )}
       </div>
-      {hint && <p className="mt-1 text-sm text-white/50">{hint}</p>}
-      {/* mt-auto so two fields side by side line up even when one hint wraps
-          to two lines and the other does not. Trimming the copy to match would
-          fix today's pair and break on the next one. */}
-      <div className="mt-auto pt-2">{children}</div>
-      {error && (
-        <p role="alert" className="mt-2 text-sm text-red-300">
-          {error}
-        </p>
-      )}
+
+      <div>{hint && <p className="mt-1 text-sm text-white/50">{hint}</p>}</div>
+
+      <div className="pt-2">{children}</div>
+
+      <div>
+        {error && (
+          <p role="alert" className="mt-2 text-sm text-red-300">
+            {error}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -190,6 +212,19 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
     setChecked(true);
     shownAt.current = Date.now();
   }, [opensAt]);
+
+  /**
+   * A failure that belongs to the whole form rather than one field.
+   *
+   * Shown in both places on purpose. The inline banner persists, so somebody
+   * who looks away and back still has the reason in front of them; the toast
+   * is what carries it to a creator whose attention is at the bottom of a long
+   * form, where a message rendered above the button is easy to miss entirely.
+   */
+  const failForm = (message: string) => {
+    setFormError(message);
+    toast.error(message);
+  };
 
   const set = (field: Field) => (value: string) => {
     setValues((v) => ({ ...v, [field]: value }));
@@ -278,7 +313,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
           // page displays. Both have to say something: a submit that returns
           // the button to its resting state and changes nothing else reads as
           // a broken site, and the creator leaves.
-          setFormError(result.message ?? "Something went wrong.");
+          failForm(result.message ?? "Something went wrong.");
         }
         return;
       }
@@ -286,7 +321,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       track("campaign_registered", { campaign: "monica-money-story" });
       setDone({ name: result.name, referralCode: result.referralCode ?? null });
     } catch {
-      setFormError(
+      failForm(
         "We could not reach the server. Check your connection and try again.",
       );
     } finally {
@@ -353,6 +388,11 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
                 onClick={() => {
                   navigator.clipboard?.writeText(shareLink);
                   setCopied(true);
+                  // The button swaps to a tick, which says it worked but not
+                  // what worked. On a screen where the only other action is
+                  // "share this", naming the thing that landed on the
+                  // clipboard is worth a line.
+                  toast.success("Referral link copied");
                   track("campaign_referral_copied", {
                     campaign: "monica-money-story",
                   });
@@ -435,7 +475,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       </div>
 
       <Section title="About you">
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 sm:grid-rows-[auto_auto_auto_auto] sm:gap-y-0">
           <Labelled
             label="Full name"
             htmlFor="fullName"
@@ -474,7 +514,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
           </Labelled>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 sm:grid-rows-[auto_auto_auto_auto] sm:gap-y-0">
           <Labelled
             label="Phone number"
             htmlFor="phone"
@@ -562,7 +602,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       </Section>
 
       <Section title="Optional" hint="Helps us understand who is taking part.">
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 sm:grid-rows-[auto_auto_auto_auto] sm:gap-y-0">
           <Labelled
             label="Audience size"
             htmlFor="audienceSize"

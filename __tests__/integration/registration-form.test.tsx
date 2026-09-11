@@ -16,6 +16,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RegistrationForm } from "@/components/campaigns/registration-form";
+import { toast } from "sonner";
+
+// The Toaster is mounted in the root layout, not here, so a real toast call
+// would be a silent no-op in this environment and an assertion on it would
+// pass whether or not the form ever called it.
+vi.mock("sonner", () => ({
+  toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
+}));
 
 /** After the campaign opens, so the form renders rather than the locked notice. */
 const OPENS_AT = "2026-09-14T00:00:00+01:00";
@@ -46,6 +54,9 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  // The sonner mock is module level, so its call history outlives a test
+  // unless it is cleared. A "was not called" assertion is worthless otherwise.
+  vi.clearAllMocks();
 });
 
 function fill() {
@@ -231,5 +242,77 @@ describe("a required field left empty", () => {
     ]) {
       expect(screen.getByLabelText(label).hasAttribute("required")).toBe(true);
     }
+  });
+});
+
+/**
+ * The project has had a toast system since before this form existed and the
+ * form never used it. A whole-form failure is the case it is for: the message
+ * renders above the submit button, which on a form this long can be well off
+ * screen by the time somebody presses it.
+ */
+describe("a failure that belongs to the whole form", () => {
+  it("is toasted as well as rendered inline", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        json: async () => ({ ok: false, message: "Please check the form." }),
+      })) as unknown as typeof fetch,
+    );
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Please check the form."),
+    );
+    expect(document.body.innerHTML).toContain("Please check the form.");
+  });
+
+  it("is toasted when the server cannot be reached at all", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("network down");
+      }) as unknown as typeof fetch,
+    );
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("could not reach the server"),
+      ),
+    );
+  });
+
+  it("does not toast a field error, which belongs beside its field", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        json: async () => ({
+          ok: false,
+          field: "email",
+          message: "That email address is already registered.",
+        }),
+      })) as unknown as typeof fetch,
+    );
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("alert").some((n) =>
+          n.textContent?.includes("already registered"),
+        ),
+      ).toBe(true),
+    );
+    expect(toast.error).not.toHaveBeenCalledWith(
+      "That email address is already registered.",
+    );
   });
 });
