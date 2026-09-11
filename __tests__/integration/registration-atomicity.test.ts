@@ -24,7 +24,6 @@ import { beforeAll, afterAll, beforeEach, describe, expect, it } from "vitest";
 
 let db: PGlite;
 let seq = 0;
-const uniq = () => `${Date.now()}-${++seq}`;
 
 const count = async (sql: string) =>
   Number((await db.query<{ n: number }>(sql)).rows[0].n);
