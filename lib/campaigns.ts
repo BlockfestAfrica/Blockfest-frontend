@@ -3,17 +3,17 @@
  *
  * Blockfest runs sponsor-backed creator campaigns alongside the event itself.
  * Monica: The Money Story is the first; Rovv follows. That is the whole reason
- * /campaigns is an index rather than a single page — a second campaign is
+ * /campaigns is an index rather than a single page. A second campaign is
  * already known about, and building for one would mean rebuilding for two.
  *
  * Everything here is static marketing copy that does not move once a campaign
  * opens: the stages, the skills, the prize ladder, the point ladder. It lives
- * in lib/ rather than the database for the same reason the ticket tiers do —
+ * in lib/ rather than the database for the same reason the ticket tiers do:
  * it lets /campaigns and the campaign landing pages prerender, and a page that
  * prerenders cannot be taken down by a database that is asleep.
  *
- * What does move during a campaign — the live challenge, the leaderboard, the
- * weekly winners — is not here. That comes from the database, fetched by the
+ * What does move during a campaign is not here: the live challenge, the
+ * leaderboard, the weekly winners. That comes from the database, fetched by the
  * client into an otherwise static shell.
  */
 
@@ -49,7 +49,7 @@ export const campaigns: Campaign[] = [
     sponsorLogo: "/2026/sponsors/Monica.png",
     sponsorUrl: "https://x.com/monicanigeria",
     summary:
-      "A creator competition about the everyday stories behind money — sending it, receiving it, moving it across borders — and how Monica is building a better way through them.",
+      "A creator competition about the everyday stories behind money: sending it, receiving it, moving it across borders, and how Monica is building a better way through them.",
     status: "live",
     rewardPool: 5_000_000,
     startsAt: "2026-09-14T00:00:00+01:00",
@@ -142,7 +142,7 @@ export const monicaStages: CampaignStage[] = [
     days: [8, 14],
     question: "Why is money still this complicated?",
     focus:
-      "Tell real or relatable stories about financial friction — the fees, the waiting, the rates.",
+      "Tell real or relatable stories about financial friction: the fees, the waiting, the rates.",
     skills: ["Storytelling", "Creativity"],
   },
   {
@@ -171,7 +171,7 @@ export const monicaStages: CampaignStage[] = [
  * brief gives both readings and they disagree: section 5.1 says three platforms
  * earns "up to 300", while the table in section 8 lists "+100" for two and
  * "+200" for three, which reads as 100 + 100 + 200 = 400. The campaign team
- * confirmed the intent — each platform is worth 100 — so the ladder is linear
+ * confirmed the intent. Each platform is worth 100, so the ladder is linear
  * and stops at three.
  *
  * Totals rather than deltas is deliberate. Deltas are what let that ambiguity
@@ -199,7 +199,7 @@ export const monicaWeeklyPrizes: PrizeAward[] = [
     label: "Creator of the Week",
     amount: 300_000,
     count: 4,
-    note: "A different creator each week — nobody wins it twice.",
+    note: "A different creator each week. Nobody wins it twice.",
   },
   {
     label: "Community Favourite",

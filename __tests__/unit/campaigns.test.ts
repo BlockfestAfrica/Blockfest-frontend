@@ -2,8 +2,8 @@
  * Tests for the campaign registry.
  *
  * Two things here are worth guarding rather than trusting. The reward pool is
- * the campaign's single most quoted number — it is on the landing page, in the
- * rules and in the sponsor deck — so it is derived from the prize breakdown
+ * the campaign's single most quoted number. It is on the landing page, in the
+ * rules and in the sponsor deck, so it is derived from the prize breakdown
  * rather than typed, and this checks the derivation still lands on the figure
  * everyone has been told.
  *
