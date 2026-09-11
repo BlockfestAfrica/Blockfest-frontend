@@ -155,6 +155,21 @@ export const registrationSchema = z
     rulesVersion: z.string().min(1),
     /** Referral code carried from /join. Absent for a direct visitor. */
     ref: z.string().trim().max(64).optional(),
+    /**
+     * A field no person can see or tab to. Anything in it came from something
+     * filling every input it found, which is the cheapest signal there is and
+     * costs a real creator nothing.
+     */
+    website: z.string().max(200).optional(),
+    /**
+     * Milliseconds between the form appearing and being submitted.
+     *
+     * A person cannot complete nine fields in under a couple of seconds. A
+     * script can do it in tens of milliseconds, and typically does, because
+     * there is no reason for it to wait. Trivially forgeable by anyone who
+     * looks, which is the point: this is for the traffic that does not look.
+     */
+    elapsedMs: z.coerce.number().int().min(0).optional(),
   })
   .refine((v) => v.x !== "" || v.instagram !== "" || v.tiktok !== "", {
     message: "Add at least one account you will be publishing from.",
@@ -179,4 +194,35 @@ export function canonicalise(input: Registration) {
       tiktok: input.tiktok || null,
     },
   };
+}
+
+/**
+ * How long a genuine person takes, at the very fastest.
+ *
+ * Deliberately low. The cost of getting this wrong is turning away a real
+ * creator who types quickly or pastes from notes, which is far worse than
+ * letting through a bot that waits three seconds. It is one layer of several,
+ * not a wall.
+ */
+export const MIN_HUMAN_FILL_MS = 2_500;
+
+/**
+ * Whether a submission looks automated.
+ *
+ * Returns the reason rather than a boolean so it can be logged. None of these
+ * signals is conclusive on its own and none is shown to the visitor: telling a
+ * bot which check it failed is telling whoever wrote it what to change.
+ */
+export function looksAutomated(input: {
+  website?: string;
+  elapsedMs?: number;
+}): string | null {
+  if (input.website && input.website.trim() !== "") return "honeypot";
+  if (
+    typeof input.elapsedMs === "number" &&
+    input.elapsedMs < MIN_HUMAN_FILL_MS
+  ) {
+    return `too-fast:${input.elapsedMs}ms`;
+  }
+  return null;
 }

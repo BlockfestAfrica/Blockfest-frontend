@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, gt, or, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   campaignCreators,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/client";
 import {
   canonicalise,
+  looksAutomated,
   REFERRAL_COOKIE,
   registrationSchema,
 } from "@/lib/campaign-registration";
@@ -73,6 +74,29 @@ export async function POST(request: NextRequest) {
   const input = parsed.data;
   const { emailCanonical, phoneE164, handles } = canonicalise(input);
 
+  // Automated submissions are answered as though they succeeded. A bot told
+  // which check it failed is a bot whose author knows what to change, and one
+  // told nothing at all simply retries. Nothing is written, and the reason is
+  // logged rather than returned.
+  const automated = looksAutomated(input);
+  if (automated) {
+    console.warn("[campaign/register] rejected as automated:", automated);
+    return NextResponse.json({
+      ok: true,
+      referralCode: null,
+      name: input.fullName,
+    });
+  }
+
+  // Netlify sets its own header; x-forwarded-for is the fallback and its first
+  // entry is the client. Never trusted for anything but rate limiting and
+  // review, because it is trivially spoofed.
+  const ip =
+    request.headers.get("x-nf-client-connection-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    null;
+  const userAgent = request.headers.get("user-agent")?.slice(0, 500) ?? null;
+
   const campaign = await db.query.campaigns.findFirst({
     where: eq(campaigns.slug, MONICA_SLUG),
   });
@@ -100,6 +124,30 @@ export async function POST(request: NextRequest) {
   }
   if (!preview && campaign.status !== "active") {
     return fail("This campaign is not accepting registrations.", 403);
+  }
+
+  // A ceiling on how fast one address can register, deliberately generous.
+  // Nigerian mobile carriers put very large numbers of subscribers behind few
+  // addresses, so a tight per-IP limit would turn away real creators sharing a
+  // carrier NAT while barely inconveniencing anyone with a VPN. This is here to
+  // stop a runaway script, not to identify people, and the honeypot and timing
+  // checks above are what actually carry the load.
+  if (ip) {
+    const recent = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(creators)
+      .where(
+        and(
+          eq(creators.registrationIp, ip),
+          gt(creators.createdAt, new Date(Date.now() - 60 * 60 * 1000)),
+        ),
+      );
+    if ((recent[0]?.n ?? 0) >= 15) {
+      return fail(
+        "Too many registrations from this connection in the last hour. Try again later.",
+        429,
+      );
+    }
   }
 
   // Who sent them, if anyone. An unknown code is discarded rather than
@@ -141,6 +189,8 @@ export async function POST(request: NextRequest) {
         contentNiche: input.contentNiche,
         audienceSize: input.audienceSize ?? null,
         location: input.location ?? null,
+        registrationIp: ip,
+        registrationUserAgent: userAgent,
       })
       .returning();
 
