@@ -17,10 +17,9 @@
  * now belongs to a verified handle, so a squat no longer locks anybody out.
  */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, afterAll, beforeEach, describe, expect, it } from "vitest";
+import { applyMigrations } from "../helpers/migrations";
 
 let db: PGlite;
 let seq = 0;
@@ -56,15 +55,7 @@ async function register(opts: {
 
 beforeAll(async () => {
   db = new PGlite();
-  const dir = join(process.cwd(), "drizzle");
-  for (const f of [
-    "0000_init.sql",
-    "0001_points_engine.sql",
-    "0002_atomic_registration.sql",
-    "0003_points_integrity.sql",
-  ]) {
-    await db.exec(readFileSync(join(dir, f), "utf8"));
-  }
+  await applyMigrations(db);
 }, 60_000);
 
 afterAll(async () => {

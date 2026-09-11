@@ -15,7 +15,7 @@ import type { Config } from "drizzle-kit";
  */
 export default {
   schema: "./lib/db/schema.ts",
-  out: "./drizzle",
+  out: "./netlify/database/migrations",
   dialect: "postgresql",
   dbCredentials: {
     // drizzle-kit runs from a terminal or CI, never inside a Netlify
