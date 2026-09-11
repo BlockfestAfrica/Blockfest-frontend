@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { CampaignJoinCTA } from "./campaign-join-cta";
 import {
   campaignBySlug,
+  campaignOpensLabel,
   campaignRun,
   CAMPAIGN_PLATFORMS,
   MONICA_CAMPAIGN_DAYS,
@@ -23,7 +24,7 @@ function Fact({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-b border-white/10 pb-5 last:border-0 last:pb-0">
+    <div>
       <dt className="eyebrow text-white/50">{label}</dt>
       <dd className="mt-2">{children}</dd>
     </div>
@@ -48,6 +49,7 @@ export function MonicaHero() {
   const campaign = campaignBySlug(MONICA_SLUG);
   if (!campaign) return null;
   const run = campaignRun(campaign);
+  const opens = campaignOpensLabel(campaign);
 
   return (
     <section className="section-y bg-ground">
@@ -77,13 +79,13 @@ export function MonicaHero() {
             </p>
 
             <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
-              <Link
-                href={monicaRoutes.register}
-                className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
-              >
-                Join the challenge
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+              {campaign.startsAt && opens && (
+                <CampaignJoinCTA
+                  href={monicaRoutes.register}
+                  opensAt={campaign.startsAt}
+                  opensLabel={opens}
+                />
+              )}
               <Link
                 href={monicaRoutes.rules}
                 className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
@@ -94,7 +96,7 @@ export function MonicaHero() {
           </div>
 
           <div className="lg:col-span-5">
-            <dl className="flex flex-col gap-5 rounded-2xl border border-white/20 bg-white/5 p-6 sm:p-8">
+            <dl className="flex flex-col gap-7 rounded-2xl border border-white/20 bg-white/5 p-6 sm:p-8">
               <Fact label="Total reward pool">
                 <p className="text-display-sm font-bold tabular-nums leading-none text-white">
                   {formatNaira(monicaRewardPool)}

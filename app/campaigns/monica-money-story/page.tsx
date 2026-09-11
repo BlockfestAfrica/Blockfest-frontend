@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { CampaignJoinCTA } from "@/components/campaigns/campaign-join-cta";
 import { MonicaHero } from "@/components/campaigns/monica-hero";
 import { MonicaHowItWorks } from "@/components/campaigns/monica-how-it-works";
 import { MonicaStages } from "@/components/campaigns/monica-stages";
@@ -8,6 +8,7 @@ import { MonicaPrizes } from "@/components/campaigns/monica-prizes";
 import { MonicaFaq } from "@/components/campaigns/monica-faq";
 import {
   campaignBySlug,
+  campaignOpensLabel,
   MONICA_CAMPAIGN_DAYS,
   monicaRewardPool,
   monicaRoutes,
@@ -17,6 +18,7 @@ import { formatNaira } from "@/lib/tickets";
 import { SITE_URL } from "@/lib/seo-event";
 
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
+const OPENS_LABEL = campaignOpensLabel(CAMPAIGN);
 
 const OG_TITLE = "Monica: The Money Story | Blockf3st Africa";
 const OG_DESCRIPTION = `A ${MONICA_CAMPAIGN_DAYS}-day creator competition from Blockfest Africa. ${formatNaira(
@@ -102,13 +104,13 @@ export default function MonicaMoneyStoryPage() {
               Register once and the first brief is waiting.
             </p>
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
-              <Link
-                href={monicaRoutes.register}
-                className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
-              >
-                Join the challenge
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+              {CAMPAIGN.startsAt && OPENS_LABEL && (
+                <CampaignJoinCTA
+                  href={monicaRoutes.register}
+                  opensAt={CAMPAIGN.startsAt}
+                  opensLabel={OPENS_LABEL}
+                />
+              )}
               <Link
                 href={monicaRoutes.pack}
                 className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
