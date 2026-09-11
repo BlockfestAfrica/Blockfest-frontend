@@ -74,6 +74,18 @@ export const campaigns: Campaign[] = [
 ];
 
 /**
+ * The event's own timezone, and the only one these dates may be read in.
+ *
+ * Without pinning it, formatting follows whatever timezone the code happens to
+ * run in, and the build runs in UTC. The campaign opens at midnight on the 14th
+ * in Lagos, which is 23:00 on the 13th in UTC, so an unpinned formatter
+ * prerenders "13 September" onto a page announcing a campaign that starts on
+ * the 14th. It formats correctly on a laptop in Lagos or London and wrongly on
+ * the server that actually builds the site.
+ */
+const CAMPAIGN_TIME_ZONE = "Africa/Lagos";
+
+/**
  * The run of a campaign as one line, e.g. "14 September – 17 October 2026".
  *
  * The year appears once, on the end date, because repeating it reads as two
@@ -82,13 +94,33 @@ export const campaigns: Campaign[] = [
  */
 export function campaignRun(campaign: Campaign): string | null {
   if (!campaign.startsAt || !campaign.endsAt) return null;
-  const day: Intl.DateTimeFormatOptions = { day: "numeric", month: "long" };
+  const day: Intl.DateTimeFormatOptions = {
+    day: "numeric",
+    month: "long",
+    timeZone: CAMPAIGN_TIME_ZONE,
+  };
   const from = new Date(campaign.startsAt).toLocaleDateString("en-GB", day);
   const to = new Date(campaign.endsAt).toLocaleDateString("en-GB", {
     ...day,
     year: "numeric",
   });
   return `${from} \u2013 ${to}`;
+}
+
+/**
+ * When entries open, worded for a button, e.g. "Monday 14 September".
+ *
+ * The weekday is included deliberately. "14 September" asks the reader to go
+ * and check what day that is; "Monday 14 September" answers it.
+ */
+export function campaignOpensLabel(campaign: Campaign): string | null {
+  if (!campaign.startsAt) return null;
+  return new Date(campaign.startsAt).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: CAMPAIGN_TIME_ZONE,
+  });
 }
 
 export function campaignBySlug(slug: string): Campaign | undefined {

@@ -69,11 +69,11 @@ export function MonicaPrizes() {
                 {formatNaira(monicaFinalTotal)}
               </p>
             </div>
-            <dl className="mt-6 flex flex-col gap-3">
+            <dl className="mt-6 flex flex-col gap-4">
               {monicaFinalPrizes.map((prize) => (
                 <div
                   key={prize.label}
-                  className="flex items-baseline justify-between gap-4 border-b border-white/10 pb-3 last:border-0 last:pb-0"
+                  className="flex items-baseline justify-between gap-4"
                 >
                   <dt className="text-base text-white/80">{prize.label}</dt>
                   <dd className="font-semibold tabular-nums text-white">

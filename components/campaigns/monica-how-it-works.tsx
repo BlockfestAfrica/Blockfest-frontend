@@ -48,7 +48,10 @@ export function MonicaHowItWorks() {
 
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {monicaSkills.map((skill) => (
-              <div key={skill.name} className="border-t border-white/20 pt-5">
+              <div
+                key={skill.name}
+                className="rounded-xl border border-white/20 bg-white/5 p-5"
+              >
                 <h4 className="eyebrow text-brand-gold">{skill.name}</h4>
                 <p className="mt-3 text-sm leading-relaxed text-white/60">
                   {skill.description}
