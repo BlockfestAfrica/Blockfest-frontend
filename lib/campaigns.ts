@@ -23,6 +23,13 @@ export type CampaignStatus = "live" | "coming-soon" | "ended";
 export const CAMPAIGN_PLATFORMS = ["x", "instagram", "tiktok"] as const;
 export type CampaignPlatform = (typeof CAMPAIGN_PLATFORMS)[number];
 
+/** How each platform is written when shown to a creator. */
+export const platformLabels: Record<CampaignPlatform, string> = {
+  x: "X",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+};
+
 export interface Campaign {
   slug: string;
   name: string;
@@ -65,6 +72,24 @@ export const campaigns: Campaign[] = [
     status: "coming-soon",
   },
 ];
+
+/**
+ * The run of a campaign as one line, e.g. "14 September – 17 October 2026".
+ *
+ * The year appears once, on the end date, because repeating it reads as two
+ * separate dates rather than a span. An en dash, not an em dash: this is a
+ * range, and it matches how the rest of the site sets dates.
+ */
+export function campaignRun(campaign: Campaign): string | null {
+  if (!campaign.startsAt || !campaign.endsAt) return null;
+  const day: Intl.DateTimeFormatOptions = { day: "numeric", month: "long" };
+  const from = new Date(campaign.startsAt).toLocaleDateString("en-GB", day);
+  const to = new Date(campaign.endsAt).toLocaleDateString("en-GB", {
+    ...day,
+    year: "numeric",
+  });
+  return `${from} \u2013 ${to}`;
+}
 
 export function campaignBySlug(slug: string): Campaign | undefined {
   return campaigns.find((campaign) => campaign.slug === slug);
@@ -120,6 +145,15 @@ export const monicaSkills: CampaignSkill[] = [
   },
 ];
 
+/**
+ * How many days the campaign runs.
+ *
+ * Day 1 is 14 September, so day 33 is 16 October and the published end date of
+ * 17 October is the close: the final standings, on the Saturday the standings
+ * always land on.
+ */
+export const MONICA_CAMPAIGN_DAYS = 33;
+
 export interface CampaignStage {
   number: number;
   name: string;
@@ -134,12 +168,15 @@ export interface CampaignStage {
 /**
  * The four stages.
  *
- * Note the arithmetic: the stages run to day 30, but the campaign window of
- * 14 September to 17 October is 33 days. The brief calls it a 30-day campaign
- * throughout while giving those dates, so the stage numbering is kept exactly
- * as written and the extra days sit at the end, where the final challenge and
- * judging fall. Worth settling with the campaign team rather than quietly
- * stretching a stage to cover it.
+ * The brief calls this a 30-day campaign while giving dates that do not make
+ * 30 days, so the campaign team settled it: 33. Day 1 is Monday 14 September
+ * and day 33 is Friday 16 October, which leaves Saturday 17 October as the
+ * close. That lands well rather than awkwardly, because Saturday is already
+ * the day standings are published every week, so the campaign ends on a final
+ * leaderboard rather than mid-week on a stage nobody finished.
+ *
+ * The extra three days go to the last stage. It is the one with the widest
+ * creative brief and the most at stake, so it is the one that benefits.
  */
 export const monicaStages: CampaignStage[] = [
   {
@@ -172,7 +209,7 @@ export const monicaStages: CampaignStage[] = [
   {
     number: 4,
     name: "The Money Story",
-    days: [22, 30],
+    days: [22, MONICA_CAMPAIGN_DAYS],
     question: "Tell Monica's story your way.",
     focus: "Maximum creative freedom, and your strongest single piece of work.",
     skills: ["Storytelling", "Creativity", "Education", "Influence"],

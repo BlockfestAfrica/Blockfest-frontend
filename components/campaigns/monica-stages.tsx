@@ -1,7 +1,11 @@
-import { monicaStages, MONICA_FIRST_LEADERBOARD } from "@/lib/campaigns";
+import {
+  MONICA_CAMPAIGN_DAYS,
+  MONICA_FIRST_LEADERBOARD,
+  monicaStages,
+} from "@/lib/campaigns";
 
 /**
- * The thirty days, stage by stage.
+ * The campaign, stage by stage.
  *
  * Also where the leaderboard would go. On day one nobody has a point, and the
  * first standings are eight days out, so this states the date instead. A table
@@ -12,7 +16,7 @@ export function MonicaStages() {
     <section className="section-y border-t border-white/20 bg-ground">
       <div className="container-page">
         <h2 className="text-display-sm font-bold text-white">
-          The 30-day journey
+          The {MONICA_CAMPAIGN_DAYS}-day journey
         </h2>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
           Four stages, each with its own question. The briefs get harder and the
