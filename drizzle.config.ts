@@ -18,6 +18,9 @@ export default {
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.NETLIFY_DATABASE_URL ?? process.env.DATABASE_URL ?? "",
+    // drizzle-kit runs from a terminal or CI, never inside a Netlify
+    // function, so the runtime-injected connection is not available to it.
+    // Point DATABASE_URL at the branch you mean to migrate.
+    url: process.env.DATABASE_URL ?? "",
   },
 } satisfies Config;

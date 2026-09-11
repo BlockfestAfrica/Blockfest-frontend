@@ -1,5 +1,9 @@
 import "server-only";
 
+import {
+  getConnectionString,
+  MissingDatabaseConnectionError,
+} from "@netlify/database";
 import { neon } from "@neondatabase/serverless";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
@@ -34,29 +38,48 @@ import * as schema from "./schema";
 let cached: NeonHttpDatabase<typeof schema> | null = null;
 
 /**
+ * Where the connection string comes from.
+ *
+ * Netlify DB does not expose the connection as a site environment variable you
+ * can read in the dashboard. It is injected into the function environment at
+ * runtime under its own name, and the supported way to reach it is the
+ * package's own resolver rather than a variable name you guessed. Guessing is
+ * exactly what went wrong here the first time: this module read
+ * NETLIFY_DATABASE_URL, which is not the name Netlify uses, so every call to
+ * the registration endpoint in production failed with a 500 while every local
+ * check passed.
+ *
+ * DATABASE_URL still wins when it is set, so a developer can point at their own
+ * database, and tests can point somewhere disposable.
+ */
+function connectionString(): string {
+  const explicit = process.env.DATABASE_URL;
+  if (explicit) return explicit;
+
+  try {
+    return getConnectionString();
+  } catch (error) {
+    if (error instanceof MissingDatabaseConnectionError) {
+      throw new Error(
+        "No database connection. Netlify DB did not provide one and DATABASE_URL is unset. " +
+          "Locally, run `netlify dev` or set DATABASE_URL.",
+      );
+    }
+    throw error;
+  }
+}
+
+/**
  * The database handle, built on first use.
  *
  * Deliberately not a module-level constant. Next evaluates every route module
- * during the build, so a client constructed at import time needs the connection
- * string to exist at build time too, and the build fails on any environment
- * that does not have one: a fresh clone, CI, and every preview built before the
- * database was provisioned. Constructing on first call moves the requirement to
- * the moment a request actually needs the database, which is when it is a real
- * problem rather than an inherited one.
+ * during the build, so a client constructed at import time needs a connection
+ * string at build time too, and the build fails on any environment without one:
+ * a fresh clone, CI, and every preview built before the database existed.
  */
 export function getDb(): NeonHttpDatabase<typeof schema> {
   if (cached) return cached;
-
-  const url = process.env.NETLIFY_DATABASE_URL ?? process.env.DATABASE_URL;
-  if (!url) {
-    // Loud, and phrased as what it is: a deployment that is missing a variable,
-    // not a bug in whatever called this.
-    throw new Error(
-      "No database URL. Expected NETLIFY_DATABASE_URL (set by Netlify DB) or DATABASE_URL.",
-    );
-  }
-
-  cached = drizzle(neon(url), { schema });
+  cached = drizzle(neon(connectionString()), { schema });
   return cached;
 }
 
