@@ -182,13 +182,13 @@ describe("the registration form", () => {
 
 describe("looksAutomated", () => {
   it("says nothing about a normal submission", () => {
-    expect(looksAutomated({ website: "", elapsedMs: 45_000 })).toBeNull();
+    expect(looksAutomated({ hp_contact: "", elapsedMs: 45_000 })).toBeNull();
   });
 
   it("catches anything that filled the hidden field", () => {
     // No person can see or tab to it, so a value came from something filling
     // every input it found.
-    expect(looksAutomated({ website: "https://spam.example" })).toBe(
+    expect(looksAutomated({ hp_contact: "https://spam.example" })).toBe(
       "honeypot",
     );
   });
@@ -196,7 +196,7 @@ describe("looksAutomated", () => {
   it("ignores whitespace in the hidden field", () => {
     // A stray space is not a bot, and treating it as one silently drops a real
     // registration.
-    expect(looksAutomated({ website: "   ", elapsedMs: 30_000 })).toBeNull();
+    expect(looksAutomated({ hp_contact: "   ", elapsedMs: 30_000 })).toBeNull();
   });
 
   it("catches a form completed faster than a person could type it", () => {
@@ -224,7 +224,7 @@ describe("the honeypot in the parsed form", () => {
   it("is accepted as an ordinary optional field", () => {
     // It has to parse, not be rejected by validation, or the bot check never
     // runs and the schema does the rejecting with a visible error instead.
-    const result = registrationSchema.safeParse({ ...valid, website: "x" });
+    const result = registrationSchema.safeParse({ ...valid, hp_contact: "x" });
     expect(result.success).toBe(true);
   });
 });

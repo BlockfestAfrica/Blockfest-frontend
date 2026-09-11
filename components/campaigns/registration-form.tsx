@@ -151,7 +151,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
   };
 
   const shareLink = useMemo(() => {
-    if (!done) return "";
+    if (!done?.referralCode) return "";
     const origin = typeof window === "undefined" ? "" : window.location.origin;
     return `${origin}${monicaRoutes.join}?ref=${done.referralCode}`;
   }, [done]);
@@ -187,6 +187,16 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
             location: values.location || undefined,
             acceptedRules: true,
             rulesVersion: MONICA_RULES_VERSION,
+            // Both of these are the bot checks. They are spread in explicitly
+            // rather than carried by ...values, because `values` is typed to
+            // the visible fields only and silently omitted them: the checks
+            // existed, were tested in isolation, and never ran on one real
+            // request.
+            hp_contact: website,
+            // Zero means the mount effect has not run, which is not the same
+            // as "submitted instantly" and must not be reported as it.
+            elapsedMs:
+              shownAt.current === 0 ? undefined : Date.now() - shownAt.current,
           }),
         },
       );
@@ -200,7 +210,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       }
 
       track("campaign_registered", { campaign: "monica-money-story" });
-      setDone({ name: result.name, referralCode: result.referralCode });
+      setDone({ name: result.name, referralCode: result.referralCode ?? null });
     } catch {
       setFormError(
         "We could not reach the server. Check your connection and try again.",
@@ -252,37 +262,48 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
           your own account, then come back and submit the link.
         </p>
 
-        <div className="mt-6">
-          <p className="eyebrow text-white/60">Your referral link</p>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
-            Bring another creator in with this. Points land once they have their
-            first approved entry, so it is worth sending to people who will
-            actually post.
-          </p>
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-            <code className="flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
-              {shareLink}
-            </code>
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard?.writeText(shareLink);
-                setCopied(true);
-                track("campaign_referral_copied", {
-                  campaign: "monica-money-story",
-                });
-              }}
-              className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
-            >
-              {copied ? (
-                <Check className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Copy className="h-4 w-4" aria-hidden="true" />
-              )}
-              {copied ? "Copied" : "Copy"}
-            </button>
+        {shareLink ? (
+          <div className="mt-6">
+            <p className="eyebrow text-white/60">Your referral link</p>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+              Bring another creator in with this. Points land once they have
+              their first approved entry, so it is worth sending to people who
+              will actually post.
+            </p>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+              <code className="flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+                {shareLink}
+              </code>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(shareLink);
+                  setCopied(true);
+                  track("campaign_referral_copied", {
+                    campaign: "monica-money-story",
+                  });
+                }}
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                )}
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          // No code came back. Rather than render .../join?ref=null, say
+          // nothing about referrals and point at the campaign. This is the
+          // path a false positive on the bot checks lands on, and it must not
+          // hand somebody a broken link dressed as a reward.
+          <p className="mt-6 max-w-prose text-sm leading-relaxed text-white/60">
+            Your referral link will be on your dashboard shortly. If you do not
+            see it, get in touch at partnership@blockfestafrica.com.
+          </p>
+        )}
 
         <Link
           href={monicaRoutes.landing}
