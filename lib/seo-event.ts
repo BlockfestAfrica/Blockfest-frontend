@@ -1,10 +1,5 @@
 import { blockfest2026Lagos } from "./events";
-import {
-  TICKET_PLATFORM_URL,
-  EARLY_BIRD_ENDS,
-  ticketTiers,
-  lowestTicketPrice,
-} from "./tickets";
+import { TICKET_PLATFORM_URL, ticketTiers, lowestTicketPrice } from "./tickets";
 
 /**
  * Canonical structured data for the event.
@@ -64,7 +59,6 @@ function ticketOffer() {
     highPrice: Math.max(...prices),
     offerCount: ticketTiers.length,
     availability: "https://schema.org/InStock",
-    priceValidUntil: EARLY_BIRD_ENDS.iso.slice(0, 10),
   };
 }
 

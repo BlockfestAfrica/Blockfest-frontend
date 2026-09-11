@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import {
-  EARLY_BIRD_ENDS,
-  EARLY_BIRD_COUNT,
+  formatNaira,
+  lowestTicketPrice,
   PHOTOGRAPHY_NOTICE,
   TRANSFER_DEADLINE,
 } from "@/lib/tickets";
@@ -33,14 +33,10 @@ export function TicketPolicy() {
               </p>
               <p>Refunds are not provided for no-shows.</p>
               <p>
-                Early bird takes 25% off {EARLY_BIRD_COUNT} passes until{" "}
-                <span className="font-semibold text-white">
-                  {EARLY_BIRD_ENDS.display}
-                </span>
-                , after which they revert to standard pricing. The CORPORATE
-                CIRCLE team discount and the VIP passes are priced separately
-                and do not change on that date. A small processing fee is added
-                at checkout.
+                The early bird rate closed on 30 August and every pass is now at
+                standard pricing. The CORPORATE CIRCLE team rate is a standing
+                discount rather than a dated offer, so it is unchanged. A small
+                processing fee is added at checkout.
               </p>
             </div>
           </div>
@@ -67,7 +63,7 @@ export function TicketPolicy() {
             Lagos, October 2026.
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
-            Early bird runs until {EARLY_BIRD_ENDS.display}.
+            Ten passes, from {formatNaira(lowestTicketPrice)}.
           </p>
           <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
             <TicketCTA source="Tickets Page - Footer CTA" className="px-8">

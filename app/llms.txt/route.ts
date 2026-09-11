@@ -1,11 +1,13 @@
-import { blockfest2026Lagos, blockfest2025Lagos, lagos2026Tracks } from "@/lib/events";
+import {
+  blockfest2026Lagos,
+  blockfest2025Lagos,
+  lagos2026Tracks,
+} from "@/lib/events";
 import {
   ticketGroups,
   ticketTiers,
   tiersInGroup,
   formatNaira,
-  EARLY_BIRD_ENDS,
-  EARLY_BIRD_COUNT,
   TRANSFER_DEADLINE,
   TICKET_PLATFORM_URL,
 } from "@/lib/tickets";
@@ -38,15 +40,12 @@ export function GET() {
     .map((group) => {
       const rows = tiersInGroup(group.id)
         .map((t) => {
-          // Only tiers with a discountLabel are early bird. CORPORATE CIRCLE is
-          // discounted off its standard rate year-round, and saying otherwise
-          // would have an AI client quote a deadline that does not apply.
-          let price = formatNaira(t.price);
-          if (t.discountLabel && t.standardPrice) {
-            price = `${formatNaira(t.price)} early bird, ${formatNaira(t.standardPrice)} standard`;
-          } else if (t.standardPrice) {
-            price = `${formatNaira(t.price)}, a standing discount off ${formatNaira(t.standardPrice)}, not an early bird rate`;
-          }
+          // CORPORATE CIRCLE is the only pass still discounted, and it is a
+          // standing team rate rather than a dated offer — worth saying, so an
+          // AI client does not quote a deadline that does not exist.
+          const price = t.standardPrice
+            ? `${formatNaira(t.price)}, a standing team discount off ${formatNaira(t.standardPrice)}`
+            : formatNaira(t.price);
           const excludes = t.excludes?.length
             ? ` Does not include ${t.excludes.map((x) => x.charAt(0).toLowerCase() + x.slice(1)).join(", ")}.`
             : "";
@@ -90,9 +89,9 @@ export function GET() {
 
 ## Tickets
 
-Early bird takes 25% off ${EARLY_BIRD_COUNT} of the ${ticketTiers.length} passes and ends
-${EARLY_BIRD_ENDS.display}. The CORPORATE CIRCLE team discount and the VIP passes are
-priced independently of it. Prices are in Nigerian naira.
+All ${ticketTiers.length} passes are at standard pricing; the early bird rate closed on
+30 August 2026. The CORPORATE CIRCLE team discount is a standing rate and is
+unaffected. Prices are in Nigerian naira.
 Tickets are non-refundable but transferable until ${TRANSFER_DEADLINE.display}.
 
 ${tiers}

@@ -26,16 +26,10 @@ export function ticketUrl(source: string): string {
     source
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
+      .replace(/^-|-$/g, ""),
   );
   return url.toString();
 }
-
-/** Early bird pricing ends at the close of this day (WAT). */
-export const EARLY_BIRD_ENDS = {
-  iso: "2026-08-30T23:59:59+01:00",
-  display: "August 30, 2026",
-} as const;
 
 /** Consent notice shown at checkout — mirrored here so both read the same. */
 export const PHOTOGRAPHY_NOTICE =
@@ -64,10 +58,13 @@ export interface TicketTier {
   group: TicketGroupId;
   /** What you pay today. */
   price: number;
-  /** Struck-through price when a discount is running. */
+  /**
+   * Struck-through price, for the one pass that is still discounted. Only
+   * CORPORATE CIRCLE carries this: it is a standing team rate rather than a
+   * dated offer, so unlike the early bird that ran until 30 August it does not
+   * expire and does not need watching.
+   */
   standardPrice?: number;
-  /** Badge copy for the discount, e.g. "25% OFF". Omitted when there is none. */
-  discountLabel?: string;
   /** Which days the pass covers, e.g. "Day 2 · Conference". */
   /**
    * Which days the pass covers, one entry per day, each with its calendar date.
@@ -93,8 +90,7 @@ export const ticketGroups: TicketGroup[] = [
     id: "conference",
     title: "Conference Day",
     icon: "presentation",
-    description:
-      "Friday, October 23. Main stage and exhibition floor.",
+    description: "Friday, October 23. Main stage and exhibition floor.",
   },
   {
     id: "workshop",
@@ -118,9 +114,7 @@ export const ticketTiers: TicketTier[] = [
     id: "buidl-pass",
     name: "BUIDL PASS",
     group: "conference",
-    price: 7_500,
-    standardPrice: 10_000,
-    discountLabel: "25% OFF",
+    price: 10_000,
     days: [{ label: "Day 2 · Conference Day", date: "Fri 23 Oct" }],
     includes: ["Access to the main stage and exhibition area"],
     bestFor:
@@ -131,9 +125,7 @@ export const ticketTiers: TicketTier[] = [
     name: "BRIDGE PASS",
     bestSeller: true,
     group: "conference",
-    price: 15_000,
-    standardPrice: 20_000,
-    discountLabel: "25% OFF",
+    price: 20_000,
     days: [{ label: "Day 2 · Conference Day", date: "Fri 23 Oct" }],
     includes: ["Access to the main stage and exhibition area", "Lunch"],
     bestFor:
@@ -143,9 +135,7 @@ export const ticketTiers: TicketTier[] = [
     id: "become-pass",
     name: "BECOME PASS",
     group: "conference",
-    price: 26_250,
-    standardPrice: 35_000,
-    discountLabel: "25% OFF",
+    price: 35_000,
     days: [{ label: "Day 2 · Conference Day", date: "Fri 23 Oct" }],
     includes: [
       "Access to the main stage and exhibition area",
@@ -169,8 +159,7 @@ export const ticketTiers: TicketTier[] = [
       "Lunch",
       "Event merch",
     ],
-    bestFor:
-      "Companies sending a delegation. One purchase covers five people.",
+    bestFor: "Companies sending a delegation. One purchase covers five people.",
   },
 
   // ——— Day 1: Workshop & The Back Room ———
@@ -178,9 +167,7 @@ export const ticketTiers: TicketTier[] = [
     id: "buidl-plus",
     name: "BUIDL PLUS",
     group: "workshop",
-    price: 11_250,
-    standardPrice: 15_000,
-    discountLabel: "25% OFF",
+    price: 15_000,
     days: [
       { label: "Day 1 Morning · Workshop", date: "Thu 22 Oct" },
       { label: "Day 2 · Conference Day", date: "Fri 23 Oct" },
@@ -196,9 +183,7 @@ export const ticketTiers: TicketTier[] = [
     id: "become-plus",
     name: "BECOME PLUS",
     group: "workshop",
-    price: 30_000,
-    standardPrice: 40_000,
-    discountLabel: "25% OFF",
+    price: 40_000,
     days: [
       { label: "Day 1 Morning · Workshop", date: "Thu 22 Oct" },
       { label: "Day 2 · Conference Day", date: "Fri 23 Oct" },
@@ -217,9 +202,7 @@ export const ticketTiers: TicketTier[] = [
     id: "founder-circle",
     name: "FOUNDER CIRCLE",
     group: "workshop",
-    price: 33_750,
-    standardPrice: 45_000,
-    discountLabel: "25% OFF",
+    price: 45_000,
     days: [{ label: "Day 1 Evening · The Back Room", date: "Thu 22 Oct" }],
     includes: [
       "Access to pitch for funding",
@@ -340,7 +323,8 @@ export const idealAudience = [
   {
     title: "Ecosystem Operators",
     icon: "network",
-    description: "Scaling teams, products, and revenue across multiple markets.",
+    description:
+      "Scaling teams, products, and revenue across multiple markets.",
   },
   {
     title: "Creators & Artistes",
@@ -375,8 +359,7 @@ export const idealAudience = [
   {
     title: "Students & Emerging Talent",
     icon: "graduation-cap",
-    description:
-      "Building the skills and network needed to compete globally.",
+    description: "Building the skills and network needed to compete globally.",
   },
 ] as const;
 
@@ -387,19 +370,9 @@ export function formatNaira(amount: number): string {
 
 /** Cheapest ticket on sale — used for schema.org offers and hero copy. */
 export const lowestTicketPrice = Math.min(
-  ...ticketTiers.map((tier) => tier.price)
+  ...ticketTiers.map((tier) => tier.price),
 );
 
 export function tiersInGroup(groupId: TicketGroupId): TicketTier[] {
   return ticketTiers.filter((tier) => tier.group === groupId);
 }
-
-/**
- * Passes that actually carry the 25% early-bird cut.
- *
- * CORPORATE CIRCLE is discounted off its standard rate but is not an early
- * bird, and the four VIP passes have one price, so "early bird" copy must say
- * how many passes it covers rather than implying all ten.
- */
-export const earlyBirdTiers = ticketTiers.filter((tier) => tier.discountLabel);
-export const EARLY_BIRD_COUNT = earlyBirdTiers.length;

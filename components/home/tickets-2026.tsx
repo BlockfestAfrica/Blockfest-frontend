@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Check, Crown, Presentation, Wrench } from "lucide-react";
 import {
-  EARLY_BIRD_ENDS,
   formatNaira,
   ticketGroups,
   tiersInGroup,
@@ -13,7 +12,7 @@ import {
  * Homepage ticket teaser.
  *
  * The three cards group passes by which DAYS they cover, not by price, so a
- * per-card "from" figure misleads: the Conference card starts at ₦7,500 but
+ * per-card "from" figure misleads: the Conference card starts at ₦10,000 but
  * contains CORPORATE CIRCLE at ₦150,000, and sat beside a VIP card whose "from"
  * was that same ₦150,000. The cards now answer "which days am I coming?" and a
  * single range answers "what does it cost?". /tickets owns the real pricing.
@@ -37,7 +36,7 @@ export function Tickets2026Section() {
       <div className="container-page">
         <div className="mb-10 lg:mb-14">
           <p className="eyebrow text-white/60">
-            EARLY BIRD · ENDS {EARLY_BIRD_ENDS.display.toUpperCase()}
+            TICKETS · LAGOS, OCTOBER 22–24
           </p>
           <h2 className="text-display-sm mt-3 font-bold text-white">
             Three Days. Ten Passes.
