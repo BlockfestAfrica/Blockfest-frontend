@@ -5,7 +5,14 @@ import {
   type TicketTier,
 } from "@/lib/tickets";
 import { TicketCTA } from "./ticket-cta";
-import { CalendarDays, Check, Crown, Presentation, Wrench, X } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  Crown,
+  Presentation,
+  Wrench,
+  X,
+} from "lucide-react";
 
 function TierCard({ tier }: { tier: TicketTier }) {
   return (
@@ -47,9 +54,7 @@ function TierCard({ tier }: { tier: TicketTier }) {
       </div>
       {tier.standardPrice && (
         <p className="mt-2 text-xs font-semibold text-brand-gold">
-          {tier.discountLabel
-            ? `Early bird · ${tier.discountLabel}`
-            : "Team discount · not an early bird rate"}
+          Team discount
         </p>
       )}
 
@@ -83,7 +88,10 @@ function TierCard({ tier }: { tier: TicketTier }) {
         ))}
         {tier.excludes?.map((item) => (
           <li key={item} className="flex items-start gap-3">
-            <X className="mt-0.5 h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            <X
+              className="mt-0.5 h-4 w-4 shrink-0 text-white/40"
+              aria-hidden="true"
+            />
             <span className="text-sm leading-relaxed text-white/60">
               <span className="sr-only">Not included: </span>
               Does not include {item.charAt(0).toLowerCase() + item.slice(1)}
@@ -127,7 +135,10 @@ const groupIcons = {
 
 export function TicketTiers() {
   return (
-    <section id="tiers" className="section-y bg-ground border-t border-white/20">
+    <section
+      id="tiers"
+      className="section-y bg-ground border-t border-white/20"
+    >
       <div className="container-page">
         <div className="mb-10 lg:mb-14">
           <h2 className="text-display-sm font-bold text-white">
