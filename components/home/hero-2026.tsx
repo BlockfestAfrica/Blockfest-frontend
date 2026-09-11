@@ -7,21 +7,27 @@ import { Button } from "../ui/button";
 import { trackButtonClick } from "@/lib/sabilytics";
 import { blockfest2026Lagos } from "@/lib/events";
 import { calculateTimeLeft, type TimeLeft } from "@/lib/countdown";
-import { EARLY_BIRD_ENDS } from "@/lib/tickets";
+import { CURRENT_EDITION } from "@/lib/seo-event";
 import { ICS_PATH } from "@/lib/calendar";
 
-/** Days remaining until early bird closes, rendered as a line of type. */
-function EarlyBirdLine() {
+/**
+ * Days until the doors open, rendered as a line of type.
+ *
+ * This counted down to the early bird deadline until that passed on 30 August,
+ * at which point it sat on the homepage reading "0 days left on early bird
+ * pricing". The event itself is the deadline that is still ahead.
+ */
+function DaysToEvent() {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(
-    calculateTimeLeft(EARLY_BIRD_ENDS.iso)
+    calculateTimeLeft(CURRENT_EDITION.date.start),
   );
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const timer = setInterval(
-      () => setTimeLeft(calculateTimeLeft(EARLY_BIRD_ENDS.iso)),
-      60_000
+      () => setTimeLeft(calculateTimeLeft(CURRENT_EDITION.date.start)),
+      60_000,
     );
     return () => clearInterval(timer);
   }, []);
@@ -31,13 +37,12 @@ function EarlyBirdLine() {
       <span className="font-semibold tabular-nums text-brand-gold">
         {mounted ? timeLeft.days : "--"} days
       </span>{" "}
-      left on early bird pricing
+      until Lagos
     </p>
   );
 }
 
 export function HeroSection2026() {
-
   return (
     <section className="relative isolate overflow-hidden bg-ground">
       {/* The room, on the night. Everything else sits on top of it. */}
@@ -113,7 +118,7 @@ export function HeroSection2026() {
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
-            <EarlyBirdLine />
+            <DaysToEvent />
             <a
               href={ICS_PATH}
               onClick={() => trackButtonClick("Add to calendar", "Hero")}

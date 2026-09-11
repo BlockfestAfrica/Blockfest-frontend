@@ -4,11 +4,7 @@ import { useEffect, useState } from "react";
 import { Calendar, MapPin } from "lucide-react";
 import { calculateTimeLeft, type TimeLeft } from "@/lib/countdown";
 import { blockfest2026Lagos } from "@/lib/events";
-import {
-  EARLY_BIRD_ENDS,
-  formatNaira,
-  lowestTicketPrice,
-} from "@/lib/tickets";
+import { formatNaira, lowestTicketPrice } from "@/lib/tickets";
 import { TicketCTA } from "./ticket-cta";
 
 const units = (timeLeft: TimeLeft) => [
@@ -18,17 +14,22 @@ const units = (timeLeft: TimeLeft) => [
   { value: timeLeft.seconds, label: "sec" },
 ];
 
-/** Early bird countdown — renders dashes until mounted to keep SSR stable. */
-function EarlyBirdCountdown() {
+/**
+ * Countdown to the doors opening — dashes until mounted, to keep SSR stable.
+ *
+ * Counted down to the early bird deadline until it passed, after which it read
+ * 00:00:00:00 under the words "Early bird closes in".
+ */
+function EventCountdown() {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(
-    calculateTimeLeft(EARLY_BIRD_ENDS.iso)
+    calculateTimeLeft(blockfest2026Lagos.date.start),
   );
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft(EARLY_BIRD_ENDS.iso));
+      setTimeLeft(calculateTimeLeft(blockfest2026Lagos.date.start));
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -40,9 +41,7 @@ function EarlyBirdCountdown() {
           <span className="block text-2xl font-bold tabular-nums text-white sm:text-3xl">
             {mounted ? String(unit.value).padStart(2, "0") : "--"}
           </span>
-          <span className="eyebrow mt-1 block text-white/60">
-            {unit.label}
-          </span>
+          <span className="eyebrow mt-1 block text-white/60">{unit.label}</span>
         </div>
       ))}
     </div>
@@ -61,14 +60,20 @@ export function TicketHero() {
                 <Calendar className="h-4 w-4" aria-hidden="true" />
                 {blockfest2026Lagos.date.displayDate}
               </span>
-              <span className="hidden text-white/20 sm:inline" aria-hidden="true">
+              <span
+                className="hidden text-white/20 sm:inline"
+                aria-hidden="true"
+              >
                 ·
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" aria-hidden="true" />
                 {blockfest2026Lagos.location.venue}
               </span>
-              <span className="hidden text-white/20 sm:inline" aria-hidden="true">
+              <span
+                className="hidden text-white/20 sm:inline"
+                aria-hidden="true"
+              >
                 ·
               </span>
               <span>Three days</span>
@@ -82,12 +87,6 @@ export function TicketHero() {
               Africa&apos;s leading convention across AI, Web3, venture capital,
               technology, culture and careers.
             </p>
-
-            <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 py-2">
-              <span className="eyebrow text-white/90">
-                Early bird ends {EARLY_BIRD_ENDS.display}
-              </span>
-            </div>
           </div>
 
           {/*
@@ -103,10 +102,10 @@ export function TicketHero() {
           */}
           <div className="lg:col-span-5">
             <div className="rounded-xl border border-white/20 bg-white/5 p-6">
-              <p className="eyebrow text-white/60">Early bird closes in</p>
+              <p className="eyebrow text-white/60">Doors open in</p>
 
               <div className="mt-4">
-                <EarlyBirdCountdown />
+                <EventCountdown />
               </div>
 
               <TicketCTA

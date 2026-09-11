@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import { marketOpportunity } from "@/lib/events";
-import { EARLY_BIRD_ENDS } from "@/lib/tickets";
+import { formatNaira, lowestTicketPrice } from "@/lib/tickets";
 import "./subtle-animations.css";
 
 export function WhyAttend2026Section() {
@@ -143,7 +143,7 @@ export function WhyAttend2026Section() {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           <p className="mt-3 text-sm text-gray-500">
-            Early bird pricing until {EARLY_BIRD_ENDS.display}
+            Passes from {formatNaira(lowestTicketPrice)}
           </p>
         </div>
       </div>
