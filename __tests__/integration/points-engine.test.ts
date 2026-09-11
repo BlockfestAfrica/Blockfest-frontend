@@ -17,10 +17,9 @@
  * alone.
  */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { applyMigrations } from "../helpers/migrations";
 import { monicaPointLadder } from "@/lib/campaigns";
 
 const BASE = monicaPointLadder[0].points;
@@ -104,13 +103,7 @@ const approvedEntries = async (enrolmentId: string) =>
 
 beforeAll(async () => {
   db = new PGlite();
-  const dir = join(process.cwd(), "drizzle");
-  await db.exec(readFileSync(join(dir, "0000_init.sql"), "utf8"));
-  await db.exec(readFileSync(join(dir, "0001_points_engine.sql"), "utf8"));
-  await db.exec(
-    readFileSync(join(dir, "0002_atomic_registration.sql"), "utf8"),
-  );
-  await db.exec(readFileSync(join(dir, "0003_points_integrity.sql"), "utf8"));
+  await applyMigrations(db);
 
   const admin = await one<{ id: string }>(`
     INSERT INTO admin_users (email, email_canonical, password_hash)
