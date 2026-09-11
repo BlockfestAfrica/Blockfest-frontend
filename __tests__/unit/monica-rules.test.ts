@@ -34,6 +34,9 @@ describe("clauses that must exist before anyone enters", () => {
     ["separation from Monica's customer bonus", "customer referral bonus"],
     ["referral points gated on an approved entry", "first approved entry"],
     ["an amendment clause", "may be amended"],
+    ["a minimum age", "aged 18 or over"],
+    ["that prizes are naira only", "nigerian naira only"],
+    ["that prizes are paid gross", "paid gross"],
   ])("covers %s", (_label, needle) => {
     expect(allText).toContain(needle);
   });
@@ -84,8 +87,20 @@ describe("the document itself", () => {
     }
   });
 
-  it("is honest about what is not settled yet", () => {
-    // An invented eligibility age is worse than an admitted gap.
-    expect(monicaRulesOpenPoints.length).toBeGreaterThan(0);
+  it("does not leave a clause vague instead of listing it as unsettled", () => {
+    // The panel is empty now that eligibility and payment are decided. If a
+    // term becomes uncertain again it belongs in this list, where a creator can
+    // see it, rather than being softened inside a clause where they cannot.
+    for (const point of monicaRulesOpenPoints) {
+      expect(point.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it("states who may enter and from where", () => {
+    // Open internationally, but paid in naira. Somebody outside Nigeria must be
+    // able to learn both facts before they spend a month making content.
+    expect(allText).toContain("aged 18 or over");
+    expect(allText).toContain("do not have to live in nigeria");
+    expect(allText).toContain("receive naira");
   });
 });
