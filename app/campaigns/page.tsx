@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import { campaigns, type Campaign } from "@/lib/campaigns";
+import { campaignRun, campaigns, type Campaign } from "@/lib/campaigns";
 import { formatNaira } from "@/lib/tickets";
 import { SITE_URL } from "@/lib/seo-event";
 
@@ -34,18 +34,6 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/campaigns` },
 };
 
-/** e.g. "14 September – 17 October 2026", or nothing if the dates are unset. */
-function campaignDates(campaign: Campaign): string | null {
-  if (!campaign.startsAt || !campaign.endsAt) return null;
-  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "long" };
-  const from = new Date(campaign.startsAt).toLocaleDateString("en-GB", opts);
-  const to = new Date(campaign.endsAt).toLocaleDateString("en-GB", {
-    ...opts,
-    year: "numeric",
-  });
-  return `${from} – ${to}`;
-}
-
 /**
  * A campaign that is open.
  *
@@ -56,7 +44,7 @@ function campaignDates(campaign: Campaign): string | null {
  * carry the weight it deserves while the summary keeps a readable measure.
  */
 function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
-  const dates = campaignDates(campaign);
+  const dates = campaignRun(campaign);
 
   return (
     <Link

@@ -8,6 +8,7 @@ import { MonicaPrizes } from "@/components/campaigns/monica-prizes";
 import { MonicaFaq } from "@/components/campaigns/monica-faq";
 import {
   campaignBySlug,
+  MONICA_CAMPAIGN_DAYS,
   monicaRewardPool,
   monicaRoutes,
   MONICA_SLUG,
@@ -18,7 +19,7 @@ import { SITE_URL } from "@/lib/seo-event";
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
 
 const OG_TITLE = "Monica: The Money Story | Blockf3st Africa";
-const OG_DESCRIPTION = `A 30-day creator competition from Blockfest Africa. ${formatNaira(
+const OG_DESCRIPTION = `A ${MONICA_CAMPAIGN_DAYS}-day creator competition from Blockfest Africa. ${formatNaira(
   monicaRewardPool,
 )} in prizes across four stages. Are you skillful?`;
 
@@ -97,8 +98,8 @@ export default function MonicaMoneyStoryPage() {
               {CAMPAIGN.hook}
             </h2>
             <p className="mt-4 text-base leading-relaxed text-white/60">
-              Thirty days, one story, told by the community. Register once and
-              the first brief is waiting.
+              {MONICA_CAMPAIGN_DAYS} days, one story, told by the community.
+              Register once and the first brief is waiting.
             </p>
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
               <Link
