@@ -21,6 +21,7 @@
 
 import { sql } from "drizzle-orm";
 import {
+  bigserial,
   boolean,
   check,
   index,
@@ -283,6 +284,16 @@ export const campaignCreators = pgTable(
 
     /** Tie-break for ranking; set on the creator's first approved platform. */
     firstApprovedAt: timestamp("first_approved_at", { withTimezone: true }),
+    /**
+     * Which version of the rules this creator accepted, and when.
+     *
+     * The rules page tells every registrant that the version in force when they
+     * register is recorded against their entry, and the rules may be amended
+     * mid-campaign. Without this, "they accepted the rules" is not an answer to
+     * a dispute, because it does not say what they accepted.
+     */
+    acceptedRulesVersion: text("accepted_rules_version"),
+    acceptedRulesAt: timestamp("accepted_rules_at", { withTimezone: true }),
 
     joinedAt: timestamp("joined_at", { withTimezone: true })
       .notNull()
@@ -473,7 +484,12 @@ export const submissions = pgTable(
     /** One URL per platform per entry — and with a 3-value enum, max 3 rows. */
     uniqueIndex("submission_one_per_platform").on(t.entryId, t.platform),
     /** Stops the same post being submitted under two different entries. */
-    uniqueIndex("submission_url_unique").on(t.url),
+    // Partial on status. A rejected submission releases its URL: while the
+    // index ignored status, the first person to submit a URL owned it forever,
+    // so any public post could be burned before its author got there.
+    uniqueIndex("submission_url_unique_active")
+      .on(t.url)
+      .where(sql`${t.status} <> 'rejected'`),
     index("submission_status_idx").on(t.status, t.submittedAt),
     index("submission_entry_idx").on(t.entryId),
     check(
@@ -921,4 +937,29 @@ export const auditLog = pgTable(
     index("audit_entity_idx").on(t.entityType, t.entityId, t.createdAt),
     index("audit_campaign_idx").on(t.campaignId, t.createdAt),
   ],
+);
+
+/**
+ * Registration attempts, for rate limiting only.
+ *
+ * The per-address ceiling used to count rows in `creators`, which counted only
+ * registrations that succeeded. Every rejected attempt was free, so the
+ * duplicate-detection responses could be probed without limit to learn whether
+ * a given email, phone or handle was already registered.
+ *
+ * Only the address and the outcome are kept. Recording which email was tried
+ * would build a list of people who are not registered, which is a worse thing
+ * to hold than the thing it is protecting.
+ */
+export const registrationAttempts = pgTable(
+  "registration_attempts",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    ip: text("ip"),
+    outcome: text("outcome").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("registration_attempts_ip_time").on(t.ip, t.createdAt)],
 );
