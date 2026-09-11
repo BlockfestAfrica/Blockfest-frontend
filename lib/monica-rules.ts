@@ -34,7 +34,8 @@ export const monicaRules: RuleSection[] = [
     title: "Entering",
     paragraphs: [
       "The campaign runs from 14 September to 17 October 2026. It is organised by Blockfest Africa, with Monica as headline sponsor.",
-      "Entry is free and open to creators with an account on X, Instagram or TikTok. You register once, with the handles you will be publishing from.",
+      "Entry is free and open to creators aged 18 or over with an account on X, Instagram or TikTok. You register once, with the handles you will be publishing from.",
+      "You do not have to live in Nigeria to enter. Prizes are paid in Nigerian naira, though, so you do need an account that can receive naira. Read the payment section before entering if you are outside Nigeria.",
       "You must be the owner of the accounts you register. Entries published from an account you do not control will be rejected, and prizes are paid only to the person who registered.",
     ],
   },
@@ -123,9 +124,10 @@ export const monicaRules: RuleSection[] = [
     id: "payment",
     title: "Getting paid",
     paragraphs: [
+      "Prizes are paid in Nigerian naira only. We do not pay in any other currency, so you need an account that can receive naira. This applies wherever you live.",
       "Before a prize is paid we will ask you to verify your identity: government-issued identification matching the name you registered with, proof that you control the account you published from, and a bank account in that same name. We do not pay third-party accounts.",
       "Results are published with a 72-hour window for creators to raise a dispute before funds move.",
-      "You are responsible for any tax due on a prize.",
+      "Prizes are paid gross, with nothing deducted. Any tax due on what you receive is yours to declare and pay, wherever you are resident.",
     ],
   },
   {
@@ -141,11 +143,13 @@ export const monicaRules: RuleSection[] = [
 /**
  * Things the campaign team still has to decide.
  *
- * Shown on the page rather than guessed at. A minimum age invented by a
- * developer is not a term anybody can rely on, and a creator who finds out in
- * week three that they were never eligible has a fair complaint.
+ * Rendered on the page when there are any, rather than guessed at. A minimum
+ * age invented by a developer is not a term anybody can rely on, and a creator
+ * who finds out in week three that they were never eligible has a fair
+ * complaint.
+ *
+ * Empty now: eligibility is 18 and over with no residency requirement, and
+ * prizes are paid gross in naira. Both are written into the clauses above. Add
+ * to this list rather than leaving a clause vague if something else comes up.
  */
-export const monicaRulesOpenPoints = [
-  "Minimum age and whether entry is limited to residents of Nigeria.",
-  "The legal entity running the competition, and whether prizes are paid gross or net of Nigerian withholding tax.",
-];
+export const monicaRulesOpenPoints: string[] = [];
