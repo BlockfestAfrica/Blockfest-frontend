@@ -160,7 +160,7 @@ export const registrationSchema = z
      * filling every input it found, which is the cheapest signal there is and
      * costs a real creator nothing.
      */
-    website: z.string().max(200).optional(),
+    hp_contact: z.string().max(200).optional(),
     /**
      * Milliseconds between the form appearing and being submitted.
      *
@@ -214,10 +214,10 @@ export const MIN_HUMAN_FILL_MS = 2_500;
  * bot which check it failed is telling whoever wrote it what to change.
  */
 export function looksAutomated(input: {
-  website?: string;
+  hp_contact?: string;
   elapsedMs?: number;
 }): string | null {
-  if (input.website && input.website.trim() !== "") return "honeypot";
+  if (input.hp_contact && input.hp_contact.trim() !== "") return "honeypot";
   if (
     typeof input.elapsedMs === "number" &&
     input.elapsedMs < MIN_HUMAN_FILL_MS

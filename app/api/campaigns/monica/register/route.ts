@@ -53,9 +53,32 @@ function fail(message: string, status = 400, field?: string) {
  * act on.
  */
 export async function POST(request: NextRequest) {
+  /**
+   * A registration is well under a kilobyte. Anything larger is not a form.
+   *
+   * The App Router has no body size limit for route handlers: the
+   * bodyParser.sizeLimit option belongs to the Pages Router, and
+   * experimental.serverActions.bodySizeLimit covers Server Actions only. So
+   * without this, request.json() will buffer whatever is sent into the memory
+   * of a serverless function, which is a cheap way to make the endpoint
+   * expensive. Content-Length is checked first because it rejects the common
+   * case without reading anything, and the body is measured again after
+   * reading because that header is advisory and can simply be wrong.
+   */
+  const MAX_BODY_BYTES = 8 * 1024;
+
+  const declared = Number(request.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY_BYTES) {
+    return fail("That request is too large.", 413);
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    const raw = await request.text();
+    if (raw.length > MAX_BODY_BYTES) {
+      return fail("That request is too large.", 413);
+    }
+    body = JSON.parse(raw);
   } catch {
     return fail("We could not read that. Please try again.");
   }
