@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Lock } from "lucide-react";
 import { hasPassed } from "@/lib/countdown";
+import { CAMPAIGN_GATE_FORCED_OPEN } from "@/lib/campaigns";
 
 /**
  * The join control, which refuses to be a join control before the campaign opens.
@@ -46,7 +47,10 @@ export function CampaignJoinCTA({
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setOpen(hasPassed(opensAt));
+    // The forced-open flag has to be honoured here as well as in the form and
+    // the endpoint. Opening only the form leaves this control locked, and the
+    // page offers no other way in, so the flow cannot be reached at all.
+    setOpen(CAMPAIGN_GATE_FORCED_OPEN || hasPassed(opensAt));
   }, [opensAt]);
 
   const base =

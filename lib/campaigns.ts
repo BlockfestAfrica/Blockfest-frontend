@@ -137,6 +137,29 @@ export const liveCampaigns = campaigns.filter((c) => c.status === "live");
 /** The slug lives here so the routes are built from one string. */
 export const MONICA_SLUG = "monica-money-story";
 
+/**
+ * Lifts the opening-date gate before the campaign starts.
+ *
+ * Set deliberately, to work through the full registration flow against the real
+ * database ahead of launch. The database is wiped before the campaign opens, so
+ * anything registered while this is on is throwaway.
+ *
+ * One flag rather than a server one and a client one, because two flags can
+ * disagree and the failure would be silent: a form that renders against an
+ * endpoint that refuses it, or worse, the reverse. It is NEXT_PUBLIC_ because
+ * both sides read it and there is nothing here worth hiding. It is a boolean,
+ * not a key: it does not admit anyone who could not already find this page.
+ *
+ * Compared against the exact string, so anything unset, misspelt or truthy-ish
+ * leaves the gate shut. Turning it off means removing the variable and
+ * redeploying, since the value is compiled into the client bundle.
+ *
+ * After 14 September this flag stops mattering: the date has passed and the
+ * gate is open on its own.
+ */
+export const CAMPAIGN_GATE_FORCED_OPEN =
+  process.env.NEXT_PUBLIC_CAMPAIGN_GATE_OPEN === "true";
+
 export const monicaRoutes = {
   landing: `/campaigns/${MONICA_SLUG}`,
   /** Where the CTA sends people. Never /register: next.config.ts 308-redirects

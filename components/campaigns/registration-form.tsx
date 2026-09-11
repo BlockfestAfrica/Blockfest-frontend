@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, Copy, Lock } from "lucide-react";
 import { hasPassed } from "@/lib/countdown";
-import { monicaRoutes } from "@/lib/campaigns";
+import { CAMPAIGN_GATE_FORCED_OPEN, monicaRoutes } from "@/lib/campaigns";
 import { MONICA_RULES_VERSION } from "@/lib/monica-rules";
 import { track } from "@/lib/sabilytics";
 
@@ -140,7 +140,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       process.env.NODE_ENV !== "production" &&
       new URLSearchParams(window.location.search).get("preview") === "open";
 
-    setOpen(preview || hasPassed(opensAt));
+    setOpen(preview || CAMPAIGN_GATE_FORCED_OPEN || hasPassed(opensAt));
     setChecked(true);
     shownAt.current = Date.now();
   }, [opensAt]);
@@ -322,6 +322,24 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       noValidate
       className="flex flex-col gap-10 rounded-2xl border border-white/20 bg-white/5 p-6 sm:p-8"
     >
+      {/* Shown only while the gate has been opened ahead of the real date. A
+          creator who finds this page early would otherwise register in good
+          faith, share a referral code, and be quietly removed when the
+          database is cleared before launch. Telling them costs one paragraph;
+          not telling them costs somebody their referrals. */}
+      {CAMPAIGN_GATE_FORCED_OPEN && !hasPassed(opensAt) && (
+        <p
+          role="status"
+          className="rounded-lg border border-brand-gold/40 bg-brand-gold/10 px-4 py-3 text-sm leading-relaxed text-white/80"
+        >
+          <strong className="font-semibold text-white">
+            This is a test run.
+          </strong>{" "}
+          The campaign opens on Monday 14 September and everything registered
+          before then is deleted beforehand. Please register again on launch day
+          so your entry and referrals count.
+        </p>
+      )}
       {/* Not display:none, which some scripts skip, and not visibility:hidden
           either. It is pushed off-screen, taken out of the tab order and
           hidden from assistive technology, so a person never meets it and a
