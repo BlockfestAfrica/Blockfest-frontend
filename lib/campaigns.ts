@@ -23,6 +23,13 @@ export type CampaignStatus = "live" | "coming-soon" | "ended";
 export const CAMPAIGN_PLATFORMS = ["x", "instagram", "tiktok"] as const;
 export type CampaignPlatform = (typeof CAMPAIGN_PLATFORMS)[number];
 
+/** How each platform is written when shown to a creator. */
+export const platformLabels: Record<CampaignPlatform, string> = {
+  x: "X",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+};
+
 export interface Campaign {
   slug: string;
   name: string;
@@ -66,6 +73,56 @@ export const campaigns: Campaign[] = [
   },
 ];
 
+/**
+ * The event's own timezone, and the only one these dates may be read in.
+ *
+ * Without pinning it, formatting follows whatever timezone the code happens to
+ * run in, and the build runs in UTC. The campaign opens at midnight on the 14th
+ * in Lagos, which is 23:00 on the 13th in UTC, so an unpinned formatter
+ * prerenders "13 September" onto a page announcing a campaign that starts on
+ * the 14th. It formats correctly on a laptop in Lagos or London and wrongly on
+ * the server that actually builds the site.
+ */
+const CAMPAIGN_TIME_ZONE = "Africa/Lagos";
+
+/**
+ * The run of a campaign as one line, e.g. "14 September – 17 October 2026".
+ *
+ * The year appears once, on the end date, because repeating it reads as two
+ * separate dates rather than a span. An en dash, not an em dash: this is a
+ * range, and it matches how the rest of the site sets dates.
+ */
+export function campaignRun(campaign: Campaign): string | null {
+  if (!campaign.startsAt || !campaign.endsAt) return null;
+  const day: Intl.DateTimeFormatOptions = {
+    day: "numeric",
+    month: "long",
+    timeZone: CAMPAIGN_TIME_ZONE,
+  };
+  const from = new Date(campaign.startsAt).toLocaleDateString("en-GB", day);
+  const to = new Date(campaign.endsAt).toLocaleDateString("en-GB", {
+    ...day,
+    year: "numeric",
+  });
+  return `${from} \u2013 ${to}`;
+}
+
+/**
+ * When entries open, worded for a button, e.g. "Monday 14 September".
+ *
+ * The weekday is included deliberately. "14 September" asks the reader to go
+ * and check what day that is; "Monday 14 September" answers it.
+ */
+export function campaignOpensLabel(campaign: Campaign): string | null {
+  if (!campaign.startsAt) return null;
+  return new Date(campaign.startsAt).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: CAMPAIGN_TIME_ZONE,
+  });
+}
+
 export function campaignBySlug(slug: string): Campaign | undefined {
   return campaigns.find((campaign) => campaign.slug === slug);
 }
@@ -76,6 +133,21 @@ export const liveCampaigns = campaigns.filter((c) => c.status === "live");
 // ---------------------------------------------------------------------------
 // Monica: The Money Story
 // ---------------------------------------------------------------------------
+
+/** The slug lives here so the routes are built from one string. */
+export const MONICA_SLUG = "monica-money-story";
+
+export const monicaRoutes = {
+  landing: `/campaigns/${MONICA_SLUG}`,
+  /** Where the CTA sends people. Never /register: next.config.ts 308-redirects
+   *  that to the homepage permanently, and browsers cache permanent redirects,
+   *  so the breakage would outlive the fix. */
+  register: `/campaigns/${MONICA_SLUG}/register`,
+  /** Referral entry point. Sets the ref cookie, then forwards to register. */
+  join: `/campaigns/${MONICA_SLUG}/join`,
+  rules: `/campaigns/${MONICA_SLUG}/rules`,
+  pack: `/campaigns/${MONICA_SLUG}/pack`,
+} as const;
 
 export interface CampaignSkill {
   name: string;
@@ -105,6 +177,15 @@ export const monicaSkills: CampaignSkill[] = [
   },
 ];
 
+/**
+ * How many days the campaign runs.
+ *
+ * Day 1 is 14 September, so day 33 is 16 October and the published end date of
+ * 17 October is the close: the final standings, on the Saturday the standings
+ * always land on.
+ */
+export const MONICA_CAMPAIGN_DAYS = 33;
+
 export interface CampaignStage {
   number: number;
   name: string;
@@ -119,12 +200,15 @@ export interface CampaignStage {
 /**
  * The four stages.
  *
- * Note the arithmetic: the stages run to day 30, but the campaign window of
- * 14 September to 17 October is 33 days. The brief calls it a 30-day campaign
- * throughout while giving those dates, so the stage numbering is kept exactly
- * as written and the extra days sit at the end, where the final challenge and
- * judging fall. Worth settling with the campaign team rather than quietly
- * stretching a stage to cover it.
+ * The brief calls this a 30-day campaign while giving dates that do not make
+ * 30 days, so the campaign team settled it: 33. Day 1 is Monday 14 September
+ * and day 33 is Friday 16 October, which leaves Saturday 17 October as the
+ * close. That lands well rather than awkwardly, because Saturday is already
+ * the day standings are published every week, so the campaign ends on a final
+ * leaderboard rather than mid-week on a stage nobody finished.
+ *
+ * The extra three days go to the last stage. It is the one with the widest
+ * creative brief and the most at stake, so it is the one that benefits.
  */
 export const monicaStages: CampaignStage[] = [
   {
@@ -157,7 +241,7 @@ export const monicaStages: CampaignStage[] = [
   {
     number: 4,
     name: "The Money Story",
-    days: [22, 30],
+    days: [22, MONICA_CAMPAIGN_DAYS],
     question: "Tell Monica's story your way.",
     focus: "Maximum creative freedom, and your strongest single piece of work.",
     skills: ["Storytelling", "Creativity", "Education", "Influence"],
@@ -236,3 +320,93 @@ export const monicaFinalTotal = sum(monicaFinalPrizes);
  * checks this equals the advertised pool.
  */
 export const monicaRewardPool = monicaWeeklyTotal + monicaFinalTotal;
+
+export interface HowItWorksStep {
+  title: string;
+  detail: string;
+}
+
+/** The loop a creator repeats for the length of the campaign. */
+export const monicaHowItWorks: HowItWorksStep[] = [
+  {
+    title: "Join",
+    detail:
+      "Register once with your handles. You get the Creator Pack: brand assets, product facts, the claims you may and may not make, hashtags and handles.",
+  },
+  {
+    title: "Take the challenge",
+    detail:
+      "A new brief drops each weekend. How you answer it is yours: a thread, a reel, a skit, a carousel, an explainer, a street interview, an animation.",
+  },
+  {
+    title: "Publish and submit",
+    detail:
+      "Post it on your own account, then submit the link. Post the same piece on more than one platform and it still counts as one entry, worth more points.",
+  },
+  {
+    title: "Earn and climb",
+    detail:
+      "Approved entries score. Bonuses go to work that is genuinely good, gets featured, or brings another creator in. The leaderboard updates every Saturday.",
+  },
+];
+
+export interface CampaignFaq {
+  question: string;
+  answer: string;
+}
+
+/**
+ * Questions a creator asks before entering.
+ *
+ * Deliberately narrow. Everything here is answerable from the campaign brief;
+ * anything turning on legal wording, eligibility or how prize money is paid is
+ * left to the rules page rather than half-answered here, because a wrong answer
+ * about ₦5,000,000 is worse than a pointer to the page that governs it.
+ */
+export const monicaFaqs: CampaignFaq[] = [
+  {
+    question: "Who can enter?",
+    answer:
+      "Any creator with an audience on X, Instagram or TikTok. You do not need a large following. Judging weighs creativity, storytelling, relevance, consistency and reach together, so the competition is not simply won by the biggest account.",
+  },
+  {
+    question: "Does it cost anything?",
+    answer: "No. Entering is free, and you keep everything you make.",
+  },
+  {
+    question: "What counts as an entry?",
+    answer:
+      "One piece of content answering the current challenge, published on your own account and submitted as a link. We review it, and once approved it scores.",
+  },
+  {
+    question: "What if I post the same thing on all three platforms?",
+    answer:
+      "That is encouraged and it is worth more. Each approved platform is worth 100 points, so the same piece across X, Instagram and TikTok earns 300. It still counts as one challenge entry, not three.",
+  },
+  {
+    question: "How do referrals work?",
+    answer:
+      "You get a link that brings other creators into the campaign. Points are credited once the creator you brought in has their first approved entry, so you are rewarded for bringing in people who actually take part.",
+  },
+  {
+    question: "Is this the same as Monica's referral bonus?",
+    answer:
+      "No, and the two are kept entirely separate. Monica runs its own customer referral bonus as a product. It has nothing to do with campaign points, the leaderboard or the prize pool.",
+  },
+  {
+    question: "Do I have to say it is an ad?",
+    answer:
+      "Yes. Disclose the partnership on every entry. The Creator Pack tells you how, and which claims you may and may not make about a financial product.",
+  },
+  {
+    question: "Who owns the content I make?",
+    answer:
+      "You do. By entering you allow Blockfest Africa and Monica to reshare it with credit. The full terms are on the rules page.",
+  },
+];
+
+/** When the first standings are published. Day 1 has nobody on the board. */
+export const MONICA_FIRST_LEADERBOARD = "Saturday 19 September";
+
+/** Where campaign conversation happens, and how entries are found. */
+export const MONICA_HASHTAGS = ["#TheMoneyStory", "#AreYouSkillful"] as const;

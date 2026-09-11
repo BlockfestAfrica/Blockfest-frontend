@@ -16,6 +16,8 @@
 import { describe, expect, it } from "vitest";
 import {
   campaignBySlug,
+  campaignRun,
+  MONICA_CAMPAIGN_DAYS,
   campaigns,
   liveCampaigns,
   monicaFinalPrizes,
@@ -129,5 +131,54 @@ describe("the stages and skills", () => {
 
   it("tests all four skills in the final stage", () => {
     expect(monicaStages[3].skills).toHaveLength(monicaSkills.length);
+  });
+});
+
+describe("the campaign length", () => {
+  const campaign = campaignBySlug("monica-money-story")!;
+  const dayOne = new Date(campaign.startsAt!);
+  const lastDay = new Date(campaign.endsAt!);
+
+  /** The calendar date a given campaign day falls on. */
+  const dateOfDay = (day: number) =>
+    new Date(dayOne.getTime() + (day - 1) * 24 * 60 * 60 * 1000);
+
+  it("runs for the number of days the stages account for", () => {
+    // The brief said 30 days while giving dates that do not make 30. If the
+    // stages and the constant ever disagree again, a creator reading "day 33"
+    // on the page and counting the calendar will find the gap before we do.
+    const finalStage = monicaStages[monicaStages.length - 1];
+    expect(finalStage.days[1]).toBe(MONICA_CAMPAIGN_DAYS);
+  });
+
+  it("fits inside the published dates", () => {
+    // Day 33 is 16 October and the campaign closes on the 17th, which is a
+    // Saturday: the day standings are published every week. The last day must
+    // never fall past the end date.
+    expect(dateOfDay(MONICA_CAMPAIGN_DAYS).getTime()).toBeLessThanOrEqual(
+      lastDay.getTime(),
+    );
+  });
+
+  it("starts on day one and not before", () => {
+    expect(dateOfDay(1).toDateString()).toBe(dayOne.toDateString());
+  });
+});
+
+describe("campaignRun", () => {
+  it("writes the span with the year stated once", () => {
+    // Repeating the year reads as two dates rather than one span.
+    const run = campaignRun(campaignBySlug("monica-money-story")!);
+    expect(run).toBe("14 September \u2013 17 October 2026");
+  });
+
+  it("uses an en dash, never an em dash", () => {
+    const run = campaignRun(campaignBySlug("monica-money-story")!)!;
+    expect(run).toContain("\u2013");
+    expect(run).not.toContain("\u2014");
+  });
+
+  it("returns nothing for a campaign with no dates", () => {
+    expect(campaignRun(campaignBySlug("rovv")!)).toBeNull();
   });
 });
