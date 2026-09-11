@@ -33,7 +33,7 @@ export const monicaRules: RuleSection[] = [
     id: "entering",
     title: "Entering",
     paragraphs: [
-      "The campaign runs from 14 September to 17 October 2026. It is organised by Blockfest Africa, with Monica as headline sponsor.",
+      "The campaign runs from 14 September to 17 October 2026. It is organised by Blockfest Africa, with Monica as headline sponsor. Blockfest Africa is operated by Tevah Synergy, which is the entity responsible for this competition and for paying prizes.",
       "Entry is free and open to creators aged 18 or over with an account on X, Instagram or TikTok. You register once, with the handles you will be publishing from.",
       "You do not have to live in Nigeria to enter. Prizes are paid in Nigerian naira, though, so you do need an account that can receive naira. Read the payment section before entering if you are outside Nigeria.",
       "You must be the owner of the accounts you register. Entries published from an account you do not control will be rejected, and prizes are paid only to the person who registered.",
@@ -124,7 +124,7 @@ export const monicaRules: RuleSection[] = [
     id: "payment",
     title: "Getting paid",
     paragraphs: [
-      "Prizes are paid in Nigerian naira only. We do not pay in any other currency, so you need an account that can receive naira. This applies wherever you live.",
+      "Prizes are paid by Tevah Synergy in Nigerian naira only. We do not pay in any other currency, so you need an account that can receive naira. This applies wherever you live.",
       "Before a prize is paid we will ask you to verify your identity: government-issued identification matching the name you registered with, proof that you control the account you published from, and a bank account in that same name. We do not pay third-party accounts.",
       "Results are published with a 72-hour window for creators to raise a dispute before funds move.",
       "Prizes are paid gross, with nothing deducted. Any tax due on what you receive is yours to declare and pay, wherever you are resident.",
