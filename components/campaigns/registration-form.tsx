@@ -34,7 +34,28 @@ const EMPTY: Record<Field, string> = {
 };
 
 const inputClass =
-  "w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/35 focus:border-brand-gold focus:outline-none";
+  "w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none";
+
+/** A titled group of fields, so the form reads as three short asks. */
+function Section({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <h2 className="eyebrow text-white/60">{title}</h2>
+      {hint && (
+        <p className="mt-2 text-sm leading-relaxed text-white/50">{hint}</p>
+      )}
+      <div className="mt-5 flex flex-col gap-5">{children}</div>
+    </section>
+  );
+}
 
 function Labelled({
   label,
@@ -50,7 +71,7 @@ function Labelled({
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <label
         htmlFor={htmlFor}
         className="block text-sm font-semibold text-white"
@@ -58,7 +79,10 @@ function Labelled({
         {label}
       </label>
       {hint && <p className="mt-1 text-sm text-white/50">{hint}</p>}
-      <div className="mt-2">{children}</div>
+      {/* mt-auto so two fields side by side line up even when one hint wraps
+          to two lines and the other does not. Trimming the copy to match would
+          fix today's pair and break on the next one. */}
+      <div className="mt-auto pt-2">{children}</div>
       {error && (
         <p role="alert" className="mt-2 text-sm text-red-300">
           {error}
@@ -267,79 +291,108 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
   }
 
   return (
-    <form onSubmit={submit} noValidate className="flex max-w-xl flex-col gap-6">
-      <Labelled label="Full name" htmlFor="fullName" error={errors.fullName}>
-        <input
-          id="fullName"
-          name="fullName"
-          autoComplete="name"
-          required
-          value={values.fullName}
-          onChange={(e) => set("fullName")(e.target.value)}
-          className={inputClass}
-          placeholder="Ada Obi"
-        />
-      </Labelled>
+    <form
+      onSubmit={submit}
+      noValidate
+      className="flex flex-col gap-10 rounded-2xl border border-white/20 bg-white/5 p-6 sm:p-8"
+    >
+      <Section title="About you">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Labelled
+            label="Full name"
+            htmlFor="fullName"
+            error={errors.fullName}
+          >
+            <input
+              id="fullName"
+              name="fullName"
+              autoComplete="name"
+              required
+              value={values.fullName}
+              onChange={(e) => set("fullName")(e.target.value)}
+              className={inputClass}
+              placeholder="Ada Obi"
+            />
+          </Labelled>
+          <Labelled label="Email" htmlFor="email" error={errors.email}>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              required
+              value={values.email}
+              onChange={(e) => set("email")(e.target.value)}
+              className={inputClass}
+              placeholder="you@example.com"
+            />
+          </Labelled>
+        </div>
 
-      <Labelled
-        label="Email"
-        htmlFor="email"
-        hint="We contact shortlisted creators here, so use one you check."
-        error={errors.email}
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Labelled
+            label="Phone number"
+            htmlFor="phone"
+            hint="Country code if you are outside Nigeria."
+            error={errors.phone}
+          >
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              required
+              value={values.phone}
+              onChange={(e) => set("phone")(e.target.value)}
+              className={inputClass}
+              placeholder="0803 000 0000"
+            />
+          </Labelled>
+          <Labelled
+            label="What do you make?"
+            htmlFor="contentNiche"
+            hint="Comedy, finance, tech, lifestyle."
+            error={errors.contentNiche}
+          >
+            <input
+              id="contentNiche"
+              name="contentNiche"
+              required
+              value={values.contentNiche}
+              onChange={(e) => set("contentNiche")(e.target.value)}
+              className={inputClass}
+              placeholder="Finance explainers"
+            />
+          </Labelled>
+        </div>
+      </Section>
+
+      <Section
+        title="Where you will publish"
+        hint="At least one. Entries have to come from an account listed here, so add the ones you will actually post from."
       >
-        <input
-          id="email"
-          name="email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          required
-          value={values.email}
-          onChange={(e) => set("email")(e.target.value)}
-          className={inputClass}
-          placeholder="you@example.com"
-        />
-      </Labelled>
-
-      <Labelled
-        label="Phone number"
-        htmlFor="phone"
-        hint="Include your country code if you are outside Nigeria."
-        error={errors.phone}
-      >
-        <input
-          id="phone"
-          name="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          required
-          value={values.phone}
-          onChange={(e) => set("phone")(e.target.value)}
-          className={inputClass}
-          placeholder="0803 000 0000"
-        />
-      </Labelled>
-
-      <fieldset>
-        <legend className="text-sm font-semibold text-white">
-          Where you will publish
-        </legend>
-        <p className="mt-1 text-sm text-white/50">
-          At least one. Entries have to come from an account listed here, so add
-          the ones you will actually post from.
-        </p>
-        <div className="mt-3 flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
           {(
             [
-              ["x", "X", "yourhandle"],
-              ["instagram", "Instagram", "yourhandle"],
-              ["tiktok", "TikTok", "yourhandle"],
+              ["x", "X"],
+              ["instagram", "Instagram"],
+              ["tiktok", "TikTok"],
             ] as const
-          ).map(([field, label, placeholder]) => (
-            <div key={field} className="flex items-center gap-3">
-              <span className="w-24 shrink-0 text-sm text-white/60">
+          ).map(([field, label]) => (
+            // The platform sits inside the field rather than in a label column
+            // beside it, so the three rows line up as one control instead of
+            // three mismatched ones.
+            <div
+              key={field}
+              className="flex items-center gap-0 overflow-hidden rounded-lg border border-white/15 bg-ground focus-within:border-brand-gold"
+            >
+              <span className="w-24 shrink-0 border-r border-white/15 px-3 py-3 text-sm text-white/60">
                 {label}
+              </span>
+              <span className="pl-3 text-white/30" aria-hidden="true">
+                @
               </span>
               <input
                 id={field}
@@ -347,115 +400,102 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
                 aria-label={`${label} username`}
                 value={values[field]}
                 onChange={(e) => set(field)(e.target.value)}
-                className={inputClass}
-                placeholder={placeholder}
+                className="w-full bg-transparent px-2 py-3 text-base text-white placeholder:text-white/30 focus:outline-none"
+                placeholder="yourhandle"
               />
             </div>
           ))}
         </div>
         {errors.x && (
-          <p role="alert" className="mt-2 text-sm text-red-300">
+          <p role="alert" className="text-sm text-red-300">
             {errors.x}
           </p>
         )}
-      </fieldset>
+      </Section>
 
-      <Labelled
-        label="What do you make?"
-        htmlFor="contentNiche"
-        hint="Comedy, finance explainers, tech, lifestyle, whatever fits."
-        error={errors.contentNiche}
-      >
-        <input
-          id="contentNiche"
-          name="contentNiche"
-          required
-          value={values.contentNiche}
-          onChange={(e) => set("contentNiche")(e.target.value)}
-          className={inputClass}
-          placeholder="Finance explainers"
-        />
-      </Labelled>
+      <Section title="Optional" hint="Helps us understand who is taking part.">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Labelled
+            label="Audience size"
+            htmlFor="audienceSize"
+            hint="Roughly, across your accounts."
+            error={errors.audienceSize}
+          >
+            <input
+              id="audienceSize"
+              name="audienceSize"
+              inputMode="numeric"
+              value={values.audienceSize}
+              onChange={(e) =>
+                set("audienceSize")(e.target.value.replace(/\D/g, ""))
+              }
+              className={inputClass}
+              placeholder="5000"
+            />
+          </Labelled>
+          <Labelled label="Where you are" htmlFor="location">
+            <input
+              id="location"
+              name="location"
+              autoComplete="address-level2"
+              value={values.location}
+              onChange={(e) => set("location")(e.target.value)}
+              className={inputClass}
+              placeholder="Lagos, Nigeria"
+            />
+          </Labelled>
+        </div>
+      </Section>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Labelled
-          label="Audience size"
-          htmlFor="audienceSize"
-          hint="Optional. Roughly, across your accounts."
-          error={errors.audienceSize}
-        >
-          <input
-            id="audienceSize"
-            name="audienceSize"
-            inputMode="numeric"
-            value={values.audienceSize}
-            onChange={(e) =>
-              set("audienceSize")(e.target.value.replace(/\D/g, ""))
-            }
-            className={inputClass}
-            placeholder="5000"
-          />
-        </Labelled>
-        <Labelled label="Where you are" htmlFor="location" hint="Optional.">
-          <input
-            id="location"
-            name="location"
-            autoComplete="address-level2"
-            value={values.location}
-            onChange={(e) => set("location")(e.target.value)}
-            className={inputClass}
-            placeholder="Lagos, Nigeria"
-          />
-        </Labelled>
-      </div>
+      <div className="flex flex-col gap-6 border-t border-white/15 pt-8">
+        <div>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(e) => {
+                setAccepted(e.target.checked);
+                setErrors((err) => ({ ...err, acceptedRules: undefined }));
+              }}
+              className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-brand-gold"
+            />
+            <span className="text-sm leading-relaxed text-white/70">
+              I have read and accept the{" "}
+              <Link
+                href={monicaRoutes.rules}
+                className="text-link underline underline-offset-2 hover:text-white"
+              >
+                campaign rules
+              </Link>{" "}
+              (version {MONICA_RULES_VERSION}), and I am 18 or over. Blockfest
+              Africa may contact me about this campaign.
+            </span>
+          </label>
+          {errors.acceptedRules && (
+            <p role="alert" className="mt-2 text-sm text-red-300">
+              {errors.acceptedRules}
+            </p>
+          )}
+        </div>
 
-      <div>
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={accepted}
-            onChange={(e) => {
-              setAccepted(e.target.checked);
-              setErrors((err) => ({ ...err, acceptedRules: undefined }));
-            }}
-            className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-brand-gold"
-          />
-          <span className="text-sm leading-relaxed text-white/70">
-            I have read and accept the{" "}
-            <Link
-              href={monicaRoutes.rules}
-              className="text-link underline underline-offset-2 hover:text-white"
-            >
-              campaign rules
-            </Link>{" "}
-            (version {MONICA_RULES_VERSION}), and I am 18 or over. Blockfest
-            Africa may contact me about this campaign.
-          </span>
-        </label>
-        {errors.acceptedRules && (
-          <p role="alert" className="mt-2 text-sm text-red-300">
-            {errors.acceptedRules}
+        {formError && (
+          <p
+            role="alert"
+            className="rounded-lg border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200"
+          >
+            {formError}
           </p>
         )}
-      </div>
 
-      {formError && (
-        <p
-          role="alert"
-          className="rounded-lg border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200"
+        <button
+          type="submit"
+          disabled={submitting}
+          className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60 sm:self-start"
         >
-          {formError}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={submitting}
-        className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60 sm:self-start"
-      >
-        {submitting ? "Registering..." : "Join the challenge"}
-        {!submitting && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
-      </button>
+          {submitting ? "Registering..." : "Register for the campaign"}
+          {!submitting && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+        </button>
+      </div>
     </form>
   );
 }
