@@ -217,12 +217,26 @@ export const creatorSocialHandles = pgTable(
     handle: text("handle").notNull(),
     /** lowercased, leading @ stripped. */
     handleNormalized: text("handle_normalized").notNull(),
+    /**
+     * When ownership of this account was actually proven.
+     *
+     * Null means claimed but unproven. Registration cannot check that somebody
+     * controls the account they typed, so a claim is only a claim: unverified
+     * rows may collide with each other, and must never be used to attribute an
+     * entry to a creator. Exclusivity belongs to proof, not to whoever typed it
+     * first, or the handles of well-known creators can be taken in bulk.
+     */
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (t) => [
-    uniqueIndex("social_handle_unique").on(t.platform, t.handleNormalized),
+    // Partial: only a proven handle is exclusive. Two people may both claim
+    // the same unverified handle; at most one of them can ever verify it.
+    uniqueIndex("social_handle_unique_verified")
+      .on(t.platform, t.handleNormalized)
+      .where(sql`${t.verifiedAt} is not null`),
     uniqueIndex("social_handle_one_per_creator_platform").on(
       t.creatorId,
       t.platform,
@@ -285,10 +299,7 @@ export const campaignCreators = pgTable(
       t.firstApprovedAt.asc(),
     ),
     check("points_total_non_negative", sql`${t.pointsTotal} >= 0`),
-    check(
-      "approved_entries_non_negative",
-      sql`${t.approvedEntriesCount} >= 0`,
-    ),
+    check("approved_entries_non_negative", sql`${t.approvedEntriesCount} >= 0`),
   ],
 );
 
@@ -626,9 +637,12 @@ export const referrals = pgTable(
     codeUsed: text("code_used").notNull(),
 
     /** NULL until the bonus actually pays out. */
-    awardedLedgerId: uuid("awarded_ledger_id").references(() => pointLedger.id, {
-      onDelete: "set null",
-    }),
+    awardedLedgerId: uuid("awarded_ledger_id").references(
+      () => pointLedger.id,
+      {
+        onDelete: "set null",
+      },
+    ),
     awardedAt: timestamp("awarded_at", { withTimezone: true }),
 
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -846,11 +860,7 @@ export const resources = pgTable(
     ),
   },
   (t) => [
-    index("resources_section_idx").on(
-      t.campaignId,
-      t.section,
-      t.displayOrder,
-    ),
+    index("resources_section_idx").on(t.campaignId, t.section, t.displayOrder),
     check(
       "resource_has_content",
       sql`${t.body} IS NOT NULL OR ${t.url} IS NOT NULL`,
