@@ -8,7 +8,7 @@ import {
   REFERRAL_COOKIE,
   registrationSchema,
 } from "@/lib/campaign-registration";
-import { MONICA_SLUG } from "@/lib/campaigns";
+import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 
 /** postgres.js and the Neon driver need sockets; neither runs on the edge. */
 export const runtime = "nodejs";
@@ -128,8 +128,24 @@ export async function POST(request: NextRequest) {
     process.env.NODE_ENV !== "production" &&
     request.nextUrl.searchParams.get("preview") === "open";
 
+  // CAMPAIGN_GATE_FORCED_OPEN is the deliberate pre-launch opening, set to work
+  // through the real flow against the real database. Logged on every request it
+  // admits, because a gate that is open for a reason still needs to be visible
+  // in the logs of the days it was open.
+  const gateOpen = preview || CAMPAIGN_GATE_FORCED_OPEN;
+
   if (
-    !preview &&
+    CAMPAIGN_GATE_FORCED_OPEN &&
+    campaign.startsAt &&
+    campaign.startsAt.getTime() > Date.now()
+  ) {
+    console.warn(
+      "[campaign/register] registering before the campaign opens: NEXT_PUBLIC_CAMPAIGN_GATE_OPEN is set",
+    );
+  }
+
+  if (
+    !gateOpen &&
     campaign.startsAt &&
     campaign.startsAt.getTime() > Date.now()
   ) {
@@ -138,7 +154,7 @@ export async function POST(request: NextRequest) {
       403,
     );
   }
-  if (!preview && campaign.status !== "active") {
+  if (!gateOpen && campaign.status !== "active") {
     return fail("This campaign is not accepting registrations.", 403);
   }
 
