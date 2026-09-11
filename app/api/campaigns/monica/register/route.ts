@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
-import { campaigns, creators, getDb } from "@/lib/db/client";
+import { campaigns, getDb, registrationAttempts } from "@/lib/db/client";
 import {
   canonicalise,
   looksAutomated,
@@ -142,25 +142,44 @@ export async function POST(request: NextRequest) {
     return fail("This campaign is not accepting registrations.", 403);
   }
 
-  // A ceiling on how fast one address can register, deliberately generous.
-  // Nigerian mobile carriers put very large numbers of subscribers behind few
-  // addresses, so a tight per-IP limit would turn away real creators sharing a
-  // carrier NAT while barely inconveniencing anyone with a VPN. This is here to
-  // stop a runaway script, not to identify people, and the honeypot and timing
-  // checks above are what actually carry the load.
+  // A ceiling on how fast one address can register, counting ATTEMPTS rather
+  // than successes.
+  //
+  // This used to count rows in `creators`, which meant only registrations that
+  // succeeded consumed any budget. Every rejection was free, so the messages
+  // that name which field is already taken could be probed without limit to
+  // learn whether a given email, phone or handle belongs to somebody.
+  //
+  // The threshold stays deliberately generous. Nigerian mobile carriers put
+  // very large numbers of subscribers behind few addresses, so a tight limit
+  // turns away real creators sharing a carrier NAT while barely inconveniencing
+  // anyone with a VPN.
+  const recordAttempt = (outcome: string) =>
+    db
+      .insert(registrationAttempts)
+      .values({ ip, outcome })
+      .catch(() => {
+        // Rate-limit bookkeeping must never be the reason a genuine
+        // registration fails.
+      });
+
   if (ip) {
     const recent = await db
       .select({ n: sql<number>`count(*)::int` })
-      .from(creators)
+      .from(registrationAttempts)
       .where(
         and(
-          eq(creators.registrationIp, ip),
-          gt(creators.createdAt, new Date(Date.now() - 60 * 60 * 1000)),
+          eq(registrationAttempts.ip, ip),
+          gt(
+            registrationAttempts.createdAt,
+            new Date(Date.now() - 60 * 60 * 1000),
+          ),
         ),
       );
-    if ((recent[0]?.n ?? 0) >= 15) {
+    if ((recent[0]?.n ?? 0) >= 30) {
+      await recordAttempt("rate_limited");
       return fail(
-        "Too many registrations from this connection in the last hour. Try again later.",
+        "Too many registration attempts from this connection in the last hour. Try again later.",
         429,
       );
     }
@@ -186,9 +205,11 @@ export async function POST(request: NextRequest) {
         ${input.audienceSize ?? null}, ${input.location ?? null},
         ${handles.x}, ${handles.instagram}, ${handles.tiktok},
         ${ref || null}, ${ip}, ${userAgent},
-        ${newReferralCode()}
+        ${newReferralCode()}, ${input.rulesVersion}
       )
     `);
+
+    await recordAttempt("registered");
 
     const row = (result.rows?.[0] ?? {}) as {
       referral_code?: string;
@@ -206,6 +227,8 @@ export async function POST(request: NextRequest) {
     // The function raises these deliberately, so the field a person has to
     // change can be named without reading constraint names out of a driver
     // error. Every one of them rolled the whole registration back.
+    await recordAttempt("failed");
+
     if (message.includes("email_taken")) {
       return fail("That email address is already registered.", 409, "email");
     }

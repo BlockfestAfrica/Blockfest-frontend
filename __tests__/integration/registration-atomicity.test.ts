@@ -50,7 +50,7 @@ async function register(opts: {
       ${opts.instagram ? `'${opts.instagram}'` : "NULL"},
       NULL,
       ${opts.ref ? `'${opts.ref}'` : "NULL"},
-      '1.2.3.4', 'test', '${code}'
+      '1.2.3.4', 'test', '${code}', '1.0'
     )`);
 }
 
@@ -61,6 +61,7 @@ beforeAll(async () => {
     "0000_init.sql",
     "0001_points_engine.sql",
     "0002_atomic_registration.sql",
+    "0003_points_integrity.sql",
   ]) {
     await db.exec(readFileSync(join(dir, f), "utf8"));
   }
@@ -282,5 +283,29 @@ describe("referrals", () => {
       }),
     ).resolves.toBeTruthy();
     expect(await count(`SELECT count(*)::int AS n FROM referrals`)).toBe(0);
+  });
+});
+
+describe("consent", () => {
+  it("records which version of the rules was accepted", async () => {
+    // The rules page tells every registrant this is recorded. It was validated
+    // and then discarded, so the promise was not kept. Since the rules can be
+    // amended mid-campaign, "they accepted the rules" is not an answer.
+    await register({
+      email: "consent@example.com",
+      phone: "+2348060000001",
+      x: "consent",
+    });
+    const row = (
+      await db.query<{
+        accepted_rules_version: string;
+        accepted_rules_at: string;
+      }>(
+        `SELECT accepted_rules_version, accepted_rules_at FROM campaign_creators
+          ORDER BY joined_at DESC LIMIT 1`,
+      )
+    ).rows[0];
+    expect(row.accepted_rules_version).toBe("1.0");
+    expect(row.accepted_rules_at).toBeTruthy();
   });
 });

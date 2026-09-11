@@ -32,6 +32,8 @@ const BONUS_2 = TWO - BASE;
 const BONUS_3 = THREE - BASE;
 
 let db: PGlite;
+/** review() refuses to mint points without a named actor, so tests need one. */
+let adminId: string;
 
 /** Ids are generated per fixture so tests cannot collide through shared rows. */
 let seq = 0;
@@ -78,7 +80,7 @@ async function reviewPlatform(
   platform: string,
   status: "approved" | "rejected",
 ) {
-  await db.query(`SELECT review(id, '${status}') FROM submissions
+  await db.query(`SELECT review(id, '${status}', '${adminId}') FROM submissions
     WHERE entry_id = '${entryId}' AND platform = '${platform}'`);
 }
 
@@ -105,6 +107,16 @@ beforeAll(async () => {
   const dir = join(process.cwd(), "drizzle");
   await db.exec(readFileSync(join(dir, "0000_init.sql"), "utf8"));
   await db.exec(readFileSync(join(dir, "0001_points_engine.sql"), "utf8"));
+  await db.exec(
+    readFileSync(join(dir, "0002_atomic_registration.sql"), "utf8"),
+  );
+  await db.exec(readFileSync(join(dir, "0003_points_integrity.sql"), "utf8"));
+
+  const admin = await one<{ id: string }>(`
+    INSERT INTO admin_users (email, email_canonical, password_hash)
+    VALUES ('reviewer@blockfestafrica.com', 'reviewer@blockfestafrica.com', 'x')
+    RETURNING id`);
+  adminId = admin.id;
 }, 60_000);
 
 afterAll(async () => {
@@ -331,5 +343,102 @@ describe("the ladder in lib and the shape the schema accepts", () => {
     // A fourth tier in lib would be unreachable: the unique index on
     // (entry_id, platform) caps an entry at three.
     expect(monicaPointLadder.map((t) => t.platforms)).toEqual([1, 2, 3]);
+  });
+});
+
+describe("who approved it", () => {
+  it("refuses to mint points without a named actor", async () => {
+    // The action that decides how ₦5,000,000 is split used to be anonymous by
+    // construction: review() set a status and a timestamp and nothing else.
+    // There is deliberately no default for the actor, because a default is a
+    // way to keep doing it anonymously.
+    const { entryId } = await makeEntry();
+    await submit(entryId, ["x"]);
+    await expect(
+      db.query(
+        `SELECT review(id, 'approved', NULL) FROM submissions WHERE entry_id = '${entryId}'`,
+      ),
+    ).rejects.toThrow(/reviewer_required/);
+  });
+
+  it("records the reviewer against the submission", async () => {
+    const { entryId } = await makeEntry();
+    await submit(entryId, ["x"]);
+    await reviewPlatform(entryId, "x", "approved");
+
+    const row = await one<{ reviewed_by_admin_id: string | null }>(
+      `SELECT reviewed_by_admin_id FROM submissions WHERE entry_id = '${entryId}'`,
+    );
+    expect(row.reviewed_by_admin_id).toBe(adminId);
+  });
+});
+
+describe("first_approved_at", () => {
+  it("is set the first time a creator has an approved entry", async () => {
+    // Declared in the schema and never written, which is worse than absent:
+    // anything reading it silently got nothing. The published rules lean on a
+    // time-based tiebreak, so it has to exist in the data.
+    const { entryId, enrolmentId } = await makeEntry();
+    await submit(entryId, ["x"]);
+    await reviewPlatform(entryId, "x", "approved");
+
+    const row = await one<{ first_approved_at: string | null }>(
+      `SELECT first_approved_at FROM campaign_creators WHERE id = '${enrolmentId}'`,
+    );
+    expect(row.first_approved_at).not.toBeNull();
+  });
+
+  it("does not move once set, even if the approval is later reversed", async () => {
+    // Losing every approval afterwards does not change when they first had one.
+    const { entryId, enrolmentId } = await makeEntry();
+    await submit(entryId, ["x"]);
+    await reviewPlatform(entryId, "x", "approved");
+    const first = await one<{ t: string }>(
+      `SELECT first_approved_at AS t FROM campaign_creators WHERE id = '${enrolmentId}'`,
+    );
+
+    await reviewPlatform(entryId, "x", "rejected");
+    await reviewPlatform(entryId, "x", "approved");
+
+    const after = await one<{ t: string }>(
+      `SELECT first_approved_at AS t FROM campaign_creators WHERE id = '${enrolmentId}'`,
+    );
+    expect(String(after.t)).toBe(String(first.t));
+  });
+});
+
+describe("a rejected submission", () => {
+  it("releases its URL for the rightful author", async () => {
+    // While the uniqueness index ignored status, the first person to submit a
+    // URL owned it permanently. Anyone could burn a public post by claiming it
+    // and being rejected, and its real author could then never submit it.
+    const squatter = await makeEntry();
+    const author = await makeEntry();
+    const url = `https://x.com/real-post-${uniq()}`;
+
+    await db.query(
+      `INSERT INTO submissions (entry_id, platform, url) VALUES ('${squatter.entryId}', 'x', '${url}')`,
+    );
+    await reviewPlatform(squatter.entryId, "x", "rejected");
+
+    await expect(
+      db.query(
+        `INSERT INTO submissions (entry_id, platform, url) VALUES ('${author.entryId}', 'x', '${url}')`,
+      ),
+    ).resolves.toBeTruthy();
+  });
+
+  it("still stops two live submissions sharing a URL", async () => {
+    const a = await makeEntry();
+    const b = await makeEntry();
+    const url = `https://x.com/contested-${uniq()}`;
+    await db.query(
+      `INSERT INTO submissions (entry_id, platform, url) VALUES ('${a.entryId}', 'x', '${url}')`,
+    );
+    await expect(
+      db.query(
+        `INSERT INTO submissions (entry_id, platform, url) VALUES ('${b.entryId}', 'x', '${url}')`,
+      ),
+    ).rejects.toThrow();
   });
 });
