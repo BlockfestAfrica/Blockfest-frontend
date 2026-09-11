@@ -10,21 +10,21 @@ import { IdealAudience } from "@/components/tickets/ideal-audience";
 import { TicketPolicy } from "@/components/tickets/ticket-policy";
 import { EVENT_ID, SITE_URL, CURRENT_EDITION } from "@/lib/seo-event";
 import {
-  EARLY_BIRD_ENDS,
+  formatNaira,
+  lowestTicketPrice,
   TICKET_PLATFORM_URL,
   ticketTiers,
 } from "@/lib/tickets";
 
 export const metadata: Metadata = {
-  title: "Tickets - Blockf3st Africa '26 Lagos | Early Bird Open",
-  description:
-    "Secure your seat for Blockf3st Africa '26 in Lagos, October 22–24, 2026. Ten passes from ₦7,500 across workshops, the conference day, The Back Room and VIP. Early bird ends August 30, 2026.",
+  title: "Tickets - Blockf3st Africa '26 Lagos",
+  description: `Secure your seat for Blockf3st Africa '26 in Lagos, October 22–24, 2026. Ten passes from ${formatNaira(lowestTicketPrice)} across workshops, the conference day, The Back Room and VIP.`,
   keywords: [
     "blockfest africa tickets",
     "blockfest 2026 tickets",
     "web3 conference tickets lagos",
     "blockchain conference tickets nigeria",
-    "blockfest early bird",
+    "blockfest africa tickets price",
     "buidl pass",
     "bridge pass",
     "become pass",
@@ -33,8 +33,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Tickets - Blockf3st Africa '26 Lagos",
-    description:
-      "Three days of building, networking and dealmaking in Lagos. Early bird pricing ends August 30, 2026.",
+    description: `Three days of building, networking and dealmaking in Lagos. Ten passes from ${formatNaira(lowestTicketPrice)}.`,
     images: [
       {
         url: "/images/og-image.jpg",
@@ -46,8 +45,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     title: "Tickets - Blockf3st Africa '26 Lagos",
-    description:
-      "Three days of building, networking and dealmaking in Lagos. Early bird pricing ends August 30, 2026.",
+    description: `Three days of building, networking and dealmaking in Lagos. Ten passes from ${formatNaira(lowestTicketPrice)}.`,
     images: ["/images/twitter-image.jpg"],
   },
   alternates: {
@@ -71,12 +69,6 @@ function TicketOffersSchema() {
       priceCurrency: "NGN",
       availability: "https://schema.org/InStock",
       url: TICKET_PLATFORM_URL,
-      // Only the early-bird tiers expire on that date. CORPORATE CIRCLE is a
-      // standing team discount and the VIP passes have a single price, so
-      // neither should tell a consumer the price stops being valid.
-      ...(tier.discountLabel
-        ? { priceValidUntil: EARLY_BIRD_ENDS.iso.slice(0, 10) }
-        : {}),
     })),
     // The venue walkthrough, attached to the same Event node so a crawler or an
     // AI client reads it as footage of this edition rather than a loose file.
@@ -110,7 +102,7 @@ const TicketsPage = () => {
       <TicketsPageView />
 
       <main id="main">
-        {/* Secure your seat — early bird countdown + primary CTA */}
+        {/* Secure your seat — countdown to the doors + primary CTA */}
         <TicketHero />
 
         {/* See the room before the prices */}
