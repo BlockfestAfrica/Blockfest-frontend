@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Coins, Search } from "lucide-react";
+import { Coins } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Panel, Pill, SectionHeading } from "@/components/shared/panel";
@@ -49,23 +49,17 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
   const [awarding, setAwarding] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
-  const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("joinedAt");
   const [ascending, setAscending] = useState(false);
 
   const shown = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-
+    // Searching lives on the page now and runs in the database, so this only
+    // narrows by the chips.
     const filtered = rows.filter((row) => {
       if (filter === "submitted" && row.submitted === 0) return false;
       if (filter === "silent" && row.submitted > 0) return false;
       if (filter === "approved" && row.approved === 0) return false;
-      if (!needle) return true;
-      return (
-        row.name.toLowerCase().includes(needle) ||
-        row.email.toLowerCase().includes(needle) ||
-        row.handles.some((h) => h.toLowerCase().includes(needle))
-      );
+      return true;
     });
 
     const direction = ascending ? 1 : -1;
@@ -82,7 +76,7 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
           return (a[sort] - b[sort]) * direction;
       }
     });
-  }, [rows, filter, search, sort, ascending]);
+  }, [rows, filter, sort, ascending]);
 
   async function submitAward(
     enrolmentId: string,
@@ -104,7 +98,12 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
       const response = await fetch("/api/admin/award", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enrolmentId, source, points, note: note.trim() }),
+        body: JSON.stringify({
+          enrolmentId,
+          source,
+          points,
+          note: note.trim(),
+        }),
       });
       const result = await response.json();
 
@@ -154,41 +153,22 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
 
   return (
     <div className="mt-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setFilter(f.key)}
-              aria-pressed={filter === f.key}
-              className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-semibold transition-colors ${
-                filter === f.key
-                  ? "border-brand-gold/50 bg-brand-gold/10 text-brand-gold"
-                  : "border-white/15 text-white/60 hover:bg-white/5"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="relative sm:w-64">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60"
-            aria-hidden="true"
-          />
-          <label htmlFor="participant-search" className="sr-only">
-            Filter the loaded rows by name, email or handle
-          </label>
-          <input
-            id="participant-search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filter these rows"
-            className="min-h-11 w-full rounded-full border border-white/15 bg-white/[0.03] pl-9 pr-4 text-sm text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
-          />
-        </div>
+      <div className="flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => setFilter(f.key)}
+            aria-pressed={filter === f.key}
+            className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-semibold transition-colors ${
+              filter === f.key
+                ? "border-brand-gold/50 bg-brand-gold/10 text-brand-gold"
+                : "border-white/15 text-white/60 hover:bg-white/5"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {/* Said plainly, because the figures above the table are population counts
@@ -196,8 +176,8 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
           answer different questions, which is exactly the sort of thing that
           gets misread when nothing says so. */}
       <p className="mt-3 text-sm text-white/60">
-        These narrow the {rows.length} rows loaded here. Use the search above the
-        table to reach anybody else.
+        These narrow the {rows.length} rows loaded here. Use the search above
+        the table to reach anybody else.
       </p>
 
       {shown.length === 0 ? (
@@ -222,7 +202,9 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
                     <p className="truncate text-base font-semibold text-white">
                       {row.name}
                     </p>
-                    <p className="truncate text-sm text-white/60">{row.email}</p>
+                    <p className="truncate text-sm text-white/60">
+                      {row.email}
+                    </p>
                   </div>
                   <p className="shrink-0 text-2xl font-bold tabular-nums text-white">
                     {row.points}
@@ -287,16 +269,35 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white/60">
                     Handles
                   </th>
-                  <Th onClick={() => sortBy("joinedAt")} active={sort === "joinedAt"} ascending={ascending}>
+                  <Th
+                    onClick={() => sortBy("joinedAt")}
+                    active={sort === "joinedAt"}
+                    ascending={ascending}
+                  >
                     Joined
                   </Th>
-                  <Th onClick={() => sortBy("submitted")} active={sort === "submitted"} ascending={ascending} numeric>
+                  <Th
+                    onClick={() => sortBy("submitted")}
+                    active={sort === "submitted"}
+                    ascending={ascending}
+                    numeric
+                  >
                     Sent
                   </Th>
-                  <Th onClick={() => sortBy("approved")} active={sort === "approved"} ascending={ascending} numeric>
+                  <Th
+                    onClick={() => sortBy("approved")}
+                    active={sort === "approved"}
+                    ascending={ascending}
+                    numeric
+                  >
                     Approved
                   </Th>
-                  <Th onClick={() => sortBy("points")} active={sort === "points"} ascending={ascending} numeric>
+                  <Th
+                    onClick={() => sortBy("points")}
+                    active={sort === "points"}
+                    ascending={ascending}
+                    numeric
+                  >
                     Points
                   </Th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white/60">
@@ -362,7 +363,9 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
                         type="button"
                         onClick={() =>
                           setAwarding(
-                            awarding === row.enrolmentId ? null : row.enrolmentId,
+                            awarding === row.enrolmentId
+                              ? null
+                              : row.enrolmentId,
                           )
                         }
                         className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/5"
@@ -522,7 +525,9 @@ function AwardRow({
 
         <button
           type="button"
-          disabled={busy || !note.trim() || !Number.isFinite(value) || value === 0}
+          disabled={
+            busy || !note.trim() || !Number.isFinite(value) || value === 0
+          }
           onClick={() => onSubmit(source, value, note)}
           className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
