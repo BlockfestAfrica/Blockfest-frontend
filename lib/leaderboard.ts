@@ -117,18 +117,19 @@ export async function leaderboard(limit = 100): Promise<LeaderboardRow[]> {
 /**
  * Where one creator stands, for their own page.
  *
- * Deliberately its own query rather than a lookup inside the published board.
- * Two reasons, and the second is the one that matters.
+ * Its own SQL function rather than a lookup inside the published board, and the
+ * first version of this got that half right and half wrong.
  *
- * The board is capped, so finding somebody by scanning it returns null for
- * anybody outside the cap, and that null is indistinguishable from "no points
- * yet". Ranking in SQL scoped to one id has no cap to fall outside of.
+ * Right: the published row type is a hand-written whitelist that drops
+ * campaign_creator_id on purpose, with that column named in NEVER_PUBLISH, so
+ * matching on it through the public shape would mean widening the whitelist to
+ * serve a private page.
  *
- * And the published row type is a hand-written whitelist that drops
- * campaign_creator_id on purpose, with that column named in NEVER_PUBLISH. A
- * rank lookup needs to match on exactly that id, so doing it through the public
- * shape would mean widening the whitelist to serve a private page. This returns
- * a number and nothing else.
+ * Wrong: it called campaign_leaderboard with a limit of 100000 and a comment
+ * claiming there was no cap to fall outside of. The function clamps to 500, so
+ * the 501st creator got nothing back, and the page renders a missing rank as
+ * "Not ranked yet" exactly as it does for somebody with no approved entries.
+ * creator_rank is built on campaign_ranked, which has no limit at all.
  *
  * Fails soft, like leaderboard(): a creator's own page must still render when
  * the database is unreachable, with their rank simply absent.
@@ -137,24 +138,12 @@ export async function creatorRank(
   enrolmentId: string,
 ): Promise<number | null> {
   try {
-    /*
-     * Ordered the way the rules say, and the tiebreak is not first_approved_at.
-     *
-     * "Who reached that total first" is a property of the ledger, not of the
-     * first approval: somebody can reach 400 points long after their first
-     * entry was approved. campaign_leaderboard() replays the ledger to work
-     * this out, and this query has to agree with it or a creator's own page
-     * and the public board will disagree about who is ahead.
-     */
-    const result = await getDb().execute(sql`
-      WITH board AS (
-        SELECT campaign_creator_id, rank
-          FROM campaign_leaderboard(${MONICA_SLUG}, 100000)
-      )
-      SELECT rank FROM board WHERE campaign_creator_id = ${enrolmentId}::uuid
-    `);
+    const result = await getDb().execute(
+      sql`SELECT creator_rank(${MONICA_SLUG}, ${enrolmentId}::uuid) AS rank`,
+    );
 
-    const rank = (result.rows?.[0] as { rank?: number } | undefined)?.rank;
+    const rank = (result.rows?.[0] as { rank?: number | null } | undefined)
+      ?.rank;
     return rank === undefined || rank === null ? null : Number(rank);
   } catch (error) {
     console.warn(

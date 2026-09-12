@@ -172,6 +172,71 @@ export interface CreatorSubmission {
  * for is a rejection they will argue with rather than learn from.
  */
 /**
+ * Load a creator's page data without letting one failure take the page down.
+ *
+ * Everything on this page came from a single Promise.all, which rejects if any
+ * one of its promises does, and three of the five had no error handling at all.
+ * A blip on any of them returned a 500 to the creator, for the whole page,
+ * including the parts that had loaded.
+ *
+ * That is not hypothetical. This page spent an afternoon serving 500 to every
+ * signed-in creator, and if the same thing happens on launch morning it happens
+ * to all of them at once, on the one screen the campaign runs through.
+ *
+ * Each concern fails on its own now and says so, rather than silently reading
+ * as empty. An empty entry list where entries exist is worse than an error: the
+ * creator concludes their work was lost and submits it again.
+ */
+export interface CreatorPageData {
+  challenge: OpenChallenge | null;
+  platforms: string[];
+  submissions: CreatorSubmission[];
+  /** Which parts could not be read. Rendered as an honest gap, not as zero. */
+  failed: { challenge: boolean; platforms: boolean; submissions: boolean };
+}
+
+export async function creatorPageData(
+  enrolmentId: string,
+): Promise<CreatorPageData> {
+  const soft = async <T>(
+    load: () => Promise<T>,
+    fallback: T,
+    what: string,
+  ): Promise<{ value: T; failed: boolean }> => {
+    try {
+      return { value: await load(), failed: false };
+    } catch (error) {
+      console.warn(
+        `[creator-page] ${what} unavailable:`,
+        error instanceof Error ? error.message : String(error),
+      );
+      return { value: fallback, failed: true };
+    }
+  };
+
+  const [challenge, platforms, submissions] = await Promise.all([
+    soft(() => openChallenge(), null as OpenChallenge | null, "this week"),
+    soft(() => registeredPlatforms(enrolmentId), [] as string[], "platforms"),
+    soft(
+      () => creatorSubmissions(enrolmentId),
+      [] as CreatorSubmission[],
+      "entries",
+    ),
+  ]);
+
+  return {
+    challenge: challenge.value,
+    platforms: platforms.value,
+    submissions: submissions.value,
+    failed: {
+      challenge: challenge.failed,
+      platforms: platforms.failed,
+      submissions: submissions.failed,
+    },
+  };
+}
+
+/**
  * Which platforms are genuinely used up for the open week.
  *
  * A rejected entry does NOT use one up, and that is not a nicety. Migration

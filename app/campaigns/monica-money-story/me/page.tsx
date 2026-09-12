@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
 import {
-  creatorSubmissions,
+  creatorPageData,
   currentCreator,
-  openChallenge,
   platformsUsedThisWeek,
-  registeredPlatforms,
   type CreatorSubmission,
 } from "@/lib/creator-session";
 import { creatorRank } from "@/lib/leaderboard";
@@ -134,13 +132,23 @@ export default async function MonicaCreatorPage() {
     );
   }
 
-  const [challenge, platforms, mine, pause, rank] = await Promise.all([
-    openChallenge(),
-    registeredPlatforms(creator.enrolmentId),
-    creatorSubmissions(creator.enrolmentId),
+  /*
+   * Each part fails on its own.
+   *
+   * These used to be five promises in one Promise.all, three of them with no
+   * error handling, so a blip on any one returned a 500 for the whole page
+   * including the parts that had loaded. pauseState and creatorRank already
+   * failed soft; creatorPageData does the same for the other three and reports
+   * which ones could not be read, so a gap is shown as a gap rather than as
+   * zero entries.
+   */
+  const [data, pause, rank] = await Promise.all([
+    creatorPageData(creator.enrolmentId),
     pauseState(),
     creatorRank(creator.enrolmentId),
   ]);
+
+  const { challenge, platforms, submissions: mine, failed } = data;
 
   // Rejected entries deliberately do not count: see platformsUsedThisWeek.
   const usedThisWeek = challenge
@@ -323,6 +331,16 @@ export default async function MonicaCreatorPage() {
                 )}
               </div>
             </HeadedPanel>
+          ) : failed.challenge ? (
+            <Panel tone="warn" className="mt-8">
+              <h2 className="text-xl font-bold text-white">
+                We could not load this week
+              </h2>
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
+                Something went wrong at our end, not with your entry. Refresh in
+                a moment. Nothing you have already sent is affected.
+              </p>
+            </Panel>
           ) : (
             <Panel tone="quiet" className="mt-8">
               <h2 className="text-xl font-bold text-white">
@@ -384,7 +402,14 @@ export default async function MonicaCreatorPage() {
               Your entries{mine.length > 0 ? ` (${mine.length})` : ""}
             </h2>
 
-            {mine.length === 0 ? (
+            {failed.submissions ? (
+              /* Never "nothing yet" when we simply could not read them. A
+                 creator who believes their work was lost submits it again. */
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-amber-200/80">
+                We could not load your entries just now. They are safe. Refresh
+                in a moment.
+              </p>
+            ) : mine.length === 0 ? (
               <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/55">
                 Nothing yet. Publish your answer on your own account, then paste
                 the link above.

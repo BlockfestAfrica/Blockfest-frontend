@@ -6,7 +6,7 @@
  * the only symptom was a message telling the creator something untrue.
  */
 
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { platformsUsedThisWeek } from "@/lib/creator-session";
 
 type Row = { weekNo: number; platform: string; status: string };
@@ -62,5 +62,64 @@ describe("which platforms are used up", () => {
 
   it("handles a creator with nothing submitted", () => {
     expect(platformsUsedThisWeek([], 1)).toEqual([]);
+  });
+});
+
+/**
+ * One failing query must not take the whole page down.
+ *
+ * This page served 500 to every signed-in creator for an afternoon. Everything
+ * on it came from a single Promise.all, which rejects if any one promise does,
+ * and three of the five loads had no error handling at all. On launch morning a
+ * database blip on any one of them would do it to every creator at once.
+ */
+describe("loading a creator's page when part of it fails", () => {
+  const mods = {
+    openChallenge: vi.fn(),
+    registeredPlatforms: vi.fn(),
+    creatorSubmissions: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    for (const fn of Object.values(mods)) fn.mockReset();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  async function load() {
+    vi.doMock("@/lib/db/client", () => ({ getDb: () => ({}) }));
+    const real = await vi.importActual<
+      typeof import("@/lib/creator-session")
+    >("@/lib/creator-session");
+    return real;
+  }
+
+  it("reports a failure rather than reading as empty", async () => {
+    // The distinction that matters. A creator shown "nothing yet" when their
+    // entries merely could not be read concludes their work was lost, and
+    // submits it again.
+    const { creatorPageData } = await load();
+    const data = await creatorPageData("not-a-real-uuid");
+
+    expect(data.submissions, "falls back to empty").toEqual([]);
+    expect(
+      data.failed.submissions,
+      "but says so, so the page does not claim there are none",
+    ).toBe(true);
+  });
+
+  it("does not reject, whatever happens underneath", async () => {
+    const { creatorPageData } = await load();
+    await expect(creatorPageData("not-a-real-uuid")).resolves.toBeTruthy();
+  });
+
+  it("tells the caller which parts are missing, not just that something is", async () => {
+    const { creatorPageData } = await load();
+    const data = await creatorPageData("not-a-real-uuid");
+    expect(Object.keys(data.failed).sort()).toEqual([
+      "challenge",
+      "platforms",
+      "submissions",
+    ]);
   });
 });
