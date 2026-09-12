@@ -415,7 +415,7 @@ export const monicaFaqs: CampaignFaq[] = [
   {
     question: "How do referrals work?",
     answer:
-      "You get a link that brings other creators into the campaign. Points are credited once the creator you brought in has their first approved entry, so you are rewarded for bringing in people who actually take part.",
+      "You get a link that brings other creators into the campaign. Each one is worth 50 points, credited once the creator you brought in has their first approved entry, so you are rewarded for bringing in people who actually take part rather than for sending sign-ups.",
   },
   {
     question: "Is this the same as Monica's referral bonus?",

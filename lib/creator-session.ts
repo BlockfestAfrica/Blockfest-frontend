@@ -171,6 +171,29 @@ export interface CreatorSubmission {
  * Includes the review note, because a rejection a creator cannot see the reason
  * for is a rejection they will argue with rather than learn from.
  */
+/**
+ * Which platforms are genuinely used up for the open week.
+ *
+ * A rejected entry does NOT use one up, and that is not a nicety. Migration
+ * 0011 replaced the unique index with a partial one on status <> 'rejected'
+ * specifically so a creator told to change something could change it and send
+ * it again. The page was filtering on week alone, so a rejection removed that
+ * platform from the dropdown for the rest of the week and a creator with one
+ * registered account was told they had submitted everywhere and lost the week.
+ * The database allowed the fix and the form refused to offer it.
+ *
+ * Pure and exported so the rule is tested rather than inlined in a server
+ * component where nothing can reach it.
+ */
+export function platformsUsedThisWeek(
+  submitted: Pick<CreatorSubmission, "weekNo" | "platform" | "status">[],
+  weekNo: number,
+): string[] {
+  return submitted
+    .filter((s) => s.weekNo === weekNo && s.status !== "rejected")
+    .map((s) => s.platform);
+}
+
 export async function creatorSubmissions(
   enrolmentId: string,
 ): Promise<CreatorSubmission[]> {

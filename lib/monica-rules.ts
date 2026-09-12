@@ -54,8 +54,10 @@ export const monicaRules: RuleSection[] = [
     title: "Points",
     paragraphs: [
       "An approved entry earns 100 points per approved platform, to a maximum of 300 for all three.",
-      "Additional points may be awarded for work judged exceptional, for entries we feature, for collaborations with other creators, and for winning a wildcard challenge. These are awarded at our discretion and the amount is recorded against your account.",
-      "Point values may be adjusted during the campaign. Points already awarded are not recalculated, so an adjustment never changes a total you have already earned.",
+      "Additional points may be awarded for work judged exceptional, for reaching a notable audience milestone with an entry, for entries featured by Blockfest Africa or by Monica, for collaborations with other creators, and for winning a wildcard challenge. Each of these is capped at 300 points, except a wildcard win which is capped at 600.",
+        "Bonuses are awarded at our discretion. Every one is recorded against your account with the reason, and you can see it on your own page.",
+      "Point values may be adjusted during the campaign. Changing a value does not recalculate points already awarded, so a change to the rate never restates what you have already earned.",
+        "Points can be taken back in two cases, and only these two: an entry that stops meeting the rules after approval, covered below, and a correction of a mistake we made. A correction is recorded against your account with the reason, the same way an award is.",
       "The leaderboard counts approved entries. Publishing one entry on three platforms earns more points but remains a single entry for that count.",
     ],
   },
@@ -63,7 +65,7 @@ export const monicaRules: RuleSection[] = [
     id: "referrals",
     title: "Referrals",
     paragraphs: [
-      "You receive a link that brings other creators into the campaign. Points are credited when the creator you referred has their first approved entry, not when they register.",
+      "You receive a link that brings other creators into the campaign. Each creator you bring in is worth 50 points, credited once, when they have their first approved entry rather than when they register.",
       "You may not refer yourself, or register more than one account. Accounts that appear to exist only to generate referrals will be removed along with any points they produced.",
       "This is separate from Monica's own customer referral bonus, which is a Monica product offer. It has no connection to campaign points, the leaderboard or the prize pool, and taking part in one has no effect on the other.",
     ],

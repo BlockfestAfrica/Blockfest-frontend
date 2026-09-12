@@ -1,3 +1,5 @@
+import { sendEmail } from "@/lib/email/client";
+import { personalLink, reissueEmail } from "@/lib/email/templates";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
@@ -6,7 +8,7 @@ import { requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { hashAccessToken, newAccessToken } from "@/lib/creator-access";
 import { canonicalEmail } from "@/lib/campaign-registration";
-import { MONICA_SLUG, monicaRoutes } from "@/lib/campaigns";
+import { MONICA_SLUG } from "@/lib/campaigns";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,7 +69,13 @@ export async function POST(request: NextRequest) {
   const db = getDb();
 
   const found = await db
-    .select({ enrolmentId: campaignCreators.id, name: creators.fullName })
+    .select({
+      enrolmentId: campaignCreators.id,
+      name: creators.fullName,
+      // As typed. canonicalEmail strips dots and plus tags to match, and
+      // sending to the stripped form delivers somewhere they may not read.
+      email: creators.email,
+    })
     .from(campaignCreators)
     .innerJoin(creators, eq(creators.id, campaignCreators.creatorId))
     .innerJoin(campaigns, eq(campaigns.id, campaignCreators.campaignId))
@@ -106,10 +114,35 @@ export async function POST(request: NextRequest) {
     creator.enrolmentId,
   );
 
+  const link = personalLink(token);
+
+  /*
+   * Emailed AND still returned to the admin, deliberately.
+   *
+   * The obvious next step is to stop showing the admin the link now that it can
+   * be emailed. That would be a trap: the rotation above has already destroyed
+   * the old token, so if the send then fails the creator is locked out by the
+   * very tool meant to let them back in, and nothing anywhere can recover the
+   * new one. Worse, the commonest reason somebody needs a reissue is that they
+   * mistyped their address at registration, which is exactly the case where the
+   * mail cannot arrive.
+   *
+   * So the email is an addition. The admin keeps the copy they can read out.
+   */
+  const result = await sendEmail(
+    reissueEmail({ to: creator.email, fullName: creator.name, personalLink: link }),
+  );
+
+  if (!result.sent) {
+    console.warn("[admin/creator-link] email not sent:", result.reason);
+  }
+
   return NextResponse.json({
     ok: true,
     name: creator.name,
+    // Whether the admin still has to pass this on by hand.
+    emailed: result.sent,
     // Returned once, to this admin, to pass on. Only the hash is stored.
-    link: `${request.nextUrl.origin}${monicaRoutes.enter}?t=${token}`,
+    link,
   });
 }

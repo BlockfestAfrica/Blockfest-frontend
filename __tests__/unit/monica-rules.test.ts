@@ -64,7 +64,58 @@ describe("the points clauses", () => {
 
   it("promises that changing a point value is not retroactive", () => {
     // Otherwise an admin adjusting a setting silently reorders the leaderboard.
-    expect(allText).toContain("not recalculated");
+    // Asserted on the promise rather than on one phrasing of it: the clause was
+    // reworded when the take-back cases were added below, and a test pinned to
+    // the old words failed while the guarantee was intact.
+    expect(allText).toMatch(
+      /does not recalculate points already awarded|points already awarded are not recalculated/i,
+    );
+  });
+
+  /**
+   * The referral payout was set in the database and published nowhere.
+   *
+   * These rules are the governing document and their version is recorded
+   * against every registration, so a payout that is not here is not a term
+   * anybody agreed to.
+   */
+  it("publishes what a referral is actually worth", () => {
+    expect(allText).toContain("50 points");
+  });
+
+  /**
+   * The clause used to say an adjustment never changes a total already earned.
+   * Clause 8 forfeits points on a deleted entry, and every manual point source
+   * carries a negative floor so a mistake can be corrected. The document
+   * promised something two other parts of the same system are built to do.
+   */
+  it("admits the two cases where points can be taken back", () => {
+    expect(allText).toMatch(/taken back/i);
+    expect(allText, "and says a correction is recorded with its reason").toMatch(
+      /correction is recorded/i,
+    );
+  });
+
+  /**
+   * engagement_milestone is seeded in point_rules and offered in the admin UI,
+   * and appeared in no published list. An admin could award points for a reason
+   * nobody entering had been told about.
+   */
+  it("names every bonus an admin can actually award", () => {
+    for (const bonus of [
+      "exceptional",
+      "audience milestone",
+      "featured",
+      "collaborations",
+      "wildcard",
+    ]) {
+      expect(allText.toLowerCase()).toContain(bonus);
+    }
+  });
+
+  it("publishes the ceiling on a bonus, since the database enforces one", () => {
+    expect(allText).toContain("capped at 300");
+    expect(allText).toContain("capped at 600");
   });
 });
 

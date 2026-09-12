@@ -34,6 +34,25 @@ export function SubmissionForm({
   const available = platforms.filter((p) => !alreadySubmitted.includes(p));
 
   const [platform, setPlatform] = useState<string>(available[0] ?? "");
+
+  /*
+   * The platform actually posted, derived rather than stored.
+   *
+   * router.refresh() re-renders the server component and passes down a new
+   * alreadySubmitted, but it does not remount this client component, so
+   * `platform` kept whatever was chosen before the submit. A creator who posted
+   * on X and then wanted TikTok saw a select rendered blank, because the stored
+   * value matched no remaining option, and the next submit still posted X and
+   * came back "You have already submitted on that platform" for a platform they
+   * had not picked. Nothing on screen suggested reloading, and the point ladder
+   * exists to encourage exactly this second post.
+   *
+   * Derived during render rather than corrected in an effect, so there is no
+   * frame where the form disagrees with itself.
+   */
+  const selected: string = available.some((p) => p === platform)
+    ? platform
+    : available[0] ?? "";
   const [url, setUrl] = useState("");
   const [error, setError] = useState<{ field?: string; message: string } | null>(
     null,
@@ -60,7 +79,7 @@ export function SubmissionForm({
       const response = await fetch("/api/campaigns/monica/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ platform, url }),
+        body: JSON.stringify({ platform: selected, url }),
       });
       const result = await response.json();
 
@@ -99,7 +118,7 @@ export function SubmissionForm({
         </label>
         <select
           id="platform"
-          value={platform}
+          value={selected}
           onChange={(e) => setPlatform(e.target.value)}
           className="w-full cursor-pointer rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white focus:border-brand-gold focus:outline-none"
         >
