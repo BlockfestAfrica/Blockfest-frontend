@@ -29,9 +29,33 @@ export const runtime = "nodejs";
 export function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("t")?.trim() ?? "";
 
-  const response = NextResponse.redirect(
-    new URL(monicaRoutes.me, request.url),
-  );
+  /*
+   * A relative Location, because request.url is not the visitor's URL.
+   *
+   * On Netlify, request.url carries the deploy's own host, so
+   * main--<site>.netlify.app rather than blockfestafrica.com, and
+   * new URL(path, request.url) therefore sends people off the domain they
+   * typed. The cookie set below is host-only for the domain they were actually
+   * on, so it does not travel with them: they land on a different host with no
+   * session and are told we do not know who they are, having just clicked the
+   * link from their own welcome email.
+   *
+   * A relative Location is resolved by the browser against the URL it asked
+   * for, which is the public domain by definition. It cannot be wrong the way a
+   * reconstructed origin can, and it needs no environment variable to be right.
+   *
+   * One honest caveat. The platform re-appends the original query string to a
+   * redirect, so the token can still appear in the address bar on the
+   * destination, which the paragraph above wished away. /me ignores query
+   * parameters entirely and reads only the cookie, and Referrer-Policy is
+   * strict-origin-when-cross-origin, so the value is not sent to another site.
+   * It is in browser history either way, since the link in the email contains
+   * it.
+   */
+  const response = new NextResponse(null, {
+    status: 307,
+    headers: { Location: monicaRoutes.me },
+  });
 
   if (looksLikeAccessToken(token)) {
     response.cookies.set(CREATOR_SESSION_COOKIE, token, {

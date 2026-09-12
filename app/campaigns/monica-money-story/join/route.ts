@@ -32,9 +32,19 @@ export const runtime = "nodejs";
 export function GET(request: NextRequest) {
   const ref = request.nextUrl.searchParams.get("ref")?.trim() ?? "";
 
-  const response = NextResponse.redirect(
-    new URL(monicaRoutes.register, request.url),
-  );
+  /*
+   * Relative, for the reason spelled out in the enter route: request.url on
+   * Netlify is the deploy host, not the visitor's domain, so an absolute
+   * redirect built from it leaves blockfestafrica.com. Here the cost is
+   * quieter and worse. The referral cookie set on this response is host-only
+   * for the domain the visitor was on, so it does not follow them, and they
+   * register with no referrer recorded. Nothing fails, nobody sees an error,
+   * and the creator who brought them in is simply never paid.
+   */
+  const response = new NextResponse(null, {
+    status: 307,
+    headers: { Location: monicaRoutes.register },
+  });
 
   // Referral codes are short and alphanumeric. Anything else is somebody
   // probing, and it is never echoed back into the page, so it is dropped
