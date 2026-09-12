@@ -3,7 +3,7 @@ import Link from "next/link";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { pauseState } from "@/lib/campaign-pause";
 import { ConsoleTabs, type ConsoleTab } from "@/components/admin/console-tabs";
-import { Panel, Pill } from "@/components/shared/panel";
+import { Pill } from "@/components/shared/panel";
 import { campaignBySlug, MONICA_SLUG } from "@/lib/campaigns";
 
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
@@ -99,44 +99,37 @@ export default async function AdminLayout({
       <header className="sticky top-0 z-40 border-b border-white/12 bg-ground/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl items-center gap-4 px-4 lg:px-8">
           <ConsoleTabs tabs={tabs} />
-          <div className="ml-auto hidden items-center gap-2 sm:flex">
-            <span className="max-w-[14rem] truncate text-sm text-white/60">
+          {/*
+           * The campaign state, once, quietly, in the chrome.
+           *
+           * This started as a full-width coloured panel above every screen, so
+           * that a reviewer whose queue stopped filling would know the campaign
+           * had been stopped rather than assume the work had dried up. That
+           * reasoning still holds, but a panel was the wrong size for it: on the
+           * Campaign screen, which is itself about the state, it produced the
+           * same sentence three times in two near-identical red boxes.
+           *
+           * A pill in the header carries the same signal on every screen, is
+           * never the loudest thing on any of them, and cannot be duplicated by
+           * a page that is already about it.
+           */}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {pause.paused ? (
+              <Pill tone="bad">Paused</Pill>
+            ) : notOpenYet ? (
+              <Pill>Opens 14 Sep</Pill>
+            ) : null}
+            <span className="hidden max-w-[14rem] truncate text-sm text-white/60 sm:block">
               {admin.admin.email}
             </span>
-            <Pill tone={owner ? "gold" : "neutral"}>{admin.admin.role}</Pill>
+            <span className="hidden sm:block">
+              <Pill tone={owner ? "gold" : "neutral"}>{admin.admin.role}</Pill>
+            </span>
           </div>
         </div>
       </header>
 
       <div className="mx-auto w-full max-w-5xl px-4 py-8 lg:px-8 lg:py-12">
-        {pause.paused ? (
-          <Panel tone="danger" className="mb-8">
-            <p className="eyebrow text-red-300">Campaign paused</p>
-            <h2 className="mt-2 text-xl font-bold text-white">
-              Nobody can register or submit
-            </h2>
-            <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/75">
-              Creators are being told: {pause.reason ?? "no reason recorded"}.
-              Nothing new will arrive in the queue until it is started again.
-            </p>
-            {owner && (
-              <Link
-                href="/admin/campaign"
-                className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-white underline underline-offset-4"
-              >
-                Start it again
-              </Link>
-            )}
-          </Panel>
-        ) : notOpenYet ? (
-          <Panel tone="warn" className="mb-8">
-            <p className="text-sm leading-relaxed text-white/75">
-              Not open yet. Registration opens Monday 14 September, so an empty
-              queue is expected until then.
-            </p>
-          </Panel>
-        ) : null}
-
         {children}
       </div>
     </main>

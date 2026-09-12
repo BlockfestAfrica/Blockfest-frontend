@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pause, Play } from "lucide-react";
 import { toast } from "sonner";
-import { Panel } from "@/components/shared/panel";
 
 /**
  * Stop the campaign, without a deploy.
@@ -22,13 +21,7 @@ import { Panel } from "@/components/shared/panel";
  * Resuming needs no reason and no confirmation. Getting the campaign back is
  * the thing that should be easiest.
  */
-export function PauseSwitch({
-  paused,
-  reason,
-}: {
-  paused: boolean;
-  reason: string | null;
-}) {
+export function PauseSwitch({ paused }: { paused: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState("");
@@ -67,25 +60,31 @@ export function PauseSwitch({
   }
 
   if (paused) {
+    /*
+     * The control only.
+     *
+     * This was a danger Panel carrying an eyebrow reading Paused, a heading
+     * reading "Nobody can register or submit", and the reason. Whatever renders
+     * it says all three above it, so the screen stated the same fact three times
+     * inside two near-identical red boxes. Whoever renders this owns the
+     * explanation; this owns the button.
+     */
     return (
-      <Panel tone="danger">
-        <p className="eyebrow text-red-300">Paused</p>
-        <h2 className="mt-2 text-xl font-bold text-white">
-          Nobody can register or submit
-        </h2>
-        <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
-          Creators are being told: {reason ?? "no reason recorded"}
-        </p>
+      <div className="max-w-2xl">
         <button
           type="button"
           disabled={busy}
           onClick={() => flip(false)}
-          className="mt-5 inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:opacity-60"
+          className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:opacity-60"
         >
           <Play className="h-4 w-4" aria-hidden="true" />
           {busy ? "Working..." : "Start the campaign again"}
         </button>
-      </Panel>
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/60">
+          Registration and submissions resume at once. Nothing anybody has
+          already sent is affected.
+        </p>
+      </div>
     );
   }
 
