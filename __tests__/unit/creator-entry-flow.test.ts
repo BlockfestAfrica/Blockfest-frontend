@@ -94,6 +94,16 @@ describe("loading a creator's page when part of it fails", () => {
     return real;
   }
 
+  it("does not let a broken points history read as no points", async () => {
+    // The total above the list comes from campaign_creators and is correct even
+    // when the ledger read fails. An empty list beside a non-zero total would
+    // have a creator believing their bonuses were taken away.
+    const { creatorPageData } = await load();
+    const data = await creatorPageData("not-a-real-uuid");
+    expect(data.history).toEqual([]);
+    expect(data.failed.history).toBe(true);
+  });
+
   it("reports a failure rather than reading as empty", async () => {
     // The distinction that matters. A creator shown "nothing yet" when their
     // entries merely could not be read concludes their work was lost, and
@@ -118,6 +128,7 @@ describe("loading a creator's page when part of it fails", () => {
     const data = await creatorPageData("not-a-real-uuid");
     expect(Object.keys(data.failed).sort()).toEqual([
       "challenge",
+      "history",
       "platforms",
       "submissions",
     ]);

@@ -6,9 +6,10 @@ import {
   campaigns,
   challengeEntries,
   challenges,
-  creators,
   creatorSocialHandles,
+  creators,
   getDb,
+  pointLedger,
   submissions,
 } from "@/lib/db/client";
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
@@ -172,6 +173,68 @@ export interface CreatorSubmission {
  * for is a rejection they will argue with rather than learn from.
  */
 /**
+ * Every movement of a creator's points, for their own page.
+ *
+ * The rules make two promises that nothing rendered: that every bonus is
+ * "recorded against your account with the reason, and you can see it on your
+ * own page", and that a correction is recorded the same way. The ledger has
+ * carried both since manual awards shipped, and no creator-facing query read
+ * it, so a creator whose total moved saw it move and never why.
+ *
+ * The whole ledger, not just the bonuses. A creator checking an unexpected
+ * total wants the arithmetic to add up, and a list that omits the entries it is
+ * mostly made of does not.
+ *
+ * The admin who awarded it is deliberately not returned. The note carries the
+ * reason, which is what a creator needs; a name invites an argument with a
+ * person instead of a reply to partnership@, and the audit log already records
+ * who for the cases where that matters.
+ */
+export interface PointMovement {
+  id: string;
+  source: string;
+  points: number;
+  note: string | null;
+  /** The week, when the movement came from an entry rather than a bonus. */
+  weekNo: number | null;
+  at: Date;
+}
+
+export async function pointHistory(
+  enrolmentId: string,
+): Promise<PointMovement[]> {
+  const db = getDb();
+
+  const rows = await db
+    .select({
+      id: pointLedger.id,
+      source: pointLedger.source,
+      points: pointLedger.points,
+      note: pointLedger.note,
+      weekNo: challenges.weekNo,
+      at: pointLedger.createdAt,
+    })
+    .from(pointLedger)
+    // Left-joined all the way: a bonus has no entry, and a row that vanished
+    // because it was not tied to a challenge would make the arithmetic on the
+    // page stop adding up, which is the one thing this list has to do.
+    .leftJoin(challengeEntries, eq(challengeEntries.id, pointLedger.entryId))
+    .leftJoin(challenges, eq(challenges.id, challengeEntries.challengeId))
+    .where(eq(pointLedger.campaignCreatorId, enrolmentId))
+    .orderBy(desc(pointLedger.createdAt))
+    .limit(200);
+
+  return rows.map((row) => ({
+    id: row.id,
+    source: String(row.source),
+    points: Number(row.points ?? 0),
+    note: row.note,
+    weekNo: row.weekNo ?? null,
+    at: row.at,
+  }));
+}
+
+/**
  * Load a creator's page data without letting one failure take the page down.
  *
  * Everything on this page came from a single Promise.all, which rejects if any
@@ -191,8 +254,14 @@ export interface CreatorPageData {
   challenge: OpenChallenge | null;
   platforms: string[];
   submissions: CreatorSubmission[];
+  history: PointMovement[];
   /** Which parts could not be read. Rendered as an honest gap, not as zero. */
-  failed: { challenge: boolean; platforms: boolean; submissions: boolean };
+  failed: {
+    challenge: boolean;
+    platforms: boolean;
+    submissions: boolean;
+    history: boolean;
+  };
 }
 
 export async function creatorPageData(
@@ -214,7 +283,7 @@ export async function creatorPageData(
     }
   };
 
-  const [challenge, platforms, submissions] = await Promise.all([
+  const [challenge, platforms, submissions, history] = await Promise.all([
     soft(() => openChallenge(), null as OpenChallenge | null, "this week"),
     soft(() => registeredPlatforms(enrolmentId), [] as string[], "platforms"),
     soft(
@@ -222,16 +291,19 @@ export async function creatorPageData(
       [] as CreatorSubmission[],
       "entries",
     ),
+    soft(() => pointHistory(enrolmentId), [] as PointMovement[], "points"),
   ]);
 
   return {
     challenge: challenge.value,
     platforms: platforms.value,
     submissions: submissions.value,
+    history: history.value,
     failed: {
       challenge: challenge.failed,
       platforms: platforms.failed,
       submissions: submissions.failed,
+      history: history.failed,
     },
   };
 }

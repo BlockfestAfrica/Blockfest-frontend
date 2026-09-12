@@ -1,3 +1,4 @@
+import { pointSourceLabel } from "@/lib/point-sources";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
@@ -78,12 +79,14 @@ function closingLabel(endsAt: Date): string {
  * "waiting to be reviewed" while printing the raw database token as its label.
  */
 function statusPill(status: string) {
-  const map: Record<string, { tone: "neutral" | "good" | "bad"; label: string }> =
-    {
-      pending: { tone: "neutral", label: "Waiting to be reviewed" },
-      approved: { tone: "good", label: "Approved" },
-      rejected: { tone: "bad", label: "Needs a change" },
-    };
+  const map: Record<
+    string,
+    { tone: "neutral" | "good" | "bad"; label: string }
+  > = {
+    pending: { tone: "neutral", label: "Waiting to be reviewed" },
+    approved: { tone: "good", label: "Approved" },
+    rejected: { tone: "bad", label: "Needs a change" },
+  };
   const known = map[status];
   // An unmapped status says so rather than presenting itself as understood.
   return known ?? { tone: "neutral" as const, label: "In review" };
@@ -195,7 +198,7 @@ export default async function MonicaCreatorPage() {
     creatorRank(creator.enrolmentId),
   ]);
 
-  const { challenge, platforms, submissions: mine, failed } = data;
+  const { challenge, platforms, submissions: mine, history, failed } = data;
 
   // Rejected entries deliberately do not count: see platformsUsedThisWeek.
   const usedThisWeek = challenge
@@ -360,8 +363,8 @@ export default async function MonicaCreatorPage() {
                         "We have stopped submissions for a moment. Nothing you have already sent is affected."}
                     </p>
                     <p className="mt-2 text-sm leading-relaxed text-white/55">
-                      The brief above still stands, so you can keep working. Come
-                      back and paste your link when this clears.
+                      The brief above still stands, so you can keep working.
+                      Come back and paste your link when this clears.
                     </p>
                   </Panel>
                 ) : failed.platforms ? (
@@ -462,6 +465,68 @@ export default async function MonicaCreatorPage() {
             </p>
           </div>
 
+          {/*
+           * How the total was arrived at.
+           *
+           * The rules promise that every bonus is "recorded against your
+           * account with the reason, and you can see it on your own page", and
+           * that a correction is recorded the same way. Nothing creator-facing
+           * read the ledger, so a creator whose total moved saw it move and
+           * never why.
+           *
+           * The whole ledger, not just the bonuses: somebody checking an
+           * unexpected total wants the arithmetic to add up, and a list missing
+           * the entries it is mostly made of does not.
+           */}
+          {(history.length > 0 || failed.history) && (
+            <div className="mt-12">
+              <h2 className="text-xl font-bold text-white">Your points</h2>
+
+              {failed.history ? (
+                <p className="mt-3 max-w-prose text-sm leading-relaxed text-amber-200/80">
+                  We could not load the breakdown just now. Your total above is
+                  correct. Refresh in a moment.
+                </p>
+              ) : (
+                <ul className="mt-5 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/12">
+                  {history.map((movement) => (
+                    <li
+                      key={movement.id}
+                      className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-4"
+                    >
+                      <span className="text-sm font-semibold text-white">
+                        {pointSourceLabel(movement.source)}
+                        {movement.weekNo ? ` · week ${movement.weekNo}` : ""}
+                      </span>
+                      {/* Signed, because a correction is a negative row and
+                          showing it as a bare number would read as an award. */}
+                      <span
+                        className={`ml-auto shrink-0 text-base font-bold tabular-nums ${
+                          movement.points < 0 ? "text-red-300" : "text-white"
+                        }`}
+                      >
+                        {movement.points > 0 ? "+" : ""}
+                        {movement.points}
+                      </span>
+                      <span className="w-full text-sm text-white/55">
+                        {movement.at.toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "long",
+                          timeZone: LAGOS,
+                        })}
+                      </span>
+                      {movement.note && (
+                        <p className="w-full text-sm leading-relaxed text-white/70">
+                          {movement.note}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
           <div className="mt-12">
             <h2 className="text-xl font-bold text-white">
               Your entries{mine.length > 0 ? ` (${mine.length})` : ""}
@@ -558,15 +623,15 @@ export default async function MonicaCreatorPage() {
             </summary>
             <Panel tone="quiet" className="mt-3">
               <p className="max-w-prose text-sm leading-relaxed text-white/70">
-                This page remembers you on this browser. The trap is opening your
-                link inside WhatsApp or Instagram: that is a different browser
-                from your normal one, so the page will not know you when you open
-                Chrome or Safari later.
+                This page remembers you on this browser. The trap is opening
+                your link inside WhatsApp or Instagram: that is a different
+                browser from your normal one, so the page will not know you when
+                you open Chrome or Safari later.
               </p>
               <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
                 Bookmark this page in the browser you actually use, or add it to
-                your home screen. Keep the email we sent at registration as well,
-                since it has your link in it.
+                your home screen. Keep the email we sent at registration as
+                well, since it has your link in it.
               </p>
               <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/55">
                 {/* No copy button. The address bar here is just /me, and pasted
@@ -581,8 +646,8 @@ export default async function MonicaCreatorPage() {
                 >
                   Email us
                 </a>{" "}
-                from the address you registered with and we will issue a new one,
-                which stops the old one working.
+                from the address you registered with and we will issue a new
+                one, which stops the old one working.
               </p>
             </Panel>
           </details>
