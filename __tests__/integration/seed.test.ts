@@ -130,13 +130,39 @@ describe("seeded point rules", () => {
     expect(ladder.three).toBe(monicaPointLadder[2].points);
   });
 
-  it("leaves manual bounds unset, since nothing awards these by hand", async () => {
+  /*
+   * This used to assert that NO rule had bounds, on the reasoning that nothing
+   * was ever awarded by hand. That stopped being true in 0016, when admins got
+   * a way to award the bonuses the campaign page promises, and every manual
+   * source gained a ceiling.
+   *
+   * The reasoning still holds for the three ladder keys. Those are computed by
+   * the engine from a snapshot and no person types a number for them, so a
+   * bound on them would be a limit on arithmetic.
+   */
+  it("leaves the computed ladder keys unbounded, since nobody types those", async () => {
     const row = await one<{ n: number }>(
       `SELECT count(*)::int AS n
          FROM point_rules pr
          JOIN campaigns c ON c.id = pr.campaign_id
         WHERE c.slug = '${MONICA_SLUG}'
+          AND pr.key IN ('entry_base','multi_platform_bonus_2','multi_platform_bonus_3')
           AND (pr.min_points IS NOT NULL OR pr.max_points IS NOT NULL)`,
+    );
+    expect(row.n).toBe(0);
+  });
+
+  it("bounds every source a person can award by hand", async () => {
+    // A source with no ceiling is not a decision anybody made, and award_points
+    // refuses one, so an unbounded manual rule would be a silent dead end.
+    const row = await one<{ n: number }>(
+      `SELECT count(*)::int AS n
+         FROM point_rules pr
+         JOIN campaigns c ON c.id = pr.campaign_id
+        WHERE c.slug = '${MONICA_SLUG}'
+          AND pr.key IN ('quality_bonus','engagement_milestone','featured_blockfest',
+                         'featured_monica','collab','wildcard_win','manual_adjustment')
+          AND pr.min_points IS NULL AND pr.max_points IS NULL`,
     );
     expect(row.n).toBe(0);
   });
@@ -150,6 +176,17 @@ describe("seeded point rules", () => {
  */
 describe("re-running the seed", () => {
   it("does not duplicate the campaign or its rules", async () => {
+    const rulesBefore = Number(
+      (
+        await one<{ n: number }>(
+          `SELECT count(*)::int AS n
+             FROM point_rules pr
+             JOIN campaigns c ON c.id = pr.campaign_id
+            WHERE c.slug = '${MONICA_SLUG}'`,
+        )
+      ).n,
+    );
+
     await applyMigration(db, "0004_seed_monica.sql");
 
     const campaigns = await one<{ n: number }>(
@@ -163,9 +200,10 @@ describe("re-running the seed", () => {
          JOIN campaigns c ON c.id = pr.campaign_id
         WHERE c.slug = '${MONICA_SLUG}'`,
     );
-    // Three ladder keys plus referral. Asserted as a count rather than a list
-    // because the point of this test is that replaying the seed adds nothing,
-    // not what the keys happen to be.
-    expect(rules.n).toBe(4);
+    // Whatever the current set is. The point of this test is that replaying
+    // the seed adds nothing, not what the keys happen to be, so it compares
+    // against the count taken before the replay rather than a number that has
+    // to be edited every time a rule is added.
+    expect(rules.n).toBe(rulesBefore);
   });
 });
