@@ -86,7 +86,12 @@ export default async function AdminLayout({
     // Pausing and clearing are owner work, so the tab is not offered to a
     // reviewer. The routes check the role again themselves: a hidden tab is a
     // tidy interface, not a permission.
-    ...(owner ? [{ href: "/admin/campaign", label: "Campaign" }] : []),
+    ...(owner
+      ? [
+          { href: "/admin/winners", label: "Winners" },
+          { href: "/admin/campaign", label: "Campaign" },
+        ]
+      : []),
   ];
 
   const notOpenYet =

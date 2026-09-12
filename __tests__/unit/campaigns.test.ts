@@ -17,10 +17,11 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  MONICA_CAMPAIGN_DAYS,
   campaignBySlug,
   campaignRun,
-  MONICA_CAMPAIGN_DAYS,
   campaigns,
+  currentWeekNo,
   liveCampaigns,
   monicaFinalPrizes,
   monicaFinalTotal,
@@ -212,8 +213,25 @@ describe("what we publish about the leaderboard", () => {
   ].join("\n");
 
   it("never claims the board itself updates weekly", () => {
+    /*
+     * Forbidding a phrasing is not forbidding a claim.
+     *
+     * The first version of this banned "standings are published" and the page
+     * said "Standings are announced ... and every Saturday after that", which
+     * is the same promise in different words. The fix that was supposed to
+     * remove it silently no-opped on an indentation mismatch, the test passed,
+     * and the contradiction shipped anyway.
+     *
+     * So this matches on what the sentence CLAIMS: standings, weekly. Winners
+     * being weekly is correct and must still be sayable, hence the negative
+     * lookahead.
+     */
     expect(copy).not.toMatch(/leaderboard updates every (Saturday|week)/i);
     expect(copy).not.toMatch(/standings are published/i);
+    expect(
+      copy,
+      "standings must never be described as a weekly event; winners are",
+    ).not.toMatch(/standings are announced/i);
   });
 
   it("puts weekly winners on one day, and it is Saturday", () => {
@@ -233,5 +251,38 @@ describe("what we publish about the leaderboard", () => {
     const match = page.match(/export const revalidate = (\d+)/);
     expect(match, "the board declares a revalidate window").toBeTruthy();
     expect(Number(match![1]), "still refreshed in minutes, not days").toBeLessThanOrEqual(300);
+  });
+});
+
+/**
+ * Which week the winners screen should be pointed at.
+ *
+ * Derived from the campaign start rather than stored, so it cannot drift from
+ * the challenge windows, which are the same four Mondays.
+ */
+describe("the current campaign week", () => {
+  const on = (iso: string) => currentWeekNo(new Date(iso));
+
+  it("is week 1 on launch day", () => {
+    expect(on("2026-09-14T09:00:00+01:00")).toBe(1);
+  });
+
+  it("turns over on the Monday, with the challenge window", () => {
+    expect(on("2026-09-20T23:00:00+01:00"), "still week 1 on Sunday").toBe(1);
+    expect(on("2026-09-21T00:30:00+01:00"), "week 2 once Monday lands").toBe(2);
+  });
+
+  it("reaches week 4 in the last stage", () => {
+    expect(on("2026-10-05T10:00:00+01:00")).toBe(4);
+  });
+
+  it("clamps before the campaign opens rather than answering zero", () => {
+    // The team rehearses on the Saturday before. Pointing the screen at week 0
+    // would offer a week no constraint accepts.
+    expect(on("2026-09-12T20:00:00+01:00")).toBe(1);
+  });
+
+  it("clamps after it closes rather than offering a week 5", () => {
+    expect(on("2026-10-20T10:00:00+01:00")).toBe(4);
   });
 });

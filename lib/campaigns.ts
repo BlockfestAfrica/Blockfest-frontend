@@ -135,6 +135,26 @@ export const liveCampaigns = campaigns.filter((c) => c.status === "live");
 // ---------------------------------------------------------------------------
 
 /** The slug lives here so the routes are built from one string. */
+/**
+ * Which campaign week it is, 1 to 4.
+ *
+ * Derived from the campaign's own start rather than from a stored value, so it
+ * cannot drift from the challenge windows, which are the same four Mondays.
+ *
+ * Clamped at both ends on purpose. Before the campaign opens this answers 1,
+ * which is what the winners screen should be pointed at while the team
+ * rehearses; after it closes it answers 4, so the final week stays selected
+ * rather than the screen offering a week 5 that no constraint would accept.
+ */
+export function currentWeekNo(now: Date = new Date()): number {
+  const campaign = campaigns.find((c) => c.slug === MONICA_SLUG);
+  if (!campaign?.startsAt) return 1;
+
+  const start = new Date(campaign.startsAt).getTime();
+  const elapsedDays = Math.floor((now.getTime() - start) / 86_400_000);
+  return Math.min(4, Math.max(1, Math.floor(elapsedDays / 7) + 1));
+}
+
 export const MONICA_SLUG = "monica-money-story";
 
 /**
@@ -176,6 +196,7 @@ export const monicaRoutes = {
   /** The creator's own page. Reads the cookie; never takes a token in the URL. */
   me: `/campaigns/${MONICA_SLUG}/me`,
   leaderboard: `/campaigns/${MONICA_SLUG}/leaderboard`,
+  winners: `/campaigns/${MONICA_SLUG}/winners`,
 } as const;
 
 export interface CampaignSkill {

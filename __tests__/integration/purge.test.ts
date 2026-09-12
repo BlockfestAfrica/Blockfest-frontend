@@ -282,6 +282,15 @@ describe("the list stays complete", () => {
     audit_log: "purged per campaign, so admin history survives",
   };
 
+  /*
+   * The quotes are optional in that pattern for a reason.
+   *
+   * It originally required them, because drizzle writes CREATE TABLE "name".
+   * The first hand-written migration to add a table wrote it unquoted, the
+   * regex did not match, and this test went green while a table full of
+   * campaign data was in neither list. A completeness check that only sees one
+   * dialect is a completeness check that reports what it can see.
+   */
   it("classifies every table as purged or kept", async () => {
     const sql = readdirSync(MIGRATIONS)
       .filter((f) => f.endsWith(".sql"))
@@ -289,11 +298,21 @@ describe("the list stays complete", () => {
       .join("\n");
 
     const tables = [
-      ...sql.matchAll(/create table (?:if not exists )?"([a-z_]+)"/gi),
+      ...sql.matchAll(/create table (?:if not exists )?"?([a-z_]+)"?/gi),
     ].map((m) => m[1]);
     expect(tables.length, "found the schema").toBeGreaterThan(10);
 
-    const purgeFn = readFileSync(join(MIGRATIONS, "0017_purge.sql"), "utf8");
+    /*
+     * Every migration, not just 0017.
+     *
+     * This read one filename, and purge_campaign_data was later redefined in a
+     * different migration to cover a new table. The function had been updated
+     * correctly and the test still reported the table as unclassified, because
+     * it was reading a file that no longer held the current definition. A check
+     * pinned to a filename stops being a check the first time somebody does the
+     * ordinary thing and replaces a function in a later migration.
+     */
+    const purgeFn = sql;
     const unclassified = [...new Set(tables)].filter(
       (t) =>
         !KEEP[t] &&
@@ -316,7 +335,7 @@ describe("the list stays complete", () => {
       .join("\n");
     const tables = [
       ...new Set(
-        [...sql.matchAll(/create table (?:if not exists )?"([a-z_]+)"/gi)].map(
+        [...sql.matchAll(/create table (?:if not exists )?"?([a-z_]+)"?/gi)].map(
           (m) => m[1],
         ),
       ),
