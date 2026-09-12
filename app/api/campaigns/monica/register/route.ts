@@ -9,6 +9,7 @@ import {
   registrationSchema,
 } from "@/lib/campaign-registration";
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
+import { hashAccessToken, newAccessToken } from "@/lib/creator-access";
 
 /** postgres.js and the Neon driver need sockets; neither runs on the edge. */
 export const runtime = "nodejs";
@@ -224,6 +225,10 @@ export async function POST(request: NextRequest) {
   // belongs to nobody, and ignores one that belongs to the person registering.
   const ref = request.cookies.get(REFERRAL_COOKIE)?.value?.trim() ?? "";
 
+  // Minted here and returned once. Only its hash is stored, so this value
+  // cannot be recovered later by us or by anybody who reads the database.
+  const accessToken = newAccessToken();
+
   try {
     // One round trip, one transaction. This was four separate inserts over a
     // driver with no interactive transactions, which meant the creators row
@@ -240,7 +245,8 @@ export async function POST(request: NextRequest) {
         ${handles.x}, ${handles.instagram}, ${handles.tiktok},
         ${ref || null}, ${ip}, ${userAgent},
         ${newReferralCode()}, ${input.rulesVersion},
-        ${input.marketingOptIn}, ${input.privacyVersion ?? null}
+        ${input.marketingOptIn}, ${input.privacyVersion ?? null},
+        ${hashAccessToken(accessToken)}
       )
     `);
 
@@ -255,6 +261,9 @@ export async function POST(request: NextRequest) {
       ok: true,
       referralCode: row.referral_code ?? null,
       name: row.full_name ?? input.fullName,
+      // The only time this is ever sent. The success screen shows it once and
+      // tells the creator to keep it.
+      accessToken,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

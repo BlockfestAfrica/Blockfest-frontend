@@ -17,6 +17,7 @@
  * now belongs to a verified handle, so a squat no longer locks anybody out.
  */
 
+import { createHash } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, afterAll, beforeEach, describe, expect, it } from "vitest";
 import { applyMigrations } from "../helpers/migrations";
@@ -36,6 +37,7 @@ async function register(opts: {
   ref?: string;
   code?: string;
   marketingOptIn?: boolean;
+  accessTokenHash?: string;
 }) {
   // Not derived from a timestamp and sliced: truncating cut off the part that
   // differed, two registrations collided on referral_code, and the failure
@@ -51,7 +53,8 @@ async function register(opts: {
       NULL,
       ${opts.ref ? `'${opts.ref}'` : "NULL"},
       '1.2.3.4', 'test', '${code}', '1.0',
-      ${opts.marketingOptIn ? "true" : "false"}, '1.0'
+      ${opts.marketingOptIn ? "true" : "false"}, '1.0',
+      ${opts.accessTokenHash ? `'${opts.accessTokenHash}'` : "NULL"}
     )`);
 }
 
@@ -421,6 +424,122 @@ describe("marketing consent", () => {
       await count(
         `SELECT count(*)::int AS n FROM pg_proc
           WHERE proname = 'register_creator'`,
+      ),
+    ).toBe(1);
+  });
+});
+
+/**
+ * The access token is how a creator proves who they are, with no email provider
+ * in existence to fall back on. What has to hold is that the database stores
+ * only a fingerprint, that the fingerprint finds exactly one enrolment, and
+ * that two creators can never end up sharing one.
+ */
+describe("creator access tokens", () => {
+  const hashOf = (token: string) =>
+    createHash("sha256").update(token, "utf8").digest("hex");
+
+  it("stores the hash and not the token", async () => {
+    const token = "a".repeat(43);
+    await register({
+      email: "tok@example.com",
+      phone: "+2348070000001",
+      x: "tok",
+      accessTokenHash: hashOf(token),
+    });
+
+    const rows = await db.query<{ access_token_hash: string }>(
+      `SELECT cc.access_token_hash
+         FROM campaign_creators cc
+         JOIN creators c ON c.id = cc.creator_id
+        WHERE c.email_canonical = 'tok@example.com'`,
+    );
+    expect(rows.rows[0].access_token_hash).toBe(hashOf(token));
+    expect(rows.rows[0].access_token_hash).not.toBe(token);
+  });
+
+  it("finds exactly one enrolment from a hash", async () => {
+    const mine = "b".repeat(43);
+    await register({
+      email: "mine@example.com",
+      phone: "+2348070000002",
+      x: "mine",
+      accessTokenHash: hashOf(mine),
+    });
+    await register({
+      email: "other@example.com",
+      phone: "+2348070000003",
+      x: "other",
+      accessTokenHash: hashOf("c".repeat(43)),
+    });
+
+    const found = await db.query<{ email_canonical: string }>(
+      `SELECT c.email_canonical
+         FROM campaign_creators cc
+         JOIN creators c ON c.id = cc.creator_id
+        WHERE cc.access_token_hash = '${hashOf(mine)}'`,
+    );
+    expect(found.rows).toHaveLength(1);
+    expect(found.rows[0].email_canonical).toBe("mine@example.com");
+  });
+
+  it("records when the token was issued", async () => {
+    await register({
+      email: "when@example.com",
+      phone: "+2348070000004",
+      x: "when",
+      accessTokenHash: hashOf("d".repeat(43)),
+    });
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM campaign_creators
+          WHERE access_token_hash = '${hashOf("d".repeat(43))}'
+            AND access_token_issued_at IS NOT NULL`,
+      ),
+    ).toBe(1);
+  });
+
+  it("refuses to let two enrolments share a token", async () => {
+    const shared = hashOf("e".repeat(43));
+    await register({
+      email: "first@example.com",
+      phone: "+2348070000005",
+      x: "first",
+      accessTokenHash: shared,
+    });
+    await expect(
+      register({
+        email: "second@example.com",
+        phone: "+2348070000006",
+        x: "second",
+        accessTokenHash: shared,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("leaves the issued timestamp unset when there is no token", async () => {
+    // The bot-detection path answers as though it succeeded and writes nothing,
+    // but a null token must not look like one issued at the epoch.
+    await register({
+      email: "none@example.com",
+      phone: "+2348070000007",
+      x: "none",
+    });
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM campaign_creators cc
+           JOIN creators c ON c.id = cc.creator_id
+          WHERE c.email_canonical = 'none@example.com'
+            AND cc.access_token_hash IS NULL
+            AND cc.access_token_issued_at IS NULL`,
+      ),
+    ).toBe(1);
+  });
+
+  it("does not leave the old 19 argument function callable", async () => {
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM pg_proc WHERE proname = 'register_creator'`,
       ),
     ).toBe(1);
   });

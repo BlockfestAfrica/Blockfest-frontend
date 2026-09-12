@@ -197,8 +197,10 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
   const [done, setDone] = useState<{
     name: string;
     referralCode: string;
+    accessToken: string | null;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [savedLink, setSavedLink] = useState(false);
   /** Filled only by something that fills every input it finds. */
   const [website, setWebsite] = useState("");
   /** When the form became fillable, for the timing check on the server. */
@@ -269,6 +271,14 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
     setValues((v) => ({ ...v, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
   };
+
+  /** The creator's own way back in. Built here because the token is only ever
+   *  in memory on this screen. */
+  const accessLink = useMemo(() => {
+    if (!done?.accessToken) return "";
+    const origin = typeof window === "undefined" ? "" : window.location.origin;
+    return `${origin}${monicaRoutes.enter}?t=${done.accessToken}`;
+  }, [done]);
 
   const shareLink = useMemo(() => {
     if (!done?.referralCode) return "";
@@ -367,7 +377,11 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       }
 
       track("campaign_registered", { campaign: "monica-money-story" });
-      setDone({ name: result.name, referralCode: result.referralCode ?? null });
+      setDone({
+        name: result.name,
+        referralCode: result.referralCode ?? null,
+        accessToken: result.accessToken ?? null,
+      });
     } catch {
       failForm(
         "We could not reach the server. Check your connection and try again.",
@@ -418,6 +432,47 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
           The first challenge is on the campaign page. Publish your entry on
           your own account, then come back and submit the link.
         </p>
+
+        {/* Shown once, and genuinely once.
+            Only a hash of this is stored, so nobody can read it back to the
+            creator later, including us. That is deliberate: a secret we could
+            replay is a secret that can be taken from us. The cost is that
+            losing the link means asking for a new one, so the warning has to
+            be unmissable rather than tucked under the fold. */}
+        {done.accessToken && (
+          <div className="mt-6 rounded-lg border border-brand-gold/40 bg-brand-gold/10 p-4 sm:p-5">
+            <p className="text-sm font-semibold text-white">
+              Save this link. It is shown once.
+            </p>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+              It opens your own page, where your points and entries live and
+              where you will submit each entry. We store only a fingerprint of
+              it, so we cannot send it to you again. Bookmark it, or send it to
+              yourself now.
+            </p>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+              <code className="flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+                {accessLink}
+              </code>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(accessLink);
+                  setSavedLink(true);
+                  toast.success("Your personal link is copied");
+                }}
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+              >
+                {savedLink ? (
+                  <Check className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                )}
+                {savedLink ? "Copied" : "Copy"}
+              </button>
+            </div>
+          </div>
+        )}
 
         {shareLink ? (
           <div className="mt-6">
