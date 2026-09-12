@@ -21,7 +21,19 @@ import type { Email } from "@/lib/email/client";
  * whose meaning depends on one is a message that sometimes means nothing.
  */
 
-const GOLD = "#d4a227";
+/*
+ * The brand gold exactly, not a near miss.
+ *
+ * The first version used a darker #d4a227 because #F2CB45 is unreadable as
+ * small text on white, about 1.6:1. Solving that by inventing a second gold is
+ * worse than not using gold at all: a recipient sees the site and the email
+ * side by side and the email looks like a cheap copy of it.
+ *
+ * So the real token is used where it works, as a filled surface with black on
+ * it, and nowhere else. That is the same rule the site follows, where gold is
+ * a fill and an edge rather than a text colour.
+ */
+const GOLD = "#F2CB45";
 const INK = "#16181d";
 const MUTED = "#5b6270";
 const LINE = "#e4e6ea";
@@ -114,9 +126,10 @@ function layout({ preheader, heading, body, action }: Shell): string {
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escape(preheader)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f5f7;">
 <tr><td align="center" style="padding:32px 16px;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#ffffff;border-radius:14px;border:1px solid ${LINE};">
-    <tr><td style="padding:32px 28px 8px;">
-      <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:${GOLD};">Monica: The Money Story</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#ffffff;border-radius:14px;border:1px solid ${LINE};overflow:hidden;">
+    <tr><td style="height:5px;background:${GOLD};line-height:5px;font-size:0;">&nbsp;</td></tr>
+    <tr><td style="padding:28px 28px 8px;">
+      <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:${MUTED};">Monica: The Money Story</p>
       <h1 style="margin:12px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:24px;line-height:1.25;font-weight:700;color:${INK};">${escape(heading)}</h1>
     </td></tr>
     <tr><td style="padding:4px 28px 32px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${INK};">
