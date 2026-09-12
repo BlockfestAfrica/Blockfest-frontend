@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
-import { currentCreator } from "@/lib/creator-session";
+import {
+  creatorSubmissions,
+  currentCreator,
+  openChallenge,
+  registeredPlatforms,
+} from "@/lib/creator-session";
+import { SubmissionForm } from "@/components/campaigns/submission-form";
+import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 import { campaignBySlug, monicaRoutes, MONICA_SLUG } from "@/lib/campaigns";
 
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
@@ -22,6 +29,35 @@ export const metadata: Metadata = {
  */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+/**
+ * Where a submission got to.
+ *
+ * Worded for the person who submitted it rather than for the queue: "waiting to
+ * be reviewed" says what is happening, where "pending" says only that something
+ * has a state.
+ */
+function StatusPill({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    pending: "border-white/25 bg-white/5 text-white/70",
+    approved: "border-green-400/40 bg-green-400/10 text-green-300",
+    rejected: "border-red-400/40 bg-red-400/10 text-red-300",
+  };
+  const labels: Record<string, string> = {
+    pending: "Waiting to be reviewed",
+    approved: "Approved",
+    rejected: "Not accepted",
+  };
+  return (
+    <span
+      className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+        styles[status] ?? styles.pending
+      }`}
+    >
+      {labels[status] ?? status}
+    </span>
+  );
+}
 
 export default async function MonicaCreatorPage() {
   const creator = await currentCreator();
@@ -63,6 +99,16 @@ export default async function MonicaCreatorPage() {
       </main>
     );
   }
+
+  const [challenge, platforms, mine] = await Promise.all([
+    openChallenge(),
+    registeredPlatforms(creator.enrolmentId),
+    creatorSubmissions(creator.enrolmentId),
+  ]);
+
+  const submittedThisWeek = challenge
+    ? mine.filter((s) => s.weekNo === challenge.weekNo).map((s) => s.platform)
+    : [];
 
   const joined = creator.joinedAt.toLocaleDateString("en-GB", {
     day: "numeric",
@@ -121,22 +167,95 @@ export default async function MonicaCreatorPage() {
             </p>
           </div>
 
-          {/* Submissions land here next. Said plainly rather than shown as an
-              empty table, because an empty table reads as something that broke
-              rather than something that has not started. */}
+          {/* Submitting, when a week is open. */}
+          <div className="mt-10 max-w-2xl rounded-xl border border-white/20 bg-white/5 p-5 sm:p-6">
+            {challenge ? (
+              <>
+                <p className="eyebrow text-brand-gold">
+                  Week {challenge.weekNo} is open
+                </p>
+                <h2 className="mt-2 text-lg font-bold text-white">
+                  {challenge.title}
+                </h2>
+                <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+                  {challenge.description}
+                </p>
+                <p className="mt-3 text-sm text-white/50">
+                  Closes{" "}
+                  {challenge.endsAt.toLocaleDateString("en-GB", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    timeZone: "Africa/Lagos",
+                  })}
+                  . Publish on your own account first, then paste the link here.
+                </p>
+
+                <SubmissionForm
+                  platforms={platforms as CampaignPlatform[]}
+                  alreadySubmitted={submittedThisWeek}
+                  challengeTitle={challenge.title}
+                />
+              </>
+            ) : (
+              // Said plainly rather than shown as an empty form, because a form
+              // that refuses everything reads as broken rather than as closed.
+              <>
+                <p className="text-base font-semibold text-white">
+                  No challenge is open right now
+                </p>
+                <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+                  A new brief opens each Monday. When one is open it appears
+                  here, with somewhere to paste your link.
+                </p>
+                <Link
+                  href={`${monicaRoutes.landing}#stages`}
+                  className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+                >
+                  See all four briefs
+                </Link>
+              </>
+            )}
+          </div>
+
           <div className="mt-10 max-w-2xl rounded-xl border border-white/15 p-5 sm:p-6">
             <p className="text-base font-semibold text-white">Your entries</p>
-            <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
-              Nothing yet. Publish your answer to the current brief on your own
-              account, then come back here to submit the link. Submitting opens
-              with the first brief.
-            </p>
-            <Link
-              href={`${monicaRoutes.landing}#stages`}
-              className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
-            >
-              See the current brief
-            </Link>
+            {mine.length === 0 ? (
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+                Nothing yet. Once you submit a link it shows here, with where it
+                got to in review.
+              </p>
+            ) : (
+              <ul className="mt-4 flex flex-col gap-3">
+                {mine.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="rounded-lg border border-white/15 bg-ground p-4"
+                  >
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                      <span className="text-sm font-semibold text-white">
+                        Week {entry.weekNo}
+                      </span>
+                      <span className="text-sm text-white/50">
+                        {platformLabels[entry.platform as CampaignPlatform] ??
+                          entry.platform}
+                      </span>
+                      <StatusPill status={entry.status} />
+                    </div>
+                    <p className="mt-2 truncate text-sm text-white/50">
+                      {entry.url}
+                    </p>
+                    {entry.reviewNote && (
+                      // Shown because a rejection whose reason is invisible is
+                      // one a creator argues with rather than learns from.
+                      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+                        {entry.reviewNote}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </section>
