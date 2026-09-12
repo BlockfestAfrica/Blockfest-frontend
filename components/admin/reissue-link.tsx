@@ -77,7 +77,7 @@ export function ReissueLink() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="The email they registered with"
-          className="w-full flex-1 rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
+          className="w-full flex-1 rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
         />
         <button
           type="submit"

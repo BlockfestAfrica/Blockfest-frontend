@@ -59,7 +59,7 @@ const EMPTY: Record<Field, string> = {
 };
 
 const inputClass =
-  "w-full rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/30 transition-colors focus:border-brand-gold focus:bg-white/[0.05] focus:outline-none";
+  "w-full rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/30 transition-colors focus:border-brand-gold focus:bg-white/[0.05]";
 
 /** A titled group of fields, so the form reads as three short asks. */
 function Section({
@@ -720,7 +720,7 @@ export function RegistrationForm({
                   aria-label={`${label} username`}
                   value={values[field]}
                   onChange={(e) => set(field)(e.target.value)}
-                  className="w-full bg-transparent px-2 py-3 text-base text-white placeholder:text-white/30 focus:outline-none"
+                  className="w-full bg-transparent px-2 py-3 text-base text-white placeholder:text-white/30"
                   placeholder="yourhandle"
                 />
               </div>

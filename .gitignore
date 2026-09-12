@@ -77,3 +77,6 @@ registrations.csv
 
 # Local Netlify folder
 .netlify
+
+# Downloaded agent skills. Cache, not source.
+.skilldb/

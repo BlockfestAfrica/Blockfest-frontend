@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Coins } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Panel, Pill, SectionHeading } from "@/components/shared/panel";
+import {
+  Panel,
+  Pill,
+  SectionHeading,
+  Segmented,
+} from "@/components/shared/panel";
 
 /** The sources a person may write. The engine owns challenge_entry and referral. */
 const AWARD_SOURCES = [
@@ -135,7 +140,31 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
     setAscending(key === "name");
   }
 
-  const selected = rows.find((r) => r.enrolmentId === awarding) ?? null;
+  /*
+   * Derived from what is on screen, not from everything loaded.
+   *
+   * Opening the award panel for a row and then changing a filter used to leave
+   * the panel open for a creator who is no longer in the list, which is the
+   * worst possible state for the one control that moves points.
+   */
+  const selected = shown.find((r) => r.enrolmentId === awarding) ?? null;
+  const awardRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * Bring the panel to the person who opened it.
+   *
+   * It renders after the entire list, so tapping Points on the fortieth row of
+   * five hundred opened a form several thousand pixels below the fold with no
+   * scroll, no focus move and no visible acknowledgement. On a phone the button
+   * appeared to do nothing at all.
+   */
+  useEffect(() => {
+    if (!selected) return;
+    awardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    awardRef.current
+      ?.querySelector<HTMLElement>("select, input, button")
+      ?.focus();
+  }, [selected]);
 
   const counts = {
     all: rows.length,
@@ -144,32 +173,21 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
     approved: rows.filter((r) => r.approved > 0).length,
   };
 
-  const FILTERS: Array<{ key: Filter; label: string }> = [
-    { key: "all", label: `Everyone (${counts.all})` },
-    { key: "submitted", label: `Submitted (${counts.submitted})` },
-    { key: "silent", label: `Never submitted (${counts.silent})` },
-    { key: "approved", label: `Has an approval (${counts.approved})` },
-  ];
-
   return (
-    <div className="mt-8">
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            onClick={() => setFilter(f.key)}
-            aria-pressed={filter === f.key}
-            className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-semibold transition-colors ${
-              filter === f.key
-                ? "border-brand-gold/50 bg-brand-gold/10 text-brand-gold"
-                : "border-white/15 text-white/60 hover:bg-white/5"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+    <div className="space-y-6">
+      {/* A legend, because four buttons in a row with one of them gold do not
+          say what dimension they are choosing along. */}
+      <Segmented<Filter>
+        legend="Show"
+        value={filter}
+        onChange={setFilter}
+        options={[
+          { value: "all", label: `Everyone (${counts.all})` },
+          { value: "submitted", label: `Submitted (${counts.submitted})` },
+          { value: "silent", label: `Never submitted (${counts.silent})` },
+          { value: "approved", label: `Has an approval (${counts.approved})` },
+        ]}
+      />
 
       {/* Said plainly, because the figures above the table are population counts
           from their own query and these are not. Both numbers are true and they
@@ -243,6 +261,8 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
                         awarding === row.enrolmentId ? null : row.enrolmentId,
                       )
                     }
+                    aria-expanded={awarding === row.enrolmentId}
+                    aria-controls="award-panel"
                     className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/5"
                   >
                     <Coins className="h-4 w-4" aria-hidden="true" />
@@ -368,6 +388,8 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
                               : row.enrolmentId,
                           )
                         }
+                        aria-expanded={awarding === row.enrolmentId}
+                        aria-controls="award-panel"
                         className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/5"
                       >
                         <Coins className="h-4 w-4" aria-hidden="true" />
@@ -391,18 +413,27 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
        * be reached on the device an admin is most likely holding. One instance,
        * below the list, for whichever creator is selected.
        */}
-      {selected && (
-        <Panel tone="accent" className="mt-8">
-          <SectionHeading label="Points" title={selected.name} />
-          <AwardRow
-            name={selected.name}
-            busy={busy}
-            onSubmit={(source, points, note) =>
-              submitAward(selected.enrolmentId, source, points, note)
-            }
-          />
-        </Panel>
-      )}
+      <div ref={awardRef} id="award-panel">
+        {selected && (
+          <Panel tone="accent" className="mt-8">
+            <SectionHeading label="Points" title={selected.name} />
+            <AwardRow
+              /*
+               * Keyed on the creator, so the points and the note do not carry
+               * over when the panel is reopened for somebody else. Without it a
+               * reviewer who closes one and opens another is looking at the
+               * previous person's figures in a form that will award them.
+               */
+              key={selected.enrolmentId}
+              name={selected.name}
+              busy={busy}
+              onSubmit={(source, points, note) =>
+                submitAward(selected.enrolmentId, source, points, note)
+              }
+            />
+          </Panel>
+        )}
+      </div>
     </div>
   );
 }
@@ -490,7 +521,7 @@ function AwardRow({
           id="award-source"
           value={source}
           onChange={(e) => setSource(e.target.value)}
-          className="min-h-12 cursor-pointer rounded-lg border border-white/12 bg-ground px-4 text-base text-white focus:border-brand-gold focus:outline-none lg:w-56"
+          className="min-h-12 cursor-pointer rounded-lg border border-white/12 bg-ground px-4 text-base text-white focus:border-brand-gold lg:w-56"
         >
           {AWARD_SOURCES.map((s) => (
             <option key={s.key} value={s.key}>
@@ -508,7 +539,7 @@ function AwardRow({
           onChange={(e) => setPoints(e.target.value.replace(/[^0-9-]/g, ""))}
           inputMode="numeric"
           placeholder="Points, or -points"
-          className="min-h-12 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none lg:w-44"
+          className="min-h-12 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold lg:w-44"
         />
 
         <label htmlFor="award-note" className="sr-only">
@@ -520,7 +551,7 @@ function AwardRow({
           onChange={(e) => setNote(e.target.value)}
           maxLength={300}
           placeholder="Why. Required, and kept against the award."
-          className="min-h-12 min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
+          className="min-h-12 min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
         />
 
         <button
