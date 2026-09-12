@@ -14,6 +14,8 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   campaignBySlug,
   campaignRun,
@@ -180,5 +182,56 @@ describe("campaignRun", () => {
 
   it("returns nothing for a campaign with no dates", () => {
     expect(campaignRun(campaignBySlug("rovv")!)).toBeNull();
+  });
+});
+
+/**
+ * What the site says about the leaderboard must match what it does.
+ *
+ * Three places described it and none agreed: two said standings are published
+ * weekly, one said weekly winners land on Sundays, and the page itself is ISR
+ * with revalidate 60, so the board moves within a minute of any approval.
+ *
+ * That reads as a broken promise in both directions. A creator who checks on
+ * the Tuesday finds a full board the site said would not exist until Saturday,
+ * and a creator told the board updates weekly has no reason to come back after
+ * an approval on a weekday, which is the whole feedback loop the campaign runs
+ * on.
+ */
+describe("what we publish about the leaderboard", () => {
+  const copy = [
+    readFileSync(join(process.cwd(), "lib/campaigns.ts"), "utf8"),
+    readFileSync(
+      join(process.cwd(), "app/campaigns/monica-money-story/leaderboard/page.tsx"),
+      "utf8",
+    ),
+    readFileSync(
+      join(process.cwd(), "app/campaigns/monica-money-story/register/page.tsx"),
+      "utf8",
+    ),
+  ].join("\n");
+
+  it("never claims the board itself updates weekly", () => {
+    expect(copy).not.toMatch(/leaderboard updates every (Saturday|week)/i);
+    expect(copy).not.toMatch(/standings are published/i);
+  });
+
+  it("puts weekly winners on one day, and it is Saturday", () => {
+    // The campaign closes Saturday 17 October specifically so it ends on an
+    // announcement. One place used to say Sundays.
+    expect(copy).not.toMatch(/announced on Sundays/i);
+    expect(copy).toMatch(/every Saturday/);
+  });
+
+  it("keeps the leaderboard page genuinely live", () => {
+    // If somebody later makes this weekly, the copy above becomes wrong again.
+    // This fails first and points at that.
+    const page = readFileSync(
+      join(process.cwd(), "app/campaigns/monica-money-story/leaderboard/page.tsx"),
+      "utf8",
+    );
+    const match = page.match(/export const revalidate = (\d+)/);
+    expect(match, "the board declares a revalidate window").toBeTruthy();
+    expect(Number(match![1]), "still refreshed in minutes, not days").toBeLessThanOrEqual(300);
   });
 });

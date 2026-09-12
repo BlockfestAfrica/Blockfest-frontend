@@ -90,7 +90,7 @@ export default function MonicaRegisterPage() {
                     {
                       title: "We review, and points land",
                       detail:
-                        "The leaderboard updates every Saturday and weekly winners are announced on Sundays.",
+                        "The leaderboard moves as entries are approved. Weekly winners are announced every Saturday.",
                     },
                   ].map((step, i) => (
                     <li key={step.title} className="flex gap-4">

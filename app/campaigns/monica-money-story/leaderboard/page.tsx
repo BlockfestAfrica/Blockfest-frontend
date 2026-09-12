@@ -22,11 +22,15 @@ export const metadata: Metadata = {
 /**
  * Rebuilt at most once a minute.
  *
- * The rules say the leaderboard updates every Saturday, which is about when the
- * standings are announced rather than how fresh this page is. A minute is short
- * enough that a creator who has just been approved sees themselves, and long
- * enough that the ranking query does not run once per visitor during a campaign
- * that is being shared.
+ * Which means this board is live, and the copy on it now says so. It used to
+ * say standings were published weekly while refreshing every sixty seconds, so
+ * a creator approved on Tuesday appeared on a board the site had told them
+ * would not exist until Saturday. Saturday is when weekly WINNERS are
+ * announced; the board itself moves with every approval.
+ *
+ * A minute is short enough that somebody just approved sees themselves, and
+ * long enough that the ranking query does not run once per visitor on a page
+ * built to be shared.
  */
 export const revalidate = 60;
 
@@ -53,9 +57,9 @@ export default async function MonicaLeaderboardPage() {
           {rows.length === 0 ? (
             <div className="mt-8 max-w-prose">
               <p className="text-base leading-relaxed text-white/60">
-                Nothing to show yet. Points land when an entry is approved, and
-                the first standings are published{" "}
-                {MONICA_FIRST_LEADERBOARD}.
+                Nothing to show yet. Points land when an entry is approved and
+                this board moves within a minute of each one. Weekly winners are
+                announced from {MONICA_FIRST_LEADERBOARD}.
               </p>
               <Link
                 href={monicaRoutes.register}
