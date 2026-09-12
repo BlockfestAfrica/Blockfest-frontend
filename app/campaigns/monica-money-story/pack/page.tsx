@@ -244,7 +244,9 @@ export default function MonicaPackPage() {
             </div>
 
             <section id="channels" className="mt-14 scroll-mt-24">
-              <h2 className="text-xl font-bold text-white">Monica's accounts</h2>
+              <h2 className="text-xl font-bold text-white">
+                Monica&apos;s accounts
+              </h2>
               <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/55">
                 The real ones. A near-miss handle tags somebody else entirely.
               </p>
