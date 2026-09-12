@@ -80,6 +80,7 @@ export default async function AdminLayout({
 
   const tabs: ConsoleTab[] = [
     { href: "/admin", label: "Review" },
+    { href: "/admin/overview", label: "Overview" },
     { href: "/admin/participants", label: "People" },
     { href: "/admin/decided", label: "Decided" },
     { href: "/admin/tools", label: "Tools" },
