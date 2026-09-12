@@ -98,12 +98,24 @@ describe("seeded point rules", () => {
   }
 
   it("defines every key the engine reads", async () => {
+    // The three the scoring ladder needs. `referral` joined them in 0014, when
+    // referrers started actually being paid, and is asserted separately below
+    // because it is read at a different moment and by different code.
     const { by } = await ladderFromRules();
-    expect(Object.keys(by).sort()).toEqual([
+    for (const key of [
       "entry_base",
       "multi_platform_bonus_2",
       "multi_platform_bonus_3",
-    ]);
+    ]) {
+      expect(Object.keys(by), `missing point rule ${key}`).toContain(key);
+    }
+  });
+
+  it("defines a referral value, since the rules promise referrers are paid", async () => {
+    // Without a row here recompute_entry_award pays nothing and deliberately
+    // leaves the referral unclaimed, so an absent rule is a silent no-op.
+    const { by } = await ladderFromRules();
+    expect(by["referral"]).toBeGreaterThan(0);
   });
 
   /**
@@ -151,6 +163,9 @@ describe("re-running the seed", () => {
          JOIN campaigns c ON c.id = pr.campaign_id
         WHERE c.slug = '${MONICA_SLUG}'`,
     );
-    expect(rules.n).toBe(3);
+    // Three ladder keys plus referral. Asserted as a count rather than a list
+    // because the point of this test is that replaying the seed adds nothing,
+    // not what the keys happen to be.
+    expect(rules.n).toBe(4);
   });
 });
