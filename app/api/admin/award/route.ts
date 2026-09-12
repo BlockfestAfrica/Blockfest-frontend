@@ -61,6 +61,11 @@ const MESSAGES: Record<string, string> = {
   P0501: "That kind of points is awarded by the system, not by hand.",
   P0502: "Say why. It is what a dispute is answered with.",
   P0503: "Zero points is not an award.",
+  /*
+   * Carries the figure, because the admin's next move is the same award with a
+   * smaller number and guessing it is the slow way to find out.
+   */
+  P0507: "That would take them below zero.",
   P0201: "That creator does not exist.",
   P0401: "Only a signed-in admin can award points.",
 };
@@ -108,7 +113,23 @@ export async function POST(request: NextRequest) {
     const known = code ? MESSAGES[code] : undefined;
 
     if (known) {
-      return NextResponse.json({ ok: false, message: known }, { status: 400 });
+      /*
+       * P0507 puts the creator's current total in the message text, since the
+       * function is the only thing that read it under the lock. Surfacing it
+       * turns "that did not work" into "they hold 50".
+       */
+      const held =
+        code === "P0507"
+          ? pgErrorMessage(error).match(/holds (-?\d+)/)?.[1]
+          : undefined;
+
+      return NextResponse.json(
+        {
+          ok: false,
+          message: held ? `${known} They hold ${held}.` : known,
+        },
+        { status: 400 },
+      );
     }
 
     console.error("[admin/award] unmapped", code, pgErrorMessage(error));

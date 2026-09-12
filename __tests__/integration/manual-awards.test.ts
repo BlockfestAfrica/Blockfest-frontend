@@ -289,3 +289,40 @@ describe("what a manual award does not disturb", () => {
     expect(await pointsOf(me)).toBe(150);
   });
 });
+
+/**
+ * A correction that would take a creator below zero.
+ *
+ * campaign_creators has carried CHECK (points_total >= 0) since the first
+ * migration. award_points checked its per-source bounds and then recomputed the
+ * total, so taking 100 from somebody holding 50 passed every bound and violated
+ * the check, which the route did not map: the admin saw "Something went wrong
+ * at our end" for an entirely reasonable thing to attempt.
+ */
+describe("taking points back below zero", () => {
+  it("refuses, and says what they hold", async () => {
+    const me = await makeCreator();
+    await award(me, "quality_bonus", 50, "Featured");
+
+    await expect(
+      award(me, "quality_bonus", -100, "Reversing, wrong creator"),
+    ).rejects.toThrow(/would_go_negative: holds 50/);
+
+    expect(await pointsOf(me), "unchanged").toBe(50);
+  });
+
+  it("allows a reversal down to exactly zero", async () => {
+    // The common correction: undo the thing you just did.
+    const me = await makeCreator();
+    await award(me, "quality_bonus", 50, "Awarded in error");
+    await award(me, "quality_bonus", -50, "Reversing it");
+    expect(await pointsOf(me)).toBe(0);
+  });
+
+  it("still refuses a deduction from somebody holding nothing", async () => {
+    const me = await makeCreator();
+    await expect(
+      award(me, "quality_bonus", -10, "Nothing to take"),
+    ).rejects.toThrow(/would_go_negative: holds 0/);
+  });
+});
