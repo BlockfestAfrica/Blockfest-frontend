@@ -24,6 +24,19 @@ export default defineConfig({
      */
     env: {
       NEXT_PUBLIC_CAMPAIGN_GATE_OPEN: "",
+      /*
+       * Emptied for the same reason, and that is not the whole of it.
+       *
+       * A developer with a local DATABASE_URL would otherwise get different
+       * results from the same suite. But the connection also resolves through
+       * getConnectionString(), which succeeds inside a Netlify build because a
+       * database is attached there, and no entry in this table can reach that.
+       * A test asserting there is no connection has to arrange the absence by
+       * mocking the resolver: assuming it from an unset variable passes locally
+       * and fails the one build that gates deploys, which is how this comment
+       * came to be written.
+       */
+      DATABASE_URL: "",
     },
     include: ["__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     coverage: {
