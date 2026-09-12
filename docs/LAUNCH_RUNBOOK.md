@@ -60,6 +60,15 @@ Netlify DB does not expose its connection string as a readable site environment
 variable. Get it from the database extension in the Netlify project dashboard,
 or from the Neon console.
 
+## If something goes wrong
+
+[RECOVERY.md](RECOVERY.md). The short version: pause first, investigate second,
+and never restore over production while you are still working out what happened.
+
+`npm run verify:db "<connection string>"` answers whether a database can still
+settle the campaign. Eleven invariants, read-only, and the one that matters is
+that every creator's total still equals the sum of their ledger.
+
 ## Still open at the time of writing
 
 | | |
