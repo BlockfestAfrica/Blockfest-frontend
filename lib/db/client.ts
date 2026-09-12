@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import "server-only";
 
 import {
@@ -66,6 +67,34 @@ function connectionString(): string {
       );
     }
     throw error;
+  }
+}
+
+/**
+ * Which database this deploy is pointed at, without revealing it.
+ *
+ * Netlify DB gives every deploy preview its own branch, seeded from production
+ * at preview-creation time, so a preview cannot write to live campaign data.
+ * That is the platform's behaviour rather than anything this code arranges,
+ * which means the only honest way to know it is still true is to look.
+ *
+ * A short hash of the host, never the host and never the credential. It answers
+ * the only question worth asking from outside, which is whether two deploys are
+ * on the same database, and answers it without publishing an address for
+ * anybody to point a client at.
+ *
+ * Returns null rather than throwing when there is no connection to describe,
+ * because this is read by a health endpoint whose job is to keep answering.
+ */
+export function databaseFingerprint(): string | null {
+  try {
+    const url = new URL(connectionString());
+    return createHash("sha256")
+      .update(url.host)
+      .digest("hex")
+      .slice(0, 12);
+  } catch {
+    return null;
   }
 }
 
