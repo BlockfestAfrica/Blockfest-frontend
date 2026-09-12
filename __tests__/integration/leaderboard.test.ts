@@ -244,16 +244,13 @@ describe("what is published", () => {
 describe("a creator's own rank", () => {
   const rankOf = async (enrolmentId: string): Promise<number | null> => {
     const rows = (
-      await db.query<{ rank: string }>(
-        `WITH board AS (
-           SELECT campaign_creator_id, rank
-             FROM campaign_leaderboard('monica-money-story', 100000)
-         )
-         SELECT rank FROM board WHERE campaign_creator_id = $1::uuid`,
+      await db.query<{ rank: string | null }>(
+        `SELECT creator_rank('monica-money-story', $1::uuid) AS rank`,
         [enrolmentId],
       )
     ).rows;
-    return rows[0] ? Number(rows[0].rank) : null;
+    const rank = rows[0]?.rank;
+    return rank === null || rank === undefined ? null : Number(rank);
   };
 
   it("matches the public board for every creator on it", async () => {
@@ -303,11 +300,19 @@ describe("a creator's own rank", () => {
   });
 
   /**
-   * The reason this is its own query rather than a lookup inside the published
-   * board. leaderboard() is capped, and scanning a capped list returns null for
-   * anybody outside it, which is indistinguishable from having no points.
+   * The reason this is its own function and not a lookup inside the board.
+   *
+   * The first version of this asserted the same thing against a query wrapped
+   * around campaign_leaderboard(slug, 100000), and passed, because it made
+   * twelve creators. campaign_leaderboard clamps its limit to 500, so that
+   * query silently stopped at the 500th creator, and the test never went near
+   * the boundary it was named after.
+   *
+   * This one proves independence instead of assuming it: the board is asked for
+   * a deliberately tiny page, and the rank of somebody outside that page is
+   * still correct. No number of creators can make that assertion vacuous.
    */
-  it("still finds somebody ranked below the published cut", async () => {
+  it("does not depend on the board's limit at all", async () => {
     const ids: string[] = [];
     for (let i = 0; i < 12; i++) {
       ids.push(
@@ -318,17 +323,61 @@ describe("a creator's own rank", () => {
     }
 
     const tail = ids[11];
-    expect(await rankOf(tail)).toBe(12);
+    expect(await rankOf(tail), "ranked 12th").toBe(12);
 
     const capped = (
       await db.query<{ campaign_creator_id: string }>(
-        `SELECT campaign_creator_id FROM campaign_leaderboard('monica-money-story', 10)`,
+        `SELECT campaign_creator_id FROM campaign_leaderboard('monica-money-story', 3)`,
       )
     ).rows;
+    expect(capped, "the board really is cut short").toHaveLength(3);
     expect(
       capped.some((r) => r.campaign_creator_id === tail),
-      "outside a capped board, so a scan of one would have found nothing",
+      "and the creator we just ranked is not on it",
     ).toBe(false);
+  });
+
+  /**
+   * The clamp itself, asserted so the reason above cannot quietly stop being
+   * true. If somebody raises the cap, this fails and they are pointed at the
+   * comment explaining why creator_rank exists.
+   */
+  it("confirms the published board is capped, whatever limit is asked for", async () => {
+    const rows = (
+      await db.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM campaign_leaderboard('monica-money-story', 100000)`,
+      )
+    ).rows;
+    // Nothing is enrolled in this test, so the point is the query shape: the
+    // function accepts an absurd limit without error and clamps it internally.
+    expect(Number(rows[0].n)).toBe(0);
+
+    const clamp = (
+      await db.query<{ src: string }>(
+        `SELECT prosrc AS src FROM pg_proc WHERE proname = 'campaign_leaderboard'`,
+      )
+    ).rows[0].src;
+    expect(clamp, "the cap is still there").toMatch(/least\(COALESCE\(p_limit/);
+  });
+
+  /**
+   * Both callers must order identically. They are now the same function body
+   * with a LIMIT or a WHERE bolted on, and this is what holds that together.
+   */
+  it("agrees with the public board on every rank", async () => {
+    const ids = [
+      await creatorWith("Ada", [{ points: 300, at: "2026-09-15T10:00:00Z" }]),
+      await creatorWith("Bola", [{ points: 200, at: "2026-09-15T09:00:00Z" }]),
+      await creatorWith("Chidi", [{ points: 100, at: "2026-09-15T08:00:00Z" }]),
+    ];
+
+    const published = await board();
+    for (const [index, id] of ids.entries()) {
+      const onBoard = published.find(
+        (r) => r.display_name === ["Ada", "Bola", "Chidi"][index],
+      );
+      expect(await rankOf(id)).toBe(Number(onBoard!.rank));
+    }
   });
 
   it("is null for a suspended creator, who is off the board entirely", async () => {
