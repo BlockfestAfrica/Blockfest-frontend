@@ -8,7 +8,7 @@ import { CAMPAIGN_GATE_FORCED_OPEN, monicaRoutes } from "@/lib/campaigns";
 import { MONICA_RULES_VERSION } from "@/lib/monica-rules";
 import { MONICA_PRIVACY_VERSION } from "@/lib/monica-privacy";
 import { toast } from "sonner";
-import { track } from "@/lib/sabilytics";
+import { CAMPAIGN_EVENTS, track } from "@/lib/sabilytics";
 
 type Field =
   | "fullName"
@@ -189,7 +189,14 @@ function Labelled({
  * are shown against the field it names, because "something went wrong" sends a
  * creator away and they do not return.
  */
-export function RegistrationForm({ opensAt }: { opensAt: string }) {
+export function RegistrationForm({
+  opensAt,
+  arrivedViaReferral = false,
+}: {
+  opensAt: string;
+  /** True when /join set a referral cookie before sending them here. */
+  arrivedViaReferral?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
   const [values, setValues] = useState<Record<Field, string>>(EMPTY);
@@ -226,10 +233,36 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       process.env.NODE_ENV !== "production" &&
       new URLSearchParams(window.location.search).get("preview") === "open";
 
-    setOpen(preview || CAMPAIGN_GATE_FORCED_OPEN || hasPassed(opensAt));
+    const isOpen = preview || CAMPAIGN_GATE_FORCED_OPEN || hasPassed(opensAt);
+    setOpen(isOpen);
     setChecked(true);
     shownAt.current = Date.now();
-  }, [opensAt]);
+
+    /*
+     * Counted only when the form can actually be filled in.
+     *
+     * Firing on every load of this page would count everybody who arrived
+     * before the campaign opened and saw a locked panel, and the funnel would
+     * then show a conversion rate that is mostly a measure of how many people
+     * came early.
+     */
+    if (isOpen) {
+      track(CAMPAIGN_EVENTS.registerStarted);
+
+      /*
+       * Arrived through somebody's referral link.
+       *
+       * Passed down from the server, because the cookie /join sets is
+       * httpOnly and document.cookie cannot see it. Reading it here would
+       * have compiled, run, and silently never fired, which is the worst
+       * shape for an analytics bug: the number is simply zero and looks like
+       * a finding.
+       */
+      if (arrivedViaReferral) {
+        track(CAMPAIGN_EVENTS.referralLinkUsed);
+      }
+    }
+  }, [opensAt, arrivedViaReferral]);
 
   /**
    * A failure that belongs to the whole form rather than one field.
@@ -385,7 +418,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
         return;
       }
 
-      track("campaign_registered", { campaign: "monica-money-story" });
+      track(CAMPAIGN_EVENTS.registerCompleted);
       setDone({
         name: result.name,
         referralCode: result.referralCode ?? null,
@@ -507,9 +540,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
                   // "share this", naming the thing that landed on the
                   // clipboard is worth a line.
                   toast.success("Referral link copied");
-                  track("campaign_referral_copied", {
-                    campaign: "monica-money-story",
-                  });
+                  track(CAMPAIGN_EVENTS.referralCopied);
                 }}
                 className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
               >
