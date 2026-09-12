@@ -57,7 +57,8 @@ export default function MonicaPrivacyPage() {
           </Link>
 
           <div className="mt-6 max-w-2xl">
-            <h1 className="text-display-sm font-bold text-white">
+            <p className="eyebrow text-brand-gold">{CAMPAIGN.name}</p>
+            <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Campaign privacy notice
             </h1>
             <p className="mt-4 text-base leading-relaxed text-white/60">
@@ -119,7 +120,7 @@ export default function MonicaPrivacyPage() {
                     {section.paragraphs.map((paragraph) => (
                       <p
                         key={paragraph}
-                        className="max-w-prose text-base leading-7 text-white/75"
+                        className="max-w-prose text-base leading-[1.75] text-white/75"
                       >
                         {paragraph}
                       </p>

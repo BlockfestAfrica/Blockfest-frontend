@@ -54,11 +54,12 @@ export function ReissueLink() {
   }
 
   return (
-    <div className="mt-12 max-w-2xl rounded-xl border border-white/15 p-5 sm:p-6">
-      <h2 className="text-lg font-bold text-white">
+    <div className="mt-16 max-w-2xl border-t border-white/12 pt-8">
+      <p className="eyebrow text-white/45">Support</p>
+      <h2 className="mt-2 text-xl font-bold text-white">
         Give a creator a new link
       </h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/50">
         For somebody who has lost the personal link they were given when they
         registered. Issuing a new one stops the old one working.
       </p>

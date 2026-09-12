@@ -109,10 +109,19 @@ describe("the review queue specifically", () => {
     expect(urlBlock).not.toContain("truncate");
   });
 
-  it("says when the link could not be checked automatically", () => {
+  it("renders a different message for a checked and an unchecked link", () => {
+    // Asserted as a branch, not as wording. A test that matched the copy would
+    // break every time the copy improved, and would still pass if both
+    // branches were changed to say the same thing, which is the actual risk:
+    // an unchecked link that reads as verified.
     const src = readFileSync(join(process.cwd(), QUEUE), "utf8");
-    expect(src).toContain("autoChecked");
-    expect(src).toMatch(/checked automatically/i);
+    expect(src).toContain("item.autoChecked");
+    expect(src).toMatch(/item\.autoChecked\s*\?/);
+
+    // Two arms, visually distinguished, or the distinction is invisible.
+    const branch = src.slice(src.indexOf("item.autoChecked ?"));
+    expect(branch).toMatch(/text-(green|emerald)-/);
+    expect(branch).toMatch(/text-(amber|red|yellow)-/);
   });
 });
 

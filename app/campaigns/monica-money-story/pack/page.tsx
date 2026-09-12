@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Check, X } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, X } from "lucide-react";
 import {
   monicaPackAllowed,
+  MONICA_BRAND_ASSETS_URL,
+  monicaChannels,
   monicaPackDisclosure,
   monicaPackFacts,
   monicaPackOpenPoints,
@@ -73,7 +75,8 @@ export default function MonicaPackPage() {
           </Link>
 
           <div className="mt-6 max-w-2xl">
-            <h1 className="text-display-sm font-bold text-white">
+            <p className="eyebrow text-brand-gold">{CAMPAIGN.name}</p>
+            <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Creator Pack
             </h1>
             <p className="mt-4 text-base leading-relaxed text-white/60">
@@ -199,12 +202,16 @@ export default function MonicaPackPage() {
                 {monicaPackDisclosure.paragraphs.map((paragraph) => (
                   <p
                     key={paragraph}
-                    className="max-w-prose text-base leading-7 text-white/75"
+                    className="max-w-prose text-base leading-[1.75] text-white/75"
                   >
                     {paragraph}
                   </p>
                 ))}
               </div>
+              <p className="mt-5 text-sm leading-relaxed text-white/70">
+                Tag {monicaPackDisclosure.tag}
+              </p>
+
               <ul className="mt-5 flex flex-wrap gap-2">
                 {monicaPackDisclosure.labels.map((label) => (
                   <li
@@ -227,7 +234,7 @@ export default function MonicaPackPage() {
                     {section.paragraphs.map((paragraph) => (
                       <p
                         key={paragraph}
-                        className="max-w-prose text-base leading-7 text-white/75"
+                        className="max-w-prose text-base leading-[1.75] text-white/75"
                       >
                         {paragraph}
                       </p>
@@ -236,6 +243,56 @@ export default function MonicaPackPage() {
                 </section>
               ))}
             </div>
+
+            <section id="assets" className="mt-14 scroll-mt-24">
+              <h2 className="text-xl font-bold text-white">
+                Logo and brand assets
+              </h2>
+              <p className="mt-2 max-w-prose text-base leading-7 text-white/75">
+                Monica&apos;s own folder. Linked rather than copied here, so you
+                always get the current files rather than whatever was correct
+                when this page was written.
+              </p>
+              <a
+                href={MONICA_BRAND_ASSETS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-full border border-brand-gold/50 bg-brand-gold/10 px-6 text-sm font-semibold text-brand-gold transition-colors duration-300 hover:bg-brand-gold/20"
+              >
+                Open Monica&apos;s brand assets
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <p className="mt-3 text-sm leading-relaxed text-white/45">
+                Open to anyone with the link, so no Google account and no
+                request needed. If that ever changes, tell us at
+                partnership@blockfestafrica.com rather than waiting: chasing it
+                is ours to do, not yours.
+              </p>
+            </section>
+
+            <section id="channels" className="mt-14 scroll-mt-24">
+              <h2 className="text-xl font-bold text-white">
+                Monica&apos;s accounts
+              </h2>
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/55">
+                The real ones. A near-miss handle tags somebody else entirely.
+              </p>
+              <ul className="mt-5 flex flex-col gap-px overflow-hidden rounded-xl bg-white/10">
+                {monicaChannels.map((channel) => (
+                  <li
+                    key={channel.label}
+                    className="flex flex-wrap items-baseline gap-x-3 gap-y-1 bg-ground px-4 py-3"
+                  >
+                    <span className="w-24 shrink-0 text-sm text-white/45">
+                      {channel.label}
+                    </span>
+                    <span className="font-mono text-sm text-brand-gold">
+                      {channel.handle}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
 
             <p className="mt-14 text-sm leading-relaxed text-white/50">
               Anything you are unsure about goes to{" "}

@@ -59,7 +59,7 @@ const EMPTY: Record<Field, string> = {
 };
 
 const inputClass =
-  "w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none";
+  "w-full rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/30 transition-colors focus:border-brand-gold focus:bg-white/[0.05] focus:outline-none";
 
 /** A titled group of fields, so the form reads as three short asks. */
 function Section({
@@ -72,12 +72,21 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section>
-      <h2 className="eyebrow text-white/60">{title}</h2>
+    /*
+     * Separated by a rule rather than boxed.
+     *
+     * The form was one bordered card wrapping three more, which gave every
+     * group the same weight and made a short form look like a long one. A
+     * hairline and real space between groups reads faster and asks for less.
+     */
+    <section className="border-t border-white/12 pt-8 first:border-0 first:pt-0">
+      <h2 className="eyebrow text-brand-gold">{title}</h2>
       {hint && (
-        <p className="mt-2 text-sm leading-relaxed text-white/50">{hint}</p>
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/50">
+          {hint}
+        </p>
       )}
-      <div className="mt-5 flex flex-col gap-5">{children}</div>
+      <div className="mt-6 flex flex-col gap-6">{children}</div>
     </section>
   );
 }
@@ -393,7 +402,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
 
   if (!checked || !open) {
     return (
-      <div className="rounded-xl border border-white/20 bg-white/5 p-6 sm:p-8">
+      <div className="rounded-xl border-l-2 border-white/25 bg-white/[0.03] p-6 pl-5 sm:p-8 sm:pl-6">
         <p className="flex items-center gap-2 text-base font-semibold text-white">
           <Lock className="h-4 w-4" aria-hidden="true" />
           Entries are not open yet
@@ -539,7 +548,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
     <form
       onSubmit={submit}
       noValidate
-      className="flex flex-col gap-10 rounded-2xl border border-white/20 bg-white/5 p-6 sm:p-8"
+      className="flex flex-col gap-10"
     >
       {/* Shown only while the gate has been opened ahead of the real date. A
           creator who finds this page early would otherwise register in good
@@ -676,8 +685,8 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
             // beside it, so the three rows line up as one control instead of
             // three mismatched ones.
             <div key={field}>
-              <div className="flex items-center gap-0 overflow-hidden rounded-lg border border-white/15 bg-ground focus-within:border-brand-gold">
-                <span className="w-24 shrink-0 border-r border-white/15 px-3 py-3 text-sm text-white/60">
+              <div className="flex items-center gap-0 overflow-hidden rounded-lg border border-white/12 bg-white/[0.03] transition-colors focus-within:border-brand-gold">
+                <span className="w-24 shrink-0 border-r border-white/12 px-3 py-3 text-sm text-white/55">
                   {label}
                 </span>
                 <span className="pl-3 text-white/30" aria-hidden="true">

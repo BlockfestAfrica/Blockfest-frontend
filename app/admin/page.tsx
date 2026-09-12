@@ -37,8 +37,11 @@ export default async function AdminQueuePage() {
       <main id="main" className="bg-ground">
         <section className="section-y">
           <div className="container-page max-w-md">
-            <h1 className="text-display-sm font-bold text-white">Admin</h1>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
+            <p className="eyebrow text-brand-gold">Blockfest Africa</p>
+            <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
+              Admin
+            </h1>
+            <p className="mt-4 text-base leading-relaxed text-white/55">
               You need to sign in to see this.
             </p>
             <Link
@@ -60,24 +63,26 @@ export default async function AdminQueuePage() {
   return (
     <main id="main" className="bg-ground">
       <section className="section-y">
-        <div className="container-page">
-          <div className="flex flex-wrap items-baseline justify-between gap-4">
-            <h1 className="text-display-sm font-bold text-white">
-              Review queue
-            </h1>
-            <p className="text-sm text-white/50">
+        <div className="container-page max-w-4xl">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="eyebrow text-brand-gold">Review</p>
+              <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
+                {queue.length} waiting
+              </h1>
+            </div>
+            <p className="text-sm text-white/40">
               {admin.admin.email} · {admin.admin.role}
             </p>
           </div>
 
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
-            Oldest first, so the creators who entered on day one are not the ones
-            left waiting. Approving mints points against a 5,000,000 naira pool
-            and is recorded against your name.
+          <p className="mt-4 max-w-prose text-sm leading-relaxed text-white/50">
+            Oldest first. Approving mints points against the prize pool and is
+            recorded against your name.
           </p>
 
           {queue.length === 0 ? (
-            <p className="mt-10 max-w-2xl rounded-xl border border-white/15 p-6 text-base leading-relaxed text-white/60">
+            <p className="mt-10 max-w-prose text-base leading-relaxed text-white/50">
               Nothing waiting. Submissions appear here as creators send them in.
             </p>
           ) : (
