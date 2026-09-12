@@ -63,7 +63,27 @@ describe("the database fingerprint", () => {
   });
 
   it("answers null rather than throwing when there is nothing to describe", async () => {
+    /*
+     * The resolver is mocked, not the environment.
+     *
+     * The first version of this deleted DATABASE_URL and expected null, which
+     * passed locally and failed the Netlify build: the fallback is
+     * getConnectionString(), which resolves inside a Netlify build because the
+     * database is attached there. "Nothing to describe" is not reachable by
+     * unsetting a variable, so it has to be arranged.
+     *
+     * This is the second time a test in this repository read ambient
+     * environment and was green everywhere except the one place that gates
+     * deploys.
+     */
     delete process.env.DATABASE_URL;
+    vi.doMock("@netlify/database", () => ({
+      getConnectionString: () => {
+        throw new Error("no database attached");
+      },
+      MissingDatabaseConnectionError: class extends Error {},
+    }));
+
     const { databaseFingerprint } = await import("@/lib/db/client");
     expect(databaseFingerprint()).toBeNull();
   });
