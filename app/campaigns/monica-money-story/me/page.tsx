@@ -198,7 +198,14 @@ export default async function MonicaCreatorPage() {
     creatorRank(creator.enrolmentId),
   ]);
 
-  const { challenge, platforms, submissions: mine, history, failed } = data;
+  const {
+    challenge,
+    platforms,
+    submissions: mine,
+    history,
+    handles,
+    failed,
+  } = data;
 
   // Rejected entries deliberately do not count: see platformsUsedThisWeek.
   const usedThisWeek = challenge
@@ -260,6 +267,59 @@ export default async function MonicaCreatorPage() {
             {creator.pointsTotal} points · {creator.approvedEntries} approved ·
             joined {joined}
           </p>
+
+          {/*
+           * Accounts still waiting to be confirmed.
+           *
+           * An entry cannot be approved into points through an unverified
+           * handle, which is the rule that stops somebody being paid for
+           * another person's work. A creator who does not know that, and does
+           * not know what to publish, has their work sitting in a queue nobody
+           * can approve while they wonder why nothing has happened.
+           *
+           * Above the week block on purpose: it is the one thing here that
+           * stops everything else from counting.
+           */}
+          {handles.some((h) => !h.verified) && (
+            <Panel tone="warn" className="mt-8">
+              <p className="eyebrow text-amber-300">
+                Before your work can score
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-white">
+                Confirm your accounts
+              </h2>
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/75">
+                We pay points to the person who published the work, so we have
+                to know the account is yours. Put your code somewhere public on
+                each account, a post, a story or your bio, and tell us. You can
+                remove it once we have confirmed.
+              </p>
+              <ul className="mt-4 flex flex-col gap-2">
+                {handles.map((h) => (
+                  <li
+                    key={`${h.platform}-${h.handle}`}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+                  >
+                    <span className="font-semibold text-white">
+                      {platformLabels[h.platform as CampaignPlatform] ??
+                        h.platform}
+                    </span>
+                    <span className="font-mono text-white/70">@{h.handle}</span>
+                    {h.verified ? (
+                      <Pill tone="good">Confirmed</Pill>
+                    ) : (
+                      <span className="font-mono text-brand-gold">
+                        {h.code}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 max-w-prose text-sm leading-relaxed text-white/60">
+                Done it? Reply to your welcome email and we will confirm.
+              </p>
+            </Panel>
+          )}
 
           {/* THE WEEK. The reason for the visit, roughly 235px down instead of
               640px. The head is present in every state so the clock never

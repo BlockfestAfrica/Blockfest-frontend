@@ -152,6 +152,9 @@ export default async function AdminQueuePage({
             submittedAt: item.submittedAt.toISOString(),
             creatorName: item.creatorName,
             registeredHandle: item.registeredHandle,
+            handleVerified: item.handleVerifiedAt !== null,
+            handleId: item.handleId,
+            verificationCode: item.verificationCode,
             /*
              * Whether the server could check the link against the handle.
              *

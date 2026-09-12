@@ -57,6 +57,16 @@ async function makeEntry(): Promise<{ entryId: string; enrolmentId: string }> {
     INSERT INTO creators (full_name, email, email_canonical, phone, phone_e164, content_niche)
     VALUES ('Creator', 'c${tag}@example.com', 'c${tag}@example.com', '0${tag}', '+234${seq}', 'finance')
     RETURNING id`);
+  // Verified handles for every platform, because that is what a registered
+  // creator has and because review() refuses to approve through an unverified
+  // one. A fixture that skips this is testing a state registration cannot
+  // produce.
+  for (const p of ["x", "instagram", "tiktok"]) {
+    await db.query(`
+      INSERT INTO creator_social_handles (creator_id, platform, handle, handle_normalized, verified_at)
+      VALUES ('${creatorId}', '${p}', 'pe${tag}${p}', 'pe${tag}${p}', now())`);
+  }
+
   const { id: enrolmentId } = await one<{ id: string }>(`
     INSERT INTO campaign_creators (campaign_id, creator_id, referral_code)
     VALUES ('${campaignId}', '${creatorId}', 'R${tag}') RETURNING id`);

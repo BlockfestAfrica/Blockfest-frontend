@@ -18,14 +18,20 @@
 ALTER TABLE creator_social_handles
   ADD COLUMN IF NOT EXISTS verification_code text;
 
--- Hex, uppercased. No O and no I to be confused with 0 and 1, because this gets
--- read off a screen, typed into a caption, and read back by somebody else.
+-- Hex, uppercased, six characters. No letters past F, so there is no O to be
+-- confused with 0 and no I to be confused with 1: this gets read off a screen,
+-- typed into a caption, and read back by somebody else.
+--
+-- Built from gen_random_uuid rather than gen_random_bytes, which lives in
+-- pgcrypto rather than core. The suite caught that against PGlite; it would
+-- otherwise have been a migration that failed at deploy time, which blocks the
+-- publish.
 UPDATE creator_social_handles
-   SET verification_code = 'BF-' || upper(encode(gen_random_bytes(3), 'hex'))
+   SET verification_code = 'BF-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 6))
  WHERE verification_code IS NULL;
 
 ALTER TABLE creator_social_handles
-  ALTER COLUMN verification_code SET DEFAULT 'BF-' || upper(encode(gen_random_bytes(3), 'hex'));
+  ALTER COLUMN verification_code SET DEFAULT 'BF-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 6));
 
 COMMENT ON COLUMN creator_social_handles.verification_code IS
   'Shown to the creator, published by them from the account, confirmed by an admin. Never proves anything on its own: the proof is a person seeing it on the account.';
@@ -44,7 +50,8 @@ CREATE OR REPLACE FUNCTION verify_social_handle(
 RETURNS TABLE (handle text, platform_name text)
 LANGUAGE plpgsql AS $$
 DECLARE
-  h RECORD;
+  h          RECORD;
+  v_campaign uuid;
 BEGIN
   IF p_admin IS NULL THEN
     RAISE EXCEPTION 'admin_required' USING ERRCODE = 'P0401';
@@ -85,10 +92,25 @@ BEGIN
      SET verified_at = now()
    WHERE id = p_handle;
 
+  /*
+   * Scoped to the campaign the creator is enrolled in.
+   *
+   * Left null, these rows survive a purge and then reference a handle that no
+   * longer exists: an audit trail pointing at nothing, which is worse than no
+   * row because somebody will try to follow it. The admin binding rows are null
+   * on purpose, because they are about an admin rather than a campaign, and
+   * this one is not.
+   */
+  SELECT cc.campaign_id INTO v_campaign
+    FROM campaign_creators cc
+   WHERE cc.creator_id = h.creator_id
+   ORDER BY cc.joined_at
+   LIMIT 1;
+
   INSERT INTO audit_log (
-    actor_admin_id, action, entity_type, entity_id, after, note
+    campaign_id, actor_admin_id, action, entity_type, entity_id, after, note
   ) VALUES (
-    p_admin, 'handle.verified', 'creator_social_handle', p_handle,
+    v_campaign, p_admin, 'handle.verified', 'creator_social_handle', p_handle,
     jsonb_build_object('platform', h.platform::text, 'handle', h.handle),
     format('Confirmed %s on %s belongs to this creator.', h.handle, h.platform)
   );
@@ -114,9 +136,10 @@ CREATE OR REPLACE FUNCTION void_enrolment(
 )
 RETURNS integer LANGUAGE plpgsql AS $$
 DECLARE
-  v_creator uuid;
-  v_reason  text := btrim(COALESCE(p_reason, ''));
-  n         integer;
+  v_creator  uuid;
+  v_campaign uuid;
+  v_reason   text := btrim(COALESCE(p_reason, ''));
+  n          integer;
 BEGIN
   IF p_admin IS NULL THEN
     RAISE EXCEPTION 'admin_required' USING ERRCODE = 'P0401';
@@ -127,7 +150,7 @@ BEGIN
     RAISE EXCEPTION 'reason_required' USING ERRCODE = 'P0502';
   END IF;
 
-  SELECT creator_id INTO v_creator
+  SELECT creator_id, campaign_id INTO v_creator, v_campaign
     FROM campaign_creators WHERE id = p_enrolment;
 
   IF v_creator IS NULL THEN
@@ -145,9 +168,9 @@ BEGIN
   GET DIAGNOSTICS n = ROW_COUNT;
 
   INSERT INTO audit_log (
-    actor_admin_id, action, entity_type, entity_id, after, note
+    campaign_id, actor_admin_id, action, entity_type, entity_id, after, note
   ) VALUES (
-    p_admin, 'enrolment.voided', 'campaign_creator', p_enrolment,
+    v_campaign, p_admin, 'enrolment.voided', 'campaign_creator', p_enrolment,
     jsonb_build_object('handles_released', n),
     v_reason
   );

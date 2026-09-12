@@ -249,6 +249,8 @@ export const creatorSocialHandles = pgTable(
      * first, or the handles of well-known creators can be taken in bulk.
      */
     verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    /** Shown to the creator, published from the account, confirmed by a person. */
+    verificationCode: text("verification_code"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
