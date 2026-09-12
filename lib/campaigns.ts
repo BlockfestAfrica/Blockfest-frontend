@@ -233,8 +233,8 @@ export interface CampaignStage {
  * 30 days, so the campaign team settled it: 33. Day 1 is Monday 14 September
  * and day 33 is Friday 16 October, which leaves Saturday 17 October as the
  * close. That lands well rather than awkwardly, because Saturday is already
- * the day standings are published every week, so the campaign ends on a final
- * leaderboard rather than mid-week on a stage nobody finished.
+   * the day weekly winners are announced, so the campaign ends on an
+   * announcement rather than mid-week on a stage nobody finished.
  *
  * The extra three days go to the last stage. It is the one with the widest
  * creative brief and the most at stake, so it is the one that benefits.
@@ -375,7 +375,7 @@ export const monicaHowItWorks: HowItWorksStep[] = [
   {
     title: "Earn and climb",
     detail:
-      "Approved entries score. Bonuses go to work that is genuinely good, gets featured, or brings another creator in. The leaderboard updates every Saturday.",
+      "Approved entries score. Bonuses go to work that is genuinely good, gets featured, or brings another creator in. The leaderboard moves as entries are approved, and weekly winners are announced every Saturday.",
   },
 ];
 
@@ -434,7 +434,17 @@ export const monicaFaqs: CampaignFaq[] = [
   },
 ];
 
-/** When the first standings are published. Day 1 has nobody on the board. */
+/**
+ * When the first weekly winners are announced.
+ *
+ * Not when the board appears. The board is live from the first approval and
+ * refreshes within a minute, which is what the code does and what a creator
+ * sees. Three separate places used to say standings were published weekly,
+ * which would have read as a broken promise in both directions: a creator
+ * checking on the 15th finds a full board the site said would not exist yet,
+ * and a creator told the board updates weekly has no reason to come back on
+ * Tuesday after an approval.
+ */
 export const MONICA_FIRST_LEADERBOARD = "Saturday 19 September";
 
 /** Where campaign conversation happens, and how entries are found. */
