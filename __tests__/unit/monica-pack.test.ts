@@ -13,7 +13,9 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  monicaChannels,
   monicaPackAllowed,
+  monicaPackDisclosure,
   monicaPackFacts,
   monicaPackOpenPoints,
   monicaPackPrinciple,
@@ -84,18 +86,24 @@ describe("what Monica is not", () => {
   });
 });
 
+/*
+ * This block used to assert that the pack published "0% platform fee, and you
+ * still pay gas", taken from Monica's Terms of Service clause 7.1 and 7.2.
+ *
+ * Monica's sponsor brief then said zero gas fees, and, a few lines earlier,
+ * $2 gas fee for BTC and zero on other coins. Three statements that cannot all
+ * be true. The rule this asserted is now known to be unsafe, so it is replaced
+ * rather than adjusted: see "fees, which are unresolved" below. Publishing any
+ * figure while the source contradicts itself is the mistake, not publishing the
+ * wrong one.
+ */
 describe("the fee wording", () => {
-  it("states the zero platform fee and the network fee together", () => {
-    // 0% is true and publishable. "Free" is not, because the sender still pays
-    // gas, so the two facts have to travel together.
+  it("publishes no fee fact at all while the source disagrees with itself", () => {
     const fee = monicaPackFacts.find((f) => /fee/i.test(f.label));
-    expect(fee).toBeTruthy();
-    expect(fee!.detail).toMatch(/0%/);
-    expect(fee!.detail).toMatch(/network fee|gas/i);
-  });
-
-  it("forbids calling the conversion free without mentioning network fees", () => {
-    expect(prohibited).toMatch(/free/i);
+    expect(
+      fee,
+      "there must be no fee fact until Monica settles which of their statements is right",
+    ).toBeUndefined();
   });
 });
 
@@ -149,5 +157,88 @@ describe("house style", () => {
 
   it("uses no em dashes", () => {
     expect(allText).not.toContain("—");
+  });
+});
+
+/**
+ * The facts Monica supplied on 12 September, and the one they did not settle.
+ */
+describe("Monica's approved messaging", () => {
+  it("uses their own product wording rather than ours", () => {
+    expect(facts).toMatch(/crypto to naira/i);
+    expect(facts).toMatch(/PADI CHOP I CHOP/);
+    expect(facts).toMatch(/3,000 naira/);
+  });
+
+  it("names the coins they actually support", () => {
+    for (const coin of ["Bitcoin", "Solana", "Ethereum", "BNB", "Tron", "USDT", "USDC"]) {
+      expect(facts).toContain(coin);
+    }
+  });
+
+  it("states plainly what Monica is not, since that is what gets got wrong", () => {
+    // Their own brief singles this out: people describe it as converting
+    // dollars, or as storing coins, and it does neither.
+    expect(facts).toMatch(/does not convert naira to crypto/i);
+    expect(facts).toMatch(/does not store coins/i);
+  });
+
+  it("forbids claiming dollars can be converted", () => {
+    expect(prohibited).toMatch(/dollars, or any currency other than crypto/i);
+  });
+
+  /**
+   * Monica calls itself the number one crypto app. That is their claim to
+   * make about themselves. A creator asserting it as a fact of their own is
+   * making a comparative advertising claim they cannot support.
+   */
+  it("allows the number one claim only as Monica's own words", () => {
+    expect(prohibited).toMatch(/number one crypto app as a fact of your own/i);
+  });
+});
+
+/**
+ * The fee contradiction.
+ *
+ * Monica's Terms of Service clause 7.2 says the user bears the onchain network
+ * fee on every chain. Their sponsor brief lists zero gas fees as a talking
+ * point, and a few lines earlier says $2 gas fee for BTC and zero on other
+ * coins. Three statements that cannot all be true, about the one subject where
+ * being wrong is a false financial claim.
+ *
+ * Until Monica settles it, the pack must publish no fee figure at all, in
+ * either direction. "Free" is as wrong as a wrong number.
+ */
+describe("fees, which are unresolved", () => {
+  it("states no fee figure anywhere a creator could copy", () => {
+    const copyable = [monicaPackPrinciple, facts, ...monicaPackAllowed].join(" ");
+    expect(copyable).not.toMatch(/0%/);
+    expect(copyable).not.toMatch(/zero (transfer |gas )?fee/i);
+    expect(copyable).not.toMatch(/\$2/);
+  });
+
+  it("forbids a creator making one", () => {
+    expect(prohibited).toMatch(/anything at all about fees/i);
+  });
+
+  it("keeps it on the open list until Monica settles it", () => {
+    const open = monicaPackOpenPoints.join(" ");
+    expect(open).toMatch(/fees/i);
+    expect(open).toMatch(/7\.2|Terms of Service/);
+  });
+});
+
+describe("tagging", () => {
+  it("gives the real handles, since a near miss tags somebody else", () => {
+    expect(monicaPackDisclosure.tag).toContain("@monicanigeria");
+    expect(monicaPackDisclosure.tag).toContain("@monica_nigeria");
+  });
+
+  it("lists every channel with an https link", () => {
+    expect(monicaChannels.length).toBeGreaterThanOrEqual(5);
+    for (const channel of monicaChannels) {
+      expect(channel.url).toMatch(/^https:\/\//);
+      expect(channel.handle.length).toBeGreaterThan(0);
+    }
   });
 });

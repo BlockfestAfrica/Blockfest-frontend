@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Check, X } from "lucide-react";
 import {
   monicaPackAllowed,
+  monicaChannels,
   monicaPackDisclosure,
   monicaPackFacts,
   monicaPackOpenPoints,
@@ -206,6 +207,10 @@ export default function MonicaPackPage() {
                   </p>
                 ))}
               </div>
+              <p className="mt-5 text-sm leading-relaxed text-white/70">
+                Tag {monicaPackDisclosure.tag}
+              </p>
+
               <ul className="mt-5 flex flex-wrap gap-2">
                 {monicaPackDisclosure.labels.map((label) => (
                   <li
@@ -237,6 +242,28 @@ export default function MonicaPackPage() {
                 </section>
               ))}
             </div>
+
+            <section id="channels" className="mt-14 scroll-mt-24">
+              <h2 className="text-xl font-bold text-white">Monica's accounts</h2>
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/55">
+                The real ones. A near-miss handle tags somebody else entirely.
+              </p>
+              <ul className="mt-5 flex flex-col gap-px overflow-hidden rounded-xl bg-white/10">
+                {monicaChannels.map((channel) => (
+                  <li
+                    key={channel.label}
+                    className="flex flex-wrap items-baseline gap-x-3 gap-y-1 bg-ground px-4 py-3"
+                  >
+                    <span className="w-24 shrink-0 text-sm text-white/45">
+                      {channel.label}
+                    </span>
+                    <span className="font-mono text-sm text-brand-gold">
+                      {channel.handle}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
 
             <p className="mt-14 text-sm leading-relaxed text-white/50">
               Anything you are unsure about goes to{" "}

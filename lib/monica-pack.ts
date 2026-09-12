@@ -29,7 +29,7 @@
  * the Compliance Statement.
  */
 
-export const MONICA_PACK_VERSION = "1.1";
+export const MONICA_PACK_VERSION = "1.2";
 
 /** ISO date. Rendered in the event's own timezone. */
 export const MONICA_PACK_UPDATED = "2026-09-12";
@@ -39,6 +39,16 @@ export const MONICA_SOURCE_URL = "https://monica.cash";
 
 /** The documents these facts were taken from, and when they were published. */
 export const MONICA_SOURCE_DATE = "29 May 2026";
+
+/** Monica's own accounts, so an entry tags the real ones. */
+export const monicaChannels = [
+  { label: "Website", handle: "monica.cash/app", url: "https://monica.cash/app" },
+  { label: "Instagram", handle: "@monicanigeria", url: "https://www.instagram.com/monicanigeria" },
+  { label: "X", handle: "@monicanigeria", url: "https://x.com/monicanigeria" },
+  { label: "TikTok", handle: "@monicanigeria", url: "https://www.tiktok.com/@monicanigeria" },
+  { label: "YouTube", handle: "@monica_nigeria", url: "https://youtube.com/@monica_nigeria" },
+  { label: "Facebook", handle: "Monica", url: "https://www.facebook.com/share/1C2zwZJ7UE/" },
+] as const;
 
 export interface PackSection {
   /** Anchor, so a point can be linked to directly when an entry is queried. */
@@ -71,27 +81,42 @@ export const monicaPackFacts: PackFact[] = [
   {
     label: "What Monica is",
     detail:
-      "A one-way crypto to naira off ramp for people in Nigeria. You send supported crypto, it is converted at the rate shown, and the naira lands in your own Nigerian bank account.",
+      "A one-way crypto to naira off ramp for people in Nigeria. You send supported crypto, it converts automatically, and the naira lands in your own Nigerian bank account. Monica's own words: crypto in, naira out, withdraw to bank.",
   },
   {
-    label: "Who operates it",
+    label: "What it is not",
     detail:
-      "Monica Technologies Limited, a company incorporated in Nigeria with its registered office in Lagos.",
+      "Monica does not convert naira to crypto, does not sell coins, and does not convert other currencies such as dollars, Australian dollars, Canadian dollars or renminbi. It does not store coins: a deposit is converted the moment it arrives and becomes a naira balance. Saying otherwise describes a product that does not exist.",
   },
   {
-    label: "Fees",
+    label: "Approved short description",
     detail:
-      "0% platform fee on the conversion and 0% fee on the naira withdrawal. Say it that way. The blockchain network fee, or gas, is still paid by the sender and is set by the network rather than by Monica, so no fees at all is not accurate.",
+      "Monica is the No. 1 crypto app built to make everyday finance simple, fast and secure. With Monica you can instantly convert crypto such as BTC, USDT, TRON and ETH into naira at the best rates and pay bills. Use it as written, or write your own in line with these facts.",
+  },
+  {
+    label: "Approved lines you may use as they are",
+    detail:
+      "Crypto to naira in 60 seconds. Convert your crypto to naira, enjoy good rates, spend crypto like cash with Monica. Join the PADI CHOP I CHOP programme and earn 3,000 naira per BTC transaction.",
   },
   {
     label: "Supported crypto",
     detail:
-      "Bitcoin, Ethereum, Solana, Tron and BNB, plus the stablecoins USDT and USDC, across the Bitcoin, ERC20, TRC20, BEP20, Solana and Base networks. Monica may change this list, so check before naming an asset.",
+      "Bitcoin, Solana, Ethereum, BNB, Base and Tron, plus the stablecoins USDT and USDC on their respective networks. Each user gets a unique deposit address per coin.",
+  },
+  {
+    label: "What else the app does",
+    detail:
+      "Bill payments covering airtime, data, TV subscriptions, electricity and betting wallets. Gift card purchases. A virtual USD card with no maintenance fees. A daily leaderboard programme.",
+  },
+  {
+    label: "The referral programme",
+    detail:
+      "3,000 naira for every verified BTC deposit by somebody you referred. It is called PADI CHOP I CHOP. This is Monica's own referral programme and is nothing to do with the campaign referral code on your own page.",
   },
   {
     label: "How the naira arrives",
     detail:
-      "By NIBSS instant transfer, to a Nigerian bank account verified as being in your own name.",
+      "Instant payout by bank transfer to a Nigerian bank account verified as being in your own name.",
   },
   {
     label: "Who can use it",
@@ -99,19 +124,14 @@ export const monicaPackFacts: PackFact[] = [
       "People aged 18 or over who are ordinarily resident in Nigeria and hold a Nigerian bank account in their own name.",
   },
   {
-    label: "Verification",
-    detail:
-      "Tier 1 verifies your Nigerian bank account and allows withdrawals up to 500,000 naira per withdrawal. Tier 2 adds your NIN and allows up to 1,000,000 naira per withdrawal. Other daily, weekly and monthly caps apply and are shown in the app.",
-  },
-  {
     label: "Regulatory position, exact wording",
     detail:
       "Monica describes itself as aligned with the Nigerian SEC's Virtual Asset Service Provider framework. Use that phrase. It is not licensed, registered, approved or regulated by the SEC or the CBN, and it holds no banking licence.",
   },
   {
-    label: "The card",
+    label: "Who operates it",
     detail:
-      "Verified users may apply for a virtual dollar card issued through a partner. It is subject to that partner's own terms, so do not describe its limits, rates or features.",
+      "Monica Technologies Limited, incorporated in Nigeria with its registered office in Lagos.",
   },
 ];
 
@@ -128,9 +148,12 @@ export const monicaPackProhibited: string[] = [
   "Saying Monica is licensed, registered, approved or regulated by the SEC, the CBN or anybody else. Its own wording is aligned with the SEC's VASP framework, and that is the only form to use.",
   "Saying Monica is a bank, or that money held with it is insured, protected or guaranteed. It holds no banking licence and nothing is NDIC insured.",
   "Saying you can buy crypto on Monica, or hold, store or keep crypto in a Monica wallet. It converts one way, crypto to naira, and it is not a custodian.",
+  "Saying Monica converts dollars, or any currency other than crypto, into naira. It does not, and Monica names this as the thing most often got wrong.",
+  "Stating that Monica is the number one crypto app as a fact of your own. It is Monica's description of itself, so say that Monica calls itself that, or leave it out.",
   "Any promise or guarantee of returns, profit, savings or a financial outcome, including phrasing like you will save, guaranteed, or risk free.",
   "Presenting Monica, or anything in your entry, as investment or financial advice.",
-  "Rates, transfer times, limits or charges that are not in the confirmed list above, including saying the conversion is free with no mention of network fees.",
+  "Anything at all about fees, charges or gas, in either direction. Monica's own documents contradict each other on this and it is the one claim currently unsafe to make. Do not say free, do not say zero fees, and do not name a figure.",
+  "Rates, transfer times or limits that are not in the confirmed list above.",
   "Comparisons naming another provider and claiming Monica is cheaper, faster or better, unless you have asked and been told in writing that you may.",
   "Urgency or pressure framing: limited time, act now, last chance, or implying somebody loses out by waiting.",
   "Targeting or appearing to target anyone under 18.",
@@ -144,6 +167,8 @@ export const monicaPackProhibited: string[] = [
  */
 export const monicaPackDisclosure = {
   labels: ["#ad", "#sponsored", "Paid partnership with Monica"],
+  /** Tag the real accounts. A near-miss handle tags somebody else entirely. */
+  tag: "@monicanigeria on X, Instagram and TikTok. @monica_nigeria on YouTube.",
   paragraphs: [
     "Every entry must show that it is part of a sponsored campaign. This is required by Nigerian advertising rules and by the platforms themselves, and an entry without it will be rejected.",
     "Put it where your audience will actually see it: in the caption near the top, or on screen early in a video, or using the platform's own paid partnership label. Buried at the end of a caption, hidden behind a more link, or lost in a block of other hashtags does not count.",
@@ -198,8 +223,7 @@ export const monicaPackSections: PackSection[] = [
  * unconfirmed by us.
  */
 export const monicaPackOpenPoints: string[] = [
-  "Monica's brand assets, and how the name and logo may be shown.",
+  "Anything about fees. Monica's own documents disagree with each other and the difference is not small. Their Terms of Service, clause 7.2, say the user bears the onchain network fee on every chain. Their sponsor brief lists zero gas fees as a talking point, and then says $2 gas fee for BTC and zero on other coins a few lines earlier. Three statements that cannot all be true, so no fee claim may be made until Monica settles which one is right.",
+  "Monica's brand assets. The folder shared is empty, so there is no logo, no lockup and no colour guidance yet.",
   "Whether creators may name another provider in a comparison, and if so which.",
-  "Any wording Monica requires verbatim in an entry, such as a risk or regulatory line.",
-  "Whether the marketing figures on Monica's own site, such as payout speed and user numbers, may be repeated by creators.",
 ];
