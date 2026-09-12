@@ -152,7 +152,7 @@ export function AdminLogin() {
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none"
+            className="w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
           />
         </div>
       )}

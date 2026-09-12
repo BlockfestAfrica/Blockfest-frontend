@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Coins, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Pill } from "@/components/shared/panel";
+import { Panel, Pill, SectionHeading } from "@/components/shared/panel";
 
 /** The sources a person may write. The engine owns challenge_entry and referral. */
 const AWARD_SOURCES = [
@@ -136,6 +136,8 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
     setAscending(key === "name");
   }
 
+  const selected = rows.find((r) => r.enrolmentId === awarding) ?? null;
+
   const counts = {
     all: rows.length,
     submitted: rows.filter((r) => r.submitted > 0).length,
@@ -159,6 +161,7 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
               key={f.key}
               type="button"
               onClick={() => setFilter(f.key)}
+              aria-pressed={filter === f.key}
               className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-semibold transition-colors ${
                 filter === f.key
                   ? "border-brand-gold/50 bg-brand-gold/10 text-brand-gold"
@@ -172,144 +175,230 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
 
         <div className="relative sm:w-64">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60"
             aria-hidden="true"
           />
           <label htmlFor="participant-search" className="sr-only">
-            Search by name, email or handle
+            Filter the loaded rows by name, email or handle
           </label>
           <input
             id="participant-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Name, email or handle"
-            className="min-h-11 w-full rounded-full border border-white/15 bg-white/[0.03] pl-9 pr-4 text-sm text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none"
+            placeholder="Filter these rows"
+            className="min-h-11 w-full rounded-full border border-white/15 bg-white/[0.03] pl-9 pr-4 text-sm text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
           />
         </div>
       </div>
 
+      {/* Said plainly, because the figures above the table are population counts
+          from their own query and these are not. Both numbers are true and they
+          answer different questions, which is exactly the sort of thing that
+          gets misread when nothing says so. */}
+      <p className="mt-3 text-sm text-white/60">
+        These narrow the {rows.length} rows loaded here. Use the search above the
+        table to reach anybody else.
+      </p>
+
       {shown.length === 0 ? (
-        <p className="mt-10 text-base leading-relaxed text-white/50">
-          Nobody matches that.
+        <p className="mt-10 text-base leading-relaxed text-white/60">
+          Nobody here matches that.
         </p>
       ) : (
-        /*
-         * Scrolls inside its own container.
-         *
-         * html and body set overflow-x: hidden site-wide, so a table wider than
-         * the screen would be clipped with no scrollbar and no sign that
-         * anything was missing. This keeps the overflow local, where it can
-         * actually be scrolled.
-         */
-        <div className="mt-6 overflow-x-auto rounded-xl border border-white/12">
-          <table className="w-full min-w-[46rem] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-white/12">
-                <Th onClick={() => sortBy("name")} active={sort === "name"} ascending={ascending}>
-                  Creator
-                </Th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white/40">
-                  Handles
-                </th>
-                <Th onClick={() => sortBy("joinedAt")} active={sort === "joinedAt"} ascending={ascending}>
-                  Joined
-                </Th>
-                <Th onClick={() => sortBy("submitted")} active={sort === "submitted"} ascending={ascending} numeric>
-                  Sent
-                </Th>
-                <Th onClick={() => sortBy("approved")} active={sort === "approved"} ascending={ascending} numeric>
-                  Approved
-                </Th>
-                <Th onClick={() => sortBy("points")} active={sort === "points"} ascending={ascending} numeric>
-                  Points
-                </Th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white/40">
-                  Award
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.flatMap((row) => [
-                <tr
-                  key={row.enrolmentId}
-                  className="border-b border-white/[0.06] last:border-0"
-                >
-                  <td className="px-4 py-3 align-top">
-                    <span className="block font-semibold text-white">
+        <>
+          {/*
+           * Two shapes, one row array.
+           *
+           * Below md the table is abandoned rather than scrolled: a 46rem table
+           * inside a scroll container on a 375px phone means every column but
+           * the first is off screen, and the reviewer is scrolling sideways to
+           * read a number. Cards say the same things down the page.
+           */}
+          <ul className="mt-6 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/12 md:hidden">
+            {shown.map((row) => (
+              <li key={row.enrolmentId} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-semibold text-white">
                       {row.name}
-                    </span>
-                    <span className="block text-sm text-white/40">
-                      {row.email}
-                    </span>
-                    {!row.active && (
-                      <span className="mt-1 inline-block">
-                        <Pill tone="bad">removed</Pill>
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 align-top text-sm text-white/55">
-                    {row.handles.length === 0 ? (
-                      <span className="text-red-300">none</span>
-                    ) : (
-                      row.handles.map((h) => {
-                        const [platform, handle] = h.split(":");
-                        return (
-                          <span key={h} className="block font-mono text-xs">
-                            <span className="text-white/35">{platform}</span>{" "}
-                            @{handle}
-                          </span>
-                        );
-                      })
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 align-top text-sm text-white/55">
-                    {new Date(row.joinedAt).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      timeZone: "Africa/Lagos",
-                    })}
-                  </td>
-                  <td className="px-4 py-3 text-right align-top tabular-nums text-white/70">
-                    {row.submitted}
-                  </td>
-                  <td className="px-4 py-3 text-right align-top tabular-nums text-white/70">
-                    {row.approved}
-                  </td>
-                  <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-white">
+                    </p>
+                    <p className="truncate text-sm text-white/60">{row.email}</p>
+                  </div>
+                  <p className="shrink-0 text-2xl font-bold tabular-nums text-white">
                     {row.points}
-                  </td>
-                  <td className="px-4 py-3 text-right align-top">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setAwarding(
-                          awarding === row.enrolmentId ? null : row.enrolmentId,
-                        )
-                      }
-                      className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-white/70 transition-colors hover:bg-white/5"
-                    >
-                      <Coins className="h-4 w-4" aria-hidden="true" />
-                      {awarding === row.enrolmentId ? "Close" : "Points"}
-                    </button>
-                  </td>
-                </tr>,
-                awarding === row.enrolmentId ? (
-                  <tr key={`${row.enrolmentId}-award`} className="bg-white/[0.03]">
-                    <td colSpan={7} className="px-4 py-5">
-                      <AwardRow
-                        name={row.name}
-                        busy={busy}
-                        onSubmit={(source, points, note) =>
-                          submitAward(row.enrolmentId, source, points, note)
+                  </p>
+                </div>
+
+                {row.handles.length > 0 && (
+                  <ul className="mt-2 flex flex-wrap gap-1.5">
+                    {row.handles.map((h) => {
+                      const [platform, handle] = h.split(":");
+                      return (
+                        <li key={h}>
+                          <Pill>
+                            {platform} @{handle}
+                          </Pill>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+
+                <p className="mt-2 text-sm text-white/60">
+                  {row.submitted} sent · {row.approved} approved · joined{" "}
+                  {new Date(row.joinedAt).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    timeZone: "Africa/Lagos",
+                  })}
+                </p>
+
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAwarding(
+                        awarding === row.enrolmentId ? null : row.enrolmentId,
+                      )
+                    }
+                    className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                  >
+                    <Coins className="h-4 w-4" aria-hidden="true" />
+                    {awarding === row.enrolmentId ? "Close" : "Points"}
+                  </button>
+                  {!row.active && <Pill tone="bad">removed</Pill>}
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6 hidden overflow-x-auto rounded-xl border border-white/12 md:block">
+            <table className="w-full min-w-[46rem] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-white/12">
+                  <Th
+                    onClick={() => sortBy("name")}
+                    active={sort === "name"}
+                    ascending={ascending}
+                    sticky
+                  >
+                    Creator
+                  </Th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white/60">
+                    Handles
+                  </th>
+                  <Th onClick={() => sortBy("joinedAt")} active={sort === "joinedAt"} ascending={ascending}>
+                    Joined
+                  </Th>
+                  <Th onClick={() => sortBy("submitted")} active={sort === "submitted"} ascending={ascending} numeric>
+                    Sent
+                  </Th>
+                  <Th onClick={() => sortBy("approved")} active={sort === "approved"} ascending={ascending} numeric>
+                    Approved
+                  </Th>
+                  <Th onClick={() => sortBy("points")} active={sort === "points"} ascending={ascending} numeric>
+                    Points
+                  </Th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white/60">
+                    Award
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {shown.map((row) => (
+                  <tr
+                    key={row.enrolmentId}
+                    className="border-b border-white/[0.06] last:border-0"
+                  >
+                    {/* Pinned. Scrolling right to reach the points column used
+                        to leave an unlabelled row under the cursor, which is
+                        how points get awarded to the wrong person. */}
+                    <td className="sticky left-0 z-10 bg-ground px-4 py-3 align-top after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-white/12">
+                      <span className="block font-semibold text-white">
+                        {row.name}
+                      </span>
+                      <span className="block text-sm text-white/60">
+                        {row.email}
+                      </span>
+                      {!row.active && (
+                        <span className="mt-1 inline-block">
+                          <Pill tone="bad">removed</Pill>
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-top text-sm text-white/60">
+                      {row.handles.length === 0 ? (
+                        <span className="text-red-300">none</span>
+                      ) : (
+                        row.handles.map((h) => {
+                          const [platform, handle] = h.split(":");
+                          return (
+                            <span key={h} className="block font-mono text-xs">
+                              <span className="text-white/60">{platform}</span>{" "}
+                              @{handle}
+                            </span>
+                          );
+                        })
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 align-top text-sm text-white/60">
+                      {new Date(row.joinedAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        timeZone: "Africa/Lagos",
+                      })}
+                    </td>
+                    <td className="px-4 py-3 text-right align-top tabular-nums text-white/70">
+                      {row.submitted}
+                    </td>
+                    <td className="px-4 py-3 text-right align-top tabular-nums text-white/70">
+                      {row.approved}
+                    </td>
+                    <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-white">
+                      {row.points}
+                    </td>
+                    <td className="px-4 py-3 text-right align-top">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAwarding(
+                            awarding === row.enrolmentId ? null : row.enrolmentId,
+                          )
                         }
-                      />
+                        className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                      >
+                        <Coins className="h-4 w-4" aria-hidden="true" />
+                        {awarding === row.enrolmentId ? "Close" : "Points"}
+                      </button>
                     </td>
                   </tr>
-                ) : null,
-              ])}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/*
+       * The award form, out of the table entirely.
+       *
+       * It lived in a colSpan cell inside the horizontal scroll container, so
+       * the form was at least 736px wide and its Apply button was off screen to
+       * the right on every phone: the one control that moves points could not
+       * be reached on the device an admin is most likely holding. One instance,
+       * below the list, for whichever creator is selected.
+       */}
+      {selected && (
+        <Panel tone="accent" className="mt-8">
+          <SectionHeading label="Points" title={selected.name} />
+          <AwardRow
+            name={selected.name}
+            busy={busy}
+            onSubmit={(source, points, note) =>
+              submitAward(selected.enrolmentId, source, points, note)
+            }
+          />
+        </Panel>
       )}
     </div>
   );
@@ -322,25 +411,30 @@ function Th({
   active,
   ascending,
   numeric = false,
+  /** Pins the column while the table scrolls sideways. */
+  sticky = false,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   active: boolean;
   ascending: boolean;
   numeric?: boolean;
+  sticky?: boolean;
 }) {
   return (
     <th
       scope="col"
       aria-sort={active ? (ascending ? "ascending" : "descending") : "none"}
-      className={numeric ? "text-right" : "text-left"}
+      className={`${sticky ? "sticky left-0 z-10 bg-ground" : ""} ${
+        numeric ? "text-right" : "text-left"
+      }`}
     >
       <button
         type="button"
         onClick={onClick}
         className={`inline-flex min-h-11 w-full cursor-pointer items-center gap-1 px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors hover:text-white ${
           numeric ? "justify-end" : "justify-start"
-        } ${active ? "text-brand-gold" : "text-white/40"}`}
+        } ${active ? "text-brand-gold" : "text-white/60"}`}
       >
         {children}
         <span aria-hidden="true" className="text-[0.65rem]">
@@ -411,7 +505,7 @@ function AwardRow({
           onChange={(e) => setPoints(e.target.value.replace(/[^0-9-]/g, ""))}
           inputMode="numeric"
           placeholder="Points, or -points"
-          className="min-h-12 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none lg:w-44"
+          className="min-h-12 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none lg:w-44"
         />
 
         <label htmlFor="award-note" className="sr-only">
@@ -423,7 +517,7 @@ function AwardRow({
           onChange={(e) => setNote(e.target.value)}
           maxLength={300}
           placeholder="Why. Required, and kept against the award."
-          className="min-h-12 min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none"
+          className="min-h-12 min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
         />
 
         <button

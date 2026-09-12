@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { eq } from "drizzle-orm";
 import { campaigns, getDb } from "@/lib/db/client";
 import { MONICA_SLUG } from "@/lib/campaigns";
@@ -45,7 +46,11 @@ const RUNNING: PauseState = { paused: false, reason: null, startsAt: null };
  * it was caused by. The gates that actually protect the campaign, the opening
  * date, the session, the admin check, all still run and all still fail closed.
  */
-export async function pauseState(): Promise<PauseState> {
+/**
+ * Deduplicated per request, for the same reason requireAdmin is: the console
+ * layout reads it to show the state to every reviewer, and pages read it again.
+ */
+export const pauseState = cache(async function pauseState(): Promise<PauseState> {
   try {
     const db = getDb();
     const rows = await db
@@ -73,4 +78,4 @@ export async function pauseState(): Promise<PauseState> {
     );
     return RUNNING;
   }
-}
+})

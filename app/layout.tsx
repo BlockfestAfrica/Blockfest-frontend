@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Footer from "@/components/shared/footer";
-import Navbar from "@/components/shared/navbar";
-import { AnnouncementBar } from "@/components/shared/announcement-bar";
+import { SiteFooter, SiteHeader } from "@/components/shared/site-chrome";
 import { Toaster } from "@/components/ui/sonner";
 import { IdentityCallback } from "@/components/admin/identity-callback";
 import { gotham } from "@/lib/fonts";
@@ -222,10 +220,9 @@ export default function RootLayout({
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <AnnouncementBar />
-        <Navbar />
+        <SiteHeader />
         {children}
-        <Footer />
+        <SiteFooter />
         <Toaster />
         {/* Netlify builds its invite and recovery links against the site root,
             and the page that completes them is /admin/login. Without this an

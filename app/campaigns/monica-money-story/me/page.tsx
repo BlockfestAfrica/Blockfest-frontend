@@ -7,14 +7,28 @@ import {
   openChallenge,
   platformsUsedThisWeek,
   registeredPlatforms,
+  type CreatorSubmission,
 } from "@/lib/creator-session";
+import { creatorRank } from "@/lib/leaderboard";
 import { SubmissionForm } from "@/components/campaigns/submission-form";
-import { Panel, SectionHeading, Stat } from "@/components/shared/panel";
+import { CopyField } from "@/components/campaigns/copy-field";
+import {
+  formatTimeLeft,
+  TimeLeftLabel,
+} from "@/components/campaigns/time-left-label";
+import { HeadedPanel, Panel, Pill, Stat } from "@/components/shared/panel";
 import { pauseState } from "@/lib/campaign-pause";
-import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
-import { campaignBySlug, monicaRoutes, MONICA_SLUG } from "@/lib/campaigns";
+import {
+  campaignBySlug,
+  monicaRoutes,
+  MONICA_SLUG,
+  platformLabels,
+  type CampaignPlatform,
+} from "@/lib/campaigns";
+import { CONTACT_EMAIL } from "@/lib/constants";
 
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
 
 export const metadata: Metadata = {
   title: "Your campaign page",
@@ -26,6 +40,18 @@ export const metadata: Metadata = {
 /**
  * A creator's own page.
  *
+ * Rebuilt around what somebody actually opens it for. The old order put the
+ * name in display type, then three figures, then a leaderboard link, and only
+ * then the brief and the box to paste a link into: about 640 pixels down a
+ * 375 pixel phone, under a sticky navbar, so the one reason for the visit was
+ * below the fold every single week.
+ *
+ * Now the week block is the page. It is a card with a filled gold header, which
+ * is the only filled surface anywhere on the site, and it carries the week and
+ * the time left in every state so the clock is never hidden. The standing is
+ * one line of figures above it, because knowing you have 400 points takes a
+ * glance and pasting a link takes a minute.
+ *
  * Dynamic, always. The whole page is a function of a cookie, so it must not be
  * prerendered and must never be cached: a cached render is one creator's points
  * shown to the next visitor.
@@ -33,33 +59,38 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const LAGOS = "Africa/Lagos";
+
+/** The closing instant, to the minute. A countdown alone leaves people guessing. */
+function closingLabel(endsAt: Date): string {
+  return endsAt.toLocaleString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: LAGOS,
+  });
+}
+
 /**
- * Where a submission got to.
+ * Where a submission got to, using the shared Pill.
  *
- * Worded for the person who submitted it rather than for the queue: "waiting to
- * be reviewed" says what is happening, where "pending" says only that something
- * has a state.
+ * This was a local copy of Pill's palette, character for character, minus its
+ * layout classes, and with a fallback that dressed an unknown status in
+ * "waiting to be reviewed" while printing the raw database token as its label.
  */
-function StatusPill({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    pending: "border-white/25 bg-white/5 text-white/70",
-    approved: "border-green-400/40 bg-green-400/10 text-green-300",
-    rejected: "border-red-400/40 bg-red-400/10 text-red-300",
-  };
-  const labels: Record<string, string> = {
-    pending: "Waiting to be reviewed",
-    approved: "Approved",
-    rejected: "Not accepted",
-  };
-  return (
-    <span
-      className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-        styles[status] ?? styles.pending
-      }`}
-    >
-      {labels[status] ?? status}
-    </span>
-  );
+function statusPill(status: string) {
+  const map: Record<string, { tone: "neutral" | "good" | "bad"; label: string }> =
+    {
+      pending: { tone: "neutral", label: "Waiting to be reviewed" },
+      approved: { tone: "good", label: "Approved" },
+      rejected: { tone: "bad", label: "Needs a change" },
+    };
+  const known = map[status];
+  // An unmapped status says so rather than presenting itself as understood.
+  return known ?? { tone: "neutral" as const, label: "In review" };
 }
 
 export default async function MonicaCreatorPage() {
@@ -76,20 +107,21 @@ export default async function MonicaCreatorPage() {
             </h1>
             <p className="mt-4 text-base leading-relaxed text-white/60">
               This page opens from the personal link you were given when you
-              registered. Open that link again and you will land back here.
+              registered, and emailed to you at the same time. Open that link
+              again and you will land back here.
             </p>
             <p className="mt-4 text-base leading-relaxed text-white/60">
               If you have lost it, write to{" "}
               <a
-                href="mailto:partnership@blockfestafrica.com"
+                href={`mailto:${CONTACT_EMAIL}`}
                 className="text-link underline underline-offset-2 hover:text-white"
               >
-                partnership@blockfestafrica.com
+                {CONTACT_EMAIL}
               </a>{" "}
-              from the email address you registered with and we will issue a
-              new one. We cannot read your old link back to you, which is why a
-              new one is the only way: a link we could recover is a link
-              somebody else could take.
+              from the email address you registered with and we will issue a new
+              one. We cannot read your old link back to you, which is why a new
+              one is the only way: a link we could recover is a link somebody
+              else could take.
             </p>
             <Link
               href={monicaRoutes.landing}
@@ -104,28 +136,48 @@ export default async function MonicaCreatorPage() {
     );
   }
 
-  const [challenge, platforms, mine, pause] = await Promise.all([
+  const [challenge, platforms, mine, pause, rank] = await Promise.all([
     openChallenge(),
     registeredPlatforms(creator.enrolmentId),
     creatorSubmissions(creator.enrolmentId),
     pauseState(),
+    creatorRank(creator.enrolmentId),
   ]);
 
   // Rejected entries deliberately do not count: see platformsUsedThisWeek.
-  const submittedThisWeek = challenge
+  const usedThisWeek = challenge
     ? platformsUsedThisWeek(mine, challenge.weekNo)
     : [];
+
+  const thisWeek: CreatorSubmission[] = challenge
+    ? mine.filter((s) => s.weekNo === challenge.weekNo)
+    : [];
+
+  const rejectedThisWeek = thisWeek.filter((s) => s.status === "rejected");
+  const stillToSubmit = platforms.filter((p) => !usedThisWeek.includes(p));
+
+  /*
+   * Guarded rather than split(" ")[0].
+   *
+   * A name stored with a leading space returns an empty string from that, and
+   * the page's accessible heading becomes nothing at all.
+   */
+  const firstName =
+    creator.name.trim().split(/\s+/)[0] || creator.name.trim() || "Your page";
 
   const joined = creator.joinedAt.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
-    timeZone: "Africa/Lagos",
+    timeZone: LAGOS,
   });
+
+  const referralLink = `${SITE}${monicaRoutes.join}?ref=${creator.referralCode}`;
 
   return (
     <main id="main" className="bg-ground">
-      <section className="section-y">
-        <div className="container-page max-w-3xl">
+      {/* pt trimmed: the default 40px above a back link is 40px of nothing. */}
+      <section className="section-y pt-6 sm:pt-10">
+        <div className="container-page max-w-2xl">
           <Link
             href={monicaRoutes.landing}
             className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
@@ -134,129 +186,316 @@ export default async function MonicaCreatorPage() {
             {CAMPAIGN.name}
           </Link>
 
-          {/* The name large and the housekeeping small. Somebody opening this
-              weekly wants their standing and the brief, not a paragraph
-              explaining what the page is. */}
-          <h1 className="mt-6 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
-            {creator.name.split(" ")[0]}
-          </h1>
-          <p className="mt-3 text-sm text-white/45">
-            Joined {joined} · Your page
-          </p>
-
-          {/* Figures, not cards. A rule and a big number reads as a number. */}
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            <Stat label="Points" value={creator.pointsTotal} />
-            <Stat label="Approved" value={creator.approvedEntries} />
-            <Stat
-              label="Referral code"
-              value={creator.referralCode}
-              hint="Share it. Points land on their first approved entry."
-            />
-          </div>
-
-          <Link
-            href={monicaRoutes.leaderboard}
-            className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
-          >
-            See the leaderboard
-          </Link>
-
-          {/* The one thing to act on, so it is the only accented block. */}
-          <div className="mt-14">
-            {/* Said here rather than left to the endpoint. A form that accepts
-                a link and then refuses it wastes the one thing a creator on a
-                deadline does not have. */}
-            {pause.paused ? (
-              <Panel tone="warn">
-                <p className="eyebrow text-amber-300">Paused</p>
-                <h2 className="mt-2 text-xl font-bold text-white">
-                  Submissions are paused
-                </h2>
-                <p className="mt-3 max-w-prose text-base leading-relaxed text-white/70">
-                  {pause.reason}
-                </p>
-                <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/50">
-                  Nothing you have already submitted is affected.
-                </p>
-              </Panel>
-            ) : challenge ? (
-              <Panel tone="accent">
-                <p className="eyebrow text-brand-gold">
-                  Week {challenge.weekNo} · closes{" "}
-                  {challenge.endsAt.toLocaleDateString("en-GB", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    timeZone: "Africa/Lagos",
-                  })}
-                </p>
-                <h2 className="mt-2 text-2xl font-bold text-white">
-                  {challenge.title}
-                </h2>
-                <p className="mt-3 max-w-prose text-base leading-relaxed text-white/70">
-                  {challenge.description}
-                </p>
-
-                <SubmissionForm
-                  platforms={platforms as CampaignPlatform[]}
-                  alreadySubmitted={submittedThisWeek}
-                  challengeTitle={challenge.title}
-                />
-              </Panel>
+          {/* Identity in one row rather than a display heading plus a grid of
+              three figures. Sentence case at 24px, not 48px uppercase: an
+              eighteen character Yoruba or Igbo given name overruns a 343px
+              content box at that size, and html/body clip rather than scroll. */}
+          <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h1 className="break-words text-2xl font-bold tracking-[-0.02em] text-white">
+              {firstName}
+            </h1>
+            {rank === null ? (
+              <Pill>Not ranked yet</Pill>
             ) : (
-              <Panel tone="quiet">
-                <SectionHeading
-                  title="No brief is open"
-                  hint="A new one opens each Monday. When it does it appears here, with somewhere to paste your link."
-                />
-                <Link
-                  href={`${monicaRoutes.landing}#stages`}
-                  className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
-                >
-                  See all four briefs
-                </Link>
-              </Panel>
+              <Pill tone="gold">Rank {rank}</Pill>
             )}
           </div>
+          <p className="mt-2 text-sm text-white/50">
+            {creator.pointsTotal} points · {creator.approvedEntries} approved ·
+            joined {joined}
+          </p>
 
-          <div className="mt-14">
-            <SectionHeading label="Your entries" title={`${mine.length} submitted`} />
+          {/* THE WEEK. The reason for the visit, roughly 235px down instead of
+              640px. The head is present in every state so the clock never
+              disappears, including during a pause. */}
+          {challenge ? (
+            <HeadedPanel
+              className="mt-8"
+              head={
+                <>
+                  <p className="eyebrow">Week {challenge.weekNo}</p>
+                  <p className="text-sm font-bold">
+                    <TimeLeftLabel
+                      endsAt={challenge.endsAt.toISOString()}
+                      initial={formatTimeLeft(challenge.endsAt.toISOString())}
+                    />
+                  </p>
+                </>
+              }
+            >
+              <h2 className="text-xl font-bold text-white sm:text-2xl">
+                {challenge.title}
+              </h2>
+              {/* The absolute instant, because submit_entry enforces it to the
+                  second and a creator posting at 10pm against a 6pm close loses
+                  the week to a formatting choice. */}
+              <p className="mt-1 text-sm text-white/55">
+                Closes {closingLabel(challenge.endsAt)} Lagos time
+              </p>
+              <p className="mt-3 max-w-prose text-base leading-relaxed text-white/75">
+                {challenge.description}
+              </p>
+
+              {/* Where each registered account stands this week, with the handle
+                  attached, so "have I done TikTok yet" is answered by looking
+                  rather than by scrolling to the entries list. */}
+              <ul className="mt-5 flex flex-wrap gap-2">
+                {platforms.map((platform) => {
+                  const entry = thisWeek.find((s) => s.platform === platform);
+                  const state = entry ? statusPill(entry.status) : null;
+                  return (
+                    <li key={platform}>
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-ground/60 py-1 pl-3 pr-1.5 text-sm text-white/70">
+                        {platformLabels[platform as CampaignPlatform] ??
+                          platform}
+                        {state ? (
+                          <Pill tone={state.tone}>{state.label}</Pill>
+                        ) : (
+                          <Pill>Not sent</Pill>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <p className="mt-4 text-sm leading-relaxed text-white/55">
+                100 points for the first platform, 200 for two, 300 for all
+                three. It stays one entry either way.
+              </p>
+
+              {rejectedThisWeek.length > 0 && (
+                <Panel tone="warn" className="mt-5">
+                  <p className="text-sm font-semibold text-amber-200">
+                    {rejectedThisWeek.length === 1
+                      ? "One entry needs a change"
+                      : `${rejectedThisWeek.length} entries need a change`}
+                  </p>
+                  {rejectedThisWeek.map((entry) => (
+                    <p
+                      key={entry.id}
+                      className="mt-2 text-sm leading-relaxed text-white/75"
+                    >
+                      <span className="font-semibold text-white">
+                        {platformLabels[entry.platform as CampaignPlatform] ??
+                          entry.platform}
+                        :
+                      </span>{" "}
+                      {entry.reviewNote ?? "No reason was recorded."}
+                    </p>
+                  ))}
+                  {/* The whole point of migration 0011. Saying so here is the
+                      difference between a dead end and an instruction. */}
+                  <p className="mt-3 text-sm leading-relaxed text-white/60">
+                    The week is still open, so you can fix it and send it again
+                    below.
+                  </p>
+                </Panel>
+              )}
+
+              <div className="mt-6">
+                {pause.paused ? (
+                  <Panel tone="warn">
+                    <p className="text-sm font-semibold text-amber-200">
+                      Submissions are paused
+                    </p>
+                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/75">
+                      {/* pauseState returns null for a blank reason, and this
+                          is the most alarming state the page can show. It does
+                          not get to have a hole in the middle of it. */}
+                      {pause.reason ??
+                        "We have stopped submissions for a moment. Nothing you have already sent is affected."}
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-white/55">
+                      The brief above still stands, so you can keep working. Come
+                      back and paste your link when this clears.
+                    </p>
+                  </Panel>
+                ) : stillToSubmit.length === 0 ? (
+                  <p className="text-sm leading-relaxed text-white/60">
+                    Everything you registered is in for this week. Each platform
+                    is reviewed on its own, so they can land at different times.
+                  </p>
+                ) : (
+                  <SubmissionForm
+                    platforms={platforms as CampaignPlatform[]}
+                    alreadySubmitted={usedThisWeek}
+                    challengeTitle={challenge.title}
+                  />
+                )}
+              </div>
+            </HeadedPanel>
+          ) : (
+            <Panel tone="quiet" className="mt-8">
+              <h2 className="text-xl font-bold text-white">
+                {CAMPAIGN.startsAt && new Date(CAMPAIGN.startsAt) > new Date()
+                  ? "The first brief opens Monday 14 September"
+                  : "No brief is open"}
+              </h2>
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/60">
+                A new one opens each Monday. When it does it appears here, with
+                somewhere to paste your link.
+              </p>
+              <Link
+                href={`${monicaRoutes.landing}#stages`}
+                className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+              >
+                See all four briefs
+              </Link>
+            </Panel>
+          )}
+
+          {/* Figures, below the action. One shared rule so three numbers read as
+              one row, and no hint on any of them: a hint under one figure hangs
+              it two lines below its siblings and the rules stop lining up. */}
+          <div className="mt-12 border-t border-white/15 pt-4">
+            {/* Three one-word labels over numbers, about 104px each at 360px.
+                Stacking them costs roughly 300px on the screen creators open
+                weekly, which is the space this redesign exists to reclaim.
+                mobile-grid-ok: numeric figures, no prose in a column */}
+            <div className="grid grid-cols-3 gap-4">
+              <Stat
+                rule={false}
+                label="Rank"
+                value={rank === null ? "—" : rank}
+              />
+              <Stat rule={false} label="Points" value={creator.pointsTotal} />
+              <Stat
+                rule={false}
+                label="Approved"
+                value={creator.approvedEntries}
+              />
+            </div>
+            <p className="mt-3 text-sm text-white/45">
+              {rank === null
+                ? "You are ranked once you have your first approved entry."
+                : "Standings update as entries are approved."}{" "}
+              <Link
+                href={monicaRoutes.leaderboard}
+                className="text-link underline underline-offset-2 hover:text-white"
+              >
+                See the leaderboard
+              </Link>
+            </p>
+          </div>
+
+          <div className="mt-12">
+            <h2 className="text-xl font-bold text-white">
+              Your entries{mine.length > 0 ? ` (${mine.length})` : ""}
+            </h2>
 
             {mine.length === 0 ? (
-              <p className="mt-4 max-w-prose text-sm leading-relaxed text-white/55">
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/55">
                 Nothing yet. Publish your answer on your own account, then paste
                 the link above.
               </p>
             ) : (
-              /* A list with a left edge coloured by outcome, so a run of
-                 entries can be scanned down rather than read across. */
-              <ul className="mt-6 flex flex-col gap-px overflow-hidden rounded-xl bg-white/10">
-                {mine.map((entry) => (
-                  <li key={entry.id} className="bg-ground p-5">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      <span className="text-sm font-semibold text-white">
-                        Week {entry.weekNo}
-                      </span>
-                      <span className="text-sm text-white/45">
-                        {platformLabels[entry.platform as CampaignPlatform] ??
-                          entry.platform}
-                      </span>
-                      <StatusPill status={entry.status} />
-                    </div>
-                    <p className="mt-2 break-all text-sm leading-relaxed text-white/45">
-                      {entry.url}
-                    </p>
-                    {entry.reviewNote && (
-                      <p className="mt-3 border-l-2 border-white/20 pl-3 text-sm leading-relaxed text-white/70">
-                        {entry.reviewNote}
-                      </p>
-                    )}
-                  </li>
-                ))}
+              <ul className="mt-5 flex flex-col gap-px overflow-hidden rounded-xl bg-white/10">
+                {mine.map((entry) => {
+                  const state = statusPill(entry.status);
+                  return (
+                    <li key={entry.id} className="bg-ground p-5">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                        <span className="text-sm font-semibold text-white">
+                          Week {entry.weekNo}
+                        </span>
+                        <span className="text-sm text-white/45">
+                          {platformLabels[entry.platform as CampaignPlatform] ??
+                            entry.platform}
+                        </span>
+                        <Pill tone={state.tone}>{state.label}</Pill>
+                      </div>
+                      {/* Tappable, because the commonest rejection reason is an
+                          entry that cannot be viewed at the link given, and on a
+                          phone there is no other way to check that. break-words
+                          rather than break-all: break-all shatters a URL at
+                          arbitrary characters. */}
+                      <a
+                        href={entry.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 block break-words text-sm leading-relaxed text-white/45 underline underline-offset-2 [overflow-wrap:anywhere] hover:text-white/70"
+                      >
+                        {entry.url}
+                      </a>
+                      {entry.reviewNote && (
+                        <div
+                          className={`mt-3 border-l-2 pl-3 ${
+                            entry.status === "rejected"
+                              ? "border-red-400/60"
+                              : "border-white/20"
+                          }`}
+                        >
+                          <p className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                            {entry.status === "rejected"
+                              ? "What to change"
+                              : "Note from the reviewer"}
+                          </p>
+                          <p className="mt-1 text-sm leading-relaxed text-white/75">
+                            {entry.reviewNote}
+                          </p>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
+
+          {/* The referral link the registration screen promised would be here.
+              It printed a bare code with the words "Share it", and there is
+              nowhere in the whole flow to type a code by hand: it only works as
+              a ?ref= link on /join. */}
+          <div className="mt-12">
+            <h2 className="text-xl font-bold text-white">Bring a creator in</h2>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/55">
+              Worth 50 points each, credited when they get their first approved
+              entry rather than when they register.
+            </p>
+            <CopyField
+              value={referralLink}
+              label="Copy your referral link"
+              shareTitle={CAMPAIGN.name}
+              shareText="Join me on the Monica campaign"
+            />
+          </div>
+
+          {/* Last, and collapsed. Needed once, by the person it happens to. */}
+          <details className="group mt-12">
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-semibold text-white/70 hover:text-white">
+              Keeping your way back in
+            </summary>
+            <Panel tone="quiet" className="mt-3">
+              <p className="max-w-prose text-sm leading-relaxed text-white/70">
+                This page remembers you on this browser. The trap is opening your
+                link inside WhatsApp or Instagram: that is a different browser
+                from your normal one, so the page will not know you when you open
+                Chrome or Safari later.
+              </p>
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
+                Bookmark this page in the browser you actually use, or add it to
+                your home screen. Keep the email we sent at registration as well,
+                since it has your link in it.
+              </p>
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/55">
+                {/* No copy button. The address bar here is just /me, and pasted
+                    anywhere else it shows the locked page: a button would hand
+                    somebody a link that looks like a rescue and is not one. */}
+                Lost it entirely?{" "}
+                <a
+                  href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+                    `Lost my campaign link (${creator.referralCode})`,
+                  )}`}
+                  className="text-link underline underline-offset-2 hover:text-white"
+                >
+                  Email us
+                </a>{" "}
+                from the address you registered with and we will issue a new one,
+                which stops the old one working.
+              </p>
+            </Panel>
+          </details>
         </div>
       </section>
     </main>

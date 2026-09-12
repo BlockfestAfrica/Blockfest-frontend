@@ -147,6 +147,60 @@ describe("the admin surface", () => {
     ).toEqual([]);
   });
 
+  /**
+   * Every admin page is behind a guard, and there are only two ways to be.
+   *
+   * The console pages used to call requireAdmin each, with the signed-out block
+   * written out once per page. That moved into app/admin/(console)/layout.tsx,
+   * which resolves the admin and returns the signed-out block without rendering
+   * children, so pages inside that group are guarded by construction.
+   *
+   * Which creates a new way to get this wrong that did not exist before: a page
+   * added under app/admin but OUTSIDE the route group is not wrapped by that
+   * layout at all, and would render admin data to anybody. It looks right in
+   * the file tree, and nothing else in this suite would notice.
+   *
+   * /admin/login is the one page that is deliberately outside and deliberately
+   * open: it is how somebody who is not yet an admin signs in, and it shows
+   * nothing.
+   */
+  it("guards every admin page, by layout or by its own call", () => {
+    const OPEN_BY_DESIGN = ["app/admin/login/page.tsx"];
+
+    const pages = filesUnder(["app/admin"]).filter((f) =>
+      /\/page\.tsx$/.test(f),
+    );
+    expect(pages.length, "found the admin pages").toBeGreaterThan(3);
+
+    const unguarded = pages.filter((file) => {
+      if (OPEN_BY_DESIGN.includes(file)) return false;
+      // Inside the console group, so the layout has already refused everybody
+      // who is not an admin before this page renders.
+      if (file.includes("/(console)/")) return false;
+      return !readFileSync(join(process.cwd(), file), "utf8").includes(
+        "requireAdmin(",
+      );
+    });
+
+    expect(
+      unguarded,
+      `these admin pages sit outside app/admin/(console) and never call requireAdmin, so they render to anybody:\n${unguarded.join("\n")}`,
+    ).toEqual([]);
+  });
+
+  it("keeps the console layout itself guarded", () => {
+    // The single point everything above depends on. If this stops calling
+    // requireAdmin, every page in the group silently opens at once.
+    const src = readFileSync(
+      join(process.cwd(), "app/admin/(console)/layout.tsx"),
+      "utf8",
+    );
+    expect(src).toMatch(/await requireAdmin\(\)/);
+    expect(src, "and refuses before rendering children").toMatch(
+      /if \(!admin\.ok\)/,
+    );
+  });
+
   it("checks the origin on every state-changing admin route", () => {
     const routes = grep(/export async function (POST|PUT|PATCH|DELETE)/, ["app/api/admin"]);
     expect(routes.length).toBeGreaterThan(0);

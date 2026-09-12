@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, ShieldAlert, ShieldCheck, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Copy,
+  ShieldAlert,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import { Pill } from "@/components/shared/panel";
 import { toast } from "sonner";
 
@@ -23,25 +30,40 @@ export interface QueueItem {
 /**
  * The queue.
  *
- * The submitted link is shown as text with a copy button rather than as a
- * clickable anchor. The destination is chosen entirely by whoever submitted it,
- * registration is open to anybody, and this page is read by the small number of
- * people who can mint points. A one-click path from an attacker-controlled
- * string to a reviewer's browser, on the origin that holds their session, is
- * the cheapest way to attack this whole system. Copying and pasting deliberately
- * is one extra second and removes that path.
+ * Rebuilt around one decision repeated many times. Every row used to be a
+ * 300 to 420 pixel block containing a link, a note field and two buttons, all
+ * expanded at once, so twenty pending submissions were an unreadable wall and
+ * the one signal that changes how long a row takes, whether the link could be
+ * checked against the registered handle, was a line of text buried in the
+ * middle of it.
  *
- * A rejection requires a reason, because the creator sees it and it is the only
- * thing that tells them what to change.
+ * Now a row is collapsed to a line, and the attribution state is a coloured
+ * left edge that can be scanned straight down the column. Opening a row is what
+ * copying the link does, so starting an item is one tap rather than two.
+ *
+ * Two things here are load-bearing and should not be tidied away.
+ *
+ * The link is never an anchor. Its destination is chosen entirely by whoever
+ * submitted it, registration is open to anybody, and this page is read by the
+ * few people who can mint points against a 5,000,000 naira pool. A one-click
+ * path from an attacker-controlled string into a reviewer's browser, on the
+ * origin holding their session, is the cheapest attack on the whole system.
+ *
+ * And the refresh after a decision is awaited rather than made optimistic.
+ * review() has no pending guard, so two reviewers working at once can overwrite
+ * each other, and a refresh per decision is what catches that. Making it
+ * optimistic would trade a visible pause for a silent conflict.
  */
 export function ReviewQueue({ items }: { items: QueueItem[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [open, setOpen] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   async function decide(id: string, decision: "approved" | "rejected") {
     const note = notes[id]?.trim() ?? "";
+    const item = items.find((i) => i.id === id);
 
     if (decision === "rejected" && note.length === 0) {
       toast.error("A rejection needs a reason. The creator sees it.");
@@ -66,10 +88,23 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
         return;
       }
 
-      toast.success(decision === "approved" ? "Approved" : "Rejected");
-      // The server owns the queue. Refreshing is how this page learns what it
-      // now contains, rather than guessing and drifting from it.
-      router.refresh();
+      /*
+       * Named, not bare.
+       *
+       * "Approved" tells you something happened. "Approved Ada Obi, week 2"
+       * tells you which one, which is the difference between a mis-tap you can
+       * go and correct by name and one you cannot find at all.
+       */
+      toast.success(
+        `${decision === "approved" ? "Approved" : "Rejected"} ${
+          item?.creatorName ?? ""
+        }, week ${item?.weekNo ?? ""}`.trim(),
+      );
+
+      // Awaited before the row is released, so the list cannot reflow under a
+      // thumb that is still travelling and cannot be double-tapped.
+      await router.refresh();
+      setOpen(null);
     } catch {
       toast.error("We could not reach the server.");
     } finally {
@@ -77,116 +112,193 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
     }
   }
 
+  function start(item: QueueItem) {
+    setOpen((current) => (current === item.id ? null : item.id));
+    navigator.clipboard?.writeText(item.url).then(
+      () => {
+        setCopied(item.id);
+        toast.success("Link copied. Open it in another tab.");
+      },
+      () => toast.error("Could not copy. Select the link and copy it by hand."),
+    );
+  }
+
   return (
-    /*
-     * One row per submission, separated by a hairline rather than boxed.
-     *
-     * A queue is read down, not across: the eye should fall through name,
-     * handle, whether it was checked, then the link. Boxing each one made every
-     * row shout equally and slowed that to a crawl over a long sitting.
-     */
-    <ul className="mt-8 flex flex-col gap-px overflow-hidden rounded-xl bg-white/10">
-      {items.map((item) => (
-        <li key={item.id} className="bg-ground p-5 sm:p-6">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="text-base font-semibold text-white">
-              {item.creatorName}
-            </span>
-            {item.registeredHandle ? (
-              <span className="font-mono text-sm text-brand-gold">
-                @{item.registeredHandle}
-              </span>
-            ) : (
-              <Pill tone="bad">no handle recorded</Pill>
-            )}
-            <span className="text-xs text-white/35">
-              Week {item.weekNo} · {item.platformLabel}
-            </span>
-          </div>
-
-          {/* The single most important line on the row: whether the link was
-              checked against that handle, or whether the reviewer has to. */}
-          {item.autoChecked ? (
-            <p className="mt-2 flex items-center gap-2 text-sm text-green-300/85">
-              <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-              Link is from this account
-            </p>
-          ) : (
-            <p className="mt-2 flex items-start gap-2 text-sm text-amber-300">
-              <ShieldAlert
-                className="mt-0.5 h-4 w-4 shrink-0"
-                aria-hidden="true"
-              />
-              <span>
-                This link does not name its author. Open it and confirm it is
-                the account above.
-              </span>
-            </p>
-          )}
-
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            {/* Wrapped, not truncated. The author segment is what the decision
-                turns on, and overflow-x is hidden site-wide so anything too
-                wide is clipped rather than scrollable. min-w-0 so a long link
-                does not push the button off a narrow screen. */}
-            <code className="min-w-0 flex-1 break-all rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-sm leading-relaxed text-white/85">
-              {item.url}
-            </code>
+    <ul className="mt-6 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/12">
+      {items.map((item) => {
+        const isOpen = open === item.id;
+        return (
+          <li
+            key={item.id}
+            /*
+             * The attribution state as a left edge.
+             *
+             * Green means the server could match the link's author to the
+             * registered handle. Amber means it could not and a human has to.
+             * As an edge it can be scanned down the column at a glance, which
+             * a sentence in the middle of a row cannot be.
+             */
+            className={`border-l-2 ${
+              item.autoChecked ? "border-l-green-400/70" : "border-l-amber-400"
+            }`}
+          >
             <button
               type="button"
-              onClick={() => {
-                navigator.clipboard?.writeText(item.url);
-                setCopied(item.id);
-                toast.success("Link copied. Open it in a new tab.");
-              }}
-              className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+              onClick={() => start(item)}
+              aria-expanded={isOpen}
+              className="flex min-h-16 w-full cursor-pointer items-center gap-3 py-3 pl-4 pr-3 text-left transition-colors hover:bg-white/[0.03]"
             >
-              {copied === item.id ? (
-                <Check className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Copy className="h-4 w-4" aria-hidden="true" />
-              )}
-              {copied === item.id ? "Copied" : "Copy"}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-base font-semibold text-white">
+                  {item.creatorName}
+                </span>
+                <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-white/60">
+                  {item.registeredHandle ? (
+                    <span className="truncate font-mono text-brand-gold">
+                      @{item.registeredHandle}
+                    </span>
+                  ) : (
+                    <Pill tone="bad">no handle</Pill>
+                  )}
+                  <span>
+                    W{item.weekNo} · {item.platformLabel}
+                  </span>
+                </span>
+              </span>
+              <WaitedFor since={item.submittedAt} />
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-white/60 transition-transform ${
+                  isOpen ? "rotate-180" : ""
+                }`}
+                aria-hidden="true"
+              />
             </button>
-          </div>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <label htmlFor={`note-${item.id}`} className="sr-only">
-              Reason, required to reject
-            </label>
-            <input
-              id={`note-${item.id}`}
-              value={notes[item.id] ?? ""}
-              onChange={(e) =>
-                setNotes((n) => ({ ...n, [item.id]: e.target.value }))
-              }
-              maxLength={500}
-              placeholder="Reason, required to reject. The creator sees it."
-              className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none"
-            />
-            <div className="flex shrink-0 gap-2">
-              <button
-                type="button"
-                disabled={busy === item.id}
-                onClick={() => decide(item.id, "approved")}
-                className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-colors duration-300 hover:bg-green-400/25 disabled:opacity-60 sm:flex-none"
-              >
-                <Check className="h-4 w-4" aria-hidden="true" />
-                Approve
-              </button>
-              <button
-                type="button"
-                disabled={busy === item.id}
-                onClick={() => decide(item.id, "rejected")}
-                className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-red-400/15 px-5 text-sm font-semibold text-red-300 transition-colors duration-300 hover:bg-red-400/25 disabled:opacity-60 sm:flex-none"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-                Reject
-              </button>
-            </div>
-          </div>
-        </li>
-      ))}
+            {isOpen && (
+              <div className="border-t border-white/10 bg-white/[0.02] p-4">
+                {item.autoChecked ? (
+                  <p className="flex items-center gap-2 text-sm text-green-300">
+                    <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    The link names this account. Still open it and check it
+                    answers the brief.
+                  </p>
+                ) : (
+                  <p className="flex items-start gap-2 text-sm text-amber-300">
+                    <ShieldAlert
+                      className="mt-0.5 h-4 w-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      This link does not name its author. Open it and confirm it
+                      is the account above.
+                    </span>
+                  </p>
+                )}
+
+                <p className="mt-1 text-sm text-white/60">
+                  Week {item.weekNo}: {item.challengeTitle}
+                </p>
+
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <code className="min-w-0 flex-1 break-all rounded-lg border border-white/12 bg-ground px-4 py-3 text-sm leading-relaxed text-white/85">
+                    {item.url}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => start(item)}
+                    className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+                  >
+                    {copied === item.id ? (
+                      <Check className="h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <Copy className="h-4 w-4" aria-hidden="true" />
+                    )}
+                    {copied === item.id ? "Copied" : "Copy"}
+                  </button>
+                </div>
+
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <label htmlFor={`note-${item.id}`} className="sr-only">
+                    Reason, required to reject
+                  </label>
+                  <input
+                    id={`note-${item.id}`}
+                    value={notes[item.id] ?? ""}
+                    onChange={(e) =>
+                      setNotes((n) => ({ ...n, [item.id]: e.target.value }))
+                    }
+                    maxLength={500}
+                    placeholder="Reason, required to reject. The creator sees it."
+                    className="min-w-0 flex-1 rounded-lg border border-white/12 bg-ground px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
+                  />
+                  {/* Separated, and reject sits on the far side. They were
+                      adjacent, the same size and the same shape, each flex-1
+                      under one thumb, with approve firing immediately and
+                      irreversibly. */}
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      type="button"
+                      disabled={busy === item.id}
+                      onClick={() => decide(item.id, "approved")}
+                      className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-colors duration-300 hover:bg-green-400/25 disabled:opacity-60 sm:flex-none"
+                    >
+                      <Check className="h-4 w-4" aria-hidden="true" />
+                      {busy === item.id ? "Working..." : "Approve"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy === item.id}
+                      onClick={() => decide(item.id, "rejected")}
+                      className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-colors duration-300 hover:bg-red-400/15 disabled:opacity-60"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
+}
+
+/**
+ * How long something has been waiting.
+ *
+ * submittedAt was already queried, serialised and typed, and rendered nowhere,
+ * so a reviewer could not tell a submission from ten minutes ago from one that
+ * had been sitting since Tuesday.
+ *
+ * Rendered as nothing on the server and filled in after mount. A relative time
+ * computed during the first client render disagrees with the server HTML and
+ * logs a hydration mismatch on every single row.
+ */
+function WaitedFor({ since }: { since: string }) {
+  const [label, setLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLabel(waitedLabel(since));
+    const timer = setInterval(() => setLabel(waitedLabel(since)), 60_000);
+    return () => clearInterval(timer);
+  }, [since]);
+
+  return (
+    <span className="shrink-0 text-sm tabular-nums text-white/55">
+      {label ?? ""}
+    </span>
+  );
+}
+
+export function waitedLabel(since: string): string {
+  const minutes = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(since).getTime()) / 60_000),
+  );
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
 }

@@ -144,21 +144,56 @@ describe("the review queue specifically", () => {
 });
 
 describe("two-column grids", () => {
-  it("are single column before the small breakpoint", () => {
-    // A two-column grid at 360px gives two unusable columns.
+  /**
+   * Default deny, with a written exception.
+   *
+   * The rule exists because a two-column grid at 360px gives two unusable
+   * columns, and that is about the width the content needs, not about grids.
+   * A row of three figures whose labels are one word and whose values are
+   * numbers fits a 104px column comfortably, and forcing it to stack costs
+   * roughly 300px of vertical space on the one screen creators open weekly.
+   *
+   * So an unprefixed grid is still a failure unless the line above it carries
+   * a marker saying why, which keeps the exception visible in review and stops
+   * this from quietly becoming "grids are fine now".
+   */
+  const OPT_OUT = /mobile-grid-ok:\s*[a-z]/i;
+
+  it("are single column before the small breakpoint, unless justified", () => {
     const offenders: string[] = [];
 
     for (const file of ALL) {
-      for (const cls of classNames(file)) {
-        if (/(^|\s)grid-cols-[2-9]/.test(cls)) {
-          offenders.push(`${file}: ${cls}`);
-        }
+      const src = readFileSync(join(process.cwd(), file), "utf8");
+      for (const match of src.matchAll(/className="([^"]+)"/g)) {
+        const cls = match[1];
+        if (!/(^|\s)grid-cols-[2-9]/.test(cls)) continue;
+
+        // The 200 characters before the attribute: enough to reach a comment
+        // on the line above without reaching the previous element.
+        const before = src.slice(Math.max(0, match.index - 200), match.index);
+        if (OPT_OUT.test(before)) continue;
+
+        offenders.push(`${file}: ${cls}`);
       }
     }
 
     expect(
       offenders,
-      `grid columns must be behind a breakpoint, for example sm:grid-cols-2:\n${offenders.join("\n")}`,
+      `grid columns must be behind a breakpoint, for example sm:grid-cols-2.\nIf a row genuinely fits at 360px, put a comment above it saying so:\n  {/* mobile-grid-ok: three one-word labels over numbers */}\n${offenders.join("\n")}`,
     ).toEqual([]);
+  });
+
+  it("does not let an unexplained grid through", () => {
+    // The opt-out has to be a reason, not just the word.
+    //
+    // The first version tested for one non-space character, which the closing
+    // delimiter of an empty comment satisfied, so a bare "mobile-grid-ok:"
+    // with nothing after it passed. That is the shape this decays into.
+    //
+    // (Written as line comments on purpose: the first version of this note
+    //  spelled that delimiter out inside a block comment and closed it.)
+    expect(OPT_OUT.test("{/* mobile-grid-ok: */}")).toBe(false);
+    expect(OPT_OUT.test("{/* mobile-grid-ok:   */}")).toBe(false);
+    expect(OPT_OUT.test("{/* mobile-grid-ok: numbers only */}")).toBe(true);
   });
 });
