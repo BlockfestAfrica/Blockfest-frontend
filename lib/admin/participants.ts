@@ -154,3 +154,57 @@ export function participantTotals(all: Participant[]) {
     approved: all.filter((p) => p.approved > 0).length,
   };
 }
+
+/**
+ * Population counts, from one row of SQL with no limit.
+ *
+ * participantTotals counts the array it is handed, and that array is capped at
+ * 500 by the query above. The header therefore printed a page size as though it
+ * were a population, and the copy underneath turned it into an outreach
+ * decision: "N have not submitted anything yet. That is the group worth a
+ * message." With 500 returned and 700 enrolled, that sentence is wrong about
+ * which people exist.
+ *
+ * These are counted in the database over the whole campaign, so they are the
+ * real numbers. The filter chips in the table still narrow what is shown, and
+ * the page says so rather than implying the chips are population counts.
+ */
+export async function participantCounts(
+  admin: AdminIdentity,
+  slug: string,
+): Promise<{
+  joined: number;
+  submitted: number;
+  silent: number;
+  points: number;
+}> {
+  void admin;
+  const db = getDb();
+
+  const submittedCount = sql<number>`(
+    SELECT count(*)::int FROM ${submissions} s
+      JOIN ${challengeEntries} ce ON ce.id = s.entry_id
+     WHERE ce.campaign_creator_id = ${campaignCreators.id}
+  )`;
+
+  const result = await db
+    .select({
+      joined: sql<number>`count(*)::int`,
+      submitted: sql<number>`count(*) FILTER (WHERE ${submittedCount} > 0)::int`,
+      points: sql<number>`COALESCE(sum(${campaignCreators.pointsTotal}), 0)::int`,
+    })
+    .from(campaignCreators)
+    .innerJoin(campaigns, eq(campaigns.id, campaignCreators.campaignId))
+    .where(eq(campaigns.slug, slug));
+
+  const row = result[0];
+  const joined = Number(row?.joined ?? 0);
+  const submitted = Number(row?.submitted ?? 0);
+
+  return {
+    joined,
+    submitted,
+    silent: joined - submitted,
+    points: Number(row?.points ?? 0),
+  };
+}

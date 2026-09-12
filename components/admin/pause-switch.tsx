@@ -68,7 +68,7 @@ export function PauseSwitch({
 
   if (paused) {
     return (
-      <Panel tone="danger" className="mt-16">
+      <Panel tone="danger">
         <p className="eyebrow text-red-300">Paused</p>
         <h2 className="mt-2 text-xl font-bold text-white">
           Nobody can register or submit
@@ -90,9 +90,8 @@ export function PauseSwitch({
   }
 
   return (
-    <div className="mt-16 max-w-2xl border-t border-white/12 pt-8">
-      <p className="eyebrow text-white/45">Emergency</p>
-      <h2 className="mt-2 text-xl font-bold text-white">Pause the campaign</h2>
+    <div className="max-w-2xl">
+      <h2 className="text-xl font-bold text-white">Pause the campaign</h2>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/50">
         Stops registration and submissions at once. Every page stays readable,
         so creators can still see the rules and the leaderboard. Takes effect on
@@ -109,7 +108,7 @@ export function PauseSwitch({
           onChange={(e) => setDraft(e.target.value)}
           maxLength={300}
           placeholder="Why. Creators see this exactly as written."
-          className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-red-400/60 focus:outline-none"
+          className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-red-400/60 focus:outline-none"
         />
         <button
           type="button"

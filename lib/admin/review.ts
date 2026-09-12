@@ -1,12 +1,13 @@
 import "server-only";
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import {
+  adminUsers,
   campaignCreators,
   campaigns,
   challengeEntries,
   challenges,
-  creators,
   creatorSocialHandles,
+  creators,
   getDb,
   submissions,
 } from "@/lib/db/client";
@@ -153,7 +154,18 @@ export async function reviewSubmission(
  * Oldest first because a review queue worked newest-first leaves the earliest
  * entrants waiting longest, and they are the ones who entered on day one.
  */
-export async function pendingSubmissions(admin: AdminIdentity, limit = 50) {
+export async function pendingSubmissions(
+  admin: AdminIdentity,
+  limit = 50,
+  /**
+   * Restrict to these submissions, keeping the oldest-first order.
+   *
+   * Used to show one lane of the queue. The lane is worked out in JavaScript
+   * from pendingAttribution, because the rule that decides it cannot be put
+   * into SQL without drifting from the function that actually decides it.
+   */
+  ids?: string[],
+) {
   void admin; // Reading the queue is admin-only; the type is the proof.
   const db = getDb();
 
@@ -198,8 +210,95 @@ export async function pendingSubmissions(admin: AdminIdentity, limit = 50) {
       ),
     )
     .where(
+      and(
+        eq(submissions.status, "pending"),
+        eq(campaigns.slug, MONICA_SLUG),
+        // An empty lane must return nothing rather than everything, which
+        // is what an omitted condition would do.
+        ...(ids ? [inArray(submissions.id, ids.length ? ids : [""])] : []),
+      ),
+    )
+    .orderBy(submissions.submittedAt)
+    .limit(Math.min(Math.max(limit, 1), 200));
+}
+
+/**
+ * Just enough of every pending submission to count and to sort into lanes.
+ *
+ * The queue header printed `queue.length`, which is the page size, so once 51
+ * submissions were waiting the page said "50 waiting" and kept saying it. This
+ * exists so the number is the real one.
+ *
+ * Three short columns and no joins out to the creator, so a few thousand rows
+ * is cheap. The attribution check is then run over it in JavaScript, because
+ * authorFromUrl special-cases reserved x.com segments, TikTok @-segments and
+ * vm./vt. share links, and returns null for every Instagram URL. A LIKE clause
+ * approximating that would drift from it and produce lane counts that are wrong
+ * in a way that looks entirely plausible.
+ */
+export async function pendingAttribution(admin: AdminIdentity) {
+  void admin; // Admin-only; the type is the proof.
+  const db = getDb();
+
+  return db
+    .select({
+      id: submissions.id,
+      platform: submissions.platform,
+      url: submissions.url,
+    })
+    .from(submissions)
+    .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))
+    .innerJoin(challenges, eq(challenges.id, challengeEntries.challengeId))
+    .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
+    .where(
       and(eq(submissions.status, "pending"), eq(campaigns.slug, MONICA_SLUG)),
     )
     .orderBy(submissions.submittedAt)
+    .limit(2000);
+}
+
+/**
+ * What has already been decided.
+ *
+ * Approving is irreversible in the sense that matters: review() has no pending
+ * guard, so the opposite decision can be sent, but there is no way back to
+ * waiting and the creator has already been emailed. This list is the only
+ * durable record of a mis-tap, and it costs a query because the schema already
+ * carries who decided, when, and what they wrote.
+ */
+export async function decidedSubmissions(admin: AdminIdentity, limit = 50) {
+  void admin;
+  const db = getDb();
+
+  return db
+    .select({
+      id: submissions.id,
+      platform: submissions.platform,
+      url: submissions.url,
+      status: submissions.status,
+      reviewedAt: submissions.reviewedAt,
+      reviewNote: submissions.reviewNote,
+      weekNo: challenges.weekNo,
+      challengeTitle: challenges.title,
+      creatorName: creators.fullName,
+      reviewerEmail: adminUsers.email,
+    })
+    .from(submissions)
+    .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))
+    .innerJoin(challenges, eq(challenges.id, challengeEntries.challengeId))
+    .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
+    .innerJoin(
+      campaignCreators,
+      eq(campaignCreators.id, challengeEntries.campaignCreatorId),
+    )
+    .innerJoin(creators, eq(creators.id, campaignCreators.creatorId))
+    // Left-joined: admin rows are never deleted, but reviewedByAdminId is
+    // ON DELETE SET NULL, so the column is nullable and an inner join would
+    // silently drop a decision rather than show it unattributed.
+    .leftJoin(adminUsers, eq(adminUsers.id, submissions.reviewedByAdminId))
+    .where(
+      and(ne(submissions.status, "pending"), eq(campaigns.slug, MONICA_SLUG)),
+    )
+    .orderBy(desc(submissions.reviewedAt))
     .limit(Math.min(Math.max(limit, 1), 200));
 }

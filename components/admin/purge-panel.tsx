@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Panel } from "@/components/shared/panel";
 import { MONICA_SLUG } from "@/lib/campaigns";
 
 /**
@@ -58,8 +57,8 @@ export function PurgePanel({ paused }: { paused: boolean }) {
   if (done) {
     const kept = done.filter((row) => row.rows > 0);
     return (
-      <Panel tone="quiet" className="mt-8">
-        <p className="eyebrow text-white/45">Cleared</p>
+      <div>
+        <p className="eyebrow text-white/60">Cleared</p>
         <h2 className="mt-2 text-xl font-bold text-white">
           The campaign is empty
         </h2>
@@ -71,26 +70,25 @@ export function PurgePanel({ paused }: { paused: boolean }) {
           <dl className="mt-5 grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
             {kept.map((row) => (
               <div key={row.table} className="flex justify-between gap-4">
-                <dt className="text-white/45">{row.table}</dt>
+                <dt className="text-white/60">{row.table}</dt>
                 <dd className="tabular-nums text-white/70">{row.rows}</dd>
               </div>
             ))}
           </dl>
         )}
-      </Panel>
+      </div>
     );
   }
 
   return (
-    <div className="mt-8 max-w-2xl border-t border-white/12 pt-8">
-      <p className="eyebrow text-white/45">Before launch only</p>
+    <div>
       <h2 className="mt-2 text-xl font-bold text-white">Clear the test data</h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/50">
+      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
         Deletes every creator, entry, submission and point in this campaign, and
         nothing else: the campaign itself, the weekly challenges, the point rules
         and every admin sign-in stay exactly as they are. There is no undo.
       </p>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/50">
+      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
         This stops working the moment the campaign opens.
       </p>
 
@@ -113,7 +111,7 @@ export function PurgePanel({ paused }: { paused: boolean }) {
           autoComplete="off"
           spellCheck={false}
           placeholder={`Type ${MONICA_SLUG} to confirm`}
-          className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-red-400/60 focus:outline-none disabled:opacity-50"
+          className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-red-400/60 focus:outline-none disabled:opacity-50"
         />
         <button
           type="button"

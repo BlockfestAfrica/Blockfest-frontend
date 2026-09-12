@@ -16,16 +16,29 @@ import type { ReactNode } from "react";
 
 type Tone = "plain" | "quiet" | "accent" | "warn" | "danger";
 
+/*
+ * The fill percentages here are the fix for "everything is grey boxes", and the
+ * old numbers are worth recording because they looked reasonable.
+ *
+ * Composited over --color-ground #0A1628, quiet at white/[0.03] resolves to
+ * rgb(17,31,44) and accent at gold/[0.07] to rgb(26,35,42). Nine, four and two
+ * out of 255 apart. The one block on a page meant to be acted on was the same
+ * box as the one meant to be background, and a 2px edge was carrying the entire
+ * hierarchy. On a phone outdoors it carried nothing.
+ *
+ * At 12% the gold lands around rgb(38,44,44), roughly ten times the separation,
+ * and the edge goes to 4px so it does real work rather than decorative work.
+ */
 const TONES: Record<Tone, string> = {
   /* No chrome at all. The default, and most content should use it. */
   plain: "",
   /* A hairline, for something that is genuinely a separate object. */
   quiet: "rounded-xl border border-white/12 bg-white/[0.03]",
   /* The one thing on the page to act on. */
-  accent: "rounded-xl border-l-2 border-brand-gold bg-brand-gold/[0.07] pl-5",
+  accent: "rounded-xl border-l-4 border-brand-gold bg-brand-gold/[0.12] pl-5",
   /* Something to read before continuing. */
-  warn: "rounded-xl border-l-2 border-amber-400/70 bg-amber-400/[0.06] pl-5",
-  danger: "rounded-xl border-l-2 border-red-400/70 bg-red-400/[0.06] pl-5",
+  warn: "rounded-xl border-l-4 border-amber-400 bg-amber-400/[0.12] pl-5",
+  danger: "rounded-xl border-l-4 border-red-400 bg-red-400/[0.12] pl-5",
 };
 
 export function Panel({
@@ -42,6 +55,42 @@ export function Panel({
     <div className={`${TONES[tone]} ${padding} ${className}`.trim()}>
       {children}
     </div>
+  );
+}
+
+/**
+ * A card with a filled header strip.
+ *
+ * For the one block on a page that is the reason for the visit. An edge and a
+ * tint can separate an object from its background; they cannot say "start
+ * here". A filled bar can, and it gives the persistent facts, the week and the
+ * time left, somewhere to live that stays put while the body below changes
+ * between open, submitted, paused and closed.
+ *
+ * Deliberately not a new tone on Panel. A tone is a treatment applied to one
+ * box; this is two boxes with different rules about what goes in each, and
+ * flattening that into a string would mean every caller re-deciding where the
+ * divide falls.
+ */
+export function HeadedPanel({
+  head,
+  className = "",
+  children,
+}: {
+  /** Sits in the filled strip. Dark text: the strip is gold. */
+  head: ReactNode;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      className={`overflow-hidden rounded-xl border border-brand-gold/30 ${className}`.trim()}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 bg-brand-gold px-5 py-3 text-black sm:px-6">
+        {head}
+      </div>
+      <div className="bg-brand-gold/[0.06] p-5 sm:p-6">{children}</div>
+    </section>
   );
 }
 
@@ -90,13 +139,22 @@ export function Stat({
   label,
   value,
   hint,
+  /**
+   * Whether to draw the rule above the figure.
+   *
+   * On by default. Turned off when a row of figures shares one rule drawn by
+   * the container, because three separate short rules at different heights read
+   * as three disconnected fragments rather than one row of numbers.
+   */
+  rule = true,
 }: {
   label: string;
   value: string | number;
   hint?: string;
+  rule?: boolean;
 }) {
   return (
-    <div className="border-t border-white/15 pt-4">
+    <div className={rule ? "border-t border-white/15 pt-4" : ""}>
       <p className="eyebrow text-white/45">{label}</p>
       <p className="mt-2 text-4xl font-bold tabular-nums leading-none text-white">
         {value}

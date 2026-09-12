@@ -228,3 +228,117 @@ describe("what is published", () => {
     expect(forbidden).toEqual([]);
   });
 });
+
+/**
+ * One creator's own rank, as their own page asks for it.
+ *
+ * The page and the public board must never disagree about who is ahead. They
+ * are two different queries, so this asserts them against each other rather
+ * than asserting the rank query on its own, which would pass happily while the
+ * board said something else.
+ *
+ * The SQL here is the same statement lib/leaderboard.ts sends. That duplication
+ * is the price of testing against PGlite directly rather than through a module
+ * that would need a live database handle.
+ */
+describe("a creator's own rank", () => {
+  const rankOf = async (enrolmentId: string): Promise<number | null> => {
+    const rows = (
+      await db.query<{ rank: string }>(
+        `WITH board AS (
+           SELECT campaign_creator_id, rank
+             FROM campaign_leaderboard('monica-money-story', 100000)
+         )
+         SELECT rank FROM board WHERE campaign_creator_id = $1::uuid`,
+        [enrolmentId],
+      )
+    ).rows;
+    return rows[0] ? Number(rows[0].rank) : null;
+  };
+
+  it("matches the public board for every creator on it", async () => {
+    const ids = [
+      await creatorWith("Ada", [{ points: 300, at: "2026-09-15T10:00:00Z" }]),
+      await creatorWith("Bola", [{ points: 200, at: "2026-09-15T09:00:00Z" }]),
+      await creatorWith("Chidi", [{ points: 100, at: "2026-09-15T08:00:00Z" }]),
+    ];
+
+    const published = await board();
+    for (const [index, id] of ids.entries()) {
+      const name = ["Ada", "Bola", "Chidi"][index];
+      const onBoard = published.find((r) => r.display_name === name);
+      expect(await rankOf(id), `${name} agrees with the board`).toBe(
+        Number(onBoard!.rank),
+      );
+    }
+  });
+
+  /**
+   * The tiebreak the rules publish is "who reached that total first", which is
+   * a property of the ledger. If the rank query used a different order from the
+   * board, two creators level on points would be told different things on two
+   * pages of the same site.
+   */
+  it("agrees with the board on a tie, which the ledger decides", async () => {
+    const early = await creatorWith("Early", [
+      { points: 100, at: "2026-09-15T08:00:00Z" },
+      { points: 200, at: "2026-09-16T08:00:00Z" },
+    ]);
+    const late = await creatorWith("Late", [
+      { points: 300, at: "2026-09-17T08:00:00Z" },
+    ]);
+
+    expect(await rankOf(early)).toBe(1);
+    expect(await rankOf(late)).toBe(2);
+
+    const published = await board();
+    expect(published.map((r) => r.display_name)).toEqual(["Early", "Late"]);
+  });
+
+  it("is null for a creator with no points, who is simply not ranked yet", async () => {
+    // Every creator is in this state for the whole of week one, so the page's
+    // null path is the common case rather than the edge case.
+    const nobody = await creatorWith("Nobody", []);
+    expect(await rankOf(nobody)).toBeNull();
+  });
+
+  /**
+   * The reason this is its own query rather than a lookup inside the published
+   * board. leaderboard() is capped, and scanning a capped list returns null for
+   * anybody outside it, which is indistinguishable from having no points.
+   */
+  it("still finds somebody ranked below the published cut", async () => {
+    const ids: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      ids.push(
+        await creatorWith(`C${i}`, [
+          { points: 1000 - i * 10, at: "2026-09-15T10:00:00Z" },
+        ]),
+      );
+    }
+
+    const tail = ids[11];
+    expect(await rankOf(tail)).toBe(12);
+
+    const capped = (
+      await db.query<{ campaign_creator_id: string }>(
+        `SELECT campaign_creator_id FROM campaign_leaderboard('monica-money-story', 10)`,
+      )
+    ).rows;
+    expect(
+      capped.some((r) => r.campaign_creator_id === tail),
+      "outside a capped board, so a scan of one would have found nothing",
+    ).toBe(false);
+  });
+
+  it("is null for a suspended creator, who is off the board entirely", async () => {
+    const suspended = await creatorWith("Gone", [
+      { points: 300, at: "2026-09-15T10:00:00Z" },
+    ]);
+    await db.query(
+      `UPDATE campaign_creators SET status = 'suspended' WHERE id = $1::uuid`,
+      [suspended],
+    );
+    expect(await rankOf(suspended)).toBeNull();
+  });
+});

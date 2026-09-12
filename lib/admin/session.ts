@@ -1,3 +1,4 @@
+import { cache } from "react";
 import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
@@ -50,7 +51,16 @@ export type AdminResult =
 
 const DENIED: AdminResult = { ok: false };
 
-export async function requireAdmin(): Promise<AdminResult> {
+/**
+ * Deduplicated per request.
+ *
+ * The console layout resolves the admin and so does every page inside it, which
+ * on a force-dynamic route is two round trips for one answer. cache() makes the
+ * second call free without either caller having to know about the other, and it
+ * is per request rather than shared, so one admin's result can never be handed
+ * to the next.
+ */
+export const requireAdmin = cache(async function requireAdmin(): Promise<AdminResult> {
   const identity = await currentIdentityUser();
   if (!identity.ok) return DENIED;
 
@@ -88,7 +98,7 @@ export async function requireAdmin(): Promise<AdminResult> {
     );
     return DENIED;
   }
-}
+})
 
 /**
  * Only owners may do a thing.

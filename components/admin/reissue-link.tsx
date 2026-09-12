@@ -62,16 +62,7 @@ export function ReissueLink() {
   }
 
   return (
-    <div className="mt-16 max-w-2xl border-t border-white/12 pt-8">
-      <p className="eyebrow text-white/45">Support</p>
-      <h2 className="mt-2 text-xl font-bold text-white">
-        Give a creator a new link
-      </h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/50">
-        For somebody who has lost the personal link they were given when they
-        registered. Issuing a new one stops the old one working.
-      </p>
-
+    <div className="mt-6 max-w-2xl">
       <form
         onSubmit={submit}
         noValidate
@@ -88,7 +79,7 @@ export function ReissueLink() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="The email they registered with"
-          className="w-full flex-1 rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none"
+          className="w-full flex-1 rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
         />
         <button
           type="submit"
