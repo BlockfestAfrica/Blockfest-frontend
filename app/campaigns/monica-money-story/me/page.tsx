@@ -357,7 +357,9 @@ export default async function MonicaCreatorPage() {
               <Stat
                 rule={false}
                 label="Rank"
-                value={rank === null ? "—" : rank}
+                // Not an em dash. A plain hyphen is the convention for a
+                // figure that has no value yet.
+                value={rank === null ? "-" : rank}
               />
               <Stat rule={false} label="Points" value={creator.pointsTotal} />
               <Stat
