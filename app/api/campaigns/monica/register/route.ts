@@ -1,3 +1,5 @@
+import { sendEmailQuietly } from "@/lib/email/client";
+import { personalLink, registrationEmail } from "@/lib/email/templates";
 import { randomBytes } from "node:crypto";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
@@ -270,12 +272,41 @@ export async function POST(request: NextRequest) {
       full_name?: string;
     };
 
+    const referralCode = row.referral_code ?? null;
+
+    /*
+     * The email that makes the link recoverable.
+     *
+     * Until now the token was shown once on the success screen and the creator
+     * was told to save it. That plan fails for the ordinary reason that people
+     * close tabs, and the owner raised exactly this after testing: what happens
+     * when they lose it. An email is the copy that survives the tab.
+     *
+     * Awaited rather than fired and forgotten. A serverless function can be
+     * frozen the moment it returns a response, so an unawaited fetch is a mail
+     * that silently never leaves. Ten seconds at worst, and sendEmailQuietly
+     * swallows every failure: the registration has already committed, so
+     * nothing the creator sees depends on the mail going.
+     */
+    if (referralCode) {
+      await sendEmailQuietly(
+        registrationEmail({
+          to: input.email,
+          fullName: row.full_name ?? input.fullName,
+          personalLink: personalLink(accessToken),
+          referralCode,
+        }),
+        `registration for ${emailCanonical}`,
+      );
+    }
+
     return NextResponse.json({
       ok: true,
-      referralCode: row.referral_code ?? null,
+      referralCode,
       name: row.full_name ?? input.fullName,
-      // The only time this is ever sent. The success screen shows it once and
-      // tells the creator to keep it.
+      // Still shown once on the success screen as well as emailed. The screen
+      // is what somebody uses in the next thirty seconds; the email is what
+      // they come back to in a week.
       accessToken,
     });
   } catch (error) {

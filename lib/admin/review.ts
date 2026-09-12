@@ -29,8 +29,27 @@ import type { AdminIdentity } from "@/lib/admin/session";
 
 export type ReviewDecision = "approved" | "rejected";
 
+/**
+ * Everything needed to tell the creator what happened.
+ *
+ * Gathered by the query that already authorises the review, rather than by a
+ * second lookup afterwards. The row is joined out to the creator regardless, and
+ * reading it twice invites the two reads to disagree.
+ */
+export interface ReviewedEntry {
+  email: string;
+  fullName: string;
+  weekNo: number;
+  platform: string;
+  /** True while the week is open, so a rejection can be fixed and resent. */
+  weekStillOpen: boolean;
+  /** Movement caused by this decision. Zero on a rejection. */
+  pointsAwarded: number;
+  pointsTotal: number;
+}
+
 export type ReviewOutcome =
-  | { ok: true; entryId: string }
+  | { ok: true; entryId: string; creator: ReviewedEntry }
   | { ok: false; reason: "not_found" | "wrong_campaign" | "failed" };
 
 /**
@@ -54,11 +73,26 @@ export async function reviewSubmission(
       id: submissions.id,
       entryId: submissions.entryId,
       slug: campaigns.slug,
+      platform: submissions.platform,
+      weekNo: challenges.weekNo,
+      weekEndsAt: challenges.endsAt,
+      enrolmentId: campaignCreators.id,
+      // The address as typed, not the canonical form. Canonicalisation
+      // strips dots and plus tags for matching, and sending to the stripped
+      // version delivers somewhere the creator may not read.
+      email: creators.email,
+      fullName: creators.fullName,
+      pointsBefore: campaignCreators.pointsTotal,
     })
     .from(submissions)
     .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))
     .innerJoin(challenges, eq(challenges.id, challengeEntries.challengeId))
     .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
+    .innerJoin(
+      campaignCreators,
+      eq(campaignCreators.id, challengeEntries.campaignCreatorId),
+    )
+    .innerJoin(creators, eq(creators.id, campaignCreators.creatorId))
     .where(eq(submissions.id, submissionId))
     .limit(1);
 
@@ -73,7 +107,37 @@ export async function reviewSubmission(
     await db.execute(
       sql`SELECT review(${submissionId}::uuid, ${decision}::submission_status, ${admin.adminId}::uuid, ${note})`,
     );
-    return { ok: true, entryId: row.entryId };
+    /*
+     * Read the total back rather than working out what the approval was worth.
+     *
+     * recompute_entry_award reconciles the whole entry, so an approval on a
+     * second platform is worth the difference between two rungs of the ladder
+     * rather than a fixed figure, and a re-approval is worth nothing at all.
+     * Subtracting the total taken a moment ago is the only version that is
+     * right in all three cases, and it matches what the creator sees on their
+     * own page.
+     */
+    const after = await db
+      .select({ pointsTotal: campaignCreators.pointsTotal })
+      .from(campaignCreators)
+      .where(eq(campaignCreators.id, row.enrolmentId))
+      .limit(1);
+
+    const pointsTotal = after[0]?.pointsTotal ?? row.pointsBefore ?? 0;
+
+    return {
+      ok: true,
+      entryId: row.entryId,
+      creator: {
+        email: row.email,
+        fullName: row.fullName,
+        weekNo: row.weekNo,
+        platform: row.platform,
+        weekStillOpen: row.weekEndsAt ? row.weekEndsAt > new Date() : false,
+        pointsAwarded: pointsTotal - (row.pointsBefore ?? 0),
+        pointsTotal,
+      },
+    };
   } catch (error) {
     console.error(
       "[admin/review]",

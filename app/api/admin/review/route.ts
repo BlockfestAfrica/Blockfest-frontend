@@ -1,3 +1,10 @@
+import { sendEmailQuietly } from "@/lib/email/client";
+import {
+  approvalEmail,
+  personalPage,
+  rejectionEmail,
+} from "@/lib/email/templates";
+import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/session";
@@ -100,6 +107,51 @@ export async function POST(request: NextRequest) {
       { status: 404 },
     );
   }
+
+  /*
+   * Tell the creator. This is the gap the owner named after testing: "there is
+   * no any other email being sent when approval has been done."
+   *
+   * A creator who published something and heard nothing cannot tell being
+   * accepted from being ignored, and on a rejection the note is the entire
+   * point of requiring one. It is written to be read on their own page, and
+   * until now nothing brought them back to look.
+   *
+   * Awaited, because a serverless function may be frozen as soon as it
+   * responds, and failures are swallowed: the decision is already recorded and
+   * a mail provider having a bad minute must not turn an approval into an
+   * error the reviewer has to think about.
+   */
+  const { creator } = outcome;
+  await sendEmailQuietly(
+    decision === "approved"
+      ? approvalEmail({
+          to: creator.email,
+          fullName: creator.fullName,
+          weekNo: creator.weekNo,
+          platformLabel:
+            platformLabels[creator.platform as CampaignPlatform] ??
+            creator.platform,
+          pointsAwarded: creator.pointsAwarded,
+          pointsTotal: creator.pointsTotal,
+          personalPage: personalPage(),
+        })
+      : rejectionEmail({
+          to: creator.email,
+          fullName: creator.fullName,
+          weekNo: creator.weekNo,
+          platformLabel:
+            platformLabels[creator.platform as CampaignPlatform] ??
+            creator.platform,
+          // Required by the schema above for a rejection, so this is never the
+          // fallback in practice. Present because a template that can render an
+          // empty reason is a template that one day does.
+          note: note ?? "No reason was recorded.",
+          personalPage: personalPage(),
+          canResubmit: creator.weekStillOpen,
+        }),
+    `${decision} for submission ${submissionId}`,
+  );
 
   return NextResponse.json({ ok: true, decision, entryId: outcome.entryId });
 }

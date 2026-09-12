@@ -5,6 +5,7 @@ import {
   creatorSubmissions,
   currentCreator,
   openChallenge,
+  platformsUsedThisWeek,
   registeredPlatforms,
 } from "@/lib/creator-session";
 import { SubmissionForm } from "@/components/campaigns/submission-form";
@@ -110,8 +111,9 @@ export default async function MonicaCreatorPage() {
     pauseState(),
   ]);
 
+  // Rejected entries deliberately do not count: see platformsUsedThisWeek.
   const submittedThisWeek = challenge
-    ? mine.filter((s) => s.weekNo === challenge.weekNo).map((s) => s.platform)
+    ? platformsUsedThisWeek(mine, challenge.weekNo)
     : [];
 
   const joined = creator.joinedAt.toLocaleDateString("en-GB", {

@@ -20,7 +20,11 @@ import { toast } from "sonner";
 export function ReissueLink() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
-  const [issued, setIssued] = useState<{ name: string; link: string } | null>(
+  const [issued, setIssued] = useState<{
+    name: string;
+    link: string;
+    emailed: boolean;
+  } | null>(
     null,
   );
   const [copied, setCopied] = useState(false);
@@ -43,7 +47,11 @@ export function ReissueLink() {
         return;
       }
 
-      setIssued({ name: result.name, link: result.link });
+      setIssued({
+        name: result.name,
+        link: result.link,
+        emailed: Boolean(result.emailed),
+      });
       setCopied(false);
       toast.success(`New link for ${result.name}`);
     } catch {
@@ -95,6 +103,9 @@ export function ReissueLink() {
         <div className="mt-4 rounded-lg border border-brand-gold/40 bg-brand-gold/10 p-4">
           <p className="text-sm font-semibold text-white">
             New link for {issued.name}. Shown once.
+          {issued.emailed
+            ? " Also emailed to the address they registered with."
+            : " The email did not go, so this copy is the only one. Pass it on now."}
           </p>
           <p className="mt-1 max-w-prose text-sm leading-relaxed text-white/60">
             Send it to them yourself. It is not emailed, and it cannot be shown
