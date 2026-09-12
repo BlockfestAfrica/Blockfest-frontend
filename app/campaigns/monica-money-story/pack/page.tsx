@@ -1,3 +1,5 @@
+import { TrackView } from "@/components/campaigns/track-view";
+import { CAMPAIGN_EVENTS } from "@/lib/sabilytics";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Check, ExternalLink, X } from "lucide-react";
@@ -64,6 +66,7 @@ export default function MonicaPackPage() {
 
   return (
     <main id="main" className="bg-ground">
+  <TrackView event={CAMPAIGN_EVENTS.packViewed} />
       <section className="section-y">
         <div className="container-page">
           <Link

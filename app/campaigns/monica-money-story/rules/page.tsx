@@ -1,3 +1,5 @@
+import { TrackView } from "@/components/campaigns/track-view";
+import { CAMPAIGN_EVENTS } from "@/lib/sabilytics";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -56,6 +58,7 @@ export default function MonicaRulesPage() {
 
   return (
     <main id="main" className="bg-ground">
+  <TrackView event={CAMPAIGN_EVENTS.rulesViewed} />
       <section className="section-y">
         <div className="container-page">
           <Link

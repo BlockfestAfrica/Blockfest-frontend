@@ -1,3 +1,5 @@
+import { TrackView } from "@/components/campaigns/track-view";
+import { CAMPAIGN_EVENTS } from "@/lib/sabilytics";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CampaignJoinCTA } from "@/components/campaigns/campaign-join-cta";
@@ -78,6 +80,7 @@ export const metadata: Metadata = {
 export default function MonicaMoneyStoryPage() {
   return (
     <main id="main" className="bg-ground">
+  <TrackView event={CAMPAIGN_EVENTS.viewed} />
       <nav aria-label="Breadcrumb" className="container-page pt-8">
         <Link
           href="/campaigns"

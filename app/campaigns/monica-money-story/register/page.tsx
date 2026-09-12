@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+import { REFERRAL_COOKIE } from "@/lib/campaign-registration";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -31,7 +33,17 @@ export const metadata: Metadata = {
  * rest of the campaign, and means a page built before launch does not have "not
  * open yet" frozen into it.
  */
-export default function MonicaRegisterPage() {
+export default async function MonicaRegisterPage() {
+  /*
+   * Read here rather than in the browser.
+   *
+   * /join sets this cookie httpOnly, so document.cookie cannot see it. The
+   * client can only know somebody arrived through a referral if the server
+   * tells it.
+   */
+  const arrivedViaReferral =
+    (await cookies()).get(REFERRAL_COOKIE)?.value !== undefined;
+
   return (
     <main id="main" className="bg-ground">
       <section className="section-y">
@@ -57,7 +69,10 @@ export default function MonicaRegisterPage() {
           <div className="mt-12 grid gap-10 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-7">
               {CAMPAIGN.startsAt && OPENS_LABEL && (
-                <RegistrationForm opensAt={CAMPAIGN.startsAt} />
+                <RegistrationForm
+                  opensAt={CAMPAIGN.startsAt}
+                  arrivedViaReferral={arrivedViaReferral}
+                />
               )}
             </div>
 

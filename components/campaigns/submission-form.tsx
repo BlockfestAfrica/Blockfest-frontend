@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
-import { track } from "@/lib/sabilytics";
+import { CAMPAIGN_EVENTS, track } from "@/lib/sabilytics";
 
 /**
  * Submitting an entry.
@@ -52,11 +52,20 @@ export function SubmissionForm({
    */
   const selected: string = available.some((p) => p === platform)
     ? platform
-    : available[0] ?? "";
+    : (available[0] ?? "");
   const [url, setUrl] = useState("");
-  const [error, setError] = useState<{ field?: string; message: string } | null>(
-    null,
-  );
+  /*
+   * Fired the first time somebody types into the link field, not on render.
+   *
+   * Rendering the form means the page loaded; typing into it means they went
+   * and got their link, which is the step worth having in a funnel. Guarded
+   * so a creator correcting a typo does not count as a second attempt.
+   */
+  const startedTracking = useRef(false);
+  const [error, setError] = useState<{
+    field?: string;
+    message: string;
+  } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const urlRef = useRef<HTMLInputElement>(null);
 
@@ -91,7 +100,7 @@ export function SubmissionForm({
         return;
       }
 
-      track("campaign_entry_submitted", { campaign: "monica-money-story" });
+      track(CAMPAIGN_EVENTS.submissionCompleted);
       toast.success(`Submitted for ${challengeTitle}`);
       setUrl("");
       // The server owns the list of what has been submitted, so refresh rather
@@ -147,6 +156,10 @@ export function SubmissionForm({
           ref={urlRef}
           value={url}
           onChange={(e) => {
+            if (!startedTracking.current) {
+              startedTracking.current = true;
+              track(CAMPAIGN_EVENTS.submissionStarted);
+            }
             setUrl(e.target.value);
             setError(null);
           }}

@@ -35,6 +35,52 @@ export const EVENTS = {
   ticketCheckoutStarted: "ticket_checkout_started",
 } as const;
 
+/**
+ * The Monica campaign funnel.
+ *
+ * Every name is prefixed, because /campaigns shares this property with the
+ * ticket funnel. Without the prefix the two blend and neither is readable: a
+ * spike in "register_started" would be unattributable to either.
+ *
+ * Named here rather than written at each call site for the same reason the
+ * ticket events are: these must match the goal configuration in Sabilytics
+ * exactly, and a typo in a string literal is a goal that silently records
+ * nothing. Three campaign events already existed as loose strings and are
+ * folded in here.
+ *
+ * Worth naming before launch rather than after, because funnel data for the
+ * first two weeks cannot be reconstructed afterwards. A page that was not
+ * instrumented on the day simply has no history.
+ */
+export const CAMPAIGN_EVENTS = {
+  /** Landing page reached. The top of the funnel. */
+  viewed: "campaign_monica_viewed",
+  /** Someone arrived through a creator's referral link. */
+  referralLinkUsed: "campaign_monica_referral_link_used",
+  /** The registration form was opened and is accepting input. */
+  registerStarted: "campaign_monica_register_started",
+  /** Registration succeeded. The conversion that matters. */
+  registerCompleted: "campaign_monica_register_completed",
+  /** A creator began pasting a link into the submission form. */
+  submissionStarted: "campaign_monica_submission_started",
+  /** An entry was accepted by the endpoint. */
+  submissionCompleted: "campaign_monica_submission_completed",
+  /** A creator copied their own referral link, meaning they intend to share. */
+  referralCopied: "campaign_monica_referral_copied",
+  leaderboardViewed: "campaign_monica_leaderboard_viewed",
+  packViewed: "campaign_monica_pack_viewed",
+  rulesViewed: "campaign_monica_rules_viewed",
+} as const;
+
+/**
+ * Every campaign event name, for the dashboard and for a test.
+ *
+ * A goal that exists in Sabilytics and nowhere in the code records nothing, and
+ * an event fired from the code with no goal behind it is invisible. Exporting
+ * the list is what lets one be checked against the other.
+ */
+export const CAMPAIGN_EVENT_NAMES = Object.values(CAMPAIGN_EVENTS);
+
 /** Fire a custom event. Safe to call before the script loads. */
 export function track(event: string, data?: Record<string, unknown>): void {
   if (typeof window === "undefined") return;
