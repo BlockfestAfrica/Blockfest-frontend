@@ -4,6 +4,7 @@ import Footer from "@/components/shared/footer";
 import Navbar from "@/components/shared/navbar";
 import { AnnouncementBar } from "@/components/shared/announcement-bar";
 import { Toaster } from "@/components/ui/sonner";
+import { IdentityCallback } from "@/components/admin/identity-callback";
 import { gotham } from "@/lib/fonts";
 import { ORGANISATION, eventJsonLd } from "@/lib/seo-event";
 import {
@@ -233,6 +234,10 @@ export default function RootLayout({
         {children}
         <Footer />
         <Toaster />
+        {/* Netlify builds its invite and recovery links against the site root,
+            and the page that completes them is /admin/login. Without this an
+            invited admin lands on the homepage and nothing happens. */}
+        <IdentityCallback />
       </body>
     </html>
   );
