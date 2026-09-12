@@ -13,26 +13,23 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { databaseFingerprint } from "@/lib/db/client";
 
 const ROOT = process.cwd();
-const ORIGINAL = { ...process.env };
-
-afterEach(() => {
-  process.env = { ...ORIGINAL };
-  vi.resetModules();
-});
-
 describe("the database fingerprint", () => {
-  beforeEach(() => {
-    vi.resetModules();
-  });
-
-  it("is a short hash, not the host", async () => {
-    process.env.DATABASE_URL =
-      "postgres://user:secret@ep-cool-name-123456.eu-central-1.aws.neon.tech/db";
-    const { databaseFingerprint } = await import("@/lib/db/client");
-    const print = databaseFingerprint();
+  /*
+   * Every case passes its own input.
+   *
+   * The first version of these asserted through process.env and the resolver,
+   * which made them a statement about the machine rather than about the
+   * function. They passed locally, where no database is attached, and failed
+   * the Netlify build, where one is, twice.
+   */
+  it("is a short hash, not the host", () => {
+    const print = databaseFingerprint(
+      "postgres://user:secret@ep-cool-name-123456.eu-central-1.aws.neon.tech/db",
+    );
 
     expect(print).toMatch(/^[0-9a-f]{12}$/);
     expect(print).not.toContain("neon");
@@ -40,32 +37,31 @@ describe("the database fingerprint", () => {
     expect(print).not.toContain("user");
   });
 
-  it("distinguishes two different databases", async () => {
-    process.env.DATABASE_URL = "postgres://u:p@production.example/db";
-    const a = (await import("@/lib/db/client")).databaseFingerprint();
-    vi.resetModules();
-    process.env.DATABASE_URL = "postgres://u:p@preview-branch.example/db";
-    const b = (await import("@/lib/db/client")).databaseFingerprint();
-
-    expect(a).not.toBe(b);
+  it("distinguishes two different databases", () => {
+    expect(
+      databaseFingerprint("postgres://u:p@production.example/db"),
+    ).not.toBe(databaseFingerprint("postgres://u:p@preview-branch.example/db"));
   });
 
-  it("ignores the credential, so a rotated password still matches", async () => {
-    // Otherwise the comparison would report a different database every time
-    // somebody rotated a secret, and stop being believed.
-    process.env.DATABASE_URL = "postgres://u:one@same.example/db";
-    const a = (await import("@/lib/db/client")).databaseFingerprint();
-    vi.resetModules();
-    process.env.DATABASE_URL = "postgres://u:two@same.example/db";
-    const b = (await import("@/lib/db/client")).databaseFingerprint();
-
-    expect(a).toBe(b);
+  it("ignores the credential, so a rotated password still matches", () => {
+    // Otherwise it would report a different database every time somebody
+    // rotated a secret, and stop being believed.
+    expect(databaseFingerprint("postgres://u:one@same.example/db")).toBe(
+      databaseFingerprint("postgres://u:two@same.example/db"),
+    );
   });
 
-  it("answers null rather than throwing when there is nothing to describe", async () => {
-    delete process.env.DATABASE_URL;
-    const { databaseFingerprint } = await import("@/lib/db/client");
-    expect(databaseFingerprint()).toBeNull();
+  it("answers null when there is nothing to describe", () => {
+    expect(databaseFingerprint(null)).toBeNull();
+    expect(databaseFingerprint("")).toBeNull();
+  });
+
+  it("answers null rather than throwing on something that is not a URL", () => {
+    // A malformed connection is a configuration problem, and a health endpoint
+    // whose job is to keep answering must not be the thing that reports it by
+    // falling over.
+    expect(databaseFingerprint("not-a-connection-string")).toBeNull();
+    expect(databaseFingerprint("postgres://")).toBeNull();
   });
 });
 
