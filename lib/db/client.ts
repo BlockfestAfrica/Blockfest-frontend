@@ -86,13 +86,38 @@ function connectionString(): string {
  * Returns null rather than throwing when there is no connection to describe,
  * because this is read by a health endpoint whose job is to keep answering.
  */
-export function databaseFingerprint(): string | null {
+export function databaseFingerprint(
+  /*
+   * Taken as an argument, defaulted to the resolved connection.
+   *
+   * It read the environment directly, and its test then asserted "no
+   * connection" by unsetting DATABASE_URL. That is not what absence means here:
+   * the fallback is getConnectionString(), which succeeds inside a Netlify
+   * build because a database is attached there. The test passed on every
+   * machine and failed the one build that gates deploys, twice, because locally
+   * there is no database and the wrong thing happened to produce the right
+   * answer.
+   *
+   * A function that takes its input can be tested by giving it one. No
+   * environment, no mocking, no resolver, and nothing left that behaves
+   * differently on the machine it happens to run on.
+   */
+  connection: string | null = resolveOrNull(),
+): string | null {
+  if (!connection) return null;
   try {
-    const url = new URL(connectionString());
-    return createHash("sha256")
-      .update(url.host)
-      .digest("hex")
-      .slice(0, 12);
+    const url = new URL(connection);
+    if (!url.host) return null;
+    return createHash("sha256").update(url.host).digest("hex").slice(0, 12);
+  } catch {
+    return null;
+  }
+}
+
+/** The connection if there is one, rather than the throw connectionString does. */
+function resolveOrNull(): string | null {
+  try {
+    return connectionString();
   } catch {
     return null;
   }
