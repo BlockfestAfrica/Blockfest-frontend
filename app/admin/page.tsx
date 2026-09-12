@@ -4,6 +4,9 @@ import { requireAdmin } from "@/lib/admin/session";
 import { pendingSubmissions } from "@/lib/admin/review";
 import { ReviewQueue } from "@/components/admin/review-queue";
 import { ReissueLink } from "@/components/admin/reissue-link";
+import { PauseSwitch } from "@/components/admin/pause-switch";
+import { pauseState } from "@/lib/campaign-pause";
+import { isOwner } from "@/lib/admin/session";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 import { authorFromUrl } from "@/lib/campaign-submission";
 
@@ -58,7 +61,10 @@ export default async function AdminQueuePage() {
 
   // The type is the proof that the guard ran: pendingSubmissions cannot be
   // called without it.
-  const queue = await pendingSubmissions(admin.admin);
+  const [queue, pause] = await Promise.all([
+    pendingSubmissions(admin.admin),
+    pauseState(),
+  ]);
 
   return (
     <main id="main" className="bg-ground">
@@ -117,6 +123,13 @@ export default async function AdminQueuePage() {
           )}
 
           <ReissueLink />
+
+          {/* Owners only. Pausing stops every creator entering, which is a
+              bigger action than approving one entry, and is the first place
+              the owner and reviewer distinction is actually used. */}
+          {isOwner(admin.admin) && (
+            <PauseSwitch paused={pause.paused} reason={pause.reason} />
+          )}
         </div>
       </section>
     </main>

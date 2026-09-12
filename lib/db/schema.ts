@@ -127,6 +127,15 @@ export const campaigns = pgTable(
     status: campaignStatusEnum("status").notNull().default("draft"),
 
     startsAt: timestamp("starts_at", { withTimezone: true }),
+    /**
+     * The pause switch. Deliberately separate from `status`, because closed
+     * means the campaign has ended and a pause has to be reversible without
+     * looking like an ending.
+     */
+    pausedAt: timestamp("paused_at", { withTimezone: true }),
+    /** Shown to creators verbatim. A pause with no reason is refused. */
+    pausedReason: text("paused_reason"),
+    pausedByAdminId: uuid("paused_by_admin_id"),
     endsAt: timestamp("ends_at", { withTimezone: true }),
 
     /** Everything date-derived (week_no, voting windows) resolves in WAT. */

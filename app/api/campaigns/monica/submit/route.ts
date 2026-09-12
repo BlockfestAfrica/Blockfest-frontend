@@ -2,6 +2,7 @@ import { and, asc, eq, gt, lte, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { campaigns, challenges, getDb } from "@/lib/db/client";
 import { currentCreator } from "@/lib/creator-session";
+import { pauseState } from "@/lib/campaign-pause";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import {
   authorFromUrl,
@@ -62,6 +63,14 @@ export async function POST(request: NextRequest) {
     return fail(
       "We do not know who you are. Open your personal link and try again.",
       401,
+    );
+  }
+
+  const paused = await pauseState();
+  if (paused.paused) {
+    return fail(
+      paused.reason ?? "Submissions are paused. Please try again shortly.",
+      503,
     );
   }
 

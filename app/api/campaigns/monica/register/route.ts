@@ -10,6 +10,7 @@ import {
 } from "@/lib/campaign-registration";
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
+import { pauseState } from "@/lib/campaign-pause";
 import { hashAccessToken, newAccessToken } from "@/lib/creator-access";
 
 /** postgres.js and the Neon driver need sockets; neither runs on the edge. */
@@ -172,6 +173,17 @@ export async function POST(request: NextRequest) {
   }
   if (!gateOpen && campaign.status !== "active") {
     return fail("This campaign is not accepting registrations.", 403);
+  }
+
+  // The pause, checked after the date gate and before anything is written.
+  // Not lifted by the pre-launch override: that exists to let the flow be
+  // walked, and a pause is somebody deliberately stopping it.
+  const paused = await pauseState();
+  if (paused.paused) {
+    return fail(
+      paused.reason ?? "Registration is paused. Please try again shortly.",
+      503,
+    );
   }
 
   // A ceiling on how fast one address can register, counting ATTEMPTS rather
