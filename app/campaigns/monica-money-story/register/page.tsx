@@ -45,13 +45,12 @@ export default function MonicaRegisterPage() {
           </Link>
 
           <div className="mt-6 max-w-2xl">
-            <h1 className="text-display-sm font-bold text-white">
-              Register for the campaign
+            <p className="eyebrow text-brand-gold">{CAMPAIGN.name}</p>
+            <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
+              Join the campaign
             </h1>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
-              One form, once. You are not entering a single challenge here: you
-              are joining the campaign, and a new brief drops every weekend for
-              four weeks.
+            <p className="mt-4 max-w-prose text-base leading-relaxed text-white/55">
+              One form, once. A new brief every Monday for four weeks.
             </p>
           </div>
 

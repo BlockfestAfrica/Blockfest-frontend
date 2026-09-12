@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, X } from "lucide-react";
+import { Check, Copy, ShieldAlert, ShieldCheck, X } from "lucide-react";
+import { Pill } from "@/components/shared/panel";
 import { toast } from "sonner";
 
 export interface QueueItem {
@@ -77,28 +78,17 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
   }
 
   return (
-    <ul className="mt-10 flex flex-col gap-4">
+    /*
+     * One row per submission, separated by a hairline rather than boxed.
+     *
+     * A queue is read down, not across: the eye should fall through name,
+     * handle, whether it was checked, then the link. Boxing each one made every
+     * row shout equally and slowed that to a crawl over a long sitting.
+     */
+    <ul className="mt-8 flex flex-col gap-px overflow-hidden rounded-xl bg-white/10">
       {items.map((item) => (
-        <li
-          key={item.id}
-          className="rounded-xl border border-white/20 bg-white/5 p-5 sm:p-6"
-        >
+        <li key={item.id} className="bg-ground p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="text-sm font-semibold text-white">
-              Week {item.weekNo}
-            </span>
-            <span className="text-sm text-white/50">{item.challengeTitle}</span>
-            <span className="rounded-full border border-white/20 px-2.5 py-0.5 text-xs font-semibold text-white/70">
-              {item.platformLabel}
-            </span>
-          </div>
-
-          {/* Who is claiming this post, and the account they registered.
-              Without both, the queue is a list of bare links and there is no
-              way to notice that a link does not belong to the person claiming
-              it. On Instagram the author is not in the URL at all, so this
-              comparison is the only check that exists. */}
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span className="text-base font-semibold text-white">
               {item.creatorName}
             </span>
@@ -107,36 +97,39 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                 @{item.registeredHandle}
               </span>
             ) : (
-              <span className="text-sm text-red-300">
-                no handle recorded for this platform
-              </span>
+              <Pill tone="bad">no handle recorded</Pill>
             )}
+            <span className="text-xs text-white/35">
+              Week {item.weekNo} · {item.platformLabel}
+            </span>
           </div>
+
+          {/* The single most important line on the row: whether the link was
+              checked against that handle, or whether the reviewer has to. */}
           {item.autoChecked ? (
-            <p className="mt-1 text-sm text-green-300/80">
-              The link is from this account. Checked automatically.
+            <p className="mt-2 flex items-center gap-2 text-sm text-green-300/85">
+              <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Link is from this account
             </p>
           ) : (
-            <p className="mt-1 text-sm text-brand-gold">
-              This link does not say who published it, so nothing could be
-              checked automatically. Open it and confirm the author is the
-              account above before approving.
+            <p className="mt-2 flex items-start gap-2 text-sm text-amber-300">
+              <ShieldAlert
+                className="mt-0.5 h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
+              <span>
+                This link does not name its author. Open it and confirm it is
+                the account above.
+              </span>
             </p>
           )}
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            {/* Text, not a link. See the note at the top of this file. */}
-            {/* Wrapped, not truncated. The author segment is usually early in
-                a link but a long handle can push it past a truncation, and that
-                is the one part of the URL this decision turns on. html and body
-                set overflow-x: hidden site-wide, so anything too wide is
-                clipped rather than scrollable: it would be silently cut off
-                rather than obviously cut off.
-
-                min-w-0 because a flex item will not shrink below its content
-                without it, which is what makes a long link push the copy button
-                off a narrow screen. */}
-            <code className="min-w-0 flex-1 break-all rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm leading-relaxed text-white">
+            {/* Wrapped, not truncated. The author segment is what the decision
+                turns on, and overflow-x is hidden site-wide so anything too
+                wide is clipped rather than scrollable. min-w-0 so a long link
+                does not push the button off a narrow screen. */}
+            <code className="min-w-0 flex-1 break-all rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-sm leading-relaxed text-white/85">
               {item.url}
             </code>
             <button
@@ -146,7 +139,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                 setCopied(item.id);
                 toast.success("Link copied. Open it in a new tab.");
               }}
-              className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+              className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
             >
               {copied === item.id ? (
                 <Check className="h-4 w-4" aria-hidden="true" />
@@ -157,42 +150,40 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
             </button>
           </div>
 
-          <label
-            htmlFor={`note-${item.id}`}
-            className="mt-4 block text-sm font-semibold text-white"
-          >
-            Reason, required to reject
-          </label>
-          <input
-            id={`note-${item.id}`}
-            value={notes[item.id] ?? ""}
-            onChange={(e) =>
-              setNotes((n) => ({ ...n, [item.id]: e.target.value }))
-            }
-            maxLength={500}
-            placeholder="Shown to the creator"
-            className="mt-2 w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none"
-          />
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              type="button"
-              disabled={busy === item.id}
-              onClick={() => decide(item.id, "approved")}
-              className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-colors duration-300 hover:bg-green-400/25 disabled:opacity-60"
-            >
-              <Check className="h-4 w-4" aria-hidden="true" />
-              Approve
-            </button>
-            <button
-              type="button"
-              disabled={busy === item.id}
-              onClick={() => decide(item.id, "rejected")}
-              className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full bg-red-400/15 px-5 text-sm font-semibold text-red-300 transition-colors duration-300 hover:bg-red-400/25 disabled:opacity-60"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-              Reject
-            </button>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <label htmlFor={`note-${item.id}`} className="sr-only">
+              Reason, required to reject
+            </label>
+            <input
+              id={`note-${item.id}`}
+              value={notes[item.id] ?? ""}
+              onChange={(e) =>
+                setNotes((n) => ({ ...n, [item.id]: e.target.value }))
+              }
+              maxLength={500}
+              placeholder="Reason, required to reject. The creator sees it."
+              className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none"
+            />
+            <div className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                disabled={busy === item.id}
+                onClick={() => decide(item.id, "approved")}
+                className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-colors duration-300 hover:bg-green-400/25 disabled:opacity-60 sm:flex-none"
+              >
+                <Check className="h-4 w-4" aria-hidden="true" />
+                Approve
+              </button>
+              <button
+                type="button"
+                disabled={busy === item.id}
+                onClick={() => decide(item.id, "rejected")}
+                className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-red-400/15 px-5 text-sm font-semibold text-red-300 transition-colors duration-300 hover:bg-red-400/25 disabled:opacity-60 sm:flex-none"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+                Reject
+              </button>
+            </div>
           </div>
         </li>
       ))}

@@ -8,6 +8,7 @@ import {
   registeredPlatforms,
 } from "@/lib/creator-session";
 import { SubmissionForm } from "@/components/campaigns/submission-form";
+import { Panel, SectionHeading, Stat } from "@/components/shared/panel";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 import { campaignBySlug, monicaRoutes, MONICA_SLUG } from "@/lib/campaigns";
 
@@ -120,7 +121,7 @@ export default async function MonicaCreatorPage() {
   return (
     <main id="main" className="bg-ground">
       <section className="section-y">
-        <div className="container-page">
+        <div className="container-page max-w-3xl">
           <Link
             href={monicaRoutes.landing}
             className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
@@ -129,67 +130,45 @@ export default async function MonicaCreatorPage() {
             {CAMPAIGN.name}
           </Link>
 
-          <div className="mt-6 max-w-2xl">
-            <h1 className="text-display-sm font-bold text-white">
-              {creator.name.split(" ")[0]}, you are in
-            </h1>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
-              Registered {joined}. This page is yours, and it is where your
-              points and entries will show up.
-            </p>
+          {/* The name large and the housekeeping small. Somebody opening this
+              weekly wants their standing and the brief, not a paragraph
+              explaining what the page is. */}
+          <h1 className="mt-6 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
+            {creator.name.split(" ")[0]}
+          </h1>
+          <p className="mt-3 text-sm text-white/45">
+            Joined {joined} · Your page
+          </p>
+
+          {/* Figures, not cards. A rule and a big number reads as a number. */}
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            <Stat label="Points" value={creator.pointsTotal} />
+            <Stat label="Approved" value={creator.approvedEntries} />
+            <Stat
+              label="Referral code"
+              value={creator.referralCode}
+              hint="Share it. Points land on their first approved entry."
+            />
           </div>
 
-          <div className="mt-10 grid max-w-2xl gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-white/20 bg-white/5 p-5">
-              <p className="eyebrow text-white/50">Points</p>
-              <p className="mt-2 text-display-sm font-bold tabular-nums text-white">
-                {creator.pointsTotal}
-              </p>
-            </div>
-            <div className="rounded-xl border border-white/20 bg-white/5 p-5">
-              <p className="eyebrow text-white/50">Approved entries</p>
-              <p className="mt-2 text-display-sm font-bold tabular-nums text-white">
-                {creator.approvedEntries}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-10 max-w-2xl rounded-xl border border-white/20 bg-white/5 p-5 sm:p-6">
-            <p className="eyebrow text-white/50">Your referral code</p>
-            <p className="mt-2 font-mono text-xl font-bold tracking-wider text-brand-gold">
-              {creator.referralCode}
-            </p>
-            <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/60">
-              Bring another creator in with this. Points land once they have
-              their first approved entry, so it is worth sending to people who
-              will actually post. Read it out loud if that is easier: there is
-              no letter O, zero, letter I or one in it, so nothing can be heard
-              two ways.
-            </p>
-          </div>
-
-          {/* Submitting, when a week is open. */}
-          <div className="mt-10 max-w-2xl rounded-xl border border-white/20 bg-white/5 p-5 sm:p-6">
+          {/* The one thing to act on, so it is the only accented block. */}
+          <div className="mt-14">
             {challenge ? (
-              <>
+              <Panel tone="accent">
                 <p className="eyebrow text-brand-gold">
-                  Week {challenge.weekNo} is open
-                </p>
-                <h2 className="mt-2 text-lg font-bold text-white">
-                  {challenge.title}
-                </h2>
-                <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
-                  {challenge.description}
-                </p>
-                <p className="mt-3 text-sm text-white/50">
-                  Closes{" "}
+                  Week {challenge.weekNo} · closes{" "}
                   {challenge.endsAt.toLocaleDateString("en-GB", {
                     weekday: "long",
                     day: "numeric",
                     month: "long",
                     timeZone: "Africa/Lagos",
                   })}
-                  . Publish on your own account first, then paste the link here.
+                </p>
+                <h2 className="mt-2 text-2xl font-bold text-white">
+                  {challenge.title}
+                </h2>
+                <p className="mt-3 max-w-prose text-base leading-relaxed text-white/70">
+                  {challenge.description}
                 </p>
 
                 <SubmissionForm
@@ -197,59 +176,52 @@ export default async function MonicaCreatorPage() {
                   alreadySubmitted={submittedThisWeek}
                   challengeTitle={challenge.title}
                 />
-              </>
+              </Panel>
             ) : (
-              // Said plainly rather than shown as an empty form, because a form
-              // that refuses everything reads as broken rather than as closed.
-              <>
-                <p className="text-base font-semibold text-white">
-                  No challenge is open right now
-                </p>
-                <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
-                  A new brief opens each Monday. When one is open it appears
-                  here, with somewhere to paste your link.
-                </p>
+              <Panel tone="quiet">
+                <SectionHeading
+                  title="No brief is open"
+                  hint="A new one opens each Monday. When it does it appears here, with somewhere to paste your link."
+                />
                 <Link
                   href={`${monicaRoutes.landing}#stages`}
                   className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
                 >
                   See all four briefs
                 </Link>
-              </>
+              </Panel>
             )}
           </div>
 
-          <div className="mt-10 max-w-2xl rounded-xl border border-white/15 p-5 sm:p-6">
-            <p className="text-base font-semibold text-white">Your entries</p>
+          <div className="mt-14">
+            <SectionHeading label="Your entries" title={`${mine.length} submitted`} />
+
             {mine.length === 0 ? (
-              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
-                Nothing yet. Once you submit a link it shows here, with where it
-                got to in review.
+              <p className="mt-4 max-w-prose text-sm leading-relaxed text-white/55">
+                Nothing yet. Publish your answer on your own account, then paste
+                the link above.
               </p>
             ) : (
-              <ul className="mt-4 flex flex-col gap-3">
+              /* A list with a left edge coloured by outcome, so a run of
+                 entries can be scanned down rather than read across. */
+              <ul className="mt-6 flex flex-col gap-px overflow-hidden rounded-xl bg-white/10">
                 {mine.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="rounded-lg border border-white/15 bg-ground p-4"
-                  >
+                  <li key={entry.id} className="bg-ground p-5">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                       <span className="text-sm font-semibold text-white">
                         Week {entry.weekNo}
                       </span>
-                      <span className="text-sm text-white/50">
+                      <span className="text-sm text-white/45">
                         {platformLabels[entry.platform as CampaignPlatform] ??
                           entry.platform}
                       </span>
                       <StatusPill status={entry.status} />
                     </div>
-                    <p className="mt-2 break-all text-sm leading-relaxed text-white/50">
+                    <p className="mt-2 break-all text-sm leading-relaxed text-white/45">
                       {entry.url}
                     </p>
                     {entry.reviewNote && (
-                      // Shown because a rejection whose reason is invisible is
-                      // one a creator argues with rather than learns from.
-                      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+                      <p className="mt-3 border-l-2 border-white/20 pl-3 text-sm leading-relaxed text-white/70">
                         {entry.reviewNote}
                       </p>
                     )}

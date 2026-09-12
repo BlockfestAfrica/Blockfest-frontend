@@ -67,7 +67,8 @@ export default function MonicaRulesPage() {
           </Link>
 
           <div className="mt-6 max-w-2xl">
-            <h1 className="text-display-sm font-bold text-white">
+            <p className="eyebrow text-brand-gold">{CAMPAIGN.name}</p>
+            <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Campaign rules
             </h1>
             <p className="mt-4 text-base leading-relaxed text-white/60">
@@ -103,7 +104,7 @@ export default function MonicaRulesPage() {
                 the ragged wrapped line of underlined links this was. */}
             <nav
               aria-label="Rules contents"
-              className="mt-10 rounded-xl border border-white/15 p-5 sm:p-6"
+              className="mt-10 rounded-xl border-l-2 border-white/20 bg-white/[0.03] p-5 pl-5 sm:p-6 sm:pl-6"
             >
               <p className="eyebrow text-white/50">Contents</p>
               <ol className="mt-4 grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
@@ -130,15 +131,17 @@ export default function MonicaRulesPage() {
                   id={section.id}
                   className="scroll-mt-24"
                 >
-                  <h2 className="flex gap-3 text-xl font-bold text-white">
-                    <span className="tabular-nums text-white/30">{i + 1}</span>
+                  <h2 className="flex gap-4 text-xl font-bold text-white">
+                    <span className="w-6 shrink-0 tabular-nums text-brand-gold/60">
+                      {i + 1}
+                    </span>
                     {section.title}
                   </h2>
                   <div className="mt-4 flex flex-col gap-4">
                     {section.paragraphs.map((paragraph) => (
                       <p
                         key={paragraph}
-                        className="max-w-prose text-base leading-7 text-white/75"
+                        className="max-w-prose text-base leading-[1.75] text-white/75"
                       >
                         {paragraph}
                       </p>
