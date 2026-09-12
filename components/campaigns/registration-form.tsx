@@ -432,7 +432,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
 
   if (done) {
     return (
-      <div className="rounded-xl border border-brand-gold/40 bg-brand-gold/5 p-6 sm:p-8">
+      <div className="rounded-xl border border-white/12 bg-white/[0.03] p-6 sm:p-8">
         <p className="flex items-center gap-2 text-lg font-bold text-white">
           <Check className="h-5 w-5 text-brand-gold" aria-hidden="true" />
           You are in, {done.name.split(" ")[0]}
@@ -449,7 +449,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
             losing the link means asking for a new one, so the warning has to
             be unmissable rather than tucked under the fold. */}
         {done.accessToken && (
-          <div className="mt-6 rounded-lg border border-brand-gold/40 bg-brand-gold/10 p-4 sm:p-5">
+          <div className="mt-6 rounded-lg border border-white/15 bg-white/[0.05] p-4 sm:p-5">
             <p className="text-sm font-semibold text-white">
               Save this link. It is shown once.
             </p>
@@ -462,7 +462,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               with and we will issue a new one.
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <code className="min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+              <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
                 {accessLink}
               </code>
               <button
@@ -494,7 +494,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               will actually post.
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <code className="min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+              <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
                 {shareLink}
               </code>
               <button
@@ -545,11 +545,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      noValidate
-      className="flex flex-col gap-10"
-    >
+    <form onSubmit={submit} noValidate className="flex flex-col gap-10">
       {/* Shown only while the gate has been opened ahead of the real date. A
           creator who finds this page early would otherwise register in good
           faith, share a referral code, and be quietly removed when the
@@ -558,7 +554,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       {CAMPAIGN_GATE_FORCED_OPEN && !hasPassed(opensAt) && (
         <p
           role="status"
-          className="rounded-lg border border-brand-gold/40 bg-brand-gold/10 px-4 py-3 text-sm leading-relaxed text-white/80"
+          className="rounded-lg border border-white/15 bg-white/[0.05] px-4 py-3 text-sm leading-relaxed text-white/80"
         >
           <strong className="font-semibold text-white">
             This is a test run.
@@ -607,12 +603,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               placeholder="Ada Obi"
             />
           </Labelled>
-          <Labelled
-            label="Email"
-            htmlFor="email"
-            error={errors.email}
-            required
-          >
+          <Labelled label="Email" htmlFor="email" error={errors.email} required>
             <input
               id="email"
               name="email"
