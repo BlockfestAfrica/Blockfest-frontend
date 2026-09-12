@@ -30,7 +30,7 @@ export const SABILYTICS_DOMAIN = "blockfestafrica.com";
  * than no link, because somebody follows it during a report.
  */
 export const SABILYTICS_SHARE_URL =
-  process.env.NEXT_PUBLIC_UMAMI_SHARE_URL?.trim() || "";
+  process.env.NEXT_PUBLIC_SABILYTICS_SHARE_URL?.trim() || "";
 
 /**
  * Conversion event names.
