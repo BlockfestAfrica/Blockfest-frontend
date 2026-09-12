@@ -136,6 +136,36 @@ describe("before the campaign opens", () => {
     expect(container.querySelector("form")).toBeNull();
     expect(screen.getByText(/not open yet/i)).toBeTruthy();
   });
+
+  /**
+   * The state the site is actually in right now, and until this was written it
+   * was the one state nothing covered. The suite ran with whatever
+   * NEXT_PUBLIC_CAMPAIGN_GATE_OPEN happened to be in the environment, so it
+   * passed on a laptop where the variable is unset and failed in the Netlify
+   * build where it is true, having found the production configuration rather
+   * than a defect.
+   *
+   * The flag is read once when lib/campaigns.ts is first imported, so moving it
+   * means resetting the module registry and importing the component again.
+   */
+  it("renders the form when the gate is deliberately forced open", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_CAMPAIGN_GATE_OPEN", "true");
+
+    const { RegistrationForm: Forced } = await import(
+      "@/components/campaigns/registration-form"
+    );
+
+    vi.setSystemTime(new Date("2026-09-01T12:00:00+01:00"));
+    const { container } = render(<Forced opensAt={OPENS_AT} />);
+
+    expect(container.querySelector("form")).not.toBeNull();
+    // And it says so, so nobody who wanders in early thinks it is launch day.
+    expect(screen.getByText(/This is a test run/i)).toBeTruthy();
+
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
 });
 
 describe("when the server returns no referral code", () => {
