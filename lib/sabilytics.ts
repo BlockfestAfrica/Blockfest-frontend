@@ -22,6 +22,17 @@ export const SABILYTICS_SITE_ID = "1csn36flwfzz";
 export const SABILYTICS_DOMAIN = "blockfestafrica.com";
 
 /**
+ * The shared dashboard, for the admin overview to link to.
+ *
+ * Impressions are a campaign KPI and are not in the campaign database. Rather
+ * than inventing a figure, the overview says so and points here. Empty when
+ * unset, and the link is then simply absent: a dead link to analytics is worse
+ * than no link, because somebody follows it during a report.
+ */
+export const SABILYTICS_SHARE_URL =
+  process.env.NEXT_PUBLIC_UMAMI_SHARE_URL?.trim() || "";
+
+/**
  * Conversion event names.
  *
  * These must match the goal and journey steps configured in Sabilytics
