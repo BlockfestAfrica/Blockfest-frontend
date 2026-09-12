@@ -9,6 +9,7 @@ import {
   MONICA_SLUG,
 } from "@/lib/campaigns";
 import { SITE_URL } from "@/lib/seo-event";
+import { LeaderboardTable } from "@/components/campaigns/leaderboard-table";
 
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
 
@@ -70,36 +71,7 @@ export default async function MonicaLeaderboardPage() {
                 that total first, then by approved entries.
               </p>
 
-              {/* A list rather than a table. There are four values per row, and
-                  a table at 360px is four columns nobody can read. */}
-              <ol className="mt-10 flex flex-col gap-px overflow-hidden rounded-xl bg-white/10">
-                {rows.map((row) => (
-                  <li
-                    key={`${row.rank}-${row.name}`}
-                    className="flex items-center gap-4 bg-ground px-4 py-4 sm:px-5"
-                  >
-                    <span
-                      className={`w-8 shrink-0 text-right text-lg font-bold tabular-nums ${
-                        row.rank <= 3 ? "text-brand-gold" : "text-white/30"
-                      }`}
-                    >
-                      {row.rank}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-base font-semibold text-white">
-                      {row.name}
-                    </span>
-                    <span className="shrink-0 text-right">
-                      <span className="block text-lg font-bold tabular-nums text-white">
-                        {row.points}
-                      </span>
-                      <span className="block text-xs text-white/40">
-                        {row.approvedEntries}{" "}
-                        {row.approvedEntries === 1 ? "entry" : "entries"}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
+              <LeaderboardTable rows={rows} />
             </>
           )}
 

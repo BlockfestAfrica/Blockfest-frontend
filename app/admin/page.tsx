@@ -77,9 +77,17 @@ export default async function AdminQueuePage() {
                 {queue.length} waiting
               </h1>
             </div>
-            <p className="text-sm text-white/40">
-              {admin.admin.email} · {admin.admin.role}
-            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                href="/admin/participants"
+                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+              >
+                All participants
+              </Link>
+              <p className="text-sm text-white/40">
+                {admin.admin.email} · {admin.admin.role}
+              </p>
+            </div>
           </div>
 
           <p className="mt-4 max-w-prose text-sm leading-relaxed text-white/50">
