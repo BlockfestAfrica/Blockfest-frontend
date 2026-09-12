@@ -168,9 +168,18 @@ const nextConfig: NextConfig = {
       },
 
       {
+        /*
+         * /register is the obvious word, so somebody will link a creator to it
+         * on launch day. It used to bounce them to the homepage, and as a 308
+         * that answer is cached by the browser indefinitely: the breakage
+         * survived the fix for everybody who hit it once.
+         *
+         * Now it lands where they were trying to go, and 307 so a later change
+         * of mind is not permanent for anybody who followed it.
+         */
         source: "/register",
-        destination: "/",
-        permanent: true,
+        destination: "/campaigns/monica-money-story/register",
+        permanent: false,
       },
     ];
   },
