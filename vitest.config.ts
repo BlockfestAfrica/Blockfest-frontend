@@ -8,6 +8,23 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./__tests__/setup.ts"],
+    /**
+     * Pinned, so a test result never depends on the machine running it.
+     *
+     * The suite now runs inside the Netlify build, which carries the real site
+     * variables. NEXT_PUBLIC_CAMPAIGN_GATE_OPEN is set to true there to open
+     * registration ahead of launch, so a test asserting the pre-launch locked
+     * state passed locally and failed on deploy, having found the production
+     * configuration rather than a bug.
+     *
+     * The default here is the shut gate, because that is the state the campaign
+     * spends most of its life in and the one worth defending. Tests that care
+     * about the other state set it themselves with vi.stubEnv and a module
+     * reset, which is the only way to move a value that is read once at import.
+     */
+    env: {
+      NEXT_PUBLIC_CAMPAIGN_GATE_OPEN: "",
+    },
     include: ["__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     coverage: {
       provider: "v8",
