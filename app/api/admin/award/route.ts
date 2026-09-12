@@ -1,0 +1,120 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
+import { sql } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import { requireAdmin } from "@/lib/admin/session";
+import { readJsonBody, sameOrigin } from "@/lib/admin/request";
+import { pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+/**
+ * Award or take back points by hand.
+ *
+ * Available to reviewers as well as owners, deliberately. Rewarding standout
+ * work is the ordinary business of reviewing, and the controls that matter are
+ * the ceiling, the note and the attribution rather than the role. Every one of
+ * those is enforced in the database, so this route cannot weaken them by
+ * forgetting something.
+ *
+ * Taking points back is the same call with a negative number. The ledger is
+ * append-only, so a reversal is a signed row rather than an edit and the
+ * original decision stays visible.
+ */
+
+/** Only the sources a person may write. The engine owns the other two. */
+const MANUAL_SOURCES = [
+  "quality_bonus",
+  "engagement_milestone",
+  "featured_blockfest",
+  "featured_monica",
+  "collab",
+  "wildcard_win",
+  "manual_adjustment",
+] as const;
+
+const awardSchema = z.object({
+  enrolmentId: z.string().uuid("That is not a creator."),
+  source: z.enum(MANUAL_SOURCES),
+  points: z
+    .number()
+    .int("Points have to be a whole number.")
+    .refine((n) => n !== 0, "Zero points is not an award."),
+  note: z
+    .string()
+    .trim()
+    .min(1, "Say why. It is what a dispute is answered with.")
+    .max(300),
+});
+
+const FORBIDDEN = NextResponse.json(
+  { ok: false, message: "Not allowed." },
+  { status: 403 },
+);
+
+/** The database raises these deliberately, so each gets its own sentence. */
+const MESSAGES: Record<string, string> = {
+  P0505: "That is below the floor for this kind of award.",
+  P0506: "That is above the ceiling for this kind of award.",
+  P0504: "No limits are configured for that kind of award, so it is refused.",
+  P0501: "That kind of points is awarded by the system, not by hand.",
+  P0502: "Say why. It is what a dispute is answered with.",
+  P0503: "Zero points is not an award.",
+  P0201: "That creator does not exist.",
+  P0401: "Only a signed-in admin can award points.",
+};
+
+export async function POST(request: NextRequest) {
+  if (!sameOrigin(request)) return FORBIDDEN;
+
+  const admin = await requireAdmin();
+  if (!admin.ok) return FORBIDDEN;
+
+  const read = await readJsonBody(request);
+  if (!read.ok) {
+    return NextResponse.json(
+      { ok: false, message: "We could not read that." },
+      { status: 400 },
+    );
+  }
+
+  const parsed = awardSchema.safeParse(read.body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: parsed.error.issues[0]?.message ?? "Check the award.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const { enrolmentId, source, points, note } = parsed.data;
+
+  try {
+    const result = await getDb().execute(
+      sql`SELECT * FROM award_points(${enrolmentId}::uuid, ${source}::ledger_source, ${points}::integer, ${note}::text, ${admin.admin.adminId}::uuid)`,
+    );
+    const row = (result.rows?.[0] ?? {}) as { points_total?: number };
+
+    return NextResponse.json({
+      ok: true,
+      points,
+      pointsTotal: Number(row.points_total ?? 0),
+    });
+  } catch (error) {
+    const code = pgErrorCode(error);
+    const known = code ? MESSAGES[code] : undefined;
+
+    if (known) {
+      return NextResponse.json({ ok: false, message: known }, { status: 400 });
+    }
+
+    console.error("[admin/award] unmapped", code, pgErrorMessage(error));
+    return NextResponse.json(
+      { ok: false, message: "Something went wrong at our end." },
+      { status: 500 },
+    );
+  }
+}

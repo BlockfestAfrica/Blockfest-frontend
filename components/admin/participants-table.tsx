@@ -1,8 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Coins, Search } from "lucide-react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { Pill } from "@/components/shared/panel";
+
+/** The sources a person may write. The engine owns challenge_entry and referral. */
+const AWARD_SOURCES = [
+  { key: "quality_bonus", label: "Quality" },
+  { key: "featured_blockfest", label: "Featured by us" },
+  { key: "featured_monica", label: "Featured by Monica" },
+  { key: "engagement_milestone", label: "Engagement" },
+  { key: "collab", label: "Collaboration" },
+  { key: "wildcard_win", label: "Wildcard" },
+  { key: "manual_adjustment", label: "Correction" },
+] as const;
 
 export interface ParticipantRow {
   enrolmentId: string;
@@ -31,6 +44,10 @@ type Filter = "all" | "submitted" | "silent" | "approved";
  * screen somebody is scanning would make it feel broken.
  */
 export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
+  const router = useRouter();
+  /** Which row has the award panel open. One at a time, on purpose. */
+  const [awarding, setAwarding] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("joinedAt");
@@ -66,6 +83,47 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
       }
     });
   }, [rows, filter, search, sort, ascending]);
+
+  async function submitAward(
+    enrolmentId: string,
+    source: string,
+    points: number,
+    note: string,
+  ) {
+    if (!note.trim()) {
+      toast.error("Say why. It is what a dispute is answered with.");
+      return;
+    }
+    if (!Number.isFinite(points) || points === 0) {
+      toast.error("Zero points is not an award.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/award", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enrolmentId, source, points, note: note.trim() }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        toast.error(result.message ?? "That did not work.");
+        return;
+      }
+
+      toast.success(
+        `${points > 0 ? "Awarded" : "Removed"} ${Math.abs(points)} points`,
+      );
+      setAwarding(null);
+      router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function sortBy(key: SortKey) {
     if (key === sort) {
@@ -165,10 +223,13 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
                 <Th onClick={() => sortBy("points")} active={sort === "points"} ascending={ascending} numeric>
                   Points
                 </Th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white/40">
+                  Award
+                </th>
               </tr>
             </thead>
             <tbody>
-              {shown.map((row) => (
+              {shown.flatMap((row) => [
                 <tr
                   key={row.enrolmentId}
                   className="border-b border-white/[0.06] last:border-0"
@@ -217,8 +278,35 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
                   <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-white">
                     {row.points}
                   </td>
-                </tr>
-              ))}
+                  <td className="px-4 py-3 text-right align-top">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAwarding(
+                          awarding === row.enrolmentId ? null : row.enrolmentId,
+                        )
+                      }
+                      className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-white/70 transition-colors hover:bg-white/5"
+                    >
+                      <Coins className="h-4 w-4" aria-hidden="true" />
+                      {awarding === row.enrolmentId ? "Close" : "Points"}
+                    </button>
+                  </td>
+                </tr>,
+                awarding === row.enrolmentId ? (
+                  <tr key={`${row.enrolmentId}-award`} className="bg-white/[0.03]">
+                    <td colSpan={7} className="px-4 py-5">
+                      <AwardRow
+                        name={row.name}
+                        busy={busy}
+                        onSubmit={(source, points, note) =>
+                          submitAward(row.enrolmentId, source, points, note)
+                        }
+                      />
+                    </td>
+                  </tr>
+                ) : null,
+              ])}
             </tbody>
           </table>
         </div>
@@ -260,5 +348,93 @@ function Th({
         </span>
       </button>
     </th>
+  );
+}
+
+/**
+ * Award or take back points for one creator.
+ *
+ * The note is required and says so, because it is what a dispute is answered
+ * with and because the database refuses an award without one. Negative numbers
+ * are allowed and explained: the ledger is append-only, so taking a bonus back
+ * is a signed row rather than an edit and the original decision stays visible.
+ *
+ * Every ceiling is enforced in the database, not here. This form can be wrong
+ * about a limit and the award is still refused, which is the right way round.
+ */
+function AwardRow({
+  name,
+  busy,
+  onSubmit,
+}: {
+  name: string;
+  busy: boolean;
+  onSubmit: (source: string, points: number, note: string) => void;
+}) {
+  const [source, setSource] = useState<string>(AWARD_SOURCES[0].key);
+  const [points, setPoints] = useState("");
+  const [note, setNote] = useState("");
+
+  const value = Number.parseInt(points, 10);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-white/55">
+        Points for <span className="font-semibold text-white">{name}</span>. A
+        negative number takes points back, and leaves the original award in the
+        ledger.
+      </p>
+
+      <div className="flex flex-col gap-3 lg:flex-row">
+        <label htmlFor="award-source" className="sr-only">
+          What kind of award
+        </label>
+        <select
+          id="award-source"
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          className="min-h-12 cursor-pointer rounded-lg border border-white/12 bg-ground px-4 text-base text-white focus:border-brand-gold focus:outline-none lg:w-56"
+        >
+          {AWARD_SOURCES.map((s) => (
+            <option key={s.key} value={s.key}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+
+        <label htmlFor="award-points" className="sr-only">
+          How many points
+        </label>
+        <input
+          id="award-points"
+          value={points}
+          onChange={(e) => setPoints(e.target.value.replace(/[^0-9-]/g, ""))}
+          inputMode="numeric"
+          placeholder="Points, or -points"
+          className="min-h-12 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none lg:w-44"
+        />
+
+        <label htmlFor="award-note" className="sr-only">
+          Why, required
+        </label>
+        <input
+          id="award-note"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={300}
+          placeholder="Why. Required, and kept against the award."
+          className="min-h-12 min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none"
+        />
+
+        <button
+          type="button"
+          disabled={busy || !note.trim() || !Number.isFinite(value) || value === 0}
+          onClick={() => onSubmit(source, value, note)}
+          className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {busy ? "Working..." : "Apply"}
+        </button>
+      </div>
+    </div>
   );
 }
