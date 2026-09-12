@@ -175,6 +175,7 @@ export const monicaRoutes = {
   enter: `/campaigns/${MONICA_SLUG}/enter`,
   /** The creator's own page. Reads the cookie; never takes a token in the URL. */
   me: `/campaigns/${MONICA_SLUG}/me`,
+  leaderboard: `/campaigns/${MONICA_SLUG}/leaderboard`,
 } as const;
 
 export interface CampaignSkill {
