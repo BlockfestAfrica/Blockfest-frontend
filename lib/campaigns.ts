@@ -171,6 +171,10 @@ export const monicaRoutes = {
   rules: `/campaigns/${MONICA_SLUG}/rules`,
   pack: `/campaigns/${MONICA_SLUG}/pack`,
   privacy: `/campaigns/${MONICA_SLUG}/privacy`,
+  /** Exchanges an access token in the URL for a cookie, then redirects to `me`. */
+  enter: `/campaigns/${MONICA_SLUG}/enter`,
+  /** The creator's own page. Reads the cookie; never takes a token in the URL. */
+  me: `/campaigns/${MONICA_SLUG}/me`,
 } as const;
 
 export interface CampaignSkill {

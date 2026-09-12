@@ -19,6 +19,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./"),
+      // server-only throws on import so that a server module cannot be pulled
+      // into a client bundle. That guard is worth keeping in the build and is
+      // meaningless here, where there is no client bundle and no boundary to
+      // cross, so it resolves to an empty module instead of failing the suite.
+      "server-only": path.resolve(__dirname, "./__tests__/stubs/server-only.ts"),
     },
   },
 });

@@ -296,6 +296,16 @@ export const campaignCreators = pgTable(
 
     /** Tie-break for ranking; set on the creator's first approved platform. */
     firstApprovedAt: timestamp("first_approved_at", { withTimezone: true }),
+
+    /**
+     * SHA-256 of the creator's access token. The token itself is shown once at
+     * registration and is not recoverable from here, which is the point: the
+     * database alone is not enough to act as somebody.
+     */
+    accessTokenHash: text("access_token_hash"),
+    accessTokenIssuedAt: timestamp("access_token_issued_at", {
+      withTimezone: true,
+    }),
     /**
      * Which version of the rules this creator accepted, and when.
      *

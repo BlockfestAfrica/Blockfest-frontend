@@ -1,8 +1,31 @@
 // Service Worker for Blockfest Africa PWA
 // Bumped whenever caching behaviour changes, not only when assets do. The
 // activate handler deletes every blockfest- cache that is not this one, which
-// is what clears API responses the previous worker stored with no expiry.
-const CACHE_NAME = "blockfest-v2";
+// is what clears responses a previous worker stored that it should not have.
+const CACHE_NAME = "blockfest-v3";
+
+// Pages that belong to one person, and must never touch the cache.
+//
+// The navigation branch below runs before every other rule and returns, so the
+// /api/ exclusion further down was never reached for a page load. That meant a
+// signed-in page was written to disk with no expiry and re-served offline with
+// no check against anything: it survived signing out, a revoked token and a
+// deleted row, because Cache Storage is not reachable from any of them.
+//
+// Matched as a whole segment so /campaigns/.../me matches and a hypothetical
+// /campaigns/.../mentions does not.
+const PRIVATE_PATH_PREFIXES = [
+  "/admin",
+  "/api/admin",
+  "/campaigns/monica-money-story/me",
+  "/campaigns/monica-money-story/enter",
+];
+
+function isPrivatePath(pathname) {
+  return PRIVATE_PATH_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+  );
+}
 const STATIC_CACHE_URLS = [
   "/",
   "/favicon.ico",
@@ -55,6 +78,12 @@ self.addEventListener("fetch", (event) => {
 
   const { request } = event;
   const url = new URL(request.url);
+
+  // Before anything else, including the navigation branch. Nothing private is
+  // read from the cache, written to it, or served from it offline: the request
+  // goes to the network untouched, and if the network is down the browser's own
+  // error is the honest answer.
+  if (isPrivatePath(url.pathname)) return;
 
   // Handle navigations explicitly with offline fallback and preload
   if (request.mode === "navigate") {
