@@ -96,6 +96,17 @@ export async function POST(request: NextRequest) {
   if (!outcome.ok) {
     // not_found and wrong_campaign answer identically, so this cannot be used
     // to discover which ids exist.
+    if (outcome.reason === "unverified_handle") {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "This creator has not proved they control that account yet, so approving would pay points for work that cannot be attributed. Verify the handle first, using the code on their row.",
+        },
+        { status: 409 },
+      );
+    }
+
     if (outcome.reason === "superseded") {
       return NextResponse.json(
         {

@@ -53,6 +53,12 @@ async function makeCreator() {
     INSERT INTO creators (full_name, email, email_canonical, phone, phone_e164, content_niche)
     VALUES ('C${tag}', 'c${tag}@e.com', 'c${tag}@e.com', '0${tag}', '+234${tag.padStart(10, "0")}', 'finance')
     RETURNING id`);
+  // A verified handle on x, because one test here approves a submission and
+  // review() refuses to approve through an unverified one.
+  await db.query(`
+    INSERT INTO creator_social_handles (creator_id, platform, handle, handle_normalized, verified_at)
+    VALUES ('${creator.id}', 'x', 'ma${tag}', 'ma${tag}', now())`);
+
   const enrolment = await one<{ id: string }>(`
     INSERT INTO campaign_creators (campaign_id, creator_id, referral_code)
     VALUES ('${campaignId}', '${creator.id}', 'CODE${tag}') RETURNING id`);

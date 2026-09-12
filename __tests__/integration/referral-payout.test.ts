@@ -43,8 +43,8 @@ async function makeCreator() {
     VALUES ('C${tag}', 'c${tag}@e.com', 'c${tag}@e.com', '0${tag}', '+234${tag.padStart(10, "0")}', 'finance')
     RETURNING id`);
   await db.query(`
-    INSERT INTO creator_social_handles (creator_id, platform, handle, handle_normalized)
-    VALUES ('${creator.id}', 'x', 'h${tag}', 'h${tag}')`);
+    INSERT INTO creator_social_handles (creator_id, platform, handle, handle_normalized, verified_at)
+    VALUES ('${creator.id}', 'x', 'h${tag}', 'h${tag}', now())`);
   const enrolment = await one<{ id: string }>(`
     INSERT INTO campaign_creators (campaign_id, creator_id, referral_code)
     VALUES ('${campaignId}', '${creator.id}', 'CODE${tag}') RETURNING id`);

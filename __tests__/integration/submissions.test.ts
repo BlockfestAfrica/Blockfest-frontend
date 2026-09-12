@@ -76,8 +76,8 @@ async function makeCreator(platforms: string[] = ["x"]) {
 
   for (const p of platforms) {
     await db.query(`
-      INSERT INTO creator_social_handles (creator_id, platform, handle, handle_normalized)
-      VALUES ('${creator.id}', '${p}', 'h${tag}${p}', 'h${tag}${p}')`);
+      INSERT INTO creator_social_handles (creator_id, platform, handle, handle_normalized, verified_at)
+      VALUES ('${creator.id}', '${p}', 'h${tag}${p}', 'h${tag}${p}', now())`);
   }
 
   const enrolment = await one<{ id: string }>(`

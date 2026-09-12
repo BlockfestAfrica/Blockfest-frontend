@@ -128,6 +128,7 @@ describe("loading a creator's page when part of it fails", () => {
     const data = await creatorPageData("not-a-real-uuid");
     expect(Object.keys(data.failed).sort()).toEqual([
       "challenge",
+      "handles",
       "history",
       "platforms",
       "submissions",

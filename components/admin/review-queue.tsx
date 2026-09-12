@@ -25,6 +25,11 @@ export interface QueueItem {
   registeredHandle: string | null;
   /** True when the server could compare the link's author to that handle. */
   autoChecked: boolean;
+  /** Null until an admin has confirmed the account belongs to this creator. */
+  handleVerified: boolean;
+  handleId: string | null;
+  /** What the creator must publish from the account, as the proof. */
+  verificationCode: string | null;
 }
 
 /**
@@ -112,6 +117,31 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
     }
   }
 
+  async function verifyHandle(item: QueueItem) {
+    if (!item.handleId) return;
+    setBusy(item.id);
+    try {
+      const response = await fetch("/api/admin/verify-handle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handleId: item.handleId }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        toast.error(result.message ?? "That did not work.");
+        return;
+      }
+
+      toast.success(`Verified @${result.handle} on ${result.platform}`);
+      await router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   function start(item: QueueItem) {
     setOpen((current) => (current === item.id ? null : item.id));
     navigator.clipboard?.writeText(item.url).then(
@@ -139,7 +169,11 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
              * a sentence in the middle of a row cannot be.
              */
             className={`border-l-2 ${
-              item.autoChecked ? "border-l-green-400/70" : "border-l-amber-400"
+              !item.handleVerified
+                ? "border-l-red-400"
+                : item.autoChecked
+                  ? "border-l-green-400/70"
+                  : "border-l-amber-400"
             }`}
           >
             <button
@@ -160,6 +194,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                   ) : (
                     <Pill tone="bad">no handle</Pill>
                   )}
+                  {!item.handleVerified && <Pill tone="bad">unverified</Pill>}
                   <span>
                     W{item.weekNo} · {item.platformLabel}
                   </span>
@@ -198,6 +233,44 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                 <p className="mt-1 text-sm text-white/60">
                   Week {item.weekNo}: {item.challengeTitle}
                 </p>
+
+                {/*
+                 * The blocking state, with the way out attached.
+                 *
+                 * review() refuses to approve through an unverified handle,
+                 * because approving pays points for work nobody has
+                 * established belongs to this creator. A reviewer who is only
+                 * told "no" has nothing to do about it, so the code they need
+                 * to look for is here, beside the button that will refuse.
+                 */}
+                {!item.handleVerified && item.handleId && (
+                  <div className="mt-3 rounded-lg border-l-2 border-red-400 bg-red-400/10 p-4">
+                    <p className="text-sm font-semibold text-red-200">
+                      This account has not been verified
+                    </p>
+                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/75">
+                      Approving would pay points for work that cannot be
+                      attributed. Check that{" "}
+                      <span className="font-mono text-brand-gold">
+                        {item.verificationCode ?? "their code"}
+                      </span>{" "}
+                      appears on{" "}
+                      <span className="font-mono">
+                        @{item.registeredHandle ?? "the account"}
+                      </span>
+                      , in a post, a bio or a message, then confirm it here.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={busy === item.id}
+                      onClick={() => verifyHandle(item)}
+                      className="mt-3 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/25 px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10 disabled:opacity-60"
+                    >
+                      <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                      This account is theirs
+                    </button>
+                  </div>
+                )}
 
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                   <code className="min-w-0 flex-1 break-all rounded-lg border border-white/12 bg-ground px-4 py-3 text-sm leading-relaxed text-white/85">
@@ -238,8 +311,13 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                   <div className="flex shrink-0 gap-2">
                     <button
                       type="button"
-                      disabled={busy === item.id}
+                      disabled={busy === item.id || !item.handleVerified}
                       onClick={() => decide(item.id, "approved")}
+                      title={
+                        item.handleVerified
+                          ? undefined
+                          : "Verify the account first"
+                      }
                       className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-colors duration-300 hover:bg-green-400/25 disabled:opacity-60 sm:flex-none"
                     >
                       <Check className="h-4 w-4" aria-hidden="true" />

@@ -64,6 +64,16 @@ async function useTheCampaign() {
   const first = (await register()).rows[0];
   await register({ ref: first.referral_code });
 
+  /*
+   * Verified, the way an admin would.
+   *
+   * register_creator deliberately never sets verified_at, because registration
+   * cannot check anything, and review() from 0022 refuses to approve through an
+   * unverified handle. So a fixture that registers and then approves has to
+   * include the step a person performs in between.
+   */
+  await db.query(`UPDATE creator_social_handles SET verified_at = now()`);
+
   const campaign = await one<{ id: string }>(
     `SELECT id FROM campaigns WHERE slug = '${SLUG}'`,
   );

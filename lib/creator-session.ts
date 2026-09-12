@@ -138,6 +138,48 @@ export async function openChallenge(): Promise<OpenChallenge | null> {
 }
 
 /** The platforms this creator said they would publish from. */
+/**
+ * The accounts a creator registered, and whether anybody has confirmed them.
+ *
+ * An entry cannot be approved into points through an unverified handle, so a
+ * creator who does not know that, and does not know what to publish, is a
+ * creator whose work sits in the queue unapprovable while they wonder why.
+ */
+export interface RegisteredHandle {
+  platform: string;
+  handle: string;
+  verified: boolean;
+  /** What they publish from the account as proof. Null once verified. */
+  code: string | null;
+}
+
+export async function registeredHandles(
+  enrolmentId: string,
+): Promise<RegisteredHandle[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      platform: creatorSocialHandles.platform,
+      handle: creatorSocialHandles.handle,
+      verifiedAt: creatorSocialHandles.verifiedAt,
+      code: creatorSocialHandles.verificationCode,
+    })
+    .from(creatorSocialHandles)
+    .innerJoin(creators, eq(creators.id, creatorSocialHandles.creatorId))
+    .innerJoin(campaignCreators, eq(campaignCreators.creatorId, creators.id))
+    .where(eq(campaignCreators.id, enrolmentId))
+    .orderBy(creatorSocialHandles.platform);
+
+  return rows.map((row) => ({
+    platform: String(row.platform),
+    handle: row.handle,
+    verified: row.verifiedAt !== null,
+    // Withheld once verified: it has done its job, and a code still on screen
+    // invites somebody to think it is still needed.
+    code: row.verifiedAt === null ? row.code : null,
+  }));
+}
+
 export async function registeredPlatforms(
   enrolmentId: string,
 ): Promise<string[]> {
@@ -146,10 +188,7 @@ export async function registeredPlatforms(
     .select({ platform: creatorSocialHandles.platform })
     .from(creatorSocialHandles)
     .innerJoin(creators, eq(creators.id, creatorSocialHandles.creatorId))
-    .innerJoin(
-      campaignCreators,
-      eq(campaignCreators.creatorId, creators.id),
-    )
+    .innerJoin(campaignCreators, eq(campaignCreators.creatorId, creators.id))
     .where(eq(campaignCreators.id, enrolmentId));
 
   return rows.map((r) => r.platform);
@@ -255,12 +294,14 @@ export interface CreatorPageData {
   platforms: string[];
   submissions: CreatorSubmission[];
   history: PointMovement[];
+  handles: RegisteredHandle[];
   /** Which parts could not be read. Rendered as an honest gap, not as zero. */
   failed: {
     challenge: boolean;
     platforms: boolean;
     submissions: boolean;
     history: boolean;
+    handles: boolean;
   };
 }
 
@@ -283,27 +324,35 @@ export async function creatorPageData(
     }
   };
 
-  const [challenge, platforms, submissions, history] = await Promise.all([
-    soft(() => openChallenge(), null as OpenChallenge | null, "this week"),
-    soft(() => registeredPlatforms(enrolmentId), [] as string[], "platforms"),
-    soft(
-      () => creatorSubmissions(enrolmentId),
-      [] as CreatorSubmission[],
-      "entries",
-    ),
-    soft(() => pointHistory(enrolmentId), [] as PointMovement[], "points"),
-  ]);
+  const [challenge, platforms, submissions, history, handles] =
+    await Promise.all([
+      soft(() => openChallenge(), null as OpenChallenge | null, "this week"),
+      soft(() => registeredPlatforms(enrolmentId), [] as string[], "platforms"),
+      soft(
+        () => creatorSubmissions(enrolmentId),
+        [] as CreatorSubmission[],
+        "entries",
+      ),
+      soft(() => pointHistory(enrolmentId), [] as PointMovement[], "points"),
+      soft(
+        () => registeredHandles(enrolmentId),
+        [] as RegisteredHandle[],
+        "accounts",
+      ),
+    ]);
 
   return {
     challenge: challenge.value,
     platforms: platforms.value,
     submissions: submissions.value,
     history: history.value,
+    handles: handles.value,
     failed: {
       challenge: challenge.failed,
       platforms: platforms.failed,
       submissions: submissions.failed,
       history: history.failed,
+      handles: handles.failed,
     },
   };
 }

@@ -54,7 +54,12 @@ export type ReviewOutcome =
   | { ok: true; entryId: string; creator: ReviewedEntry }
   | {
       ok: false;
-      reason: "not_found" | "wrong_campaign" | "failed" | "superseded";
+      reason:
+        | "not_found"
+        | "wrong_campaign"
+        | "failed"
+        | "superseded"
+        | "unverified_handle";
     };
 
 /**
@@ -206,6 +211,16 @@ export async function pendingSubmissions(
        */
       creatorName: creators.fullName,
       registeredHandle: creatorSocialHandles.handle,
+      /*
+       * Whether anybody has established that this account belongs to this
+       * creator. review() refuses to approve without it, so a queue that did
+       * not show it would be a wall with no door: the reviewer would press
+       * approve, be refused, and have nothing to act on.
+       */
+      handleVerifiedAt: creatorSocialHandles.verifiedAt,
+      handleId: creatorSocialHandles.id,
+      /** Published by the creator from the account, as the proof. */
+      verificationCode: creatorSocialHandles.verificationCode,
     })
     .from(submissions)
     .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))
