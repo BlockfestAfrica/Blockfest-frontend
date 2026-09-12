@@ -13,6 +13,20 @@ import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 /** postgres.js and the Neon driver need sockets; neither runs on the edge. */
 export const runtime = "nodejs";
 
+/**
+ * How many attempts one address may make in a rolling hour.
+ *
+ * Set high on purpose. This exists to bound automated probing of the "already
+ * registered" messages, not to ration registrations, and a limit in the
+ * hundreds bounds a script just as well as a tight one. What a tight one also
+ * does is turn away real creators: Nigerian mobile carriers put very large
+ * numbers of subscribers behind each egress address, so every creator on a
+ * carrier shares one number here, while anyone with a VPN simply changes
+ * address and is unaffected. The honeypot and the timing floor are what
+ * actually carry the load.
+ */
+const ATTEMPTS_PER_HOUR = 300;
+
 /** Short, unambiguous, and safe to read aloud over a voice note. */
 function newReferralCode(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0, no I/1
@@ -166,10 +180,7 @@ export async function POST(request: NextRequest) {
   // that name which field is already taken could be probed without limit to
   // learn whether a given email, phone or handle belongs to somebody.
   //
-  // The threshold stays deliberately generous. Nigerian mobile carriers put
-  // very large numbers of subscribers behind few addresses, so a tight limit
-  // turns away real creators sharing a carrier NAT while barely inconveniencing
-  // anyone with a VPN.
+  // See ATTEMPTS_PER_HOUR for why the ceiling is where it is.
   const recordAttempt = (outcome: string) =>
     db
       .insert(registrationAttempts)
@@ -192,8 +203,15 @@ export async function POST(request: NextRequest) {
           ),
         ),
       );
-    if ((recent[0]?.n ?? 0) >= 30) {
-      await recordAttempt("rate_limited");
+    if ((recent[0]?.n ?? 0) >= ATTEMPTS_PER_HOUR) {
+      // Deliberately does NOT record an attempt.
+      //
+      // Recording one here made the counter feed itself: once an address
+      // crossed the line, every retry from anyone behind it wrote another row
+      // and pushed the newest timestamp forward, so the window could not drain
+      // while people kept trying. The message says "try again later", which is
+      // exactly what kept them locked out. A blocked window now expires on its
+      // own an hour after the last real attempt.
       return fail(
         "Too many registration attempts from this connection in the last hour. Try again later.",
         429,
@@ -221,7 +239,8 @@ export async function POST(request: NextRequest) {
         ${input.audienceSize ?? null}, ${input.location ?? null},
         ${handles.x}, ${handles.instagram}, ${handles.tiktok},
         ${ref || null}, ${ip}, ${userAgent},
-        ${newReferralCode()}, ${input.rulesVersion}
+        ${newReferralCode()}, ${input.rulesVersion},
+        ${input.marketingOptIn}, ${input.privacyVersion ?? null}
       )
     `);
 

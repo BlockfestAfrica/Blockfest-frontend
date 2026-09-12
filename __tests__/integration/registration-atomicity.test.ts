@@ -35,6 +35,7 @@ async function register(opts: {
   instagram?: string;
   ref?: string;
   code?: string;
+  marketingOptIn?: boolean;
 }) {
   // Not derived from a timestamp and sliced: truncating cut off the part that
   // differed, two registrations collided on referral_code, and the failure
@@ -49,7 +50,8 @@ async function register(opts: {
       ${opts.instagram ? `'${opts.instagram}'` : "NULL"},
       NULL,
       ${opts.ref ? `'${opts.ref}'` : "NULL"},
-      '1.2.3.4', 'test', '${code}', '1.0'
+      '1.2.3.4', 'test', '${code}', '1.0',
+      ${opts.marketingOptIn ? "true" : "false"}, '1.0'
     )`);
 }
 
@@ -262,6 +264,53 @@ describe("referrals", () => {
     expect(await count(`SELECT count(*)::int AS n FROM referrals`)).toBe(1);
   });
 
+  /**
+   * Codes are minted from an uppercase alphabet with no O, 0, I or 1, chosen so
+   * one can be read aloud over a voice note and typed back. A lower-case code
+   * is therefore the expected shape of a hand-typed referral, and matching it
+   * case-sensitively silently credited nobody: registration still succeeded and
+   * neither party was told the referral had been dropped.
+   */
+  it("credits the referrer when the code was typed in lower case", async () => {
+    await register({
+      email: "shouter@example.com",
+      phone: "+2348050000011",
+      x: "shouter",
+      code: "REFCODE9",
+    });
+    await register({
+      email: "typer@example.com",
+      phone: "+2348050000012",
+      x: "typer",
+      ref: "refcode9",
+    });
+    expect(await count(`SELECT count(*)::int AS n FROM referrals`)).toBe(1);
+  });
+
+  it("stores the code folded, so it joins back to the referrer", async () => {
+    await register({
+      email: "r2@example.com",
+      phone: "+2348050000013",
+      x: "rtwo",
+      code: "REFCODE8",
+    });
+    await register({
+      email: "t2@example.com",
+      phone: "+2348050000014",
+      x: "ttwo",
+      ref: "RefCode8",
+    });
+    expect(
+      await count(
+        `SELECT count(*)::int AS n
+           FROM referrals r
+           JOIN campaign_creators cc
+             ON cc.referral_code = r.code_used
+          WHERE cc.id = r.referrer_campaign_creator_id`,
+      ),
+    ).toBe(1);
+  });
+
   it("ignores a code that belongs to nobody rather than failing", async () => {
     // The person registering did nothing wrong and should not be stopped by
     // somebody else's broken link.
@@ -298,5 +347,81 @@ describe("consent", () => {
     ).rows[0];
     expect(row.accepted_rules_version).toBe("1.0");
     expect(row.accepted_rules_at).toBeTruthy();
+  });
+});
+
+/**
+ * Marketing consent is a separate question from accepting the rules, because it
+ * is a separate purpose. Bundling them would make the consent worthless and
+ * take the campaign's own lawful basis down with it, so the two are recorded
+ * independently and the default is no.
+ */
+describe("marketing consent", () => {
+  it("defaults to no, and records no time for a no", async () => {
+    await register({ email: "q@example.com", phone: "+2348060000001", x: "qq" });
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM creators
+          WHERE email_canonical = 'q@example.com'
+            AND marketing_opt_in = false
+            AND marketing_opt_in_at IS NULL`,
+      ),
+    ).toBe(1);
+  });
+
+  it("records the moment consent was actually given", async () => {
+    await register({
+      email: "y@example.com",
+      phone: "+2348060000002",
+      x: "yy",
+      marketingOptIn: true,
+    });
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM creators
+          WHERE email_canonical = 'y@example.com'
+            AND marketing_opt_in = true
+            AND marketing_opt_in_at IS NOT NULL`,
+      ),
+    ).toBe(1);
+  });
+
+  it("refuses a consent with no time against it", async () => {
+    // The timestamp is the evidence. A true with no moment attached cannot
+    // answer when somebody agreed, which is the only question that gets asked.
+    await expect(
+      db.query(`
+        INSERT INTO creators (
+          full_name, email, email_canonical, phone, phone_e164,
+          content_niche, marketing_opt_in, marketing_opt_in_at
+        ) VALUES (
+          'X', 'z@example.com', 'z@example.com', '1', '+2348060000003',
+          'finance', true, NULL
+        )`),
+    ).rejects.toThrow();
+  });
+
+  it("records which privacy notice was in force", async () => {
+    await register({ email: "p@example.com", phone: "+2348060000004", x: "pp" });
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM creators
+          WHERE email_canonical = 'p@example.com'
+            AND privacy_notice_version = '1.0'`,
+      ),
+    ).toBe(1);
+  });
+
+  it("does not leave the old 17 argument function callable", async () => {
+    // Adding parameters to a plpgsql function defines a second one beside the
+    // first unless the first is dropped by its exact signature. Both would be
+    // callable, and the old one would keep writing registrations that record
+    // no consent at all.
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM pg_proc
+          WHERE proname = 'register_creator'`,
+      ),
+    ).toBe(1);
   });
 });

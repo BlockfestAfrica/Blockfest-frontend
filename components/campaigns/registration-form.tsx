@@ -6,6 +6,8 @@ import { ArrowRight, Check, Copy, Lock } from "lucide-react";
 import { hasPassed } from "@/lib/countdown";
 import { CAMPAIGN_GATE_FORCED_OPEN, monicaRoutes } from "@/lib/campaigns";
 import { MONICA_RULES_VERSION } from "@/lib/monica-rules";
+import { MONICA_PRIVACY_VERSION } from "@/lib/monica-privacy";
+import { toast } from "sonner";
 import { track } from "@/lib/sabilytics";
 
 type Field =
@@ -19,6 +21,29 @@ type Field =
   | "audienceSize"
   | "location"
   | "acceptedRules";
+
+/**
+ * The fields that actually render an error when one is set against them.
+ *
+ * The server names the field a 400 belongs to and the client shows it there.
+ * That only works if something on the page is watching that name: three of
+ * these once were not, so a creator whose Instagram handle contained a space
+ * got a silent form and no way to discover why. Anything not listed here falls
+ * back to the form-level message, which is worse placement but is never
+ * nothing.
+ */
+const FIELDS_WITH_VISIBLE_ERRORS: ReadonlySet<Field> = new Set<Field>([
+  "fullName",
+  "email",
+  "phone",
+  "x",
+  "instagram",
+  "tiktok",
+  "contentNiche",
+  "audienceSize",
+  "location",
+  "acceptedRules",
+]);
 
 const EMPTY: Record<Field, string> = {
   fullName: "",
@@ -62,32 +87,76 @@ function Labelled({
   hint,
   error,
   htmlFor,
+  required = false,
   children,
 }: {
   label: string;
   hint?: string;
   error?: string;
   htmlFor: string;
+  /** Marks the field visibly, not just in the markup. */
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full flex-col">
-      <label
-        htmlFor={htmlFor}
-        className="block text-sm font-semibold text-white"
-      >
-        {label}
-      </label>
-      {hint && <p className="mt-1 text-sm text-white/50">{hint}</p>}
-      {/* mt-auto so two fields side by side line up even when one hint wraps
-          to two lines and the other does not. Trimming the copy to match would
-          fix today's pair and break on the next one. */}
-      <div className="mt-auto pt-2">{children}</div>
-      {error && (
-        <p role="alert" className="mt-2 text-sm text-red-300">
-          {error}
-        </p>
-      )}
+    /*
+     * Four rows, shared with the field beside it.
+     *
+     * Two fields sit side by side and their labels, hints, inputs and errors
+     * have to line up across the pair even though each part is a different
+     * height in each column. This used to bottom-align the input with mt-auto,
+     * which worked until an error appeared: the column carrying it grew, and
+     * because the error sits below the input, that column's input ended up
+     * higher than its neighbour's. The phone message wraps to two lines in a
+     * half-width column, so the gap was visible rather than theoretical.
+     *
+     * Subgrid makes the two columns share the parent's row tracks, so each part
+     * aligns with its opposite number whatever either one contains. The empty
+     * divs matter: they hold a field's place in the hint and error rows so the
+     * rows stay in step when only one column has either.
+     *
+     * Below sm the fields stack and none of this applies, so it is a plain
+     * flex column there.
+     */
+    <div className="flex flex-col sm:row-span-4 sm:grid sm:grid-rows-subgrid sm:gap-0">
+      {/* The asterisk sits beside the label rather than inside it. Inside, it
+          becomes part of the field's accessible name, so the control announces
+          itself as "Full name star" and every lookup by label has to know that.
+          It is aria-hidden for the same reason: the input already carries the
+          required attribute, which is what assistive technology reads, so this
+          is purely the visible half and repeating it would be noise.
+
+          Visible at all because the form sets noValidate to word its own
+          messages, so the browser enforces nothing and nothing on screen told a
+          creator which fields they could skip. */}
+      <div className="flex items-baseline gap-1">
+        <label
+          htmlFor={htmlFor}
+          className="block text-sm font-semibold text-white"
+        >
+          {label}
+        </label>
+        {required && (
+          <span
+            className="text-base font-bold leading-none text-red-400"
+            aria-hidden="true"
+          >
+            *
+          </span>
+        )}
+      </div>
+
+      <div>{hint && <p className="mt-1 text-sm text-white/50">{hint}</p>}</div>
+
+      <div className="pt-2">{children}</div>
+
+      <div>
+        {error && (
+          <p role="alert" className="mt-2 text-sm text-red-300">
+            {error}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -116,6 +185,12 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
   const [checked, setChecked] = useState(false);
   const [values, setValues] = useState<Record<Field, string>>(EMPTY);
   const [accepted, setAccepted] = useState(false);
+  /**
+   * Optional, and false until somebody actively says otherwise. Refusing it
+   * changes nothing about the entry, which is what keeps the campaign's own
+   * lawful basis separate from this one.
+   */
+  const [marketing, setMarketing] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -145,6 +220,51 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
     shownAt.current = Date.now();
   }, [opensAt]);
 
+  /**
+   * A failure that belongs to the whole form rather than one field.
+   *
+   * Shown in both places on purpose. The inline banner persists, so somebody
+   * who looks away and back still has the reason in front of them; the toast
+   * is what carries it to a creator whose attention is at the bottom of a long
+   * form, where a message rendered above the button is easy to miss entirely.
+   */
+  const failForm = (message: string) => {
+    setFormError(message);
+    toast.error(message);
+  };
+
+  /**
+   * Move to the field a server error belongs to.
+   *
+   * Guarded because the id is not always an input: acceptedRules is a checkbox
+   * rendered without one, and a field the page does not display reaches here
+   * only if the set above ever falls out of step with the markup.
+   */
+  const focusField = (field: Field) => {
+    if (typeof document === "undefined") return;
+    const el = document.getElementById(field);
+    if (!(el instanceof HTMLElement)) return;
+
+    // Focus first, and guard both calls separately.
+    //
+    // This runs inside the submit handler's try block, so anything thrown here
+    // is caught by it and reported as "we could not reach the server", which
+    // would be a lie about a request that succeeded and came back with a
+    // perfectly good field error. scrollIntoView is exactly the kind of call
+    // that is missing in some environments, so it must not be able to take the
+    // focus down with it, and neither may take the message down.
+    try {
+      el.focus({ preventScroll: true });
+    } catch {
+      // Focus is a courtesy. The inline message and the toast still stand.
+    }
+    try {
+      el.scrollIntoView?.({ block: "center", behavior: "smooth" });
+    } catch {
+      // Focus alone already brings most browsers to the field.
+    }
+  };
+
   const set = (field: Field) => (value: string) => {
     setValues((v) => ({ ...v, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
@@ -160,6 +280,27 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
     event.preventDefault();
     setFormError("");
     setErrors({});
+
+    // Checked here as well as on the server. noValidate means the browser
+    // enforces nothing, so without this an empty name costs a round trip to be
+    // told something the page already knew. The server still refuses the same
+    // things; this only saves the wait.
+    const missing = (
+      [
+        ["fullName", "Add your name."],
+        ["email", "Add your email address."],
+        [
+          "phone",
+          "Add your phone number, with country code if you are outside Nigeria.",
+        ],
+        ["contentNiche", "Tell us what kind of content you make."],
+      ] as const
+    ).find(([field]) => !values[field].trim());
+
+    if (missing) {
+      setErrors({ [missing[0]]: missing[1] });
+      return;
+    }
 
     if (!accepted) {
       setErrors({ acceptedRules: "You need to accept the campaign rules." });
@@ -187,6 +328,8 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
             location: values.location || undefined,
             acceptedRules: true,
             rulesVersion: MONICA_RULES_VERSION,
+            marketingOptIn: marketing,
+            privacyVersion: MONICA_PRIVACY_VERSION,
             // Both of these are the bot checks. They are spread in explicitly
             // rather than carried by ...values, because `values` is typed to
             // the visible fields only and silently omitted them: the checks
@@ -203,16 +346,30 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       const result = await response.json();
 
       if (!response.ok || !result.ok) {
-        if (result.field)
-          setErrors({ [result.field as Field]: result.message });
-        else setFormError(result.message ?? "Something went wrong.");
+        const field = result.field as Field | undefined;
+        if (field && FIELDS_WITH_VISIBLE_ERRORS.has(field)) {
+          setErrors({ [field]: result.message });
+          // Inline alone was not enough. The message renders beside its field,
+          // which on a form this long can be well above the button that was
+          // just pressed, so somebody sees the button settle and nothing else.
+          // The toast says it out loud and the focus takes them to the field
+          // it belongs to, which a toast on its own cannot do.
+          toast.error(result.message);
+          focusField(field);
+        } else {
+          // Either the server named no field, or it named one nothing on this
+          // page displays. Both have to say something: a submit that returns
+          // the button to its resting state and changes nothing else reads as
+          // a broken site, and the creator leaves.
+          failForm(result.message ?? "Something went wrong.");
+        }
         return;
       }
 
       track("campaign_registered", { campaign: "monica-money-story" });
       setDone({ name: result.name, referralCode: result.referralCode ?? null });
     } catch {
-      setFormError(
+      failForm(
         "We could not reach the server. Check your connection and try again.",
       );
     } finally {
@@ -279,6 +436,11 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
                 onClick={() => {
                   navigator.clipboard?.writeText(shareLink);
                   setCopied(true);
+                  // The button swaps to a tick, which says it worked but not
+                  // what worked. On a screen where the only other action is
+                  // "share this", naming the thing that landed on the
+                  // clipboard is worth a line.
+                  toast.success("Referral link copied");
                   track("campaign_referral_copied", {
                     campaign: "monica-money-story",
                   });
@@ -306,7 +468,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
         )}
 
         <Link
-          href={monicaRoutes.landing}
+          href={`${monicaRoutes.landing}#stages`}
           className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
         >
           See the first challenge
@@ -361,10 +523,11 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
       </div>
 
       <Section title="About you">
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 sm:grid-rows-[auto_auto_auto_auto] sm:gap-y-0">
           <Labelled
             label="Full name"
             htmlFor="fullName"
+            required
             error={errors.fullName}
           >
             <input
@@ -378,7 +541,12 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               placeholder="Ada Obi"
             />
           </Labelled>
-          <Labelled label="Email" htmlFor="email" error={errors.email}>
+          <Labelled
+            label="Email"
+            htmlFor="email"
+            error={errors.email}
+            required
+          >
             <input
               id="email"
               name="email"
@@ -394,10 +562,11 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
           </Labelled>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 sm:grid-rows-[auto_auto_auto_auto] sm:gap-y-0">
           <Labelled
             label="Phone number"
             htmlFor="phone"
+            required
             hint="Country code if you are outside Nigeria."
             error={errors.phone}
           >
@@ -417,6 +586,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
           <Labelled
             label="What do you make?"
             htmlFor="contentNiche"
+            required
             hint="Comedy, finance, tech, lifestyle."
             error={errors.contentNiche}
           >
@@ -448,37 +618,39 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
             // The platform sits inside the field rather than in a label column
             // beside it, so the three rows line up as one control instead of
             // three mismatched ones.
-            <div
-              key={field}
-              className="flex items-center gap-0 overflow-hidden rounded-lg border border-white/15 bg-ground focus-within:border-brand-gold"
-            >
-              <span className="w-24 shrink-0 border-r border-white/15 px-3 py-3 text-sm text-white/60">
-                {label}
-              </span>
-              <span className="pl-3 text-white/30" aria-hidden="true">
-                @
-              </span>
-              <input
-                id={field}
-                name={field}
-                aria-label={`${label} username`}
-                value={values[field]}
-                onChange={(e) => set(field)(e.target.value)}
-                className="w-full bg-transparent px-2 py-3 text-base text-white placeholder:text-white/30 focus:outline-none"
-                placeholder="yourhandle"
-              />
+            <div key={field}>
+              <div className="flex items-center gap-0 overflow-hidden rounded-lg border border-white/15 bg-ground focus-within:border-brand-gold">
+                <span className="w-24 shrink-0 border-r border-white/15 px-3 py-3 text-sm text-white/60">
+                  {label}
+                </span>
+                <span className="pl-3 text-white/30" aria-hidden="true">
+                  @
+                </span>
+                <input
+                  id={field}
+                  name={field}
+                  aria-label={`${label} username`}
+                  value={values[field]}
+                  onChange={(e) => set(field)(e.target.value)}
+                  className="w-full bg-transparent px-2 py-3 text-base text-white placeholder:text-white/30 focus:outline-none"
+                  placeholder="yourhandle"
+                />
+              </div>
+              {/* Each row owns its own error. One shared slot showing only
+                  errors.x meant a bad Instagram or TikTok handle was rejected
+                  by the server and reported nowhere. */}
+              {errors[field] && (
+                <p role="alert" className="mt-2 text-sm text-red-300">
+                  {errors[field]}
+                </p>
+              )}
             </div>
           ))}
         </div>
-        {errors.x && (
-          <p role="alert" className="text-sm text-red-300">
-            {errors.x}
-          </p>
-        )}
       </Section>
 
       <Section title="Optional" hint="Helps us understand who is taking part.">
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 sm:grid-rows-[auto_auto_auto_auto] sm:gap-y-0">
           <Labelled
             label="Audience size"
             htmlFor="audienceSize"
@@ -497,7 +669,11 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               placeholder="5000"
             />
           </Labelled>
-          <Labelled label="Where you are" htmlFor="location">
+          <Labelled
+            label="Where you are"
+            htmlFor="location"
+            error={errors.location}
+          >
             <input
               id="location"
               name="location"
@@ -532,7 +708,15 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
                 campaign rules
               </Link>{" "}
               (version {MONICA_RULES_VERSION}), and I am 18 or over. Blockfest
-              Africa may contact me about this campaign.
+              Africa may contact me about this campaign, and will handle my
+              details as set out in the{" "}
+              <Link
+                href={monicaRoutes.privacy}
+                className="text-link underline underline-offset-2 hover:text-white"
+              >
+                privacy notice
+              </Link>
+              .
             </span>
           </label>
           {errors.acceptedRules && (
@@ -540,6 +724,32 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               {errors.acceptedRules}
             </p>
           )}
+        </div>
+
+        {/* Deliberately a second, separate question.
+            Hearing about future campaigns is a different purpose from running
+            this one, so it cannot ride on the agreement above: bundling them
+            would make the consent worthless and take the campaign's own basis
+            down with it. Unticked, never required, and saying no changes
+            nothing, which is what the line under it says out loud. */}
+        <div>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={marketing}
+              onChange={(e) => setMarketing(e.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-brand-gold"
+            />
+            <span className="text-sm leading-relaxed text-white/70">
+              Optional. Tell me about future Blockfest Africa campaigns and
+              events by email.
+            </span>
+          </label>
+          <p className="mt-2 pl-7 text-sm leading-relaxed text-white/40">
+            Nothing to do with this campaign. Leaving it unticked has no effect
+            on your entry or your chances, and you can stop the emails at any
+            time.
+          </p>
         </div>
 
         {formError && (

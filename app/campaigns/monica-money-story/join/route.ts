@@ -39,8 +39,13 @@ export function GET(request: NextRequest) {
   // Referral codes are short and alphanumeric. Anything else is somebody
   // probing, and it is never echoed back into the page, so it is dropped
   // rather than stored.
+  // Folded to upper case before it is stored. Codes are minted from an
+  // uppercase alphabet, so a lower-case one reaching the cookie is a code
+  // somebody typed by hand from a voice note or a poster, which is the journey
+  // the alphabet was chosen for. The database comparison folds both sides too;
+  // this keeps the cookie consistent with everything else that holds a code.
   if (ref && /^[A-Za-z0-9_-]{1,64}$/.test(ref)) {
-    response.cookies.set(REFERRAL_COOKIE, ref, {
+    response.cookies.set(REFERRAL_COOKIE, ref.toUpperCase(), {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",

@@ -149,6 +149,24 @@ export default function MonicaRulesPage() {
             </div>
 
             <p className="mt-14 text-sm leading-relaxed text-white/50">
+              How your details are handled is set out in the{" "}
+              <Link
+                href={monicaRoutes.privacy}
+                className="text-link underline underline-offset-2 hover:text-white"
+              >
+                campaign privacy notice
+              </Link>
+              , and what you may say about Monica in an entry is in the{" "}
+              <Link
+                href={monicaRoutes.pack}
+                className="text-link underline underline-offset-2 hover:text-white"
+              >
+                Creator Pack
+              </Link>
+              .
+            </p>
+
+            <p className="mt-4 text-sm leading-relaxed text-white/50">
               Questions about these rules go to{" "}
               <a
                 href="mailto:partnership@blockfestafrica.com"

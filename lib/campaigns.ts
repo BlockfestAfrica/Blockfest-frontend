@@ -170,6 +170,7 @@ export const monicaRoutes = {
   join: `/campaigns/${MONICA_SLUG}/join`,
   rules: `/campaigns/${MONICA_SLUG}/rules`,
   pack: `/campaigns/${MONICA_SLUG}/pack`,
+  privacy: `/campaigns/${MONICA_SLUG}/privacy`,
 } as const;
 
 export interface CampaignSkill {
@@ -359,7 +360,7 @@ export const monicaHowItWorks: HowItWorksStep[] = [
   {
     title: "Take the challenge",
     detail:
-      "A new brief drops each weekend. How you answer it is yours: a thread, a reel, a skit, a carousel, an explainer, a street interview, an animation.",
+      "A new brief drops each Monday. How you answer it is yours: a thread, a reel, a skit, a carousel, an explainer, a street interview, an animation.",
   },
   {
     title: "Publish and submit",

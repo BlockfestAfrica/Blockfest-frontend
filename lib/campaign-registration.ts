@@ -153,6 +153,14 @@ export const registrationSchema = z
       message: "You need to accept the campaign rules.",
     }),
     rulesVersion: z.string().min(1),
+    /**
+     * Optional and unticked. Refusing it must change nothing about the entry,
+     * so it is never required and never blocks a registration. Absent is the
+     * same as no, which is why it defaults rather than erroring.
+     */
+    marketingOptIn: z.boolean().optional().default(false),
+    /** Which privacy notice was on screen when they answered. */
+    privacyVersion: z.string().min(1).optional(),
     /** Referral code carried from /join. Absent for a direct visitor. */
     ref: z.string().trim().max(64).optional(),
     /**

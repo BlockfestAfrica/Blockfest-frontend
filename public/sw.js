@@ -1,5 +1,8 @@
 // Service Worker for Blockfest Africa PWA
-const CACHE_NAME = "blockfest-v1";
+// Bumped whenever caching behaviour changes, not only when assets do. The
+// activate handler deletes every blockfest- cache that is not this one, which
+// is what clears API responses the previous worker stored with no expiry.
+const CACHE_NAME = "blockfest-v2";
 const STATIC_CACHE_URLS = [
   "/",
   "/favicon.ico",
@@ -101,30 +104,25 @@ self.addEventListener("fetch", (event) => {
     );
   }
 
-  // Network-first strategy for API calls and dynamic content
-  else if (
-    url.pathname.startsWith("/api/") ||
-    url.pathname.includes("insights")
-  ) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Cache successful API responses for 5 minutes
-          if (response.ok) {
-            const responseClone = response.clone();
-            event.waitUntil(
-              caches
-                .open(CACHE_NAME)
-                .then((cache) => cache.put(request, responseClone))
-            );
-          }
-          return response;
-        })
-        .catch(() => {
-          // Fallback to cache if network fails
-          return caches.match(request);
-        })
-    );
+  // API calls go to the network and are never cached.
+  //
+  // This used to cache every successful response and serve it back when the
+  // network failed, under a comment claiming a five minute lifetime that was
+  // never implemented: there was no expiry at all, and an entry only left the
+  // cache when CACHE_NAME changed.
+  //
+  // Three reasons that had to go. A cached leaderboard served as though it were
+  // current, during a campaign that pays real money on it, is worse than a
+  // visible failure. An endpoint that answers with somebody's own entry status
+  // leaves that answer sitting in the browser cache long after they are done
+  // with it. And cache.put rejects on a non-GET request, so every registration
+  // POST that came through here produced a rejected promise for no benefit.
+  //
+  // Offline handling belongs to whatever made the call: it can tell somebody
+  // the request did not go through, which is true, rather than showing them an
+  // old answer as if it were a new one.
+  else if (url.pathname.startsWith("/api/")) {
+    return;
   }
 
   // Stale-while-revalidate for HTML pages

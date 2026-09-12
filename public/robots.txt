@@ -6,7 +6,6 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 Disallow: /private/
-Disallow: /insights/
 Disallow: /analytics/
 
 # /_next/ is deliberately NOT disallowed. It serves the CSS, JS and optimised

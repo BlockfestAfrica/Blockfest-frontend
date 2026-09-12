@@ -19,7 +19,7 @@
 export const MONICA_RULES_VERSION = "1.0";
 
 /** ISO date. Rendered in the event's own timezone. */
-export const MONICA_RULES_UPDATED = "2026-09-11";
+export const MONICA_RULES_UPDATED = "2026-09-12";
 
 export interface RuleSection {
   /** Anchor, so a clause can be linked to directly in a dispute. */
@@ -128,6 +128,16 @@ export const monicaRules: RuleSection[] = [
       "Before a prize is paid we will ask you to verify your identity: government-issued identification matching the name you registered with, proof that you control the account you published from, and a bank account in that same name. We do not pay third-party accounts.",
       "Results are published with a 72-hour window for creators to raise a dispute before funds move.",
       "Prizes are paid gross, with nothing deducted. Any tax due on what you receive is yours to declare and pay, wherever you are resident.",
+    ],
+  },
+  {
+    id: "your-details",
+    title: "Your details",
+    paragraphs: [
+      "Registering means giving us a name, an email address, a phone number and the handles you will publish from. We need those to judge entries, rank a leaderboard and pay a prize, and we ask for as little else as we can.",
+      "We also record the IP address and browser you registered from, to stop automated signups, and which version of these rules you accepted.",
+      "Monica is the headline sponsor and does not receive your personal details. Monica sees published entries, which are already public, and aggregate results.",
+      "What we collect, how long it is kept and what you can ask for are set out in full in the campaign privacy notice, which is linked from the registration form and from the campaign page.",
     ],
   },
   {
