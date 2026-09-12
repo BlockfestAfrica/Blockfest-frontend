@@ -94,7 +94,28 @@ export async function participants(
 
   if (search) {
     const like = `%${search}%`;
-    const match = or(ilike(creators.fullName, like), ilike(creators.email, like));
+    /*
+     * Handles are matched here, not in the browser.
+     *
+     * The screen used to carry two search boxes: this one, which matched name
+     * and email across the whole campaign, and a second one in the table that
+     * matched name, email and handle but only across the rows already loaded.
+     * Two boxes that look the same and answer differently is worse than either
+     * alone, and on a phone it was two of the four stacked rows before any data.
+     *
+     * Moving the handle match into SQL means one box, and it now finds somebody
+     * by handle even when they are outside the page window, which the browser
+     * version never could.
+     */
+    const match = or(
+      ilike(creators.fullName, like),
+      ilike(creators.email, like),
+      sql`EXISTS (
+        SELECT 1 FROM ${creatorSocialHandles} h
+         WHERE h.creator_id = ${creators.id}
+           AND h.handle ILIKE ${like}
+      )`,
+    );
     if (match) filters.push(match);
   }
 

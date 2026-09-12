@@ -80,7 +80,8 @@ export default async function AdminQueuePage({
     laneIds ? laneIds : undefined,
   );
 
-  const shownOf = lane === "all" ? total : lane === "checked" ? checkedCount : lookCount;
+  const shownOf =
+    lane === "all" ? total : lane === "checked" ? checkedCount : lookCount;
 
   return (
     <>
@@ -94,36 +95,43 @@ export default async function AdminQueuePage({
 
       {queue.length < shownOf && (
         <p className="mt-3 text-sm text-white/60">
-          Oldest first. Showing {queue.length} of {shownOf}. Decide these and the
-          next {PAGE_SIZE} appear.
+          Oldest first. Showing {queue.length} of {shownOf}. Decide these and
+          the next {PAGE_SIZE} appear.
         </p>
       )}
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
-        Approving mints points against the prize pool and is recorded against
-        your name. Open every link: the check below only says whether the link
-        names the right account, not whether the post answers the brief.
-      </p>
+      {total > 0 && (
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+          Approving mints points against the prize pool and is recorded against
+          your name. Open every link: the check only says whether the link names
+          the right account, not whether the post answers the brief.
+        </p>
+      )}
 
-      {/* Rounded pills filter. Flat items with a bottom edge navigate. */}
-      <div
-        className="mt-6 flex flex-wrap gap-2"
-        role="group"
-        aria-label="Filter the queue"
-      >
-        <LaneChip lane="all" active={lane} label="All" count={total} />
-        <LaneChip
-          lane="look"
-          active={lane}
-          label="Needs a look"
-          count={lookCount}
-        />
-        <LaneChip
-          lane="checked"
-          active={lane}
-          label="Account matches"
-          count={checkedCount}
-        />
-      </div>
+      {/* Rounded pills filter. Flat items with a bottom edge navigate.
+          Not rendered on an empty queue: three chips reading zero are three
+          controls for nothing, and on a phone they are a row of chrome above
+          a sentence saying there is nothing here. */}
+      {total > 0 && (
+        <div
+          className="mt-6 flex flex-wrap gap-2"
+          role="group"
+          aria-label="Filter the queue"
+        >
+          <LaneChip lane="all" active={lane} label="All" count={total} />
+          <LaneChip
+            lane="look"
+            active={lane}
+            label="Needs a look"
+            count={lookCount}
+          />
+          <LaneChip
+            lane="checked"
+            active={lane}
+            label="Account matches"
+            count={checkedCount}
+          />
+        </div>
+      )}
 
       {queue.length === 0 ? (
         <p className="mt-8 max-w-prose text-base leading-relaxed text-white/60">
@@ -139,7 +147,8 @@ export default async function AdminQueuePage({
             weekNo: item.weekNo,
             challengeTitle: item.challengeTitle,
             platformLabel:
-              platformLabels[item.platform as CampaignPlatform] ?? item.platform,
+              platformLabels[item.platform as CampaignPlatform] ??
+              item.platform,
             submittedAt: item.submittedAt.toISOString(),
             creatorName: item.creatorName,
             registeredHandle: item.registeredHandle,

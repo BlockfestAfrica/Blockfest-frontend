@@ -156,7 +156,10 @@ export function Stat({
   return (
     <div className={rule ? "border-t border-white/15 pt-4" : ""}>
       <p className="eyebrow text-white/45">{label}</p>
-      <p className="mt-2 text-4xl font-bold tabular-nums leading-none text-white">
+      {/* Smaller on a phone. Four of these at 36px filled most of a narrow
+          screen before any data, and a four digit total in a 104px column was
+          already tight. */}
+      <p className="mt-2 text-3xl font-bold tabular-nums leading-none text-white sm:text-4xl">
         {value}
       </p>
       {hint && <p className="mt-2 text-sm text-white/45">{hint}</p>}
