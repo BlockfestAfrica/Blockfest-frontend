@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gt, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gt, lte } from "drizzle-orm";
 import { cookies } from "next/headers";
 import {
   campaignCreators,
@@ -11,7 +11,7 @@ import {
   getDb,
   submissions,
 } from "@/lib/db/client";
-import { MONICA_SLUG } from "@/lib/campaigns";
+import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 import {
   CREATOR_SESSION_COOKIE,
   hashAccessToken,
@@ -101,7 +101,39 @@ export async function openChallenge(): Promise<OpenChallenge | null> {
     )
     .limit(1);
 
-  return rows[0] ?? null;
+  if (rows[0]) return rows[0];
+
+  // Before launch there is no open week, and the page still has to have
+  // something to submit to so the flow can be walked end to end. When the
+  // campaign gate is deliberately forced open, the next week is shown instead.
+  //
+  // The endpoint applies the same rule and refuses anything this offers that it
+  // would not itself accept, so this cannot widen what is submittable. After 14
+  // September a week is open continuously until 17 October, which makes this
+  // branch unreachable.
+  if (!CAMPAIGN_GATE_FORCED_OPEN) return null;
+
+  const upcoming = await db
+    .select({
+      id: challenges.id,
+      title: challenges.title,
+      description: challenges.description,
+      weekNo: challenges.weekNo,
+      endsAt: challenges.endsAt,
+    })
+    .from(challenges)
+    .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
+    .where(
+      and(
+        eq(campaigns.slug, MONICA_SLUG),
+        eq(challenges.status, "active"),
+        gt(challenges.startsAt, new Date()),
+      ),
+    )
+    .orderBy(asc(challenges.startsAt))
+    .limit(1);
+
+  return upcoming[0] ?? null;
 }
 
 /** The platforms this creator said they would publish from. */

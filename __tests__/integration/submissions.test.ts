@@ -67,9 +67,15 @@ async function makeCreator(platforms: string[] = ["x"]) {
   return enrolment.id;
 }
 
-const submit = (enrolment: string, challenge: string, platform: string, url: string) =>
+const submit = (
+  enrolment: string,
+  challenge: string,
+  platform: string,
+  url: string,
+  allowBeforeOpen = false,
+) =>
   db.query(
-    `SELECT * FROM submit_entry('${enrolment}', '${challenge}', '${platform}', '${url}')`,
+    `SELECT * FROM submit_entry('${enrolment}', '${challenge}', '${platform}', '${url}', ${allowBeforeOpen})`,
   );
 
 beforeAll(async () => {
@@ -86,6 +92,22 @@ beforeEach(async () => {
     DELETE FROM submissions; DELETE FROM challenge_entries;
     DELETE FROM creator_social_handles; DELETE FROM campaign_creators;
     DELETE FROM creators;
+  `);
+
+  // Challenges are seeded once and several tests move their windows or close
+  // them. Without restoring, a test that closes week 1 changes the result of
+  // every test that runs after it, and the failure appears in whichever test
+  // happens to be next rather than in the one that caused it.
+  await db.exec(`
+    UPDATE challenges SET status = 'active';
+    UPDATE challenges SET starts_at = '2026-09-14 00:00:00+01',
+                          ends_at   = '2026-09-20 23:59:59+01' WHERE week_no = 1;
+    UPDATE challenges SET starts_at = '2026-09-21 00:00:00+01',
+                          ends_at   = '2026-09-27 23:59:59+01' WHERE week_no = 2;
+    UPDATE challenges SET starts_at = '2026-09-28 00:00:00+01',
+                          ends_at   = '2026-10-04 23:59:59+01' WHERE week_no = 3;
+    UPDATE challenges SET starts_at = '2026-10-05 00:00:00+01',
+                          ends_at   = '2026-10-17 23:59:59+01' WHERE week_no = 4;
   `);
   const c = await one<{ id: string }>(
     `SELECT id FROM campaigns WHERE slug = 'monica-money-story'`,
@@ -136,15 +158,21 @@ describe("the seeded challenges", () => {
   });
 
   it("is idempotent, so re-running the seed adds nothing", async () => {
-    await db.exec(
-      (await import("node:fs")).readFileSync(
-        (await import("node:path")).join(
-          process.cwd(),
-          "netlify/database/migrations/0008_submissions.sql",
-        ),
-        "utf8",
+    // Only the seed is replayed, not the whole migration file. 0008 also
+    // defines submit_entry, and 0010 replaced that with a different signature,
+    // so re-running the file would resurrect the old function beside the new
+    // one. Netlify applies each migration exactly once, so that never happens
+    // in production, and a fixture that does it is testing something the
+    // system does not do.
+    const sql = (await import("node:fs")).readFileSync(
+      (await import("node:path")).join(
+        process.cwd(),
+        "netlify/database/migrations/0008_submissions.sql",
       ),
+      "utf8",
     );
+    const seedOnly = sql.slice(0, sql.indexOf("CREATE OR REPLACE FUNCTION"));
+    await db.exec(seedOnly);
     expect(
       await count(
         `SELECT count(*)::int AS n FROM challenges WHERE campaign_id = '${campaignId}'`,
@@ -336,5 +364,78 @@ describe("the challenge window", () => {
     await expect(submit(me, week1, "x", "https://x.com/closed/1")).rejects.toThrow(
       /challenge_closed/,
     );
+  });
+});
+
+/**
+ * Walking the flow before the first week opens.
+ *
+ * Registration is forced open ahead of launch so the whole journey can be
+ * tested. The challenge window is a separate gate, so without this nobody could
+ * exercise submit, review and score until 14 September, which is the day all
+ * three have to work.
+ *
+ * The override lifts exactly one check, and the asymmetry is the safety.
+ */
+describe("the pre-launch override", () => {
+  it("allows a week that has not opened yet", async () => {
+    const me = await makeCreator(["x"]);
+    await expect(
+      submit(me, week2, "x", "https://x.com/preview/1", true),
+    ).resolves.toBeTruthy();
+  });
+
+  it("still refuses that week without it", async () => {
+    const me = await makeCreator(["x"]);
+    await expect(
+      submit(me, week2, "x", "https://x.com/preview/2", false),
+    ).rejects.toThrow(/challenge_not_open/);
+  });
+
+  /**
+   * Never overridden, and this is the point. Opening an upcoming week early
+   * affects only the days before launch. Reopening a finished one would let an
+   * entry be filed against a challenge that has already been scored, and in
+   * week four against the one that decides the final leaderboard.
+   */
+  it("does not reopen a week that has ended", async () => {
+    const me = await makeCreator(["x"]);
+    await db.query(
+      `UPDATE challenges SET starts_at = now() - interval '30 days',
+                             ends_at = now() - interval '20 days'
+        WHERE id = '${week1}'`,
+    );
+    await expect(
+      submit(me, week1, "x", "https://x.com/reopen/1", true),
+    ).rejects.toThrow(/challenge_ended/);
+  });
+
+  it("does not reopen a week that was closed by hand", async () => {
+    const me = await makeCreator(["x"]);
+    await db.query(`UPDATE challenges SET status = 'closed' WHERE id = '${week1}'`);
+    await expect(
+      submit(me, week1, "x", "https://x.com/reopen/2", true),
+    ).rejects.toThrow(/challenge_closed/);
+  });
+
+  it("relaxes nothing else at all", async () => {
+    // Every other refusal still applies with the override set.
+    const me = await makeCreator(["x"]);
+    await expect(
+      submit(me, week2, "tiktok", "https://tiktok.com/x/1", true),
+    ).rejects.toThrow(/platform_not_registered/);
+
+    await submit(me, week2, "x", "https://x.com/dup/1", true);
+    await expect(
+      submit(me, week2, "x", "https://x.com/dup/2", true),
+    ).rejects.toThrow(/already_submitted_for_platform/);
+  });
+
+  it("leaves only one submit_entry callable", async () => {
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM pg_proc WHERE proname = 'submit_entry'`,
+      ),
+    ).toBe(1);
   });
 });

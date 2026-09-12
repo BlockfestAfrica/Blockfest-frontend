@@ -1,9 +1,9 @@
-import { and, eq, gt, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gt, lte, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { campaigns, challenges, getDb } from "@/lib/db/client";
 import { currentCreator } from "@/lib/creator-session";
 import { canonicalUrl, submissionSchema } from "@/lib/campaign-submission";
-import { MONICA_SLUG } from "@/lib/campaigns";
+import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 
 export const runtime = "nodejs";
 
@@ -84,7 +84,30 @@ export async function POST(request: NextRequest) {
     )
     .limit(1);
 
-  const challenge = open[0];
+  let challenge = open[0];
+
+  // Before launch there is no open week, and the flow still has to be walkable
+  // end to end. When the campaign gate is deliberately forced open, the next
+  // week is offered instead. This is read from the server's own environment,
+  // so nothing a client sends can reach it, and after 14 September a week is
+  // open continuously until 17 October, which makes this branch unreachable.
+  if (!challenge && CAMPAIGN_GATE_FORCED_OPEN) {
+    const upcoming = await db
+      .select({ id: challenges.id, title: challenges.title })
+      .from(challenges)
+      .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
+      .where(
+        and(
+          eq(campaigns.slug, MONICA_SLUG),
+          eq(challenges.status, "active"),
+          gt(challenges.startsAt, new Date()),
+        ),
+      )
+      .orderBy(asc(challenges.startsAt))
+      .limit(1);
+    challenge = upcoming[0];
+  }
+
   if (!challenge) {
     return fail(
       "No challenge is open right now. The next brief opens on Monday.",
@@ -100,7 +123,8 @@ export async function POST(request: NextRequest) {
   try {
     const result = await db.execute(sql`
       SELECT * FROM submit_entry(
-        ${creator.enrolmentId}, ${challenge.id}, ${parsed.data.platform}, ${url}
+        ${creator.enrolmentId}, ${challenge.id}, ${parsed.data.platform}, ${url},
+        ${CAMPAIGN_GATE_FORCED_OPEN}
       )
     `);
 
