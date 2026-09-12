@@ -15,6 +15,8 @@ export interface QueueItem {
   creatorName: string;
   /** The account they said they publish from. Null if none is recorded. */
   registeredHandle: string | null;
+  /** True when the server could compare the link's author to that handle. */
+  autoChecked: boolean;
 }
 
 /**
@@ -110,13 +112,31 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-white/40">
-            Check the post was published by that account before approving.
-          </p>
+          {item.autoChecked ? (
+            <p className="mt-1 text-sm text-green-300/80">
+              The link is from this account. Checked automatically.
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-brand-gold">
+              This link does not say who published it, so nothing could be
+              checked automatically. Open it and confirm the author is the
+              account above before approving.
+            </p>
+          )}
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             {/* Text, not a link. See the note at the top of this file. */}
-            <code className="flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+            {/* Wrapped, not truncated. The author segment is usually early in
+                a link but a long handle can push it past a truncation, and that
+                is the one part of the URL this decision turns on. html and body
+                set overflow-x: hidden site-wide, so anything too wide is
+                clipped rather than scrollable: it would be silently cut off
+                rather than obviously cut off.
+
+                min-w-0 because a flex item will not shrink below its content
+                without it, which is what makes a long link push the copy button
+                off a narrow screen. */}
+            <code className="min-w-0 flex-1 break-all rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm leading-relaxed text-white">
               {item.url}
             </code>
             <button

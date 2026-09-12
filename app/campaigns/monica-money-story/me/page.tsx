@@ -83,9 +83,10 @@ export default async function MonicaCreatorPage() {
               >
                 partnership@blockfestafrica.com
               </a>{" "}
-              from the email address you registered with and we will sort it
-              out. We cannot read your link back to you, so we will issue a new
-              one.
+              from the email address you registered with and we will issue a
+              new one. We cannot read your old link back to you, which is why a
+              new one is the only way: a link we could recover is a link
+              somebody else could take.
             </p>
             <Link
               href={monicaRoutes.landing}
@@ -242,7 +243,7 @@ export default async function MonicaCreatorPage() {
                       </span>
                       <StatusPill status={entry.status} />
                     </div>
-                    <p className="mt-2 truncate text-sm text-white/50">
+                    <p className="mt-2 break-all text-sm leading-relaxed text-white/50">
                       {entry.url}
                     </p>
                     {entry.reviewNote && (

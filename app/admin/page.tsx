@@ -3,7 +3,9 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin/session";
 import { pendingSubmissions } from "@/lib/admin/review";
 import { ReviewQueue } from "@/components/admin/review-queue";
+import { ReissueLink } from "@/components/admin/reissue-link";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
+import { authorFromUrl } from "@/lib/campaign-submission";
 
 export const metadata: Metadata = {
   title: "Review queue",
@@ -91,9 +93,25 @@ export default async function AdminQueuePage() {
                 submittedAt: item.submittedAt.toISOString(),
                 creatorName: item.creatorName,
                 registeredHandle: item.registeredHandle,
+                /*
+                 * Whether the server could check the link against the handle.
+                 *
+                 * X always carries the author in the path, TikTok only in its
+                 * full web form and not in a vm. or vt. share link, and
+                 * Instagram never. So the automatic check covers one platform
+                 * always, one sometimes, and one never, and until now a
+                 * reviewer could not tell which they were looking at. An
+                 * unchecked link that looks identical to a checked one is worse
+                 * than no check at all.
+                 */
+                autoChecked:
+                  authorFromUrl(item.url, item.platform as CampaignPlatform) !==
+                  null,
               }))}
             />
           )}
+
+          <ReissueLink />
         </div>
       </section>
     </main>
