@@ -49,16 +49,15 @@ export default async function CampaignPage() {
       </h1>
       <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/60">
         {pause.paused
-          ? "Nobody can register or submit. Creators can still read the rules, the brief and the leaderboard."
+          ? `Nobody can register or submit. Creators are being told: ${pause.reason ?? "no reason recorded"}. They can still read the rules, the brief and the leaderboard.`
           : "Registration and submissions are open. Pausing takes effect on a creator's next click, not on the next deploy."}
       </p>
 
-      {/* A fixed height across both states. PauseSwitch is a tall form when
-          running and a short panel when paused, so without this, flipping it
-          moves everything below by about 260 pixels, under whatever finger
-          just tapped. */}
-      <div className="mt-8 min-h-[17rem]">
-        <PauseSwitch paused={pause.paused} reason={pause.reason} />
+      {/* A fixed height across both states. The running form is tall and the
+          paused state is one button, so without this, flipping the switch moves
+          everything below it under whatever finger just tapped. */}
+      <div className="mt-8 min-h-[14rem]">
+        <PauseSwitch paused={pause.paused} />
       </div>
 
       {/*
