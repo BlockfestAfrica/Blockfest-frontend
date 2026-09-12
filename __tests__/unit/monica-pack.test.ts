@@ -13,6 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  MONICA_BRAND_ASSETS_URL,
   monicaChannels,
   monicaPackAllowed,
   monicaPackDisclosure,
@@ -145,8 +146,13 @@ describe("what is still unknown", () => {
   });
 
   it("still names the things the published documents do not answer", () => {
+    // The assets themselves are now linked, so the open point is no longer
+    // "we have no logo". It is that having a logo does not tell a creator how
+    // it may be used, which is the part that gets an entry rejected.
     expect(monicaPackOpenPoints.length).toBeGreaterThan(0);
-    expect(monicaPackOpenPoints.join(" ")).toMatch(/brand assets/i);
+    expect(monicaPackOpenPoints.join(" ")).toMatch(
+      /clear space|minimum size|coloured background/i,
+    );
   });
 });
 
@@ -240,5 +246,26 @@ describe("tagging", () => {
       expect(channel.url).toMatch(/^https:\/\//);
       expect(channel.handle.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("brand assets", () => {
+  it("links to Monica's own folder rather than copying files", () => {
+    // Linking means a creator always gets the current logo. Copying means the
+    // page is wrong the first time Monica replaces one and nobody notices.
+    expect(MONICA_BRAND_ASSETS_URL).toMatch(/^https:\/\/drive\.google\.com\//);
+  });
+
+  it("no longer claims the folder is empty", () => {
+    // It was not. That claim came from one query returning nothing, which is
+    // not evidence of absence.
+    const open = monicaPackOpenPoints.join(" ");
+    expect(open).not.toMatch(/empty/i);
+  });
+
+  it("still asks for the thing the files do not answer", () => {
+    // Having a logo is not the same as knowing how it may be used.
+    const open = monicaPackOpenPoints.join(" ");
+    expect(open).toMatch(/clear space|minimum size|coloured background/i);
   });
 });

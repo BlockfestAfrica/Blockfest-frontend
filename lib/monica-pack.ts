@@ -29,7 +29,7 @@
  * the Compliance Statement.
  */
 
-export const MONICA_PACK_VERSION = "1.2";
+export const MONICA_PACK_VERSION = "1.3";
 
 /** ISO date. Rendered in the event's own timezone. */
 export const MONICA_PACK_UPDATED = "2026-09-12";
@@ -39,6 +39,20 @@ export const MONICA_SOURCE_URL = "https://monica.cash";
 
 /** The documents these facts were taken from, and when they were published. */
 export const MONICA_SOURCE_DATE = "29 May 2026";
+
+/**
+ * Monica's brand assets, linked rather than hosted.
+ *
+ * Pointing at the source means a creator always gets the current logo, and
+ * nothing here goes stale when Monica replaces one.
+ *
+ * It is open to anyone with the link, which is the only reason this is safe to
+ * put in front of creators: a request access screen at midnight before a
+ * deadline is a creator who does not enter. If that sharing setting is ever
+ * tightened, this link stops being useful and becomes a dead end.
+ */
+export const MONICA_BRAND_ASSETS_URL =
+  "https://drive.google.com/drive/folders/1vMRqnQLQ_S19rsw8PTCm7OFtX0yAZvl1";
 
 /** Monica's own accounts, so an entry tags the real ones. */
 export const monicaChannels = [
@@ -224,6 +238,6 @@ export const monicaPackSections: PackSection[] = [
  */
 export const monicaPackOpenPoints: string[] = [
   "Anything about fees. Monica's own documents disagree with each other and the difference is not small. Their Terms of Service, clause 7.2, say the user bears the onchain network fee on every chain. Their sponsor brief lists zero gas fees as a talking point, and then says $2 gas fee for BTC and zero on other coins a few lines earlier. Three statements that cannot all be true, so no fee claim may be made until Monica settles which one is right.",
-  "Monica's brand assets. The folder shared is empty, so there is no logo, no lockup and no colour guidance yet.",
+  "How the Monica name and logo may be shown: minimum size, clear space, and whether it may be placed on a coloured background. The assets themselves are linked above.",
   "Whether creators may name another provider in a comparison, and if so which.",
 ];

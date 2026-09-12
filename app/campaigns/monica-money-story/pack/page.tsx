@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Check, X } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, X } from "lucide-react";
 import {
   monicaPackAllowed,
+  MONICA_BRAND_ASSETS_URL,
   monicaChannels,
   monicaPackDisclosure,
   monicaPackFacts,
@@ -242,6 +243,32 @@ export default function MonicaPackPage() {
                 </section>
               ))}
             </div>
+
+            <section id="assets" className="mt-14 scroll-mt-24">
+              <h2 className="text-xl font-bold text-white">
+                Logo and brand assets
+              </h2>
+              <p className="mt-2 max-w-prose text-base leading-7 text-white/75">
+                Monica&apos;s own folder. Linked rather than copied here, so you
+                always get the current files rather than whatever was correct
+                when this page was written.
+              </p>
+              <a
+                href={MONICA_BRAND_ASSETS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-full border border-brand-gold/50 bg-brand-gold/10 px-6 text-sm font-semibold text-brand-gold transition-colors duration-300 hover:bg-brand-gold/20"
+              >
+                Open Monica&apos;s brand assets
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <p className="mt-3 text-sm leading-relaxed text-white/45">
+                Open to anyone with the link, so no Google account and no
+                request needed. If that ever changes, tell us at
+                partnership@blockfestafrica.com rather than waiting: chasing it
+                is ours to do, not yours.
+              </p>
+            </section>
 
             <section id="channels" className="mt-14 scroll-mt-24">
               <h2 className="text-xl font-bold text-white">
