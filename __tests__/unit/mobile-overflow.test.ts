@@ -82,11 +82,29 @@ describe("touch targets", () => {
 
     for (const file of ALL) {
       const src = readFileSync(join(process.cwd(), file), "utf8");
-      for (const match of src.matchAll(/<button[\s\S]{0,600}?className="([^"]+)"/g)) {
-        const cls = match[1];
-        const hasMin = /\bmin-h-(1[1-9]|[2-9][0-9])\b/.test(cls);
-        const hasPadding = /\bpy-[3-9]\b/.test(cls);
-        if (!hasMin && !hasPadding) offenders.push(`${file}: ${cls.slice(0, 80)}`);
+
+      /*
+       * The whole opening tag, not the first className after it.
+       *
+       * The first version matched `className="..."` within 600 characters of
+       * `<button`, which silently skipped every button whose class is a
+       * template literal, `className={...}`, and matched a nested span instead.
+       * It then reported the span's classes as an undersized button. Two real
+       * buttons were flagged for a class belonging to an arrow glyph.
+       */
+      for (const match of src.matchAll(/<button\b/g)) {
+        // Everything from `<button` to the next element start. Attributes
+        // cannot contain `<`, and arrow functions in handlers contain `=>`
+        // rather than a bare `>`, so stopping at `>` truncated the tag before
+        // the class ever appeared. This takes the attributes and no children.
+        const from = match.index ?? 0;
+        const nextChild = src.indexOf("<", from + 1);
+        const tag = src.slice(from, nextChild === -1 ? from + 1200 : nextChild);
+        const hasMin = /\bmin-h-(1[1-9]|[2-9][0-9])\b/.test(tag);
+        const hasPadding = /\bpy-[3-9]\b/.test(tag);
+        if (!hasMin && !hasPadding) {
+          offenders.push(`${file}: ${tag.replace(/\s+/g, " ").slice(0, 90)}`);
+        }
       }
     }
 
