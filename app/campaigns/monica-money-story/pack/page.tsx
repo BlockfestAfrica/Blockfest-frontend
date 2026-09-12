@@ -4,12 +4,14 @@ import { ArrowLeft, Check, X } from "lucide-react";
 import {
   monicaPackAllowed,
   monicaPackDisclosure,
+  monicaPackFacts,
   monicaPackOpenPoints,
   monicaPackPrinciple,
   monicaPackProhibited,
   monicaPackSections,
   MONICA_PACK_UPDATED,
   MONICA_PACK_VERSION,
+  MONICA_SOURCE_DATE,
 } from "@/lib/monica-pack";
 import { campaignBySlug, monicaRoutes, MONICA_SLUG } from "@/lib/campaigns";
 import { SITE_URL } from "@/lib/seo-event";
@@ -33,10 +35,16 @@ export const metadata: Metadata = {
  * the link from the campaign page resolved to a 404, which meant creators could
  * be rejected under a standard they had no way to read.
  *
- * So this publishes the half that does not depend on Monica, and names the half
- * that does rather than inventing it. Stating a fee or a transfer time for a
- * payments company we have not confirmed with would be the worst thing this
- * page could do, and is precisely the kind of claim it exists to prevent.
+ * The product facts come from Monica's own published terms, so most of what a
+ * creator wants to say now has an approved form rather than a prohibition. The
+ * wording carries the weight: Monica says it is aligned with the SEC's VASP
+ * framework and never licensed or regulated by it, it converts one way and is
+ * not a custodian, and nothing about it is insured. Each of those is a
+ * distinction somebody would collapse in good faith, and each collapse is a
+ * false statement about a financial business.
+ *
+ * What Monica's documents do not answer stays in the open list rather than
+ * being filled in with something plausible.
  *
  * Laid out as a document, like the rules, for the same reason: it is read
  * carefully rather than skimmed, sometimes by somebody whose entry has just
@@ -113,9 +121,41 @@ export default function MonicaPackPage() {
               </div>
             )}
 
+            {/* The confirmed facts, before the two lists.
+                Most of what a creator wants to say is a fact about the product,
+                so giving them the approved form of each one is more useful than
+                a longer list of things not to do. The wording is the point:
+                several of these are correct only as written. */}
+            <section id="facts" className="mt-14 scroll-mt-24">
+              <h2 className="text-xl font-bold text-white">
+                Confirmed facts you may state
+              </h2>
+              <p className="mt-4 max-w-prose text-base leading-7 text-white/75">
+                Taken from Monica&apos;s own published terms, dated{" "}
+                {MONICA_SOURCE_DATE}. Say these as they are written here.
+                Several are accurate only in this exact form.
+              </p>
+
+              <dl className="mt-6 flex flex-col gap-4">
+                {monicaPackFacts.map((fact) => (
+                  <div
+                    key={fact.label}
+                    className="rounded-xl border border-white/15 bg-white/5 p-4 sm:p-5"
+                  >
+                    <dt className="text-base font-semibold text-white">
+                      {fact.label}
+                    </dt>
+                    <dd className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+                      {fact.detail}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+
             {/* The two lists side by side on wide screens, because they are
                 read against each other rather than in sequence. */}
-            <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <div className="mt-14 grid gap-6 lg:grid-cols-2">
               <div className="rounded-xl border border-white/20 bg-white/5 p-5 sm:p-6">
                 <h2 className="text-lg font-bold text-white">You may</h2>
                 <ul className="mt-4 flex flex-col gap-3">
