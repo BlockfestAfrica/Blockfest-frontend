@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { calculateTimeLeft } from "@/lib/countdown";
+import { formatTimeLeft } from "@/lib/countdown";
 
 /**
  * How long is left, counted down in the browser.
@@ -36,21 +36,4 @@ export function TimeLeftLabel({
   }, [endsAt]);
 
   return <span className="tabular-nums">{label}</span>;
-}
-
-/**
- * The same label on the server and in the browser.
- *
- * Coarse on purpose. "4 days left" is what somebody deciding whether to film
- * tonight needs; the exact closing instant is printed separately, because a
- * countdown alone leaves them guessing what hour they are counting to.
- */
-export function formatTimeLeft(endsAt: string): string {
-  const { days, hours, minutes } = calculateTimeLeft(endsAt);
-
-  if (days === 0 && hours === 0 && minutes === 0) return "Closed";
-  if (days >= 2) return `${days} days left`;
-  if (days === 1) return `1 day, ${hours}h left`;
-  if (hours >= 1) return `${hours}h ${minutes}m left`;
-  return `${minutes}m left`;
 }

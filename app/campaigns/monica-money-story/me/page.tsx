@@ -12,10 +12,8 @@ import {
 import { creatorRank } from "@/lib/leaderboard";
 import { SubmissionForm } from "@/components/campaigns/submission-form";
 import { CopyField } from "@/components/campaigns/copy-field";
-import {
-  formatTimeLeft,
-  TimeLeftLabel,
-} from "@/components/campaigns/time-left-label";
+import { TimeLeftLabel } from "@/components/campaigns/time-left-label";
+import { formatTimeLeft } from "@/lib/countdown";
 import { HeadedPanel, Panel, Pill, Stat } from "@/components/shared/panel";
 import { pauseState } from "@/lib/campaign-pause";
 import {
