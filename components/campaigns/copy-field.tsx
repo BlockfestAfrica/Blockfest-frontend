@@ -68,7 +68,12 @@ export function CopyField({
 
   return (
     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-      <code className="min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+      {/* w-full matters as much as min-w-0 here. Once this row stacks at narrow
+          widths the flex main axis is vertical, so min-w-0 no longer constrains
+          the width, and a nowrap URL contributes its full length as the
+          container's cross size. The card then grows past the viewport and
+          html/body clip it, cutting the whole page rather than the URL. */}
+      <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
         {value}
       </code>
       <div className="flex gap-2">

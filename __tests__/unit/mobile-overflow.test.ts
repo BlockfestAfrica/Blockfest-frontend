@@ -72,6 +72,38 @@ describe("flex items that hold long strings", () => {
       `flex-1 with a long string needs min-w-0 or it will not shrink:\n${offenders.join("\n")}`,
     ).toEqual([]);
   });
+
+  /**
+   * min-w-0 is not enough on its own, which this suite learned the hard way.
+   *
+   * These rows are `flex flex-col gap-2 sm:flex-row`, so below the small
+   * breakpoint the main axis is vertical. min-w-0 constrains the MAIN axis, so
+   * once the row stacks it stops constraining the width at all, and a nowrap
+   * URL contributes its full length as the container's cross size. The card
+   * then grows wider than the viewport and html/body clip it, which cuts every
+   * paragraph on the page mid-word rather than just shortening the URL.
+   *
+   * w-full caps the element at the container width in both directions.
+   */
+  it("cannot widen a column that has stacked", () => {
+    const offenders: string[] = [];
+
+    for (const file of ALL) {
+      for (const cls of classNames(file)) {
+        const isFlexChild = /\bflex-1\b/.test(cls);
+        const cannotWrap = /\btruncate\b/.test(cls);
+        const cappedToParent = /\bw-full\b|\bmax-w-full\b/.test(cls);
+        if (isFlexChild && cannotWrap && !cappedToParent) {
+          offenders.push(`${file}: ${cls}`);
+        }
+      }
+    }
+
+    expect(
+      offenders,
+      `a truncating flex child needs w-full as well as min-w-0, or it widens the card once the row stacks:\n${offenders.join("\n")}`,
+    ).toEqual([]);
+  });
 });
 
 describe("touch targets", () => {

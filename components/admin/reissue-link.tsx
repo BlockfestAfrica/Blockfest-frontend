@@ -24,9 +24,7 @@ export function ReissueLink() {
     name: string;
     link: string;
     emailed: boolean;
-  } | null>(
-    null,
-  );
+  } | null>(null);
   const [copied, setCopied] = useState(false);
 
   async function submit(event: React.FormEvent) {
@@ -94,16 +92,16 @@ export function ReissueLink() {
         <div className="mt-4 rounded-lg border border-brand-gold/40 bg-brand-gold/10 p-4">
           <p className="text-sm font-semibold text-white">
             New link for {issued.name}. Shown once.
-          {issued.emailed
-            ? " Also emailed to the address they registered with."
-            : " The email did not go, so this copy is the only one. Pass it on now."}
+            {issued.emailed
+              ? " Also emailed to the address they registered with."
+              : " The email did not go, so this copy is the only one. Pass it on now."}
           </p>
           <p className="mt-1 max-w-prose text-sm leading-relaxed text-white/60">
             Send it to them yourself. It is not emailed, and it cannot be shown
             again.
           </p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-            <code className="min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+            <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
               {issued.link}
             </code>
             <button
