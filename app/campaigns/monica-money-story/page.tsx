@@ -118,6 +118,12 @@ export default function MonicaMoneyStoryPage() {
                 See the Creator Pack
               </Link>
               <Link
+                href={monicaRoutes.leaderboard}
+                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+              >
+                Leaderboard
+              </Link>
+              <Link
                 href={monicaRoutes.privacy}
                 className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
               >

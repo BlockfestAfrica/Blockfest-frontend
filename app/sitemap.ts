@@ -113,6 +113,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      // Changes as often as entries are approved, which is the point of it.
+      url: `${baseUrl}/campaigns/monica-money-story/leaderboard`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/campaigns/monica-money-story/rules`,
       lastModified: new Date(),
       changeFrequency: "weekly",
