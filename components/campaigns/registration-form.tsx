@@ -448,10 +448,12 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               It opens your own page, where your points and entries live and
               where you will submit each entry. We store only a fingerprint of
               it, so we cannot send it to you again. Bookmark it, or send it to
-              yourself now.
+              yourself now. If you do lose it, write to
+              partnership@blockfestafrica.com from the address you registered
+              with and we will issue a new one.
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <code className="flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+              <code className="min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
                 {accessLink}
               </code>
               <button
@@ -483,7 +485,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               will actually post.
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <code className="flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+              <code className="min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
                 {shareLink}
               </code>
               <button
