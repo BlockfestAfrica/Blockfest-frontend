@@ -2,8 +2,16 @@ import { and, asc, eq, gt, lte, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { campaigns, challenges, getDb } from "@/lib/db/client";
 import { currentCreator } from "@/lib/creator-session";
-import { canonicalUrl, submissionSchema } from "@/lib/campaign-submission";
-import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
+import {
+  authorFromUrl,
+  canonicalUrl,
+  submissionSchema,
+} from "@/lib/campaign-submission";
+import {
+  CAMPAIGN_GATE_FORCED_OPEN,
+  MONICA_SLUG,
+  type CampaignPlatform,
+} from "@/lib/campaigns";
 
 export const runtime = "nodejs";
 
@@ -120,11 +128,16 @@ export async function POST(request: NextRequest) {
   // share sheet appended a tracking parameter.
   const url = canonicalUrl(parsed.data.url);
 
+  // Read from the URL here, never taken from the request. X and TikTok carry
+  // the author in the path; Instagram does not and yields null, which the
+  // function reads as "nothing to compare" rather than "no check needed".
+  const author = authorFromUrl(url, parsed.data.platform as CampaignPlatform);
+
   try {
     const result = await db.execute(sql`
       SELECT * FROM submit_entry(
         ${creator.enrolmentId}, ${challenge.id}, ${parsed.data.platform}, ${url},
-        ${CAMPAIGN_GATE_FORCED_OPEN}
+        ${CAMPAIGN_GATE_FORCED_OPEN}, ${author}
       )
     `);
 
@@ -142,6 +155,13 @@ export async function POST(request: NextRequest) {
 
     // Raised deliberately by the function, so the creator can be told the one
     // thing they need to change rather than "something went wrong".
+    if (message.includes("wrong_account")) {
+      return fail(
+        "That post is not from the account you registered. Entries have to come from an account you listed when you joined.",
+        409,
+        "url",
+      );
+    }
     if (message.includes("platform_not_registered")) {
       return fail(
         "You did not register that account. Entries have to come from an account you listed when you joined.",

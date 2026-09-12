@@ -62,6 +62,57 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        /*
+         * A second, tighter policy for the admin surface.
+         *
+         * A browser enforces the INTERSECTION of every Content-Security-Policy
+         * header it receives, so this genuinely narrows the one above rather
+         * than replacing it. On these paths the vendor analytics host is not an
+         * allowed script source or connect target, and 'unsafe-eval' is gone.
+         *
+         * This is the second layer. components/shared/analytics.tsx already
+         * refuses to render the tag here, and this is what holds if somebody
+         * moves it back into the layout while tidying up. A third-party script
+         * on an authenticated admin page does not need to steal anything: a
+         * same-origin fetch to /api/admin/review carries the session cookie and
+         * a browser-set Origin, so every server-side check passes and the
+         * approvals are recorded against the real reviewer.
+         *
+         * 'unsafe-inline' stays, and that is not an oversight. Next emits its
+         * own inline hydration scripts, so removing it needs a nonce threaded
+         * through middleware, which is a day of work and a separate change. The
+         * vendor host and eval are the two that matter for this attack.
+         */
+        source: "/admin/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
+          },
+          {
+            // Nothing on the admin surface should ever be stored by a shared
+            // cache or an intermediary.
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+        ],
+      },
+      {
+        source: "/api/admin/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none';",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+        ],
+      },
     ];
   },
 

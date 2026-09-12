@@ -12,6 +12,9 @@ export interface QueueItem {
   challengeTitle: string;
   platformLabel: string;
   submittedAt: string;
+  creatorName: string;
+  /** The account they said they publish from. Null if none is recorded. */
+  registeredHandle: string | null;
 }
 
 /**
@@ -87,6 +90,29 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
               {item.platformLabel}
             </span>
           </div>
+
+          {/* Who is claiming this post, and the account they registered.
+              Without both, the queue is a list of bare links and there is no
+              way to notice that a link does not belong to the person claiming
+              it. On Instagram the author is not in the URL at all, so this
+              comparison is the only check that exists. */}
+          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-base font-semibold text-white">
+              {item.creatorName}
+            </span>
+            {item.registeredHandle ? (
+              <span className="font-mono text-sm text-brand-gold">
+                @{item.registeredHandle}
+              </span>
+            ) : (
+              <span className="text-sm text-red-300">
+                no handle recorded for this platform
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-sm text-white/40">
+            Check the post was published by that account before approving.
+          </p>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             {/* Text, not a link. See the note at the top of this file. */}

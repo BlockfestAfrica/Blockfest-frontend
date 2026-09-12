@@ -101,3 +101,55 @@ export const submissionSchema = z
   });
 
 export type SubmissionInput = z.infer<typeof submissionSchema>;
+
+/**
+ * The account a post was published from, read out of its own URL.
+ *
+ * X and TikTok both carry the author in the path, so a link can be compared
+ * against the handle the creator registered. Instagram does not: a post is
+ * /p/<shortcode>/ and a reel is /reel/<shortcode>/, with the author nowhere in
+ * the address, so there is nothing to compare and this returns null rather than
+ * guessing.
+ *
+ * This is a comparison, not verification. Nothing in the system has ever proved
+ * that a registered handle belongs to the person who registered it: 0002 says
+ * an unverified handle must not be used to attribute an entry, and verified_at
+ * is still never set. So this stops somebody submitting a rival's post under
+ * their own unrelated handle, which is the easy attack. It does not stop
+ * somebody who registers the rival's handle in the first place. That needs
+ * handle verification, which is a separate piece of work.
+ */
+export function authorFromUrl(
+  url: string,
+  platform: CampaignPlatform,
+): string | null {
+  let path: string;
+  try {
+    path = new URL(url).pathname;
+  } catch {
+    return null;
+  }
+
+  const segments = path.split("/").filter(Boolean);
+  if (segments.length === 0) return null;
+
+  if (platform === "x") {
+    // x.com/<handle>/status/<id>. A short link with no author segment, or one
+    // of the site's own pages, yields nothing to compare.
+    const first = segments[0].toLowerCase();
+    if (["i", "home", "search", "hashtag", "intent"].includes(first)) {
+      return null;
+    }
+    return first.replace(/^@/, "") || null;
+  }
+
+  if (platform === "tiktok") {
+    // tiktok.com/@<handle>/video/<id>. The short domains, vm. and vt., encode
+    // no author at all and resolve only by following the redirect.
+    const at = segments.find((seg) => seg.startsWith("@"));
+    return at ? at.slice(1).toLowerCase() || null : null;
+  }
+
+  // Instagram: the author is not in the URL.
+  return null;
+}

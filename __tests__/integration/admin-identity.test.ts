@@ -237,3 +237,85 @@ describe("deleting an admin", () => {
     expect(await rows(`SELECT 1 FROM admin_users WHERE email_canonical = 'fresh@example.com'`)).toHaveLength(1);
   });
 });
+
+/**
+ * The binding happens once, decides everything afterwards, and used to leave no
+ * trace. An owner who signed in on the wrong Netlify account, which needs no
+ * attacker at all, locked themselves out permanently and could not tell: every
+ * failure collapses to one answer, correctly, so the page says the same thing
+ * whether the row is taken or Identity is down.
+ *
+ * The HTTP response is unchanged. It is the operator who gains the ability to
+ * see what happened.
+ */
+describe("the audit trail of binding", () => {
+  beforeEach(async () => {
+    await db.exec(`DELETE FROM audit_log`);
+  });
+
+  it("records the first binding", async () => {
+    await resolve("partnership@blockfestafrica.com", "netlify-user-1");
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM audit_log WHERE action = 'admin.identity_bound'`,
+      ),
+    ).toBe(1);
+  });
+
+  it("records which account was bound", async () => {
+    await resolve("partnership@blockfestafrica.com", "netlify-user-1");
+    const row = await db.query<{ after: { identity_user_id: string } }>(
+      `SELECT after FROM audit_log WHERE action = 'admin.identity_bound'`,
+    );
+    expect(row.rows[0].after.identity_user_id).toBe("netlify-user-1");
+  });
+
+  it("does not record a binding on every later sign-in", async () => {
+    await resolve("partnership@blockfestafrica.com", "netlify-user-1");
+    await resolve("partnership@blockfestafrica.com", "netlify-user-1");
+    await resolve("partnership@blockfestafrica.com", "netlify-user-1");
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM audit_log WHERE action = 'admin.identity_bound'`,
+      ),
+    ).toBe(1);
+  });
+
+  it("records a refused attempt from a different account", async () => {
+    await resolve("heedris2olubisi@gmail.com", "netlify-user-2");
+    await resolve("heedris2olubisi@gmail.com", "netlify-user-IMPOSTOR");
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM audit_log WHERE action = 'admin.identity_mismatch'`,
+      ),
+    ).toBe(1);
+  });
+
+  it("attributes a refused attempt to nobody, since it is not the admin", async () => {
+    await resolve("heedris2olubisi@gmail.com", "netlify-user-2");
+    await resolve("heedris2olubisi@gmail.com", "netlify-user-IMPOSTOR");
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM audit_log
+          WHERE action = 'admin.identity_mismatch' AND actor_admin_id IS NULL`,
+      ),
+    ).toBe(1);
+  });
+
+  it("still tells the caller nothing, which is the point", async () => {
+    await resolve("heedris2olubisi@gmail.com", "netlify-user-2");
+    const refused = await resolve("heedris2olubisi@gmail.com", "netlify-user-IMPOSTOR");
+    expect(refused.rows).toEqual([]);
+  });
+
+  it("can be undone, so a mistaken binding is not permanent", async () => {
+    // The documented recovery, and the reason it is safe: it is not reachable
+    // from the application at all.
+    await resolve("partnership@blockfestafrica.com", "wrong-account");
+    await db.query(`
+      UPDATE admin_users SET identity_user_id = NULL, identity_bound_at = NULL
+       WHERE email_canonical = 'partnership@blockfestafrica.com'`);
+    const after = await resolve("partnership@blockfestafrica.com", "right-account");
+    expect(after.rows).toHaveLength(1);
+  });
+});

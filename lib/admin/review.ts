@@ -1,9 +1,12 @@
 import "server-only";
 import { and, eq, sql } from "drizzle-orm";
 import {
+  campaignCreators,
   campaigns,
   challengeEntries,
   challenges,
+  creators,
+  creatorSocialHandles,
   getDb,
   submissions,
 } from "@/lib/db/client";
@@ -99,11 +102,37 @@ export async function pendingSubmissions(admin: AdminIdentity, limit = 50) {
       challengeTitle: challenges.title,
       weekNo: challenges.weekNo,
       entryId: submissions.entryId,
+      /*
+       * Who submitted it, and which account they said they publish from.
+       *
+       * Without these the queue was a list of bare links, and the one person
+       * who could notice that a link does not belong to the person claiming it
+       * had nothing to notice it with. That is the half of the attribution
+       * problem the database cannot solve: on Instagram the author is not in
+       * the URL at all, so a human comparing the handle to the post is the only
+       * check there is.
+       */
+      creatorName: creators.fullName,
+      registeredHandle: creatorSocialHandles.handle,
     })
     .from(submissions)
     .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))
     .innerJoin(challenges, eq(challenges.id, challengeEntries.challengeId))
     .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
+    .innerJoin(
+      campaignCreators,
+      eq(campaignCreators.id, challengeEntries.campaignCreatorId),
+    )
+    .innerJoin(creators, eq(creators.id, campaignCreators.creatorId))
+    // Left-joined on purpose: a handle row could be missing, and a queue that
+    // silently drops a submission is worse than one that shows it unlabelled.
+    .leftJoin(
+      creatorSocialHandles,
+      and(
+        eq(creatorSocialHandles.creatorId, creators.id),
+        eq(creatorSocialHandles.platform, submissions.platform),
+      ),
+    )
     .where(
       and(eq(submissions.status, "pending"), eq(campaigns.slug, MONICA_SLUG)),
     )

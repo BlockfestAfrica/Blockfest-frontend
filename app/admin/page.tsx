@@ -89,6 +89,8 @@ export default async function AdminQueuePage() {
                   platformLabels[item.platform as CampaignPlatform] ??
                   item.platform,
                 submittedAt: item.submittedAt.toISOString(),
+                creatorName: item.creatorName,
+                registeredHandle: item.registeredHandle,
               }))}
             />
           )}

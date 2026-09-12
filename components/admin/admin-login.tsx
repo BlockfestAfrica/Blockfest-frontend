@@ -36,6 +36,18 @@ export function AdminLogin() {
    * running on mount and the form being submitted.
    */
   const [inviteToken, setInviteToken] = useState<string | null>(null);
+  /**
+   * A recovery link has ALREADY signed this browser in by the time the callback
+   * resolves. handleRecoveryCallback calls setBrowserAuthCookies with a live
+   * JWT before returning, so there is a real session here and the only thing
+   * standing between it and the review queue is this component.
+   *
+   * That session is not dismissed, because it belongs to the real admin and
+   * dismissing it would be a lie about what happened. What is refused is
+   * reaching the queue without setting a new password, so a link read out of a
+   * mailbox cannot be used and left no trace.
+   */
+  const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,7 +58,12 @@ export function AdminLogin() {
         const result = await handleAuthCallback();
         if (cancelled || !result) return;
 
-        // An invite needs a password set before the account can be used again.
+        // Handled by name, never by falling through.
+        //
+        // Each callback type differs in whether the library has already
+        // established a session: an invite has not, a recovery has. A default
+        // that navigates to the queue gives a free session to every type that
+        // does, including any the library adds later, so there is no default.
         if (result.type === "invite") {
           setInviteToken(result.token ?? null);
           setNotice(
@@ -54,7 +71,22 @@ export function AdminLogin() {
           );
           return;
         }
-        window.location.href = "/admin";
+
+        if (result.type === "recovery") {
+          setRecovering(true);
+          setNotice(
+            "Set a new password to finish. Your old one no longer works.",
+          );
+          return;
+        }
+
+        if (result.type === "confirmation" || result.type === "email_change") {
+          setNotice("That is confirmed. Sign in below.");
+          return;
+        }
+
+        // An unrecognised type. Say so rather than assuming it is harmless.
+        setNotice("That link is not one we recognise. Sign in below.");
       } catch {
         // A link that has expired or been used already. Say so once, plainly,
         // rather than leaving somebody on a page that appears to do nothing.
@@ -80,6 +112,10 @@ export function AdminLogin() {
 
       if (inviteToken) {
         await identity.acceptInvite(inviteToken, password);
+      } else if (recovering) {
+        // The session already exists. This is what makes the recovery link
+        // cost something to use: without it, reading the mail was enough.
+        await identity.updateUser({ password });
       } else {
         await identity.login(email.trim(), password);
       }
@@ -105,7 +141,7 @@ export function AdminLogin() {
         </p>
       )}
 
-      {!inviteToken && (
+      {!inviteToken && !recovering && (
         <div className="flex flex-col gap-2">
           <label htmlFor="email" className="text-sm font-semibold text-white">
             Email
@@ -123,12 +159,12 @@ export function AdminLogin() {
 
       <div className="flex flex-col gap-2">
         <label htmlFor="password" className="text-sm font-semibold text-white">
-          {inviteToken ? "Choose a password" : "Password"}
+          {inviteToken || recovering ? "Choose a password" : "Password"}
         </label>
         <input
           id="password"
           type="password"
-          autoComplete={inviteToken ? "new-password" : "current-password"}
+          autoComplete={inviteToken || recovering ? "new-password" : "current-password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white focus:border-brand-gold focus:outline-none"
@@ -137,10 +173,18 @@ export function AdminLogin() {
 
       <button
         type="submit"
-        disabled={busy || password.length === 0 || (!inviteToken && !email.trim())}
+        disabled={
+          busy ||
+          password.length === 0 ||
+          (!inviteToken && !recovering && !email.trim())
+        }
         className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {busy ? "Please wait..." : inviteToken ? "Set password" : "Sign in"}
+        {busy
+          ? "Please wait..."
+          : inviteToken || recovering
+            ? "Set password"
+            : "Sign in"}
       </button>
     </form>
   );

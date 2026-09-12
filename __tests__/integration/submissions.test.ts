@@ -73,9 +73,10 @@ const submit = (
   platform: string,
   url: string,
   allowBeforeOpen = false,
+  author: string | null = null,
 ) =>
   db.query(
-    `SELECT * FROM submit_entry('${enrolment}', '${challenge}', '${platform}', '${url}', ${allowBeforeOpen})`,
+    `SELECT * FROM submit_entry('${enrolment}', '${challenge}', '${platform}', '${url}', ${allowBeforeOpen}, ${author === null ? "NULL" : `'${author}'`})`,
   );
 
 beforeAll(async () => {
@@ -437,5 +438,117 @@ describe("the pre-launch override", () => {
         `SELECT count(*)::int AS n FROM pg_proc WHERE proname = 'submit_entry'`,
       ),
     ).toBe(1);
+  });
+});
+
+/**
+ * Submitting somebody else's post.
+ *
+ * The only ownership test used to be whether the creator had registered SOME
+ * handle on that platform. It never asked whether that handle was the one in
+ * the link, so anybody could register with any handle string, wait for a rival
+ * to publish a strong post, and submit their URL. The reviewer saw a bare link,
+ * opened a real on-brief post, and approved it.
+ *
+ * The author is read out of the URL by the server, never sent by the client.
+ */
+describe("attribution", () => {
+  beforeEach(async () => {
+    await openNow(week1);
+  });
+
+  it("accepts a post from the account the creator registered", async () => {
+    const tag = seq + 1;
+    const me = await makeCreator(["x"]);
+    const handle = `h${tag}x`;
+    await expect(
+      submit(me, week1, "x", `https://x.com/${handle}/status/1`, false, handle),
+    ).resolves.toBeTruthy();
+  });
+
+  it("refuses a post published by somebody else", async () => {
+    const me = await makeCreator(["x"]);
+    await expect(
+      submit(
+        me,
+        week1,
+        "x",
+        "https://x.com/rivalcreator/status/99",
+        false,
+        "rivalcreator",
+      ),
+    ).rejects.toThrow(/wrong_account/);
+  });
+
+  it("compares without regard to case", async () => {
+    const tag = seq + 1;
+    const me = await makeCreator(["x"]);
+    const handle = `h${tag}x`;
+    await expect(
+      submit(
+        me,
+        week1,
+        "x",
+        `https://x.com/${handle.toUpperCase()}/status/2`,
+        false,
+        handle.toUpperCase(),
+      ),
+    ).resolves.toBeTruthy();
+  });
+
+  /**
+   * Instagram puts no author in the URL, so there is nothing to compare and the
+   * server passes null. That must mean "nothing to compare", not "skip the
+   * check", so the platform registration test still has to run.
+   */
+  it("still accepts a platform with no author in the link", async () => {
+    const me = await makeCreator(["instagram"]);
+    await expect(
+      submit(me, week1, "instagram", "https://instagram.com/p/Cabc/", false, null),
+    ).resolves.toBeTruthy();
+  });
+
+  it("still refuses an unregistered platform when there is no author", async () => {
+    const me = await makeCreator(["x"]);
+    await expect(
+      submit(me, week1, "instagram", "https://instagram.com/p/Cxyz/", false, null),
+    ).rejects.toThrow(/platform_not_registered/);
+  });
+});
+
+/**
+ * A rejected submission must not block that platform for the rest of the week.
+ *
+ * submission_one_per_platform was a plain unique index, so a creator whose
+ * entry was rejected could never resubmit on that platform, even to fix exactly
+ * what the reviewer asked them to fix. The URL index was made partial on status
+ * in 0003 for the same reason; this half was missed.
+ */
+describe("resubmitting after a rejection", () => {
+  beforeEach(async () => {
+    await openNow(week1);
+  });
+
+  it("lets a creator try again on the same platform", async () => {
+    const tag = seq + 1;
+    const me = await makeCreator(["x"]);
+    const handle = `h${tag}x`;
+    await submit(me, week1, "x", `https://x.com/${handle}/status/10`, false, handle);
+    await db.query(
+      `UPDATE submissions SET status = 'rejected', reviewed_at = now()`,
+    );
+    await expect(
+      submit(me, week1, "x", `https://x.com/${handle}/status/11`, false, handle),
+    ).resolves.toBeTruthy();
+  });
+
+  it("still refuses a second live submission on that platform", async () => {
+    const tag = seq + 1;
+    const me = await makeCreator(["x"]);
+    const handle = `h${tag}x`;
+    await submit(me, week1, "x", `https://x.com/${handle}/status/12`, false, handle);
+    await expect(
+      submit(me, week1, "x", `https://x.com/${handle}/status/13`, false, handle),
+    ).rejects.toThrow(/already_submitted_for_platform/);
   });
 });
