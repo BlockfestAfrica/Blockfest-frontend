@@ -78,7 +78,7 @@ export default function MonicaRegisterPage() {
                         "Straight away, on this page. Share it to bring other creators in.",
                     },
                     {
-                      title: "A brief drops every weekend",
+                      title: "A brief drops every Monday",
                       detail:
                         "Four of them, one per week. You do not register again for any of them.",
                     },

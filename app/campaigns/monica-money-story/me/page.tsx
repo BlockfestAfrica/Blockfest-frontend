@@ -90,7 +90,54 @@ function statusPill(status: string) {
 }
 
 export default async function MonicaCreatorPage() {
-  const creator = await currentCreator();
+  /*
+   * The last unguarded await on this page.
+   *
+   * creatorPageData, pauseState and creatorRank were all made to fail soft, and
+   * this one was missed. It is the worst one to miss: it runs before any of
+   * them, so a blip here is the whole page gone for every signed-in creator,
+   * which is exactly the outage this page already had once today.
+   *
+   * A failure is not the same as being signed out, and must not be told as one.
+   * "We do not know who you are" sends a creator hunting for a link that works
+   * perfectly well.
+   */
+  let creator: Awaited<ReturnType<typeof currentCreator>> = null;
+  let sessionUnavailable = false;
+  try {
+    creator = await currentCreator();
+  } catch (error) {
+    sessionUnavailable = true;
+    console.warn(
+      "[creator-page] session could not be read:",
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+
+  if (sessionUnavailable) {
+    return (
+      <main id="main" className="bg-ground">
+        <section className="section-y">
+          <div className="container-page max-w-2xl">
+            <h1 className="text-display-sm font-bold text-white">
+              We could not load your page
+            </h1>
+            <p className="mt-4 max-w-prose text-base leading-relaxed text-white/70">
+              Something went wrong at our end. Your link is fine and nothing you
+              have sent is affected. Refresh in a moment.
+            </p>
+            <Link
+              href={monicaRoutes.landing}
+              className="mt-8 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              {CAMPAIGN.name}
+            </Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   if (!creator) {
     return (
@@ -315,6 +362,24 @@ export default async function MonicaCreatorPage() {
                     <p className="mt-2 text-sm leading-relaxed text-white/55">
                       The brief above still stands, so you can keep working. Come
                       back and paste your link when this clears.
+                    </p>
+                  </Panel>
+                ) : failed.platforms ? (
+                  /*
+                   * The read failed, so stillToSubmit is empty for the wrong
+                   * reason. Without this branch the next one fires and tells a
+                   * creator they have finished the week while removing the form
+                   * they would have used, which is the most expensive lie this
+                   * page can tell.
+                   */
+                  <Panel tone="warn">
+                    <p className="text-sm font-semibold text-amber-200">
+                      We could not load your accounts
+                    </p>
+                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/75">
+                      This is at our end, not yours, and it is not a sign that
+                      anything is missing. Refresh in a moment and the form will
+                      be here.
                     </p>
                   </Panel>
                 ) : stillToSubmit.length === 0 ? (

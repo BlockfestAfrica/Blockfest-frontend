@@ -74,7 +74,8 @@ export function MonicaStages() {
             First standings: {MONICA_FIRST_LEADERBOARD}
           </p>
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
-            Standings update every Saturday once entries have been reviewed.
+            The leaderboard moves as entries are approved. Weekly winners are
+            announced every Saturday.
             Weekly winners are announced on Sundays.
           </p>
         </div>

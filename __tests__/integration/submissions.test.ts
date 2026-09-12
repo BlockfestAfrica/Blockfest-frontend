@@ -32,6 +32,27 @@ const count = async (sql: string) =>
  * argument, which would mean testing something other than what ships, the
  * fixture moves the window.
  */
+/**
+ * Push a challenge into the future, relative to now.
+ *
+ * The fixture restores the four real production windows, which is right for
+ * tests about the real schedule and wrong for tests about a window's state.
+ * Four assertions here said "this week has not opened" and actually meant "21
+ * September is in the future". From the night week 2 opens that stops being
+ * true and they invert, and because netlify.toml runs the suite before the
+ * build, no deploy of any kind publishes until somebody works out that the
+ * tests did not break, the clock moved. Mid-campaign that is the pause switch
+ * and every copy fix gone at once, on a 5,000,000 naira campaign.
+ */
+async function notOpenYet(challenge: string) {
+  await db.query(`
+    UPDATE challenges
+       SET starts_at = now() + interval '1 day',
+           ends_at   = now() + interval '8 days'
+     WHERE id = '${challenge}'`);
+}
+
+
 async function openNow(challenge: string) {
   await db.query(`
     UPDATE challenges
@@ -339,6 +360,7 @@ describe("the challenge window", () => {
   it("refuses a week that has not opened yet", async () => {
     // All four challenges are published at once, so the dates are what stop
     // somebody entering week four on day one.
+    await notOpenYet(week2);
     const me = await makeCreator(["x"]);
     await expect(submit(me, week2, "x", "https://x.com/early/1")).rejects.toThrow(
       /challenge_not_open/,
@@ -380,6 +402,7 @@ describe("the challenge window", () => {
  */
 describe("the pre-launch override", () => {
   it("allows a week that has not opened yet", async () => {
+    await notOpenYet(week2);
     const me = await makeCreator(["x"]);
     await expect(
       submit(me, week2, "x", "https://x.com/preview/1", true),
@@ -387,6 +410,7 @@ describe("the pre-launch override", () => {
   });
 
   it("still refuses that week without it", async () => {
+    await notOpenYet(week2);
     const me = await makeCreator(["x"]);
     await expect(
       submit(me, week2, "x", "https://x.com/preview/2", false),
@@ -421,6 +445,7 @@ describe("the pre-launch override", () => {
 
   it("relaxes nothing else at all", async () => {
     // Every other refusal still applies with the override set.
+    await notOpenYet(week2);
     const me = await makeCreator(["x"]);
     await expect(
       submit(me, week2, "tiktok", "https://tiktok.com/x/1", true),
@@ -549,6 +574,57 @@ describe("resubmitting after a rejection", () => {
     await submit(me, week1, "x", `https://x.com/${handle}/status/12`, false, handle);
     await expect(
       submit(me, week1, "x", `https://x.com/${handle}/status/13`, false, handle),
+    ).rejects.toThrow(/already_submitted_for_platform/);
+  });
+});
+
+/**
+ * Which collision the creator is told about.
+ *
+ * submit_entry catches unique_violation and picks between two messages. Both
+ * indexes it is choosing between are partial on status <> 'rejected', so a
+ * rejected row is not a collision. The test that matters is the one where a
+ * rejected row exists AND the real collision is the URL: the handler used to
+ * see the old rejected row and report the platform, sending the creator away
+ * from the fix.
+ */
+describe("the message when a submission collides", () => {
+  it("names the URL, not the platform, when a rejected row is lying around", async () => {
+    await openNow(week1);
+    const mine = await makeCreator(["x"]);
+    const other = await makeCreator(["x"]);
+
+    // Somebody else already holds this URL, live.
+    await submit(other, week1, "x", "https://x.com/taken/1");
+
+    // I have a rejected entry on the same platform, which frees the slot.
+    const first = await submit(mine, week1, "x", "https://x.com/mine/1");
+    // Through review(), not by hand: submission_reviewed_consistently requires
+    // the status and reviewed_at to move together, and a fixture that writes
+    // one without the other is not the state production can reach.
+    const admin = (
+      await db.query<{ id: string }>(
+        `SELECT id FROM admin_users ORDER BY created_at LIMIT 1`,
+      )
+    ).rows[0];
+    await db.query(
+      `SELECT review($1::uuid, 'rejected'::submission_status, $2::uuid, 'Not your account')`,
+      [(first.rows[0] as { submission_id: string }).submission_id, admin.id],
+    );
+
+    // Now collide on the URL. The platform is genuinely free.
+    await expect(
+      submit(mine, week1, "x", "https://x.com/taken/1"),
+    ).rejects.toThrow(/url_already_submitted/);
+  });
+
+  it("still names the platform when the platform really is taken", async () => {
+    await openNow(week1);
+    const mine = await makeCreator(["x"]);
+
+    await submit(mine, week1, "x", "https://x.com/mine/a");
+    await expect(
+      submit(mine, week1, "x", "https://x.com/mine/b"),
     ).rejects.toThrow(/already_submitted_for_platform/);
   });
 });
