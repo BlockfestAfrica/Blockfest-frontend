@@ -60,6 +60,18 @@ Netlify DB does not expose its connection string as a readable site environment
 variable. Get it from the database extension in the Netlify project dashboard,
 or from the Neon console.
 
+## Deploy previews
+
+They cannot write to production: Netlify DB gives every preview its own branch.
+Verify rather than believe by comparing `/api/health` on a preview against
+production, where `database` is a short hash of the connection host. Different
+values mean the isolation holds.
+
+**Do not share a preview link outside the team.** Preview branches are seeded
+from production, so from launch they contain real creators' names, emails,
+phone numbers and IP addresses, and preview URLs are public. Details in
+[DATABASE.md](DATABASE.md).
+
 ## Still open at the time of writing
 
 | | |
