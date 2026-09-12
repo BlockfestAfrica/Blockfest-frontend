@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import {
@@ -104,6 +105,39 @@ export default async function WinnersPage() {
             publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
           }))}
         />
+      </div>
+
+      {/*
+       * The working, for the people being paid.
+       *
+       * A link rather than a button: it is a GET that changes nothing, and a
+       * link can be opened, saved and attached to an email, which is what
+       * somebody actually does with it two days before a transfer.
+       */}
+      <div className="mt-12 border-t border-white/12 pt-8">
+        <h2 className="text-xl font-bold text-white">Payout audit</h2>
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+          Every ledger row for the top five, with the date, the source, the
+          amount, the admin who awarded it and what they wrote. This is the
+          document a dispute is answered with. It carries no bank details,
+          because the platform never holds any.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <a
+            href="/api/admin/payout"
+            className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-6 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            Points, with the working
+          </a>
+          <a
+            href="/api/admin/payout?of=entries"
+            className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-6 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            The entries they were paid for
+          </a>
+        </div>
       </div>
 
       {snapshots.length > 0 && (
