@@ -9,6 +9,7 @@ import {
 } from "@/lib/creator-session";
 import { SubmissionForm } from "@/components/campaigns/submission-form";
 import { Panel, SectionHeading, Stat } from "@/components/shared/panel";
+import { pauseState } from "@/lib/campaign-pause";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 import { campaignBySlug, monicaRoutes, MONICA_SLUG } from "@/lib/campaigns";
 
@@ -102,10 +103,11 @@ export default async function MonicaCreatorPage() {
     );
   }
 
-  const [challenge, platforms, mine] = await Promise.all([
+  const [challenge, platforms, mine, pause] = await Promise.all([
     openChallenge(),
     registeredPlatforms(creator.enrolmentId),
     creatorSubmissions(creator.enrolmentId),
+    pauseState(),
   ]);
 
   const submittedThisWeek = challenge
@@ -160,7 +162,23 @@ export default async function MonicaCreatorPage() {
 
           {/* The one thing to act on, so it is the only accented block. */}
           <div className="mt-14">
-            {challenge ? (
+            {/* Said here rather than left to the endpoint. A form that accepts
+                a link and then refuses it wastes the one thing a creator on a
+                deadline does not have. */}
+            {pause.paused ? (
+              <Panel tone="warn">
+                <p className="eyebrow text-amber-300">Paused</p>
+                <h2 className="mt-2 text-xl font-bold text-white">
+                  Submissions are paused
+                </h2>
+                <p className="mt-3 max-w-prose text-base leading-relaxed text-white/70">
+                  {pause.reason}
+                </p>
+                <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/50">
+                  Nothing you have already submitted is affected.
+                </p>
+              </Panel>
+            ) : challenge ? (
               <Panel tone="accent">
                 <p className="eyebrow text-brand-gold">
                   Week {challenge.weekNo} · closes{" "}
