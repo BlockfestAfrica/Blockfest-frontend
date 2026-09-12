@@ -12,6 +12,7 @@ import {
   submissions,
 } from "@/lib/db/client";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { isPgError } from "@/lib/db/errors";
 import type { AdminIdentity } from "@/lib/admin/session";
 
 /**
@@ -51,7 +52,10 @@ export interface ReviewedEntry {
 
 export type ReviewOutcome =
   | { ok: true; entryId: string; creator: ReviewedEntry }
-  | { ok: false; reason: "not_found" | "wrong_campaign" | "failed" };
+  | {
+      ok: false;
+      reason: "not_found" | "wrong_campaign" | "failed" | "superseded";
+    };
 
 /**
  * Decide a submission.
@@ -140,6 +144,18 @@ export async function reviewSubmission(
       },
     };
   } catch (error) {
+    /*
+     * The creator replaced this submission while it sat in the queue.
+     *
+     * A rejected submission frees its platform so the creator can send
+     * another, which the rejection note tells them to do. Bringing the old
+     * one back then collides with the new one. This is the reviewer
+     * correcting their own mistake, and it has to say so.
+     */
+    if (isPgError(error, "P0210", "superseded_by_newer_submission")) {
+      return { ok: false, reason: "superseded" };
+    }
+
     console.error(
       "[admin/review]",
       error instanceof Error ? error.message : String(error),

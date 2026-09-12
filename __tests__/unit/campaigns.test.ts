@@ -213,8 +213,25 @@ describe("what we publish about the leaderboard", () => {
   ].join("\n");
 
   it("never claims the board itself updates weekly", () => {
+    /*
+     * Forbidding a phrasing is not forbidding a claim.
+     *
+     * The first version of this banned "standings are published" and the page
+     * said "Standings are announced ... and every Saturday after that", which
+     * is the same promise in different words. The fix that was supposed to
+     * remove it silently no-opped on an indentation mismatch, the test passed,
+     * and the contradiction shipped anyway.
+     *
+     * So this matches on what the sentence CLAIMS: standings, weekly. Winners
+     * being weekly is correct and must still be sayable, hence the negative
+     * lookahead.
+     */
     expect(copy).not.toMatch(/leaderboard updates every (Saturday|week)/i);
     expect(copy).not.toMatch(/standings are published/i);
+    expect(
+      copy,
+      "standings must never be described as a weekly event; winners are",
+    ).not.toMatch(/standings are announced/i);
   });
 
   it("puts weekly winners on one day, and it is Saturday", () => {
