@@ -107,7 +107,7 @@ export function PauseSwitch({ paused }: { paused: boolean }) {
           onChange={(e) => setDraft(e.target.value)}
           maxLength={300}
           placeholder="Why. Creators see this exactly as written."
-          className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-red-400/60 focus:outline-none"
+          className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-red-400/60"
         />
         <button
           type="button"

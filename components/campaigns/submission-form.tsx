@@ -129,7 +129,7 @@ export function SubmissionForm({
           id="platform"
           value={selected}
           onChange={(e) => setPlatform(e.target.value)}
-          className="w-full cursor-pointer rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white focus:border-brand-gold focus:outline-none"
+          className="w-full cursor-pointer rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white focus:border-brand-gold"
         >
           {available.map((p) => (
             <option key={p} value={p}>
@@ -165,7 +165,7 @@ export function SubmissionForm({
           }}
           inputMode="url"
           placeholder="https://"
-          className="w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-brand-gold focus:outline-none"
+          className="w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-brand-gold"
         />
         {error?.field === "url" && (
           <p role="alert" className="text-sm text-red-300">

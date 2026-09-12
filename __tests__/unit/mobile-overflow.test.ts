@@ -53,6 +53,22 @@ function classNames(file: string): string[] {
 }
 
 describe("flex items that hold long strings", () => {
+  /*
+   * The exemption above is only sound while this is true, so it is asserted
+   * rather than assumed.
+   */
+  it("keeps the height inside the shared button helper", () => {
+    const panel = readFileSync(
+      join(process.cwd(), "components/shared/panel.tsx"),
+      "utf8",
+    );
+    const body = panel.slice(panel.indexOf("export function buttonClass"));
+    expect(
+      /\bmin-h-(1[2-9]|[2-9][0-9])\b/.test(body.slice(0, 600)),
+      "buttonClass must set its own min-height, or every call site loses its tap target",
+    ).toBe(true);
+  });
+
   it("can shrink, so they do not push a button off a narrow screen", () => {
     const offenders: string[] = [];
 
@@ -134,7 +150,16 @@ describe("touch targets", () => {
         const tag = src.slice(from, nextChild === -1 ? from + 1200 : nextChild);
         const hasMin = /\bmin-h-(1[1-9]|[2-9][0-9])\b/.test(tag);
         const hasPadding = /\bpy-[3-9]\b/.test(tag);
-        if (!hasMin && !hasPadding) {
+        /*
+         * buttonClass() carries the height itself, and the assertion below
+         * proves it does. Without this the guard reads the call site, sees no
+         * min-h in the literal text, and reports a button that is in fact 48px
+         * tall. A guard that cannot see through the helper pushes people back
+         * to hand-rolled class strings, which is what the helper exists to
+         * stop.
+         */
+        const viaHelper = /\bbuttonClass\(/.test(tag);
+        if (!hasMin && !hasPadding && !viaHelper) {
           offenders.push(`${file}: ${tag.replace(/\s+/g, " ").slice(0, 90)}`);
         }
       }

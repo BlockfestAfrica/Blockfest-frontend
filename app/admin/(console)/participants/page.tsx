@@ -2,7 +2,17 @@ import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/session";
 import { participantCounts, participants } from "@/lib/admin/participants";
 import { ParticipantsTable } from "@/components/admin/participants-table";
-import { Stat } from "@/components/shared/panel";
+import {
+  buttonClass,
+  control,
+  Field,
+  JobCard,
+  PageHeader,
+  Pill,
+  selectControl,
+  SPACING,
+  Stat,
+} from "@/components/shared/panel";
 import { campaigns as allCampaigns, MONICA_SLUG } from "@/lib/campaigns";
 
 export const metadata: Metadata = {
@@ -57,20 +67,29 @@ export default async function AdminParticipantsPage({
   ]);
 
   return (
-    <>
-      <p className="eyebrow text-brand-gold">People</p>
-      <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-white">
-        {counts.joined} joined
-      </h1>
-
-      {/* mobile-grid-ok: four one-word labels over numbers; two columns below
-          sm, four above, so no column is ever narrower than about 150px. */}
-      <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
-        <Stat label="Joined" value={counts.joined} />
-        <Stat label="Submitted" value={counts.submitted} />
-        <Stat label="Silent" value={counts.silent} />
-        <Stat label="Points" value={counts.points} />
-      </div>
+    <div className={SPACING.page}>
+      {/*
+       * The heading is the place, not a number.
+       *
+       * It used to read "417 joined", which made the page title change every
+       * time somebody registered and put the same figure twice on one screen:
+       * once as an h1 and again as the first of four Stats directly below it.
+       * A heading answers where you are. The Stats answer how many.
+       */}
+      <PageHeader
+        context="Monica"
+        title="People"
+        hint="Everyone enrolled, whether or not they have submitted anything. The review queue only shows work that has arrived."
+      >
+        {/* mobile-grid-ok: four one-word labels over numbers; two columns below
+            sm, four above, so no column is ever narrower than about 150px. */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+          <Stat label="Joined" value={counts.joined} />
+          <Stat label="Submitted" value={counts.submitted} />
+          <Stat label="Silent" value={counts.silent} />
+          <Stat label="Points" value={counts.points} />
+        </div>
+      </PageHeader>
 
       {counts.joined === 0 ? (
         /*
@@ -80,109 +99,135 @@ export default async function AdminParticipantsPage({
          * phone it was four stacked rows of it above an empty table. The screen
          * earns them back the moment somebody registers.
          */
-        <p className="mt-8 max-w-prose text-base leading-relaxed text-white/60">
+        <p className="max-w-prose text-base leading-relaxed text-white/70">
           Nobody has registered yet. Everyone who joins appears here, whether or
           not they have submitted anything.
         </p>
       ) : (
         <>
-          <p className="mt-4 max-w-prose text-sm leading-relaxed text-white/60">
-            {counts.silent} {counts.silent === 1 ? "has" : "have"} not submitted
-            anything yet. That is the group worth a message before a brief
-            closes.
-          </p>
-
           {/*
-           * One form, one button.
+           * One job: find somebody.
            *
-           * The search and the campaign switcher were two separate GET forms
-           * with a button each, which on a phone is four stacked full-width
-           * rows before any data. They submit together now.
+           * The search box, its button and the campaign switcher were three
+           * controls loose on the page between the figures and the table, which
+           * on a phone is four stacked full-width rows before any data. They are
+           * one form with one button, inside one named card.
            *
            * The search runs in SQL before the limit and matches name, email and
            * handle, so it reaches somebody outside the page window. The chips
            * inside the table narrow only what is already on screen, and say so.
            */}
-          <form method="get" className="mt-6 flex flex-col gap-2">
-            <label htmlFor="q" className="sr-only">
-              Search by name, email or handle
-            </label>
-            <div className="flex gap-2">
-              <input
+          <JobCard
+            id="find"
+            title="Find somebody"
+            state="todo"
+            hint={
+              search
+                ? undefined
+                : `Searches every registration, not just the ${PAGE_SIZE} on this page.`
+            }
+            status={
+              search ? (
+                <Pill>
+                  {rows.length} {rows.length === 1 ? "match" : "matches"}
+                </Pill>
+              ) : undefined
+            }
+          >
+            <form method="get" className="space-y-4">
+              <Field
                 id="q"
-                name="q"
-                type="search"
-                defaultValue={search ?? ""}
-                placeholder="Name, email or handle"
-                className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
-              >
-                Search
-              </button>
-            </div>
-
-            {allCampaigns.length > 1 && (
-              <div className="flex items-center gap-2">
-                <label htmlFor="campaign" className="text-sm text-white/60">
-                  Campaign
-                </label>
-                <select
-                  id="campaign"
-                  name="campaign"
-                  defaultValue={slug}
-                  className="min-h-11 min-w-0 flex-1 cursor-pointer rounded-lg border border-white/20 bg-ground px-3 text-sm text-white focus:border-brand-gold focus:outline-none sm:flex-none"
-                >
-                  {allCampaigns.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </form>
-
-          {search && (
-            <p className="mt-3 text-sm text-white/60">
-              {rows.length} {rows.length === 1 ? "match" : "matches"} for “
-              {search}”.{" "}
-              <a
-                href={
-                  slug === MONICA_SLUG
-                    ? "/admin/participants"
-                    : `/admin/participants?campaign=${slug}`
+                label="Name, email or handle"
+                hint={
+                  search ? `Showing matches for “${search}”.` : undefined
                 }
-                className="text-link underline underline-offset-2 hover:text-white"
               >
-                Clear
-              </a>
-            </p>
-          )}
+                <div className="flex gap-2">
+                  <input
+                    id="q"
+                    name="q"
+                    type="search"
+                    defaultValue={search ?? ""}
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    placeholder="Ada, ada@example.com, @adawrites"
+                    className={`${control} flex-1`}
+                  />
+                  <button
+                    type="submit"
+                    className={buttonClass("secondary", "shrink-0")}
+                  >
+                    Search
+                  </button>
+                </div>
+              </Field>
 
-          {!search && rows.length === PAGE_SIZE && (
-            <p className="mt-3 text-sm text-white/60">
-              Showing the {PAGE_SIZE} most recent. Search to reach anybody else.
-            </p>
-          )}
+              {allCampaigns.length > 1 && (
+                <Field id="campaign" label="Campaign">
+                  <select
+                    id="campaign"
+                    name="campaign"
+                    defaultValue={slug}
+                    className={selectControl}
+                  >
+                    {allCampaigns.map((c) => (
+                      <option key={c.slug} value={c.slug}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
 
-          <ParticipantsTable
-            rows={rows.map((row) => ({
-              enrolmentId: row.enrolmentId,
-              name: row.name,
-              email: row.email,
-              joinedAt: row.joinedAt.toISOString(),
-              handles: row.handles,
-              submitted: row.submitted,
-              approved: row.approved,
-              points: row.points,
-              active: row.active,
-            }))}
-          />
+              {search && (
+                <a
+                  href={
+                    slug === MONICA_SLUG
+                      ? "/admin/participants"
+                      : `/admin/participants?campaign=${slug}`
+                  }
+                  className="inline-block text-sm text-link underline underline-offset-2 hover:text-white"
+                >
+                  Clear the search
+                </a>
+              )}
+            </form>
+          </JobCard>
+
+          <section aria-labelledby="everyone" className="space-y-4">
+            <h2 id="everyone" className="text-xl font-bold text-white">
+              {search ? "Matches" : "Everyone"}
+            </h2>
+            <p className="max-w-prose text-sm leading-relaxed text-white/70">
+              {counts.silent} {counts.silent === 1 ? "has" : "have"} not
+              submitted anything yet. That is the group worth a message before a
+              brief closes.
+              {!search && rows.length === PAGE_SIZE && (
+                <>
+                  {" "}
+                  This page holds the {PAGE_SIZE} most recent. Search to reach
+                  anybody else.
+                </>
+              )}
+            </p>
+
+            <ParticipantsTable
+              rows={rows.map((row) => ({
+                enrolmentId: row.enrolmentId,
+                name: row.name,
+                email: row.email,
+                joinedAt: row.joinedAt.toISOString(),
+                handles: row.handles,
+                submitted: row.submitted,
+                approved: row.approved,
+                points: row.points,
+                active: row.active,
+              }))}
+            />
+          </section>
         </>
       )}
-    </>
+    </div>
   );
 }

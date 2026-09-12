@@ -2,9 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Trophy } from "lucide-react";
+import { Camera } from "lucide-react";
 import { toast } from "sonner";
-import { Panel, Pill, SectionHeading } from "@/components/shared/panel";
+import {
+  buttonClass,
+  control,
+  Field,
+  JobCard,
+  Pill,
+  Segmented,
+  selectControl,
+} from "@/components/shared/panel";
+import { Confirm } from "@/components/shared/confirm";
+import { naira } from "@/lib/format";
 
 export interface CandidateRow {
   enrolmentId: string;
@@ -26,17 +36,22 @@ const CATEGORY_LABEL = {
   community_favourite: "Community Favourite",
 } as const;
 
+type Category = keyof typeof CATEGORY_LABEL;
+
 /**
- * Choosing and announcing the weekly winners.
+ * The weekly ritual, as two jobs rather than eleven blocks.
  *
- * The candidate list for Creator of the Week arrives already filtered: a past
- * winner is not in it, because the rules say it cannot go to the same person
- * twice. The count of who was removed is shown rather than hidden, so an owner
- * looking for a name and not finding it gets an answer instead of a mystery.
- * That is the third of the three enforcements, and the only one a person sees.
+ * This screen was a flat run of headings, paragraphs, chips, selects, inputs and
+ * buttons, all sitting directly on the page background at the same weight, with
+ * the grouping asserted by a single larger margin partway down. The reader was
+ * asked to infer which of the last six blocks belonged to which of the two
+ * headings, by remembering a gap.
  *
- * Draft and publish are one control with two buttons. The choice is made on the
- * Saturday and announced on the Sunday, and nothing a draft touches is public.
+ * It is two jobs: freeze the standings on Saturday, announce the winners on
+ * Sunday. Each is now an object with a name, a state on its edge, and a foot
+ * containing the control that performs it. Nothing here is boxed: a fill over
+ * this background lands a few values out of 255, which is the defect already
+ * found and rejected once. The boundary is a coloured edge and two hairlines.
  */
 export function WinnersPanel({
   weekNo,
@@ -44,32 +59,36 @@ export function WinnersPanel({
   favouriteCandidates,
   excludedCount,
   picked,
+  frozen,
 }: {
   weekNo: number;
   creatorCandidates: CandidateRow[];
   favouriteCandidates: CandidateRow[];
   excludedCount: number;
   picked: PickedRow[];
+  /** Whether this week's standings have been recorded yet. */
+  frozen: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const [category, setCategory] =
-    useState<keyof typeof CATEGORY_LABEL>("creator_of_week");
+  const [category, setCategory] = useState<Category>("creator_of_week");
   const [enrolmentId, setEnrolmentId] = useState("");
   const [prize, setPrize] = useState("");
   const [note, setNote] = useState("");
 
   const candidates =
     category === "creator_of_week" ? creatorCandidates : favouriteCandidates;
+  const chosen = candidates.find((c) => c.enrolmentId === enrolmentId);
+  const amount = Number(prize);
+  const ready = Boolean(enrolmentId) && Number.isInteger(amount) && amount > 0;
+
+  const announcedThisWeek = picked.filter(
+    (p) => p.weekNo === weekNo && p.publishedAt,
+  ).length;
 
   async function save(publish: boolean) {
-    const amount = Number(prize);
-    if (!enrolmentId) {
-      toast.error("Pick a creator.");
-      return;
-    }
-    if (!Number.isInteger(amount) || amount <= 0) {
-      toast.error("Enter the prize amount in naira.");
+    if (!ready) {
+      toast.error("Pick a creator and enter the prize amount.");
       return;
     }
 
@@ -97,7 +116,7 @@ export function WinnersPanel({
       toast.success(
         publish
           ? `${CATEGORY_LABEL[category]} announced for week ${weekNo}`
-          : `Saved as a draft, not yet public`,
+          : "Saved as a draft. Nothing is public yet.",
       );
       setEnrolmentId("");
       setPrize("");
@@ -124,7 +143,7 @@ export function WinnersPanel({
         return;
       }
       toast.success(
-        `Week ${weekNo} frozen: ${result.rows} creators, version ${result.version}`,
+        `Week ${weekNo} recorded: ${result.rows} creators, version ${result.version}`,
       );
       await router.refresh();
     } catch {
@@ -136,170 +155,147 @@ export function WinnersPanel({
 
   return (
     <>
-      <SectionHeading
-        label="Saturday"
-        title={`Freeze week ${weekNo}`}
-        hint="Records the standings as they are now. A live board answers what the standings are; only this answers what they were, which is the question asked in October. Taking it again makes a new version and loses nothing."
-      />
-      <button
-        type="button"
-        disabled={busy}
-        onClick={snapshot}
-        className="mt-4 inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full border border-white/20 px-6 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10 disabled:opacity-60"
-      >
-        <Camera className="h-4 w-4" aria-hidden="true" />
-        {busy ? "Working..." : `Freeze week ${weekNo} standings`}
-      </button>
-
-      <div className="mt-12">
-        <SectionHeading
-          label="Sunday"
-          title={`Week ${weekNo} winners`}
-          hint="Chosen by a person, never automatically. A draft is invisible on the public page until you announce it."
-        />
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          {(
-            Object.keys(CATEGORY_LABEL) as (keyof typeof CATEGORY_LABEL)[]
-          ).map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => {
-                setCategory(key);
-                setEnrolmentId("");
-              }}
-              aria-pressed={category === key}
-              className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-semibold transition-colors ${
-                category === key
-                  ? "border-brand-gold bg-brand-gold/15 text-brand-gold"
-                  : "border-white/20 text-white/60 hover:text-white"
-              }`}
-            >
-              {CATEGORY_LABEL[key]}
-            </button>
-          ))}
-        </div>
-
-        {/* The third enforcement: say why a name is missing, rather than
-            letting an owner hunt for somebody the list will never offer. */}
-        {category === "creator_of_week" && excludedCount > 0 && (
-          <p className="mt-4 max-w-prose text-sm leading-relaxed text-amber-200/80">
-            {excludedCount}{" "}
-            {excludedCount === 1 ? "creator is" : "creators are"} not listed
-            because they have already been Creator of the Week. The rules say it
-            cannot go to the same person twice. Community Favourite has no such
-            limit.
-          </p>
-        )}
-
-        <div className="mt-5 flex flex-col gap-3">
-          <label htmlFor="winner" className="sr-only">
-            The creator
-          </label>
-          <select
-            id="winner"
-            value={enrolmentId}
-            onChange={(event) => setEnrolmentId(event.target.value)}
-            className="min-h-12 w-full cursor-pointer rounded-lg border border-white/15 bg-ground px-4 text-base text-white focus:border-brand-gold focus:outline-none"
+      <JobCard
+        id="freeze"
+        step="Saturday"
+        title={`Record the week ${weekNo} standings`}
+        state={frozen ? "done" : "now"}
+        status={
+          frozen ? <Pill tone="good">Recorded</Pill> : <Pill>Not yet</Pill>
+        }
+        hint="Writes down the standings as they are today. The live board always shows where things stand now; only this can answer where they stood on a particular Saturday, which is the question asked in October when the prizes are settled. Doing it again makes a new version and loses nothing."
+        foot={
+          <button
+            type="button"
+            disabled={busy}
+            onClick={snapshot}
+            className={buttonClass(frozen ? "secondary" : "primary")}
           >
-            <option value="">Pick a creator</option>
-            {candidates.map((c) => (
-              <option key={c.enrolmentId} value={c.enrolmentId}>
-                {c.rank}. {c.name} ({c.points} points)
-              </option>
-            ))}
-          </select>
+            <Camera className="h-4 w-4" aria-hidden="true" />
+            {busy ? "Working…" : frozen ? "Record again" : "Record the standings"}
+          </button>
+        }
+      />
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <label htmlFor="prize" className="sr-only">
-              Prize in naira
-            </label>
-            <input
-              id="prize"
-              inputMode="numeric"
-              value={prize}
-              onChange={(event) =>
-                setPrize(event.target.value.replace(/[^\d]/g, ""))
-              }
-              placeholder="Prize in naira"
-              className="min-w-0 flex-1 rounded-lg border border-white/15 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
-            />
-            <label htmlFor="winner-note" className="sr-only">
-              Why, shown on the winners page
-            </label>
-            <input
-              id="winner-note"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              maxLength={300}
-              placeholder="Why. Shown publicly."
-              className="min-w-0 flex-[2] rounded-lg border border-white/15 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold focus:outline-none"
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-2">
+      <JobCard
+        id="announce"
+        step="Sunday"
+        title={`Announce the week ${weekNo} winners`}
+        state={announcedThisWeek >= 2 ? "done" : frozen ? "now" : "todo"}
+        status={<Pill>{announcedThisWeek} of 2 announced</Pill>}
+        hint="Chosen by a person, never automatically. A draft is invisible on the public page until you announce it."
+        foot={
+          <>
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || !ready}
               onClick={() => save(false)}
-              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full border border-white/20 px-6 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10 disabled:opacity-60"
+              className={buttonClass("quiet")}
             >
               Save as draft
             </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => save(true)}
-              className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:opacity-60"
+            <Confirm
+              label={`Announce ${CATEGORY_LABEL[category]}`}
+              question={`Announce ${chosen?.name ?? "this creator"} as ${CATEGORY_LABEL[category]} for week ${weekNo}, with ${ready ? naira(amount) : "no prize set"}?`}
+              consequence="This publishes the name and the amount on the public winners page straight away. There is no undo here."
+              confirmLabel={`Yes, announce ${ready ? naira(amount) : "it"}`}
+              pending={busy}
+              onConfirm={() => save(true)}
+            />
+            {!ready && (
+              <p className="text-sm text-white/70">
+                Pick a creator and enter the prize to continue.
+              </p>
+            )}
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Segmented<Category>
+            legend="Which prize"
+            value={category}
+            onChange={(next) => {
+              setCategory(next);
+              setEnrolmentId("");
+            }}
+            options={(Object.keys(CATEGORY_LABEL) as Category[]).map((key) => ({
+              value: key,
+              label: CATEGORY_LABEL[key],
+            }))}
+          />
+
+          {/* The third of the three enforcements of the no-repeat rule: the
+              index refuses it, the candidate list omits them, and this says
+              why a name somebody is looking for is not there. */}
+          {category === "creator_of_week" && excludedCount > 0 && (
+            <p className="max-w-prose text-sm leading-relaxed text-white/70">
+              {excludedCount}{" "}
+              {excludedCount === 1 ? "creator is" : "creators are"} missing from
+              this list because they have already been Creator of the Week. It
+              cannot go to the same person twice. Community Favourite can.
+            </p>
+          )}
+
+          <Field
+            id="winner"
+            label="Creator"
+            hint="Ranked by the standings, so the leader is first."
+          >
+            <select
+              id="winner"
+              name="winner"
+              value={enrolmentId}
+              onChange={(event) => setEnrolmentId(event.target.value)}
+              className={selectControl}
             >
-              <Trophy className="h-4 w-4" aria-hidden="true" />
-              {busy ? "Working..." : "Announce"}
-            </button>
+              <option value="">Pick a creator…</option>
+              {candidates.map((c) => (
+                <option key={c.enrolmentId} value={c.enrolmentId}>
+                  {c.rank}. {c.name} ({c.points} points)
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              id="prize"
+              label="Prize"
+              hint={ready ? naira(amount) : "In naira, digits only."}
+            >
+              <input
+                id="prize"
+                name="prize"
+                inputMode="numeric"
+                autoComplete="off"
+                value={prize}
+                onChange={(event) =>
+                  setPrize(event.target.value.replace(/[^\d]/g, ""))
+                }
+                placeholder="300000"
+                className={control}
+              />
+            </Field>
+
+            <Field
+              id="winner-note"
+              label="Why they won"
+              hint="Shown on the public winners page."
+            >
+              <input
+                id="winner-note"
+                name="note"
+                autoComplete="off"
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                maxLength={300}
+                placeholder="Carried the week on TikTok…"
+                className={control}
+              />
+            </Field>
           </div>
         </div>
-      </div>
-
-      {picked.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-xl font-bold text-white">Chosen so far</h2>
-          <ul className="mt-4 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/12">
-            {picked.map((p) => (
-              <li
-                key={`${p.weekNo}-${p.category}`}
-                className="flex flex-wrap items-center gap-x-3 gap-y-2 p-4"
-              >
-                <span className="text-sm font-semibold text-white">
-                  W{p.weekNo}
-                </span>
-                <span className="text-sm text-white/60">
-                  {CATEGORY_LABEL[p.category]}
-                </span>
-                <span className="text-base font-semibold text-white">
-                  {p.name}
-                </span>
-                <span className="tabular-nums text-sm text-white/60">
-                  ₦{p.prizeNaira.toLocaleString("en-NG")}
-                </span>
-                {p.publishedAt ? (
-                  <Pill tone="good">Announced</Pill>
-                ) : (
-                  <Pill>Draft, not public</Pill>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {picked.length === 0 && (
-        <Panel tone="quiet" className="mt-12">
-          <p className="text-sm leading-relaxed text-white/60">
-            Nothing chosen yet. The first winners are announced Sunday 20
-            September.
-          </p>
-        </Panel>
-      )}
+      </JobCard>
     </>
   );
 }

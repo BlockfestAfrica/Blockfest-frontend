@@ -111,7 +111,7 @@ export function PurgePanel({ paused }: { paused: boolean }) {
           autoComplete="off"
           spellCheck={false}
           placeholder={`Type ${MONICA_SLUG} to confirm`}
-          className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-red-400/60 focus:outline-none disabled:opacity-50"
+          className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-red-400/60 disabled:opacity-50"
         />
         <button
           type="button"

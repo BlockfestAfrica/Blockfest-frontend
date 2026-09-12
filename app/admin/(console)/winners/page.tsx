@@ -8,8 +8,9 @@ import {
 } from "@/lib/admin/winners";
 import { leaderboard } from "@/lib/leaderboard";
 import { WinnersPanel } from "@/components/admin/winners-panel";
-import { Panel } from "@/components/shared/panel";
+import { PageHeader, SPACING } from "@/components/shared/panel";
 import { currentWeekNo } from "@/lib/campaigns";
+import { count, dateTime } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Winners",
@@ -24,6 +25,13 @@ export const revalidate = 0;
  *
  * Owners only, checked here as well as by the tab being hidden and by the API
  * refusing again. A hidden tab is a tidy interface, not a permission.
+ *
+ * The page is four things in a fixed order: where you are, the two jobs, the
+ * paperwork, and the record of what has been recorded. Each job carries its own
+ * state, which is why the yellow warning bar that used to sit at the top is
+ * gone: it announced "week 3 is not frozen yet" directly above a control headed
+ * "Freeze week 3", in an alarm colour, for the ordinary condition of a Saturday
+ * morning. The job now says "Not yet" on itself.
  */
 export default async function WinnersPage() {
   const admin = await requireAdmin();
@@ -31,15 +39,11 @@ export default async function WinnersPage() {
 
   if (!isOwner(admin.admin)) {
     return (
-      <>
-        <h1 className="text-display-sm font-bold uppercase tracking-[-0.03em] text-white">
-          Owners only
-        </h1>
-        <p className="mt-4 max-w-prose text-base leading-relaxed text-white/60">
-          Announcing a winner commits prize money to a named person, so it is
-          restricted to owners. Everything else in the console is open to you.
-        </p>
-      </>
+      <PageHeader
+        context="Winners"
+        title="Owners only"
+        hint="Announcing a winner commits prize money to a named person, so it is restricted to owners. Everything else in the console is open to you."
+      />
     );
   }
 
@@ -63,111 +67,101 @@ export default async function WinnersPage() {
    */
   const excludedCount = Math.max(0, board.length - creators.length);
 
-  const thisWeekFrozen = snapshots.some((s) => s.weekNo === weekNo);
-
   return (
-    <>
-      <p className="eyebrow text-brand-gold">Winners</p>
-      <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-white">
-        Week {weekNo}
-      </h1>
+    <div className={SPACING.page}>
+      <PageHeader
+        context={`Monica · Week ${weekNo}`}
+        title="Winners"
+        hint="Two jobs, in order. Record the standings on Saturday, announce on Sunday. Both are done by a person, and the second one is public the moment you confirm it."
+      />
 
-      {!thisWeekFrozen && (
-        <Panel tone="warn" className="mt-6">
-          <p className="text-sm leading-relaxed text-white/75">
-            Week {weekNo} has not been frozen yet. Do that before announcing,
-            so the standings the prize was decided on are recorded.
-          </p>
-        </Panel>
-      )}
-
-      <div className="mt-8">
-        <WinnersPanel
-          weekNo={weekNo}
-          creatorCandidates={creators.map((c) => ({
-            enrolmentId: c.enrolmentId,
-            name: c.name,
-            points: c.points,
-            rank: c.rank,
-          }))}
-          favouriteCandidates={favourites.map((c) => ({
-            enrolmentId: c.enrolmentId,
-            name: c.name,
-            points: c.points,
-            rank: c.rank,
-          }))}
-          excludedCount={excludedCount}
-          picked={picked.map((p) => ({
-            weekNo: p.weekNo,
-            category: p.category,
-            name: p.name,
-            prizeNaira: p.prizeNaira,
-            publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
-          }))}
-        />
-      </div>
+      <WinnersPanel
+        weekNo={weekNo}
+        creatorCandidates={creators.map((c) => ({
+          enrolmentId: c.enrolmentId,
+          name: c.name,
+          points: c.points,
+          rank: c.rank,
+        }))}
+        favouriteCandidates={favourites.map((c) => ({
+          enrolmentId: c.enrolmentId,
+          name: c.name,
+          points: c.points,
+          rank: c.rank,
+        }))}
+        excludedCount={excludedCount}
+        picked={picked.map((p) => ({
+          weekNo: p.weekNo,
+          category: p.category,
+          name: p.name,
+          prizeNaira: p.prizeNaira,
+          publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
+        }))}
+        frozen={snapshots.some((s) => s.weekNo === weekNo)}
+      />
 
       {/*
        * The working, for the people being paid.
        *
-       * A link rather than a button: it is a GET that changes nothing, and a
-       * link can be opened, saved and attached to an email, which is what
-       * somebody actually does with it two days before a transfer.
+       * Links rather than buttons: a GET that changes nothing, and a link can be
+       * opened, saved and attached to an email, which is what somebody actually
+       * does with it two days before a transfer.
        */}
-      <div className="mt-12 border-t border-white/12 pt-8">
-        <h2 className="text-xl font-bold text-white">Payout audit</h2>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+      <section aria-labelledby="paperwork" className="space-y-4">
+        <h2 id="paperwork" className="text-xl font-bold text-white">
+          Paperwork
+        </h2>
+        <p className="max-w-prose text-sm leading-relaxed text-white/70">
           Every ledger row for the top five, with the date, the source, the
           amount, the admin who awarded it and what they wrote. This is the
           document a dispute is answered with. It carries no bank details,
           because the platform never holds any.
         </p>
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3">
           <a
             href="/api/admin/payout"
-            className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-6 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+            className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-white/20 px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
           >
             <Download className="h-4 w-4" aria-hidden="true" />
             Points, with the working
           </a>
           <a
             href="/api/admin/payout?of=entries"
-            className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-6 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+            className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-white/20 px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
           >
             <Download className="h-4 w-4" aria-hidden="true" />
             The entries they were paid for
           </a>
         </div>
-      </div>
 
-      {snapshots.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-xl font-bold text-white">Frozen weeks</h2>
-          <ul className="mt-4 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/12">
-            {snapshots.map((s) => (
-              <li
-                key={`${s.weekNo}-${s.version}`}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 p-4 text-sm"
-              >
-                <span className="font-semibold text-white">
-                  Week {s.weekNo}
-                </span>
-                <span className="text-white/60">version {s.version}</span>
-                <span className="text-white/60">{s.rows} creators</span>
-                <span className="text-white/55">
-                  {s.takenAt.toLocaleString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    timeZone: "Africa/Lagos",
-                  })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </>
+        {snapshots.length > 0 && (
+          <div className="pt-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50">
+              Recorded so far
+            </h3>
+            {/* A definition list, because every row is week then facts about
+                that week. It was four spans in a flex row, which on a phone
+                wrapped into a shape with no grammar. */}
+            <dl className="mt-3 divide-y divide-white/10 border-y border-white/10">
+              {snapshots.map((s) => (
+                <div
+                  key={`${s.weekNo}-${s.version}`}
+                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
+                >
+                  <dt className="font-semibold text-white">Week {s.weekNo}</dt>
+                  <dd className="text-sm text-white/60">
+                    {count(s.rows)} creators
+                    {s.version > 1 && ` · version ${s.version}`}
+                    <span className="ml-2 text-white/45">
+                      {dateTime(s.takenAt)}
+                    </span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+      </section>
+    </div>
   );
 }

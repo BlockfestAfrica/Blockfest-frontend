@@ -194,3 +194,280 @@ export function Pill({
     </span>
   );
 }
+
+/* ===========================================================================
+ * The structural layer.
+ *
+ * Everything above is a surface: a thing you put content on. What the admin
+ * screens were missing is an OBJECT: a bounded, named job with a beginning and
+ * an end, so a screen reads as three things to do rather than eleven anonymous
+ * blocks separated by margin.
+ *
+ * Deliberately built without a fill. A recessed panel over #0A1628 lands three
+ * to ten values apart out of 255, which is the exact defect recorded in the
+ * tone table above and rejected once already. So the boundary is a coloured
+ * left edge and two hairlines, which survive a phone in sunlight where a 3%
+ * fill does not.
+ * ========================================================================= */
+
+/** The spacing scale. Reaching for a fifth value means a new object, not a new gap. */
+const GAP = {
+  /** Inside a control group: a label and its input. */
+  tight: "space-y-2",
+  /** Between controls in the same job. */
+  related: "space-y-4",
+  /** Between the parts of a job. */
+  section: "space-y-6",
+  /** Between jobs. */
+  page: "space-y-10",
+} as const;
+
+export const SPACING = GAP;
+
+type JobState = "todo" | "now" | "done";
+
+/**
+ * The edge carries the state, because it is the only always-visible part.
+ *
+ * Gold means this is the thing to do now. Green means it is done. Neutral means
+ * it is waiting on something else.
+ */
+const JOB_EDGE: Record<JobState, string> = {
+  todo: "border-l-white/15",
+  now: "border-l-brand-gold",
+  done: "border-l-green-400/50",
+};
+
+/**
+ * One job: a bounded piece of work with a name and an outcome.
+ *
+ * The header rail says what it is and where it stands. The body is how you do
+ * it. The foot is what does it. A screen built from these reads as a list of
+ * jobs, which is what an operations console is.
+ */
+export function JobCard({
+  id,
+  step,
+  title,
+  hint,
+  status,
+  state = "todo",
+  foot,
+  children,
+}: {
+  /** Anchors the section, so a job can be linked to. */
+  id: string;
+  /** The small label above the title: when this is done, or which step it is. */
+  step?: string;
+  title: string;
+  hint?: string;
+  /** Where this job stands, shown in the rail. */
+  status?: ReactNode;
+  state?: JobState;
+  /** The controls that perform the job. Separated by a rule. */
+  foot?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <section
+      id={id}
+      aria-labelledby={`${id}-title`}
+      // scroll-mt clears the sticky console bar when a job is linked to.
+      className={`scroll-mt-24 border-l-2 pl-4 sm:pl-5 ${JOB_EDGE[state]}`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-white/10 pb-3">
+        <div className="min-w-0">
+          {step && (
+            <p
+              className={`eyebrow ${
+                state === "now" ? "text-brand-gold" : "text-white/45"
+              }`}
+            >
+              {step}
+            </p>
+          )}
+          <h2
+            id={`${id}-title`}
+            className={`${step ? "mt-1" : ""} text-lg font-bold text-pretty text-white sm:text-xl`}
+          >
+            {title}
+          </h2>
+        </div>
+        {status && <div className="shrink-0">{status}</div>}
+      </div>
+
+      {hint && (
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
+          {hint}
+        </p>
+      )}
+
+      {children && <div className="mt-4">{children}</div>}
+
+      {foot && (
+        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
+          {foot}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * The top of a screen: what it is, then the figures, then what to do here.
+ *
+ * Both admin screens spent their h1 on a datum, "Week 5" and "417 joined", with
+ * their own name demoted to a 12px eyebrow. A number is not a title, and the
+ * figure was repeated four lines below in the stat row anyway.
+ */
+export function PageHeader({
+  context,
+  title,
+  hint,
+  children,
+}: {
+  /** Where you are, small and above. */
+  context?: string;
+  title: string;
+  hint?: string;
+  /** A row of Stat, usually. */
+  children?: ReactNode;
+}) {
+  return (
+    <header>
+      {context && <p className="eyebrow text-brand-gold">{context}</p>}
+      <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-pretty text-white">
+        {title}
+      </h1>
+      {hint && (
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
+          {hint}
+        </p>
+      )}
+      {children && <div className="mt-6">{children}</div>}
+    </header>
+  );
+}
+
+/**
+ * A labelled field.
+ *
+ * There were seven controls across the two screens whose only visible
+ * identification was a placeholder, which disappears on the first keystroke.
+ * Two of them sat side by side and one of them was the prize money: once a
+ * number and a sentence are typed, nothing says which box is the amount.
+ */
+export function Field({
+  id,
+  label,
+  hint,
+  error,
+  children,
+}: {
+  id: string;
+  label: string;
+  hint?: string;
+  error?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={GAP.tight}>
+      <label htmlFor={id} className="block text-sm font-semibold text-white">
+        {label}
+      </label>
+      {children}
+      {hint && !error && <p className="text-sm text-white/70">{hint}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-red-300">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The one input recipe.
+ *
+ * Never contains outline-none. globals.css defines a single site-wide
+ * focus-visible ring and its own comment forbids removing it, and eighteen
+ * controls removed it anyway: Tailwind's utilities layer sits after base, so
+ * `focus:outline-none` silently deletes the only focus indicator the product
+ * has. With no fills anywhere, that ring is the only thing saying where you are
+ * in a form.
+ */
+export const control =
+  "w-full min-h-12 rounded-lg border border-white/15 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 transition-colors focus:border-brand-gold";
+
+/**
+ * A native select needs its own colours declared.
+ *
+ * The option list is drawn by the operating system, not the page, so on Windows
+ * in dark mode an undeclared select renders dark text on dark and is unreadable.
+ */
+export const selectControl = `${control} cursor-pointer bg-ground [&>option]:bg-ground [&>option]:text-white`;
+
+type Intent = "primary" | "secondary" | "quiet" | "danger";
+
+const INTENT: Record<Intent, string> = {
+  primary: "bg-brand-gold text-black hover:bg-brand-gold-hover",
+  secondary: "border border-white/20 text-white hover:bg-white/10",
+  quiet: "text-white/70 hover:text-white hover:bg-white/5",
+  danger: "border border-red-400/40 text-red-300 hover:bg-red-400/15",
+};
+
+/**
+ * Button classes, exported as a string as well as a component.
+ *
+ * Two controls on the winners screen must stay anchors: they are GETs that
+ * download a file, and somebody attaches that file to an email, which needs a
+ * real link. Without a class-only export those two get hand-rolled and drift.
+ */
+export function buttonClass(intent: Intent = "secondary", className = ""): string {
+  return `inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-6 text-sm font-semibold transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-60 ${INTENT[intent]} ${className}`.trim();
+}
+
+/**
+ * A group of choices that says what it is grouping.
+ *
+ * A bare row of pills is a set of buttons with no name, which a screen reader
+ * reads as four unrelated controls and a person reads as four unrelated
+ * controls that happen to be adjacent.
+ */
+export function Segmented<T extends string>({
+  legend,
+  value,
+  options,
+  onChange,
+}: {
+  legend: string;
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (value: T) => void;
+}) {
+  return (
+    <fieldset>
+      <legend className="eyebrow text-white/45">{legend}</legend>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {options.map((option) => {
+          const on = option.value === value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              aria-pressed={on}
+              className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-semibold transition-colors ${
+                on
+                  ? "border-brand-gold bg-brand-gold/15 text-brand-gold"
+                  : "border-white/20 text-white/70 hover:text-white"
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
