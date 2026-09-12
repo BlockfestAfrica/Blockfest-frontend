@@ -5,6 +5,7 @@ import { pendingSubmissions } from "@/lib/admin/review";
 import { ReviewQueue } from "@/components/admin/review-queue";
 import { ReissueLink } from "@/components/admin/reissue-link";
 import { PauseSwitch } from "@/components/admin/pause-switch";
+import { PurgePanel } from "@/components/admin/purge-panel";
 import { pauseState } from "@/lib/campaign-pause";
 import { isOwner } from "@/lib/admin/session";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
@@ -136,7 +137,19 @@ export default async function AdminQueuePage() {
               bigger action than approving one entry, and is the first place
               the owner and reviewer distinction is actually used. */}
           {isOwner(admin.admin) && (
-            <PauseSwitch paused={pause.paused} reason={pause.reason} />
+            <>
+              <PauseSwitch paused={pause.paused} reason={pause.reason} />
+
+              {/* Only before the campaign opens. The database refuses a purge
+                  after starts_at regardless, so this is about not showing a
+                  button that cannot work rather than about stopping anything.
+                  An unreadable date counts as open: everywhere else an unknown
+                  answer means the campaign is running, but the one destructive
+                  action fails closed. */}
+              {pause.startsAt !== null && pause.startsAt > new Date() && (
+                <PurgePanel paused={pause.paused} />
+              )}
+            </>
           )}
         </div>
       </section>

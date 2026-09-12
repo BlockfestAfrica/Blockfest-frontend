@@ -15,9 +15,22 @@ export interface PauseState {
   paused: boolean;
   /** Shown to creators verbatim. Null when running. */
   reason: string | null;
+  /**
+   * When registration opens, or null if it could not be read.
+   *
+   * Read from the row rather than the constant in lib/campaigns, because the
+   * one destructive action in the admin screen is allowed only before this
+   * moment and it is the database that enforces it. A screen deciding from a
+   * hardcoded date while the function decides from the row is two answers to
+   * one question, and they only have to disagree once.
+   *
+   * Null when unknown, and callers treat unknown as open. That is the opposite
+   * of the pause default above on purpose: this one gates destruction.
+   */
+  startsAt: Date | null;
 }
 
-const RUNNING: PauseState = { paused: false, reason: null };
+const RUNNING: PauseState = { paused: false, reason: null, startsAt: null };
 
 /**
  * Fails open, and that is a deliberate choice rather than an oversight.
@@ -39,17 +52,19 @@ export async function pauseState(): Promise<PauseState> {
       .select({
         pausedAt: campaigns.pausedAt,
         reason: campaigns.pausedReason,
+        startsAt: campaigns.startsAt,
       })
       .from(campaigns)
       .where(eq(campaigns.slug, MONICA_SLUG))
       .limit(1);
 
     const row = rows[0];
-    if (!row?.pausedAt) return RUNNING;
+    if (!row) return RUNNING;
 
     return {
-      paused: true,
-      reason: row.reason?.trim() || null,
+      paused: Boolean(row.pausedAt),
+      reason: row.pausedAt ? row.reason?.trim() || null : null,
+      startsAt: row.startsAt ?? null,
     };
   } catch (error) {
     console.warn(
