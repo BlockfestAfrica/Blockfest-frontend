@@ -628,3 +628,61 @@ describe("the message when a submission collides", () => {
     ).rejects.toThrow(/already_submitted_for_platform/);
   });
 });
+
+/**
+ * Re-deciding a submission the creator has already replaced.
+ *
+ * A rejected submission frees its platform, which is what 0011 exists for and
+ * what the rejection note tells the creator to do. So a reviewer who decides
+ * their rejection was wrong, and approves the old one, collides with the
+ * replacement. Before this it was an unmapped unique_violation: the most
+ * sympathetic case in the queue getting the least useful error.
+ */
+describe("re-deciding a superseded submission", () => {
+  it("is refused by name rather than as a constraint violation", async () => {
+    await openNow(week1);
+    const me = await makeCreator(["x"]);
+    const admin = (
+      await db.query<{ id: string }>(
+        `SELECT id FROM admin_users ORDER BY created_at LIMIT 1`,
+      )
+    ).rows[0];
+
+    const first = await submit(me, week1, "x", "https://x.com/first/1");
+    const firstId = (first.rows[0] as { submission_id: string }).submission_id;
+
+    await db.query(
+      `SELECT review($1::uuid, 'rejected'::submission_status, $2::uuid, 'Not your account')`,
+      [firstId, admin.id],
+    );
+
+    // The creator does exactly what the note told them to.
+    await submit(me, week1, "x", "https://x.com/second/1");
+
+    // The reviewer changes their mind about the first one.
+    await expect(
+      db.query(
+        `SELECT review($1::uuid, 'approved'::submission_status, $2::uuid, NULL)`,
+        [firstId, admin.id],
+      ),
+    ).rejects.toThrow(/superseded_by_newer_submission/);
+  });
+
+  it("still lets an ordinary decision through", async () => {
+    await openNow(week1);
+    const me = await makeCreator(["x"]);
+    const admin = (
+      await db.query<{ id: string }>(
+        `SELECT id FROM admin_users ORDER BY created_at LIMIT 1`,
+      )
+    ).rows[0];
+
+    const only = await submit(me, week1, "x", "https://x.com/only/1");
+    await expect(
+      db.query(
+        `SELECT review($1::uuid, 'approved'::submission_status, $2::uuid, NULL)`,
+        [(only.rows[0] as { submission_id: string }).submission_id, admin.id],
+      ),
+    ).resolves.toBeTruthy();
+  });
+});

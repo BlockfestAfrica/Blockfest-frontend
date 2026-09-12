@@ -96,6 +96,17 @@ export async function POST(request: NextRequest) {
   if (!outcome.ok) {
     // not_found and wrong_campaign answer identically, so this cannot be used
     // to discover which ids exist.
+    if (outcome.reason === "superseded") {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "This creator has already sent a replacement for that platform, so this one cannot be changed. Decide the newer submission instead.",
+        },
+        { status: 409 },
+      );
+    }
+
     if (outcome.reason === "failed") {
       return NextResponse.json(
         { ok: false, message: "Something went wrong at our end." },
