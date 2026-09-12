@@ -1,0 +1,156 @@
+import "server-only";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import {
+  campaignCreators,
+  campaigns,
+  challengeEntries,
+  creators,
+  creatorSocialHandles,
+  getDb,
+  submissions,
+} from "@/lib/db/client";
+import type { AdminIdentity } from "@/lib/admin/session";
+
+/**
+ * Everyone enrolled in a campaign, whether or not they have ever submitted.
+ *
+ * The review queue only shows work that has arrived, so a creator who
+ * registered and then went quiet was invisible: there was no way to ask how
+ * many people had joined, who had gone silent, or who to chase before a brief
+ * closed.
+ *
+ * This carries contact details, which the queue deliberately does not. The
+ * queue is read while deciding somebody's points and needs nothing but the post
+ * and the handle; this is read while deciding whether to email somebody. So it
+ * takes an AdminIdentity, for the same reason reviewSubmission does: an
+ * unguarded caller does not compile.
+ *
+ * It must never become the public leaderboard's data source. That one has its
+ * own hand-written whitelist in lib/leaderboard.ts, and the two are separate on
+ * purpose.
+ */
+
+export type ParticipantFilter = "all" | "submitted" | "silent" | "approved";
+
+export interface Participant {
+  enrolmentId: string;
+  name: string;
+  email: string;
+  joinedAt: Date;
+  handles: string[];
+  submitted: number;
+  approved: number;
+  points: number;
+  active: boolean;
+}
+
+export interface ParticipantQuery {
+  /** Campaign slug. More than one campaign is coming. */
+  slug: string;
+  filter?: ParticipantFilter;
+  /** Matches a name or an email, because that is how somebody is looked up. */
+  search?: string;
+  limit?: number;
+}
+
+export async function participants(
+  admin: AdminIdentity,
+  query: ParticipantQuery,
+): Promise<Participant[]> {
+  void admin; // The type is the proof the guard ran.
+
+  const db = getDb();
+  const search = query.search?.trim();
+  const limit = Math.min(Math.max(query.limit ?? 200, 1), 500);
+
+  /*
+   * Counted with correlated subqueries rather than joins.
+   *
+   * Joining submissions and handles and then grouping multiplies rows: a
+   * creator with three handles and two submissions produces six, and every
+   * count comes out wrong in a way that looks plausible. Subqueries keep one
+   * row per creator and each number counts what it says it counts.
+   */
+  const submittedCount = sql<number>`(
+    SELECT count(*)::int FROM ${submissions} s
+      JOIN ${challengeEntries} ce ON ce.id = s.entry_id
+     WHERE ce.campaign_creator_id = ${campaignCreators.id}
+  )`;
+
+  const approvedCount = sql<number>`(
+    SELECT count(*)::int FROM ${submissions} s
+      JOIN ${challengeEntries} ce ON ce.id = s.entry_id
+     WHERE ce.campaign_creator_id = ${campaignCreators.id}
+       AND s.status = 'approved'
+  )`;
+
+  const handleList = sql<string[]>`(
+    SELECT COALESCE(array_agg(h.platform || ':' || h.handle ORDER BY h.platform), '{}')
+      FROM ${creatorSocialHandles} h
+     WHERE h.creator_id = ${creators.id}
+  )`;
+
+  const filters = [eq(campaigns.slug, query.slug)];
+
+  if (search) {
+    const like = `%${search}%`;
+    const match = or(ilike(creators.fullName, like), ilike(creators.email, like));
+    if (match) filters.push(match);
+  }
+
+  const rows = await db
+    .select({
+      enrolmentId: campaignCreators.id,
+      name: creators.fullName,
+      email: creators.email,
+      joinedAt: campaignCreators.joinedAt,
+      handles: handleList,
+      submitted: submittedCount,
+      approved: approvedCount,
+      points: campaignCreators.pointsTotal,
+      status: campaignCreators.status,
+    })
+    .from(campaignCreators)
+    .innerJoin(creators, eq(creators.id, campaignCreators.creatorId))
+    .innerJoin(campaigns, eq(campaigns.id, campaignCreators.campaignId))
+    .where(and(...filters))
+    .orderBy(desc(campaignCreators.joinedAt))
+    .limit(limit);
+
+  const mapped: Participant[] = rows.map((row) => ({
+    enrolmentId: row.enrolmentId,
+    name: row.name,
+    email: row.email,
+    joinedAt: row.joinedAt,
+    handles: Array.isArray(row.handles) ? row.handles : [],
+    submitted: Number(row.submitted ?? 0),
+    approved: Number(row.approved ?? 0),
+    points: Number(row.points ?? 0),
+    active: row.status === "active",
+  }));
+
+  // Filtered here rather than in SQL, because the counts are already computed
+  // and the set is a few hundred rows at most. Pushing it down would mean
+  // repeating the subqueries in a HAVING clause for no measurable gain.
+  switch (query.filter) {
+    case "submitted":
+      return mapped.filter((p) => p.submitted > 0);
+    case "silent":
+      // The group worth acting on: joined, never sent anything.
+      return mapped.filter((p) => p.submitted === 0);
+    case "approved":
+      return mapped.filter((p) => p.approved > 0);
+    default:
+      return mapped;
+  }
+}
+
+/** Headline counts, so the page can say what it is showing. */
+export function participantTotals(all: Participant[]) {
+  return {
+    total: all.length,
+    submitted: all.filter((p) => p.submitted > 0).length,
+    silent: all.filter((p) => p.submitted === 0).length,
+    approved: all.filter((p) => p.approved > 0).length,
+  };
+}
