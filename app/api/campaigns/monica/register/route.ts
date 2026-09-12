@@ -239,7 +239,8 @@ export async function POST(request: NextRequest) {
         ${input.audienceSize ?? null}, ${input.location ?? null},
         ${handles.x}, ${handles.instagram}, ${handles.tiktok},
         ${ref || null}, ${ip}, ${userAgent},
-        ${newReferralCode()}, ${input.rulesVersion}
+        ${newReferralCode()}, ${input.rulesVersion},
+        ${input.marketingOptIn}, ${input.privacyVersion ?? null}
       )
     `);
 

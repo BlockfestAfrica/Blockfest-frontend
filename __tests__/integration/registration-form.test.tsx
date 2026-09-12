@@ -75,7 +75,11 @@ function fill() {
   fireEvent.change(screen.getByLabelText("What do you make?"), {
     target: { value: "Finance explainers" },
   });
-  fireEvent.click(screen.getByRole("checkbox"));
+  // Named, because there are two checkboxes now: accepting the rules, which is
+  // required, and the optional marketing opt-in, which must stay untouched.
+  fireEvent.click(
+    screen.getByRole("checkbox", { name: /accept the campaign rules/i }),
+  );
 }
 
 describe("the submitted payload", () => {
@@ -314,5 +318,61 @@ describe("a failure that belongs to the whole form", () => {
     expect(toast.error).not.toHaveBeenCalledWith(
       "That email address is already registered.",
     );
+  });
+});
+
+/**
+ * Hearing about future campaigns is a different purpose from running this one,
+ * so it is a separate question with its own answer. If it ever rode along with
+ * accepting the rules, the consent would be worthless and would take the
+ * campaign's own lawful basis with it.
+ */
+describe("the marketing opt-in", () => {
+  it("is sent as false when nobody touches it", async () => {
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent!.marketingOptIn).toBe(false);
+  });
+
+  it("is sent as true only when it is actually ticked", async () => {
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /future Blockfest Africa campaigns/i }),
+    );
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent!.marketingOptIn).toBe(true);
+  });
+
+  it("starts unticked, so consent is never a default", async () => {
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    const box = screen.getByRole("checkbox", {
+      name: /future Blockfest Africa campaigns/i,
+    }) as HTMLInputElement;
+    expect(box.checked).toBe(false);
+  });
+
+  it("does not block registration when refused", async () => {
+    // The line under it promises this. If refusing it could ever stop a
+    // registration, the consent would not be freely given.
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() => expect(screen.getByText(/You are in/i)).toBeTruthy());
+  });
+
+  it("carries the privacy notice version that was on screen", async () => {
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent!.privacyVersion).toBeTruthy();
   });
 });

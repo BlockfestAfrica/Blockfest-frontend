@@ -6,6 +6,7 @@ import { ArrowRight, Check, Copy, Lock } from "lucide-react";
 import { hasPassed } from "@/lib/countdown";
 import { CAMPAIGN_GATE_FORCED_OPEN, monicaRoutes } from "@/lib/campaigns";
 import { MONICA_RULES_VERSION } from "@/lib/monica-rules";
+import { MONICA_PRIVACY_VERSION } from "@/lib/monica-privacy";
 import { toast } from "sonner";
 import { track } from "@/lib/sabilytics";
 
@@ -184,6 +185,12 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
   const [checked, setChecked] = useState(false);
   const [values, setValues] = useState<Record<Field, string>>(EMPTY);
   const [accepted, setAccepted] = useState(false);
+  /**
+   * Optional, and false until somebody actively says otherwise. Refusing it
+   * changes nothing about the entry, which is what keeps the campaign's own
+   * lawful basis separate from this one.
+   */
+  const [marketing, setMarketing] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -289,6 +296,8 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
             location: values.location || undefined,
             acceptedRules: true,
             rulesVersion: MONICA_RULES_VERSION,
+            marketingOptIn: marketing,
+            privacyVersion: MONICA_PRIVACY_VERSION,
             // Both of these are the bot checks. They are spread in explicitly
             // rather than carried by ...values, because `values` is typed to
             // the visible fields only and silently omitted them: the checks
@@ -660,7 +669,15 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
                 campaign rules
               </Link>{" "}
               (version {MONICA_RULES_VERSION}), and I am 18 or over. Blockfest
-              Africa may contact me about this campaign.
+              Africa may contact me about this campaign, and will handle my
+              details as set out in the{" "}
+              <Link
+                href={monicaRoutes.privacy}
+                className="text-link underline underline-offset-2 hover:text-white"
+              >
+                privacy notice
+              </Link>
+              .
             </span>
           </label>
           {errors.acceptedRules && (
@@ -668,6 +685,32 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
               {errors.acceptedRules}
             </p>
           )}
+        </div>
+
+        {/* Deliberately a second, separate question.
+            Hearing about future campaigns is a different purpose from running
+            this one, so it cannot ride on the agreement above: bundling them
+            would make the consent worthless and take the campaign's own basis
+            down with it. Unticked, never required, and saying no changes
+            nothing, which is what the line under it says out loud. */}
+        <div>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={marketing}
+              onChange={(e) => setMarketing(e.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-brand-gold"
+            />
+            <span className="text-sm leading-relaxed text-white/70">
+              Optional. Tell me about future Blockfest Africa campaigns and
+              events by email.
+            </span>
+          </label>
+          <p className="mt-2 pl-7 text-sm leading-relaxed text-white/40">
+            Nothing to do with this campaign. Leaving it unticked has no effect
+            on your entry or your chances, and you can stop the emails at any
+            time.
+          </p>
         </div>
 
         {formError && (

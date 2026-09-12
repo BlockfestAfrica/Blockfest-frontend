@@ -185,6 +185,18 @@ export const creators = pgTable(
     registrationIp: text("registration_ip"),
     registrationUserAgent: text("registration_user_agent"),
 
+    /**
+     * Consent to hear about future campaigns. Separate from accepting the
+     * rules, because it is a different purpose and cannot ride on the
+     * agreement to run an entry. Defaults to false: an unanswered question is
+     * a no.
+     */
+    marketingOptIn: boolean("marketing_opt_in").notNull().default(false),
+    /** Set only where the answer was yes. Proving when is the point. */
+    marketingOptInAt: timestamp("marketing_opt_in_at", { withTimezone: true }),
+    /** Which privacy notice was in force, since it can be amended. */
+    privacyNoticeVersion: text("privacy_notice_version"),
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

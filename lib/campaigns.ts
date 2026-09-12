@@ -170,6 +170,7 @@ export const monicaRoutes = {
   join: `/campaigns/${MONICA_SLUG}/join`,
   rules: `/campaigns/${MONICA_SLUG}/rules`,
   pack: `/campaigns/${MONICA_SLUG}/pack`,
+  privacy: `/campaigns/${MONICA_SLUG}/privacy`,
 } as const;
 
 export interface CampaignSkill {

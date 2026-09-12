@@ -20,6 +20,9 @@ const exploreMenu: Menu[] = [
 ];
 
 const infoMenu: Menu[] = [
+  // The campaign surface had no inbound link from anywhere on the site: the
+  // only link ran upward, from the campaign page to the index.
+  { path: "/campaigns", title: "Campaigns" },
   { path: "/newsletter", title: "Newsletter" },
   { path: "/faq", title: "FAQ" },
   { path: "/travel", title: "Travel & Visa" },

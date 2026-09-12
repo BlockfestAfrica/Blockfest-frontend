@@ -102,10 +102,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Network-first strategy for API calls and dynamic content
-  else if (
-    url.pathname.startsWith("/api/") ||
-    url.pathname.includes("insights")
-  ) {
+  else if (url.pathname.startsWith("/api/")) {
     event.respondWith(
       fetch(request)
         .then((response) => {

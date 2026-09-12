@@ -89,5 +89,40 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.7,
     },
+    // The campaign surface. Absent until now, so nothing under /campaigns was
+    // discoverable except by following a link from the campaign page itself,
+    // which only ran upward to the index. /register is deliberately left out:
+    // it is noindex, and a bare form is a worse search result than the page
+    // that explains it.
+    {
+      url: `${baseUrl}/campaigns`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/campaigns/monica-money-story`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/campaigns/monica-money-story/rules`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/campaigns/monica-money-story/pack`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/campaigns/monica-money-story/privacy`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
   ];
 }
