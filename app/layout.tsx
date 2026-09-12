@@ -4,13 +4,10 @@ import Footer from "@/components/shared/footer";
 import Navbar from "@/components/shared/navbar";
 import { AnnouncementBar } from "@/components/shared/announcement-bar";
 import { Toaster } from "@/components/ui/sonner";
+import { IdentityCallback } from "@/components/admin/identity-callback";
 import { gotham } from "@/lib/fonts";
 import { ORGANISATION, eventJsonLd } from "@/lib/seo-event";
-import {
-  SABILYTICS_DOMAIN,
-  SABILYTICS_SITE_ID,
-  SABILYTICS_SRC,
-} from "@/lib/sabilytics";
+import { Analytics } from "@/components/shared/analytics";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
@@ -169,13 +166,10 @@ export default function RootLayout({
           }}
         />
 
-        {/* Sabilytics — auto-tracks pageviews, no manual initialiser needed */}
-        <script
-          async
-          src={SABILYTICS_SRC}
-          data-site={SABILYTICS_SITE_ID}
-          data-domain={SABILYTICS_DOMAIN}
-        />
+        {/* Sabilytics moved out of the head and behind a path check.
+            Loaded here it also ran on the review queue, where a third-party
+            script on an authenticated page can approve entries with a
+            same-origin fetch. See components/shared/analytics.tsx. */}
 
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -233,6 +227,11 @@ export default function RootLayout({
         {children}
         <Footer />
         <Toaster />
+        {/* Netlify builds its invite and recovery links against the site root,
+            and the page that completes them is /admin/login. Without this an
+            invited admin lands on the homepage and nothing happens. */}
+        <IdentityCallback />
+        <Analytics />
       </body>
     </html>
   );

@@ -67,9 +67,16 @@ async function makeCreator(platforms: string[] = ["x"]) {
   return enrolment.id;
 }
 
-const submit = (enrolment: string, challenge: string, platform: string, url: string) =>
+const submit = (
+  enrolment: string,
+  challenge: string,
+  platform: string,
+  url: string,
+  allowBeforeOpen = false,
+  author: string | null = null,
+) =>
   db.query(
-    `SELECT * FROM submit_entry('${enrolment}', '${challenge}', '${platform}', '${url}')`,
+    `SELECT * FROM submit_entry('${enrolment}', '${challenge}', '${platform}', '${url}', ${allowBeforeOpen}, ${author === null ? "NULL" : `'${author}'`})`,
   );
 
 beforeAll(async () => {
@@ -86,6 +93,22 @@ beforeEach(async () => {
     DELETE FROM submissions; DELETE FROM challenge_entries;
     DELETE FROM creator_social_handles; DELETE FROM campaign_creators;
     DELETE FROM creators;
+  `);
+
+  // Challenges are seeded once and several tests move their windows or close
+  // them. Without restoring, a test that closes week 1 changes the result of
+  // every test that runs after it, and the failure appears in whichever test
+  // happens to be next rather than in the one that caused it.
+  await db.exec(`
+    UPDATE challenges SET status = 'active';
+    UPDATE challenges SET starts_at = '2026-09-14 00:00:00+01',
+                          ends_at   = '2026-09-20 23:59:59+01' WHERE week_no = 1;
+    UPDATE challenges SET starts_at = '2026-09-21 00:00:00+01',
+                          ends_at   = '2026-09-27 23:59:59+01' WHERE week_no = 2;
+    UPDATE challenges SET starts_at = '2026-09-28 00:00:00+01',
+                          ends_at   = '2026-10-04 23:59:59+01' WHERE week_no = 3;
+    UPDATE challenges SET starts_at = '2026-10-05 00:00:00+01',
+                          ends_at   = '2026-10-17 23:59:59+01' WHERE week_no = 4;
   `);
   const c = await one<{ id: string }>(
     `SELECT id FROM campaigns WHERE slug = 'monica-money-story'`,
@@ -136,15 +159,21 @@ describe("the seeded challenges", () => {
   });
 
   it("is idempotent, so re-running the seed adds nothing", async () => {
-    await db.exec(
-      (await import("node:fs")).readFileSync(
-        (await import("node:path")).join(
-          process.cwd(),
-          "netlify/database/migrations/0008_submissions.sql",
-        ),
-        "utf8",
+    // Only the seed is replayed, not the whole migration file. 0008 also
+    // defines submit_entry, and 0010 replaced that with a different signature,
+    // so re-running the file would resurrect the old function beside the new
+    // one. Netlify applies each migration exactly once, so that never happens
+    // in production, and a fixture that does it is testing something the
+    // system does not do.
+    const sql = (await import("node:fs")).readFileSync(
+      (await import("node:path")).join(
+        process.cwd(),
+        "netlify/database/migrations/0008_submissions.sql",
       ),
+      "utf8",
     );
+    const seedOnly = sql.slice(0, sql.indexOf("CREATE OR REPLACE FUNCTION"));
+    await db.exec(seedOnly);
     expect(
       await count(
         `SELECT count(*)::int AS n FROM challenges WHERE campaign_id = '${campaignId}'`,
@@ -336,5 +365,190 @@ describe("the challenge window", () => {
     await expect(submit(me, week1, "x", "https://x.com/closed/1")).rejects.toThrow(
       /challenge_closed/,
     );
+  });
+});
+
+/**
+ * Walking the flow before the first week opens.
+ *
+ * Registration is forced open ahead of launch so the whole journey can be
+ * tested. The challenge window is a separate gate, so without this nobody could
+ * exercise submit, review and score until 14 September, which is the day all
+ * three have to work.
+ *
+ * The override lifts exactly one check, and the asymmetry is the safety.
+ */
+describe("the pre-launch override", () => {
+  it("allows a week that has not opened yet", async () => {
+    const me = await makeCreator(["x"]);
+    await expect(
+      submit(me, week2, "x", "https://x.com/preview/1", true),
+    ).resolves.toBeTruthy();
+  });
+
+  it("still refuses that week without it", async () => {
+    const me = await makeCreator(["x"]);
+    await expect(
+      submit(me, week2, "x", "https://x.com/preview/2", false),
+    ).rejects.toThrow(/challenge_not_open/);
+  });
+
+  /**
+   * Never overridden, and this is the point. Opening an upcoming week early
+   * affects only the days before launch. Reopening a finished one would let an
+   * entry be filed against a challenge that has already been scored, and in
+   * week four against the one that decides the final leaderboard.
+   */
+  it("does not reopen a week that has ended", async () => {
+    const me = await makeCreator(["x"]);
+    await db.query(
+      `UPDATE challenges SET starts_at = now() - interval '30 days',
+                             ends_at = now() - interval '20 days'
+        WHERE id = '${week1}'`,
+    );
+    await expect(
+      submit(me, week1, "x", "https://x.com/reopen/1", true),
+    ).rejects.toThrow(/challenge_ended/);
+  });
+
+  it("does not reopen a week that was closed by hand", async () => {
+    const me = await makeCreator(["x"]);
+    await db.query(`UPDATE challenges SET status = 'closed' WHERE id = '${week1}'`);
+    await expect(
+      submit(me, week1, "x", "https://x.com/reopen/2", true),
+    ).rejects.toThrow(/challenge_closed/);
+  });
+
+  it("relaxes nothing else at all", async () => {
+    // Every other refusal still applies with the override set.
+    const me = await makeCreator(["x"]);
+    await expect(
+      submit(me, week2, "tiktok", "https://tiktok.com/x/1", true),
+    ).rejects.toThrow(/platform_not_registered/);
+
+    await submit(me, week2, "x", "https://x.com/dup/1", true);
+    await expect(
+      submit(me, week2, "x", "https://x.com/dup/2", true),
+    ).rejects.toThrow(/already_submitted_for_platform/);
+  });
+
+  it("leaves only one submit_entry callable", async () => {
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM pg_proc WHERE proname = 'submit_entry'`,
+      ),
+    ).toBe(1);
+  });
+});
+
+/**
+ * Submitting somebody else's post.
+ *
+ * The only ownership test used to be whether the creator had registered SOME
+ * handle on that platform. It never asked whether that handle was the one in
+ * the link, so anybody could register with any handle string, wait for a rival
+ * to publish a strong post, and submit their URL. The reviewer saw a bare link,
+ * opened a real on-brief post, and approved it.
+ *
+ * The author is read out of the URL by the server, never sent by the client.
+ */
+describe("attribution", () => {
+  beforeEach(async () => {
+    await openNow(week1);
+  });
+
+  it("accepts a post from the account the creator registered", async () => {
+    const tag = seq + 1;
+    const me = await makeCreator(["x"]);
+    const handle = `h${tag}x`;
+    await expect(
+      submit(me, week1, "x", `https://x.com/${handle}/status/1`, false, handle),
+    ).resolves.toBeTruthy();
+  });
+
+  it("refuses a post published by somebody else", async () => {
+    const me = await makeCreator(["x"]);
+    await expect(
+      submit(
+        me,
+        week1,
+        "x",
+        "https://x.com/rivalcreator/status/99",
+        false,
+        "rivalcreator",
+      ),
+    ).rejects.toThrow(/wrong_account/);
+  });
+
+  it("compares without regard to case", async () => {
+    const tag = seq + 1;
+    const me = await makeCreator(["x"]);
+    const handle = `h${tag}x`;
+    await expect(
+      submit(
+        me,
+        week1,
+        "x",
+        `https://x.com/${handle.toUpperCase()}/status/2`,
+        false,
+        handle.toUpperCase(),
+      ),
+    ).resolves.toBeTruthy();
+  });
+
+  /**
+   * Instagram puts no author in the URL, so there is nothing to compare and the
+   * server passes null. That must mean "nothing to compare", not "skip the
+   * check", so the platform registration test still has to run.
+   */
+  it("still accepts a platform with no author in the link", async () => {
+    const me = await makeCreator(["instagram"]);
+    await expect(
+      submit(me, week1, "instagram", "https://instagram.com/p/Cabc/", false, null),
+    ).resolves.toBeTruthy();
+  });
+
+  it("still refuses an unregistered platform when there is no author", async () => {
+    const me = await makeCreator(["x"]);
+    await expect(
+      submit(me, week1, "instagram", "https://instagram.com/p/Cxyz/", false, null),
+    ).rejects.toThrow(/platform_not_registered/);
+  });
+});
+
+/**
+ * A rejected submission must not block that platform for the rest of the week.
+ *
+ * submission_one_per_platform was a plain unique index, so a creator whose
+ * entry was rejected could never resubmit on that platform, even to fix exactly
+ * what the reviewer asked them to fix. The URL index was made partial on status
+ * in 0003 for the same reason; this half was missed.
+ */
+describe("resubmitting after a rejection", () => {
+  beforeEach(async () => {
+    await openNow(week1);
+  });
+
+  it("lets a creator try again on the same platform", async () => {
+    const tag = seq + 1;
+    const me = await makeCreator(["x"]);
+    const handle = `h${tag}x`;
+    await submit(me, week1, "x", `https://x.com/${handle}/status/10`, false, handle);
+    await db.query(
+      `UPDATE submissions SET status = 'rejected', reviewed_at = now()`,
+    );
+    await expect(
+      submit(me, week1, "x", `https://x.com/${handle}/status/11`, false, handle),
+    ).resolves.toBeTruthy();
+  });
+
+  it("still refuses a second live submission on that platform", async () => {
+    const tag = seq + 1;
+    const me = await makeCreator(["x"]);
+    const handle = `h${tag}x`;
+    await submit(me, week1, "x", `https://x.com/${handle}/status/12`, false, handle);
+    await expect(
+      submit(me, week1, "x", `https://x.com/${handle}/status/13`, false, handle),
+    ).rejects.toThrow(/already_submitted_for_platform/);
   });
 });
