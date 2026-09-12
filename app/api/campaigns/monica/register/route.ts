@@ -9,6 +9,7 @@ import {
   registrationSchema,
 } from "@/lib/campaign-registration";
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
+import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { hashAccessToken, newAccessToken } from "@/lib/creator-access";
 
 /** postgres.js and the Neon driver need sockets; neither runs on the edge. */
@@ -266,27 +267,31 @@ export async function POST(request: NextRequest) {
       accessToken,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+
 
     // The function raises these deliberately, so the field a person has to
     // change can be named without reading constraint names out of a driver
     // error. Every one of them rolled the whole registration back.
     await recordAttempt("failed");
 
-    if (message.includes("email_taken")) {
+    if (isPgError(error, PG.EMAIL_TAKEN, "email_taken")) {
       return fail("That email address is already registered.", 409, "email");
     }
-    if (message.includes("phone_taken")) {
+    if (isPgError(error, PG.PHONE_TAKEN, "phone_taken")) {
       return fail("That phone number is already registered.", 409, "phone");
     }
-    if (message.includes("campaign_not_found")) {
+    if (isPgError(error, PG.CAMPAIGN_NOT_FOUND, "campaign_not_found")) {
       return fail("That campaign does not exist.", 404);
     }
-    if (/social_handle_one_per_creator_platform/.test(message)) {
+    if (/social_handle_one_per_creator_platform/.test(pgErrorMessage(error))) {
       return fail("You can only add one account per platform.", 400, "x");
     }
 
-    console.error("[campaign/register]", message);
+    console.error(
+      "[campaign/register] unmapped",
+      pgErrorCode(error),
+      pgErrorMessage(error),
+    );
     return fail("Something went wrong at our end. Please try again.", 500);
   }
 }

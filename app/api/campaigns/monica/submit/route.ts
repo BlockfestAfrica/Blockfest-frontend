@@ -2,6 +2,7 @@ import { and, asc, eq, gt, lte, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { campaigns, challenges, getDb } from "@/lib/db/client";
 import { currentCreator } from "@/lib/creator-session";
+import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import {
   authorFromUrl,
   canonicalUrl,
@@ -151,49 +152,58 @@ export async function POST(request: NextRequest) {
       entryId: row.entry_id ?? null,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+
 
     // Raised deliberately by the function, so the creator can be told the one
     // thing they need to change rather than "something went wrong".
-    if (message.includes("wrong_account")) {
+    if (isPgError(error, PG.WRONG_ACCOUNT, "wrong_account")) {
       return fail(
         "That post is not from the account you registered. Entries have to come from an account you listed when you joined.",
         409,
         "url",
       );
     }
-    if (message.includes("platform_not_registered")) {
+    if (isPgError(error, PG.PLATFORM_NOT_REGISTERED, "platform_not_registered")) {
       return fail(
         "You did not register that account. Entries have to come from an account you listed when you joined.",
         409,
         "platform",
       );
     }
-    if (message.includes("already_submitted_for_platform")) {
+    if (isPgError(error, PG.ALREADY_SUBMITTED_FOR_PLATFORM, "already_submitted_for_platform")) {
       return fail(
         "You have already submitted on that platform for this challenge.",
         409,
         "platform",
       );
     }
-    if (message.includes("url_already_submitted")) {
+    if (isPgError(error, PG.URL_ALREADY_SUBMITTED, "url_already_submitted")) {
       return fail(
         "That link has already been submitted. If it is your post, get in touch.",
         409,
         "url",
       );
     }
-    if (message.includes("challenge_not_open")) {
+    if (isPgError(error, PG.CHALLENGE_NOT_OPEN, "challenge_not_open")) {
       return fail("That challenge has not opened yet.", 409);
     }
-    if (message.includes("challenge_ended") || message.includes("challenge_closed")) {
+    if (
+      isPgError(error, PG.CHALLENGE_ENDED, "challenge_ended") ||
+      isPgError(error, PG.CHALLENGE_CLOSED, "challenge_closed")
+    ) {
       return fail("That challenge has closed.", 409);
     }
-    if (message.includes("submission_url_is_http")) {
+    if (pgErrorMessage(error).includes("submission_url_is_http")) {
       return fail("The link has to start with https://", 400, "url");
     }
 
-    console.error("[campaign/submit]", message);
+    // Logged with the SQLSTATE, because that is what a mapping is keyed on
+    // and a message alone did not distinguish these at all.
+    console.error(
+      "[campaign/submit] unmapped",
+      pgErrorCode(error),
+      pgErrorMessage(error),
+    );
     return fail("Something went wrong at our end. Please try again.", 500);
   }
 }
