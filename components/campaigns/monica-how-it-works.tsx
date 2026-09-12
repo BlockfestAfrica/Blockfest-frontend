@@ -13,7 +13,7 @@ export function MonicaHowItWorks() {
       <div className="container-page">
         <h2 className="text-display-sm font-bold text-white">How it works</h2>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
-          A new brief every weekend, your own take on it, published on your own
+          A new brief every Monday, your own take on it, published on your own
           account. Repeat for four weeks.
         </p>
 

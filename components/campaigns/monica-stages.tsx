@@ -13,7 +13,13 @@ import {
  */
 export function MonicaStages() {
   return (
-    <section className="section-y border-t border-white/20 bg-ground">
+    // Anchored, because the success screen sends a creator straight here.
+    // "See the first challenge" landing at the top of the page and leaving
+    // them to scroll for it is the same as not linking to it.
+    <section
+      id="stages"
+      className="section-y scroll-mt-20 border-t border-white/20 bg-ground"
+    >
       <div className="container-page">
         <h2 className="text-display-sm font-bold text-white">
           The {MONICA_CAMPAIGN_DAYS}-day journey

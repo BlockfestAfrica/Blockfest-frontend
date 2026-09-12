@@ -360,7 +360,7 @@ export const monicaHowItWorks: HowItWorksStep[] = [
   {
     title: "Take the challenge",
     detail:
-      "A new brief drops each weekend. How you answer it is yours: a thread, a reel, a skit, a carousel, an explainer, a street interview, an animation.",
+      "A new brief drops each Monday. How you answer it is yours: a thread, a reel, a skit, a carousel, an explainer, a street interview, an animation.",
   },
   {
     title: "Publish and submit",

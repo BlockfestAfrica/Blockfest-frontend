@@ -233,6 +233,38 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
     toast.error(message);
   };
 
+  /**
+   * Move to the field a server error belongs to.
+   *
+   * Guarded because the id is not always an input: acceptedRules is a checkbox
+   * rendered without one, and a field the page does not display reaches here
+   * only if the set above ever falls out of step with the markup.
+   */
+  const focusField = (field: Field) => {
+    if (typeof document === "undefined") return;
+    const el = document.getElementById(field);
+    if (!(el instanceof HTMLElement)) return;
+
+    // Focus first, and guard both calls separately.
+    //
+    // This runs inside the submit handler's try block, so anything thrown here
+    // is caught by it and reported as "we could not reach the server", which
+    // would be a lie about a request that succeeded and came back with a
+    // perfectly good field error. scrollIntoView is exactly the kind of call
+    // that is missing in some environments, so it must not be able to take the
+    // focus down with it, and neither may take the message down.
+    try {
+      el.focus({ preventScroll: true });
+    } catch {
+      // Focus is a courtesy. The inline message and the toast still stand.
+    }
+    try {
+      el.scrollIntoView?.({ block: "center", behavior: "smooth" });
+    } catch {
+      // Focus alone already brings most browsers to the field.
+    }
+  };
+
   const set = (field: Field) => (value: string) => {
     setValues((v) => ({ ...v, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
@@ -317,6 +349,13 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
         const field = result.field as Field | undefined;
         if (field && FIELDS_WITH_VISIBLE_ERRORS.has(field)) {
           setErrors({ [field]: result.message });
+          // Inline alone was not enough. The message renders beside its field,
+          // which on a form this long can be well above the button that was
+          // just pressed, so somebody sees the button settle and nothing else.
+          // The toast says it out loud and the focus takes them to the field
+          // it belongs to, which a toast on its own cannot do.
+          toast.error(result.message);
+          focusField(field);
         } else {
           // Either the server named no field, or it named one nothing on this
           // page displays. Both have to say something: a submit that returns
@@ -429,7 +468,7 @@ export function RegistrationForm({ opensAt }: { opensAt: string }) {
         )}
 
         <Link
-          href={monicaRoutes.landing}
+          href={`${monicaRoutes.landing}#stages`}
           className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
         >
           See the first challenge

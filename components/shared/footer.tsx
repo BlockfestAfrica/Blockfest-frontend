@@ -29,6 +29,7 @@ const infoMenu: Menu[] = [
   { path: "/call-for-speakers", title: "Call for Speakers" },
   { path: "/volunteer", title: "Volunteer" },
   { path: "/code-of-conduct", title: "Code of Conduct" },
+  { path: "/privacy", title: "Privacy" },
   { path: `mailto:${CONTACT_EMAIL}`, title: "Contact" },
 ];
 

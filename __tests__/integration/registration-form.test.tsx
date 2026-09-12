@@ -292,7 +292,7 @@ describe("a failure that belongs to the whole form", () => {
     );
   });
 
-  it("does not toast a field error, which belongs beside its field", async () => {
+  it("toasts a field error as well as rendering it beside its field", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => ({
@@ -315,8 +315,31 @@ describe("a failure that belongs to the whole form", () => {
         ),
       ).toBe(true),
     );
-    expect(toast.error).not.toHaveBeenCalledWith(
+    // Both. The inline message is the one that points at the field; the toast
+    // is what makes it visible when the field is off screen.
+    expect(toast.error).toHaveBeenCalledWith(
       "That email address is already registered.",
+    );
+  });
+
+  it("moves focus to the field the error belongs to", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        json: async () => ({
+          ok: false,
+          field: "phone",
+          message: "That phone number is already registered.",
+        }),
+      })) as unknown as typeof fetch,
+    );
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByLabelText("Phone number")),
     );
   });
 });
