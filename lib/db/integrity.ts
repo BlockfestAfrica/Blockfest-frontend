@@ -67,13 +67,13 @@ export const INTEGRITY_CHECKS: IntegrityCheck[] = [
     expect: 1,
   },
   {
-    name: "all four weekly challenges are seeded",
+    name: "all five stages are seeded",
     because:
       "A missing week is a week nobody can submit to, discovered on the Monday it opens.",
     sql: `SELECT count(*)::int FROM challenges c
             JOIN campaigns cm ON cm.id = c.campaign_id
            WHERE cm.slug = '${SLUG}'`,
-    expect: 4,
+    expect: 5,
   },
   {
     name: "at least one owner can still sign in",

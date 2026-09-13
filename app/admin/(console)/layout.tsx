@@ -63,8 +63,29 @@ export default async function AdminLayout({
           <h1 className="mt-2 text-display-sm font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
             Admin
           </h1>
-          <p className="mt-4 text-base leading-relaxed text-white/60">
+          {/*
+            * Two causes, one message, because the console cannot tell them
+            * apart without weakening the uniform denial that stops the admin
+            * list being enumerated. What it can do is stop sending somebody in
+            * a circle: a person whose Identity invite worked, whose password
+            * set, and who signed in successfully used to read "You need to
+            * sign in", click Sign in, succeed again, and land back here. The
+            * second sentence is the one that would have saved them the loop.
+            */}
+          <p className="mt-4 text-base leading-relaxed text-white/70">
             You need to sign in to see this.
+          </p>
+          <p className="mt-3 text-base leading-relaxed text-white/70">
+            If you have just signed in and are still seeing this, your address
+            has not been added to the console yet. Being invited in Netlify is
+            only half of it. Ask an owner to add you, or write to{" "}
+            <a
+              href="mailto:partnership@blockfestafrica.com"
+              className="text-link underline underline-offset-2 hover:text-white"
+            >
+              partnership@blockfestafrica.com
+            </a>
+            .
           </p>
           <Link
             href="/admin/login"

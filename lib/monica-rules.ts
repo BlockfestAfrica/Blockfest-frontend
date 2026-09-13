@@ -53,7 +53,7 @@ export const monicaRules: RuleSection[] = [
     id: "points",
     title: "Points",
     paragraphs: [
-      "An approved entry earns 100 points per approved platform, to a maximum of 300 for all three.",
+      "An approved entry earns 100 points for the first approved platform and 50 for each platform after it, to a maximum of 200 for all three.",
       "Additional points may be awarded for work judged exceptional, for reaching a notable audience milestone with an entry, for entries featured by Blockfest Africa or by Monica, for collaborations with other creators, and for winning a wildcard challenge. Each of these is capped at 300 points, except a wildcard win which is capped at 600.",
         "Bonuses are awarded at our discretion. Every one is recorded against your account with the reason, and you can see it on your own page.",
       "Point values may be adjusted during the campaign. Changing a value does not recalculate points already awarded, so a change to the rate never restates what you have already earned.",

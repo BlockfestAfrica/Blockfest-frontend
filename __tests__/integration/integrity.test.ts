@@ -213,7 +213,7 @@ describe("each check actually catches the thing it is named after", () => {
     );
     expectFailure(
       await runIntegrityChecks(b.query),
-      "all four weekly challenges are seeded",
+      "all five stages are seeded",
     );
     await b.db.close();
   }, 60_000);
