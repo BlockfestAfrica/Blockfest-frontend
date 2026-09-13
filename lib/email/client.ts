@@ -1,4 +1,5 @@
 import "server-only";
+import { redactPii } from "@/lib/log";
 
 /**
  * Transactional mail, through ZeptoMail.
@@ -87,9 +88,13 @@ function sender(): { address: string; name: string } {
  * ZeptoMail echoes request details in some error bodies, and a 400 logged in
  * full is a credential in a log aggregator that outlives the campaign.
  */
-function redact(text: string): string {
-  return text.replace(/Zoho-enczapikey\s+\S+/gi, "Zoho-enczapikey [redacted]");
-}
+/**
+ * This used to strip the API key and nothing else, which missed the thing most
+ * likely to be in a mail provider's error body: the recipient. ZeptoMail echoes
+ * the address it could not deliver to, so every 4xx wrote a creator's email
+ * address into the function log. redactPii covers the key and the address.
+ */
+const redact = redactPii;
 
 /**
  * Send one message.
@@ -192,6 +197,6 @@ export async function sendEmailQuietly(
 ): Promise<void> {
   const result = await sendEmail(email);
   if (!result.sent) {
-    console.warn(`[email] ${context} not sent: ${result.reason}`);
+    console.warn(`[email] ${context} not sent: ${redactPii(result.reason ?? "")}`);
   }
 }

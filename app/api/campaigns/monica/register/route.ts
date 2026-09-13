@@ -12,6 +12,7 @@ import {
 } from "@/lib/campaign-registration";
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
+import { logError } from "@/lib/log";
 import { pauseState } from "@/lib/campaign-pause";
 import { hashAccessToken, newAccessToken } from "@/lib/creator-access";
 
@@ -330,11 +331,7 @@ export async function POST(request: NextRequest) {
       return fail("You can only add one account per platform.", 400, "x");
     }
 
-    console.error(
-      "[campaign/register] unmapped",
-      pgErrorCode(error),
-      pgErrorMessage(error),
-    );
+    logError("campaign/register unmapped", error);
     return fail("Something went wrong at our end. Please try again.", 500);
   }
 }

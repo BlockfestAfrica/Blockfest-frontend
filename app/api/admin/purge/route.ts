@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db/client";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
+import { logError } from "@/lib/log";
 import { MONICA_SLUG } from "@/lib/campaigns";
 
 export const runtime = "nodejs";
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, message: known }, { status: 400 });
     }
 
-    console.error("[admin/purge] unmapped", code, pgErrorMessage(error));
+    logError("admin/purge unmapped", error);
     return NextResponse.json(
       { ok: false, message: "Something went wrong at our end." },
       { status: 500 },

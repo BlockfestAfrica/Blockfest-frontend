@@ -9,6 +9,7 @@ import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { hashAccessToken, newAccessToken } from "@/lib/creator-access";
 import { canonicalEmail } from "@/lib/campaign-registration";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { logWarning } from "@/lib/log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
   );
 
   if (!result.sent) {
-    console.warn("[admin/creator-link] email not sent:", result.reason);
+    logWarning("admin/creator-link email not sent", result.reason ?? "");
   }
 
   return NextResponse.json({
