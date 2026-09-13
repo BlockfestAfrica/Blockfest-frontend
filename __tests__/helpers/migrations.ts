@@ -22,8 +22,27 @@ export function migrationFiles(): string[] {
     .sort();
 }
 
-export async function applyMigrations(db: PGlite): Promise<void> {
+/**
+ * Apply the migrations, optionally only part of the run.
+ *
+ * The range exists so a migration can be tested against data the schema before
+ * it permitted. A migration that adds a constraint has two jobs: enforce the
+ * rule from now on, and survive the rows that broke it already. The second is
+ * the one that fails a deploy, and it cannot be exercised at all if the only
+ * way to set up is to apply every migration first.
+ *
+ * Bounds are inclusive and match on the numeric prefix, so "0022" means up to
+ * and including 0022_handle_verification.sql.
+ */
+export async function applyMigrations(
+  db: PGlite,
+  range: { upTo?: string; from?: string } = {},
+): Promise<void> {
+  const prefix = (file: string) => file.split("_")[0];
+
   for (const file of migrationFiles()) {
+    if (range.upTo && prefix(file) > range.upTo) continue;
+    if (range.from && prefix(file) < range.from) continue;
     await applyMigration(db, file);
   }
 }

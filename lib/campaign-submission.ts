@@ -46,11 +46,19 @@ export function hostMatchesPlatform(
 }
 
 /**
- * Strip the tracking tail a share sheet adds.
+ * Strip the tracking tail a share sheet adds, for display.
  *
- * Two creators sharing the same post produce different strings for it, and the
- * uniqueness index compares strings. Without this, `?igsh=...` is enough to
- * submit somebody else's post alongside theirs and have both look distinct.
+ * This is tidying, not a rule. It used to be the rule, and that was the bug:
+ * uniqueness compared the string this returns, so every other spelling of the
+ * same post counted as a new entry. twitter.com against x.com, a capital in the
+ * handle, /statuses/ against /status/, a /photo/1 suffix, reel against p. Each
+ * was full points for work done once, repeatable every week.
+ *
+ * Uniqueness now lives on submissions.post_identity, a generated column added
+ * in 0023 that extracts the id the platform itself uses. It is computed by the
+ * database so a caller cannot bypass it and so there is no second copy of the
+ * rule here to drift from it. What this function returns is what a reviewer
+ * clicks, and it no longer decides anything.
  *
  * Only the query and fragment go. The path is untouched, because on these
  * platforms the path is the post.
