@@ -36,7 +36,7 @@ async function enrol(platform = "x") {
   const enrolment = await one<{ id: string }>(`
     INSERT INTO campaign_creators (campaign_id, creator_id, referral_code)
     VALUES ('${campaignId}', '${creator.id}', 'CODE${tag}') RETURNING id`);
-  return enrolment.id;
+  return { enrolmentId: enrolment.id, handle: `h${tag}` };
 }
 
 /** Submit directly, bypassing the author check, to isolate the identity rule. */
@@ -104,19 +104,76 @@ const SAME_POST: Array<[string, string, string, string]> = [
   ["tiktok", "a different handle", "https://tiktok.com/@ada/video/7211", "https://tiktok.com/@thief/video/7211"],
 ];
 
+/** Approve whatever is stored for this url, or throw if the rule refuses. */
+const approve = (url: string) =>
+  db.query(
+    `UPDATE submissions SET status = 'approved', reviewed_at = now() WHERE url = $1`,
+    [url],
+  );
+
 describe("the same post, spelled two ways", () => {
+  /**
+   * The rule is about credit, not about claims. Two creators may both claim a
+   * post, because refusing the second claim is what let anybody burn a rival's
+   * post by filing it first. Only one may ever be paid for it.
+   */
   for (const [platform, how, first, second] of SAME_POST) {
-    it(`refuses the second when it differs by ${how}`, async () => {
+    it(`never pays twice when the second differs by ${how}`, async () => {
       const a = await enrol(platform);
       const b = await enrol(platform);
 
-      await store(a, platform, first);
+      await store(a.enrolmentId, platform, first);
+      await approve(first);
+
+      // The claim is allowed. The credit is not.
+      await store(b.enrolmentId, platform, second);
       await expect(
-        store(b, platform, second),
-        `${second} was accepted alongside ${first}, so one post counted twice`,
+        approve(second),
+        `${second} was credited alongside ${first}, so one post was paid twice`,
       ).rejects.toThrow();
     });
   }
+
+  it("lets a second creator claim a post that is only pending", async () => {
+    // The burn attack this exists to stop: under the old rule the first filing
+    // held the post until a reviewer looked, so a creator who saw a rival's
+    // reel could file it and cost them the week. Instagram was the whole of the
+    // exposure, because X and TikTok carry the author in the path and
+    // submit_entry refuses a mismatch outright.
+    const thief = await enrol("instagram");
+    const author = await enrol("instagram");
+
+    await store(thief.enrolmentId, "instagram", "https://instagram.com/p/BURNED/");
+    await expect(
+      store(author.enrolmentId, "instagram", "https://instagram.com/p/BURNED/"),
+      "a pending claim must not block the real author from entering their own post",
+    ).resolves.toBeTruthy();
+  });
+
+  it("still lets the real author be paid after the thief is rejected", async () => {
+    const thief = await enrol("instagram");
+    const author = await enrol("instagram");
+
+    await store(thief.enrolmentId, "instagram", "https://instagram.com/p/CONTEST/");
+    await store(author.enrolmentId, "instagram", "https://instagram.com/p/CONTEST/");
+
+    await db.query(
+      `UPDATE submissions SET status = 'rejected', reviewed_at = now()
+        WHERE entry_id IN (SELECT id FROM challenge_entries WHERE campaign_creator_id = $1)`,
+      [thief.enrolmentId],
+    );
+
+    // Scoped to the author's own row. Both rows carry the same url, so a blanket
+    // update would try to approve the rejected one too and collide with itself.
+    await expect(
+      db.query(
+        `UPDATE submissions SET status = 'approved', reviewed_at = now()
+          WHERE status = 'pending'
+            AND entry_id IN (SELECT id FROM challenge_entries WHERE campaign_creator_id = $1)`,
+        [author.enrolmentId],
+      ),
+    ).resolves.toBeTruthy();
+  });
 });
 
 describe("genuinely different posts", () => {
@@ -137,8 +194,8 @@ describe("genuinely different posts", () => {
     it(`allows ${second} beside ${first}`, async () => {
       const a = await enrol(platform);
       const b = await enrol(platform);
-      await store(a, platform, first);
-      await expect(store(b, platform, second)).resolves.toBeTruthy();
+      await store(a.enrolmentId, platform, first);
+      await expect(store(b.enrolmentId, platform, second)).resolves.toBeTruthy();
     });
   }
 });
@@ -153,39 +210,60 @@ describe("links whose post id cannot be read", () => {
   it("does not collapse two different short links onto each other", async () => {
     const a = await enrol("tiktok");
     const b = await enrol("tiktok");
-    await store(a, "tiktok", "https://vm.tiktok.com/ZMabcdef/");
+    await store(a.enrolmentId, "tiktok", "https://vm.tiktok.com/ZMabcdef/");
     await expect(
-      store(b, "tiktok", "https://vm.tiktok.com/ZMgggggg/"),
+      store(b.enrolmentId, "tiktok", "https://vm.tiktok.com/ZMgggggg/"),
       "a constant fallback would block every creator after the first",
     ).resolves.toBeTruthy();
   });
 
-  it("still refuses the very same short link twice", async () => {
+  it("still refuses to pay for the very same short link twice", async () => {
     const a = await enrol("tiktok");
     const b = await enrol("tiktok");
-    await store(a, "tiktok", "https://vm.tiktok.com/ZMabcdef/");
-    await expect(store(b, "tiktok", "https://vm.tiktok.com/ZMabcdef/")).rejects.toThrow();
+    await store(a.enrolmentId, "tiktok", "https://vm.tiktok.com/ZMabcdef/");
+    await db.query(
+      `UPDATE submissions SET status = 'approved', reviewed_at = now()`,
+    );
+    await store(b.enrolmentId, "tiktok", "https://vm.tiktok.com/ZMabcdef/");
+    await expect(
+      db.query(
+        `UPDATE submissions SET status = 'approved', reviewed_at = now()
+          WHERE status = 'pending'`,
+      ),
+    ).rejects.toThrow();
   });
 });
 
 describe("what the identity looks like", () => {
   it("is the platform and the post id", async () => {
     const a = await enrol("x");
-    await store(a, "x", "https://x.com/ada/status/123");
+    await store(a.enrolmentId, "x", "https://x.com/ada/status/123");
     expect(await identityOf("https://x.com/ada/status/123", "x")).toBe("x:123");
   });
 
-  /** Rejection releases the claim, which 0003 established and this preserves. */
-  it("lets a rejected post be entered by its real author", async () => {
+  /** Rejection releases the credit, which 0003 established and this preserves. */
+  it("lets a rejected post be credited to its real author", async () => {
     const thief = await enrol("x");
     const author = await enrol("x");
 
-    await store(thief, "x", "https://x.com/ada/status/999");
-    await db.query(`UPDATE submissions SET status = 'rejected', reviewed_at = now()`);
+    await store(thief.enrolmentId, "x", "https://x.com/ada/status/999");
+    await db.query(
+      `UPDATE submissions SET status = 'approved', reviewed_at = now()`,
+    );
+    await store(author.enrolmentId, "x", "https://twitter.com/ada/status/999");
+
+    // Reversed on review: the first was not theirs after all.
+    await db.query(
+      `UPDATE submissions SET status = 'rejected', reviewed_at = now()
+        WHERE url = 'https://x.com/ada/status/999'`,
+    );
 
     await expect(
-      store(author, "x", "https://twitter.com/ada/status/999"),
-      "a rejected claim must not keep holding the post under another spelling",
+      db.query(
+        `UPDATE submissions SET status = 'approved', reviewed_at = now()
+          WHERE url = 'https://twitter.com/ada/status/999'`,
+      ),
+      "a rejected credit must not keep holding the post under another spelling",
     ).resolves.toBeTruthy();
   });
 });
@@ -266,4 +344,128 @@ describe("applying the migration to data that already collides", () => {
       await fresh.close();
     }
   }, 60_000);
+});
+
+/**
+ * The burn attack, and the line between a claim and a credit.
+ *
+ * Exercised through submit_entry and review() rather than by writing rows, so
+ * what is asserted is what a creator and a reviewer actually meet.
+ */
+describe("two creators contesting one post", () => {
+  let adminId: string;
+
+  beforeEach(async () => {
+    adminId = (
+      await one<{ id: string }>(
+        `SELECT id FROM admin_users WHERE email_canonical = 'partnership@blockfestafrica.com'`,
+      )
+    ).id;
+  });
+
+  /**
+   * p_author is what authorFromUrl reads out of the URL, never the submitter's
+   * own handle. Passing their handle would compare a value against itself and
+   * the wrong_account check would pass for everybody.
+   */
+  function authorIn(url: string, platform: string): string | null {
+    if (platform === "x") return url.split("/")[3] ?? null;
+    if (platform === "tiktok") {
+      const at = url.split("/").find((s) => s.startsWith("@"));
+      return at ? at.slice(1) : null;
+    }
+    return null;
+  }
+
+  async function enterVia(enrolment: string, platform: string, url: string) {
+    const challenge = await one<{ id: string }>(
+      `SELECT id FROM challenges WHERE campaign_id = '${campaignId}' AND week_no = 1`,
+    );
+    const result = await db.query(
+      `SELECT * FROM submit_entry($1::uuid, $2::uuid, $3::platform, $4::text, true, $5::text)`,
+      [enrolment, challenge.id, platform, url, authorIn(url, platform)],
+    );
+    return (result.rows[0] as { submission_id: string }).submission_id;
+  }
+
+  const decide = (submission: string, status: string) =>
+    db.query(`SELECT review($1::uuid, $2::submission_status, $3::uuid, 'note')`, [
+      submission,
+      status,
+      adminId,
+    ]);
+
+  const URL = "https://instagram.com/p/CONTESTED/";
+
+  it("lets the real author enter a post a thief has pending", async () => {
+    const thief = await enrol("instagram");
+    const author = await enrol("instagram");
+
+    await enterVia(thief.enrolmentId, "instagram", URL);
+    await expect(
+      enterVia(author.enrolmentId, "instagram", URL),
+      "a pending claim used to hold the post until a reviewer looked, which cost the author the week",
+    ).resolves.toBeTruthy();
+  });
+
+  it("pays only one of them", async () => {
+    const thief = await enrol("instagram");
+    const author = await enrol("instagram");
+
+    const a = await enterVia(thief.enrolmentId, "instagram", URL);
+    const b = await enterVia(author.enrolmentId, "instagram", URL);
+
+    await decide(a, "approved");
+    await expect(decide(b, "approved")).rejects.toThrow(/post_already_credited/);
+  });
+
+  it("frees the post when the wrong one was approved and is reversed", async () => {
+    const thief = await enrol("instagram");
+    const author = await enrol("instagram");
+
+    const a = await enterVia(thief.enrolmentId, "instagram", URL);
+    const b = await enterVia(author.enrolmentId, "instagram", URL);
+
+    await decide(a, "approved");
+    await decide(a, "rejected");
+    await expect(decide(b, "approved")).resolves.toBeTruthy();
+  });
+
+  it("still refuses a post somebody is already credited for, at submit", async () => {
+    // The good half of the old rule, kept. Without this a creator pastes a
+    // link, is told it went through, and finds out at review that it never
+    // counted.
+    const first = await enrol("instagram");
+    const second = await enrol("instagram");
+
+    const a = await enterVia(first.enrolmentId, "instagram", "https://instagram.com/p/TAKEN/");
+    await decide(a, "approved");
+
+    await expect(
+      enterVia(second.enrolmentId, "instagram", "https://instagram.com/p/TAKEN/"),
+    ).rejects.toThrow(/url_already_submitted/);
+  });
+
+  it("refuses it under a different spelling too", async () => {
+    const first = await enrol("instagram");
+    const second = await enrol("instagram");
+
+    const a = await enterVia(first.enrolmentId, "instagram", "https://instagram.com/p/SPELL/");
+    await decide(a, "approved");
+
+    await expect(
+      enterVia(second.enrolmentId, "instagram", "https://instagr.am/reel/SPELL/"),
+    ).rejects.toThrow(/url_already_submitted/);
+  });
+
+  /**
+   * X and TikTok were never exposed to the burn, because the author is in the
+   * path. Asserted so that stays true rather than being assumed.
+   */
+  it("still refuses somebody else's X post outright", async () => {
+    const thief = await enrol("x");
+    await expect(
+      enterVia(thief.enrolmentId, "x", "https://x.com/someoneelse/status/4242"),
+    ).rejects.toThrow(/wrong_account/);
+  });
 });
