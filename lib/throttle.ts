@@ -34,8 +34,20 @@ export async function allow(
   limit: number,
   windowSeconds: number,
 ): Promise<boolean> {
-  const key = throttleKey(request);
-  if (key === SHARED_BUCKET) return true;
+  return allowKey(throttleKey(request), name, limit, windowSeconds);
+}
+
+/**
+ * The same, keyed directly, for server actions where there is no NextRequest.
+ * Callers read x-nf-client-connection-ip from headers() themselves.
+ */
+export async function allowKey(
+  key: string,
+  name: string,
+  limit: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  if (!key || key === SHARED_BUCKET) return true;
 
   try {
     const result = await getDb().execute(
@@ -49,9 +61,20 @@ export async function allow(
     }
     return ok !== false;
   } catch (error) {
+    /*
+     * The error NAME only, never its message.
+     *
+     * Drizzle wraps a failed query in a DrizzleQueryError whose message is
+     * "Failed query: <sql> params: <params>", and the params here are the
+     * bucket, which is name:<client-ip>. Passing that message to the log would
+     * write the address into the very place this function's own comment
+     * promises it does not. redactPii has no IP rule, so the message would
+     * pass through intact. The name answers "the throttle read failed" without
+     * naming anybody.
+     */
     logWarning(
       "throttle",
-      `could not be read, allowing: ${error instanceof Error ? error.message : String(error)}`,
+      `could not be read, allowing: ${error instanceof Error ? error.name : "unknown"}`,
     );
     return true;
   }

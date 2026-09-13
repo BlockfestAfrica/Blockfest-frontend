@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { campaigns, challenges, getDb } from "@/lib/db/client";
 import { currentCreator } from "@/lib/creator-session";
 import { pauseState } from "@/lib/campaign-pause";
+import { logError } from "@/lib/log";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import {
   authorFromUrl,
@@ -219,11 +220,7 @@ export async function POST(request: NextRequest) {
 
     // Logged with the SQLSTATE, because that is what a mapping is keyed on
     // and a message alone did not distinguish these at all.
-    console.error(
-      "[campaign/submit] unmapped",
-      pgErrorCode(error),
-      pgErrorMessage(error),
-    );
+    logError("campaign/submit unmapped", error);
     return fail("Something went wrong at our end. Please try again.", 500);
   }
 }

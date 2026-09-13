@@ -92,3 +92,44 @@ describe("finishing a recovery", () => {
     ).toBe(false);
   });
 });
+
+/**
+ * After the session exchange (#138), the gate is defence in depth rather than
+ * the whole defence: requireAdmin no longer reads nf_jwt at all, and the
+ * exchange accepts only a password, so no link-established Identity session can
+ * reach the console by any server path. These two assertions keep the client
+ * side from quietly regressing anyway.
+ */
+describe("the sign-in path after the exchange", () => {
+  it("never calls identity.login, which would re-plant a readable credential", () => {
+    // The single most likely regression: somebody restoring client-side login
+    // "temporarily" and putting nf_jwt back in document.cookie.
+    const code = SOURCE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    expect(code).not.toMatch(/identity\.login\(/);
+    expect(code, "sign-in goes through the server exchange").toContain(
+      '"/api/admin/session"',
+    );
+  });
+
+  it("clears gotrue's persisted session, not only the cookies", () => {
+    // The library keeps the refresh token in localStorage and arms a timer that
+    // re-plants the cookies from it at the refresh margin, so clearing cookies
+    // alone is undone within the hour.
+    expect(SOURCE).toContain("sweepLegacyStorage");
+    const sweep = SOURCE.slice(SOURCE.indexOf("function sweepLegacyStorage"));
+    expect(sweep.slice(0, 500)).toContain("gotrue.");
+  });
+
+  it("does not ride an invite's session into the console", () => {
+    const submit = SOURCE.slice(SOURCE.indexOf("async function submit"));
+    const invite = submit.slice(
+      submit.indexOf("if (inviteToken) {"),
+      submit.indexOf("} else if (recovering) {"),
+    );
+    expect(invite, "the invite session is torn down").toContain("logout()");
+    expect(
+      invite.includes('window.location.href = "/admin"'),
+      "an invited admin signs in with the password they just set",
+    ).toBe(false);
+  });
+});

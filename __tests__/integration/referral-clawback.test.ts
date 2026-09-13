@@ -199,10 +199,18 @@ describe("the clamp", () => {
     await approveAnEntry(farmed, "https://x.com/h2/status/5");
 
     const paid = await pointsOf(referrer);
-    // Take most of it back by hand first, leaving less than was paid.
+    /*
+     * Leave the referrer holding less than was paid. Written straight into
+     * the ledger rather than through award_points, because the floor added in
+     * 0028 rightly refuses a manual deduction of engine-awarded points; the
+     * clamp exists for ANY low-total state however it arose, and this is the
+     * honest way to make one.
+     */
     await db.query(`
-      SELECT award_points('${referrer}'::uuid, 'manual_adjustment'::ledger_source,
-                          ${-(paid - 10)}::integer, 'Correction'::text, '${adminId}'::uuid)`);
+      INSERT INTO point_ledger (campaign_id, campaign_creator_id, source, points, note, awarded_by_admin_id)
+      SELECT campaign_id, id, 'manual_adjustment'::ledger_source, ${-(paid - 10)}, 'Fixture', '${adminId}'
+        FROM campaign_creators WHERE id = '${referrer}'`);
+    await db.query(`SELECT recompute_points_total('${referrer}'::uuid)`);
     expect(await pointsOf(referrer)).toBe(10);
 
     await expect(voidIt(farmed), "the void must not fail on the CHECK").resolves.toBeTruthy();

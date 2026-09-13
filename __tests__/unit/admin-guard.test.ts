@@ -214,21 +214,31 @@ describe("the admin surface", () => {
     }
   });
 
-  it("resolves the admin from the database, never from the token's roles", () => {
-    const src = readFileSync(join(process.cwd(), "lib/admin/session.ts"), "utf8");
-    // Roles in the nf_jwt are stale for about an hour after a revocation, so a
-    // stolen laptop would keep working. The row is the authority.
-    expect(src).toContain("resolve_admin");
-    expect(src).not.toMatch(/roles\.includes\(/);
+  it("resolves the admin from the session row, never from a token's roles", () => {
+    // The authority chain moved with the session exchange (#138) but did not
+    // weaken. Per request, requireAdmin resolves a live session row; the admin
+    // identity is bound at sign-in inside create_admin_session, which calls
+    // resolve_admin. Neither trusts a client-supplied role.
+    const session = readFileSync(join(process.cwd(), "lib/admin/session.ts"), "utf8");
+    expect(session).toContain("touch_admin_session");
+    expect(session).not.toMatch(/roles\.includes\(/);
+
+    const exchange = readFileSync(
+      join(process.cwd(), "app/api/admin/session/route.ts"),
+      "utf8",
+    );
+    expect(exchange).toContain("create_admin_session");
+    expect(exchange).not.toMatch(/roles\.includes\(/);
   });
 });
 
 describe("failing closed", () => {
-  it("denies when identity cannot be resolved at all", () => {
-    const src = readFileSync(join(process.cwd(), "lib/admin/identity.ts"), "utf8");
-    // An unknown runtime must not be read as permission.
-    expect(src).toMatch(/reason: "unavailable"/);
+  it("fails the password exchange closed", () => {
+    // The Identity credential is verified once, at the exchange. An unreachable
+    // or unhappy GoTrue must read as a failed sign-in, never as a pass.
+    const src = readFileSync(join(process.cwd(), "lib/admin/exchange.ts"), "utf8");
     expect(src).toMatch(/catch/);
+    expect(src).toMatch(/return \{ ok: false \}/);
   });
 
   it("denies when the database cannot answer", () => {

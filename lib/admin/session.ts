@@ -2,19 +2,26 @@ import { cache } from "react";
 import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { currentIdentityUser } from "@/lib/admin/identity";
+import { cookies } from "next/headers";
+import {
+  ADMIN_SESSION_COOKIE,
+  hashAdminSessionToken,
+  looksLikeAdminSessionToken,
+} from "@/lib/admin/session-token";
 
 /**
  * Who is allowed to act as an admin, decided on every single request.
  *
- * Netlify Identity answers one question: which verified address is signed in.
- * It does not answer whether that person is still an admin, and it must not be
- * asked to. Roles ride in the nf_jwt, which is valid for about an hour and is
- * not invalidated when a role is stripped, so trusting it would mean a stolen
- * laptop keeps approving entries for an hour after being revoked.
+ * The credential is a server-minted session cookie (#138), not the Netlify
+ * Identity JWT. Identity is spent once at sign-in, server side, in
+ * app/api/admin/session; what the browser carries afterwards is an opaque
+ * __Host- token whose SHA-256 is a row in admin_sessions, readable by no page
+ * script. touch_admin_session resolves it, checks it has not expired, and
+ * checks the admin is still active, all in one call.
  *
- * So: Identity for identity, a row in admin_users for authorisation, read live.
- * Revoking is one UPDATE and it applies on the next click.
+ * Authorisation stays live: is_active is read on every request, so revoking is
+ * one UPDATE and it applies on the next click, and the 0029 trigger deletes the
+ * revoked admin\'s sessions in the same statement.
  */
 
 /**
@@ -36,6 +43,8 @@ export interface AdminIdentity {
   readonly adminId: string;
   readonly role: "owner" | "reviewer";
   readonly email: string;
+  /** When this session ends, for the header clock. Not an authorization input. */
+  readonly sessionExpiresAt: Date;
 }
 
 export type AdminResult =
@@ -61,23 +70,28 @@ const DENIED: AdminResult = { ok: false };
  * to the next.
  */
 export const requireAdmin = cache(async function requireAdmin(): Promise<AdminResult> {
-  const identity = await currentIdentityUser();
-  if (!identity.ok) return DENIED;
+  const jar = await cookies();
+  const token = jar.get(ADMIN_SESSION_COOKIE)?.value?.trim();
 
-  const { email, id } = identity.user;
-  if (!email || !id) return DENIED;
+  // Shape checked before the database is touched, like the creator session.
+  if (!looksLikeAdminSessionToken(token)) return DENIED;
 
   try {
     const db = getDb();
     const result = await db.execute(
-      sql`SELECT * FROM resolve_admin(${email}, ${id})`,
+      sql`SELECT * FROM touch_admin_session(${hashAdminSessionToken(token)})`,
     );
 
     const row = result.rows?.[0] as
-      | { admin_id?: string; admin_role?: string }
+      | {
+          admin_id?: string;
+          admin_role?: string;
+          admin_email?: string;
+          expires_at?: string | Date;
+        }
       | undefined;
 
-    if (!row?.admin_id) return DENIED;
+    if (!row?.admin_id || !row.admin_email || !row.expires_at) return DENIED;
     if (row.admin_role !== "owner" && row.admin_role !== "reviewer") {
       return DENIED;
     }
@@ -87,13 +101,14 @@ export const requireAdmin = cache(async function requireAdmin(): Promise<AdminRe
       admin: {
         adminId: row.admin_id,
         role: row.admin_role,
-        email,
+        email: row.admin_email,
+        sessionExpiresAt: new Date(row.expires_at as string | Date),
       } as AdminIdentity,
     };
   } catch (error) {
     // A database that cannot answer is not permission to proceed.
     console.error(
-      "[admin] could not resolve admin:",
+      "[admin] could not resolve session:",
       error instanceof Error ? error.name : String(error),
     );
     return DENIED;

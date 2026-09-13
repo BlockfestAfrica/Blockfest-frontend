@@ -26,7 +26,14 @@ vi.mock("@/lib/creator-session", async () => {
     ...actual,
     creatorByToken: (token: string) => resolve(token),
     sessionCookieOptions: () => ({ httpOnly: true, path: "/", maxAge: 100 }),
-    pendingCookieOptions: () => ({ httpOnly: true, path: "/x", maxAge: 10 }),
+    // The real path, not a stand-in. The helper below refuses to count a
+    // clearing Set-Cookie whose Path a browser would not match, so a mock
+    // with a fake path would fail correct code.
+    pendingCookieOptions: () => ({
+      httpOnly: true,
+      path: "/campaigns/monica-money-story/enter",
+      maxAge: 10,
+    }),
   };
 });
 
@@ -70,13 +77,31 @@ function cookiesOn(response: Response): {
     const index = pair.indexOf("=");
     const name = pair.slice(0, index).trim();
     const value = pair.slice(index + 1).trim();
+    const path = attributes
+      .map((a) => /^\s*path\s*=\s*(.+)$/i.exec(a)?.[1]?.trim())
+      .find(Boolean);
 
     const clearing =
       value === "" ||
       attributes.some((a) => /^\s*max-age\s*=\s*0\s*$/i.test(a));
 
-    if (clearing) deleted.push(name);
-    else set[name] = value;
+    if (clearing) {
+      /*
+       * A clearing Set-Cookie only clears the cookie whose Path matches. The
+       * first version of this helper classified by name alone, and passed a
+       * clear that every real browser ignored: the pending cookie is set
+       * path-scoped to the entry route, and delete() without options emits
+       * Path=/, which matches nothing. A delete only counts here if a browser
+       * would actually honour it.
+       */
+      const expected: Record<string, string> = {
+        monica_pending: "/campaigns/monica-money-story/enter",
+      };
+      const wanted = expected[name];
+      if (!wanted || path === wanted) deleted.push(name);
+    } else {
+      set[name] = value;
+    }
   }
 
   return { set, deleted };

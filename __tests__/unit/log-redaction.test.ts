@@ -26,6 +26,20 @@ describe("what must never appear", () => {
     expect(out).toContain("[email]");
   });
 
+  it("removes an IPv4 address, so a throttle bucket cannot leak one", () => {
+    // A throttle bucket is name:<client-ip>, and Drizzle's error message
+    // embeds the bound params. A client IP is NDPA personal data.
+    expect(redactPii("throttle enter:102.89.33.4 failed")).not.toContain(
+      "102.89.33.4",
+    );
+    expect(redactPii("register:41.58.128.9,300,3600")).toContain("[ip]");
+  });
+
+  it("keeps a version-like number that is not an address", () => {
+    // The rule needs four octets; a UUID or a short dotted number survives.
+    expect(redactPii("schema 15.5.25 ok")).toContain("15.5.25");
+  });
+
   it("removes a phone number", () => {
     expect(redactPii(`Key (phone_e164)=(${PHONE}) already exists`)).not.toContain(
       PHONE,
@@ -39,6 +53,16 @@ describe("what must never appear", () => {
   it("removes an access token", () => {
     // The worst one: it is not personal data, it is a live 90 day credential.
     expect(redactPii(`?t=${TOKEN} failed`)).not.toContain(TOKEN);
+  });
+
+  it("removes a token that starts or ends with a hyphen", () => {
+    // Base64url index 62 is '-', so about one minted token in thirty starts
+    // or ends with one, and \b does not treat '-' as a word boundary. The
+    // first version of this redactor missed exactly those.
+    const leading = "-" + TOKEN.slice(1);
+    const trailing = TOKEN.slice(0, 42) + "-";
+    expect(redactPii(`t=${leading} failed`)).not.toContain(leading);
+    expect(redactPii(`t=${trailing} failed`)).not.toContain(trailing);
   });
 
   it("removes the mail provider key", () => {

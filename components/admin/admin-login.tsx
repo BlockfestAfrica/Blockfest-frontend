@@ -75,6 +75,27 @@ export function AdminLogin() {
    * narrowest thing that closes the hole without breaking the password change
    * it exists to enable.
    */
+  /**
+   * Clear gotrue's persisted session, which the cookie drop does not touch.
+   *
+   * The library keeps the user and refresh token in localStorage under
+   * gotrue.* / netlify* keys and arms a module-level timer that re-plants the
+   * cookies from them at the refresh margin. Clearing the cookies without this
+   * is undone within the hour. logout() stops the timer; this removes what it
+   * would otherwise rebuild from.
+   */
+  function sweepLegacyStorage() {
+    try {
+      for (const key of Object.keys(window.localStorage)) {
+        if (key.startsWith("gotrue.") || key.startsWith("netlify")) {
+          window.localStorage.removeItem(key);
+        }
+      }
+    } catch {
+      // A browser with storage blocked has nothing to clear.
+    }
+  }
+
   function dropServerVisibleSession() {
     try {
       for (const name of ["nf_jwt", "nf_refresh"]) {
@@ -93,6 +114,12 @@ export function AdminLogin() {
 
     (async () => {
       try {
+        // Strip any pre-deploy Identity credential out of both places the
+        // first time an admin returns. The fragment token is in the URL, not
+        // localStorage, so this cannot break the callback below.
+        dropServerVisibleSession();
+        sweepLegacyStorage();
+
         const { handleAuthCallback } = await import("@netlify/identity");
         const result = await handleAuthCallback();
         if (cancelled || !result) return;
@@ -115,7 +142,13 @@ export function AdminLogin() {
           dropServerVisibleSession();
           setRecovering(true);
           setNotice(
-            "Set a new password to finish. Your old one no longer works.",
+            /*
+             * Truthful, unlike its first version, which said "Your old one no
+             * longer works". A GoTrue recovery link changes nothing by itself;
+             * the old password works until the new one is set, and telling a
+             * locked-out admin otherwise sends them in circles.
+             */
+            "Set a new password to finish.",
           );
           return;
         }
@@ -162,7 +195,20 @@ export function AdminLogin() {
       const identity = await import("@netlify/identity");
 
       if (inviteToken) {
+        // acceptInvite sets the password and signs the browser into gotrue.
+        // That session is torn down at once: every path into the console now
+        // ends at the same door, the exchange, so no link-established Identity
+        // session is ever load-bearing.
         await identity.acceptInvite(inviteToken, password);
+        await identity.logout().catch(() => {});
+        dropServerVisibleSession();
+        sweepLegacyStorage();
+
+        setInviteToken(null);
+        setBusy(false);
+        setPassword("");
+        setNotice("Password set. Sign in with it below.");
+        return;
       } else if (recovering) {
         /*
          * Changed through the in-memory session, then ended.
@@ -175,6 +221,7 @@ export function AdminLogin() {
         await identity.updateUser({ password });
         await identity.logout().catch(() => {});
         dropServerVisibleSession();
+        sweepLegacyStorage();
 
         setRecovering(false);
         setBusy(false);
@@ -182,7 +229,41 @@ export function AdminLogin() {
         setNotice("Password changed. Sign in with it below.");
         return;
       } else {
-        await identity.login(email.trim(), password);
+        /*
+         * The exchange, not identity.login. This is the whole of #138: the
+         * password goes to the server, which performs the Identity grant and
+         * hands back an httpOnly session cookie. identity.login is never called
+         * again, so nf_jwt, nf_refresh and the gotrue localStorage are never
+         * created on the sign-in path and no admin credential sits where page
+         * script can read it.
+         */
+        const response = await fetch("/api/admin/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), password }),
+        });
+
+        if (response.status === 429) {
+          const body = await response.json().catch(() => ({}));
+          const message =
+            body.message ?? "Too many tries. Wait a few minutes, then try again.";
+          setNotice(message);
+          toast.error(message);
+          setBusy(false);
+          return;
+        }
+
+        if (!response.ok) {
+          const message = "That did not work. Check the address and password.";
+          setNotice(message);
+          toast.error(message);
+          setBusy(false);
+          return;
+        }
+
+        // Full navigation, so the server tree renders with the new cookie.
+        window.location.href = "/admin";
+        return;
       }
 
       window.location.href = "/admin";

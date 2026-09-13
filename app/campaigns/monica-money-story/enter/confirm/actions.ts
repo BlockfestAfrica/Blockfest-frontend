@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   CREATOR_PENDING_COOKIE,
@@ -12,6 +12,7 @@ import {
   sessionCookieOptions,
 } from "@/lib/creator-session";
 import { monicaRoutes } from "@/lib/campaigns";
+import { allowKey } from "@/lib/throttle";
 
 /**
  * Turn a claim into a session.
@@ -26,7 +27,31 @@ import { monicaRoutes } from "@/lib/campaigns";
  * also loads a third party analytics script, which is the same mistake in a
  * different place.
  */
-export async function enterAsPending() {
+export async function enterAsPending(form: FormData) {
+  /*
+   * The enrolment the page actually displayed, carried in the form.
+   *
+   * Without it there is a gap between render and tap: the page names account A,
+   * the pending cookie is swapped for token B in another tab before the tap
+   * lands, and the person who confirmed "I am A" is signed in as B. An
+   * enrolment id is not a credential, so putting it in the HTML costs nothing,
+   * and comparing it here means the session established is exactly the one the
+   * person read the name of.
+   */
+  const shown = String(form.get("enrolment") ?? "").trim();
+
+  /*
+   * The same budget as /enter, because this action also resolves a token
+   * against the database and a cookie an attacker can plant themselves is not
+   * a gate. The confirm PAGE's render stays unthrottled and that is accepted:
+   * it is one indexed hash lookup per view, the same weight as any public
+   * page, and 32 random bytes leave an enumerator nothing to enumerate.
+   */
+  const who = (await headers()).get("x-nf-client-connection-ip")?.trim() ?? "";
+  if (!(await allowKey(who, "enter", 600, 3600))) {
+    redirect(`${monicaRoutes.enterConfirm}?s=unavailable`);
+  }
+
   const jar = await cookies();
   const token = jar.get(CREATOR_PENDING_COOKIE)?.value?.trim() ?? "";
 
@@ -38,9 +63,24 @@ export async function enterAsPending() {
    * should invalidate what is sitting in this cookie. Checking at the point of
    * use rather than the point of display is what makes that true.
    */
-  const holder = await creatorByToken(token);
+  /*
+   * A Neon blip at the exact moment somebody taps the confirm button must not
+   * throw out of the action into a bare Next error page. It reads as the site
+   * breaking on the one tap that mattered, on launch morning.
+   */
+  let holder: Awaited<ReturnType<typeof creatorByToken>> = null;
+  let unavailable = false;
+  try {
+    holder = await creatorByToken(token);
+  } catch {
+    unavailable = true;
+  }
 
-  if (!holder) {
+  if (unavailable) {
+    redirect(`${monicaRoutes.enterConfirm}?s=unavailable`);
+  }
+
+  if (!holder || holder.enrolmentId !== shown) {
     jar.delete({ name: CREATOR_PENDING_COOKIE, path: pendingCookieOptions().path });
     redirect(`${monicaRoutes.enterConfirm}?s=expired`);
   }

@@ -135,6 +135,34 @@ export async function currentCreator(): Promise<CreatorSession | null> {
   return rows[0] ?? null;
 }
 
+/**
+ * The registered handles for an enrolment, for the confirm page.
+ *
+ * The adversarial review broke the confirm page with one observation: the page
+ * vouches for an account using nothing but a self-asserted display name, and
+ * registration enforces no name uniqueness, so an attacker registers under the
+ * victim's exact name and the page itself tells the victim the link is theirs.
+ *
+ * Handles resist that. They are unique per platform, they are what a creator
+ * actually recognises as theirs, and showing them to the holder of the account's
+ * own link discloses nothing the link does not already grant.
+ */
+export async function handlesForEnrolment(
+  enrolmentId: string,
+): Promise<Array<{ platform: string; handle: string }>> {
+  return getDb()
+    .select({
+      platform: creatorSocialHandles.platform,
+      handle: creatorSocialHandles.handle,
+    })
+    .from(creatorSocialHandles)
+    .innerJoin(
+      campaignCreators,
+      eq(campaignCreators.creatorId, creatorSocialHandles.creatorId),
+    )
+    .where(eq(campaignCreators.id, enrolmentId));
+}
+
 /** The challenge a creator can submit to right now, if any. */
 export interface OpenChallenge {
   id: string;

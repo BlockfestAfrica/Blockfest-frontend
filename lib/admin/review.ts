@@ -242,6 +242,21 @@ export async function pendingSubmissions(
       handleId: creatorSocialHandles.id,
       /** Published by the creator from the account, as the proof. */
       verificationCode: creatorSocialHandles.verificationCode,
+      /*
+       * Whether another live submission claims this same post.
+       *
+       * 0025 made claims non-exclusive so a pending claim cannot burn a
+       * rival's post, and moved exclusivity to approval. That put the tie
+       * break on the reviewer, and the queue gave them no sign a tie existed:
+       * worked oldest first, the thief who filed first was reviewed first,
+       * and the refusal only fired on the SECOND approval. This is the sign.
+       */
+      contested: sql<boolean>`EXISTS (
+        SELECT 1 FROM submissions other
+         WHERE other.post_identity = submissions.post_identity
+           AND other.id <> submissions.id
+           AND other.status <> 'rejected'
+      )`.as("contested"),
     })
     .from(submissions)
     .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))

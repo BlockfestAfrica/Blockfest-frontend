@@ -290,6 +290,8 @@ describe("the list stays complete", () => {
     admin_users: "carries the Identity binding every reviewer signs in with",
     resources: "admin-edited page content, not anybody's personal data",
     audit_log: "purged per campaign, so admin history survives",
+    admin_sessions:
+      "the signed-in admins' own sessions, not participant data; rows expire in twelve hours and purging them would sign the owner out mid-purge",
   };
 
   /*
@@ -301,6 +303,36 @@ describe("the list stays complete", () => {
    * campaign data was in neither list. A completeness check that only sees one
    * dialect is a completeness check that reports what it can see.
    */
+  /**
+   * The counts the purge reports are true.
+   *
+   * 0026 inserted the request_throttle DELETE between the votes DELETE and the
+   * GET DIAGNOSTICS meant to capture it, so ROW_COUNT was overwritten and the
+   * purge reported the throttle's count under the votes name. Rows were still
+   * deleted; the accounting lied, in the one report an owner reads while
+   * destroying data. Nothing here checked counts, which is how it survived
+   * 799 green tests. request_throttle is trivial to seed, so the assertion
+   * rides on it: under the bug, votes reported the throttle's count. Proved by
+   * running this against the migrations capped at 0027, where it fails with
+   * votes = 3.
+   */
+  it("reports each table's own count, not its neighbour's", async () => {
+    await db.query(`
+      INSERT INTO request_throttle (bucket, window_start, hits) VALUES
+        ('t:1.2.3.4', now(), 1), ('t:5.6.7.8', now(), 2), ('t:9.9.9.9', now(), 3)`);
+
+    const { rows } = await db.query<{ table_name: string; rows_deleted: number }>(
+      `SELECT * FROM purge_campaign_data($1, $2)`,
+      [SLUG, SLUG],
+    );
+    const reported = Object.fromEntries(
+      rows.map((r) => [r.table_name, Number(r.rows_deleted)]),
+    );
+
+    expect(reported.request_throttle, "its own three rows").toBe(3);
+    expect(reported.votes, "not the throttle count wearing the votes name").toBe(0);
+  });
+
   it("classifies every table as purged or kept", async () => {
     const sql = readdirSync(MIGRATIONS)
       .filter((f) => f.endsWith(".sql"))
