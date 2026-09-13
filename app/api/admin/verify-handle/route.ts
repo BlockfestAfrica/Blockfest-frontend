@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db/client";
 import { requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
+import { logError } from "@/lib/log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, message: known }, { status: 400 });
     }
 
-    console.error("[admin/verify-handle]", code, pgErrorMessage(error));
+    logError("admin/verify-handle", error);
     return NextResponse.json(
       { ok: false, message: "Something went wrong at our end." },
       { status: 500 },

@@ -56,9 +56,32 @@ const nextConfig: NextConfig = {
             value: "max-age=31536000; includeSubDomains",
           },
           {
+            /*
+             * 'unsafe-eval' is gone. Nothing here needs it: Next's production
+             * bundle does not eval, and the only third party script is a
+             * pageview tag. It was widening the public policy for nothing,
+             * and the public policy is what an attacker lands on.
+             *
+             * What this cannot fix is the shape of the problem. Netlify
+             * Identity sets nf_jwt and nf_refresh through document.cookie with
+             * path=/ and no httpOnly, and gotrue-js keeps the refresh token in
+             * localStorage, so an admin's credentials are readable by any
+             * script running anywhere on this origin. The console and the
+             * public site share an origin, and the public site loads a vendor
+             * tag. Script execution on the homepage is therefore script
+             * execution with an admin's session in reach, and the hour long
+             * JWT can be refreshed from the stolen refresh token indefinitely.
+             *
+             * The real fix is to stop sharing the origin: move the console to
+             * its own hostname, or exchange the Identity token server side once
+             * and carry an httpOnly SameSite=Strict cookie. Both are larger
+             * than a night before launch. Removing eval and keeping the tag off
+             * every path that can carry a credential narrows it; it does not
+             * close it. Tracked in #138.
+             */
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.sabilytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.sabilytics.com; frame-src 'self' https://blockfest.substack.com; frame-ancestors 'none';",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.sabilytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.sabilytics.com; frame-src 'self' https://blockfest.substack.com; frame-ancestors 'none';",
           },
         ],
       },
@@ -96,6 +119,57 @@ const nextConfig: NextConfig = {
             // cache or an intermediary.
             key: "Cache-Control",
             value: "no-store, no-cache, must-revalidate, private",
+          },
+        ],
+      },
+      {
+        /*
+         * The same tightening, for the pages that can carry a creator's token.
+         *
+         * /enter receives it in the query by definition, and the platform
+         * re-appends that query to the redirect, so /enter/confirm and /me can
+         * both be loaded with the token in the address bar. Any third party
+         * script running there reads it from location.search and has a ninety
+         * day session for that creator.
+         *
+         * components/shared/analytics.tsx already refuses to render the tag on
+         * these paths. This is the layer that holds if somebody removes that
+         * check, because the browser will not fetch the script at all.
+         */
+        source: "/campaigns/monica-money-story/enter/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+          {
+            // Belt for the Referer, so the token cannot ride out on an
+            // outbound click either.
+            key: "Referrer-Policy",
+            value: "no-referrer",
+          },
+        ],
+      },
+      {
+        source: "/campaigns/monica-money-story/me",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "no-referrer",
           },
         ],
       },

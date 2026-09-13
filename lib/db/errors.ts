@@ -36,9 +36,19 @@ export const PG = {
   ALREADY_SUBMITTED_FOR_PLATFORM: "P0207",
   URL_ALREADY_SUBMITTED: "P0208",
   WRONG_ACCOUNT: "P0209",
+  /** review() refused because a newer submission superseded this one. */
+  SUPERSEDED: "P0210",
+  /** The creator has no verified handle on that platform. */
+  HANDLE_NOT_VERIFIED: "P0211",
+  /** The enrolment was voided by an admin. */
+  ENROLMENT_NOT_ACTIVE: "P0212",
+  /** Another submission is already approved for this same post. */
+  POST_ALREADY_CREDITED: "P0213",
   ADMIN_UNDELETABLE: "P0301",
   /** Postgres' own, for a constraint we did not raise ourselves. */
   UNIQUE_VIOLATION: "23505",
+  /** award_points refused: the per-creator manual total would be exceeded. */
+  MANUAL_CAP_EXCEEDED: "P0508",
   CHECK_VIOLATION: "23514",
   UNDEFINED_FUNCTION: "42883",
 } as const;

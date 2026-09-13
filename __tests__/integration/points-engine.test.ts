@@ -277,16 +277,24 @@ describe("shapes the schema refuses outright", () => {
     await expect(submit(entryId, ["x"])).rejects.toThrow();
   });
 
-  it("will not take the same URL twice", async () => {
+  it("will not credit the same URL twice", async () => {
+    // The rule is about credit, not about claims. 0025 moved exclusivity onto
+    // approval, because refusing the second CLAIM is what let anybody burn a
+    // rival's post by filing it first.
     const { entryId } = await makeEntry();
     const { entryId: other } = await makeEntry();
     const url = `https://x.com/shared-${uniq()}`;
     await db.query(
-      `INSERT INTO submissions (entry_id, platform, url) VALUES ('${entryId}', 'x', '${url}')`,
+      `INSERT INTO submissions (entry_id, platform, url, status, reviewed_at)
+       VALUES ('${entryId}', 'x', '${url}', 'approved', now())`,
+    );
+    await db.query(
+      `INSERT INTO submissions (entry_id, platform, url) VALUES ('${other}', 'x', '${url}')`,
     );
     await expect(
       db.query(
-        `INSERT INTO submissions (entry_id, platform, url) VALUES ('${other}', 'x', '${url}')`,
+        `UPDATE submissions SET status = 'approved', reviewed_at = now()
+          WHERE entry_id = '${other}'`,
       ),
     ).rejects.toThrow();
   });
@@ -431,16 +439,21 @@ describe("a rejected submission", () => {
     ).resolves.toBeTruthy();
   });
 
-  it("still stops two live submissions sharing a URL", async () => {
+  it("still stops two approved submissions sharing a URL", async () => {
+    // The rule is about credit, not about claims. 0025 moved exclusivity onto
+    // approval, because refusing the second CLAIM is what let anybody burn a
+    // rival's post by filing it first.
     const a = await makeEntry();
     const b = await makeEntry();
     const url = `https://x.com/contested-${uniq()}`;
     await db.query(
-      `INSERT INTO submissions (entry_id, platform, url) VALUES ('${a.entryId}', 'x', '${url}')`,
+      `INSERT INTO submissions (entry_id, platform, url, status, reviewed_at)
+       VALUES ('${a.entryId}', 'x', '${url}', 'approved', now())`,
     );
     await expect(
       db.query(
-        `INSERT INTO submissions (entry_id, platform, url) VALUES ('${b.entryId}', 'x', '${url}')`,
+        `INSERT INTO submissions (entry_id, platform, url, status, reviewed_at)
+         VALUES ('${b.entryId}', 'x', '${url}', 'approved', now())`,
       ),
     ).rejects.toThrow();
   });

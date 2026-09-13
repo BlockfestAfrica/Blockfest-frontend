@@ -30,7 +30,26 @@ import {
  * Analytics on an admin page measured nothing anybody wanted anyway.
  */
 
-const OFF_LIMITS = ["/admin", "/api/admin"];
+/*
+ * Paths where a bearer credential can appear in the URL, plus the admin
+ * surface.
+ *
+ * The entry link carries the creator's access token in ?t=, and Netlify
+ * re-appends the original query string to a redirect, so the token arrives in
+ * the address bar of wherever that redirect lands. A pageview tag sends the
+ * URL it is on. That means an analytics vendor was being handed a live
+ * ninety day credential for every creator on their first visit, which is a
+ * worse leak than the admin one this component was written for, and it was
+ * live on the marketing build.
+ *
+ * The prefix rule below covers /enter, /enter/confirm and /me together.
+ */
+const OFF_LIMITS = [
+  "/admin",
+  "/api/admin",
+  "/campaigns/monica-money-story/enter",
+  "/campaigns/monica-money-story/me",
+];
 
 export function Analytics() {
   const pathname = usePathname();

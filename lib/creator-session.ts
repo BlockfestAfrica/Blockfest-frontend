@@ -14,10 +14,74 @@ import {
 } from "@/lib/db/client";
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 import {
+  CREATOR_PENDING_MAX_AGE,
+  CREATOR_PENDING_PATH,
   CREATOR_SESSION_COOKIE,
+  CREATOR_SESSION_MAX_AGE,
   hashAccessToken,
   looksLikeAccessToken,
 } from "@/lib/creator-access";
+
+/**
+ * Cookie options, in one place.
+ *
+ * The route handler sets the pending cookie and the server action sets the
+ * session cookie, so without this the two halves of one flow would each carry
+ * their own copy of secure, sameSite and path, and drift the first time one of
+ * them was edited.
+ */
+const cookieBase = () => ({
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+});
+
+export const sessionCookieOptions = () => ({
+  ...cookieBase(),
+  path: "/",
+  maxAge: CREATOR_SESSION_MAX_AGE,
+});
+
+export const pendingCookieOptions = () => ({
+  ...cookieBase(),
+  path: CREATOR_PENDING_PATH,
+  maxAge: CREATOR_PENDING_MAX_AGE,
+});
+
+/** Who a token belongs to, for naming an account before anybody enters it. */
+export interface TokenHolder {
+  enrolmentId: string;
+  name: string;
+}
+
+/**
+ * Resolve a token to the creator who holds it, or to nothing.
+ *
+ * The route used to refuse to do this, on the grounds that answering "is this
+ * token real" turns the endpoint into an oracle. That reasoning does not
+ * survive the arithmetic: a token is 32 bytes from randomBytes, so there is no
+ * search to speed up and nothing for an oracle to accelerate. Meanwhile the
+ * cost of not asking was that any 43 well formed characters set a ninety day
+ * session cookie, which is the actual hole.
+ */
+export async function creatorByToken(token: string): Promise<TokenHolder | null> {
+  if (!looksLikeAccessToken(token)) return null;
+
+  const rows = await getDb()
+    .select({ enrolmentId: campaignCreators.id, name: creators.fullName })
+    .from(campaignCreators)
+    .innerJoin(creators, eq(creators.id, campaignCreators.creatorId))
+    .innerJoin(campaigns, eq(campaigns.id, campaignCreators.campaignId))
+    .where(
+      and(
+        eq(campaignCreators.accessTokenHash, hashAccessToken(token)),
+        eq(campaigns.slug, MONICA_SLUG),
+      ),
+    )
+    .limit(1);
+
+  return rows[0] ?? null;
+}
 
 /**
  * Who is reading their own page.

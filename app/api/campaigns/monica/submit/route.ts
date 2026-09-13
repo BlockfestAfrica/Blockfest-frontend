@@ -165,6 +165,17 @@ export async function POST(request: NextRequest) {
 
     // Raised deliberately by the function, so the creator can be told the one
     // thing they need to change rather than "something went wrong".
+    if (isPgError(error, PG.ENROLMENT_NOT_ACTIVE, "enrolment_not_active")) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "This account cannot enter the campaign. If you think that is a mistake, write to partnership@blockfestafrica.com from the address you registered with.",
+        },
+        { status: 403 },
+      );
+    }
+
     if (isPgError(error, PG.WRONG_ACCOUNT, "wrong_account")) {
       return fail(
         "That post is not from the account you registered. Entries have to come from an account you listed when you joined.",

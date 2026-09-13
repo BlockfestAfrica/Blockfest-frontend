@@ -3,6 +3,7 @@ import Link from "next/link";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { pauseState } from "@/lib/campaign-pause";
 import { ConsoleTabs, type ConsoleTab } from "@/components/admin/console-tabs";
+import { SignOut } from "@/components/admin/sign-out";
 import { Pill } from "@/components/shared/panel";
 import { campaignBySlug, MONICA_SLUG } from "@/lib/campaigns";
 
@@ -131,6 +132,10 @@ export default async function AdminLayout({
             <span className="hidden sm:block">
               <Pill tone={owner ? "gold" : "neutral"}>{admin.admin.role}</Pill>
             </span>
+            {/* There was no way to end a session from the application at all,
+                so a reviewer on a borrowed laptop closed the tab and left a
+                working one behind. */}
+            <SignOut />
           </div>
         </div>
       </header>

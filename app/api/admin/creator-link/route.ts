@@ -3,12 +3,19 @@ import { personalLink, reissueEmail } from "@/lib/email/templates";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
-import { campaignCreators, campaigns, creators, getDb } from "@/lib/db/client";
+import {
+  auditLog,
+  campaignCreators,
+  campaigns,
+  creators,
+  getDb,
+} from "@/lib/db/client";
 import { requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { hashAccessToken, newAccessToken } from "@/lib/creator-access";
 import { canonicalEmail } from "@/lib/campaign-registration";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { logWarning } from "@/lib/log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,6 +82,7 @@ export async function POST(request: NextRequest) {
       // As typed. canonicalEmail strips dots and plus tags to match, and
       // sending to the stripped form delivers somewhere they may not read.
       email: creators.email,
+      campaignId: campaigns.id,
     })
     .from(campaignCreators)
     .innerJoin(creators, eq(creators.id, campaignCreators.creatorId))
@@ -105,8 +113,30 @@ export async function POST(request: NextRequest) {
     })
     .where(eq(campaignCreators.id, creator.enrolmentId));
 
-  // Logged, because handing somebody a working session is an admin action and
-  // should be answerable afterwards. The token itself is never logged.
+  /*
+   * Recorded in audit_log, not only in stdout.
+   *
+   * This mints a working session for a named creator from nothing but their
+   * email address, and it is open to reviewers as well as owners. A stdout line
+   * is not a record: it is not queryable, it is not retained with the campaign,
+   * and it is not what a dispute about who entered what gets answered from.
+   * Every other action that moves a creator's standing writes an audit row, and
+   * handing somebody the ability to submit as that creator is at least as
+   * consequential as awarding them fifty points.
+   *
+   * The token itself is never written anywhere, here or in the log.
+   */
+  await db.insert(auditLog).values({
+    campaignId: creator.campaignId,
+    actorAdminId: admin.admin.adminId,
+    action: "creator.link_reissued",
+    entityType: "campaign_creator",
+    entityId: creator.enrolmentId,
+    note: `Reissued by ${admin.admin.email}. The previous link stopped working.`,
+  });
+
+  // Kept alongside, because a log line is what somebody greps during an
+  // incident before they think to query the table.
   console.warn(
     "[admin/creator-link] reissued by",
     admin.admin.email,
@@ -134,7 +164,7 @@ export async function POST(request: NextRequest) {
   );
 
   if (!result.sent) {
-    console.warn("[admin/creator-link] email not sent:", result.reason);
+    logWarning("admin/creator-link email not sent", result.reason ?? "");
   }
 
   return NextResponse.json({
