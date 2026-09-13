@@ -42,11 +42,50 @@ export function AdminLogin() {
    * JWT before returning, so there is a real session here and the only thing
    * standing between it and the review queue is this component.
    *
-   * That session is not dismissed, because it belongs to the real admin and
-   * dismissing it would be a lie about what happened. What is refused is
-   * reaching the queue without setting a new password, so a link read out of a
-   * mailbox cannot be used and left no trace.
+   * The first version of this kept that session, reasoning that it belongs to
+   * the real admin and dismissing it would be a lie about what happened. That
+   * reasoning was wrong, and it made the whole gate decorative. The refusal was
+   * three lines of React state, and nothing on the server knew the session was
+   * mid-recovery, so an attacker who reached the mail did not have to argue
+   * with this component at all: they typed /admin in the address bar and the
+   * console rendered. requireAdmin resolved the real owner, because it really
+   * was the owner's token. The real admin's password still worked and nothing
+   * had changed, so the one signal the design leaned on, that using a link
+   * would leave a trace, did not fire either.
+   *
+   * The shared inbox seeded as owner makes that reachable by anybody ever
+   * forwarded a thread from partnerships, and GoTrue's recover endpoint is
+   * mounted on this domain and live whether or not anything links to it.
+   *
+   * So the cookies go immediately. They are the half the server reads, and
+   * without them requireAdmin denies, which is what turns this from a request
+   * into a gate. The in-memory session stays only long enough to change the
+   * password through it, and is then ended so the new password has to be
+   * typed. Anyone holding the link is left with nothing but the ability to set
+   * a password they will then have to use, which is exactly the trace the
+   * design wanted and never had.
    */
+
+  /**
+   * Drop the credentials the server can see, keeping the in-memory session.
+   *
+   * The danger is entirely in the cookies: they are what requireAdmin reads and
+   * what travels to /admin in another tab. The library's own session object
+   * lives in JS and is what updateUser needs, so clearing the cookies is the
+   * narrowest thing that closes the hole without breaking the password change
+   * it exists to enable.
+   */
+  function dropServerVisibleSession() {
+    try {
+      for (const name of ["nf_jwt", "nf_refresh"]) {
+        document.cookie = `${name}=; path=/; max-age=0; samesite=lax${
+          window.location.protocol === "https:" ? "; secure" : ""
+        }`;
+      }
+    } catch {
+      // Nothing to clear, which is the safe direction.
+    }
+  }
   const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
@@ -73,6 +112,7 @@ export function AdminLogin() {
         }
 
         if (result.type === "recovery") {
+          dropServerVisibleSession();
           setRecovering(true);
           setNotice(
             "Set a new password to finish. Your old one no longer works.",
@@ -81,11 +121,22 @@ export function AdminLogin() {
         }
 
         if (result.type === "confirmation" || result.type === "email_change") {
+          /*
+           * Confirmation signs the browser in too. The comment here used to say
+           * an invite establishes no session and a recovery does, and then
+           * treated confirmation as the harmless case. The library signs in on
+           * confirmation as well, so it was a free session for anybody holding
+           * a confirmation link.
+           */
+          dropServerVisibleSession();
           setNotice("That is confirmed. Sign in below.");
           return;
         }
 
-        // An unrecognised type. Say so rather than assuming it is harmless.
+        // An unrecognised type. Assume it established a session, because the
+        // two that do outnumber the one that does not and a new one costs
+        // nothing to be wrong about in this direction.
+        dropServerVisibleSession();
         setNotice("That link is not one we recognise. Sign in below.");
       } catch {
         // A link that has expired or been used already. Say so once, plainly,
@@ -113,9 +164,23 @@ export function AdminLogin() {
       if (inviteToken) {
         await identity.acceptInvite(inviteToken, password);
       } else if (recovering) {
-        // The session already exists. This is what makes the recovery link
-        // cost something to use: without it, reading the mail was enough.
+        /*
+         * Changed through the in-memory session, then ended.
+         *
+         * Sending them back to sign in with the password they just chose is
+         * the point: it means holding the link alone is never enough to reach
+         * the queue, and that using it leaves the account's password changed,
+         * which is the trace somebody notices.
+         */
         await identity.updateUser({ password });
+        await identity.logout().catch(() => {});
+        dropServerVisibleSession();
+
+        setRecovering(false);
+        setBusy(false);
+        setPassword("");
+        setNotice("Password changed. Sign in with it below.");
+        return;
       } else {
         await identity.login(email.trim(), password);
       }
