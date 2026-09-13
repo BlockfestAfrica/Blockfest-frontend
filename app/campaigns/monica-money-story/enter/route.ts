@@ -60,10 +60,11 @@ export async function GET(request: NextRequest) {
    * change the arithmetic, since a token is 32 random bytes and guessing was
    * never the threat, but the sentence is true rather than aspirational.
    *
-   * Sixty an hour: a creator opening their link on a few devices is nowhere
-   * near it.
+   * Six hundred an hour, because the address is a carrier NAT, not a person:
+   * one MTN IP is hundreds of creators, all opening their links in the same
+   * launch-morning hour.
    */
-  if (!(await allow(request, "enter", 60, 3600))) {
+  if (!(await allow(request, "enter", 600, 3600))) {
     return new NextResponse(null, {
       status: 307,
       headers: { Location: `${monicaRoutes.enterConfirm}?s=unavailable` },
@@ -113,7 +114,16 @@ export async function GET(request: NextRequest) {
      * a dashboard into a sentence about the link that was actually clicked.
      */
     const response = go(`${monicaRoutes.enterConfirm}?s=unknown`);
-    response.cookies.delete(CREATOR_PENDING_COOKIE);
+    /*
+     * With the cookie's own path, or the delete is a no-op. A clearing
+     * Set-Cookie only matches the cookie it names when the Path matches too,
+     * and this one was set path-scoped to the entry route. delete() without
+     * options emits Path=/, which every real browser ignores for it.
+     */
+    response.cookies.delete({
+      name: CREATOR_PENDING_COOKIE,
+      path: pendingCookieOptions().path,
+    });
     return response;
   }
 
@@ -123,7 +133,16 @@ export async function GET(request: NextRequest) {
     const response = go(monicaRoutes.me);
     // Re-set so the ninety days run from this visit rather than from the first.
     response.cookies.set(CREATOR_SESSION_COOKIE, token, sessionCookieOptions());
-    response.cookies.delete(CREATOR_PENDING_COOKIE);
+    /*
+     * With the cookie's own path, or the delete is a no-op. A clearing
+     * Set-Cookie only matches the cookie it names when the Path matches too,
+     * and this one was set path-scoped to the entry route. delete() without
+     * options emits Path=/, which every real browser ignores for it.
+     */
+    response.cookies.delete({
+      name: CREATOR_PENDING_COOKIE,
+      path: pendingCookieOptions().path,
+    });
     return response;
   }
 

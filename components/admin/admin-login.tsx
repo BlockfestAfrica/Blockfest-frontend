@@ -115,7 +115,13 @@ export function AdminLogin() {
           dropServerVisibleSession();
           setRecovering(true);
           setNotice(
-            "Set a new password to finish. Your old one no longer works.",
+            /*
+             * Truthful, unlike its first version, which said "Your old one no
+             * longer works". A GoTrue recovery link changes nothing by itself;
+             * the old password works until the new one is set, and telling a
+             * locked-out admin otherwise sends them in circles.
+             */
+            "Set a new password to finish.",
           );
           return;
         }

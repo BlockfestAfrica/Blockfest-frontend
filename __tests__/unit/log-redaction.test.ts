@@ -41,6 +41,16 @@ describe("what must never appear", () => {
     expect(redactPii(`?t=${TOKEN} failed`)).not.toContain(TOKEN);
   });
 
+  it("removes a token that starts or ends with a hyphen", () => {
+    // Base64url index 62 is '-', so about one minted token in thirty starts
+    // or ends with one, and \b does not treat '-' as a word boundary. The
+    // first version of this redactor missed exactly those.
+    const leading = "-" + TOKEN.slice(1);
+    const trailing = TOKEN.slice(0, 42) + "-";
+    expect(redactPii(`t=${leading} failed`)).not.toContain(leading);
+    expect(redactPii(`t=${trailing} failed`)).not.toContain(trailing);
+  });
+
   it("removes the mail provider key", () => {
     expect(redactPii("Authorization: Zoho-enczapikey ABC123xyz")).not.toContain(
       "ABC123xyz",

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { CREATOR_PENDING_COOKIE, CREATOR_SESSION_COOKIE } from "@/lib/creator-access";
-import { creatorByToken } from "@/lib/creator-session";
+import { creatorByToken, handlesForEnrolment } from "@/lib/creator-session";
 import { monicaRoutes } from "@/lib/campaigns";
 import { buttonClass } from "@/components/shared/panel";
 import { enterAsPending, discardPending } from "./actions";
@@ -65,6 +65,22 @@ export default async function ConfirmEntryPage({
     }
   }
 
+  /*
+   * The handles, because a name alone vouches for nothing. Registration does
+   * not make names unique, so an attacker can register under the exact name a
+   * victim expects to see. Handles are unique per platform and are what a
+   * person recognises as theirs; a victim reading a stranger's @handle under
+   * their own name stops.
+   */
+  let handles: Array<{ platform: string; handle: string }> = [];
+  if (holder) {
+    try {
+      handles = await handlesForEnrolment(holder.enrolmentId);
+    } catch {
+      handles = [];
+    }
+  }
+
   const problem = unavailable || s === "unavailable" ? "unavailable" : !holder ? (s ?? "expired") : null;
 
   return (
@@ -79,6 +95,22 @@ export default async function ConfirmEntryPage({
               <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-pretty text-white">
                 Open the dashboard for {holder!.name}
               </h1>
+
+              {handles.length > 0 && (
+                <ul className="mt-4 space-y-1">
+                  {handles.map((h) => (
+                    <li
+                      key={`${h.platform}-${h.handle}`}
+                      className="text-sm text-white/70"
+                    >
+                      <span className="uppercase tracking-wider text-white/45">
+                        {h.platform}
+                      </span>{" "}
+                      <span className="font-mono">@{h.handle}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {signedInAs ? (
                 /*
@@ -95,7 +127,8 @@ export default async function ConfirmEntryPage({
                 </p>
               ) : (
                 <p className="mt-4 text-base leading-relaxed text-white/75">
-                  If that is not your name, this link belongs to somebody else.
+                  If that is not your name, or those are not your accounts,
+                  this link belongs to somebody else.
                   Do not continue: anything you submit would be filed under
                   their account and counted as their work.
                 </p>
@@ -103,6 +136,10 @@ export default async function ConfirmEntryPage({
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <form action={enterAsPending}>
+                  {/* The enrolment the page displayed, so the action can refuse
+                      to sign in anybody other than the account named above. An
+                      id is not a credential; the token stays in its cookie. */}
+                  <input type="hidden" name="enrolment" value={holder!.enrolmentId} />
                   <button type="submit" className={buttonClass("primary", "w-full sm:w-auto")}>
                     Yes, I am {holder!.name}
                   </button>

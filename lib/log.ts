@@ -30,8 +30,14 @@ import { pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 const SENSITIVE: Array<[RegExp, string]> = [
   // Email. Before the phone rule, because an address can contain digits.
   [/[\w.!#$%&'*+/=?^`{|}~-]+@[\w-]+(?:\.[\w-]+)+/g, "[email]"],
-  // The access token shape, exactly as minted: 32 bytes base64url.
-  [/\b[A-Za-z0-9_-]{43}\b/g, "[token]"],
+  /*
+   * The access token shape, exactly as minted: 32 bytes base64url. Lookarounds
+   * rather than \b, because '-' is not a word character, so \b silently fails
+   * to match any token that begins or ends with one. Base64url index 62 is
+   * '-', which makes that roughly one token in every thirty, found by the
+   * adversarial review rather than by a leak.
+   */
+  [/(?<![A-Za-z0-9_-])[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/g, "[token]"],
   // The mail provider's key, which the old redact() in the email client caught.
   [/Zoho-enczapikey\s+\S+/gi, "Zoho-enczapikey [redacted]"],
   // Anything that looks like a bearer credential in a header or URL.

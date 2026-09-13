@@ -78,10 +78,16 @@ export async function POST(request: NextRequest) {
    *
    * What makes the oracle cheap is being able to ask endlessly. Nigerian mobile
    * numbers are a small enough space to walk, so the limit is on the asking.
-   * Twenty an hour from one address is far above anything a person registering
-   * themselves will do, and far below anything worth enumerating with.
+   *
+   * Three hundred an hour, not twenty. The audience is Nigerian creators on
+   * phones, and MTN, Airtel and Glo put hundreds of subscribers behind one
+   * carrier-grade NAT address, so on launch morning one IP is a crowd, not a
+   * person. Twenty an hour would have had the campaign refusing its own
+   * registrants within minutes of the announcement post. Three hundred still
+   * caps an enumerator at seven thousand probes a day against a space of
+   * hundreds of millions, which is the property the limit exists for.
    */
-  if (!(await allow(request, "register", 20, 3600))) {
+  if (!(await allow(request, "register", 300, 3600))) {
     return NextResponse.json(
       {
         ok: false,

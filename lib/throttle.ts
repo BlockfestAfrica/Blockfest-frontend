@@ -34,8 +34,20 @@ export async function allow(
   limit: number,
   windowSeconds: number,
 ): Promise<boolean> {
-  const key = throttleKey(request);
-  if (key === SHARED_BUCKET) return true;
+  return allowKey(throttleKey(request), name, limit, windowSeconds);
+}
+
+/**
+ * The same, keyed directly, for server actions where there is no NextRequest.
+ * Callers read x-nf-client-connection-ip from headers() themselves.
+ */
+export async function allowKey(
+  key: string,
+  name: string,
+  limit: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  if (!key || key === SHARED_BUCKET) return true;
 
   try {
     const result = await getDb().execute(

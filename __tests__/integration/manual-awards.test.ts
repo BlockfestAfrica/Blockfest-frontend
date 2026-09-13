@@ -307,12 +307,17 @@ describe("what a manual award does not disturb", () => {
  */
 describe("taking points back below zero", () => {
   it("refuses, and says what they hold", async () => {
+    // The floor (0028) fires before the negativity guard here, and names the
+    // binding constraint: what manual sources hold, since manual sources are
+    // what a manual deduction may draw on. would_go_negative survives as the
+    // belt behind it, mathematically unreachable for manual awards now that
+    // every manual deduction must fit inside the manual sum.
     const me = await makeCreator();
     await award(me, "quality_bonus", 50, "Featured");
 
     await expect(
       award(me, "quality_bonus", -100, "Reversing, wrong creator"),
-    ).rejects.toThrow(/would_go_negative: holds 50/);
+    ).rejects.toThrow(/manual_floor_exceeded: holds 50 manual/);
 
     expect(await pointsOf(me), "unchanged").toBe(50);
   });
@@ -329,6 +334,27 @@ describe("taking points back below zero", () => {
     const me = await makeCreator();
     await expect(
       award(me, "quality_bonus", -10, "Nothing to take"),
-    ).rejects.toThrow(/would_go_negative: holds 0/);
+    ).rejects.toThrow(/manual_floor_exceeded: holds 0 manual/);
+  });
+
+  /**
+   * The drain the floor exists to stop: a compromised reviewer session
+   * lowering a rival instead of raising an ally. Engine points are not
+   * touchable by manual deduction at all; taking them away is what
+   * void_enrolment is for.
+   */
+  it("refuses to drain points the engine awarded", async () => {
+    const me = await makeCreator();
+    await db.query(
+      `INSERT INTO point_ledger (campaign_id, campaign_creator_id, source, points, note)
+       SELECT campaign_id, id, 'referral'::ledger_source, 500, 'engine'
+         FROM campaign_creators WHERE id = '${me}'`,
+    );
+    await expect(
+      award(me, "manual_adjustment", -300, "Draining a rival"),
+    ).rejects.toThrow(/manual_floor_exceeded: holds 0 manual/);
+    expect(await pointsOf(me), "untouched").toBe(0);
+    // pointsOf reads the cache, which the refused award never recomputed;
+    // the ledger row above was inserted directly so the truth is 500.
   });
 });

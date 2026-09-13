@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
+import { logError } from "@/lib/log";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { MONICA_SLUG } from "@/lib/campaigns";
 
@@ -94,11 +95,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error(
-      "[admin/pause] unmapped",
-      pgErrorCode(error),
-      pgErrorMessage(error),
-    );
+    logError("admin/pause", error);
     return NextResponse.json(
       { ok: false, message: "Something went wrong at our end." },
       { status: 500 },

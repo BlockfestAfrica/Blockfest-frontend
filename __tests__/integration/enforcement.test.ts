@@ -264,3 +264,62 @@ describe("recomputing a total", () => {
     expect(Number(total.recompute_points_total)).toBe(150);
   });
 });
+
+/**
+ * The two rules 0028 added, exercised against the real functions.
+ */
+describe("the manual floor (0028)", () => {
+  it("refuses to drain engine points below the manual sum", async () => {
+    const me = await enrol();
+    await db.query(
+      `INSERT INTO point_ledger (campaign_id, campaign_creator_id, source, points, note)
+       VALUES ($1::uuid, $2::uuid, 'referral'::ledger_source, 500, 'engine')`,
+      [campaignId, me.enrolmentId],
+    );
+    await db.query(`SELECT recompute_points_total($1::uuid)`, [me.enrolmentId]);
+
+    await expect(
+      award(me.enrolmentId, -300, "Draining a rival"),
+    ).rejects.toThrow(/manual_floor_exceeded: holds 0 manual/);
+    expect(await pointsOf(me.enrolmentId), "untouched").toBe(500);
+  });
+
+  it("still allows reversing exactly what manual sources gave", async () => {
+    const me = await enrol();
+    await award(me.enrolmentId, 200);
+    await expect(award(me.enrolmentId, -200, "Reversing")).resolves.toBeTruthy();
+    expect(await pointsOf(me.enrolmentId)).toBe(0);
+  });
+});
+
+describe("the void and approve race (0028)", () => {
+  it("takes the enrolment's row lock before reading its status", async () => {
+    // A lost race needs two concurrent writers, which single-process PGlite
+    // cannot produce, so the lock's presence and position are asserted on the
+    // latest definition of review() instead.
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const sql = readFileSync(
+      join(process.cwd(), "netlify/database/migrations/0028_adversary_fixes.sql"),
+      "utf8",
+    );
+    /*
+     * Comments stripped first. The lock is explained in a comment directly
+     * above the SELECT, and the first version of this assertion found the
+     * words "FOR UPDATE OF cc" in that prose rather than in the code,
+     * measured a negative distance, and failed on correct SQL. A guard that
+     * cannot tell code from prose about code punishes writing the reason
+     * down, which this codebase refuses to do.
+     */
+    const fn = sql
+      .slice(sql.indexOf("CREATE OR REPLACE FUNCTION review("))
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*--.*$/gm, "");
+    const statusRead = fn.indexOf("COALESCE(cc.status, 'active')");
+    const lock = fn.indexOf("FOR UPDATE OF cc");
+
+    expect(statusRead, "the status read exists").toBeGreaterThan(-1);
+    expect(lock, "and is made under the enrolment's lock").toBeGreaterThan(statusRead);
+    expect(lock - statusRead, "in the same statement").toBeLessThan(600);
+  });
+});

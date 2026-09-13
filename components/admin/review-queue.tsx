@@ -23,6 +23,8 @@ export interface QueueItem {
   creatorName: string;
   /** The account they said they publish from. Null if none is recorded. */
   registeredHandle: string | null;
+  /** Another live submission claims this same post. Only one can be paid. */
+  contested: boolean;
   /** True when the server could compare the link's author to that handle. */
   autoChecked: boolean;
   /** Null until an admin has confirmed the account belongs to this creator. */
@@ -185,6 +187,18 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-base font-semibold text-white">
                   {item.creatorName}
+                  {item.contested && (
+                    /*
+                     * Two creators claim this exact post; approving pays only
+                     * the first and the second is refused by name. Without
+                     * this the queue is worked oldest first, the thief who
+                     * filed first is reviewed first, and the reviewer learns
+                     * a tie existed only from the refusal.
+                     */
+                    <span className="ml-2 inline-flex min-h-6 items-center rounded-full border border-amber-400/40 px-2 text-xs font-semibold text-amber-300">
+                      Contested: another creator entered this same post
+                    </span>
+                  )}
                 </span>
                 <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-white/60">
                   {item.registeredHandle ? (
