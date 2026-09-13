@@ -24,7 +24,7 @@ describe("route import probe", () => {
         fullName: "Zqxcanary Surname",
         email: "zqxcanary01@example.com",
         phone: "+2348012345678",
-        contentNiche: "money",
+        monicaTag: "money",
         x: "zqxcanaryx",
         instagram: "",
         tiktok: "",

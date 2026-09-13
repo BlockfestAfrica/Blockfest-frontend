@@ -91,7 +91,7 @@ export default async function MonicaLeaderboardPage() {
 
           <p className="mt-6 text-sm leading-relaxed text-white/45">
             This board moves as entries are approved. Weekly winners are
-            announced {MONICA_FIRST_LEADERBOARD} and every Saturday after that.
+            announced {MONICA_FIRST_LEADERBOARD} and every Sunday after that.
             How points are earned is in the{" "}
             <Link
               href={monicaRoutes.rules}

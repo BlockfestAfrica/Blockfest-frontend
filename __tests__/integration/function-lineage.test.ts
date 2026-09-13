@@ -124,3 +124,40 @@ describe("every redefined function", () => {
     }
   });
 });
+
+/**
+ * Migration numbering, which a deploy enforces and nothing else did.
+ *
+ * Netlify applies migrations in lexicographic order and rejects any whose
+ * numeric prefix is not above the highest already applied. A rejected migration
+ * does not get skipped: it fails the deploy. Two files sharing a prefix is
+ * therefore safe only while neither has been applied, and stops being safe the
+ * moment one of them ships.
+ *
+ * That is not hypothetical here. 0029_admin_sessions.sql and a second 0029
+ * existed on separate branches at the same time, and the collision was invisible
+ * until both were merged.
+ */
+describe("migration filenames", () => {
+  it("never reuses a numeric prefix", () => {
+    const seen = new Map<string, string>();
+    const clashes: string[] = [];
+
+    for (const file of migrationFiles()) {
+      const prefix = file.split("_")[0];
+      const previous = seen.get(prefix);
+      if (previous) clashes.push(`${prefix}: ${previous} and ${file}`);
+      else seen.set(prefix, file);
+    }
+
+    expect(
+      clashes,
+      `two migrations share a prefix, which blocks the deploy once either is applied:\n${clashes.join("\n")}`,
+    ).toEqual([]);
+  });
+
+  it("numbers them in strictly ascending order", () => {
+    const prefixes = migrationFiles().map((f) => f.split("_")[0]);
+    expect([...prefixes].sort()).toEqual(prefixes);
+  });
+});

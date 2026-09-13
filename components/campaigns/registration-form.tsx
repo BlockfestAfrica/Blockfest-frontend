@@ -17,7 +17,8 @@ type Field =
   | "x"
   | "instagram"
   | "tiktok"
-  | "contentNiche"
+  | "monicaTag"
+  | "referralCode"
   | "audienceSize"
   | "location"
   | "acceptedRules";
@@ -39,7 +40,8 @@ const FIELDS_WITH_VISIBLE_ERRORS: ReadonlySet<Field> = new Set<Field>([
   "x",
   "instagram",
   "tiktok",
-  "contentNiche",
+  "monicaTag",
+  "referralCode",
   "audienceSize",
   "location",
   "acceptedRules",
@@ -52,7 +54,8 @@ const EMPTY: Record<Field, string> = {
   x: "",
   instagram: "",
   tiktok: "",
-  contentNiche: "",
+  monicaTag: "",
+  referralCode: "",
   audienceSize: "",
   location: "",
   acceptedRules: "",
@@ -345,7 +348,7 @@ export function RegistrationForm({
           "phone",
           "Add your phone number, with country code if you are outside Nigeria.",
         ],
-        ["contentNiche", "Tell us what kind of content you make."],
+        ["monicaTag", "Enter your Monica username."],
       ] as const
     ).find(([field]) => !values[field].trim());
 
@@ -379,6 +382,10 @@ export function RegistrationForm({
             audienceSize: values.audienceSize || undefined,
             location: values.location || undefined,
             acceptedRules: true,
+            // Named `ref` on the wire because that is what /join's cookie and
+            // the schema already call it. Omitted when blank so an empty string
+            // never looks like a code that failed to resolve.
+            ref: values.referralCode.trim() || undefined,
             rulesVersion: MONICA_RULES_VERSION,
             marketingOptIn: marketing,
             privacyVersion: MONICA_PRIVACY_VERSION,
@@ -672,23 +679,64 @@ export function RegistrationForm({
             />
           </Labelled>
           <Labelled
-            label="What do you make?"
-            htmlFor="contentNiche"
+            label="Monica tag"
+            htmlFor="monicaTag"
             required
-            hint="Comedy, finance, tech, lifestyle."
-            error={errors.contentNiche}
+            hint="Your username on Monica. This is how prize money reaches you, so check it."
+            error={errors.monicaTag}
           >
             <input
-              id="contentNiche"
-              name="contentNiche"
+              id="monicaTag"
+              name="monicaTag"
               required
-              value={values.contentNiche}
-              onChange={(e) => set("contentNiche")(e.target.value)}
+              value={values.monicaTag}
+              onChange={(e) => set("monicaTag")(e.target.value)}
               className={inputClass}
-              placeholder="Finance explainers"
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="yourname"
             />
           </Labelled>
         </div>
+
+        {/*
+          * Shown only to somebody who did not arrive through a referral link.
+          *
+          * The link path already sets a cookie and needs no typing. What had no
+          * path at all was the creator who was sent a bare code in a WhatsApp
+          * message, which is how codes actually travel: we email each creator
+          * their code, and a code is far easier to forward than a URL.
+          *
+          * Optional, and wrong codes are ignored rather than refused. A typo
+          * here should cost the referrer their 50 points, not cost the person
+          * registering their place in the campaign.
+          */}
+        {!arrivedViaReferral && (
+          <div className="mt-6">
+            <Labelled
+              label="Referral code"
+              htmlFor="referralCode"
+              hint="Optional. If another creator gave you a code, enter it and they get the credit."
+              error={errors.referralCode}
+            >
+              <input
+                id="referralCode"
+                name="referralCode"
+                value={values.referralCode}
+                onChange={(e) =>
+                  set("referralCode")(e.target.value.toUpperCase())
+                }
+                className={inputClass}
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                maxLength={16}
+                placeholder="R3WW9GHF"
+              />
+            </Labelled>
+          </div>
+        )}
       </Section>
 
       <Section
@@ -795,7 +843,7 @@ export function RegistrationForm({
               >
                 campaign rules
               </Link>{" "}
-              (version {MONICA_RULES_VERSION}), and I am 18 or over. Blockfest
+              , and I am 18 or over. Blockfest
               Africa may contact me about this campaign, and will handle my
               details as set out in the{" "}
               <Link

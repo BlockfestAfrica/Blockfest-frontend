@@ -55,8 +55,14 @@ export const campaigns: Campaign[] = [
     sponsor: "Monica",
     sponsorLogo: "/2026/sponsors/Monica.png",
     sponsorUrl: "https://x.com/monicanigeria",
+    /*
+     * One sentence, because this is a card on a phone. The longer version,
+     * which listed sending, receiving and moving money across borders, pushed
+     * the card past a screen and said nothing the campaign page does not say
+     * better a tap later.
+     */
     summary:
-      "A creator competition about the everyday stories behind money: sending it, receiving it, moving it across borders, and how Monica is building a better way through them.",
+      "A creator competition about the everyday stories behind money, and how Monica is building a better way through them.",
     status: "live",
     rewardPool: 5_000_000,
     startsAt: "2026-09-14T00:00:00+01:00",
@@ -67,8 +73,7 @@ export const campaigns: Campaign[] = [
     name: "Rovv",
     hook: "Coming soon",
     sponsor: "Rovv",
-    summary:
-      "The next creator campaign from Blockfest Africa. Details to be announced.",
+    summary: "The next campaign. Details to be announced.",
     status: "coming-soon",
   },
 ];
@@ -136,15 +141,18 @@ export const liveCampaigns = campaigns.filter((c) => c.status === "live");
 
 /** The slug lives here so the routes are built from one string. */
 /**
- * Which campaign week it is, 1 to 4.
+ * Which campaign stage it is, 1 to 5.
  *
  * Derived from the campaign's own start rather than from a stored value, so it
- * cannot drift from the challenge windows, which are the same four Mondays.
+ * cannot drift from the challenge windows, which are the same five Mondays.
+ * The stages run Monday to Saturday with Sunday between them, so they are not
+ * contiguous, but they still begin exactly seven days apart and the arithmetic
+ * is unchanged.
  *
  * Clamped at both ends on purpose. Before the campaign opens this answers 1,
  * which is what the winners screen should be pointed at while the team
- * rehearses; after it closes it answers 4, so the final week stays selected
- * rather than the screen offering a week 5 that no constraint would accept.
+ * rehearses; after it closes it answers 5, so the final stage stays selected
+ * rather than the screen offering a stage no constraint would accept.
  */
 export function currentWeekNo(now: Date = new Date()): number {
   const campaign = campaigns.find((c) => c.slug === MONICA_SLUG);
@@ -152,7 +160,7 @@ export function currentWeekNo(now: Date = new Date()): number {
 
   const start = new Date(campaign.startsAt).getTime();
   const elapsedDays = Math.floor((now.getTime() - start) / 86_400_000);
-  return Math.min(4, Math.max(1, Math.floor(elapsedDays / 7) + 1));
+  return Math.min(5, Math.max(1, Math.floor(elapsedDays / 7) + 1));
 }
 
 export const MONICA_SLUG = "monica-money-story";
@@ -236,7 +244,7 @@ export const monicaSkills: CampaignSkill[] = [
  * 17 October is the close: the final standings, on the Saturday the standings
  * always land on.
  */
-export const MONICA_CAMPAIGN_DAYS = 33;
+export const MONICA_CAMPAIGN_DAYS = 34;
 
 export interface CampaignStage {
   number: number;
@@ -250,23 +258,25 @@ export interface CampaignStage {
 }
 
 /**
- * The four stages.
+ * The five stages.
  *
- * The brief calls this a 30-day campaign while giving dates that do not make
- * 30 days, so the campaign team settled it: 33. Day 1 is Monday 14 September
- * and day 33 is Friday 16 October, which leaves Saturday 17 October as the
- * close. That lands well rather than awkwardly, because Saturday is already
-   * the day weekly winners are announced, so the campaign ends on an
-   * announcement rather than mid-week on a stage nobody finished.
+ * Each runs Monday to Saturday, with the Sunday between them kept clear: that
+ * is when the week's entries are reviewed and the weekly winners announced, so
+ * a stage never ends on the day its own result is published.
  *
- * The extra three days go to the last stage. It is the one with the widest
- * creative brief and the most at stake, so it is the one that benefits.
+ * Day 1 is Monday 14 September and day 34 is Saturday 17 October. The four
+ * Sundays in between are days 7, 14, 21 and 28, which is why the ranges below
+ * have gaps in them rather than running end to end.
+ *
+ * Weekly prizes are decided after stages 1 to 4. Stage 5 is the finale: it
+ * carries the final prize rather than a fifth weekly one, which is why the
+ * weekly pool is still described as four rounds.
  */
 export const monicaStages: CampaignStage[] = [
   {
     number: 1,
     name: "The Discovery",
-    days: [1, 7],
+    days: [1, 6],
     question: "Who is Monica?",
     focus:
       "Introduce Monica to your audience and make the brand understandable.",
@@ -275,7 +285,7 @@ export const monicaStages: CampaignStage[] = [
   {
     number: 2,
     name: "The Problem",
-    days: [8, 14],
+    days: [8, 13],
     question: "Why is money still this complicated?",
     focus:
       "Tell real or relatable stories about financial friction: the fees, the waiting, the rates.",
@@ -284,7 +294,7 @@ export const monicaStages: CampaignStage[] = [
   {
     number: 3,
     name: "The Solution",
-    days: [15, 21],
+    days: [15, 20],
     question: "There's a better way.",
     focus:
       "Explore stablecoins, digital finance and what Monica is actually building.",
@@ -292,8 +302,17 @@ export const monicaStages: CampaignStage[] = [
   },
   {
     number: 4,
+    name: "The Proof",
+    days: [22, 27],
+    question: "Show it working.",
+    focus:
+      "Make it concrete: what changes for somebody who actually uses it.",
+    skills: ["Influence", "Education"],
+  },
+  {
+    number: 5,
     name: "The Money Story",
-    days: [22, MONICA_CAMPAIGN_DAYS],
+    days: [29, MONICA_CAMPAIGN_DAYS],
     question: "Tell Monica's story your way.",
     focus: "Maximum creative freedom, and your strongest single piece of work.",
     skills: ["Storytelling", "Creativity", "Education", "Influence"],
@@ -303,22 +322,21 @@ export const monicaStages: CampaignStage[] = [
 /**
  * Points for one challenge entry, by how many platforms of it were approved.
  *
- * Written as the total a creator ends up with, not as stacking bonuses. The
- * brief gives both readings and they disagree: section 5.1 says three platforms
- * earns "up to 300", while the table in section 8 lists "+100" for two and
- * "+200" for three, which reads as 100 + 100 + 200 = 400. The campaign team
- * confirmed the intent. Each platform is worth 100, so the ladder is linear
- * and stops at three.
+ * Written as the total a creator ends up with, not as stacking bonuses.
  *
- * Totals rather than deltas is deliberate. Deltas are what let that ambiguity
- * become a silent bug, and they make the admin configuration screen a puzzle.
- * Three approved platforms is worth exactly what this array says, and the
- * scoring code never adds anything up to find out.
+ * The first platform is worth 100 and every platform after it is worth 50. The
+ * second posting is not the same work as the first: the creator writes one
+ * piece and repurposes it, which is what the campaign asks for and why it does
+ * not pay three times over. Two platforms is 150, three is 200.
+ *
+ * The database holds these as increments above base_points, which is how
+ * recompute_entry_award reads them, so the two representations are related but
+ * not identical. 0030_platform_ladder.sql carries the mapping.
  */
 export const monicaPointLadder = [
   { platforms: 1, points: 100 },
-  { platforms: 2, points: 200 },
-  { platforms: 3, points: 300 },
+  { platforms: 2, points: 150 },
+  { platforms: 3, points: 200 },
 ] as const;
 
 export interface PrizeAward {
@@ -357,7 +375,7 @@ export const monicaFinalPrizes: PrizeAward[] = [
 const sum = (prizes: PrizeAward[]) =>
   prizes.reduce((total, prize) => total + prize.amount * prize.count, 0);
 
-/** ₦1,600,000 across the four weeks. */
+/** ₦1,600,000 across the four weekly rounds, after stages 1 to 4. */
 export const monicaWeeklyTotal = sum(monicaWeeklyPrizes);
 
 /** ₦3,400,000 on the final leaderboard. */
@@ -398,7 +416,7 @@ export const monicaHowItWorks: HowItWorksStep[] = [
   {
     title: "Earn and climb",
     detail:
-      "Approved entries score. Bonuses go to work that is genuinely good, gets featured, or brings another creator in. The leaderboard moves as entries are approved, and weekly winners are announced every Saturday.",
+      "Approved entries score. Bonuses go to work that is genuinely good, gets featured, or brings another creator in. The leaderboard moves as entries are approved, and weekly winners are announced on Sundays.",
   },
 ];
 
@@ -433,7 +451,7 @@ export const monicaFaqs: CampaignFaq[] = [
   {
     question: "What if I post the same thing on all three platforms?",
     answer:
-      "That is encouraged and it is worth more. Each approved platform is worth 100 points, so the same piece across X, Instagram and TikTok earns 300. It still counts as one challenge entry, not three.",
+      "That is encouraged and it is worth more. The first platform is worth 100 points and each one after it is worth 50, so the same piece across X, Instagram and TikTok earns 200. It still counts as one challenge entry, not three.",
   },
   {
     question: "How do referrals work?",
@@ -468,7 +486,7 @@ export const monicaFaqs: CampaignFaq[] = [
  * and a creator told the board updates weekly has no reason to come back on
  * Tuesday after an approval.
  */
-export const MONICA_FIRST_LEADERBOARD = "Saturday 19 September";
+export const MONICA_FIRST_LEADERBOARD = "Sunday 20 September";
 
 /** Where campaign conversation happens, and how entries are found. */
 export const MONICA_HASHTAGS = ["#TheMoneyStory", "#AreYouSkillful"] as const;

@@ -120,16 +120,25 @@ beforeEach(async () => {
   // them. Without restoring, a test that closes week 1 changes the result of
   // every test that runs after it, and the failure appears in whichever test
   // happens to be next rather than in the one that caused it.
+  //
+  // These are the published windows, Monday to Saturday with the Sunday between
+  // stages kept clear. They must stay identical to 0031_five_stages.sql: this
+  // fixture overwrites whatever the migrations produced, so a fixture carrying
+  // the old dates would quietly test a schedule the campaign does not run, and
+  // the assertions about the shape of the calendar would fail against correct
+  // migrations. That is exactly what happened when the stages changed.
   await db.exec(`
     UPDATE challenges SET status = 'active';
     UPDATE challenges SET starts_at = '2026-09-14 00:00:00+01',
-                          ends_at   = '2026-09-20 23:59:59+01' WHERE week_no = 1;
+                          ends_at   = '2026-09-19 23:59:59+01' WHERE week_no = 1;
     UPDATE challenges SET starts_at = '2026-09-21 00:00:00+01',
-                          ends_at   = '2026-09-27 23:59:59+01' WHERE week_no = 2;
+                          ends_at   = '2026-09-26 23:59:59+01' WHERE week_no = 2;
     UPDATE challenges SET starts_at = '2026-09-28 00:00:00+01',
-                          ends_at   = '2026-10-04 23:59:59+01' WHERE week_no = 3;
+                          ends_at   = '2026-10-03 23:59:59+01' WHERE week_no = 3;
     UPDATE challenges SET starts_at = '2026-10-05 00:00:00+01',
-                          ends_at   = '2026-10-17 23:59:59+01' WHERE week_no = 4;
+                          ends_at   = '2026-10-10 23:59:59+01' WHERE week_no = 4;
+    UPDATE challenges SET starts_at = '2026-10-12 00:00:00+01',
+                          ends_at   = '2026-10-17 23:59:59+01' WHERE week_no = 5;
   `);
   const c = await one<{ id: string }>(
     `SELECT id FROM campaigns WHERE slug = 'monica-money-story'`,
@@ -148,12 +157,12 @@ beforeEach(async () => {
 });
 
 describe("the seeded challenges", () => {
-  it("publishes all four stages", async () => {
+  it("publishes all five stages", async () => {
     expect(
       await count(
         `SELECT count(*)::int AS n FROM challenges WHERE campaign_id = '${campaignId}'`,
       ),
-    ).toBe(4);
+    ).toBe(5);
   });
 
   it("starts week 1 on the day the campaign opens", async () => {
@@ -168,15 +177,38 @@ describe("the seeded challenges", () => {
     );
   });
 
-  it("runs the weeks back to back with no gap and no overlap", async () => {
-    const gaps = await count(`
+  /**
+   * The gap is the design, not a mistake.
+   *
+   * Stages run Monday to Saturday and the Sunday between them is kept clear:
+   * that is when the week's entries are reviewed and the weekly winners
+   * announced, so a stage never ends on the day its own result is published.
+   * The earlier shape ran Monday to Sunday back to back, which is why the site
+   * said Saturday in one place and Sunday in another.
+   *
+   * Asserted as exactly one clear day, so a stage cannot quietly grow into the
+   * Sunday or leave a second one nobody can submit in.
+   */
+  it("leaves exactly one clear day between stages", async () => {
+    const wrong = await count(`
       SELECT count(*)::int AS n FROM (
         SELECT ends_at, lead(starts_at) OVER (ORDER BY week_no) AS next_start
           FROM challenges WHERE campaign_id = '${campaignId}'
       ) w
        WHERE next_start IS NOT NULL
-         AND next_start <> ends_at + interval '1 second'`);
-    expect(gaps).toBe(0);
+         AND next_start <> ends_at + interval '1 day 1 second'`);
+    expect(wrong).toBe(0);
+  });
+
+  it("closes every stage on a Saturday and opens the next on a Monday", async () => {
+    // The days themselves, not just the spacing, because a uniform gap would
+    // also be satisfied by the whole campaign sliding by a day.
+    const offDays = await count(`
+      SELECT count(*)::int AS n FROM challenges
+       WHERE campaign_id = '${campaignId}'
+         AND (extract(dow FROM ends_at AT TIME ZONE 'Africa/Lagos') <> 6
+           OR extract(dow FROM starts_at AT TIME ZONE 'Africa/Lagos') <> 1)`);
+    expect(offDays).toBe(0);
   });
 
   it("is idempotent, so re-running the seed adds nothing", async () => {
@@ -199,7 +231,7 @@ describe("the seeded challenges", () => {
       await count(
         `SELECT count(*)::int AS n FROM challenges WHERE campaign_id = '${campaignId}'`,
       ),
-    ).toBe(4);
+    ).toBe(5);
   });
 });
 

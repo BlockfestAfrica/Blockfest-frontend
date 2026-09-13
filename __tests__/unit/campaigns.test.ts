@@ -18,6 +18,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   MONICA_CAMPAIGN_DAYS,
+  MONICA_FIRST_LEADERBOARD,
   campaignBySlug,
   campaignRun,
   campaigns,
@@ -67,11 +68,21 @@ describe("the reward pool", () => {
 });
 
 describe("the point ladder", () => {
-  it("is worth 100 per approved platform", () => {
-    // The decision that settled the brief's contradiction. Section 5.1 said a
-    // three-platform entry earns "up to 300"; the table in section 8 read as
-    // 100 + 100 + 200 = 400. The campaign team confirmed 100 each.
-    expect(monicaPointLadder.map((t) => t.points)).toEqual([100, 200, 300]);
+  it("pays 100 for the first platform and 50 for each one after", () => {
+    // The second posting is not the same work as the first: the creator writes
+    // one piece and repurposes it, which is what the campaign asks for and why
+    // it stopped paying three times over. The earlier ladder was linear at 100
+    // each, which the team changed deliberately.
+    expect(monicaPointLadder.map((t) => t.points)).toEqual([100, 150, 200]);
+  });
+
+  it("keeps the database and the page telling the same story", () => {
+    // The ladder here is a total; point_rules holds the increment above
+    // base_points, which is how recompute_entry_award reads it. Two
+    // representations of one rule drift the moment only one is edited.
+    const base = monicaPointLadder[0].points;
+    const increments = monicaPointLadder.slice(1).map((t) => t.points - base);
+    expect(increments, "what 0030_platform_ladder.sql writes").toEqual([50, 100]);
   });
 
   it("stops at three platforms, because there are only three", () => {
@@ -111,18 +122,39 @@ describe("the campaign registry", () => {
 });
 
 describe("the stages and skills", () => {
-  it("runs four stages, numbered in order", () => {
-    expect(monicaStages.map((s) => s.number)).toEqual([1, 2, 3, 4]);
+  it("runs five stages, numbered in order", () => {
+    expect(monicaStages.map((s) => s.number)).toEqual([1, 2, 3, 4, 5]);
   });
 
-  it("covers the days continuously, with no gap or overlap", () => {
-    // A gap would be a week where creators are told nothing is running.
+  /**
+   * The gap between stages is deliberate and exactly one day.
+   *
+   * Stages run Monday to Saturday; the Sunday between them is when the week's
+   * entries are reviewed and the weekly winners announced, so a stage never
+   * ends on the day its own result is published. The earlier shape ran the
+   * stages end to end, which is why the site said Saturday in one place and
+   * Sunday in another.
+   *
+   * Asserted as exactly one day, not merely "no overlap", so a stage cannot
+   * quietly swallow the Sunday or leave a second day nobody can submit in.
+   */
+  it("leaves exactly one clear day between stages", () => {
     monicaStages.forEach((stage, i) => {
       const [from, to] = stage.days;
       expect(to).toBeGreaterThanOrEqual(from);
-      if (i > 0) expect(from).toBe(monicaStages[i - 1].days[1] + 1);
+      if (i > 0) expect(from).toBe(monicaStages[i - 1].days[1] + 2);
     });
     expect(monicaStages[0].days[0]).toBe(1);
+  });
+
+  it("is six days per stage, Monday to Saturday", () => {
+    for (const stage of monicaStages) {
+      expect(stage.days[1] - stage.days[0], stage.name).toBe(5);
+    }
+  });
+
+  it("ends on the last day of the campaign", () => {
+    expect(monicaStages.at(-1)!.days[1]).toBe(MONICA_CAMPAIGN_DAYS);
   });
 
   it("only names skills that exist", () => {
@@ -133,7 +165,7 @@ describe("the stages and skills", () => {
   });
 
   it("tests all four skills in the final stage", () => {
-    expect(monicaStages[3].skills).toHaveLength(monicaSkills.length);
+    expect(monicaStages.at(-1)!.skills).toHaveLength(monicaSkills.length);
   });
 });
 
@@ -234,11 +266,24 @@ describe("what we publish about the leaderboard", () => {
     ).not.toMatch(/standings are announced/i);
   });
 
-  it("puts weekly winners on one day, and it is Saturday", () => {
-    // The campaign closes Saturday 17 October specifically so it ends on an
-    // announcement. One place used to say Sundays.
-    expect(copy).not.toMatch(/announced on Sundays/i);
-    expect(copy).toMatch(/every Saturday/);
+  it("puts weekly winners on one day, and it is Sunday", () => {
+    /*
+     * Stages now run Monday to Saturday with the Sunday between them kept
+     * clear, so the week's entries are reviewed and its winners announced on
+     * the day no stage is running. A stage never ends on the day its own
+     * result is published.
+     *
+     * The copy said both at once before that, in adjacent sentences of the
+     * same paragraph, which is what this guard exists to stop happening again.
+     */
+    expect(copy).not.toMatch(/announced every Saturday/i);
+    expect(copy).toMatch(/announced on Sundays/);
+  });
+
+  it("opens the first standings on a Sunday too", () => {
+    // Naming a Saturday here while promising Sunday announcements is the same
+    // contradiction wearing a date.
+    expect(MONICA_FIRST_LEADERBOARD).toMatch(/^Sunday /);
   });
 
   it("keeps the leaderboard page genuinely live", () => {
@@ -282,7 +327,7 @@ describe("the current campaign week", () => {
     expect(on("2026-09-12T20:00:00+01:00")).toBe(1);
   });
 
-  it("clamps after it closes rather than offering a week 5", () => {
-    expect(on("2026-10-20T10:00:00+01:00")).toBe(4);
+  it("clamps after it closes rather than offering a sixth stage", () => {
+    expect(on("2026-10-20T10:00:00+01:00")).toBe(5);
   });
 });

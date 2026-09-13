@@ -268,10 +268,27 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // The referral code arrives as a cookie from /join. It is passed straight
-  // through to the database function, which resolves it, ignores one that
-  // belongs to nobody, and ignores one that belongs to the person registering.
-  const ref = request.cookies.get(REFERRAL_COOKIE)?.value?.trim() ?? "";
+  /*
+   * The referral code, from the cookie /join set or from the form.
+   *
+   * The cookie was the only path, which assumed every referral arrives as a
+   * click. Creators are sent their code by email and share it as a bare string
+   * in a WhatsApp message, and somebody who types that code had no way to be
+   * credited to whoever gave it to them.
+   *
+   * The cookie wins when both are present. It records an actual click on an
+   * actual link, which is the stronger evidence, and preferring the typed value
+   * would let a cookie set moments earlier be overridden by a stale code
+   * autofilled by a browser.
+   *
+   * Either way it is passed straight through to the database function, which
+   * resolves it, ignores one that belongs to nobody, and ignores one that
+   * belongs to the person registering.
+   */
+  const ref =
+    request.cookies.get(REFERRAL_COOKIE)?.value?.trim() ||
+    parsed.data.ref?.trim() ||
+    "";
 
   // Minted here and returned once. Only its hash is stored, so this value
   // cannot be recovered later by us or by anybody who reads the database.
@@ -288,7 +305,7 @@ export async function POST(request: NextRequest) {
       SELECT * FROM register_creator(
         ${MONICA_SLUG},
         ${input.fullName}, ${input.email}, ${emailCanonical},
-        ${input.phone}, ${phoneE164}, ${input.contentNiche},
+        ${input.phone}, ${phoneE164}, ${input.monicaTag},
         ${input.audienceSize ?? null}, ${input.location ?? null},
         ${handles.x}, ${handles.instagram}, ${handles.tiktok},
         ${ref || null}, ${ip}, ${userAgent},

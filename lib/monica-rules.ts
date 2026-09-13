@@ -53,7 +53,7 @@ export const monicaRules: RuleSection[] = [
     id: "points",
     title: "Points",
     paragraphs: [
-      "An approved entry earns 100 points per approved platform, to a maximum of 300 for all three.",
+      "An approved entry earns 100 points for the first approved platform and 50 for each platform after it, to a maximum of 200 for all three.",
       "Additional points may be awarded for work judged exceptional, for reaching a notable audience milestone with an entry, for entries featured by Blockfest Africa or by Monica, for collaborations with other creators, and for winning a wildcard challenge. Each of these is capped at 300 points, except a wildcard win which is capped at 600.",
         "Bonuses are awarded at our discretion. Every one is recorded against your account with the reason, and you can see it on your own page.",
       "Point values may be adjusted during the campaign. Changing a value does not recalculate points already awarded, so a change to the rate never restates what you have already earned.",
@@ -126,7 +126,7 @@ export const monicaRules: RuleSection[] = [
     id: "payment",
     title: "Getting paid",
     paragraphs: [
-      "Prizes are paid by Tevah Synergy in Nigerian naira only. We do not pay in any other currency, so you need an account that can receive naira. This applies wherever you live.",
+      "Prizes are paid to the Monica tag you gave when you registered, in Nigerian naira only. Check that tag is right: it is the only detail we use to find you, and we cannot pay a winner we cannot locate. If it is wrong, write to partnership@blockfestafrica.com before the campaign ends.",
       "Before a prize is paid we will ask you to verify your identity: government-issued identification matching the name you registered with, proof that you control the account you published from, and a bank account in that same name. We do not pay third-party accounts.",
       "Results are published with a 72-hour window for creators to raise a dispute before funds move.",
       "Prizes are paid gross, with nothing deducted. Any tax due on what you receive is yours to declare and pay, wherever you are resident.",

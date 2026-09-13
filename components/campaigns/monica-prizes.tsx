@@ -25,9 +25,8 @@ export function MonicaPrizes() {
         <h2 className="text-display-sm font-bold text-white">
           {formatNaira(monicaRewardPool)}, and how it splits
         </h2>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
-          Weekly prizes keep the campaign worth entering in week three. The
-          final leaderboard rewards the whole run.
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/70">
+          Win a week, or win the whole thing.
         </p>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
@@ -87,9 +86,9 @@ export function MonicaPrizes() {
 
         <div className="mt-10 rounded-xl border border-white/20 p-6 sm:p-8">
           <h3 className="text-lg font-bold text-white">How points add up</h3>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
-            One approved entry earns 100. Publish the same piece on more than
-            one platform and it stays a single entry, worth more.
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+            One approved entry earns 100. Put the same piece on another platform
+            and it is still one entry, worth 50 more each time.
           </p>
           <ul className="mt-6 flex flex-wrap gap-4">
             {monicaPointLadder.map((tier) => (
@@ -106,9 +105,16 @@ export function MonicaPrizes() {
               </li>
             ))}
           </ul>
-          <p className="mt-6 text-sm leading-relaxed text-white/60">
-            Bonus points go to standout work, featured entries, collaborations
-            and creators you bring in. The full breakdown is in the{" "}
+          {/* The referral is the one bonus a creator can plan for, so it gets a
+              number rather than being folded into "bonus points". */}
+          <p className="mt-6 text-sm leading-relaxed text-white/70">
+            Bring in another creator with your referral link and you get 50
+            points when their first entry is approved. There is no cap on how
+            many you bring in.
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-white/70">
+            Other bonuses go to standout work, featured entries and
+            collaborations. The full breakdown is in the{" "}
             <Link
               href={monicaRoutes.rules}
               className="text-link underline underline-offset-2 hover:text-white"

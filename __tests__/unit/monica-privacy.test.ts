@@ -56,7 +56,7 @@ describe("what the notice says is collected", () => {
       x: /handle/i,
       instagram: /handle/i,
       tiktok: /handle/i,
-      contentNiche: /content/i,
+      monicaTag: /monica tag/i,
       audienceSize: /audience/i,
       location: /where you are|location/i,
     };

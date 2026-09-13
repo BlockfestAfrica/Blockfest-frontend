@@ -58,8 +58,9 @@ describe("the Community Favourite promise", () => {
 
 describe("the points clauses", () => {
   it("states the per-platform value and the cap", () => {
-    expect(allText).toContain("100 points per approved platform");
-    expect(allText).toContain("maximum of 300");
+    expect(allText).toContain("100 points for the first approved platform");
+    expect(allText).toContain("50 for each platform after it");
+    expect(allText).toContain("maximum of 200");
   });
 
   it("promises that changing a point value is not retroactive", () => {
