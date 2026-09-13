@@ -57,10 +57,11 @@ const nextConfig: NextConfig = {
           },
           {
             /*
-             * 'unsafe-eval' is gone. Nothing here needs it: Next's production
-             * bundle does not eval, and the only third party script is a
-             * pageview tag. It was widening the public policy for nothing,
-             * and the public policy is what an attacker lands on.
+             * 'unsafe-eval' is gone, and so is the vendor host from
+             * script-src: the analytics tag is served from this origin as a
+             * pinned snapshot (public/vendor/script.js), so NO external host
+             * may execute script anywhere on the site. The vendor stays in
+             * connect-src only, which is receiving beacons, not running code.
              *
              * What this cannot fix is the shape of the problem. Netlify
              * Identity sets nf_jwt and nf_refresh through document.cookie with
@@ -81,7 +82,7 @@ const nextConfig: NextConfig = {
              */
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.sabilytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.sabilytics.com; frame-src 'self' https://blockfest.substack.com; frame-ancestors 'none';",
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.sabilytics.com; frame-src 'self' https://blockfest.substack.com; frame-ancestors 'none';",
           },
         ],
       },

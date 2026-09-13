@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
+import { allow } from "@/lib/throttle";
 import { pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
 
@@ -72,6 +73,7 @@ const MESSAGES: Record<string, string> = {
    * is a smaller award, and the remaining headroom is the thing they need.
    */
   P0508: "That would take them past the manual award ceiling for this campaign.",
+  P0509: "Manual awards cannot take back more than manual awards gave. Removing engine points is a disqualification, which the void does with a reason and a clawback.",
   P0201: "That creator does not exist.",
   P0401: "Only a signed-in admin can award points.",
 };
@@ -81,6 +83,19 @@ export async function POST(request: NextRequest) {
 
   const admin = await requireAdmin();
   if (!admin.ok) return FORBIDDEN;
+
+  /*
+   * Twenty a minute. A person reviewing generously awards a few an hour, so
+   * this never touches a human, and a runaway script or replayed session is
+   * slowed to a pace the audit trail and the aggregate cap contain. Defence in
+   * depth: the cap and the floor are the controls, this is the brake.
+   */
+  if (!(await allow(request, "admin_award", 20, 60))) {
+    return NextResponse.json(
+      { ok: false, message: "That is a lot of awards at once. Wait a minute." },
+      { status: 429 },
+    );
+  }
 
   const read = await readJsonBody(request);
   if (!read.ok) {
@@ -125,7 +140,7 @@ export async function POST(request: NextRequest) {
        * turns "that did not work" into "they hold 50".
        */
       const held =
-        code === "P0507" || code === "P0508"
+        code === "P0507" || code === "P0508" || code === "P0509"
           ? pgErrorMessage(error).match(/holds (-?\d+)/)?.[1]
           : undefined;
 

@@ -83,3 +83,36 @@ describe("the content security policy", () => {
     }
   });
 });
+
+describe("script execution, site-wide", () => {
+  /**
+   * The #138 residual, closed: no CSP anywhere on this site may allow an
+   * external host in script-src. The analytics tag is a pinned snapshot
+   * served from this origin, and the vendor appears in connect-src only,
+   * which is receiving beacons rather than running code. Reintroducing a
+   * hosted tag "temporarily" is exactly the drift this catches.
+   */
+  it("is never granted to an external host by any policy", () => {
+    const config = read("next.config.ts");
+    const policies = [...config.matchAll(/script-src ([^;]+);/g)].map((m) => m[1]);
+
+    expect(policies.length, "the site declares script-src").toBeGreaterThan(0);
+    for (const policy of policies) {
+      expect(
+        /https?:\/\//.test(policy),
+        `an external script host is back in a CSP: ${policy}`,
+      ).toBe(false);
+    }
+  });
+
+  it("keeps the pinned snapshot pointing its beacons at the vendor", () => {
+    // The script derives its endpoint from its own src when data-api is
+    // absent, which self-hosted means this origin's nonexistent /api/e and
+    // every pageview silently dropped.
+    const tag = read("components/shared/analytics.tsx");
+    expect(tag).toContain("data-api");
+    const lib = read("lib/sabilytics.ts");
+    expect(lib).toMatch(/SABILYTICS_SRC = "\/vendor\//);
+    expect(lib).toMatch(/SABILYTICS_API = "https:\/\/www\.sabilytics\.com/);
+  });
+});
