@@ -1,9 +1,11 @@
+import { HandleFix } from "@/components/campaigns/handle-fix";
 import { pointSourceLabel } from "@/lib/point-sources";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
 import {
   creatorPageData,
+  handleRequestsForEnrolment,
   currentCreator,
   platformsUsedThisWeek,
   type CreatorSubmission,
@@ -193,10 +195,14 @@ export default async function MonicaCreatorPage() {
    * which ones could not be read, so a gap is shown as a gap rather than as
    * zero entries.
    */
-  const [data, pause, rank] = await Promise.all([
+  const [data, pause, rank, handleRequests] = await Promise.all([
     creatorPageData(creator.enrolmentId),
     pauseState(),
     creatorRank(creator.enrolmentId),
+    // Soft like the rest: a blip here hides the request states, not the page.
+    handleRequestsForEnrolment(creator.enrolmentId).catch(
+      () => [] as Awaited<ReturnType<typeof handleRequestsForEnrolment>>,
+    ),
   ]);
 
   const {
@@ -625,6 +631,22 @@ export default async function MonicaCreatorPage() {
               It printed a bare code with the words "Share it", and there is
               nowhere in the whole flow to type a code by hand: it only works as
               a ?ref= link on /join. */}
+          {handles.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-xl font-bold text-white">Your accounts</h2>
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+                Entries only count from these. If one is wrong, ask for a
+                correction: the team reviews every request by hand before
+                anything changes.
+              </p>
+              <HandleFix
+                handles={handles}
+                requests={handleRequests}
+                platformLabels={platformLabels}
+              />
+            </div>
+          )}
+
           <div className="mt-12">
             <h2 className="text-xl font-bold text-white">Bring a creator in</h2>
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/55">

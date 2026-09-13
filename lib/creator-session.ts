@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, gt, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gt, lte, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import {
   campaignCreators,
@@ -161,6 +161,41 @@ export async function handlesForEnrolment(
       eq(campaignCreators.creatorId, creatorSocialHandles.creatorId),
     )
     .where(eq(campaignCreators.id, enrolmentId));
+}
+
+/** The creator's own view of a correction request, one per platform. */
+export interface HandleRequestState {
+  platform: string;
+  requestedHandle: string;
+  status: "pending" | "approved" | "rejected";
+  /** Written by the admin, for the creator, on a rejection. */
+  decisionNote: string | null;
+}
+
+/**
+ * The latest request per platform, so /me can say "requested, waiting" or
+ * show the rejection note instead of leaving the creator wondering whether
+ * the form did anything.
+ */
+export async function handleRequestsForEnrolment(
+  enrolmentId: string,
+): Promise<HandleRequestState[]> {
+  const result = await getDb().execute(sql`
+    SELECT DISTINCT ON (platform)
+           platform, requested_handle, status, decision_note
+      FROM handle_change_requests
+     WHERE campaign_creator_id = ${enrolmentId}
+     ORDER BY platform, created_at DESC
+  `);
+  return (result.rows ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      platform: String(r.platform),
+      requestedHandle: String(r.requested_handle),
+      status: r.status as HandleRequestState["status"],
+      decisionNote: r.decision_note ? String(r.decision_note) : null,
+    };
+  });
 }
 
 /** The challenge a creator can submit to right now, if any. */
