@@ -38,8 +38,11 @@ export const PG = {
   WRONG_ACCOUNT: "P0209",
   /** review() refused because a newer submission superseded this one. */
   SUPERSEDED: "P0210",
-  /** The creator has no verified handle on that platform. */
-  HANDLE_NOT_VERIFIED: "P0211",
+  /*
+   * P0211 (handle_not_verified) existed from 0022 to 0034 and was retired when
+   * the team removed the verification step. The number stays reserved so a
+   * future code does not reuse it and confuse an old log.
+   */
   /** The enrolment was voided by an admin. */
   ENROLMENT_NOT_ACTIVE: "P0212",
   /** Another submission is already approved for this same post. */

@@ -233,16 +233,14 @@ export async function openChallenge(): Promise<OpenChallenge | null> {
 /**
  * The accounts a creator registered, and whether anybody has confirmed them.
  *
- * An entry cannot be approved into points through an unverified handle, so a
- * creator who does not know that, and does not know what to publish, is a
- * creator whose work sits in the queue unapprovable while they wonder why.
+ * Verification fields are gone from this shape on purpose. The campaign team
+ * removed the confirm-your-accounts step in 0034, so verified and code would
+ * be data the page must not show, and the safest field is one that does not
+ * reach the client at all.
  */
 export interface RegisteredHandle {
   platform: string;
   handle: string;
-  verified: boolean;
-  /** What they publish from the account as proof. Null once verified. */
-  code: string | null;
 }
 
 export async function registeredHandles(
@@ -253,8 +251,6 @@ export async function registeredHandles(
     .select({
       platform: creatorSocialHandles.platform,
       handle: creatorSocialHandles.handle,
-      verifiedAt: creatorSocialHandles.verifiedAt,
-      code: creatorSocialHandles.verificationCode,
     })
     .from(creatorSocialHandles)
     .innerJoin(creators, eq(creators.id, creatorSocialHandles.creatorId))
@@ -265,10 +261,6 @@ export async function registeredHandles(
   return rows.map((row) => ({
     platform: String(row.platform),
     handle: row.handle,
-    verified: row.verifiedAt !== null,
-    // Withheld once verified: it has done its job, and a code still on screen
-    // invites somebody to think it is still needed.
-    code: row.verifiedAt === null ? row.code : null,
   }));
 }
 
