@@ -211,8 +211,8 @@ export async function POST(request: NextRequest) {
 
       return fail(
         registered && claimed
-          ? `That link is from @${claimed}, and the ${parsed.data.platform} account you registered is @${registered}. If @${registered} is a typo, write to partnership@blockfestafrica.com from the email you registered with and we will correct it.`
-          : "That post is not from the account you registered. Entries have to come from an account you listed when you joined. If the account on your registration is wrong, write to partnership@blockfestafrica.com from the email you registered with.",
+          ? `That link is from @${claimed}, and the ${parsed.data.platform} account you registered is @${registered}. If @${registered} is a typo, ask for a correction under Your accounts further down this page. The team reviews it by hand.`
+          : "That post is not from the account you registered. Entries have to come from an account you listed when you joined. If the account on your registration is wrong, ask for a correction under Your accounts further down this page.",
         409,
         "url",
       );

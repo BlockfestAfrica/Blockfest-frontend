@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { participantCounts, participants } from "@/lib/admin/participants";
+import { pendingHandleRequests } from "@/lib/admin/handle-requests";
+import { HandleRequestQueue } from "@/components/admin/handle-request-queue";
 import { ParticipantsTable } from "@/components/admin/participants-table";
 import {
   buttonClass,
@@ -61,9 +63,15 @@ export default async function AdminParticipantsPage({
 
   const search = params.q?.trim() || undefined;
 
-  const [rows, counts] = await Promise.all([
+  const owner = isOwner(admin.admin);
+
+  const [rows, counts, requests] = await Promise.all([
     participants(admin.admin, { slug, limit: PAGE_SIZE, search }),
     participantCounts(admin.admin, slug),
+    // Owners decide these, so only owners load them.
+    owner
+      ? pendingHandleRequests(admin.admin).catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -90,6 +98,21 @@ export default async function AdminParticipantsPage({
           <Stat label="Points" value={counts.points} />
         </div>
       </PageHeader>
+
+      {owner && requests.length > 0 && (
+        <HandleRequestQueue
+          requests={requests.map((r) => ({
+            id: r.id,
+            creatorName: r.creatorName,
+            creatorEmail: r.creatorEmail,
+            platform: r.platform,
+            oldHandle: r.oldHandle,
+            requestedHandle: r.requestedHandle,
+            reason: r.reason,
+            createdAt: r.createdAt.toISOString(),
+          }))}
+        />
+      )}
 
       {counts.joined === 0 ? (
         /*
@@ -213,7 +236,7 @@ export default async function AdminParticipantsPage({
             </p>
 
             <ParticipantsTable
-              canCorrectHandles={isOwner(admin.admin)}
+              canCorrectHandles={owner}
               rows={rows.map((row) => ({
                 enrolmentId: row.enrolmentId,
                 name: row.name,

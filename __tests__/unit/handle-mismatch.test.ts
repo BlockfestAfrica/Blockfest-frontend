@@ -41,10 +41,12 @@ describe("the wrong-account refusal", () => {
   });
 
   it("says how to get a wrong registration corrected", () => {
-    // The sentence that was missing entirely. Both the specific and the
-    // fallback message carry it, because the specific one needs both handles
-    // to have resolved and the fallback runs when they have not.
-    const routes = branch.match(/partnership@blockfestafrica\.com/g) ?? [];
+    // The sentence that was missing entirely. It pointed at an email address
+    // first; now it points at the request flow on the same page, where the
+    // team reviews and approves by hand. Both the specific and the fallback
+    // message carry it, because the specific one needs both handles to have
+    // resolved and the fallback runs when they have not.
+    const routes = branch.match(/Your accounts/g) ?? [];
     expect(routes.length, "on both the specific and the fallback message").toBe(2);
   });
 

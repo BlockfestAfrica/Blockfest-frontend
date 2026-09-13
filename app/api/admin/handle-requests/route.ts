@@ -1,0 +1,86 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
+import { sql } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import { isOwner, requireAdmin } from "@/lib/admin/session";
+import { readJsonBody, sameOrigin } from "@/lib/admin/request";
+import { isPgError } from "@/lib/db/errors";
+import { logError } from "@/lib/log";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+/**
+ * Decide a handle change request.
+ *
+ * Owners only, like the direct fix, because approval IS the direct fix: it
+ * runs through correct_social_handle, so a request can never become a second,
+ * weaker door into editing attribution. Rejection requires a note, because the
+ * note is what the creator reads on their own page.
+ */
+
+const FORBIDDEN = NextResponse.json({ ok: false, message: "Not allowed." }, { status: 403 });
+
+const schema = z.object({
+  requestId: z.string().uuid(),
+  approve: z.boolean(),
+  note: z.string().trim().max(300).optional().default(""),
+});
+
+const KNOWN: Array<[code: string, raise: string, message: string]> = [
+  ["P0906", "request_already_decided", "Somebody has already decided this request."],
+  ["P0904", "request_not_found", "That request does not exist."],
+  ["P0502", "note_required", "Say why. The creator reads this on their page."],
+  ["P0903", "handle_invalid", "The requested username no longer passes the shape check."],
+  ["P0901", "handle_not_found", "That creator no longer has an account on that platform."],
+];
+
+export async function POST(request: NextRequest) {
+  if (!sameOrigin(request)) return FORBIDDEN;
+
+  const admin = await requireAdmin();
+  if (!admin.ok || !isOwner(admin.admin)) return FORBIDDEN;
+
+  const read = await readJsonBody(request);
+  if (!read.ok) {
+    return NextResponse.json({ ok: false, message: "We could not read that." }, { status: 400 });
+  }
+
+  const parsed = schema.safeParse(read.body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, message: parsed.error.issues[0]?.message ?? "Check the decision." },
+      { status: 400 },
+    );
+  }
+
+  const { requestId, approve, note } = parsed.data;
+
+  try {
+    const result = await getDb().execute(
+      sql`SELECT * FROM decide_handle_request(${requestId}::uuid, ${admin.admin.adminId}::uuid, ${approve}::boolean, ${note}::text)`,
+    );
+    const row = (result.rows?.[0] ?? {}) as {
+      outcome?: string;
+      old_handle?: string;
+      new_handle?: string;
+    };
+    return NextResponse.json({
+      ok: true,
+      outcome: row.outcome ?? null,
+      from: row.old_handle ?? null,
+      to: row.new_handle ?? null,
+    });
+  } catch (error) {
+    for (const [code, raise, message] of KNOWN) {
+      if (isPgError(error, code, raise)) {
+        return NextResponse.json({ ok: false, message }, { status: 400 });
+      }
+    }
+    logError("admin/handle-requests", error);
+    return NextResponse.json(
+      { ok: false, message: "Something went wrong at our end." },
+      { status: 500 },
+    );
+  }
+}
