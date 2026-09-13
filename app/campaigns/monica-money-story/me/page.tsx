@@ -21,6 +21,7 @@ import {
   MONICA_SLUG,
   platformLabels,
   type CampaignPlatform,
+  monicaPointLadder,
 } from "@/lib/campaigns";
 import { CONTACT_EMAIL } from "@/lib/constants";
 
@@ -322,9 +323,24 @@ export default async function MonicaCreatorPage() {
                 })}
               </ul>
 
-              <p className="mt-4 text-sm leading-relaxed text-white/55">
-                100 points for the first platform, 200 for two, 300 for all
-                three. It stays one entry either way.
+              {/* Derived from the registry, never typed here. This line
+                  carried the old 100/200/300 ladder for a day after the rules
+                  changed, which is exactly what a second copy of a number
+                  does. */}
+              <p className="mt-4 text-sm leading-relaxed text-white/70">
+                {monicaPointLadder
+                  .map(
+                    (tier) =>
+                      `${tier.points} points for ${
+                        tier.platforms === 1
+                          ? "the first platform"
+                          : tier.platforms === 2
+                            ? "two"
+                            : "all three"
+                      }`,
+                  )
+                  .join(", ")}
+                . It stays one entry either way.
               </p>
 
               {rejectedThisWeek.length > 0 && (
