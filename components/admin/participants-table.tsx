@@ -48,8 +48,22 @@ type Filter = "all" | "submitted" | "silent" | "approved";
  * it is a few hundred rows at most, and a round trip per column click on a
  * screen somebody is scanning would make it feel broken.
  */
-export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
+export function ParticipantsTable({
+  rows,
+  canCorrectHandles = false,
+}: {
+  rows: ParticipantRow[];
+  /** Owners only. Editing a handle moves attribution, so the control is not
+   *  rendered for reviewers at all rather than rendered and refused. */
+  canCorrectHandles?: boolean;
+}) {
   const router = useRouter();
+  /** Which handle is being corrected: one at a time, keyed by row and platform. */
+  const [fixing, setFixing] = useState<{
+    enrolmentId: string;
+    platform: string;
+    current: string;
+  } | null>(null);
   /** Which row has the award panel open. One at a time, on purpose. */
   const [awarding, setAwarding] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -230,18 +244,52 @@ export function ParticipantsTable({ rows }: { rows: ParticipantRow[] }) {
                 </div>
 
                 {row.handles.length > 0 && (
-                  <ul className="mt-2 flex flex-wrap gap-1.5">
+                  <ul className="mt-2 flex flex-wrap items-center gap-1.5">
                     {row.handles.map((h) => {
                       const [platform, handle] = h.split(":");
                       return (
-                        <li key={h}>
+                        <li key={h} className="flex items-center gap-1">
                           <Pill>
                             {platform} @{handle}
                           </Pill>
+                          {canCorrectHandles && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFixing(
+                                  fixing?.enrolmentId === row.enrolmentId &&
+                                    fixing.platform === platform
+                                    ? null
+                                    : {
+                                        enrolmentId: row.enrolmentId,
+                                        platform,
+                                        current: handle,
+                                      },
+                                )
+                              }
+                              aria-expanded={
+                                fixing?.enrolmentId === row.enrolmentId &&
+                                fixing.platform === platform
+                              }
+                              className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-2 text-xs font-semibold text-white/50 transition-colors hover:text-white"
+                            >
+                              fix
+                            </button>
+                          )}
                         </li>
                       );
                     })}
                   </ul>
+                )}
+
+                {fixing?.enrolmentId === row.enrolmentId && (
+                  <CorrectHandle
+                    key={`${fixing.enrolmentId}-${fixing.platform}`}
+                    enrolmentId={fixing.enrolmentId}
+                    platform={fixing.platform}
+                    current={fixing.current}
+                    onDone={() => setFixing(null)}
+                  />
                 )}
 
                 <p className="mt-2 text-sm text-white/60">
@@ -564,6 +612,129 @@ function AwardRow({
         >
           {busy ? "Working..." : "Apply"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The inline correction form.
+ *
+ * This is the tool behind the sentence a creator reads when their submission is
+ * refused for a handle mismatch: "write to partnership@blockfestafrica.com and
+ * we will correct it." Before this, "we will correct it" meant a manual UPDATE
+ * against production, with handle_normalized forgotten as the likely failure.
+ *
+ * The reason is required, the same as taking points away, because with
+ * verification gone the registered handle IS the attribution and every change
+ * of it should be answerable afterwards.
+ */
+function CorrectHandle({
+  enrolmentId,
+  platform,
+  current,
+  onDone,
+}: {
+  enrolmentId: string;
+  platform: string;
+  current: string;
+  onDone: () => void;
+}) {
+  const router = useRouter();
+  const [handle, setHandle] = useState(current);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    if (!handle.trim() || handle.trim().replace(/^@+/, "") === current) {
+      toast.error("Enter the corrected username.");
+      return;
+    }
+    if (!reason.trim()) {
+      toast.error("Say why. It is what a dispute is answered with.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/correct-handle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          enrolmentId,
+          platform,
+          handle: handle.trim(),
+          reason: reason.trim(),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        toast.error(result.message ?? "That did not work.");
+        return;
+      }
+
+      toast.success(`${platform} handle corrected: @${result.from} is now @${result.to}`);
+      onDone();
+      router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-3 rounded-lg border border-white/15 bg-white/[0.03] p-4">
+      <p className="text-sm font-semibold text-white">
+        Correct the {platform} handle
+      </p>
+      <p className="mt-1 max-w-prose text-sm leading-relaxed text-white/70">
+        Currently @{current}. Their next submission is checked against whatever
+        you save here, so make sure it is the account they actually publish
+        from.
+      </p>
+      <div className="mt-3 flex flex-col gap-2">
+        <label htmlFor={`fix-${enrolmentId}-${platform}`} className="sr-only">
+          Corrected username
+        </label>
+        <input
+          id={`fix-${enrolmentId}-${platform}`}
+          value={handle}
+          onChange={(event) => setHandle(event.target.value)}
+          autoComplete="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          placeholder="the-right-username"
+          className="min-h-11 w-full rounded-lg border border-white/15 bg-ground px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
+        />
+        <label htmlFor={`fix-why-${enrolmentId}-${platform}`} className="sr-only">
+          Why it is being corrected
+        </label>
+        <input
+          id={`fix-why-${enrolmentId}-${platform}`}
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          maxLength={300}
+          placeholder="Why: they wrote in from their registered email…"
+          className="min-h-11 w-full rounded-lg border border-white/15 bg-ground px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
+        />
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={save}
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-brand-gold px-5 text-sm font-semibold text-black transition-colors hover:bg-brand-gold-hover disabled:opacity-60"
+          >
+            {busy ? "Saving…" : "Save the correction"}
+          </button>
+          <button
+            type="button"
+            onClick={onDone}
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-semibold text-white/70 transition-colors hover:text-white"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );

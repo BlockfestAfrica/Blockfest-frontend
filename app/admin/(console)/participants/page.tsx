@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireAdmin } from "@/lib/admin/session";
+import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { participantCounts, participants } from "@/lib/admin/participants";
 import { ParticipantsTable } from "@/components/admin/participants-table";
 import {
@@ -213,6 +213,7 @@ export default async function AdminParticipantsPage({
             </p>
 
             <ParticipantsTable
+              canCorrectHandles={isOwner(admin.admin)}
               rows={rows.map((row) => ({
                 enrolmentId: row.enrolmentId,
                 name: row.name,
