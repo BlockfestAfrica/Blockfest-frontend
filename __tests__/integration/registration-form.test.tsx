@@ -72,8 +72,8 @@ function fill() {
   fireEvent.change(screen.getByLabelText("X username"), {
     target: { value: "adacreates" },
   });
-  fireEvent.change(screen.getByLabelText("What do you make?"), {
-    target: { value: "Finance explainers" },
+  fireEvent.change(screen.getByLabelText("Monica tag"), {
+    target: { value: "adacreates" },
   });
   // Named, because there are two checkboxes now: accepting the rules, which is
   // required, and the optional marketing opt-in, which must stay untouched.
@@ -251,7 +251,7 @@ describe("a required field left empty", () => {
     ["Full name", "Add your name."],
     ["Email", "Add your email address."],
     ["Phone number", "Add your phone number"],
-    ["What do you make?", "Tell us what kind of content you make."],
+    ["Monica tag", "Enter your Monica username."],
   ])("stops the submission and says so for %s", async (label, message) => {
     render(<RegistrationForm opensAt={OPENS_AT} />);
     fill();
@@ -272,7 +272,7 @@ describe("a required field left empty", () => {
       "Full name",
       "Email",
       "Phone number",
-      "What do you make?",
+      "Monica tag",
     ]) {
       expect(screen.getByLabelText(label).hasAttribute("required")).toBe(true);
     }
@@ -427,5 +427,46 @@ describe("the marketing opt-in", () => {
 
     await waitFor(() => expect(sent).not.toBeNull());
     expect(sent!.privacyVersion).toBeTruthy();
+  });
+});
+
+/**
+ * The referral code, typed rather than clicked.
+ *
+ * /join sets a cookie, which covers somebody who follows a link. It did not
+ * cover the creator who was sent a bare code in a WhatsApp message, which is
+ * how codes actually travel: each creator is emailed their own code, and a code
+ * forwards far more easily than a URL.
+ */
+describe("entering a referral code by hand", () => {
+  it("sends it as ref, upper-cased as the creator types", async () => {
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.change(screen.getByLabelText("Referral code"), {
+      target: { value: "r3ww9ghf" },
+    });
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent!.ref).toBe("R3WW9GHF");
+  });
+
+  it("omits ref entirely when the box is left empty", async () => {
+    // An empty string would reach the database as a code resolving to nobody,
+    // which is indistinguishable from a typo when somebody asks later why a
+    // referral was not credited.
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent!.ref).toBeUndefined();
+  });
+
+  it("is not shown to somebody who arrived through a referral link", () => {
+    // Their cookie already carries it, and an empty box beside it invites the
+    // question of whether they need to type something too.
+    render(<RegistrationForm opensAt={OPENS_AT} arrivedViaReferral />);
+    expect(screen.queryByLabelText("Referral code")).toBeNull();
   });
 });

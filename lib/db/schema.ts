@@ -181,7 +181,21 @@ export const creators = pgTable(
     /** E.164, e.g. +2348031234567. */
     phoneE164: text("phone_e164").notNull(),
 
-    contentNiche: text("content_niche").notNull(),
+    /**
+     * What they said they make. Kept for the creators who gave it, and no
+     * longer asked for: nothing ever read it back.
+     */
+    contentNiche: text("content_niche"),
+
+    /**
+     * Their username on Monica, and how prize money reaches them.
+     *
+     * Nullable here and required by the form. Rows written before 0032 cannot
+     * have one, and a placeholder default would mean "we have their tag" for
+     * creators whose tag we do not have, which is the one thing this column
+     * exists to tell us.
+     */
+    monicaTag: text("monica_tag"),
     audienceSize: integer("audience_size"),
     location: text("location"),
 

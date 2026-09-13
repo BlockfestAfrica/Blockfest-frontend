@@ -1,7 +1,7 @@
 import { and, asc, eq, gt, lte, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { campaigns, challenges, getDb } from "@/lib/db/client";
-import { currentCreator } from "@/lib/creator-session";
+import { currentCreator, handlesForEnrolment } from "@/lib/creator-session";
 import { pauseState } from "@/lib/campaign-pause";
 import { logError } from "@/lib/log";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
@@ -178,8 +178,41 @@ export async function POST(request: NextRequest) {
     }
 
     if (isPgError(error, PG.WRONG_ACCOUNT, "wrong_account")) {
+      /*
+       * Name both handles, because the commonest cause is a typo in their own
+       * registration and the old message could not tell them that.
+       *
+       * The refusal is correct either way: the post genuinely is not from the
+       * account on file. But a creator who mistyped their handle when they
+       * joined reads "that post is not from the account you registered",
+       * believes the system is wrong about their own post, and has nowhere to
+       * go. Showing what we hold beside what the link says makes a typo
+       * obvious in a second, and the last sentence gives them the way out,
+       * which is the part that was missing entirely.
+       *
+       * Corrections are not self-service on purpose: a creator who can edit a
+       * handle freely can point it at somebody else's account and claim their
+       * posts, which is exactly the attribution the handle exists to protect.
+       */
+      let registered: string | null = null;
+      try {
+        const handles = await handlesForEnrolment(creator.enrolmentId);
+        registered =
+          handles.find((h) => h.platform === parsed.data.platform)?.handle ??
+          null;
+      } catch {
+        registered = null;
+      }
+
+      const claimed = authorFromUrl(
+        url,
+        parsed.data.platform as CampaignPlatform,
+      );
+
       return fail(
-        "That post is not from the account you registered. Entries have to come from an account you listed when you joined.",
+        registered && claimed
+          ? `That link is from @${claimed}, and the ${parsed.data.platform} account you registered is @${registered}. If @${registered} is a typo, write to partnership@blockfestafrica.com from the email you registered with and we will correct it.`
+          : "That post is not from the account you registered. Entries have to come from an account you listed when you joined. If the account on your registration is wrong, write to partnership@blockfestafrica.com from the email you registered with.",
         409,
         "url",
       );

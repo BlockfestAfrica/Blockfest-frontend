@@ -62,7 +62,7 @@ export default async function WinnersPage() {
 
           {weeks.length === 0 ? (
             <p className="mt-8 max-w-prose text-base leading-relaxed text-white/60">
-              Nothing announced yet. Weekly winners are announced every Saturday,
+              Nothing announced yet. Weekly winners are announced on Sundays,
               starting {MONICA_FIRST_LEADERBOARD}.{" "}
               <Link
                 href={monicaRoutes.leaderboard}

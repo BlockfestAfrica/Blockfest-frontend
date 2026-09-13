@@ -126,7 +126,7 @@ export const monicaRules: RuleSection[] = [
     id: "payment",
     title: "Getting paid",
     paragraphs: [
-      "Prizes are paid by Tevah Synergy in Nigerian naira only. We do not pay in any other currency, so you need an account that can receive naira. This applies wherever you live.",
+      "Prizes are paid to the Monica tag you gave when you registered, in Nigerian naira only. Check that tag is right: it is the only detail we use to find you, and we cannot pay a winner we cannot locate. If it is wrong, write to partnership@blockfestafrica.com before the campaign ends.",
       "Before a prize is paid we will ask you to verify your identity: government-issued identification matching the name you registered with, proof that you control the account you published from, and a bank account in that same name. We do not pay third-party accounts.",
       "Results are published with a 72-hour window for creators to raise a dispute before funds move.",
       "Prizes are paid gross, with nothing deducted. Any tax due on what you receive is yours to declare and pay, wherever you are resident.",

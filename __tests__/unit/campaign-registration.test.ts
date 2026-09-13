@@ -118,7 +118,7 @@ const valid = {
   x: "adacreates",
   instagram: "",
   tiktok: "",
-  contentNiche: "Finance explainers",
+  monicaTag: "adacreates",
   acceptedRules: true as const,
   rulesVersion: "1.0",
 };

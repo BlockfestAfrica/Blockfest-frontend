@@ -25,7 +25,7 @@ const OPENS_LABEL = campaignOpensLabel(CAMPAIGN);
 const OG_TITLE = "Monica: The Money Story | Blockf3st Africa";
 const OG_DESCRIPTION = `A ${MONICA_CAMPAIGN_DAYS}-day creator competition from Blockfest Africa. ${formatNaira(
   monicaRewardPool,
-)} in prizes across four stages. Are you skillful?`;
+)} in prizes across five stages. Are you skillful?`;
 
 export const metadata: Metadata = {
   // The root layout appends "| Blockf3st Africa 2026", so branding here would

@@ -6,9 +6,9 @@ import { campaignRun, campaigns, type Campaign } from "@/lib/campaigns";
 import { formatNaira } from "@/lib/tickets";
 import { SITE_URL } from "@/lib/seo-event";
 
-const OG_TITLE = "Creator Campaigns | Blockf3st Africa";
+const OG_TITLE = "Campaigns | Blockf3st Africa";
 const OG_DESCRIPTION =
-  "Sponsor-backed creator competitions from Blockfest Africa. Tell the story, earn the points, take the prize.";
+  "Creator competitions from Blockfest Africa. Tell the story, earn the points, take the prize.";
 
 export const metadata: Metadata = {
   // The root layout appends "| Blockf3st Africa 2026", so branding here would
@@ -104,10 +104,10 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
           )}
           {campaign.sponsorLogo && (
             <div>
-              <dt className="eyebrow text-white/60">Sponsor</dt>
+              {/* The logo, with no "Sponsor" label above it. The label was a
+                  word explaining a thing that explains itself, and the card has
+                  to fit a phone. */}
               <dd className="mt-2">
-                {/* On a white chip, as the partner sections do it. These are
-                    dark wordmarks and they vanish against the ground. */}
                 <span className="inline-flex items-center rounded-md bg-white px-3 py-2">
                   <Image
                     src={campaign.sponsorLogo}
@@ -158,9 +158,8 @@ function UpcomingCampaign() {
         <span className="h-7 w-20 rounded-md bg-white/15 blur-[6px] sm:h-9 sm:w-24" />
       </div>
 
-      <p className="mt-7 text-base leading-relaxed text-white/50">
-        The next creator campaign from Blockfest Africa. We are not saying who
-        yet.
+      <p className="mt-7 text-base leading-relaxed text-white/60">
+        The next campaign. We are not saying who yet.
       </p>
     </div>
   );
@@ -192,15 +191,13 @@ export default function CampaignsPage() {
               page is meant to look considered. */}
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
             <div>
-              <p className="eyebrow text-white/60">Creator campaigns</p>
               <h1 className="text-display mt-3 font-bold uppercase text-white">
                 Campaigns
               </h1>
             </div>
-            <p className="max-w-md text-base leading-relaxed text-white/60 lg:pb-2 lg:text-right">
-              Sponsor-backed creator competitions run by Blockfest Africa. Real
-              briefs, real prize money, and your own audience. You keep the
-              work, we help it travel.
+            <p className="max-w-md text-base leading-relaxed text-white/70 lg:pb-2 lg:text-right">
+              Real briefs, real prize money, your own audience. You keep the
+              work.
             </p>
           </div>
 

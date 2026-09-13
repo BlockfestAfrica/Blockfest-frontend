@@ -2,7 +2,7 @@
  * The privacy notice for Monica: The Money Story.
  *
  * Written because the registration form collects a name, an email address, a
- * phone number, up to three social handles, a content niche, an audience size
+ * phone number, up to three social handles, a Monica tag, an audience size
  * and a location, and the endpoint additionally records the client IP address
  * and user agent, which the form never mentions at all. Nothing on the site
  * told anybody any of that, what it was for, or who holds it.
@@ -73,8 +73,8 @@ export const monicaPrivacyCollected: CollectedItem[] = [
     why: "To confirm a submitted post is yours, since an entry is judged only if it came from an account you registered.",
   },
   {
-    what: "What kind of content you make",
-    why: "To understand who is taking part and to group entries sensibly during review.",
+    what: "Your Monica tag",
+    why: "Your username on Monica. It is how prize money reaches you if you win, so it is the one detail we use to identify a winner for payment.",
   },
   {
     what: "Your audience size and where you are, if you give them",

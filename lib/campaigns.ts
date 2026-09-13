@@ -55,8 +55,14 @@ export const campaigns: Campaign[] = [
     sponsor: "Monica",
     sponsorLogo: "/2026/sponsors/Monica.png",
     sponsorUrl: "https://x.com/monicanigeria",
+    /*
+     * One sentence, because this is a card on a phone. The longer version,
+     * which listed sending, receiving and moving money across borders, pushed
+     * the card past a screen and said nothing the campaign page does not say
+     * better a tap later.
+     */
     summary:
-      "A creator competition about the everyday stories behind money: sending it, receiving it, moving it across borders, and how Monica is building a better way through them.",
+      "A creator competition about the everyday stories behind money, and how Monica is building a better way through them.",
     status: "live",
     rewardPool: 5_000_000,
     startsAt: "2026-09-14T00:00:00+01:00",
@@ -67,8 +73,7 @@ export const campaigns: Campaign[] = [
     name: "Rovv",
     hook: "Coming soon",
     sponsor: "Rovv",
-    summary:
-      "The next creator campaign from Blockfest Africa. Details to be announced.",
+    summary: "The next campaign. Details to be announced.",
     status: "coming-soon",
   },
 ];
@@ -411,7 +416,7 @@ export const monicaHowItWorks: HowItWorksStep[] = [
   {
     title: "Earn and climb",
     detail:
-      "Approved entries score. Bonuses go to work that is genuinely good, gets featured, or brings another creator in. The leaderboard moves as entries are approved, and weekly winners are announced every Saturday.",
+      "Approved entries score. Bonuses go to work that is genuinely good, gets featured, or brings another creator in. The leaderboard moves as entries are approved, and weekly winners are announced on Sundays.",
   },
 ];
 
@@ -481,7 +486,7 @@ export const monicaFaqs: CampaignFaq[] = [
  * and a creator told the board updates weekly has no reason to come back on
  * Tuesday after an approval.
  */
-export const MONICA_FIRST_LEADERBOARD = "Saturday 19 September";
+export const MONICA_FIRST_LEADERBOARD = "Sunday 20 September";
 
 /** Where campaign conversation happens, and how entries are found. */
 export const MONICA_HASHTAGS = ["#TheMoneyStory", "#AreYouSkillful"] as const;

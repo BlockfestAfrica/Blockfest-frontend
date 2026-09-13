@@ -62,7 +62,7 @@ export default async function MonicaRegisterPage() {
               Join the campaign
             </h1>
             <p className="mt-4 max-w-prose text-base leading-relaxed text-white/55">
-              One form, once. A new brief every Monday for four weeks.
+              One form, once. A new brief every Monday.
             </p>
           </div>
 
@@ -95,7 +95,7 @@ export default async function MonicaRegisterPage() {
                     {
                       title: "A brief drops every Monday",
                       detail:
-                        "Four of them, one per week. You do not register again for any of them.",
+                        "One per week. You do not register again for any of them.",
                     },
                     {
                       title: "You publish, then submit the link",
@@ -105,7 +105,7 @@ export default async function MonicaRegisterPage() {
                     {
                       title: "We review, and points land",
                       detail:
-                        "The leaderboard moves as entries are approved. Weekly winners are announced every Saturday.",
+                        "The leaderboard moves as entries are approved. Weekly winners are announced on Sundays.",
                     },
                   ].map((step, i) => (
                     <li key={step.title} className="flex gap-4">

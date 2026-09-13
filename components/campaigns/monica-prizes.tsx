@@ -25,9 +25,8 @@ export function MonicaPrizes() {
         <h2 className="text-display-sm font-bold text-white">
           {formatNaira(monicaRewardPool)}, and how it splits
         </h2>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
-          Weekly prizes keep the campaign worth entering in week three. The
-          final leaderboard rewards the whole run.
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/70">
+          Win a week, or win the whole thing.
         </p>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-2">

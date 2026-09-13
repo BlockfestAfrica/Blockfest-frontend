@@ -137,11 +137,31 @@ export const registrationSchema = z
     x: handleField.optional().default(""),
     instagram: handleField.optional().default(""),
     tiktok: handleField.optional().default(""),
-    contentNiche: z
+    /**
+     * Their username on Monica, and how prize money reaches them.
+     *
+     * This replaced "what kind of content do you make", which was required,
+     * written once and never read back by anything. Asking for the tag at
+     * registration is far better than asking a winner for it afterwards, when
+     * they may have gone quiet and the prize is already committed to a name.
+     *
+     * A leading @ is accepted and stripped, because that is how people write a
+     * username and refusing it would be a rejection over punctuation.
+     */
+    monicaTag: z
       .string()
       .trim()
-      .min(2, "What kind of content do you make?")
-      .max(80),
+      .transform((v) => v.replace(/^@+/, ""))
+      .pipe(
+        z
+          .string()
+          .min(2, "Enter your Monica username.")
+          .max(40, "That is longer than a Monica username.")
+          .regex(
+            /^[A-Za-z0-9._-]+$/,
+            "A Monica username is letters, numbers, dots, dashes and underscores.",
+          ),
+      ),
     audienceSize: z.coerce.number().int().min(0).max(1_000_000_000).optional(),
     location: z.string().trim().max(120).optional(),
     /**

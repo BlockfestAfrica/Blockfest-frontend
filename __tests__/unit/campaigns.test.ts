@@ -18,6 +18,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   MONICA_CAMPAIGN_DAYS,
+  MONICA_FIRST_LEADERBOARD,
   campaignBySlug,
   campaignRun,
   campaigns,
@@ -265,11 +266,24 @@ describe("what we publish about the leaderboard", () => {
     ).not.toMatch(/standings are announced/i);
   });
 
-  it("puts weekly winners on one day, and it is Saturday", () => {
-    // The campaign closes Saturday 17 October specifically so it ends on an
-    // announcement. One place used to say Sundays.
-    expect(copy).not.toMatch(/announced on Sundays/i);
-    expect(copy).toMatch(/every Saturday/);
+  it("puts weekly winners on one day, and it is Sunday", () => {
+    /*
+     * Stages now run Monday to Saturday with the Sunday between them kept
+     * clear, so the week's entries are reviewed and its winners announced on
+     * the day no stage is running. A stage never ends on the day its own
+     * result is published.
+     *
+     * The copy said both at once before that, in adjacent sentences of the
+     * same paragraph, which is what this guard exists to stop happening again.
+     */
+    expect(copy).not.toMatch(/announced every Saturday/i);
+    expect(copy).toMatch(/announced on Sundays/);
+  });
+
+  it("opens the first standings on a Sunday too", () => {
+    // Naming a Saturday here while promising Sunday announcements is the same
+    // contradiction wearing a date.
+    expect(MONICA_FIRST_LEADERBOARD).toMatch(/^Sunday /);
   });
 
   it("keeps the leaderboard page genuinely live", () => {
