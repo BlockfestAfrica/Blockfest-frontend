@@ -9,6 +9,7 @@ import {
   sessionCookieOptions,
 } from "@/lib/creator-session";
 import { monicaRoutes } from "@/lib/campaigns";
+import { allow } from "@/lib/throttle";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +50,25 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("t")?.trim() ?? "";
+
+  /*
+   * The throttle the old comment here wanted and could not point at.
+   *
+   * It declined to resolve the token, reasoning that doing so would make this
+   * an oracle "before any rate limit". There was no rate limit anywhere:
+   * throttleKey existed with nothing behind it. There is one now. It does not
+   * change the arithmetic, since a token is 32 random bytes and guessing was
+   * never the threat, but the sentence is true rather than aspirational.
+   *
+   * Sixty an hour: a creator opening their link on a few devices is nowhere
+   * near it.
+   */
+  if (!(await allow(request, "enter", 60, 3600))) {
+    return new NextResponse(null, {
+      status: 307,
+      headers: { Location: `${monicaRoutes.enterConfirm}?s=unavailable` },
+    });
+  }
 
   /*
    * A relative Location, because request.url is not the visitor's URL.

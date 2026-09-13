@@ -13,6 +13,7 @@ import {
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
+import { allow } from "@/lib/throttle";
 import { pauseState } from "@/lib/campaign-pause";
 import { hashAccessToken, newAccessToken } from "@/lib/creator-access";
 
@@ -66,6 +67,31 @@ function fail(message: string, status = 400, field?: string) {
  * act on.
  */
 export async function POST(request: NextRequest) {
+  /*
+   * Throttled before anything is read.
+   *
+   * Registration answers "that email is taken" and "that phone is taken" in
+   * different words, which is an unauthenticated membership oracle. The
+   * messages stay distinct, because a creator who typed their phone number
+   * wrong needs to be told which field to fix, and merging them would trade a
+   * real usability cost for an attacker who can still test one field at a time.
+   *
+   * What makes the oracle cheap is being able to ask endlessly. Nigerian mobile
+   * numbers are a small enough space to walk, so the limit is on the asking.
+   * Twenty an hour from one address is far above anything a person registering
+   * themselves will do, and far below anything worth enumerating with.
+   */
+  if (!(await allow(request, "register", 20, 3600))) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "That is a lot of attempts from one place. Wait a few minutes and try again.",
+      },
+      { status: 429 },
+    );
+  }
+
   /**
    * A registration is well under a kilobyte. Anything larger is not a form.
    *
