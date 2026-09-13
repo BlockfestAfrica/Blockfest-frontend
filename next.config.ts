@@ -100,6 +100,57 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        /*
+         * The same tightening, for the pages that can carry a creator's token.
+         *
+         * /enter receives it in the query by definition, and the platform
+         * re-appends that query to the redirect, so /enter/confirm and /me can
+         * both be loaded with the token in the address bar. Any third party
+         * script running there reads it from location.search and has a ninety
+         * day session for that creator.
+         *
+         * components/shared/analytics.tsx already refuses to render the tag on
+         * these paths. This is the layer that holds if somebody removes that
+         * check, because the browser will not fetch the script at all.
+         */
+        source: "/campaigns/monica-money-story/enter/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+          {
+            // Belt for the Referer, so the token cannot ride out on an
+            // outbound click either.
+            key: "Referrer-Policy",
+            value: "no-referrer",
+          },
+        ],
+      },
+      {
+        source: "/campaigns/monica-money-story/me",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "no-referrer",
+          },
+        ],
+      },
+      {
         source: "/api/admin/:path*",
         headers: [
           {

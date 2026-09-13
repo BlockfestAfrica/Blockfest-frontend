@@ -26,6 +26,22 @@ export const CREATOR_SESSION_COOKIE = "monica_creator";
  */
 export const CREATOR_SESSION_MAX_AGE = 60 * 60 * 24 * 90;
 
+/**
+ * Where a token waits between arriving in a link and the creator confirming it
+ * is theirs.
+ *
+ * Separate from the session cookie on purpose. Clicking a link no longer signs
+ * anybody in, so a link that arrives from a group chat, or that a mail client
+ * prefetches, cannot establish a session on its own. This holds the claim; only
+ * a confirmed POST turns it into one.
+ *
+ * Ten minutes, because it exists for the seconds between a redirect and a tap.
+ * Scoped to the entry path so it is not attached to any other request.
+ */
+export const CREATOR_PENDING_COOKIE = "monica_pending";
+export const CREATOR_PENDING_MAX_AGE = 60 * 10;
+export const CREATOR_PENDING_PATH = "/campaigns/monica-money-story/enter";
+
 /** Base64url, so it survives a URL, a cookie and a WhatsApp message intact. */
 export function newAccessToken(): string {
   return randomBytes(TOKEN_BYTES).toString("base64url");

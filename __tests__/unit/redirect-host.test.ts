@@ -58,17 +58,44 @@ describe("routes that set a cookie and redirect", () => {
     ).toEqual([]);
   });
 
-  it("sends a relative Location, so the browser resolves it against the visitor's own origin", () => {
+  /*
+   * Asserts the property, not one spelling of it.
+   *
+   * The first version required the literal `headers: { Location: monicaRoutes.x }`
+   * at every redirect. That passed only while each route had exactly one exit.
+   * When /enter grew four (valid, unknown, unavailable, already signed in) and
+   * routed them through one helper, the guard failed on correct code, for the
+   * shape of the code rather than for where it sends anybody. What actually
+   * matters is that no destination can leave the visitor's origin.
+   */
+  it("can never send the visitor to another origin", () => {
     for (const file of ROUTES) {
-      const src = source(file);
+      const src = code(file);
+
       expect(
-        /headers:\s*\{\s*Location:\s*monicaRoutes\.\w+/.test(src),
-        `${file} should return a relative Location built from monicaRoutes`,
+        /monicaRoutes\./.test(src),
+        `${file} should build its destinations from monicaRoutes`,
       ).toBe(true);
+
       expect(
-        code(file).includes("https://"),
+        src.includes("https://") || src.includes("http://"),
         `${file} must not hardcode an origin`,
       ).toBe(false);
+
+      // Every Location, however it is spelled: a helper argument, a variable,
+      // or an inline literal. None may be absolute or protocol relative.
+      const destinations = [
+        ...src.matchAll(/Location:\s*([^,}\n]+)/g),
+      ].map((m) => m[1].trim());
+
+      expect(destinations.length, `${file} should redirect somewhere`).toBeGreaterThan(0);
+
+      for (const destination of destinations) {
+        expect(
+          /^["'`](\/\/|[a-z]+:)/i.test(destination),
+          `${file} sends Location ${destination}, which leaves the visitor's origin, so the cookie set beside it does not follow`,
+        ).toBe(false);
+      }
     }
   });
 

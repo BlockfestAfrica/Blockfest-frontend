@@ -191,8 +191,10 @@ export const monicaRoutes = {
   rules: `/campaigns/${MONICA_SLUG}/rules`,
   pack: `/campaigns/${MONICA_SLUG}/pack`,
   privacy: `/campaigns/${MONICA_SLUG}/privacy`,
-  /** Exchanges an access token in the URL for a cookie, then redirects to `me`. */
+  /** Resolves an access token from a link and asks whose account it opens. */
   enter: `/campaigns/${MONICA_SLUG}/enter`,
+  /** Names the account a link opens, and takes the confirming POST. */
+  enterConfirm: `/campaigns/${MONICA_SLUG}/enter/confirm`,
   /** The creator's own page. Reads the cookie; never takes a token in the URL. */
   me: `/campaigns/${MONICA_SLUG}/me`,
   leaderboard: `/campaigns/${MONICA_SLUG}/leaderboard`,
