@@ -290,6 +290,8 @@ describe("the list stays complete", () => {
     admin_users: "carries the Identity binding every reviewer signs in with",
     resources: "admin-edited page content, not anybody's personal data",
     audit_log: "purged per campaign, so admin history survives",
+    admin_sessions:
+      "the signed-in admins' own sessions, not participant data; rows expire in twelve hours and purging them would sign the owner out mid-purge",
   };
 
   /*

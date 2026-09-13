@@ -1,5 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { sameOrigin } from "@/lib/admin/request";
+import { sql } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import { logError } from "@/lib/log";
+import {
+  ADMIN_SESSION_COOKIE,
+  adminSessionCookieOptions,
+  hashAdminSessionToken,
+  looksLikeAdminSessionToken,
+} from "@/lib/admin/session-token";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,14 +39,44 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) {
-    return NextResponse.json(
-      { ok: false, message: "Not allowed." },
-      { status: 403 },
-    );
+    return NextResponse.json({ ok: false, message: "Not allowed." }, { status: 403 });
   }
 
-  const response = NextResponse.json({ ok: true });
+  const jar = request.cookies;
+  const token = jar.get(ADMIN_SESSION_COOKIE)?.value?.trim();
 
+  /*
+   * Delete the row, not just the cookie.
+   *
+   * The old sign-out cleared cookies and left the session live in the
+   * database, so a copy of the cookie value taken beforehand kept working. A
+   * single DELETE makes the token worthless everywhere the moment it runs.
+   */
+  let ok = true;
+  if (looksLikeAdminSessionToken(token)) {
+    try {
+      await getDb().execute(
+        sql`DELETE FROM admin_sessions WHERE token_hash = ${hashAdminSessionToken(token)}`,
+      );
+    } catch (error) {
+      ok = false;
+      logError("admin/signout", error);
+    }
+  }
+
+  const response = ok
+    ? NextResponse.json({ ok: true })
+    : NextResponse.json(
+        { ok: false, message: "We could not sign you out fully. Close the browser to be sure." },
+        { status: 500 },
+      );
+
+  // Cookies expire either way: the server row is the authority, and clearing
+  // the cookie is still worth doing when the delete failed.
+  response.cookies.set(ADMIN_SESSION_COOKIE, "", {
+    ...adminSessionCookieOptions(),
+    maxAge: 0,
+  });
   for (const name of ["nf_jwt", "nf_refresh"]) {
     response.cookies.set(name, "", {
       path: "/",

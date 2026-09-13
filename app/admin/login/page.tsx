@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/admin/session";
 import { AdminLogin } from "@/components/admin/admin-login";
 
 export const metadata: Metadata = {
@@ -22,7 +24,18 @@ export const revalidate = 0;
  * an address that was never invited produce the same answer, because a login
  * page that distinguishes them is a login page that enumerates the admin list.
  */
-export default function AdminLoginPage() {
+export default async function AdminLoginPage() {
+  /*
+   * A valid session skips the form.
+   *
+   * The session cookie is SameSite=Strict, so an admin arriving from an
+   * external link does not send it and sees the signed-out shell. One
+   * same-site click to sign in now carries the cookie, and this redirect
+   * bounces them straight back in without retyping anything.
+   */
+  const admin = await requireAdmin();
+  if (admin.ok) redirect("/admin");
+
   return (
     <main id="main" className="bg-ground">
       <section className="section-y">
