@@ -51,7 +51,7 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
       href={`/campaigns/${campaign.slug}`}
       className="group flex flex-col rounded-2xl border border-white/20 bg-white/5 transition-colors duration-300 hover:border-white/30 hover:bg-white/[0.07] lg:col-span-2"
     >
-      <div className="flex flex-1 flex-col gap-8 p-6 sm:p-8 md:flex-row md:gap-10 lg:p-10">
+      <div className="flex flex-1 flex-col gap-6 p-5 sm:p-6 md:flex-row md:gap-10 lg:p-8">
         <div className="flex flex-1 flex-col">
           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-gold/15 px-3 py-1 text-xs font-semibold text-brand-gold">
             <span
@@ -61,17 +61,13 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
             Open now
           </span>
 
-          <h2 className="text-display-sm mt-5 font-bold text-white">
+          <h2 className="text-display-sm mt-4 font-bold text-white">
             {campaign.name}
           </h2>
           <p className="mt-2 text-lg font-semibold text-brand-gold">
             {campaign.hook}
           </p>
-          <p className="mt-4 max-w-prose text-base leading-relaxed text-white/60">
-            {campaign.summary}
-          </p>
-
-          <span className="mt-auto pt-8">
+          <span className="mt-auto pt-6">
             {/* A span, not a nested link. The whole card is already the link,
                 and a link inside a link is invalid and unpredictable. */}
             <span className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-300 group-hover:bg-brand-gold-hover">
@@ -85,7 +81,7 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
             does. Top-aligned, its divider ran on past the last item and the
             card read as unfinished. The left column already pins its button to
             the bottom, so this balances against it. */}
-        <dl className="flex flex-col justify-between gap-6 border-t border-white/15 pt-8 md:w-52 md:shrink-0 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+        <dl className="flex flex-col justify-between gap-5 border-t border-white/15 pt-6 md:w-52 md:shrink-0 md:border-l md:border-t-0 md:pl-10 md:pt-0">
           {campaign.rewardPool && (
             <div>
               <dt className="eyebrow text-white/60">Prize pool</dt>
