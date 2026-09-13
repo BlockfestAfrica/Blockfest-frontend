@@ -174,7 +174,12 @@ function Problem({ kind }: { kind: string }) {
       body: "Something at our end did not answer, which is not a problem with your link. Wait a moment and open it again.",
     },
   };
-  const { title, body } = COPY[kind] ?? COPY.expired;
+  // Own-property only. Without this a crafted ?s=__proto__ resolves to the
+  // truthy Object prototype rather than falling through to expired, and the
+  // page renders an empty heading.
+  const { title, body } = Object.prototype.hasOwnProperty.call(COPY, kind)
+    ? COPY[kind]
+    : COPY.expired;
 
   return (
     <>

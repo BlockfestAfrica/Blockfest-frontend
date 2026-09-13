@@ -26,6 +26,20 @@ describe("what must never appear", () => {
     expect(out).toContain("[email]");
   });
 
+  it("removes an IPv4 address, so a throttle bucket cannot leak one", () => {
+    // A throttle bucket is name:<client-ip>, and Drizzle's error message
+    // embeds the bound params. A client IP is NDPA personal data.
+    expect(redactPii("throttle enter:102.89.33.4 failed")).not.toContain(
+      "102.89.33.4",
+    );
+    expect(redactPii("register:41.58.128.9,300,3600")).toContain("[ip]");
+  });
+
+  it("keeps a version-like number that is not an address", () => {
+    // The rule needs four octets; a UUID or a short dotted number survives.
+    expect(redactPii("schema 15.5.25 ok")).toContain("15.5.25");
+  });
+
   it("removes a phone number", () => {
     expect(redactPii(`Key (phone_e164)=(${PHONE}) already exists`)).not.toContain(
       PHONE,

@@ -42,6 +42,10 @@ const SENSITIVE: Array<[RegExp, string]> = [
   [/Zoho-enczapikey\s+\S+/gi, "Zoho-enczapikey [redacted]"],
   // Anything that looks like a bearer credential in a header or URL.
   [/(authorization|bearer|api[_-]?key)[=:\s]+\S+/gi, "$1 [redacted]"],
+  // An IPv4 address. A throttle bucket is name:<client-ip>, and a client IP is
+  // personal data under the NDPA. Before the phone rule, so the dotted quad is
+  // consumed as an address rather than four short numbers.
+  [/(?<![\d.])\d{1,3}(?:\.\d{1,3}){3}(?![\d.])/g, "[ip]"],
   /*
    * A phone number. Last, and deliberately narrow: 10 to 15 digits with an
    * optional plus, not bounded by other digits. A UUID survives this because
