@@ -54,7 +54,19 @@ const raisesIn = (body: string): Set<string> =>
  * Deliberately a list that has to be edited, so dropping a rule is a decision
  * somebody writes down rather than a diff nobody reads.
  */
-const DELIBERATELY_DROPPED: Record<string, string[]> = {};
+const DELIBERATELY_DROPPED: Record<string, string[]> = {
+  /*
+   * 0034: the campaign team ruled the handle verification step out. Asking
+   * every creator to publish a BF- code on each account before their work can
+   * score was a hurdle at the moment the campaign wants people posting. What
+   * the rule bought is recorded in 0034's header: proof that the registered
+   * handle belongs to the registrant, which no automatic check provides. The
+   * reviewer seeing the registered handle beside every link is the defence
+   * that remains, and restoring the RAISE is one migration if week one proves
+   * the team wrong.
+   */
+  review: ["handle_not_verified"],
+};
 
 describe("every redefined function", () => {
   it("keeps every rule its previous definition enforced", () => {

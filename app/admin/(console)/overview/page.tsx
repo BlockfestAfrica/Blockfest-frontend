@@ -89,25 +89,6 @@ export default async function OverviewPage() {
         <Stat label="Points" value={metrics.pointsAwarded} />
       </div>
 
-      {metrics.handlesUnverified > 0 && (
-        <Panel tone="warn" className="mt-8">
-          <p className="text-sm leading-relaxed text-white/75">
-            <strong className="font-semibold text-white">
-              {metrics.handlesUnverified}
-            </strong>{" "}
-            {metrics.handlesUnverified === 1 ? "account has" : "accounts have"}{" "}
-            not been verified. Nothing published from them can be approved into
-            points until somebody confirms they belong to the creator claiming
-            them, so this number is a queue rather than a statistic.{" "}
-            <Link
-              href="/admin"
-              className="text-link underline underline-offset-2 hover:text-white"
-            >
-              The review queue shows the code to look for.
-            </Link>
-          </p>
-        </Panel>
-      )}
 
       <div className="mt-10">
         <h2 className="text-xl font-bold text-white">By week</h2>

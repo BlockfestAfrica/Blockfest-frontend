@@ -43,8 +43,6 @@ export interface CampaignMetrics {
   referralsPending: number;
   /** Everything the ledger has minted. */
   pointsAwarded: number;
-  handlesVerified: number;
-  handlesUnverified: number;
 }
 
 export async function campaignMetrics(
@@ -82,13 +80,7 @@ export async function campaignMetrics(
        WHERE cm.slug = ${MONICA_SLUG} AND r.awarded_at IS NULL)         AS referrals_pending,
       (SELECT COALESCE(sum(pl.points), 0)::int FROM point_ledger pl
         JOIN campaigns cm ON cm.id = pl.campaign_id
-       WHERE cm.slug = ${MONICA_SLUG})                                  AS points_awarded,
-      (SELECT count(*)::int FROM creator_social_handles h
-        WHERE h.creator_id IN (SELECT creator_id FROM c)
-          AND h.verified_at IS NOT NULL)                                AS handles_verified,
-      (SELECT count(*)::int FROM creator_social_handles h
-        WHERE h.creator_id IN (SELECT creator_id FROM c)
-          AND h.verified_at IS NULL)                                    AS handles_unverified
+       WHERE cm.slug = ${MONICA_SLUG})                                  AS points_awarded
   `);
 
   const row = (result.rows?.[0] ?? {}) as Record<string, unknown>;
@@ -104,8 +96,6 @@ export async function campaignMetrics(
     referralsPaid: n("referrals_paid"),
     referralsPending: n("referrals_pending"),
     pointsAwarded: n("points_awarded"),
-    handlesVerified: n("handles_verified"),
-    handlesUnverified: n("handles_unverified"),
   };
 }
 

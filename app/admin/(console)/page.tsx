@@ -153,9 +153,6 @@ export default async function AdminQueuePage({
             creatorName: item.creatorName,
             registeredHandle: item.registeredHandle,
             contested: Boolean(item.contested),
-            handleVerified: item.handleVerifiedAt !== null,
-            handleId: item.handleId,
-            verificationCode: item.verificationCode,
             /*
              * Whether the server could check the link against the handle.
              *

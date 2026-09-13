@@ -1,11 +1,23 @@
 /**
- * Proving a handle belongs to the person claiming it.
+ * Handle verification, after the team removed its enforcement.
  *
- * Registration accepts any string matching a handle pattern, and the handle is
- * not decoration: submission intake resolves a pasted URL back to an enrolment
- * through this table, so whoever holds the row collects the points for whatever
- * that account publishes. On a 5,000,000 naira pool that is the cheapest fraud
- * available.
+ * The verification step existed because a handle typed at registration is a
+ * claim, not a fact, and on every platform the automatic checks stop short of
+ * proving the registered handle belongs to the REGISTRANT. The BF- code was
+ * proof of control, and review() refusing to approve through an unverified
+ * handle (P0211, 0022) was its teeth.
+ *
+ * The campaign team ruled it out: asking creators to publish a code before
+ * their work can score was a hurdle at the moment the campaign wants people
+ * posting. 0034 removed the refusal. The machinery below it stays, because it
+ * costs nothing and restoring enforcement is one migration if week one proves
+ * the team wrong.
+ *
+ * So this suite now asserts three things: the DECISION (approval proceeds with
+ * nobody having checked anything), the surviving machinery (verify and void
+ * still behave), and the trade (the impersonation path the check existed for
+ * is open, recorded here as documentation rather than left to be rediscovered
+ * as a surprise).
  */
 
 import { PGlite } from "@electric-sql/pglite";
@@ -162,55 +174,48 @@ describe("verifying", () => {
 });
 
 describe("approving through a handle nobody has checked", () => {
-  /** The acceptance criterion, and the whole reason any of this exists. */
-  it("is refused", async () => {
-    const { enrolmentId } = await claim("ada");
-    const submission = await submissionFor(enrolmentId, "https://x.com/ada/1");
+  /**
+   * The decision, asserted so it reads as a choice rather than a bug. Until
+   * 0034 this exact call raised handle_not_verified.
+   */
+  it("is allowed, by the team's decision in 0034", async () => {
+    const mine = await claim("amara");
+    const sub = await submissionFor(mine.enrolmentId, "https://x.com/amara/status/1");
+    await expect(decide(sub, "approved")).resolves.toBeTruthy();
+  });
 
-    await expect(decide(submission, "approved")).rejects.toThrow(
-      /handle_not_verified/,
+  it("pays the points", async () => {
+    const mine = await claim("amara");
+    const sub = await submissionFor(mine.enrolmentId, "https://x.com/amara/status/2");
+    await decide(sub, "approved");
+    const total = await one<{ points_total: number }>(
+      `SELECT points_total FROM campaign_creators WHERE id = '${mine.enrolmentId}'`,
     );
-  });
-
-  it("mints no points when it is refused", async () => {
-    const { enrolmentId } = await claim("ada");
-    const submission = await submissionFor(enrolmentId, "https://x.com/ada/2");
-    await expect(decide(submission, "approved")).rejects.toThrow();
-
-    expect(
-      await count(
-        `SELECT count(*)::int AS n FROM point_ledger
-          WHERE campaign_creator_id = '${enrolmentId}'`,
-      ),
-    ).toBe(0);
-  });
-
-  it("allows the approval once the handle is verified", async () => {
-    const { handleId, enrolmentId } = await claim("ada");
-    const submission = await submissionFor(enrolmentId, "https://x.com/ada/3");
-
-    await verify(handleId);
-    await expect(decide(submission, "approved")).resolves.toBeTruthy();
-
-    expect(
-      Number(
-        (
-          await one<{ points_total: number }>(
-            `SELECT points_total FROM campaign_creators WHERE id = '${enrolmentId}'`,
-          )
-        ).points_total,
-      ),
-    ).toBe(100);
+    expect(Number(total.points_total)).toBeGreaterThan(0);
   });
 
   /**
-   * Rejection stays open on purpose. A reviewer looking at something wrong must
-   * never be blocked from saying so, and a rejection pays nobody.
+   * The trade, spelled out. Registration with somebody else's handle passes,
+   * and a submission of that person's real post passes wrong_account because
+   * the URL author matches the REGISTERED handle. Nothing automatic is left
+   * between this and points: the reviewer seeing the handle beside the link is
+   * the whole defence now. This is not a bug to fix silently; it is the
+   * insurance the team chose not to pay for, and if it is ever "fixed" the
+   * team decision in 0034 is being reversed and should be reversed knowingly.
    */
+  it("documents what is no longer stopped: the registrant was never proved to own the handle", async () => {
+    const thief = await claim("someoneelse");
+    const sub = await submissionFor(
+      thief.enrolmentId,
+      "https://x.com/someoneelse/status/99",
+    );
+    await expect(decide(sub, "approved")).resolves.toBeTruthy();
+  });
+
   it("still allows a rejection, which pays nobody", async () => {
-    const { enrolmentId } = await claim("ada");
-    const submission = await submissionFor(enrolmentId, "https://x.com/ada/4");
-    await expect(decide(submission, "rejected")).resolves.toBeTruthy();
+    const mine = await claim("amara");
+    const sub = await submissionFor(mine.enrolmentId, "https://x.com/amara/status/3");
+    await expect(decide(sub, "rejected")).resolves.toBeTruthy();
   });
 });
 
