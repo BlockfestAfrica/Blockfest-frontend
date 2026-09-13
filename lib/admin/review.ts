@@ -61,7 +61,8 @@ export type ReviewOutcome =
         | "failed"
         | "superseded"
         | "unverified_handle"
-        | "disqualified";
+        | "disqualified"
+        | "already_credited";
     };
 
 /**
@@ -171,6 +172,17 @@ export async function reviewSubmission(
      */
     if (isPgError(error, PG.ENROLMENT_NOT_ACTIVE, "enrolment_not_active")) {
       return { ok: false, reason: "disqualified" };
+    }
+
+    /*
+     * Two creators claimed one post and the other one was approved first.
+     *
+     * 0025 lets both claims exist, because refusing the second claim is what
+     * let anybody burn a rival's post by filing it first. Only one can ever be
+     * paid, and this is the reviewer meeting that rule.
+     */
+    if (isPgError(error, PG.POST_ALREADY_CREDITED, "post_already_credited")) {
+      return { ok: false, reason: "already_credited" };
     }
 
     logError("admin/review", error);

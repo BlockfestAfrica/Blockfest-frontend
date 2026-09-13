@@ -42,6 +42,8 @@ export const PG = {
   HANDLE_NOT_VERIFIED: "P0211",
   /** The enrolment was voided by an admin. */
   ENROLMENT_NOT_ACTIVE: "P0212",
+  /** Another submission is already approved for this same post. */
+  POST_ALREADY_CREDITED: "P0213",
   ADMIN_UNDELETABLE: "P0301",
   /** Postgres' own, for a constraint we did not raise ourselves. */
   UNIQUE_VIOLATION: "23505",

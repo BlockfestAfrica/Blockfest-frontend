@@ -302,13 +302,31 @@ describe("what it refuses", () => {
     ).rejects.toThrow(/already_submitted_for_platform/);
   });
 
-  it("refuses a URL somebody else has already submitted", async () => {
+  it("refuses a URL somebody else has already been credited for", async () => {
+    // The rule is about credit, not about claims. 0025 moved exclusivity onto
+    // approval, because refusing the second CLAIM is what let anybody burn a
+    // rival's post by filing it first.
     const a = await makeCreator(["x"]);
     const b = await makeCreator(["x"]);
     await submit(a, week1, "x", "https://x.com/shared/1");
+    await db.query(
+      `UPDATE submissions SET status = 'approved', reviewed_at = now()`,
+    );
     await expect(submit(b, week1, "x", "https://x.com/shared/1")).rejects.toThrow(
       /url_already_submitted/,
     );
+  });
+
+  it("lets a second creator claim a post that is only pending", async () => {
+    // The burn attack. Under the old rule the first filing held the post until
+    // a reviewer looked, so a creator who saw a rival's post could file it and
+    // cost them the week.
+    const a = await makeCreator(["x"]);
+    const b = await makeCreator(["x"]);
+    await submit(a, week1, "x", "https://x.com/contested/1");
+    await expect(
+      submit(b, week1, "x", "https://x.com/contested/1"),
+    ).resolves.toBeTruthy();
   });
 
   it("releases a URL once the first submission is rejected", async () => {
@@ -594,8 +612,12 @@ describe("the message when a submission collides", () => {
     const mine = await makeCreator(["x"]);
     const other = await makeCreator(["x"]);
 
-    // Somebody else already holds this URL, live.
+    // Somebody else already holds this URL, credited. Approved rather than
+    // merely pending, because 0025 made approval the exclusive state.
     await submit(other, week1, "x", "https://x.com/taken/1");
+    await db.query(
+      `UPDATE submissions SET status = 'approved', reviewed_at = now()`,
+    );
 
     // I have a rejected entry on the same platform, which frees the slot.
     const first = await submit(mine, week1, "x", "https://x.com/mine/1");

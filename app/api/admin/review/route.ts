@@ -107,6 +107,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (outcome.reason === "already_credited") {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "Another creator has already been approved for this exact post, so this one cannot also be paid for it. Open both links and reject whichever is not the author's own.",
+        },
+        { status: 409 },
+      );
+    }
+
     if (outcome.reason === "disqualified") {
       return NextResponse.json(
         {
