@@ -12,7 +12,8 @@ import {
   submissions,
 } from "@/lib/db/client";
 import { MONICA_SLUG } from "@/lib/campaigns";
-import { isPgError } from "@/lib/db/errors";
+import { logError } from "@/lib/log";
+import { PG, isPgError } from "@/lib/db/errors";
 import type { AdminIdentity } from "@/lib/admin/session";
 
 /**
@@ -59,7 +60,8 @@ export type ReviewOutcome =
         | "wrong_campaign"
         | "failed"
         | "superseded"
-        | "unverified_handle";
+        | "unverified_handle"
+        | "disqualified";
     };
 
 /**
@@ -161,10 +163,17 @@ export async function reviewSubmission(
       return { ok: false, reason: "superseded" };
     }
 
-    console.error(
-      "[admin/review]",
-      error instanceof Error ? error.message : String(error),
-    );
+    /*
+     * The creator was voided while this sat in the queue.
+     *
+     * Rejection is still allowed, and the reviewer needs to know that rather
+     * than seeing the approval fail with nothing to do next.
+     */
+    if (isPgError(error, PG.ENROLMENT_NOT_ACTIVE, "enrolment_not_active")) {
+      return { ok: false, reason: "disqualified" };
+    }
+
+    logError("admin/review", error);
     return { ok: false, reason: "failed" };
   }
 }

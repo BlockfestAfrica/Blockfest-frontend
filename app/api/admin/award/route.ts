@@ -67,6 +67,11 @@ const MESSAGES: Record<string, string> = {
    * smaller number and guessing it is the slow way to find out.
    */
   P0507: "That would take them below zero.",
+  /*
+   * Carries both figures for the same reason P0507 does: the admin's next move
+   * is a smaller award, and the remaining headroom is the thing they need.
+   */
+  P0508: "That would take them past the manual award ceiling for this campaign.",
   P0201: "That creator does not exist.",
   P0401: "Only a signed-in admin can award points.",
 };
@@ -120,7 +125,7 @@ export async function POST(request: NextRequest) {
        * turns "that did not work" into "they hold 50".
        */
       const held =
-        code === "P0507"
+        code === "P0507" || code === "P0508"
           ? pgErrorMessage(error).match(/holds (-?\d+)/)?.[1]
           : undefined;
 

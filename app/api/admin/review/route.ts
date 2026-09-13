@@ -107,6 +107,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (outcome.reason === "disqualified") {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "This creator has been disqualified, so their work cannot be approved. You can still reject it to clear the queue.",
+        },
+        { status: 409 },
+      );
+    }
+
     if (outcome.reason === "superseded") {
       return NextResponse.json(
         {
