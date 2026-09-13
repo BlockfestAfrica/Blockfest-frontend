@@ -1,5 +1,12 @@
 -- Give marketing@blockfestafrica.com a console account.
 --
+-- Numbered 0033, not 0029. 0029_admin_sessions.sql landed on main while this
+-- was being written, and two files sharing a prefix is fine only while neither
+-- has been applied: once 0029 is applied, Netlify rejects any migration whose
+-- prefix is not above the highest applied version, and a rejected migration
+-- blocks the deploy rather than being skipped. Numbering above everything makes
+-- that impossible regardless of what has already shipped.
+--
 -- Being invited in the Netlify Identity dashboard is only half of what this
 -- codebase requires. Identity answers "which verified address is signed in";
 -- authorisation is a row in admin_users, read live on every request, which is
