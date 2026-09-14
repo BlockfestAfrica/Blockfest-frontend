@@ -176,7 +176,13 @@ describe("the aggregate ceiling on manual awards", () => {
   it("refuses an award that would cross it in one go", async () => {
     const me = await enrol();
     for (let i = 0; i < 9; i += 1) await award(me.enrolmentId, 200);
-    await expect(award(me.enrolmentId, 300)).rejects.toThrow(/manual_cap_exceeded/);
+    // 1800 held; a collab (ceiling 300 since 0050) would cross 2000.
+    await expect(
+      db.query(
+        `SELECT * FROM award_points($1::uuid, 'collab'::ledger_source, 300, 'x', $2::uuid)`,
+        [me.enrolmentId, adminId],
+      ),
+    ).rejects.toThrow(/manual_cap_exceeded/);
   });
 
   /**
@@ -215,10 +221,12 @@ describe("the aggregate ceiling on manual awards", () => {
   it("is configurable without a migration", async () => {
     const me = await enrol();
     await db.query(
-      `UPDATE point_rules SET max_points = 400 WHERE campaign_id = '${campaignId}' AND key = 'manual_total_cap'`,
+      `UPDATE point_rules SET max_points = 300 WHERE campaign_id = '${campaignId}' AND key = 'manual_total_cap'`,
     );
-    await award(me.enrolmentId, 300);
-    await expect(award(me.enrolmentId, 300)).rejects.toThrow(/manual_cap_exceeded/);
+    // 200 is quality's own ceiling since 0050; the second award crosses
+    // the lowered aggregate, not the per-source bound.
+    await award(me.enrolmentId, 200);
+    await expect(award(me.enrolmentId, 200)).rejects.toThrow(/manual_cap_exceeded/);
   });
 });
 

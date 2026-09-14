@@ -148,11 +148,15 @@ describe("the points clauses", () => {
   });
 
   it("publishes the ceiling on a bonus, since the database enforces one", () => {
-    // The prose sentence was cut on 14 Sep 2026; the points table carries
-    // the caps now. The database enforces them either way, and an enforced
-    // number that is published nowhere is how disputes start.
-    expect(allText).toContain("capped at 300");
-    expect(allText).toContain("capped at 600");
+    // Aligned to the marketing point table on 14 Sep 2026, and 0050 moved
+    // the database bounds to match. An enforced number published nowhere
+    // is how disputes start, so each published range is pinned here.
+    expect(allText).toContain("50 to 200");
+    expect(allText).toContain("20 to 200");
+    expect(allText).toContain("up to 300");
+    // The tier ladder's floor and ceiling, from the published table.
+    expect(allText).toContain("5,000 and above");
+    expect(allText).toContain("100,000 and above");
   });
 });
 

@@ -119,7 +119,9 @@ describe("freezing a week's standings", () => {
 
     // A late approval changes the live board.
     await db.query(
-      `SELECT award_points($1::uuid, 'quality_bonus', 300, 'Late review', $2::uuid)`,
+      // 200 is quality's published ceiling since 0050; the property under
+      // test is the freeze not moving, not the size of the award.
+      `SELECT award_points($1::uuid, 'quality_bonus', 200, 'Late review', $2::uuid)`,
       [ada, adminId],
     );
 
