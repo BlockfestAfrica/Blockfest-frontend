@@ -298,7 +298,7 @@ export function AdminLogin() {
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-line-2 bg-control px-4 py-3 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
+            className="w-full rounded-lg border border-line-2 bg-control px-4 py-3 text-base text-white placeholder:text-ink-3"
           />
         </div>
       )}
@@ -313,7 +313,7 @@ export function AdminLogin() {
           autoComplete={inviteToken || recovering ? "new-password" : "current-password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border border-line-2 bg-ground px-4 py-3 text-base text-white focus:border-brand-gold"
+          className="w-full rounded-lg border border-line-2 bg-ground px-4 py-3 text-base text-white"
         />
       </div>
 
