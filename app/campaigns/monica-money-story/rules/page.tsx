@@ -8,7 +8,6 @@ import {
   monicaRules,
   monicaRulesOpenPoints,
   MONICA_RULES_UPDATED,
-  MONICA_RULES_VERSION,
 } from "@/lib/monica-rules";
 import { campaignBySlug, monicaRoutes, MONICA_SLUG } from "@/lib/campaigns";
 import { SITE_URL } from "@/lib/seo-event";
@@ -76,8 +75,8 @@ export default function MonicaRulesPage() {
               Campaign rules
             </h1>
             <p className="mt-4 text-base leading-relaxed text-ink-3">
-              Version {MONICA_RULES_VERSION}, last updated {updated}. The
-              version in force when you register is recorded against your entry.
+              Last updated {updated}. The rules in force when you register are
+              recorded against your entry.
             </p>
           </div>
 

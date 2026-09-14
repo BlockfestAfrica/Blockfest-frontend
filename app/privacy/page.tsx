@@ -4,7 +4,6 @@ import {
   privacySections,
   privacySurfaces,
   PRIVACY_UPDATED,
-  PRIVACY_VERSION,
 } from "@/lib/privacy";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import { monicaRoutes } from "@/lib/campaigns";
@@ -47,7 +46,7 @@ export default function PrivacyPage() {
               Privacy policy
             </h1>
             <p className="mt-4 text-base leading-relaxed text-ink-3">
-              Version {PRIVACY_VERSION}, last updated {updated}. Running a
+              Last updated {updated}. Running a
               campaign has its own notice, which goes further: see the{" "}
               <Link
                 href={monicaRoutes.privacy}

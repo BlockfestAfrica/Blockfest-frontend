@@ -45,7 +45,7 @@ export function LiveResources() {
   return (
     <section aria-labelledby="live-resources" className="mt-12">
       <h2 id="live-resources" className="text-xl font-bold text-white">
-        From the team
+        Resources
       </h2>
       <ul className="mt-4 flex flex-col gap-3">
         {rows.map((row) => (

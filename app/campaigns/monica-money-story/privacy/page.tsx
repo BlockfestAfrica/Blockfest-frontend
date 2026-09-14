@@ -5,7 +5,6 @@ import {
   monicaPrivacyCollected,
   monicaPrivacySections,
   MONICA_PRIVACY_UPDATED,
-  MONICA_PRIVACY_VERSION,
   PRIVACY_CONTACT,
 } from "@/lib/monica-privacy";
 import { campaignBySlug, monicaRoutes, MONICA_SLUG } from "@/lib/campaigns";
@@ -62,7 +61,7 @@ export default function MonicaPrivacyPage() {
               Campaign privacy notice
             </h1>
             <p className="mt-4 text-base leading-relaxed text-ink-3">
-              Version {MONICA_PRIVACY_VERSION}, last updated {updated}. This
+              Last updated {updated}. This
               covers {CAMPAIGN.name} specifically. The{" "}
               <Link
                 href={monicaRoutes.rules}
