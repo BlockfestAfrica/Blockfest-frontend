@@ -40,6 +40,8 @@ export interface CandidateEntry {
 export interface NomineeTally {
   nomineeId: string;
   entryId: string;
+  /** The creator behind the entry: what the announce step actually names. */
+  enrolmentId: string;
   name: string;
   votes: number;
 }
@@ -182,7 +184,8 @@ export async function roundTally(
 
   const [nominees, domains, ips, held, unverified] = await Promise.all([
     db.execute(sql`
-      SELECT t.nominee_id, t.entry_id, t.votes, c.full_name
+      SELECT t.nominee_id, t.entry_id, t.votes, c.full_name,
+             cc.id AS enrolment_id
         FROM vote_tally t
         JOIN vote_round_nominees n ON n.id = t.nominee_id
         JOIN challenge_entries e   ON e.id = t.entry_id
@@ -237,6 +240,7 @@ export async function roundTally(
       return {
         nomineeId: String(r.nominee_id),
         entryId: String(r.entry_id),
+        enrolmentId: String(r.enrolment_id),
         name: String(r.full_name ?? "").trim(),
         votes: Number(r.votes ?? 0),
       };

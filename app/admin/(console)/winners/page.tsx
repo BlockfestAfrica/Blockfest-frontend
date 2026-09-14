@@ -76,6 +76,48 @@ export default async function WinnersPage() {
   const frozen = snapshots.some((s) => s.weekNo === weekNo);
 
   /*
+   * What the vote has settled, for the announce card. The engine is the
+   * authority (P0806 and P0807 refuse anything else at publish time); this
+   * mirrors its answer so the card can show the winner instead of asking
+   * for one. Ties break by standings points, the same rule the SQL applies,
+   * and a disagreement is harmless: the announce is refused and the tally
+   * is on the same screen.
+   */
+  const settled =
+    round !== null &&
+    (round.status === "closed" || round.status === "published") &&
+    round.reviewedAt !== null;
+  const voteVerdict =
+    round && tally
+      ? (() => {
+          const nomineeEnrolmentIds = tally.nominees.map((n) => n.enrolmentId);
+          if (!settled) {
+            return { state: "pending" as const, winner: null, nomineeEnrolmentIds };
+          }
+          const top = Math.max(0, ...tally.nominees.map((n) => n.votes));
+          if (top === 0) {
+            return { state: "zero" as const, winner: null, nomineeEnrolmentIds };
+          }
+          const pointsOf = (id: string) =>
+            favourites.find((c) => c.enrolmentId === id)?.points ?? 0;
+          const winner = tally.nominees
+            .filter((n) => n.votes === top)
+            .reduce((a, b) =>
+              pointsOf(b.enrolmentId) > pointsOf(a.enrolmentId) ? b : a,
+            );
+          return {
+            state: "decided" as const,
+            winner: {
+              enrolmentId: winner.enrolmentId,
+              name: winner.name,
+              votes: winner.votes,
+            },
+            nomineeEnrolmentIds,
+          };
+        })()
+      : null;
+
+  /*
    * How many names the no-repeat rule removed.
    *
    * Derived rather than counted in SQL: the candidate query already filters
@@ -118,6 +160,7 @@ export default async function WinnersPage() {
           publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
         }))}
         frozen={frozen}
+        vote={voteVerdict}
       />
 
       <VoteRoundPanel

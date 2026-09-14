@@ -24,6 +24,21 @@ export interface CandidateRow {
   rank: number;
 }
 
+/**
+ * What the week's vote has settled, computed by the page from the same
+ * tally the round card shows. The SQL is the authority either way: with a
+ * reviewed round, publish_weekly_winner refuses any name but the vote's
+ * winner, so this exists to show the answer rather than ask for one.
+ */
+export interface VoteVerdict {
+  /** pending: round open or review incomplete. decided: a winner exists.
+      zero: closed and reviewed with no countable votes. */
+  state: "pending" | "decided" | "zero";
+  winner: { enrolmentId: string; name: string; votes: number } | null;
+  /** The shortlist, for the zero-vote fallback where only nominees may win. */
+  nomineeEnrolmentIds: string[];
+}
+
 export interface PickedRow {
   weekNo: number;
   category: "creator_of_week" | "community_favourite";
@@ -75,6 +90,7 @@ export function WinnersPanel({
   excludedCount,
   picked,
   frozen,
+  vote,
 }: {
   weekNo: number;
   creatorCandidates: CandidateRow[];
@@ -83,6 +99,8 @@ export function WinnersPanel({
   picked: PickedRow[];
   /** Whether this week's standings have been recorded yet. */
   frozen: boolean;
+  /** Null when the week has no on-site round (the social-poll fallback). */
+  vote: VoteVerdict | null;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -91,11 +109,36 @@ export function WinnersPanel({
   const [prize, setPrize] = useState(String(CATEGORY_PRIZE.creator_of_week));
   const [note, setNote] = useState("");
 
+  /*
+   * The vote's verdict shapes the Community Favourite half of this card.
+   * With a decided round the picker disappears: the engine refuses any
+   * other name (P0806), so a dropdown here would only be a menu of
+   * errors. A pending round blocks announcing until the review is done,
+   * and zero countable votes narrows the picker to the shortlist, the
+   * only names the published fallback rule allows (P0807).
+   */
+  const verdict = category === "community_favourite" ? vote : null;
+  const decided = verdict?.state === "decided" ? verdict.winner : null;
+  const shortlistOnly = verdict?.state === "zero";
+  const votePending = verdict?.state === "pending";
+
   const candidates =
-    category === "creator_of_week" ? creatorCandidates : favouriteCandidates;
-  const chosen = candidates.find((c) => c.enrolmentId === enrolmentId);
+    category === "creator_of_week"
+      ? creatorCandidates
+      : shortlistOnly && verdict
+        ? favouriteCandidates.filter((c) =>
+            verdict.nomineeEnrolmentIds.includes(c.enrolmentId),
+          )
+        : favouriteCandidates;
+  const selectedId = decided ? decided.enrolmentId : enrolmentId;
+  const chosenName =
+    decided?.name ?? candidates.find((c) => c.enrolmentId === selectedId)?.name;
   const amount = Number(prize);
-  const ready = Boolean(enrolmentId) && Number.isInteger(amount) && amount > 0;
+  const ready =
+    Boolean(selectedId) &&
+    Number.isInteger(amount) &&
+    amount > 0 &&
+    !votePending;
 
   const announcedThisWeek = picked.filter(
     (p) => p.weekNo === weekNo && p.publishedAt,
@@ -137,7 +180,7 @@ export function WinnersPanel({
         body: JSON.stringify({
           weekNo,
           category,
-          enrolmentId,
+          enrolmentId: selectedId,
           prizeNaira: amount,
           note: note.trim() || undefined,
           publish,
@@ -238,7 +281,7 @@ export function WinnersPanel({
             </button>
             <Confirm
               label={`Announce ${CATEGORY_LABEL[category]}`}
-              question={`Announce ${chosen?.name ?? "this creator"} as ${CATEGORY_LABEL[category]} for week ${weekNo}, with ${ready ? naira(amount) : "no prize set"}?`}
+              question={`Announce ${chosenName ?? "this creator"} as ${CATEGORY_LABEL[category]} for week ${weekNo}, with ${ready ? naira(amount) : "no prize set"}?`}
               consequence="This publishes the name and the amount on the public winners page straight away. There is no undo here."
               confirmLabel={`Yes, announce ${ready ? naira(amount) : "it"}`}
               pending={busy}
@@ -246,7 +289,9 @@ export function WinnersPanel({
             />
             {!ready && (
               <p className="text-sm text-ink-2">
-                Pick a creator and enter the prize to continue.
+                {votePending
+                  ? "Settle the vote below to unlock this announcement."
+                  : "Pick a creator and enter the prize to continue."}
               </p>
             )}
           </>
@@ -303,26 +348,55 @@ export function WinnersPanel({
             </p>
           )}
 
-          <Field
-            id="winner"
-            label="Creator"
-            hint="Ranked by the standings, so the leader is first."
-          >
-            <select
+          {votePending ? (
+            <div className="rounded-lg border border-line bg-card-2 p-4">
+              <p className="text-sm font-semibold text-white">
+                The vote decides this one.
+              </p>
+              <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
+                Close the round in the card below, sweep any suspicious
+                votes, and mark the review complete. The winner then appears
+                here, filled in.
+              </p>
+            </div>
+          ) : decided ? (
+            <div className="rounded-lg border border-line bg-card-2 p-4">
+              <p className="text-sm font-semibold text-white">
+                Decided by the vote: {decided.name},{" "}
+                {decided.votes === 1 ? "1 verified vote" : `${decided.votes} verified votes`}
+              </p>
+              <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
+                There is nothing to pick. Announcing records the result the
+                community reached; to dispute it, remove fraudulent votes in
+                the round review below and this name changes with the tally.
+              </p>
+            </div>
+          ) : (
+            <Field
               id="winner"
-              name="winner"
-              value={enrolmentId}
-              onChange={(event) => setEnrolmentId(event.target.value)}
-              className={selectControl}
+              label="Creator"
+              hint={
+                shortlistOnly
+                  ? "No countable votes came in, so the rules fall back to Blockfest selecting, from the shortlist people were shown."
+                  : "Ranked by the standings, so the leader is first."
+              }
             >
-              <option value="">Pick a creator…</option>
-              {candidates.map((c) => (
-                <option key={c.enrolmentId} value={c.enrolmentId}>
-                  {c.rank}. {c.name} ({c.points} points)
-                </option>
-              ))}
-            </select>
-          </Field>
+              <select
+                id="winner"
+                name="winner"
+                value={enrolmentId}
+                onChange={(event) => setEnrolmentId(event.target.value)}
+                className={selectControl}
+              >
+                <option value="">Pick a creator…</option>
+                {candidates.map((c) => (
+                  <option key={c.enrolmentId} value={c.enrolmentId}>
+                    {c.rank}. {c.name} ({c.points} points)
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field

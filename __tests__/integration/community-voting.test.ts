@@ -422,4 +422,89 @@ describe("close, review, announce", () => {
       ),
     ).resolves.toBeTruthy();
   });
+
+  const enrolmentOf = async (entry: string) =>
+    (
+      await one<{ id: string }>(
+        `SELECT campaign_creator_id AS id FROM challenge_entries WHERE id = '${entry}'`,
+      )
+    ).id;
+
+  const announceFavourite = (enrolment: string) =>
+    db.query(
+      `SELECT * FROM publish_weekly_winner($1, 1::smallint, 'community_favourite'::winner_category,
+         $2::uuid, NULL, 100000, NULL, $3::uuid, true)`,
+      ["monica-money-story", enrolment, adminId],
+    );
+
+  const settleRound = async (round: string) => {
+    await db.query(
+      `SELECT * FROM take_leaderboard_snapshot($1, 1::smallint, $2::uuid)`,
+      ["monica-money-story", adminId],
+    );
+    await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]);
+    await db.query(`SELECT mark_round_reviewed($1::uuid, $2::uuid)`, [adminId, round]);
+  };
+
+  it("the vote decides: announcing anyone but the winner refuses by name", async () => {
+    const entries = [await approvedEntry(1), await approvedEntry(1), await approvedEntry(1)];
+    const round = (await openRound(1, entries)).rows[0].round_id;
+    const winner = await nomineeOf(round, entries[1]);
+    await cast(round, winner, "decider@gmail.com");
+    await verify(round, "decider@gmail.com");
+    await settleRound(round);
+
+    // An owner with the form open still cannot announce the loser.
+    await expect(announceFavourite(await enrolmentOf(entries[0]))).rejects.toThrow(
+      /not_the_vote_winner/,
+    );
+
+    // The winner announces, and the winning entry travels even though the
+    // call passed no entry: the public page keeps linking what people
+    // actually voted for.
+    await expect(announceFavourite(await enrolmentOf(entries[1]))).resolves.toBeTruthy();
+    expect(
+      (await one<{ entry_id: string }>(`SELECT entry_id FROM weekly_winners LIMIT 1`)).entry_id,
+    ).toBe(entries[1]);
+  });
+
+  it("a vote tie breaks by the recorded standings, as the rules publish", async () => {
+    const entries = [await approvedEntry(1), await approvedEntry(1), await approvedEntry(1)];
+    const round = (await openRound(1, entries)).rows[0].round_id;
+    await cast(round, await nomineeOf(round, entries[0]), "one@gmail.com", "c1");
+    await verify(round, "one@gmail.com", "c1");
+    await cast(round, await nomineeOf(round, entries[1]), "two@yahoo.com", "c2");
+    await verify(round, "two@yahoo.com", "c2");
+
+    // One vote each; the second nominee stands higher on the board when
+    // the week is recorded, so the standings break the tie their way.
+    const ahead = await enrolmentOf(entries[1]);
+    await db.query(
+      `UPDATE campaign_creators SET points_total = 150 WHERE id = '${ahead}'`,
+    );
+    await settleRound(round);
+
+    await expect(announceFavourite(await enrolmentOf(entries[0]))).rejects.toThrow(
+      /not_the_vote_winner/,
+    );
+    await expect(announceFavourite(ahead)).resolves.toBeTruthy();
+  });
+
+  it("zero countable votes falls back to Blockfest selecting, shortlist only", async () => {
+    const entries = [await approvedEntry(1), await approvedEntry(1), await approvedEntry(1)];
+    const outsider = await approvedEntry(1);
+    const round = (await openRound(1, entries)).rows[0].round_id;
+    await settleRound(round);
+
+    // The fallback is a genuine selection, but only among the names people
+    // were shown. A creator who was never on the ballot cannot quietly
+    // become its winner.
+    await expect(announceFavourite(await enrolmentOf(outsider))).rejects.toThrow(
+      /not_on_shortlist/,
+    );
+    await expect(announceFavourite(await enrolmentOf(entries[2]))).resolves.toBeTruthy();
+    expect(
+      (await one<{ entry_id: string }>(`SELECT entry_id FROM weekly_winners LIMIT 1`)).entry_id,
+    ).toBe(entries[2]);
+  });
 });
