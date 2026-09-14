@@ -109,7 +109,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     >
       <ul className="flex flex-col gap-3">
         {challenges.map((challenge) => (
-          <li key={challenge.id} className="rounded-lg border border-line bg-card p-4">
+          <li key={challenge.id} className="rounded-lg border border-line p-4">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-semibold text-white">
                 Week {challenge.weekNo}: {challenge.title}

@@ -74,7 +74,7 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
         {requests.map((request) => (
           <li
             key={request.id}
-            className="rounded-lg border border-line bg-card p-4"
+            className="rounded-lg border border-line p-4"
           >
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-semibold text-white">

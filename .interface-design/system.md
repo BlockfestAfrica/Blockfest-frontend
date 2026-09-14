@@ -73,6 +73,17 @@ caught real regressions from this very pass.
 
 ## Rulings from the first post-system design review (this file is why)
 
+### Console jobs are contained cards
+
+The open-edge JobCard, a job as bare text with only a 2px coloured left
+rule, was re-judged against the shipped /me page and the owner called the
+consoles scattered next to it. JobCard now renders as a hairline card
+(border-line-2, bg-card, header and foot rows on hairlines) with the 2px
+status colour kept on the card's left border. Loose admin sections
+(paperwork, overview data blocks, the participants table) sit in
+SectionCard for the same reason. The fill-separation objection that
+justified the open edge is answered by the card border, not the fill.
+
 ### No filled gold header strips
 
 HeadedPanel (gold-filled header bar plus gold-tinted body) is deleted, and

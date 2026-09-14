@@ -8,7 +8,7 @@ import {
 } from "@/lib/admin/winners";
 import { leaderboard } from "@/lib/leaderboard";
 import { WinnersPanel } from "@/components/admin/winners-panel";
-import { PageHeader, SPACING } from "@/components/shared/panel";
+import { PageHeader, SectionCard, SPACING } from "@/components/shared/panel";
 import { currentWeekNo } from "@/lib/campaigns";
 import { count, dateTime } from "@/lib/format";
 
@@ -72,7 +72,7 @@ export default async function WinnersPage() {
       <PageHeader
         context={`Monica · Week ${weekNo}`}
         title="Winners"
-        hint="Two jobs, in order. Record the standings on Saturday, announce on Sunday. Both are done by a person, and the second one is public the moment you confirm it."
+        hint="Record the standings on Saturday, announce on Sunday; announcing is public the moment you confirm."
       />
 
       <WinnersPanel
@@ -109,17 +109,13 @@ export default async function WinnersPage() {
        * opened, saved and attached to an email, which is what somebody actually
        * does with it two days before a transfer.
        */}
-      <section aria-labelledby="paperwork" className="space-y-4">
-        <h2 id="paperwork" className="text-xl font-bold text-white">
-          Paperwork
-        </h2>
-        <p className="max-w-prose text-sm leading-relaxed text-ink-2">
-          Every ledger row for the top five, with the date, the source, the
-          amount, the admin who awarded it and what they wrote. This is the
-          document a dispute is answered with. It carries no bank details,
-          because the platform never holds any.
+      <SectionCard id="paperwork" title="Paperwork">
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
+          Every ledger row for the top five, with who awarded it and why: the
+          document a dispute is answered with. No bank details; the platform
+          never holds any.
         </p>
-        <div className="flex flex-wrap gap-3">
+        <div className="mt-4 flex flex-wrap gap-3">
           <a
             href="/api/admin/payout"
             className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
@@ -137,7 +133,7 @@ export default async function WinnersPage() {
         </div>
 
         {snapshots.length > 0 && (
-          <div className="pt-2">
+          <div className="mt-6">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-ink-4">
               Recorded so far
             </h3>
@@ -163,7 +159,7 @@ export default async function WinnersPage() {
             </dl>
           </div>
         )}
-      </section>
+      </SectionCard>
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   JobCard,
   PageHeader,
   Pill,
+  SectionCard,
   selectControl,
   SPACING,
   Stat,
@@ -218,17 +219,15 @@ export default async function AdminParticipantsPage({
             </form>
           </JobCard>
 
-          <section aria-labelledby="everyone" className="space-y-4">
-            <h2 id="everyone" className="text-xl font-bold text-white">
-              {search ? "Matches" : "Everyone"}
-            </h2>
-            <p className="max-w-prose text-sm leading-relaxed text-ink-2">
+          <SectionCard id="everyone" title={search ? "Matches" : "Everyone"}>
+            <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
               Anyone who has not submitted yet is worth a message before a
               brief closes.
             </p>
 
-            <ParticipantsTable
-              canCorrectHandles={owner}
+            <div className="mt-4">
+              <ParticipantsTable
+                canCorrectHandles={owner}
               rows={rows.map((row) => ({
                 enrolmentId: row.enrolmentId,
                 name: row.name,
@@ -240,8 +239,9 @@ export default async function AdminParticipantsPage({
                 points: row.points,
                 active: row.active,
               }))}
-            />
-          </section>
+              />
+            </div>
+          </SectionCard>
         </>
       )}
     </div>

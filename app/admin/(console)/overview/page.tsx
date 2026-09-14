@@ -7,7 +7,7 @@ import {
   campaignMetrics,
   weeklyActivity,
 } from "@/lib/admin/metrics";
-import { Panel, Pill, Stat } from "@/components/shared/panel";
+import { Pill, SectionCard, Stat } from "@/components/shared/panel";
 import { SABILYTICS_SHARE_URL } from "@/lib/sabilytics";
 
 export const metadata: Metadata = {
@@ -90,9 +90,8 @@ export default async function OverviewPage() {
       </div>
 
 
-      <div className="mt-10">
-        <h2 className="text-xl font-bold text-white">By week</h2>
-        <div className="mt-4 overflow-x-auto rounded-xl border border-line">
+      <SectionCard id="by-week" title="By week" className="mt-10">
+        <div className="mt-4 overflow-x-auto rounded-lg border border-line">
           <table className="w-full min-w-[34rem] border-collapse text-left">
             <thead>
               <tr className="border-b border-line text-xs font-semibold uppercase tracking-wider text-ink-3">
@@ -132,24 +131,24 @@ export default async function OverviewPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </SectionCard>
 
-      <div className="mt-10">
-        <h2 className="text-xl font-bold text-white">Referrals</h2>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
+      <SectionCard id="referrals" title="Referrals" className="mt-6">
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
           {metrics.referralsPaid} paid, {metrics.referralsPending} recorded and
           waiting. A referral pays when the creator who was brought in has their
           first approved entry, so a large waiting number means people arrived
           and have not published yet.
         </p>
-      </div>
+      </SectionCard>
 
       {clusters.length > 0 && (
-        <div className="mt-10">
-          <h2 className="text-xl font-bold text-white">
-            Registrations sharing an address
-          </h2>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
+        <SectionCard
+          id="clusters"
+          title="Registrations sharing an address"
+          className="mt-6"
+        >
+          <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
             For a person to look at, never acted on automatically.
           </p>
           <details className="mt-2">
@@ -166,7 +165,7 @@ export default async function OverviewPage() {
               cannot.
             </p>
           </details>
-          <ul className="mt-4 divide-y divide-line overflow-hidden rounded-xl border border-line">
+          <ul className="mt-4 divide-y divide-line overflow-hidden rounded-lg border border-line">
             {clusters.map((cluster) => (
               <li key={cluster.ip} className="p-4">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -181,7 +180,7 @@ export default async function OverviewPage() {
               </li>
             ))}
           </ul>
-        </div>
+        </SectionCard>
       )}
 
       {/*
@@ -192,9 +191,8 @@ export default async function OverviewPage() {
        * which only the creator can see. A number here would be a guess wearing
        * the clothes of a measurement.
        */}
-      <div className="mt-10 border-t border-line pt-8">
-        <h2 className="text-xl font-bold text-white">Impressions</h2>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
+      <SectionCard id="impressions" title="Impressions" className="mt-6">
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
           Not measurable from here, and not estimated. On-site traffic is in
           Sabilytics; reach on each post is in that platform&apos;s own analytics
           and only the creator can see it. Any figure this page produced would be
@@ -212,7 +210,7 @@ export default async function OverviewPage() {
             <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
           </a>
         )}
-      </div>
+      </SectionCard>
     </>
   );
 }
