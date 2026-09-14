@@ -197,6 +197,14 @@ export async function sendEmailQuietly(
 ): Promise<void> {
   const result = await sendEmail(email);
   if (!result.sent) {
-    console.warn(`[email] ${context} not sent: ${redactPii(result.reason ?? "")}`);
+    /*
+     * The WHOLE line goes through the redactor, context included. The first
+     * version redacted only the provider's reason, and the register route was
+     * passing the creator's address inside the context string, so the redactor
+     * was scrubbing one half of the line while the other half leaked the same
+     * address. A sink that trusts its callers to pre-clean their labels is a
+     * sink that leaks on the next caller written in a hurry.
+     */
+    console.warn(redactPii(`[email] ${context} not sent: ${result.reason ?? ""}`));
   }
 }

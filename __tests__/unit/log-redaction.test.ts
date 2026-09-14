@@ -142,3 +142,40 @@ describe("logError", () => {
     spy.mockRestore();
   });
 });
+
+describe("the quiet email failure line", () => {
+  /**
+   * The residual the issue-closure verification found on #145: the sink
+   * redacted the provider's reason and trusted the caller's context label,
+   * and the register route was passing the creator's address inside it. The
+   * whole line goes through the redactor now, exercised through the real
+   * function on its no-token path so no network is involved.
+   */
+  it("redacts the context label, not only the reason", async () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const token = process.env.ZEPTOMAIL_TOKEN;
+    delete process.env.ZEPTOMAIL_TOKEN;
+
+    try {
+      vi.resetModules();
+      const { sendEmailQuietly } = await import("@/lib/email/client");
+      await sendEmailQuietly(
+        {
+          to: "ada@example.com",
+          subject: "x",
+          html: "<p>x</p>",
+          text: "x",
+        } as never,
+        "registration for ada.lovelace@example.com",
+      );
+
+      const written = spy.mock.calls.flat().join(" ");
+      expect(written, "the failure is still reported").toContain("not sent");
+      expect(written).not.toContain("ada.lovelace@example.com");
+      expect(written).toContain("[email]");
+    } finally {
+      if (token !== undefined) process.env.ZEPTOMAIL_TOKEN = token;
+      spy.mockRestore();
+    }
+  });
+});

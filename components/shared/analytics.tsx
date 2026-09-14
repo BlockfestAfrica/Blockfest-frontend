@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import {
+  SABILYTICS_API,
   SABILYTICS_DOMAIN,
   SABILYTICS_SITE_ID,
   SABILYTICS_SRC,
@@ -65,6 +66,7 @@ export function Analytics() {
       src={SABILYTICS_SRC}
       data-site={SABILYTICS_SITE_ID}
       data-domain={SABILYTICS_DOMAIN}
+      data-api={SABILYTICS_API}
     />
   );
 }

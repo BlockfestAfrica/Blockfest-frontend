@@ -17,7 +17,27 @@ declare global {
   }
 }
 
-export const SABILYTICS_SRC = "https://www.sabilytics.com/script.js";
+/*
+ * Served from our own origin, deliberately.
+ *
+ * The issue-closure verification of #138 left one residual standing: the
+ * vendor tag was loaded live from www.sabilytics.com, un-pinned, so whoever
+ * controls that host, or its CDN, could change what executes on every public
+ * page of the origin that also hosts the console. Self-hosting the snapshot in
+ * public/vendor/script.js removes the last third-party script execution on
+ * this origin: the vendor can now receive beacons but can no longer run new
+ * code here.
+ *
+ * The cost is that upstream updates stop arriving. To refresh deliberately:
+ * curl -o public/vendor/script.js https://www.sabilytics.com/script.js
+ * and read the diff before committing it.
+ *
+ * SABILYTICS_API must be pinned alongside: the script derives its endpoint
+ * from its own src when data-api is absent, which self-hosted would point at
+ * this origin's nonexistent /api/e and silently drop every pageview.
+ */
+export const SABILYTICS_SRC = "/vendor/script.js";
+export const SABILYTICS_API = "https://www.sabilytics.com/api/e";
 export const SABILYTICS_SITE_ID = "1csn36flwfzz";
 export const SABILYTICS_DOMAIN = "blockfestafrica.com";
 

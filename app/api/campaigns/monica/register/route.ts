@@ -346,7 +346,9 @@ export async function POST(request: NextRequest) {
           personalLink: personalLink(accessToken),
           referralCode,
         }),
-        `registration for ${emailCanonical}`,
+        // No address in the label. The sink redacts anyway, but a log label
+        // is not a place personal data should ever be put on purpose.
+        "registration",
       );
     }
 
