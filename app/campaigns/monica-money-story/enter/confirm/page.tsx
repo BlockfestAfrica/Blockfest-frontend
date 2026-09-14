@@ -92,7 +92,10 @@ export default async function ConfirmEntryPage({
           ) : (
             <>
               <p className="eyebrow text-brand-gold">Monica</p>
-              <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-pretty text-white">
+              {/* break-words for the same reason /me dropped its display
+                  size: a long single-token name at the 30px clamp floor
+                  overruns a 328px box and html/body clip, never scroll. */}
+              <h1 className="mt-2 break-words text-display-sm font-bold uppercase tracking-[-0.03em] text-pretty text-white">
                 Open the dashboard for {holder!.name}
               </h1>
 
@@ -106,7 +109,7 @@ export default async function ConfirmEntryPage({
                       <span className="uppercase tracking-wider text-ink-4">
                         {h.platform}
                       </span>{" "}
-                      <span className="font-mono">@{h.handle}</span>
+                      <span className="font-mono [overflow-wrap:anywhere]">@{h.handle}</span>
                     </li>
                   ))}
                 </ul>

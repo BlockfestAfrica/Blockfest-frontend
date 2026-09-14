@@ -110,12 +110,12 @@ export default function MonicaRulesPage() {
               className="mt-10 rounded-xl border-l-2 border-line-2 bg-card p-5 pl-5 sm:p-6 sm:pl-6"
             >
               <p className="eyebrow text-ink-4">Contents</p>
-              <ol className="mt-4 grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
+              <ol className="mt-4 grid gap-x-8 gap-y-1 sm:grid-cols-2">
                 {monicaRules.map((section, i) => (
                   <li key={section.id}>
                     <a
                       href={`#${section.id}`}
-                      className="flex gap-2.5 text-sm leading-snug text-ink-2 transition-colors duration-200 hover:text-white"
+                      className="flex min-h-11 items-center gap-2.5 text-sm leading-snug text-ink-2 transition-colors duration-200 hover:text-white"
                     >
                       <span className="tabular-nums text-ink-4">
                         {i + 1}

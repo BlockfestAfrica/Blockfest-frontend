@@ -579,7 +579,7 @@ export default async function MonicaCreatorPage() {
                         href={entry.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-2 block break-words text-sm leading-relaxed text-ink-4 underline underline-offset-2 [overflow-wrap:anywhere] hover:text-ink-2"
+                        className="mt-2 flex min-h-11 items-center break-words text-sm leading-relaxed text-ink-4 underline underline-offset-2 [overflow-wrap:anywhere] hover:text-ink-2"
                       >
                         {entry.url}
                       </a>

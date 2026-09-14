@@ -166,18 +166,22 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
           {/* items-end, not center: the Order field is a label over an input
               and the checkbox is one line, so centring floated the checkbox
               against the taller field. Both now sit on the input row. */}
-          <div className="flex flex-wrap items-end gap-4">
-            <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-semibold text-white">
-              <input type="checkbox" checked={form.isPublished}
-                onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
-                className="h-4 w-4 cursor-pointer accent-brand-gold" />
-              Published
-            </label>
+          {/* The labelled field first, then the toggle. The checkbox row
+              matches the input's height (min-h-12) so items-end centres it
+              against the input itself; the old order left the Order label
+              floating over an empty corner with the checkbox mid-air. */}
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
             <Field id="res-order" label="Order">
               <input id="res-order" inputMode="numeric" value={form.displayOrder}
                 onChange={(e) => setForm({ ...form, displayOrder: e.target.value.replace(/[^\d]/g, "") })}
                 className={`${control} w-24`} />
             </Field>
+            <label className="flex min-h-12 cursor-pointer items-center gap-2.5 text-sm font-semibold text-white">
+              <input type="checkbox" checked={form.isPublished}
+                onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
+                className="h-4 w-4 cursor-pointer accent-brand-gold" />
+              Published
+            </label>
           </div>
           <div className="flex gap-2">
             <button type="button" disabled={busy} onClick={save} className={buttonClass("primary")}>
