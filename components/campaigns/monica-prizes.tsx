@@ -46,9 +46,11 @@ export function MonicaPrizes() {
                     <dt className="text-base font-semibold text-white">
                       {prize.label}
                     </dt>
+                    {/* The amount alone. The x4 suffix repeated what the
+                        Weekly Pool (x4) heading already says, and pressed
+                        against the figure it read as part of the number. */}
                     <dd className="tabular-nums text-ink-2">
                       {formatNaira(prize.amount)}
-                      <span className="text-ink-4"> x{prize.count}</span>
                     </dd>
                   </div>
                   {prize.note && (
