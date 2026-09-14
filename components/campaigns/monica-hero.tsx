@@ -4,13 +4,10 @@ import { CampaignJoinCTA } from "./campaign-join-cta";
 import {
   campaignBySlug,
   campaignOpensLabel,
-  campaignRun,
   CAMPAIGN_PLATFORMS,
-  MONICA_CAMPAIGN_DAYS,
   MONICA_SLUG,
   monicaRewardPool,
   monicaRoutes,
-  monicaStages,
   platformLabels,
 } from "@/lib/campaigns";
 import { formatNaira } from "@/lib/tickets";
@@ -51,11 +48,10 @@ function Fact({
 export function MonicaHero() {
   const campaign = campaignBySlug(MONICA_SLUG);
   if (!campaign) return null;
-  const run = campaignRun(campaign);
   const opens = campaignOpensLabel(campaign);
 
   return (
-    <section className="section-y bg-ground">
+    <section className="bg-ground pb-10 pt-6 sm:pb-14 sm:pt-8">
       <div className="container-page">
         <div className="grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-16">
           <div className="lg:col-span-7">
@@ -78,7 +74,7 @@ export function MonicaHero() {
                 stacked one per line on a phone, three loose blue lines under
                 the button; as buttons they share the CTA's shape and wrap
                 side by side. */}
-            <div className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4">
+            <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
               {campaign.startsAt && opens && (
                 <CampaignJoinCTA
                   href={monicaRoutes.register}
@@ -99,7 +95,19 @@ export function MonicaHero() {
           </div>
 
           <div className="lg:col-span-5">
-            <dl className="flex flex-col gap-7 rounded-2xl border border-line-2 bg-card-2 p-6 sm:p-8">
+            <div className="rounded-2xl border border-line-2 bg-card-2 p-6 sm:p-8">
+              {/* Just the countdown, no label and no date arithmetic under
+                  it: the owner cut both, and the ticking number carries the
+                  urgency on its own. */}
+              {campaign.endsAt && (
+                <p className="text-2xl font-bold tabular-nums leading-none text-brand-gold">
+                  <TimeLeftLabel
+                    endsAt={campaign.endsAt}
+                    initial={formatTimeLeft(campaign.endsAt)}
+                  />
+                </p>
+              )}
+              <dl className={`flex flex-col gap-7 ${campaign.endsAt ? "mt-7" : ""}`}>
               <Fact label="Total reward pool">
                 <p className="text-display-sm font-bold tabular-nums leading-none text-white">
                   {formatNaira(monicaRewardPool)}
@@ -108,21 +116,6 @@ export function MonicaHero() {
                   Weekly prizes plus a final leaderboard.
                 </p>
               </Fact>
-
-              {campaign.endsAt && (
-                <Fact label="Time left">
-                  <p className="text-2xl font-bold tabular-nums leading-none text-white">
-                    <TimeLeftLabel
-                      endsAt={campaign.endsAt}
-                      initial={formatTimeLeft(campaign.endsAt)}
-                    />
-                  </p>
-                  <p className="mt-2 text-sm text-ink-3">
-                    {run}. {MONICA_CAMPAIGN_DAYS} days,{" "}
-                    {monicaStages.length} stages.
-                  </p>
-                </Fact>
-              )}
 
               <Fact label="Publish on">
                 <ul className="flex flex-wrap gap-2">
@@ -157,7 +150,8 @@ export function MonicaHero() {
                   </span>
                 </Fact>
               )}
-            </dl>
+              </dl>
+            </div>
           </div>
         </div>
       </div>
