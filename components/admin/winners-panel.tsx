@@ -11,8 +11,8 @@ import {
   JobCard,
   Pill,
   Segmented,
-  selectControl,
 } from "@/components/shared/panel";
+import { CreatorPicker } from "@/components/admin/creator-picker";
 import { Confirm } from "@/components/shared/confirm";
 import { naira } from "@/lib/format";
 import { monicaWeeklyPrizes } from "@/lib/campaigns";
@@ -134,8 +134,12 @@ export function WinnersPanel({
   const chosenName =
     decided?.name ?? candidates.find((c) => c.enrolmentId === selectedId)?.name;
   const amount = Number(prize);
+  /* Named, not just set: a loaded draft can carry an id the current list
+     no longer contains (the creator fell off the shortlist, or already won
+     while the draft sat). The picker would show blank while the API quietly
+     received the invisible id, so an id nobody can read is not ready. */
   const ready =
-    Boolean(selectedId) &&
+    Boolean(chosenName) &&
     Number.isInteger(amount) &&
     amount > 0 &&
     !votePending;
@@ -378,23 +382,15 @@ export function WinnersPanel({
               hint={
                 shortlistOnly
                   ? "No countable votes came in, so the rules fall back to Blockfest selecting, from the shortlist people were shown."
-                  : "Ranked by the standings, so the leader is first."
+                  : "Type any part of a name. Ranked by the standings, so the leader is first."
               }
             >
-              <select
+              <CreatorPicker
                 id="winner"
-                name="winner"
+                candidates={candidates}
                 value={enrolmentId}
-                onChange={(event) => setEnrolmentId(event.target.value)}
-                className={selectControl}
-              >
-                <option value="">Pick a creator…</option>
-                {candidates.map((c) => (
-                  <option key={c.enrolmentId} value={c.enrolmentId}>
-                    {c.rank}. {c.name} ({c.points} points)
-                  </option>
-                ))}
-              </select>
+                onChange={setEnrolmentId}
+              />
             </Field>
           )}
 
