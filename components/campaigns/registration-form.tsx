@@ -824,7 +824,7 @@ export function RegistrationForm({
           * what the server uses.
           *
           * Optional, and wrong codes are ignored rather than refused. A typo
-          * here should cost the referrer their 50 points, not cost the person
+          * here should cost the referrer their referral points, not cost the person
           * registering their place in the campaign.
           */}
         <div className="mt-6">

@@ -62,7 +62,7 @@ export const monicaRules: RuleSection[] = [
         ["Approved entry, one platform", "100"],
         ["The same entry on two platforms", "150"],
         ["The same entry on all three platforms", "200"],
-        ["Creator referral, on their first approved entry", "50"],
+        ["Creator referral, on their first approved entry", "10"],
         [
           "Standout work, audience milestones, featured entries, collaborations",
           "Case by case, capped at 300 each",
@@ -83,7 +83,7 @@ export const monicaRules: RuleSection[] = [
     id: "referrals",
     title: "Referrals",
     paragraphs: [
-      "You receive a link that brings other creators into the campaign. Each creator you bring in is worth 50 points, credited once, when they have their first approved entry rather than when they register.",
+      "You receive a link that brings other creators into the campaign. Each creator you bring in is worth 10 points, credited once, when they have their first approved entry rather than when they register.",
       "You may not refer yourself, or register more than one account. Accounts that appear to exist only to generate referrals will be removed along with any points they produced.",
       "This is separate from Monica's own customer referral bonus, which is a Monica product offer. It has no connection to campaign points, the leaderboard or the prize pool, and taking part in one has no effect on the other.",
     ],

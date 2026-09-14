@@ -200,18 +200,21 @@ describe("the clamp", () => {
 
     const paid = await pointsOf(referrer);
     /*
-     * Leave the referrer holding less than was paid. Written straight into
+     * Leave the referrer holding less than was paid, derived from the paid
+     * amount rather than assuming it, so a change to the referral rate does
+     * not turn this fixture into a zero-point row. Written straight into
      * the ledger rather than through award_points, because the floor added in
      * 0028 rightly refuses a manual deduction of engine-awarded points; the
      * clamp exists for ANY low-total state however it arose, and this is the
      * honest way to make one.
      */
+    const hold = Math.max(1, Math.floor(paid / 2));
     await db.query(`
       INSERT INTO point_ledger (campaign_id, campaign_creator_id, source, points, note, awarded_by_admin_id)
-      SELECT campaign_id, id, 'manual_adjustment'::ledger_source, ${-(paid - 10)}, 'Fixture', '${adminId}'
+      SELECT campaign_id, id, 'manual_adjustment'::ledger_source, ${-(paid - hold)}, 'Fixture', '${adminId}'
         FROM campaign_creators WHERE id = '${referrer}'`);
     await db.query(`SELECT recompute_points_total('${referrer}'::uuid)`);
-    expect(await pointsOf(referrer)).toBe(10);
+    expect(await pointsOf(referrer)).toBe(hold);
 
     await expect(voidIt(farmed), "the void must not fail on the CHECK").resolves.toBeTruthy();
     expect(await pointsOf(referrer), "clamped to what they held").toBe(0);

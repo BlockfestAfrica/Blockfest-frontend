@@ -110,7 +110,7 @@ export function MonicaPrizes() {
           {/* The referral is the one bonus a creator can plan for, so it gets a
               number rather than being folded into "bonus points". */}
           <p className="mt-6 text-sm leading-relaxed text-ink-2">
-            Bring in another creator with your referral link and you get 50
+            Bring in another creator with your referral link and you get 10
             points when their first entry is approved. There is no cap on how
             many you bring in.
           </p>

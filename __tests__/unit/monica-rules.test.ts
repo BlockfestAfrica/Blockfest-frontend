@@ -87,7 +87,7 @@ describe("the points clauses", () => {
    * anybody agreed to.
    */
   it("publishes what a referral is actually worth", () => {
-    expect(allText).toContain("50 points");
+    expect(allText).toContain("10 points");
   });
 
   /**

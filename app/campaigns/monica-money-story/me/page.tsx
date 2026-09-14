@@ -628,7 +628,7 @@ export default async function MonicaCreatorPage() {
 
           <SectionCard id="referral" title="Bring a creator in" className="mt-6">
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
-              50 points each, paid when they get their first approved entry,
+              10 points each, paid when they get their first approved entry,
               not when they register.
             </p>
             <CopyField

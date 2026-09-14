@@ -230,7 +230,7 @@ export function registrationEmail(params: {
       `If you did not register for this, reply and tell us.`,
       ``,
       `Your referral code: ${params.referralCode}`,
-      `You earn 50 points when somebody who joins with your code gets their first entry approved.`,
+      `You earn 10 points when somebody who joins with your code gets their first entry approved.`,
       ``,
       `A new challenge opens every Monday. Publish your answer on your own account, then paste the link on your page.`,
       ``,
@@ -249,7 +249,7 @@ export function registrationEmail(params: {
         ),
         boxed("Your referral code", params.referralCode),
         p(
-          "You earn <strong>50 points</strong> when a creator who joins with your code gets their first entry approved. Not when they register, when their work is accepted.",
+          "You earn <strong>10 points</strong> when a creator who joins with your code gets their first entry approved. Not when they register, when their work is accepted.",
         ),
         p(
           "A new challenge opens every Monday. Publish your answer on your own account, then paste the link on your page.",

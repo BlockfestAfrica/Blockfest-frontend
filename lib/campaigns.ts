@@ -476,7 +476,7 @@ export const monicaFaqs: CampaignFaq[] = [
     // 50, not the 10 in the marketing doc: 50 is what the rules promise and
     // what the database pays, and the three must never disagree.
     answer:
-      "Every creator gets a unique referral link. Share it with other creators and earn 50 points when a creator you refer joins the campaign and their first entry is approved. There is no limit to the number of creators you can refer.",
+      "Every creator gets a unique referral link. Share it with other creators and earn 10 points when a creator you refer joins the campaign and their first entry is approved. There is no limit to the number of creators you can refer.",
   },
   {
     question: "Is this the same as Monica's referral bonus?",
