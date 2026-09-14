@@ -16,7 +16,7 @@ const navLinkClasses =
 const activeNavClasses =
   "text-white relative after:absolute after:left-1 after:right-1 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-brand-gold";
 
-const Navbar = () => {
+const Navbar = ({ sticky = true }: { sticky?: boolean } = {}) => {
   const contactEmail = CONTACT_EMAIL;
 
   const router = useRouter();
@@ -75,7 +75,10 @@ const Navbar = () => {
 
   return (
     <header
-      className={`${gotham.className} bg-ground sticky top-0 z-50 border-b border-line`}
+      // Non-sticky on the console: the sidebar and the mobile tab bar pin
+      // themselves to the viewport top, and a bar that never leaves would
+      // spend permanent height on every screen of a working shift.
+      className={`${gotham.className} bg-ground ${sticky ? "sticky top-0" : ""} z-50 border-b border-line`}
     >
       <div className="container-page flex items-center justify-between py-4 lg:py-5">
       {/* Logo */}
