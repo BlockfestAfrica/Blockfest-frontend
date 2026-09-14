@@ -15,7 +15,7 @@ import { SubmissionForm } from "@/components/campaigns/submission-form";
 import { CopyField } from "@/components/campaigns/copy-field";
 import { TimeLeftLabel } from "@/components/campaigns/time-left-label";
 import { formatTimeLeft } from "@/lib/countdown";
-import { SectionCard, HeadedPanel, Panel, Pill, Stat } from "@/components/shared/panel";
+import { SectionCard, Panel, Pill } from "@/components/shared/panel";
 import { pauseState } from "@/lib/campaign-pause";
 import {
   campaignBySlug,
@@ -270,166 +270,181 @@ export default async function MonicaCreatorPage() {
               <Pill tone="gold"><span className="tabular-nums">Rank {rank}</span></Pill>
             )}
           </div>
-          <p className="mt-2 text-sm tabular-nums text-ink-4">
-            {creator.pointsTotal} points · {creator.approvedEntries} approved ·
-            joined {joined}
+          {/* The only place the figures live. A card below the week repeated
+              all three of them and the page opened by saying the same numbers
+              twice, which is most of what read as scatter. */}
+          <p className="mt-2 text-sm text-ink-4">
+            <span className="tabular-nums">
+              {creator.pointsTotal} points · {creator.approvedEntries} approved
+              · joined {joined}
+            </span>{" "}
+            <Link
+              href={monicaRoutes.leaderboard}
+              className="whitespace-nowrap text-link underline underline-offset-2 hover:text-white"
+            >
+              See the leaderboard
+            </Link>
           </p>
 
           {/* THE WEEK. The reason for the visit, roughly 235px down instead of
               640px. The head is present in every state so the clock never
               disappears, including during a pause. */}
           {challenge ? (
-            <HeadedPanel
-              className="mt-8"
-              head={
-                <>
-                  <p className="eyebrow">Week {challenge.weekNo}</p>
-                  <p className="text-sm font-bold">
-                    <TimeLeftLabel
-                      endsAt={challenge.endsAt.toISOString()}
-                      initial={formatTimeLeft(challenge.endsAt.toISOString())}
-                    />
-                  </p>
-                </>
-              }
-            >
-              <h2 className="text-xl font-bold text-white sm:text-2xl">
-                {challenge.title}
-              </h2>
-              {/* The absolute instant, because submit_entry enforces it to the
-                  second and a creator posting at 10pm against a 6pm close loses
-                  the week to a formatting choice. */}
-              <p className="mt-1 text-sm text-ink-3">
-                Closes {closingLabel(challenge.endsAt)} Lagos time
-              </p>
-              <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-2">
-                {challenge.description}
-              </p>
-
-              {/* Where each registered account stands this week, with the handle
-                  attached, so "have I done TikTok yet" is answered by looking
-                  rather than by scrolling to the entries list. */}
-              <ul className="mt-5 flex flex-wrap gap-2">
-                {platforms.map((platform) => {
-                  const entry = thisWeek.find((s) => s.platform === platform);
-                  const state = entry ? statusPill(entry.status) : null;
-                  return (
-                    <li key={platform}>
-                      <span className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground/60 py-1 pl-3 pr-1.5 text-sm text-ink-2">
-                        {platformLabels[platform as CampaignPlatform] ??
-                          platform}
-                        {state ? (
-                          <Pill tone={state.tone}>{state.label}</Pill>
-                        ) : (
-                          <Pill>Not sent</Pill>
-                        )}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-
-              {rejectedThisWeek.length > 0 && (
-                <Panel tone="warn" className="mt-5">
-                  <p className="text-sm font-semibold text-amber-200">
-                    {rejectedThisWeek.length === 1
-                      ? "One entry needs a change"
-                      : `${rejectedThisWeek.length} entries need a change`}
-                  </p>
-                  {rejectedThisWeek.map((entry) => (
-                    <p
-                      key={entry.id}
-                      className="mt-2 text-sm leading-relaxed text-ink-2"
-                    >
-                      <span className="font-semibold text-white">
-                        {platformLabels[entry.platform as CampaignPlatform] ??
-                          entry.platform}
-                        :
-                      </span>{" "}
-                      {entry.reviewNote ?? "No reason was recorded."}
-                    </p>
-                  ))}
-                  {/* The whole point of migration 0011. Saying so here is the
-                      difference between a dead end and an instruction. */}
-                  <p className="mt-3 text-sm leading-relaxed text-ink-3">
-                    The week is still open, so you can fix it and send it again
-                    below.
-                  </p>
-                </Panel>
-              )}
-
-              <div className="mt-6">
-                {pause.paused ? (
-                  <Panel tone="warn">
-                    <p className="text-sm font-semibold text-amber-200">
-                      Submissions are paused
-                    </p>
-                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
-                      {/* pauseState returns null for a blank reason, and this
-                          is the most alarming state the page can show. It does
-                          not get to have a hole in the middle of it. */}
-                      {pause.reason ??
-                        "We have stopped submissions for a moment. Nothing you have already sent is affected."}
-                    </p>
-                    <p className="mt-2 text-sm leading-relaxed text-ink-3">
-                      The brief above still stands, so you can keep working.
-                      Come back and paste your link when this clears.
-                    </p>
-                  </Panel>
-                ) : failed.platforms ? (
-                  /*
-                   * The read failed, so stillToSubmit is empty for the wrong
-                   * reason. Without this branch the next one fires and tells a
-                   * creator they have finished the week while removing the form
-                   * they would have used, which is the most expensive lie this
-                   * page can tell.
-                   */
-                  <Panel tone="warn">
-                    <p className="text-sm font-semibold text-amber-200">
-                      We could not load your accounts
-                    </p>
-                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
-                      This is at our end, not yours, and it is not a sign that
-                      anything is missing. Refresh in a moment and the form will
-                      be here.
-                    </p>
-                  </Panel>
-                ) : stillToSubmit.length === 0 ? (
-                  <p className="text-sm leading-relaxed text-ink-3">
-                    Everything you registered is in for this week. Each platform
-                    is reviewed on its own, so they can land at different times.
-                  </p>
-                ) : (
-                  <>
-                    <SubmissionForm
-                      platforms={platforms as CampaignPlatform[]}
-                      alreadySubmitted={usedThisWeek}
-                      challengeTitle={challenge.title}
-                    />
-
-              {/* Derived from the registry, never typed here. This line
-                  carried the old 100/200/300 ladder for a day after the rules
-                  changed, which is exactly what a second copy of a number
-                  does. */}
-              <p className="mt-5 text-sm leading-relaxed text-ink-2">
-                {monicaPointLadder
-                  .map(
-                    (tier) =>
-                      `${tier.points} points for ${
-                        tier.platforms === 1
-                          ? "the first platform"
-                          : tier.platforms === 2
-                            ? "two"
-                            : "all three"
-                      }`,
-                  )
-                  .join(", ")}
-                . It stays one entry either way.
-              </p>
-                  </>
-                )}
+            /* A hairline rail instead of a filled gold strip. The week is the
+               focal object here because it sits first and holds the form, not
+               because its container shouts. Gold survives on the two pieces of
+               text that are genuinely status, and on the submit button. */
+            <section className="mt-8 rounded-xl border border-line-2 bg-card">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-5 py-3 sm:px-6">
+                <p className="eyebrow text-brand-gold">
+                  Week {challenge.weekNo}
+                </p>
+                <p className="text-sm font-bold tabular-nums text-brand-gold">
+                  <TimeLeftLabel
+                    endsAt={challenge.endsAt.toISOString()}
+                    initial={formatTimeLeft(challenge.endsAt.toISOString())}
+                  />
+                </p>
               </div>
-            </HeadedPanel>
+              <div className="p-5 sm:p-6">
+                <h2 className="text-xl font-bold text-white sm:text-2xl">
+                  {challenge.title}
+                </h2>
+                {/* The absolute instant, because submit_entry enforces it to the
+                    second and a creator posting at 10pm against a 6pm close loses
+                    the week to a formatting choice. */}
+                <p className="mt-1 text-sm text-ink-3">
+                  Closes {closingLabel(challenge.endsAt)} Lagos time
+                </p>
+                <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-2">
+                  {challenge.description}
+                </p>
+
+                {/* Where each registered account stands this week, with the handle
+                    attached, so "have I done TikTok yet" is answered by looking
+                    rather than by scrolling to the entries list. */}
+                <ul className="mt-5 flex flex-wrap gap-2">
+                  {platforms.map((platform) => {
+                    const entry = thisWeek.find((s) => s.platform === platform);
+                    const state = entry ? statusPill(entry.status) : null;
+                    return (
+                      <li key={platform}>
+                        <span className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground/60 py-1 pl-3 pr-1.5 text-sm text-ink-2">
+                          {platformLabels[platform as CampaignPlatform] ??
+                            platform}
+                          {state ? (
+                            <Pill tone={state.tone}>{state.label}</Pill>
+                          ) : (
+                            <Pill>Not sent</Pill>
+                          )}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                {rejectedThisWeek.length > 0 && (
+                  <Panel tone="warn" className="mt-5">
+                    <p className="text-sm font-semibold text-amber-200">
+                      {rejectedThisWeek.length === 1
+                        ? "One entry needs a change"
+                        : `${rejectedThisWeek.length} entries need a change`}
+                    </p>
+                    {rejectedThisWeek.map((entry) => (
+                      <p
+                        key={entry.id}
+                        className="mt-2 text-sm leading-relaxed text-ink-2"
+                      >
+                        <span className="font-semibold text-white">
+                          {platformLabels[entry.platform as CampaignPlatform] ??
+                            entry.platform}
+                          :
+                        </span>{" "}
+                        {entry.reviewNote ?? "No reason was recorded."}
+                      </p>
+                    ))}
+                    {/* The whole point of migration 0011. Saying so here is the
+                        difference between a dead end and an instruction. */}
+                    <p className="mt-3 text-sm leading-relaxed text-ink-3">
+                      The week is still open, so you can fix it and send it again
+                      below.
+                    </p>
+                  </Panel>
+                )}
+
+                <div className="mt-6">
+                  {pause.paused ? (
+                    <Panel tone="warn">
+                      <p className="text-sm font-semibold text-amber-200">
+                        Submissions are paused
+                      </p>
+                      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
+                        {/* pauseState returns null for a blank reason, and this
+                            is the most alarming state the page can show. It does
+                            not get to have a hole in the middle of it. */}
+                        {pause.reason ??
+                          "We have stopped submissions for a moment. Nothing you have already sent is affected."}
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-ink-3">
+                        The brief above still stands, so you can keep working.
+                        Come back and paste your link when this clears.
+                      </p>
+                    </Panel>
+                  ) : failed.platforms ? (
+                    /*
+                     * The read failed, so stillToSubmit is empty for the wrong
+                     * reason. Without this branch the next one fires and tells a
+                     * creator they have finished the week while removing the form
+                     * they would have used, which is the most expensive lie this
+                     * page can tell.
+                     */
+                    <Panel tone="warn">
+                      <p className="text-sm font-semibold text-amber-200">
+                        We could not load your accounts
+                      </p>
+                      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
+                        This is at our end, not yours, and it is not a sign that
+                        anything is missing. Refresh in a moment and the form will
+                        be here.
+                      </p>
+                    </Panel>
+                  ) : stillToSubmit.length === 0 ? (
+                    <p className="text-sm leading-relaxed text-ink-3">
+                      Everything you registered is in for this week. Each platform
+                      is reviewed on its own, so they can land at different times.
+                    </p>
+                  ) : (
+                    <>
+                      <SubmissionForm
+                        platforms={platforms as CampaignPlatform[]}
+                        alreadySubmitted={usedThisWeek}
+                        challengeTitle={challenge.title}
+                      />
+
+                {/* Derived from the registry, never typed here. This line
+                    carried the old 100/200/300 ladder for a day after the rules
+                    changed, which is exactly what a second copy of a number
+                    does. */}
+                <p className="mt-5 text-sm leading-relaxed text-ink-2">
+                  {monicaPointLadder
+                    .map(
+                      (tier) =>
+                        `${tier.points} points for ${
+                          tier.platforms === 1
+                            ? "the first platform"
+                            : tier.platforms === 2
+                              ? "two"
+                              : "all three"
+                        }`,
+                    )
+                    .join(", ")}
+                  . It stays one entry either way.
+                </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </section>
           ) : failed.challenge ? (
             <Panel tone="warn" className="mt-8">
               <h2 className="text-xl font-bold text-white">
@@ -459,46 +474,6 @@ export default async function MonicaCreatorPage() {
               </Link>
             </Panel>
           )}
-
-          {/* Figures, below the action. One shared rule so three numbers read as
-              one row, and no hint on any of them: a hint under one figure hangs
-              it two lines below its siblings and the rules stop lining up. */}
-          {/* A quiet rule over the figures, deliberately NOT another card:
-              the week above and the sections below are contained, and a third
-              identical box in between made the page monotone. Varying the
-              rhythm is what lets the week stay the loudest thing here. */}
-          <div className="mt-8 border-t border-line-2 pt-5">
-            {/* Three one-word labels over numbers, about 104px each at 360px.
-                Stacking them costs roughly 300px on the screen creators open
-                weekly, which is the space this redesign exists to reclaim.
-                mobile-grid-ok: numeric figures, no prose in a column */}
-            <div className="grid grid-cols-3 gap-4">
-              <Stat
-                rule={false}
-                label="Rank"
-                // Not an em dash. A plain hyphen is the convention for a
-                // figure that has no value yet.
-                value={rank === null ? "-" : rank}
-              />
-              <Stat rule={false} label="Points" value={creator.pointsTotal} />
-              <Stat
-                rule={false}
-                label="Approved"
-                value={creator.approvedEntries}
-              />
-            </div>
-            <p className="mt-3 text-sm text-ink-4">
-              {rank === null
-                ? "You are ranked once you have your first approved entry."
-                : "Standings update as entries are approved."}{" "}
-              <Link
-                href={monicaRoutes.leaderboard}
-                className="text-link underline underline-offset-2 hover:text-white"
-              >
-                See the leaderboard
-              </Link>
-            </p>
-          </div>
 
           {/*
            * How the total was arrived at.
@@ -640,9 +615,8 @@ export default async function MonicaCreatorPage() {
           {handles.length > 0 && (
             <SectionCard id="accounts" title="Your accounts" className="mt-6">
               <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
-                Entries only count from these. If one is wrong, ask for a
-                correction: the team reviews every request by hand before
-                anything changes.
+                Entries only count from these. Ask for a correction if one is
+                wrong; the team reviews every request by hand.
               </p>
               <HandleFix
                 handles={handles}
@@ -654,8 +628,8 @@ export default async function MonicaCreatorPage() {
 
           <SectionCard id="referral" title="Bring a creator in" className="mt-6">
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
-              Worth 50 points each, credited when they get their first approved
-              entry rather than when they register.
+              50 points each, paid when they get their first approved entry,
+              not when they register.
             </p>
             <CopyField
               value={referralLink}
