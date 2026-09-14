@@ -169,4 +169,16 @@ describe("what it refuses", () => {
       edit("00000000-0000-0000-0000-000000000000", { title: "x" }),
     ).rejects.toThrow(/unknown_challenge/);
   });
+
+  it("refuses a window that overlaps another week", async () => {
+    // Two open windows at once would file entries against whichever week
+    // the route's unordered pick found first, so the editor refuses to
+    // create the state at all.
+    await expect(
+      edit(week2, {
+        startsAt: "2026-09-17T00:00:00+01:00",
+        endsAt: "2026-09-23T23:59:59+01:00",
+      }),
+    ).rejects.toThrow(/window_overlaps/);
+  });
 });

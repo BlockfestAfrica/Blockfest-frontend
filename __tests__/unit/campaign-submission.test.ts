@@ -26,6 +26,13 @@ const errorFor = (platform: string, url: string) => {
   return r.success ? null : r.error.issues[0];
 };
 
+/*
+ * vm./vt.tiktok.com share links were accepted here until the day-one audit:
+ * they hide the author, so the ownership check never ran on them, and they
+ * minted a URL-shaped post identity distinct from the canonical video,
+ * worth a second credit. They are refused now, in the authored-form
+ * describe below, and the message tells the creator which link to paste.
+ */
 describe("links a real share sheet produces", () => {
   it.each([
     ["x", "https://x.com/adacreates/status/1234567890"],
@@ -34,8 +41,6 @@ describe("links a real share sheet produces", () => {
     ["instagram", "https://www.instagram.com/p/Cabcdef/"],
     ["instagram", "https://instagram.com/reel/Cabcdef/"],
     ["tiktok", "https://www.tiktok.com/@ada/video/7211"],
-    ["tiktok", "https://vm.tiktok.com/ZMabcdef/"],
-    ["tiktok", "https://vt.tiktok.com/ZSabcdef/"],
   ])("accepts %s: %s", (platform, url) => {
     expect(ok(platform, url)).toBe(true);
   });
@@ -143,5 +148,35 @@ describe("host matching on its own", () => {
   it("returns false rather than throwing on rubbish", () => {
     expect(() => hostMatchesPlatform("::::", "x")).not.toThrow();
     expect(hostMatchesPlatform("::::", "x")).toBe(false);
+  });
+});
+
+describe("the authored-form requirement", () => {
+  const parse = (platform: string, url: string) =>
+    submissionSchema.safeParse({ platform, url });
+
+  it("refuses an authorless X link", () => {
+    expect(parse("x", "https://x.com/i/status/1234567890").success).toBe(false);
+  });
+
+  it("refuses a TikTok share link that hides the author", () => {
+    expect(parse("tiktok", "https://vt.tiktok.com/ZSqxCpWFD").success).toBe(
+      false,
+    );
+  });
+
+  it("accepts the canonical authored forms", () => {
+    expect(
+      parse("x", "https://x.com/somebody/status/1234567890").success,
+    ).toBe(true);
+    expect(
+      parse("tiktok", "https://www.tiktok.com/@somebody/video/123456").success,
+    ).toBe(true);
+  });
+
+  it("leaves Instagram alone, whose links never name the author", () => {
+    expect(
+      parse("instagram", "https://instagram.com/p/DZ2bSUMIWpr").success,
+    ).toBe(true);
   });
 });

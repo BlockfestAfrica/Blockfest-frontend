@@ -106,7 +106,29 @@ export const submissionSchema = z
     // Named against url, because that is the field they will fix.
     path: ["url"],
     message: "That link does not match the platform you picked.",
-  });
+  })
+  /*
+   * X and TikTok links must arrive in their authored form.
+   *
+   * An authorless form (x.com/i/status/..., a vt.tiktok.com share link)
+   * skipped the wrong_account comparison entirely, and TikTok share links
+   * also minted a URL-shaped post identity distinct from the canonical
+   * video, worth a second credit. Refusing them costs the creator one
+   * copy-paste of the full link from their own post; accepting them costs
+   * the ownership check its meaning. Instagram never names the author in a
+   * link, so review carries that platform and it is exempt here.
+   */
+  .refine(
+    (v) =>
+      v.platform === "instagram" ||
+      authorFromUrl(canonicalUrl(v.url), v.platform as CampaignPlatform) !==
+        null,
+    {
+      path: ["url"],
+      message:
+        "Paste the full link from your post, the one with your username in it. Short links and x.com/i/ links hide who posted it.",
+    },
+  );
 
 export type SubmissionInput = z.infer<typeof submissionSchema>;
 
