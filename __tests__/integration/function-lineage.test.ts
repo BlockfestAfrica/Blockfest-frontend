@@ -173,3 +173,42 @@ describe("migration filenames", () => {
     expect([...prefixes].sort()).toEqual(prefixes);
   });
 });
+
+describe("point rule changes", () => {
+  /*
+   * The guard born from the 300-point entry.
+   *
+   * Entries snapshot their point values at creation, so a migration that
+   * changes a point_rules default silently strands every in-flight entry
+   * on the old value. Sometimes that is exactly right (the published rules
+   * promise a rate change never restates earned points) and sometimes it
+   * is exactly wrong (a pre-launch change nobody was ever promised). The
+   * one unacceptable state is the migration not saying which.
+   *
+   * So: any migration that updates a point_rules default must also contain
+   * either the word "snapshot" or "in-flight" or "grandfather" (a stated
+   * decision about existing entries) or a recompute call (a repair). A
+   * migration that changes a rate without addressing existing entries
+   * fails the build.
+   */
+  it("every rate change states what happens to in-flight entries", () => {
+    const offenders: string[] = [];
+    for (const file of migrationFiles()) {
+      const text = readFileSync(join(MIGRATIONS_DIR, file), "utf8");
+      const changesRate =
+        /UPDATE\s+point_rules/i.test(text) && /default_points/i.test(text);
+      if (!changesRate) continue;
+      // "already paid ... stand" is 0041's phrasing of the same decision;
+      // applied migrations are immutable, so the vocabulary widens here.
+      const statesDecision =
+        /snapshot|in-flight|grandfather|already paid|already awarded/i.test(
+          text,
+        ) || /recompute_entry_award/i.test(text);
+      if (!statesDecision) offenders.push(file);
+    }
+    expect(
+      offenders,
+      "these migrations change a point rate without stating what happens to entries already in flight",
+    ).toEqual([]);
+  });
+});
