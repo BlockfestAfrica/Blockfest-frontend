@@ -82,6 +82,14 @@ function fill() {
   );
 }
 
+/*
+ * Every waitFor here carries a five second ceiling, not the library's one
+ * second default. The default lost a race on a saturated worker pool during
+ * a full-suite run: the assertion was true, it just took 1.2 seconds to
+ * become observable, and the deploy gate went red for it. Same lesson as the
+ * throttle window test: a timing assumption in a test is a coin toss wired
+ * to the deploy button. The ceiling changes nothing about what is asserted.
+ */
 describe("the submitted payload", () => {
   it("carries the honeypot field, even when empty", async () => {
     // The bug: this key was absent, so the server's honeypot branch could
@@ -90,7 +98,7 @@ describe("the submitted payload", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent).toHaveProperty("hp_contact");
     expect(sent!.hp_contact).toBe("");
   });
@@ -100,7 +108,7 @@ describe("the submitted payload", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent).toHaveProperty("elapsedMs");
     expect(typeof sent!.elapsedMs).toBe("number");
   });
@@ -112,7 +120,7 @@ describe("the submitted payload", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent!.rulesVersion).toBeTruthy();
     expect(sent!.acceptedRules).toBe(true);
   });
@@ -122,7 +130,7 @@ describe("the submitted payload", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent!.fullName).toBe("Ada Obi");
     expect(sent!.email).toBe("ada@example.com");
     expect(sent!.x).toBe("adacreates");
@@ -183,7 +191,7 @@ describe("when the server returns no referral code", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(screen.getByText(/You are in/i)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/You are in/i), { timeout: 5000 }).toBeTruthy());
     expect(document.body.innerHTML).not.toContain("ref=null");
   });
 });
@@ -223,6 +231,7 @@ describe("a field error the server sends back", () => {
       expect(
         screen.getAllByRole("alert").some((n) => n.textContent === message),
       ).toBe(true),
+      { timeout: 5000 },
     );
   });
 
@@ -236,6 +245,7 @@ describe("a field error the server sends back", () => {
 
     await waitFor(() =>
       expect(document.body.innerHTML).toContain("Please check the form."),
+      { timeout: 5000 },
     );
   });
 });
@@ -260,7 +270,7 @@ describe("a required field left empty", () => {
 
     await waitFor(() =>
       expect(
-        screen.getAllByRole("alert").some((n) => n.textContent?.includes(message)),
+        screen.getAllByRole("alert").some((n) => n.textContent?.includes(message), { timeout: 5000 }),
       ).toBe(true),
     );
     expect(sent).toBeNull();
@@ -300,6 +310,7 @@ describe("a failure that belongs to the whole form", () => {
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Please check the form."),
+      { timeout: 5000 },
     );
     expect(document.body.innerHTML).toContain("Please check the form.");
   });
@@ -319,6 +330,7 @@ describe("a failure that belongs to the whole form", () => {
       expect(toast.error).toHaveBeenCalledWith(
         expect.stringContaining("could not reach the server"),
       ),
+      { timeout: 5000 },
     );
   });
 
@@ -344,6 +356,7 @@ describe("a failure that belongs to the whole form", () => {
           n.textContent?.includes("already registered"),
         ),
       ).toBe(true),
+      { timeout: 5000 },
     );
     // Both. The inline message is the one that points at the field; the toast
     // is what makes it visible when the field is off screen.
@@ -369,7 +382,7 @@ describe("a failure that belongs to the whole form", () => {
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
     await waitFor(() =>
-      expect(document.activeElement).toBe(screen.getByLabelText("Phone number")),
+      expect(document.activeElement).toBe(screen.getByLabelText("Phone number"), { timeout: 5000 }),
     );
   });
 });
@@ -386,7 +399,7 @@ describe("the marketing opt-in", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent!.marketingOptIn).toBe(false);
   });
 
@@ -398,7 +411,7 @@ describe("the marketing opt-in", () => {
     );
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent!.marketingOptIn).toBe(true);
   });
 
@@ -417,7 +430,7 @@ describe("the marketing opt-in", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(screen.getByText(/You are in/i)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/You are in/i), { timeout: 5000 }).toBeTruthy());
   });
 
   it("carries the privacy notice version that was on screen", async () => {
@@ -425,7 +438,7 @@ describe("the marketing opt-in", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent!.privacyVersion).toBeTruthy();
   });
 });
@@ -455,7 +468,7 @@ describe("the referral code field", () => {
     });
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent!.ref).toBe("R3WW9GHF");
   });
 
@@ -467,7 +480,7 @@ describe("the referral code field", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent!.ref).toBeUndefined();
   });
 
@@ -502,7 +515,7 @@ describe("the referral code field", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent!.ref).toBe("RQ4963ZV");
   });
 
@@ -516,7 +529,7 @@ describe("the referral code field", () => {
     });
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent!.ref).toBe("AB23CD45");
   });
 
@@ -531,7 +544,7 @@ describe("the referral code field", () => {
     });
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(sent).not.toBeNull());
+    await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
     expect(sent!.ref).toBeUndefined();
   });
 });
