@@ -93,8 +93,7 @@ export function PauseSwitch({ paused }: { paused: boolean }) {
       <h2 className="text-xl font-bold text-white">Pause the campaign</h2>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-4">
         Stops registration and submissions at once. Every page stays readable,
-        so creators can still see the rules and the leaderboard. Takes effect on
-        their next click, not on the next deploy.
+        so creators can still see the rules and the leaderboard.
       </p>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">

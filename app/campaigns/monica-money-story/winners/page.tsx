@@ -82,12 +82,7 @@ export default async function WinnersPage() {
                       .filter((w) => w.weekNo === week)
                       .map((w) => (
                         <li key={`${w.weekNo}-${w.category}`}>
-                          {/* Gold means "the news". When every week of the
-                              campaign wears the accent, the newest win only
-                              wins by scroll position, which is no hierarchy
-                              at all. Earlier weeks are the record; the
-                              latest is the announcement. */}
-                          <Panel tone={week === weeks[0] ? "accent" : "quiet"}>
+                          <Panel tone="quiet">
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                               <Trophy
                                 className="h-5 w-5 shrink-0 text-brand-gold"
@@ -150,7 +145,7 @@ export default async function WinnersPage() {
               <SectionHeading
                 label="Open now"
                 title="Community Favourite shortlist"
-                hint="Voting runs as a poll on Monica's own channels, not here, so the vote reaches the audience it is meant to. The result is advisory: winners are selected by Blockfest Africa, informed by the public vote."
+                hint="Voting runs as a poll on Monica's own channels, not here, so the vote reaches the audience it is meant to. The result is advisory."
               />
               <ul className="mt-6 grid gap-4 sm:grid-cols-2">
                 {shortlist.map((entry, index) => (

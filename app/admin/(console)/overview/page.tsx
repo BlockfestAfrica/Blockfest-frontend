@@ -150,14 +150,22 @@ export default async function OverviewPage() {
             Registrations sharing an address
           </h2>
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
-            For a person to look at, never acted on automatically. Nigerian
-            mobile carriers put very large numbers of subscribers behind each
-            address, so this is far more likely to be two creators on the same
-            network than one person with two accounts. It is here because it is
-            the only signal in the database that points at the fraud the rules
-            forbid, and a human comparing the names and the work can tell those
-            apart where a threshold cannot.
+            For a person to look at, never acted on automatically.
           </p>
+          <details className="mt-2">
+            <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink-2 hover:text-white">
+              Why a shared address is usually innocent
+            </summary>
+            <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
+              Nigerian mobile carriers put very large numbers of subscribers
+              behind each address, so this is far more likely to be two
+              creators on the same network than one person with two accounts.
+              It is here because it is the only signal in the database that
+              points at the fraud the rules forbid, and a human comparing the
+              names and the work can tell those apart where a threshold
+              cannot.
+            </p>
+          </details>
           <ul className="mt-4 divide-y divide-line overflow-hidden rounded-xl border border-line">
             {clusters.map((cluster) => (
               <li key={cluster.ip} className="p-4">

@@ -89,9 +89,10 @@ export function ReissueLink() {
       </form>
 
       {issued && (
-        <div className="mt-4 rounded-lg border border-brand-gold/40 bg-brand-gold/10 p-4">
+        <div className="mt-4 rounded-lg border border-line-2 bg-card p-4">
           <p className="text-sm font-semibold text-white">
-            New link for {issued.name}. Shown once.
+            New link for {issued.name}.{" "}
+            <span className="text-brand-gold">Shown once.</span>
             {issued.emailed
               ? " Also emailed to the address they registered with."
               : " The email did not go, so this copy is the only one. Pass it on now."}

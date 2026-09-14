@@ -61,8 +61,16 @@ export default async function MonicaLeaderboardPage() {
             <div className="mt-8 max-w-prose">
               <p className="text-base leading-relaxed text-ink-3">
                 Nothing to show yet. Points land when an entry is approved and
-                this board moves within a minute of each one. Weekly winners are
-                announced from {MONICA_FIRST_LEADERBOARD}.
+                this board moves within a minute of each one. Weekly winners
+                are announced from {MONICA_FIRST_LEADERBOARD}, and how points
+                are earned is in the{" "}
+                <Link
+                  href={monicaRoutes.rules}
+                  className="text-link underline underline-offset-2 hover:text-white"
+                >
+                  campaign rules
+                </Link>
+                .
               </p>
               <Link
                 href={monicaRoutes.register}
@@ -79,6 +87,19 @@ export default async function MonicaLeaderboardPage() {
               </p>
 
               <LeaderboardTable rows={rows} />
+
+              <p className="mt-6 text-sm leading-relaxed text-ink-4">
+                This board moves as entries are approved. Weekly winners are
+                announced {MONICA_FIRST_LEADERBOARD} and every Sunday after
+                that. How points are earned is in the{" "}
+                <Link
+                  href={monicaRoutes.rules}
+                  className="text-link underline underline-offset-2 hover:text-white"
+                >
+                  campaign rules
+                </Link>
+                .
+              </p>
             </>
           )}
 
@@ -88,19 +109,6 @@ export default async function MonicaLeaderboardPage() {
           >
             See the weekly winners
           </Link>
-
-          <p className="mt-6 text-sm leading-relaxed text-ink-4">
-            This board moves as entries are approved. Weekly winners are
-            announced {MONICA_FIRST_LEADERBOARD} and every Sunday after that.
-            How points are earned is in the{" "}
-            <Link
-              href={monicaRoutes.rules}
-              className="text-link underline underline-offset-2 hover:text-white"
-            >
-              campaign rules
-            </Link>
-            .
-          </p>
         </div>
       </section>
     </main>

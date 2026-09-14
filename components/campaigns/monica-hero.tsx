@@ -14,6 +14,7 @@ import {
   platformLabels,
 } from "@/lib/campaigns";
 import { formatNaira } from "@/lib/tickets";
+import { buttonClass } from "@/components/shared/panel";
 
 /** One row of the facts panel. */
 function Fact({
@@ -78,7 +79,11 @@ export function MonicaHero() {
               point. Telling it well is.
             </p>
 
-            <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
+            {/* One wrapping row of actions. As underlined text links these
+                stacked one per line on a phone, three loose blue lines under
+                the button; as buttons they share the CTA's shape and wrap
+                side by side. */}
+            <div className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4">
               {campaign.startsAt && opens && (
                 <CampaignJoinCTA
                   href={monicaRoutes.register}
@@ -86,15 +91,12 @@ export function MonicaHero() {
                   opensLabel={opens}
                 />
               )}
-              <Link
-                href={monicaRoutes.rules}
-                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
-              >
+              <Link href={monicaRoutes.rules} className={buttonClass("secondary")}>
                 Read the rules first
               </Link>
               <Link
                 href={monicaRoutes.leaderboard}
-                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+                className={buttonClass("secondary")}
               >
                 Leaderboard
               </Link>

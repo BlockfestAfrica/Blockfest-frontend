@@ -208,8 +208,7 @@ export function ParticipantsTable({
           answer different questions, which is exactly the sort of thing that
           gets misread when nothing says so. */}
       <p className="mt-3 text-sm text-ink-3">
-        These narrow the {rows.length} rows loaded here. Use the search above
-        the table to reach anybody else.
+        These narrow the {rows.length} rows loaded here.
       </p>
 
       {shown.length === 0 ? (
@@ -463,7 +462,7 @@ export function ParticipantsTable({
        */}
       <div ref={awardRef} id="award-panel">
         {selected && (
-          <Panel tone="accent" className="mt-8">
+          <Panel tone="quiet" className="mt-8">
             <SectionHeading label="Points" title={selected.name} />
             <AwardRow
               /*

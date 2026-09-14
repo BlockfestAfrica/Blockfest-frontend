@@ -52,8 +52,10 @@ function renderWithDraft() {
 describe("a saved draft", () => {
   it("is visible, with the name and the amount", () => {
     renderWithDraft();
-    expect(screen.getByText(/Draft saved: Amara Obi/)).toBeTruthy();
-    expect(screen.getByText(/300,000/)).toBeTruthy();
+    // The rail pill is the one place the draft-saved status lives; the box
+    // below it carries the name and the amount without restating it.
+    expect(screen.getByText(/draft saved/i)).toBeTruthy();
+    expect(screen.getByText(/Amara Obi, ₦300,000/)).toBeTruthy();
   });
 
   it("says plainly that it is not public and that saving replaces it", () => {

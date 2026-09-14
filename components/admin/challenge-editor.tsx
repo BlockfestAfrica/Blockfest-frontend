@@ -105,7 +105,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
           ? "now"
           : "todo"
       }
-      hint="Write next week's brief as a draft, read it over, flip it active on the Monday. A draft is invisible to creators and cannot receive entries; closing stops new entries and leaves what arrived reviewable. A week that has ended is the record of how its winners were decided, so it locks."
+      hint="Write next week's brief as a draft, read it over, flip it active on the Monday. Closing stops new entries and leaves what arrived reviewable."
     >
       <ul className="flex flex-col gap-3">
         {challenges.map((challenge) => (
