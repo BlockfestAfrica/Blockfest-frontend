@@ -7,6 +7,10 @@ import { isPgError } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
 import { allow } from "@/lib/throttle";
 import { CAMPAIGN_PLATFORMS } from "@/lib/campaigns";
+import { sendEmailQuietly } from "@/lib/email/client";
+import { handleRequestFiledEmail } from "@/lib/email/templates";
+import { handlesForEnrolment } from "@/lib/creator-session";
+import { CONTACT_EMAIL } from "@/lib/constants";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +81,31 @@ export async function POST(request: NextRequest) {
     await getDb().execute(
       sql`SELECT * FROM request_handle_change(${creator.enrolmentId}::uuid, ${parsed.data.platform}::platform, ${parsed.data.handle}::text, ${parsed.data.reason}::text)`,
     );
+
+    /*
+     * Tell the team. A request that sits unseen is a creator stuck for days,
+     * since their entries keep being refused against the old handle until
+     * somebody decides, and nobody camps on the People screen. Quietly: the
+     * request is filed either way, and the console shows it regardless.
+     */
+    const current = await handlesForEnrolment(creator.enrolmentId).catch(
+      () => [] as Awaited<ReturnType<typeof handlesForEnrolment>>,
+    );
+    const oldHandle =
+      current.find((h) => h.platform === parsed.data.platform)?.handle ?? "unknown";
+    await sendEmailQuietly(
+      handleRequestFiledEmail({
+        to: CONTACT_EMAIL,
+        creatorName: creator.name,
+        platform: parsed.data.platform,
+        oldHandle,
+        requestedHandle: parsed.data.handle.replace(/^@+/, "").toLowerCase(),
+        reason: parsed.data.reason,
+        consoleUrl: "https://blockfestafrica.com/admin/participants",
+      }),
+      "handle request notification",
+    );
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     for (const [code, raise, message] of KNOWN) {

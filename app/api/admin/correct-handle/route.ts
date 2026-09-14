@@ -7,6 +7,10 @@ import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { isPgError, PG } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
 import { CAMPAIGN_PLATFORMS } from "@/lib/campaigns";
+import { sendEmailQuietly } from "@/lib/email/client";
+import { handleCorrectedEmail, personalPage } from "@/lib/email/templates";
+import { campaignCreators, creators } from "@/lib/db/client";
+import { eq } from "drizzle-orm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,6 +90,36 @@ export async function POST(request: NextRequest) {
       old_handle?: string;
       new_handle?: string;
     };
+
+    /*
+     * Tell the creator. Their registration changed under them, and what their
+     * entries are checked against is a thing they must be able to dispute;
+     * silence is how a wrong correction goes unnoticed until an entry is
+     * refused for reasons they cannot see.
+     */
+    if (row.old_handle && row.new_handle) {
+      const who = await getDb()
+        .select({ email: creators.email, fullName: creators.fullName })
+        .from(campaignCreators)
+        .innerJoin(creators, eq(creators.id, campaignCreators.creatorId))
+        .where(eq(campaignCreators.id, enrolmentId))
+        .limit(1)
+        .catch(() => []);
+      const recipient = who[0];
+      if (recipient) {
+        await sendEmailQuietly(
+          handleCorrectedEmail({
+            to: recipient.email,
+            fullName: recipient.fullName,
+            platform,
+            oldHandle: row.old_handle,
+            newHandle: row.new_handle,
+            personalPage: personalPage(),
+          }),
+          "handle correction notice",
+        );
+      }
+    }
 
     return NextResponse.json({
       ok: true,

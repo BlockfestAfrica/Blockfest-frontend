@@ -7,6 +7,10 @@ import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { sendEmailQuietly } from "@/lib/email/client";
+import { personalPage, winnerEmail } from "@/lib/email/templates";
+import { campaignCreators, creators } from "@/lib/db/client";
+import { eq } from "drizzle-orm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +30,11 @@ export const dynamic = "force-dynamic";
  */
 
 const CATEGORIES = ["creator_of_week", "community_favourite"] as const;
+
+const CATEGORY_LABEL: Record<(typeof CATEGORIES)[number], string> = {
+  creator_of_week: "Creator of the Week",
+  community_favourite: "Community Favourite",
+};
 
 const schema = z.object({
   weekNo: z.number().int().min(1).max(4),
@@ -91,6 +100,36 @@ export async function POST(request: NextRequest) {
           )`,
     );
     const row = (result.rows?.[0] ?? {}) as { published?: boolean };
+
+    /*
+     * The winner hears when it is PUBLISHED, never for a draft: a draft can
+     * be changed and an email cannot. Quietly, because the public page is
+     * live either way and a mail failure is a Monday follow-up, not a reason
+     * to fail the announcement.
+     */
+    if (publish && Boolean(row.published)) {
+      const who = await getDb()
+        .select({ email: creators.email, fullName: creators.fullName })
+        .from(campaignCreators)
+        .innerJoin(creators, eq(creators.id, campaignCreators.creatorId))
+        .where(eq(campaignCreators.id, enrolmentId))
+        .limit(1)
+        .catch(() => []);
+      const winner = who[0];
+      if (winner) {
+        await sendEmailQuietly(
+          winnerEmail({
+            to: winner.email,
+            fullName: winner.fullName,
+            weekNo,
+            categoryLabel: CATEGORY_LABEL[category as (typeof CATEGORIES)[number]],
+            prizeNaira,
+            personalPage: personalPage(),
+          }),
+          `winner announcement week ${weekNo}`,
+        );
+      }
+    }
 
     return NextResponse.json({
       ok: true,

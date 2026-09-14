@@ -270,3 +270,143 @@ describe("failing without taking the caller down", () => {
     expect(warn).toHaveBeenCalled();
   });
 });
+
+import {
+  handleCorrectedEmail,
+  handleRequestDecidedEmail,
+  handleRequestFiledEmail,
+  winnerEmail,
+} from "@/lib/email/templates";
+import { monicaPointLadder } from "@/lib/campaigns";
+
+/**
+ * The notification sweep (launch feedback): every action a creator waits on
+ * now tells them by email, and the team hears when a request needs them.
+ */
+describe("the handle request notifications", () => {
+  const filed = handleRequestFiledEmail({
+    to: "partnership@blockfestafrica.com",
+    creatorName: "Amara Obi",
+    platform: "x",
+    oldHandle: "amaraa",
+    requestedHandle: "amara",
+    reason: "The a key stuck",
+    consoleUrl: "https://blockfestafrica.com/admin/participants",
+  });
+
+  it("tells the team both handles and the creator's own words", () => {
+    expect(filed.text).toContain("@amaraa");
+    expect(filed.text).toContain("@amara");
+    expect(filed.text).toContain("The a key stuck");
+  });
+
+  it("says why it is urgent: the creator is stuck until somebody decides", () => {
+    expect(filed.text).toMatch(/checked against @amaraa/);
+  });
+
+  const approved = handleRequestDecidedEmail({
+    to: "amara@example.com",
+    fullName: "Amara Obi",
+    platform: "x",
+    oldHandle: "amaraa",
+    requestedHandle: "amara",
+    approved: true,
+    decisionNote: null,
+    personalPage: "https://blockfestafrica.com/campaigns/monica-money-story/me",
+  });
+
+  it("tells an approved creator the thing to do next: resubmit", () => {
+    expect(approved.subject).toContain("@amara");
+    expect(approved.text).toMatch(/submit it again/i);
+  });
+
+  const rejected = handleRequestDecidedEmail({
+    to: "amara@example.com",
+    fullName: "Amara Obi",
+    platform: "x",
+    oldHandle: "amaraa",
+    requestedHandle: "davido",
+    approved: false,
+    decisionNote: "That account belongs to somebody else",
+    personalPage: "https://blockfestafrica.com/campaigns/monica-money-story/me",
+  });
+
+  it("carries the reviewer's note verbatim on a rejection", () => {
+    // The note is the decision; paraphrasing it puts words in the reviewer's
+    // mouth, which is why the database refuses a rejection without one.
+    expect(rejected.text).toContain("That account belongs to somebody else");
+    expect(rejected.text).toMatch(/new request/i);
+  });
+
+  it("escapes what the creator typed before it reaches the html", () => {
+    const sneaky = handleRequestFiledEmail({
+      to: "partnership@blockfestafrica.com",
+      creatorName: "Amara Obi",
+      platform: "x",
+      oldHandle: "amaraa",
+      requestedHandle: "amara",
+      reason: '<img src=x onerror=alert(1)>',
+      consoleUrl: "https://blockfestafrica.com/admin/participants",
+    });
+    expect(sneaky.html).not.toContain("<img src=x");
+    expect(sneaky.html).toContain("&lt;img");
+  });
+});
+
+describe("the direct correction notice", () => {
+  const mail = handleCorrectedEmail({
+    to: "amara@example.com",
+    fullName: "Amara Obi",
+    platform: "x",
+    oldHandle: "amaraa",
+    newHandle: "amara",
+    personalPage: "https://blockfestafrica.com/campaigns/monica-money-story/me",
+  });
+
+  it("names both handles and offers the dispute path", () => {
+    // The registration changed under them; a change to what their entries
+    // are checked against must be disputable, and silence is how a wrong
+    // correction goes unnoticed until an entry is refused.
+    expect(mail.text).toContain("@amaraa");
+    expect(mail.text).toContain("@amara");
+    expect(mail.text).toMatch(/reply to this email/i);
+  });
+});
+
+describe("the winner email", () => {
+  const mail = winnerEmail({
+    to: "amara@example.com",
+    fullName: "Amara Obi",
+    weekNo: 1,
+    categoryLabel: "Creator of the Week",
+    prizeNaira: 300_000,
+    personalPage: "https://blockfestafrica.com/campaigns/monica-money-story/me",
+  });
+
+  it("names the amount and how it is paid", () => {
+    // "How do I get it" is the reply every winner otherwise sends.
+    expect(mail.text).toMatch(/300,000/);
+    expect(mail.text).toMatch(/Monica tag/);
+  });
+});
+
+describe("the approval email's ladder line", () => {
+  it("is derived from the registry, never typed", () => {
+    // This sentence carried the old 100/200/300 ladder into every approval
+    // email for a day after the rules changed. Now the same array the page
+    // and the engine read produces it.
+    const mail = approvalEmail({
+      to: "amara@example.com",
+      fullName: "Amara Obi",
+      weekNo: 1,
+      platformLabel: "X",
+      pointsAwarded: 100,
+      pointsTotal: 100,
+      personalPage: "https://blockfestafrica.com/campaigns/monica-money-story/me",
+    });
+    for (const tier of monicaPointLadder) {
+      expect(mail.text).toContain(`${tier.points} points`);
+    }
+    expect(mail.text).not.toContain("three is 300");
+  });
+});

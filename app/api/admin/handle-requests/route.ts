@@ -6,6 +6,9 @@ import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { isPgError } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
+import { sendEmailQuietly } from "@/lib/email/client";
+import { handleRequestDecidedEmail } from "@/lib/email/templates";
+import { personalPage } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,6 +60,27 @@ export async function POST(request: NextRequest) {
   const { requestId, approve, note } = parsed.data;
 
   try {
+    /*
+     * Who to tell, read before deciding so the join still resolves whatever
+     * the decision does to the row. The creator's copy of the outcome is the
+     * email plus their page; without the email they learn only if they
+     * happen to visit.
+     */
+    const who = await getDb().execute(sql`
+      SELECT c.email, c.full_name, r.platform, r.old_handle, r.requested_handle
+        FROM handle_change_requests r
+        JOIN campaign_creators cc ON cc.id = r.campaign_creator_id
+        JOIN creators c ON c.id = cc.creator_id
+       WHERE r.id = ${requestId}::uuid
+    `);
+    const recipient = (who.rows?.[0] ?? null) as {
+      email?: string;
+      full_name?: string;
+      platform?: string;
+      old_handle?: string;
+      requested_handle?: string;
+    } | null;
+
     const result = await getDb().execute(
       sql`SELECT * FROM decide_handle_request(${requestId}::uuid, ${admin.admin.adminId}::uuid, ${approve}::boolean, ${note}::text)`,
     );
@@ -65,6 +89,22 @@ export async function POST(request: NextRequest) {
       old_handle?: string;
       new_handle?: string;
     };
+    if (recipient?.email && recipient.full_name) {
+      await sendEmailQuietly(
+        handleRequestDecidedEmail({
+          to: recipient.email,
+          fullName: recipient.full_name,
+          platform: String(recipient.platform),
+          oldHandle: String(recipient.old_handle),
+          requestedHandle: String(recipient.requested_handle),
+          approved: approve,
+          decisionNote: approve ? null : note,
+          personalPage: personalPage(),
+        }),
+        `handle request ${approve ? "approval" : "rejection"}`,
+      );
+    }
+
     return NextResponse.json({
       ok: true,
       outcome: row.outcome ?? null,
