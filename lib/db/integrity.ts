@@ -131,9 +131,27 @@ export const INTEGRITY_CHECKS: IntegrityCheck[] = [
             JOIN campaigns cm ON cm.id = pr.campaign_id
            WHERE cm.slug = '${SLUG}'
              AND pr.key IN ('quality_bonus','engagement_milestone','featured_blockfest',
-                            'featured_monica','collab','wildcard_win','manual_adjustment')
+                            'featured_monica','collab','wildcard_win','manual_adjustment',
+                            'manual_total_cap')
              AND pr.max_points IS NOT NULL`,
-    expect: 7,
+    expect: 8,
+  },
+  {
+    name: "the point rules hold the published values",
+    because:
+      "The rules page, the award guards and these rows must be one system. An owner edit that outruns the published copy surfaces here instead of in a creator's dispute.",
+    sql: `SELECT count(*)::int FROM point_rules pr
+            JOIN campaigns cm ON cm.id = pr.campaign_id
+           WHERE cm.slug = '${SLUG}'
+             AND ((pr.key = 'featured_blockfest' AND pr.default_points = 50 AND pr.max_points = 50)
+               OR (pr.key = 'featured_monica' AND pr.default_points = 100 AND pr.max_points = 100)
+               OR (pr.key = 'wildcard_win' AND pr.default_points = 100 AND pr.max_points = 100)
+               OR (pr.key = 'quality_bonus' AND pr.default_points = 50 AND pr.max_points = 200)
+               OR (pr.key = 'engagement_milestone' AND pr.default_points = 20 AND pr.max_points = 200)
+               OR (pr.key = 'referral' AND pr.default_points = 10 AND pr.max_points IS NULL)
+               OR (pr.key = 'multi_platform_bonus_2' AND pr.default_points = 50)
+               OR (pr.key = 'multi_platform_bonus_3' AND pr.default_points = 100))`,
+    expect: 8,
   },
   {
     name: "no referral is half-paid",
