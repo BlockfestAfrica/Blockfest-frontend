@@ -230,12 +230,11 @@ export function registrationEmail(params: {
       `If you did not register for this, reply and tell us.`,
       ``,
       `Your referral code: ${params.referralCode}`,
-      `You earn 50 points when somebody who joins with your code gets their first entry approved.`,
+      `You earn 10 points when somebody who joins with your code gets their first entry approved.`,
       ``,
-      `A new brief opens every Monday. Publish your answer on your own account, then paste the link on your page.`,
+      `A new challenge opens every Monday. Publish your answer on your own account, then paste the link on your page.`,
       ``,
       `Rules: ${link}${monicaRoutes.rules}`,
-      `Creator pack: ${link}${monicaRoutes.pack}`,
       ``,
       `Reply to this email if you need anything.`,
     ].join("\n"),
@@ -250,10 +249,10 @@ export function registrationEmail(params: {
         ),
         boxed("Your referral code", params.referralCode),
         p(
-          "You earn <strong>50 points</strong> when a creator who joins with your code gets their first entry approved. Not when they register, when their work is accepted.",
+          "You earn <strong>10 points</strong> when a creator who joins with your code gets their first entry approved. Not when they register, when their work is accepted.",
         ),
         p(
-          "A new brief opens every Monday. Publish your answer on your own account, then paste the link on your page.",
+          "A new challenge opens every Monday. Publish your answer on your own account, then paste the link on your page.",
         ),
       ].join(""),
       action: { label: "Open your page", href: params.personalLink },
@@ -338,7 +337,7 @@ export function rejectionEmail(params: {
   const name = firstName(params.fullName);
   const again = params.canResubmit
     ? "This week is still open, so you can fix it and send it again."
-    : "The week has closed, but the next brief is a fresh start.";
+    : "The week has closed, but the next challenge is a fresh start.";
 
   return {
     to: params.to,

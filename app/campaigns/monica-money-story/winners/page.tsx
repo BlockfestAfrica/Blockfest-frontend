@@ -145,7 +145,7 @@ export default async function WinnersPage() {
               <SectionHeading
                 label="Open now"
                 title="Community Favourite shortlist"
-                hint="Voting runs as a poll on Monica's own channels, not here, so the vote reaches the audience it is meant to. The result is advisory."
+                hint="Voting runs as a poll on Monica's own channels, not here, so the vote reaches the audience it is meant to. The creator with the most valid votes wins."
               />
               <ul className="mt-6 grid gap-4 sm:grid-cols-2">
                 {shortlist.map((entry, index) => (
@@ -186,8 +186,8 @@ export default async function WinnersPage() {
           )}
 
           <p className="mt-14 max-w-prose text-sm leading-relaxed text-ink-3">
-            Winners are selected by Blockfest Africa, informed by an advisory
-            public vote. How points are earned is in the{" "}
+            Creator of the Week is selected by Blockfest Africa; Community
+            Favourite is decided by public vote. How points are earned is in the{" "}
             <Link
               href={monicaRoutes.rules}
               className="text-link underline underline-offset-2 hover:text-white"

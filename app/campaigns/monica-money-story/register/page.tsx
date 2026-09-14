@@ -82,7 +82,7 @@ export default async function MonicaRegisterPage({
               Join the campaign
             </h1>
             <p className="mt-4 max-w-prose text-base leading-relaxed text-ink-3">
-              One form, once. A new brief every Monday.
+              Fill the form once. A new challenge every Monday.
             </p>
           </div>
 
@@ -114,7 +114,7 @@ export default async function MonicaRegisterPage({
                         "Straight away, on this page. Share it to bring other creators in.",
                     },
                     {
-                      title: "A brief drops every Monday",
+                      title: "A challenge drops every Monday",
                       detail:
                         "One per week. You do not register again for any of them.",
                     },

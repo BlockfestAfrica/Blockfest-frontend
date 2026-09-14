@@ -196,7 +196,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                   <p className="flex items-center gap-2 text-sm text-green-300">
                     <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
                     The link names this account. Still open it and check it
-                    answers the brief.
+                    answers the challenge.
                   </p>
                 ) : (
                   <p className="flex items-start gap-2 text-sm text-amber-300">

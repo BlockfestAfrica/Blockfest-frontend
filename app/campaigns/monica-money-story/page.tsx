@@ -108,7 +108,7 @@ export default function MonicaMoneyStoryPage() {
             </h2>
             <p className="mt-4 text-base leading-relaxed text-ink-3">
               {MONICA_CAMPAIGN_DAYS} days, one story, told by the community.
-              Register once and the first brief is waiting.
+              Register once and the first challenge is waiting.
             </p>
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
               {CAMPAIGN.startsAt && OPENS_LABEL && (

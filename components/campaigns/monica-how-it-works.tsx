@@ -13,8 +13,8 @@ export function MonicaHowItWorks() {
       <div className="container-page">
         <h2 className="text-display-sm font-bold text-white">How it works</h2>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
-          A new brief every Monday, your own take on it, published on your own
-          account. Repeat across all stages.
+          Every Monday, a new challenge drops. You create it your way, publish
+          it on your own social account, submit your entry and earn points.
         </p>
 
         {/* 2x2, not four across: inside container-page four columns give a

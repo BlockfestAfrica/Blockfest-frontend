@@ -29,12 +29,12 @@ export interface EditableChallenge {
 const STATUS_TONE = { draft: "neutral", active: "good", closed: "bad" } as const;
 
 /**
- * The weekly briefs, editable by the team (#67).
+ * The weekly challenges, editable by the team (#67).
  *
  * Briefs drop at the weekend, which is exactly when a solo developer should
  * not be on call, so from stage 2 onward the team drives this themselves:
- * write the brief as a draft, read it over, flip it active on the Monday.
- * The stage list on the public page reveals a brief only when its stage is
+ * write the challenge as a draft, read it over, flip it active on the Monday.
+ * The stage list on the public page reveals a challenge only when its stage is
  * live, so a draft here leaks nothing there.
  */
 export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[] }) {
@@ -92,7 +92,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
   return (
     <JobCard
       id="stages"
-      title="The weekly briefs"
+      title="The weekly challenges"
       /* The edge is derived, not decorative: gold when the live week is
          still a draft or wearing a seeded placeholder title, which is
          exactly when this card needs a person before Monday. */
@@ -105,7 +105,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
           ? "now"
           : "todo"
       }
-      hint="Write next week's brief as a draft, read it over, flip it active on the Monday. Closing stops new entries and leaves what arrived reviewable."
+      hint="Write next week's challenge as a draft, read it over, flip it active on the Monday. Closing stops new entries and leaves what arrived reviewable."
     >
       <ul className="flex flex-col gap-3">
         {challenges.map((challenge) => (
@@ -151,7 +151,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
 
                 <Field
                   id={`brief-${challenge.id}`}
-                  label="The brief"
+                  label="The challenge"
                   hint="What creators read on the Monday. Plain sentences carry it."
                 >
                   <textarea

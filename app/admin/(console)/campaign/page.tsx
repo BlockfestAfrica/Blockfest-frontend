@@ -60,7 +60,7 @@ export default async function CampaignPage() {
       </h1>
       <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
         {pause.paused
-          ? `Nobody can register or submit. Creators are being told: ${pause.reason ?? "no reason recorded"}. They can still read the rules, the brief and the leaderboard.`
+          ? `Nobody can register or submit. Creators are being told: ${pause.reason ?? "no reason recorded"}. They can still read the rules, the challenge and the leaderboard.`
           : "Registration and submissions are open. Pausing takes effect on a creator's next click, not on the next deploy."}
       </p>
 
@@ -75,8 +75,8 @@ export default async function CampaignPage() {
         </div>
       </SectionCard>
 
-      {/* The weekly briefs, right where starting and stopping already lives,
-          because writing Monday's brief is the other thing an owner does here
+      {/* The weekly challenges, right where starting and stopping already lives,
+          because writing Monday's challenge is the other thing an owner does here
           every week (#67). */}
       <div className="mt-10">
         <ChallengeEditor

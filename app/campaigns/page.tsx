@@ -79,6 +79,14 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
         aria-hidden="true"
         className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(242,203,69,0.14),transparent_60%)]"
       />
+      {/* A narrow fade where the photo meets the card's right border. The
+          hairline border over the poster's bright green read as a white line
+          down that edge; over ground it reads as the same quiet edge the rest
+          of the card has. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-ground/70 to-transparent"
+      />
 
       <div className="relative flex flex-1 flex-col p-6 sm:p-7">
         <span className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-gold/15 px-3 py-1 text-xs font-semibold text-brand-gold">

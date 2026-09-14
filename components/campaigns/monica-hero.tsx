@@ -14,6 +14,8 @@ import {
   platformLabels,
 } from "@/lib/campaigns";
 import { formatNaira } from "@/lib/tickets";
+import { TimeLeftLabel } from "./time-left-label";
+import { formatTimeLeft } from "@/lib/countdown";
 import { buttonClass } from "@/components/shared/panel";
 
 /** One row of the facts panel. */
@@ -55,7 +57,7 @@ export function MonicaHero() {
   return (
     <section className="section-y bg-ground">
       <div className="container-page">
-        <div className="grid gap-10 lg:grid-cols-12 lg:items-center lg:gap-16">
+        <div className="grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-16">
           <div className="lg:col-span-7">
             <p className="eyebrow text-ink-3">
               Presented by Blockfest Africa
@@ -107,11 +109,17 @@ export function MonicaHero() {
                 </p>
               </Fact>
 
-              {run && (
-                <Fact label="Runs">
-                  <p className="text-base font-semibold text-white">{run}</p>
-                  <p className="mt-1 text-sm text-ink-3">
-                    {MONICA_CAMPAIGN_DAYS} days, {monicaStages.length} stages.
+              {campaign.endsAt && (
+                <Fact label="Time left">
+                  <p className="text-2xl font-bold tabular-nums leading-none text-white">
+                    <TimeLeftLabel
+                      endsAt={campaign.endsAt}
+                      initial={formatTimeLeft(campaign.endsAt)}
+                    />
+                  </p>
+                  <p className="mt-2 text-sm text-ink-3">
+                    {run}. {MONICA_CAMPAIGN_DAYS} days,{" "}
+                    {monicaStages.length} stages.
                   </p>
                 </Fact>
               )}
@@ -128,7 +136,8 @@ export function MonicaHero() {
                   ))}
                 </ul>
                 <p className="mt-2 text-sm text-ink-3">
-                  Post once, or on all three for more points.
+                  Post on one, two or all three platforms. More platforms,
+                  more points.
                 </p>
               </Fact>
 

@@ -138,19 +138,25 @@ describe("the stages and skills", () => {
    * Asserted as exactly one day, not merely "no overlap", so a stage cannot
    * quietly swallow the Sunday or leave a second day nobody can submit in.
    */
-  it("leaves exactly one clear day between stages", () => {
+  it("covers the calendar with no gap and no overlap", () => {
+    // The displayed spans became full weeks on 14 Sep 2026, marketing's
+    // framing: the week belongs to its stage, winners day included. The
+    // submission windows are still Monday to Saturday in the database;
+    // these spans only describe the stage.
     monicaStages.forEach((stage, i) => {
       const [from, to] = stage.days;
       expect(to).toBeGreaterThanOrEqual(from);
-      if (i > 0) expect(from).toBe(monicaStages[i - 1].days[1] + 2);
+      if (i > 0) expect(from).toBe(monicaStages[i - 1].days[1] + 1);
     });
     expect(monicaStages[0].days[0]).toBe(1);
   });
 
-  it("is six days per stage, Monday to Saturday", () => {
-    for (const stage of monicaStages) {
-      expect(stage.days[1] - stage.days[0], stage.name).toBe(5);
+  it("is a full week per stage, with the shorter final run", () => {
+    for (const stage of monicaStages.slice(0, -1)) {
+      expect(stage.days[1] - stage.days[0], stage.name).toBe(6);
     }
+    const last = monicaStages.at(-1)!;
+    expect(last.days[1] - last.days[0], last.name).toBe(5);
   });
 
   it("ends on the last day of the campaign", () => {

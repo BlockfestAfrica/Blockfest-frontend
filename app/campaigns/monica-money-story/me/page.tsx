@@ -42,7 +42,7 @@ export const metadata: Metadata = {
  *
  * Rebuilt around what somebody actually opens it for. The old order put the
  * name in display type, then three figures, then a leaderboard link, and only
- * then the brief and the box to paste a link into: about 640 pixels down a
+ * then the challenge and the box to paste a link into: about 640 pixels down a
  * 375 pixel phone, under a sticky navbar, so the one reason for the visit was
  * below the fold every single week.
  *
@@ -386,7 +386,7 @@ export default async function MonicaCreatorPage() {
                           "We have stopped submissions for a moment. Nothing you have already sent is affected."}
                       </p>
                       <p className="mt-2 text-sm leading-relaxed text-ink-3">
-                        The brief above still stands, so you can keep working.
+                        The challenge above still stands, so you can keep working.
                         Come back and paste your link when this clears.
                       </p>
                     </Panel>
@@ -459,8 +459,8 @@ export default async function MonicaCreatorPage() {
             <Panel tone="quiet" className="mt-8">
               <h2 className="text-xl font-bold text-white">
                 {CAMPAIGN.startsAt && new Date(CAMPAIGN.startsAt) > new Date()
-                  ? "The first brief opens Monday 14 September"
-                  : "No brief is open"}
+                  ? "The first challenge opens Monday 14 September"
+                  : "No challenge is open"}
               </h2>
               <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
                 A new one opens each Monday. When it does it appears here, with
@@ -470,7 +470,7 @@ export default async function MonicaCreatorPage() {
                 href={`${monicaRoutes.landing}#stages`}
                 className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
               >
-                See all four briefs
+                See all five challenges
               </Link>
             </Panel>
           )}
@@ -628,7 +628,7 @@ export default async function MonicaCreatorPage() {
 
           <SectionCard id="referral" title="Bring a creator in" className="mt-6">
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
-              50 points each, paid when they get their first approved entry,
+              10 points each, paid when they get their first approved entry,
               not when they register.
             </p>
             <CopyField
