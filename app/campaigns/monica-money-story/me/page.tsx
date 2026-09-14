@@ -15,7 +15,7 @@ import { SubmissionForm } from "@/components/campaigns/submission-form";
 import { CopyField } from "@/components/campaigns/copy-field";
 import { TimeLeftLabel } from "@/components/campaigns/time-left-label";
 import { formatTimeLeft } from "@/lib/countdown";
-import { HeadedPanel, Panel, Pill, Stat } from "@/components/shared/panel";
+import { SectionCard, HeadedPanel, Panel, Pill, Stat } from "@/components/shared/panel";
 import { pauseState } from "@/lib/campaign-pause";
 import {
   campaignBySlug,
@@ -461,7 +461,10 @@ export default async function MonicaCreatorPage() {
           {/* Figures, below the action. One shared rule so three numbers read as
               one row, and no hint on any of them: a hint under one figure hangs
               it two lines below its siblings and the rules stop lining up. */}
-          <div className="mt-12 border-t border-white/15 pt-4">
+          {/* Contained like every section below, not floating on a hairline.
+              The figures stay where the redesign put them, under the week,
+              because the week is the reason for the visit. */}
+          <div className="mt-8 rounded-xl border border-white/12 bg-white/[0.02] p-5 sm:p-6">
             {/* Three one-word labels over numbers, about 104px each at 360px.
                 Stacking them costs roughly 300px on the screen creators open
                 weekly, which is the space this redesign exists to reclaim.
@@ -508,8 +511,7 @@ export default async function MonicaCreatorPage() {
            * the entries it is mostly made of does not.
            */}
           {(history.length > 0 || failed.history) && (
-            <div className="mt-12">
-              <h2 className="text-xl font-bold text-white">Your points</h2>
+            <SectionCard id="points" title="Your points" className="mt-6">
 
               {failed.history ? (
                 <p className="mt-3 max-w-prose text-sm leading-relaxed text-amber-200/80">
@@ -553,13 +555,14 @@ export default async function MonicaCreatorPage() {
                   ))}
                 </ul>
               )}
-            </div>
+            </SectionCard>
           )}
 
-          <div className="mt-12">
-            <h2 className="text-xl font-bold text-white">
-              Your entries{mine.length > 0 ? ` (${mine.length})` : ""}
-            </h2>
+          <SectionCard
+            id="entries"
+            title={`Your entries${mine.length > 0 ? ` (${mine.length})` : ""}`}
+            className="mt-6"
+          >
 
             {failed.submissions ? (
               /* Never "nothing yet" when we simply could not read them. A
@@ -625,15 +628,14 @@ export default async function MonicaCreatorPage() {
                 })}
               </ul>
             )}
-          </div>
+          </SectionCard>
 
           {/* The referral link the registration screen promised would be here.
               It printed a bare code with the words "Share it", and there is
               nowhere in the whole flow to type a code by hand: it only works as
               a ?ref= link on /join. */}
           {handles.length > 0 && (
-            <div className="mt-12">
-              <h2 className="text-xl font-bold text-white">Your accounts</h2>
+            <SectionCard id="accounts" title="Your accounts" className="mt-6">
               <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
                 Entries only count from these. If one is wrong, ask for a
                 correction: the team reviews every request by hand before
@@ -644,11 +646,10 @@ export default async function MonicaCreatorPage() {
                 requests={handleRequests}
                 platformLabels={platformLabels}
               />
-            </div>
+            </SectionCard>
           )}
 
-          <div className="mt-12">
-            <h2 className="text-xl font-bold text-white">Bring a creator in</h2>
+          <SectionCard id="referral" title="Bring a creator in" className="mt-6">
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/55">
               Worth 50 points each, credited when they get their first approved
               entry rather than when they register.
@@ -659,7 +660,7 @@ export default async function MonicaCreatorPage() {
               shareTitle={CAMPAIGN.name}
               shareText="Join me on the Monica campaign"
             />
-          </div>
+          </SectionCard>
 
           {/* Last, and collapsed. Needed once, by the person it happens to. */}
           <details className="group mt-12">

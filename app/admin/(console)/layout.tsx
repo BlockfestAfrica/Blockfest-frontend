@@ -3,6 +3,7 @@ import Link from "next/link";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { pauseState } from "@/lib/campaign-pause";
 import { ConsoleTabs, type ConsoleTab } from "@/components/admin/console-tabs";
+import { ConsoleNav } from "@/components/admin/console-nav";
 import { SignOut } from "@/components/admin/sign-out";
 import { SessionClock } from "@/components/admin/session-clock";
 import { Pill } from "@/components/shared/panel";
@@ -121,50 +122,74 @@ export default async function AdminLayout({
   const notOpenYet =
     CAMPAIGN.startsAt && new Date(CAMPAIGN.startsAt) > new Date();
 
+  const statePills = (
+    <>
+      {pause.paused ? (
+        <Pill tone="bad">Paused</Pill>
+      ) : notOpenYet ? (
+        <Pill>Opens 14 Sep</Pill>
+      ) : null}
+      <SessionClock expiresAt={admin.admin.sessionExpiresAt.toISOString()} />
+    </>
+  );
+
   return (
-    <main id="main" className="min-h-dvh bg-ground">
-      {/* z-40 sits under the skip link at z-100 and over the desktop table's
-          sticky first column at z-10. */}
-      <header className="sticky top-0 z-40 border-b border-white/12 bg-ground/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-5xl items-center gap-4 px-4 lg:px-8">
-          <ConsoleTabs tabs={tabs} />
-          {/*
-           * The campaign state, once, quietly, in the chrome.
-           *
-           * This started as a full-width coloured panel above every screen, so
-           * that a reviewer whose queue stopped filling would know the campaign
-           * had been stopped rather than assume the work had dried up. That
-           * reasoning still holds, but a panel was the wrong size for it: on the
-           * Campaign screen, which is itself about the state, it produced the
-           * same sentence three times in two near-identical red boxes.
-           *
-           * A pill in the header carries the same signal on every screen, is
-           * never the loudest thing on any of them, and cannot be duplicated by
-           * a page that is already about it.
-           */}
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            {pause.paused ? (
-              <Pill tone="bad">Paused</Pill>
-            ) : notOpenYet ? (
-              <Pill>Opens 14 Sep</Pill>
-            ) : null}
-            <span className="hidden max-w-[14rem] truncate text-sm text-white/60 sm:block">
-              {admin.admin.email}
-            </span>
-            <span className="hidden sm:block">
-              <Pill tone={owner ? "gold" : "neutral"}>{admin.admin.role}</Pill>
-            </span>
-            <SessionClock expiresAt={admin.admin.sessionExpiresAt.toISOString()} />
+    /*
+     * The dashboard shell: a persistent rail on desktop, tabs on a phone.
+     *
+     * The seven screens used to share nothing but a tab row floating above a
+     * column, which is why they read as disconnected tables on a page. The
+     * rail holds where-you-are, who-you-are and the campaign state in one
+     * fixed place, and the content area holds exactly one thing: the screen.
+     *
+     * On a phone the rail would spend a third of the width on chrome, so the
+     * horizontal tabs stay, in a sticky header that also carries the state
+     * pills. One-handed reviewing on launch weekend is the constraint there.
+     */
+    <main id="main" className="min-h-dvh bg-ground lg:grid lg:grid-cols-[230px_minmax(0,1fr)]">
+      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-white/10 py-6 pl-4 pr-2 lg:flex">
+        <div className="px-4">
+          <p className="eyebrow text-brand-gold">Blockfest</p>
+          <p className="mt-1 text-lg font-bold text-white">Console</p>
+        </div>
+
+        <div className="mt-8 flex-1 overflow-y-auto">
+          <ConsoleNav tabs={tabs} />
+        </div>
+
+        {/* Who is signed in, pinned to the bottom of the rail where a
+            dashboard keeps its account block. */}
+        <div className="flex flex-col gap-2 border-t border-white/10 px-4 pt-4">
+          <div className="flex items-center gap-2">{statePills}</div>
+          <p className="truncate text-sm text-white/60" title={admin.admin.email}>
+            {admin.admin.email}
+          </p>
+          <div className="flex items-center justify-between gap-2">
+            <Pill tone={owner ? "gold" : "neutral"}>{admin.admin.role}</Pill>
             {/* There was no way to end a session from the application at all,
                 so a reviewer on a borrowed laptop closed the tab and left a
                 working one behind. */}
             <SignOut />
           </div>
         </div>
-      </header>
+      </aside>
 
-      <div className="mx-auto w-full max-w-5xl px-4 py-8 lg:px-8 lg:py-12">
-        {children}
+      <div className="min-w-0">
+        {/* z-40 sits under the skip link at z-100 and over the desktop table's
+            sticky first column at z-10. */}
+        <header className="sticky top-0 z-40 border-b border-white/12 bg-ground/95 backdrop-blur lg:hidden">
+          <div className="flex w-full items-center gap-3 px-4">
+            <ConsoleTabs tabs={tabs} />
+            <div className="ml-auto flex shrink-0 items-center gap-2">
+              {statePills}
+              <SignOut />
+            </div>
+          </div>
+        </header>
+
+        <div className="mx-auto w-full max-w-5xl px-4 py-8 lg:px-10 lg:py-10">
+          {children}
+        </div>
       </div>
     </main>
   );
