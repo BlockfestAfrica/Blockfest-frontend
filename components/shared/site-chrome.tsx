@@ -6,13 +6,19 @@ import Navbar from "@/components/shared/navbar";
 import { AnnouncementBar } from "@/components/shared/announcement-bar";
 
 /**
- * The marketing chrome, absent from the console.
+ * The site chrome, adapted for the console rather than absent from it.
  *
- * The admin screens were rendering inside the public site: an announcement bar,
- * a sticky navbar and a full footer with a sitemap and a newsletter signup. On
- * a phone that is around 106 pixels of permanent vertical space gone before the
- * console has spent any of its own, and it put a newsletter form directly under
- * the control that permanently deletes every creator and every point.
+ * The console once excluded all of this, and the owner asked for the main
+ * site's navbar and footer back on the admin pages. The accommodation:
+ *
+ * The navbar renders but does not stick on console routes. The console's own
+ * sidebar pins to the viewport top on desktop and its tab bar does the same
+ * on a phone, so a permanently visible bar above them would either overlap
+ * them or cost every screen its height for a whole shift. Scrolling away
+ * gives the brand chrome at the top and the full workbench after one swipe.
+ *
+ * The announcement bar stays off the console: it is campaign marketing
+ * aimed at visitors, not at the person reviewing the queue.
  *
  * Two leaf components that return null, deliberately not a wrapper around
  * children. A "use client" component wrapping {children} would push every route
@@ -31,7 +37,7 @@ function isConsole(pathname: string | null): boolean {
 
 export function SiteHeader() {
   const pathname = usePathname();
-  if (isConsole(pathname)) return null;
+  if (isConsole(pathname)) return <Navbar sticky={false} />;
   return (
     <>
       <AnnouncementBar />
@@ -41,7 +47,5 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
-  const pathname = usePathname();
-  if (isConsole(pathname)) return null;
   return <Footer />;
 }
