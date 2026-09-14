@@ -797,6 +797,13 @@ export const voteRounds = pgTable(
     opensAt: timestamp("opens_at", { withTimezone: true }).notNull(),
     closesAt: timestamp("closes_at", { withTimezone: true }).notNull(),
 
+    /** The suspicious-vote sweep happened; announce refuses until it has. */
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedByAdminId: uuid("reviewed_by_admin_id").references(
+      () => adminUsers.id,
+      { onDelete: "set null" },
+    ),
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -824,6 +831,18 @@ export const voteRoundNominees = pgTable(
       .notNull()
       .references(() => challengeEntries.id, { onDelete: "cascade" }),
     displayOrder: smallint("display_order").notNull().default(0),
+
+    /**
+     * Soft withdrawal. Deleting a nominee would cascade-delete their votes,
+     * which are the audit trail of the round; withdrawing keeps every row
+     * and simply takes them off the ballot and out of the tally.
+     */
+    withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
+    withdrawnByAdminId: uuid("withdrawn_by_admin_id").references(
+      () => adminUsers.id,
+      { onDelete: "set null" },
+    ),
+    withdrawnReason: text("withdrawn_reason"),
   },
   (t) => [
     uniqueIndex("nominee_unique_per_round").on(t.roundId, t.entryId),
@@ -866,6 +885,24 @@ export const votes = pgTable(
       () => adminUsers.id,
       { onDelete: "set null" },
     ),
+
+    /**
+     * The verification code, bound to THIS cast: recasting regenerates it,
+     * so a stale code can never verify a choice the voter since changed.
+     * Cleared on success so a code never verifies twice.
+     */
+    codeHash: text("code_hash"),
+    codeExpiresAt: timestamp("code_expires_at", { withTimezone: true }),
+
+    /**
+     * Verified but parked past the per-domain cap, waiting for a person.
+     * Still that voter's one vote; clearing the timestamp admits it to the
+     * tally, which only ever reads the countable_votes view.
+     */
+    heldAt: timestamp("held_at", { withTimezone: true }),
+
+    /** How a removal was meant: fraud bars the email for the round. */
+    removedMode: text("removed_mode"),
 
     /** Signals for review, not gates. */
     ipHash: text("ip_hash"),
