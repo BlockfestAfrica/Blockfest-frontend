@@ -63,15 +63,42 @@ export function hostMatchesPlatform(
  * Only the query and fragment go. The path is untouched, because on these
  * platforms the path is the post.
  */
+/**
+ * Percent-escapes in the path collapse before anything is stored.
+ *
+ * The platforms treat x.com/ada/status/12%339 as the same post as .../1239,
+ * but post_identity is computed from the stored string, so the encoded
+ * spelling minted a fresh identity: the same post, credited again. Decoding
+ * until stable (three rounds bounds a %25-tower) means every spelling of a
+ * path stores identically and the identity column sees one post once.
+ */
+function decodedPath(path: string): string {
+  let current = path;
+  for (let round = 0; round < 3; round++) {
+    let next: string;
+    try {
+      next = decodeURIComponent(current);
+    } catch {
+      // Malformed escapes stay as typed; the URL was probably not a real
+      // post link and later checks will say so in their own words.
+      return current;
+    }
+    if (next === current) return current;
+    current = next;
+  }
+  return current;
+}
+
 export function canonicalUrl(raw: string): string {
   try {
     const url = new URL(raw.trim());
     url.hash = "";
     url.search = "";
     url.hostname = bareHost(url.hostname);
-    // A trailing slash is not a different post.
-    const clean = url.toString().replace(/\/$/, "");
-    return clean;
+    // Composed by hand: assigning a decoded pathname back onto URL would
+    // re-encode it, which is the spelling this exists to remove.
+    const path = decodedPath(url.pathname).replace(/\/$/, "");
+    return `${url.protocol}//${url.hostname}${path}`;
   } catch {
     return raw.trim();
   }
