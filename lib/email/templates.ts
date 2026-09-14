@@ -38,11 +38,16 @@ const INK = "#16181d";
 const MUTED = "#5b6270";
 const LINE = "#e4e6ea";
 
-function siteUrl(): string {
+export function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
     "https://blockfestafrica.com"
   );
+}
+
+/** The public voting section, where a ballot and its results live. */
+export function votingPage(): string {
+  return `${siteUrl()}${monicaRoutes.winners}#shortlist`;
 }
 
 /**
@@ -128,7 +133,7 @@ function layout({ preheader, heading, body, action }: Shell): string {
     ? `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 8px;">
         <tr><td style="border-radius:999px;background:${GOLD};">
-          <a href="${action.href}" style="display:inline-block;padding:14px 30px;font-family:Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#111111;text-decoration:none;border-radius:999px;">${escape(action.label)}</a>
+          <a href="${escape(action.href)}" style="display:inline-block;padding:14px 30px;font-family:Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#111111;text-decoration:none;border-radius:999px;">${escape(action.label)}</a>
         </td></tr>
       </table>`
     : "";
@@ -700,6 +705,360 @@ export function voteVerificationEmail(params: {
           "If you did not vote in Monica: The Money Story, ignore this email and nothing is counted.",
         ),
       ].join(""),
+    }),
+  };
+}
+
+/**
+ * An entry, received.
+ *
+ * The submission form says "we got it" on screen and the decision arrives by
+ * mail, which left a gap the owner named: everything a creator does that they
+ * then wait on should leave a trail in their inbox. This is the trail for the
+ * wait itself. It echoes the link back, because the commonest submission
+ * mistake is pasting the wrong one, and the moment to notice is now, while
+ * the week is still open, not on Friday in a rejection.
+ */
+export function submissionReceivedEmail(params: {
+  to: string;
+  fullName: string;
+  weekNo: number;
+  platformLabel: string;
+  url: string;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `We got it: your week ${params.weekNo} entry`,
+    text: [
+      `${name}, your week ${params.weekNo} entry on ${params.platformLabel} is in.`,
+      ``,
+      `What you submitted:`,
+      params.url,
+      ``,
+      `A person reviews every entry by hand. You will get an email either way: the points if it is approved, the reason if it is not.`,
+      `If that link is not the post you meant, submit the right one before the week closes and tell us by replying here.`,
+      ``,
+      `Your page: ${params.personalPage}`,
+    ].join("\n"),
+    html: layout({
+      preheader: `Your week ${params.weekNo} entry on ${params.platformLabel} is in. A person reviews it by hand.`,
+      heading: `We got it, ${name}`,
+      body: [
+        p(
+          `Your week ${params.weekNo} entry on ${escape(params.platformLabel)} is in.`,
+        ),
+        boxed("What you submitted", params.url),
+        p(
+          "A person reviews every entry by hand. You will get an email either way: the points if it is approved, the reason if it is not.",
+        ),
+        quiet(
+          "If that link is not the post you meant, submit the right one before the week closes and tell us by replying here.",
+        ),
+      ].join(""),
+      action: { label: "See your entries", href: params.personalPage },
+    }),
+  };
+}
+
+/**
+ * A vote, recorded.
+ *
+ * Sent after the code verifies, to the address as typed. One template with no
+ * status parameter at all, and that absence is the security property: a held
+ * vote must be indistinguishable from a counted one in the voter's inbox,
+ * exactly as it is on screen, or the mail becomes a progress report for
+ * whoever is tuning a farm against the cap. Nothing here may ever say
+ * counted, held, reviewed, or anything a status could vary.
+ */
+export function voteReceiptEmail(params: {
+  to: string;
+  nomineeName: string;
+  weekNo: number;
+}): Email {
+  const line = `Your Community Favourite vote for ${params.nomineeName} is in for week ${params.weekNo}.`;
+
+  return {
+    to: params.to,
+    replyTo: CONTACT_EMAIL,
+    subject: "Your vote is in",
+    text: [
+      line,
+      ``,
+      `The result is announced on Sunday evening, Lagos time, on the winners page:`,
+      votingPage(),
+      ``,
+      `Thank you for taking a minute to vote.`,
+    ].join("\n"),
+    html: layout({
+      preheader: line,
+      heading: "Your vote is in",
+      body: [
+        p(escape(line)),
+        p(
+          "The result is announced on Sunday evening, Lagos time, on the winners page.",
+        ),
+        quiet("Thank you for taking a minute to vote."),
+      ].join(""),
+      action: { label: "See the shortlist", href: votingPage() },
+    }),
+  };
+}
+
+/**
+ * You are on the ballot.
+ *
+ * Being placed on a public shortlist is a thing that happens TO a creator,
+ * and the vote is also theirs to campaign in: the rules allow asking your
+ * audience to vote, and every vote is email-verified, so telling nominees
+ * the moment the round opens is what makes the vote a real contest rather
+ * than a page their followers never hear about.
+ */
+export function shortlistEmail(params: {
+  to: string;
+  fullName: string;
+  weekNo: number;
+  /** Already formatted for Lagos, e.g. "Sunday 6:00 pm". */
+  closesAtLagos: string;
+  /** Set when the round is staged ahead: the window has not opened yet. A
+      round opened for a future morning must not mail "open now" tonight. */
+  opensAtLagos?: string;
+  votingUrl: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const window = params.opensAtLagos
+    ? `The public vote opens ${params.opensAtLagos} and closes ${params.closesAtLagos}, Lagos time.`
+    : `The public vote is open now and closes ${params.closesAtLagos}, Lagos time.`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `You are on the week ${params.weekNo} ballot`,
+    text: [
+      `${name}, your week ${params.weekNo} entry is on the Community Favourite shortlist.`,
+      ``,
+      `${window} The winner takes the Community Favourite prize.`,
+      ``,
+      `Share the voting page with your audience. Every vote is verified by email, one per address:`,
+      params.votingUrl,
+    ].join("\n"),
+    html: layout({
+      preheader: `Your entry is on the Community Favourite shortlist. Voting closes ${params.closesAtLagos}.`,
+      heading: `You are on the ballot, ${name}`,
+      body: [
+        p(
+          `Your week ${params.weekNo} entry is on the Community Favourite shortlist. ${escape(window)}`,
+        ),
+        p(
+          "Share the voting page with your audience. Every vote is verified by email, one per address, so the push you make is the push that counts.",
+        ),
+      ].join(""),
+      action: { label: "Open the voting page", href: params.votingUrl },
+    }),
+  };
+}
+
+/**
+ * The result, to the nominees who did not win.
+ *
+ * The winner gets the winner email; everybody else on the ballot finds out
+ * from the public page or from silence, and silence after being asked to
+ * campaign is a door slammed. Two sentences: the result, and that being
+ * shortlisted was itself the achievement the next week builds on.
+ */
+export function nomineeResultEmail(params: {
+  to: string;
+  fullName: string;
+  weekNo: number;
+  winnerName: string;
+  votingUrl: string;
+}): Email {
+  const name = firstName(params.fullName);
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `Week ${params.weekNo}: the Community Favourite result`,
+    text: [
+      `${name}, the week ${params.weekNo} Community Favourite vote has closed. It went to ${params.winnerName}.`,
+      ``,
+      `Being on the shortlist put your work in front of every voter, and next week is a fresh ballot. Keep going.`,
+      ``,
+      `The results: ${params.votingUrl}`,
+    ].join("\n"),
+    html: layout({
+      preheader: `The week ${params.weekNo} vote went to ${params.winnerName}.`,
+      heading: `The week ${params.weekNo} result`,
+      body: [
+        p(
+          `The Community Favourite vote has closed, and it went to <strong>${escape(params.winnerName)}</strong>.`,
+        ),
+        p(
+          "Being on the shortlist put your work in front of every voter, and next week is a fresh ballot. Keep going.",
+        ),
+      ].join(""),
+      action: { label: "See the results", href: params.votingUrl },
+    }),
+  };
+}
+
+/**
+ * Points moved by hand.
+ *
+ * Every manual award or correction lands in the ledger with a note, and the
+ * note used to be readable only by a creator who thought to scroll their own
+ * history. A total that decides money moved silently is a dispute; the same
+ * movement announced, with the reason attached, is bookkeeping. One template
+ * for both directions, because the difference is the sign, not the honesty.
+ */
+export function awardEmail(params: {
+  to: string;
+  fullName: string;
+  /** The human label for the source, e.g. "Featured by Blockfest". */
+  sourceLabel: string;
+  /** Signed: negative is a correction. */
+  points: number;
+  note: string;
+  pointsTotal: number;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const gained = params.points > 0;
+  const moved = gained
+    ? `You earned ${params.points} bonus points: ${params.sourceLabel}.`
+    : `Your points were adjusted by ${params.points}: ${params.sourceLabel}.`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: gained
+      ? `+${params.points} points: ${params.sourceLabel}`
+      : `Your points were adjusted: ${params.sourceLabel}`,
+    text: [
+      `${name}, ${moved}`,
+      ``,
+      `The note from the team: ${params.note}`,
+      ``,
+      `Your total is now ${params.pointsTotal} points.`,
+      ``,
+      `Your page shows every movement: ${params.personalPage}`,
+      `If this looks wrong, reply from this address and a person looks into it.`,
+    ].join("\n"),
+    html: layout({
+      preheader: `${moved} Your total is now ${params.pointsTotal}.`,
+      heading: gained ? `+${params.points} points, ${name}` : `Your points changed, ${name}`,
+      body: [
+        p(escape(moved)),
+        boxed("The note from the team", params.note),
+        boxed("Your points", `${params.pointsTotal}`),
+        quiet(
+          "Your page shows every movement. If this looks wrong, reply from this address and a person looks into it.",
+        ),
+      ].join(""),
+      action: { label: "See your history", href: params.personalPage },
+    }),
+  };
+}
+
+/**
+ * An entry, re-scored.
+ *
+ * Repricing exists for the day a point rule was wrong and an entry was paid
+ * under it. The engine records before and after with a reason; a creator
+ * whose number changed under them deserves the same three facts, because a
+ * total that moves silently in either direction reads as a glitch, and a
+ * glitch in the thing that decides money reads as worse.
+ */
+export function repriceEmail(params: {
+  to: string;
+  fullName: string;
+  weekNo: number;
+  before: number;
+  after: number;
+  reason: string;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const line = `Your week ${params.weekNo} entry was re-scored from ${params.before} to ${params.after} points.`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `Your week ${params.weekNo} entry was re-scored`,
+    text: [
+      `${name}, ${line}`,
+      ``,
+      `Why: ${params.reason}`,
+      ``,
+      `Your page shows the movement in your history: ${params.personalPage}`,
+      `If this looks wrong, reply from this address and a person looks into it.`,
+    ].join("\n"),
+    html: layout({
+      preheader: line,
+      heading: `Re-scored: week ${params.weekNo}`,
+      body: [
+        p(escape(line)),
+        boxed("Why", params.reason),
+        quiet(
+          "Your page shows the movement in your history. If this looks wrong, reply from this address and a person looks into it.",
+        ),
+      ].join(""),
+      action: { label: "See your history", href: params.personalPage },
+    }),
+  };
+}
+
+/**
+ * A handle-change request, acknowledged.
+ *
+ * The decision email always follows, but the gap between filing and deciding
+ * is exactly when a creator retries the refused entry and concludes the
+ * campaign is broken. One mail that says hold that platform's entry converts
+ * days of silent bouncing into a wait with a shape.
+ */
+export function handleFixAckEmail(params: {
+  to: string;
+  fullName: string;
+  platformLabel: string;
+  oldHandle: string;
+  requestedHandle: string;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `We got your handle change request`,
+    text: [
+      `${name}, we got your request to change your ${params.platformLabel} handle from @${params.oldHandle} to @${params.requestedHandle}.`,
+      ``,
+      `A person reviews it by hand and you will get an email with the decision.`,
+      `Until it is decided, entries on ${params.platformLabel} are still checked against @${params.oldHandle}, so hold that platform's entry rather than resubmitting into refusals.`,
+      ``,
+      `Your page: ${params.personalPage}`,
+    ].join("\n"),
+    html: layout({
+      preheader: `Change @${params.oldHandle} to @${params.requestedHandle} on ${params.platformLabel}: received.`,
+      heading: `We got it, ${name}`,
+      body: [
+        p(
+          `Your request to change your ${escape(params.platformLabel)} handle from <strong>@${escape(params.oldHandle)}</strong> to <strong>@${escape(params.requestedHandle)}</strong> is filed. A person reviews it by hand and you will get an email with the decision.`,
+        ),
+        quiet(
+          `Until it is decided, entries on ${escape(params.platformLabel)} are still checked against the old handle, so hold that platform's entry rather than resubmitting into refusals.`,
+        ),
+      ].join(""),
+      action: { label: "Back to your page", href: params.personalPage },
     }),
   };
 }

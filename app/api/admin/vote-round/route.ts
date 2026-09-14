@@ -7,6 +7,9 @@ import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { pgErrorCode } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { closingAt } from "@/lib/format";
+import { sendEmailQuietly } from "@/lib/email/client";
+import { shortlistEmail, votingPage } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -155,6 +158,48 @@ export async function POST(request: NextRequest) {
             )`,
       );
       const row = (result.rows?.[0] ?? {}) as { round_id?: string };
+
+      /*
+       * Tell the nominees they are on the ballot, after the round exists
+       * and never in its way. The vote is theirs to campaign in, and a
+       * shortlist nobody was told about is a page their audiences never
+       * hear of. Three to five sends, each fail-soft: a lost mail leaves
+       * the ballot public and the console showing the round regardless.
+       */
+      try {
+        const entryIdListAgain = sql.join(
+          action.entryIds.map((id) => sql`${id}::uuid`),
+          sql`, `,
+        );
+        const nominees = await getDb().execute(sql`
+          SELECT c.email, c.full_name
+            FROM challenge_entries ce
+            JOIN campaign_creators cc ON cc.id = ce.campaign_creator_id
+            JOIN creators c           ON c.id = cc.creator_id
+           WHERE ce.id IN (${entryIdListAgain})
+        `);
+        for (const nominee of nominees.rows ?? []) {
+          const person = nominee as { email?: string; full_name?: string };
+          if (!person.email) continue;
+          await sendEmailQuietly(
+            shortlistEmail({
+              to: person.email,
+              fullName: person.full_name ?? "",
+              weekNo: action.weekNo,
+              closesAtLagos: closingAt(action.closesAt),
+              opensAtLagos:
+                new Date(action.opensAt).getTime() > Date.now()
+                  ? closingAt(action.opensAt)
+                  : undefined,
+              votingUrl: votingPage(),
+            }),
+            "shortlist notice",
+          );
+        }
+      } catch (error) {
+        logError("admin/vote-round shortlist mail", error);
+      }
+
       return NextResponse.json({ ok: true, roundId: row.round_id ?? null });
     }
 

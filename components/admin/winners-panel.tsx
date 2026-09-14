@@ -197,11 +197,19 @@ export function WinnersPanel({
         return;
       }
 
-      toast.success(
-        publish
-          ? `${CATEGORY_LABEL[category]} announced for week ${weekNo}`
-          : "Saved as a draft. Nothing is public yet.",
-      );
+      if (publish && result.emailed === false) {
+        /* The announcement stood; only the mail died. Said here, because a
+           winner who never hears is otherwise discovered on Monday. */
+        toast.warning(
+          `${CATEGORY_LABEL[category]} announced for week ${weekNo}, but the winner email did not send. Follow up with them directly.`,
+        );
+      } else {
+        toast.success(
+          publish
+            ? `${CATEGORY_LABEL[category]} announced for week ${weekNo}${result.emailed ? " and the winner has been emailed" : ""}`
+            : "Saved as a draft. Nothing is public yet.",
+        );
+      }
       setEnrolmentId("");
       setPrize("");
       setNote("");

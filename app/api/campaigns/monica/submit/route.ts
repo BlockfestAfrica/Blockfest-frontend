@@ -13,8 +13,11 @@ import {
 import {
   CAMPAIGN_GATE_FORCED_OPEN,
   MONICA_SLUG,
+  platformLabels,
   type CampaignPlatform,
 } from "@/lib/campaigns";
+import { sendEmailQuietly } from "@/lib/email/client";
+import { personalPage, submissionReceivedEmail } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
   // The week that is open right now. All four are published, so the dates are
   // what decide, and the same comparison runs again inside submit_entry.
   const open = await db
-    .select({ id: challenges.id, title: challenges.title })
+    .select({ id: challenges.id, title: challenges.title, weekNo: challenges.weekNo })
     .from(challenges)
     .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
     .where(
@@ -123,7 +126,7 @@ export async function POST(request: NextRequest) {
 
   if (!challenge && CAMPAIGN_GATE_FORCED_OPEN && beforeLaunch) {
     const upcoming = await db
-      .select({ id: challenges.id, title: challenges.title })
+      .select({ id: challenges.id, title: challenges.title, weekNo: challenges.weekNo })
       .from(challenges)
       .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
       .where(
@@ -164,6 +167,41 @@ export async function POST(request: NextRequest) {
     `);
 
     const row = (result.rows?.[0] ?? {}) as { entry_id?: string };
+
+    /*
+     * The receipt, after the commit and never in its way. The address lives
+     * one join from the session's enrolment; if the read or the send breaks,
+     * the entry is filed, the screen says so, and the decision email still
+     * arrives. Same fail-soft shape as the vote code mail.
+     */
+    try {
+      const who = await db.execute(sql`
+        SELECT c.email, c.full_name
+          FROM campaign_creators cc
+          JOIN creators c ON c.id = cc.creator_id
+         WHERE cc.id = ${creator.enrolmentId}
+      `);
+      const person = (who.rows?.[0] ?? null) as {
+        email?: string;
+        full_name?: string;
+      } | null;
+      if (person?.email) {
+        await sendEmailQuietly(
+          submissionReceivedEmail({
+            to: person.email,
+            fullName: person.full_name ?? creator.name,
+            weekNo: challenge.weekNo,
+            platformLabel:
+              platformLabels[parsed.data.platform as CampaignPlatform],
+            url,
+            personalPage: personalPage(),
+          }),
+          "submission receipt",
+        );
+      }
+    } catch (error) {
+      logError("campaign/submit receipt mail", error);
+    }
 
     return NextResponse.json({
       ok: true,
