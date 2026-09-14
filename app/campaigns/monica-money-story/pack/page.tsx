@@ -78,7 +78,7 @@ export default function MonicaPackPage() {
             {CAMPAIGN.name}
           </Link>
 
-          <div className="mt-6 max-w-2xl">
+          <div className="mt-6 max-w-3xl">
             <p className="eyebrow text-brand-gold">{CAMPAIGN.name}</p>
             <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Creator Pack
@@ -95,7 +95,7 @@ export default function MonicaPackPage() {
             </p>
           </div>
 
-          <div className="mt-12 max-w-2xl">
+          <div className="mt-16 max-w-3xl">
             {/* The one rule that answers most questions, given its own block so
                 a creator who reads nothing else still leaves with it. */}
             <div className="rounded-xl border border-brand-gold/30 bg-brand-gold/5 p-5 sm:p-6">
@@ -133,7 +133,7 @@ export default function MonicaPackPage() {
                 so giving them the approved form of each one is more useful than
                 a longer list of things not to do. The wording is the point:
                 several of these are correct only as written. */}
-            <section id="facts" className="mt-14 scroll-mt-24">
+            <section id="facts" className="mt-16 scroll-mt-24">
               <h2 className="text-xl font-bold text-white">
                 Confirmed facts you may state
               </h2>
@@ -162,7 +162,7 @@ export default function MonicaPackPage() {
 
             {/* The two lists side by side on wide screens, because they are
                 read against each other rather than in sequence. */}
-            <div className="mt-14 grid gap-6 lg:grid-cols-2">
+            <div className="mt-16 grid gap-6 lg:grid-cols-2">
               <div className="rounded-xl border border-line-2 bg-card-2 p-5 sm:p-6">
                 <h2 className="text-lg font-bold text-white">You may</h2>
                 <ul className="mt-4 flex flex-col gap-3">
@@ -198,7 +198,7 @@ export default function MonicaPackPage() {
               </div>
             </div>
 
-            <section id="disclosure" className="mt-14 scroll-mt-24">
+            <section id="disclosure" className="mt-16 scroll-mt-24">
               <h2 className="text-xl font-bold text-white">
                 Disclosing the partnership
               </h2>
@@ -228,7 +228,7 @@ export default function MonicaPackPage() {
               </ul>
             </section>
 
-            <div className="mt-14 flex flex-col gap-12">
+            <div className="mt-16 flex flex-col gap-12">
               {monicaPackSections.map((section) => (
                 <section key={section.id} id={section.id} className="scroll-mt-24">
                   <h2 className="text-xl font-bold text-white">
@@ -248,7 +248,7 @@ export default function MonicaPackPage() {
               ))}
             </div>
 
-            <section id="assets" className="mt-14 scroll-mt-24">
+            <section id="assets" className="mt-16 scroll-mt-24">
               <h2 className="text-xl font-bold text-white">
                 Logo and brand assets
               </h2>
@@ -274,7 +274,7 @@ export default function MonicaPackPage() {
               </p>
             </section>
 
-            <section id="channels" className="mt-14 scroll-mt-24">
+            <section id="channels" className="mt-16 scroll-mt-24">
               <h2 className="text-xl font-bold text-white">
                 Monica&apos;s accounts
               </h2>
@@ -300,7 +300,7 @@ export default function MonicaPackPage() {
 
             <LiveResources />
 
-            <p className="mt-14 text-sm leading-relaxed text-ink-4">
+            <p className="mt-16 text-sm leading-relaxed text-ink-4">
               Anything you are unsure about goes to{" "}
               <a
                 href="mailto:partnership@blockfestafrica.com"

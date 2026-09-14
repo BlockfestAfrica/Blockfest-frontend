@@ -214,26 +214,14 @@ export default function CampaignsPage() {
           {/* Title and lead sit side by side above the large breakpoint. In one
               column the lead left half the width empty at exactly the point the
               page is meant to look considered. */}
-          {/* The selling line IS the headline, per the marketing team's
-              mockup: the page's one promise stated at display size, its
-              second half in the accent because that half is about the
-              creator. The word Campaigns drops to the eyebrow where a
-              category label belongs. */}
-          <div className="max-w-3xl">
-            <p className="eyebrow text-brand-gold">Campaigns</p>
-            <h1 className="mt-3 text-display font-bold text-white">
-              Real briefs. Real prize money.{" "}
-              <span className="block text-brand-gold">
-                Your audience. Your work.
-              </span>
-            </h1>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-2">
-              Partner campaigns for creators. Build your audience, create on
-              your own terms, and compete for real money.
-            </p>
-          </div>
+          {/* No prose here, by the owner's call: the cards carry everything
+              a visitor needs to choose, and anything further belongs on the
+              campaign's own page rather than being said twice. The heading
+              survives for screen readers and the document outline, which is
+              what an h1 is actually for. */}
+          <h1 className="sr-only">Campaigns</h1>
 
-          <div className="mt-12 grid gap-6 lg:mt-16 lg:grid-cols-2 lg:items-stretch">
+          <div className="grid gap-6 lg:grid-cols-2 lg:items-stretch">
             {live.map((campaign) => (
               <FeaturedCampaign key={campaign.slug} campaign={campaign} />
             ))}
