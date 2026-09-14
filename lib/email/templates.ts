@@ -233,6 +233,7 @@ export function registrationEmail(params: {
       ``,
       `That link IS your sign in and it does not expire. Anyone who opens it is you, so do not post it publicly or forward this email. Keep it and you can always get back in.`,
       `If you did not register for this, reply and tell us.`,
+      `We will never ask you to send us your link, and a genuine link from us always starts with blockfestafrica.com. A replacement only ever arrives after you write to us first, and only to this address.`,
       ``,
       `Your referral code: ${params.referralCode}`,
       `You earn 10 points when somebody who joins with your code gets their first entry approved.`,
@@ -251,6 +252,9 @@ export function registrationEmail(params: {
         boxed("Your personal link", params.personalLink),
         quiet(
           "That link is your sign in and it does not expire. Anybody who opens it is you, so do not post it anywhere public or forward this email. If you lose it, reply from the address you registered with and we will issue a new one, which stops the old one working. If you did not register for this, reply and tell us.",
+        ),
+        quiet(
+          "We will never ask you to send us your link, and a genuine link from us always starts with blockfestafrica.com. A replacement only ever arrives after you write to us first, and only to this address.",
         ),
         boxed("Your referral code", params.referralCode),
         p(
@@ -410,6 +414,8 @@ export function reissueEmail(params: {
       `Your old link has stopped working. This one replaces it. Keep this email.`,
       ``,
       `Your points and your entries are untouched.`,
+      ``,
+      `A genuine replacement like this one only ever arrives after you asked us for it, and only to this address. We will never ask you to send us your link; a mail that does is not from us.`,
     ].join("\n"),
     html: layout({
       preheader: "Your old link has stopped working. This one replaces it.",
@@ -421,6 +427,9 @@ export function reissueEmail(params: {
         ),
         quiet(
           "Your points and your entries are untouched. Anybody who opens this link is you, so do not post it anywhere public.",
+        ),
+        quiet(
+          "A genuine replacement like this one only ever arrives after you asked us for it, and only to this address. We will never ask you to send us your link; a mail that does is not from us.",
         ),
       ].join(""),
       action: { label: "Open your page", href: params.personalLink },

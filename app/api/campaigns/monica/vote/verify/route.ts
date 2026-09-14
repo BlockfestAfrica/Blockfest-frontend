@@ -43,10 +43,26 @@ function fail(message: string, status: number) {
  * hears one sentence, because "your vote is being reviewed" is a progress
  * report to a farm operator tuning their run.
  */
+/** A round id, an email, and six digits. Anything larger is not a verify. */
+const MAX_BODY_BYTES = 8 * 1024;
+
 export async function POST(request: NextRequest) {
+  // The App Router has no body limit for route handlers, and this is the one
+  // public route that skipped the cap its siblings carry: request.json()
+  // buffers whatever arrives, so a multi-megabyte body makes the cheapest
+  // endpoint the most expensive one. Same pattern as the cast route.
+  const declared = Number(request.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY_BYTES) {
+    return fail("That request is too large.", 413);
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    const raw = await request.text();
+    if (raw.length > MAX_BODY_BYTES) {
+      return fail("That request is too large.", 413);
+    }
+    body = JSON.parse(raw);
   } catch {
     return fail("We could not read that. Please try again.", 400);
   }

@@ -2,6 +2,7 @@ import { and, asc, eq, gt, lte, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { campaigns, challenges, getDb } from "@/lib/db/client";
 import { currentCreator, handlesForEnrolment } from "@/lib/creator-session";
+import { sameOrigin } from "@/lib/admin/request";
 import { pauseState } from "@/lib/campaign-pause";
 import { logError } from "@/lib/log";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
@@ -48,6 +49,15 @@ function fail(message: string, status = 400, field?: string) {
  * would otherwise race each other.
  */
 export async function POST(request: NextRequest) {
+  /*
+   * Same-origin before anything else. SameSite=Lax already keeps the session
+   * cookie off cross-site POSTs in current browsers, but the mutation that
+   * files a money-scoring entry should not rest on one browser default; the
+   * admin routes carry this same guard, calibrated for Netlify's forwarded
+   * host, and it fails closed on a missing Origin.
+   */
+  if (!sameOrigin(request)) return fail("Not allowed.", 403);
+
   const declared = Number(request.headers.get("content-length") ?? 0);
   if (declared > MAX_BODY_BYTES) return fail("That request is too large.", 413);
 

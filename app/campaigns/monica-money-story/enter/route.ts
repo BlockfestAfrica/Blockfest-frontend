@@ -10,6 +10,7 @@ import {
 } from "@/lib/creator-session";
 import { monicaRoutes } from "@/lib/campaigns";
 import { allow } from "@/lib/throttle";
+import { logWarning } from "@/lib/log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -100,9 +101,11 @@ export async function GET(request: NextRequest) {
   try {
     holder = await creatorByToken(token);
   } catch (error) {
-    console.warn(
-      "[campaign/enter] token could not be resolved:",
-      error instanceof Error ? error.message : String(error),
+    // Through the redactor, never raw: Postgres error text embeds offending
+    // values, and this is a code path a token has just travelled.
+    logWarning(
+      "campaign/enter",
+      `token could not be resolved: ${error instanceof Error ? error.message : String(error)}`,
     );
     return go(`${monicaRoutes.enterConfirm}?s=unavailable`);
   }
@@ -130,7 +133,11 @@ export async function GET(request: NextRequest) {
   // Already signed in as this same person. No question worth asking.
   const existing = request.cookies.get(CREATOR_SESSION_COOKIE)?.value?.trim();
   if (existing && existing === token) {
-    const response = go(monicaRoutes.me);
+    /* An explicit query, because Netlify re-appends the ORIGINAL query to a
+       query-less redirect Location: without this, the two success branches
+       are exactly the ones that land the creator on a URL still carrying
+       ?t=TOKEN, into the address bar, history, and any synced device. */
+    const response = go(`${monicaRoutes.me}?s=go`);
     // Re-set so the ninety days run from this visit rather than from the first.
     response.cookies.set(CREATOR_SESSION_COOKIE, token, sessionCookieOptions());
     /*
@@ -146,7 +153,9 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
-  const response = go(monicaRoutes.enterConfirm);
+  // Same explicit-query rule as the signed-in branch above: leave nothing
+  // for Netlify to re-append the token onto.
+  const response = go(`${monicaRoutes.enterConfirm}?s=go`);
   response.cookies.set(CREATOR_PENDING_COOKIE, token, pendingCookieOptions());
   return response;
 }

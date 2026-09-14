@@ -162,8 +162,10 @@ describe("a link that does belong to somebody", () => {
   it("sends them to be asked whose account it is", async () => {
     resolve.mockResolvedValue({ enrolmentId: "e1", name: "Ada N." });
     const response = await enter(VALID);
+    // With an explicit query: a query-less Location gets the ORIGINAL query,
+    // token included, re-appended by Netlify.
     expect(response.headers.get("location")).toBe(
-      "/campaigns/monica-money-story/enter/confirm",
+      "/campaigns/monica-money-story/enter/confirm?s=go",
     );
   });
 
@@ -192,8 +194,10 @@ describe("the creator who clicks their own link again", () => {
     resolve.mockResolvedValue({ enrolmentId: "e1", name: "Ada N." });
     const response = await enter(VALID, { monica_creator: VALID });
 
+    // The explicit query keeps Netlify from re-appending ?t= to the one URL
+    // a signed-in creator lands on with their token still in hand.
     expect(response.headers.get("location")).toBe(
-      "/campaigns/monica-money-story/me",
+      "/campaigns/monica-money-story/me?s=go",
     );
     expect(setCookies(response).monica_creator).toBe(VALID);
   });
