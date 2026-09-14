@@ -2,6 +2,7 @@ import { TrackView } from "@/components/campaigns/track-view";
 import { CAMPAIGN_EVENTS } from "@/lib/sabilytics";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { CampaignJoinCTA } from "@/components/campaigns/campaign-join-cta";
 import { MonicaHero } from "@/components/campaigns/monica-hero";
 import { MonicaIntro } from "@/components/campaigns/monica-intro";
@@ -87,6 +88,7 @@ export default function MonicaMoneyStoryPage() {
           href="/campaigns"
           className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
         >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           All campaigns
         </Link>
       </nav>

@@ -82,8 +82,7 @@ export function PurgePanel({ paused }: { paused: boolean }) {
 
   return (
     <div>
-      <h2 className="mt-2 text-xl font-bold text-white">Clear the test data</h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
+      <p className="max-w-prose text-sm leading-relaxed text-ink-3">
         Deletes every creator, entry, submission and point in this campaign, and
         nothing else: the campaign itself, the weekly challenges, the point rules
         and every admin sign-in stay exactly as they are. There is no undo.

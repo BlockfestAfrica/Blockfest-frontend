@@ -223,16 +223,8 @@ export default async function AdminParticipantsPage({
               {search ? "Matches" : "Everyone"}
             </h2>
             <p className="max-w-prose text-sm leading-relaxed text-ink-2">
-              {counts.silent} {counts.silent === 1 ? "has" : "have"} not
-              submitted anything yet. That is the group worth a message before a
+              Anyone who has not submitted yet is worth a message before a
               brief closes.
-              {!search && rows.length === PAGE_SIZE && (
-                <>
-                  {" "}
-                  This page holds the {PAGE_SIZE} most recent. Search to reach
-                  anybody else.
-                </>
-              )}
             </p>
 
             <ParticipantsTable

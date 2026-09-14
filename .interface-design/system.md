@@ -75,7 +75,11 @@ caught real regressions from this very pass.
 
 ### No filled gold header strips
 
-HeadedPanel (gold-filled header bar plus gold-tinted body) is deleted. The
+HeadedPanel (gold-filled header bar plus gold-tinted body) is deleted, and
+so is Panel's accent tone (gold left edge plus gold-tinted fill): its last
+two callers were the participants award panel and the newest winners week,
+and both read better as quiet with position and gold status text doing the
+work. The
 user rejected gold framing three separate times; the third was the week
 panel on /me. Focal weight comes from position (first object after the
 identity line) and from gold on the status text itself (eyebrow, clock,

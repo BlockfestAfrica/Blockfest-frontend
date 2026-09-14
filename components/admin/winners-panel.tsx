@@ -187,7 +187,7 @@ export function WinnersPanel({
         status={
           frozen ? <Pill tone="good">Recorded</Pill> : <Pill>Not yet</Pill>
         }
-        hint="Writes down the standings as they are today. The live board always shows where things stand now; only this can answer where they stood on a particular Saturday, which is the question asked in October when the prizes are settled. Doing it again makes a new version and loses nothing."
+        hint="Writes down the standings as they are today. Doing it again makes a new version and loses nothing."
         foot={
           <button
             type="button"
@@ -241,9 +241,9 @@ export function WinnersPanel({
       >
         <div className="space-y-4">
           {draft && (
-            <div className="rounded-lg border border-brand-gold/40 bg-brand-gold/[0.06] p-4">
+            <div className="rounded-lg border border-line-2 bg-card p-4">
               <p className="text-sm font-semibold text-white">
-                Draft saved: {draft.name}, {naira(draft.prizeNaira)}
+                {draft.name}, {naira(draft.prizeNaira)}
               </p>
               {draft.note && (
                 <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
@@ -284,8 +284,8 @@ export function WinnersPanel({
             <p className="max-w-prose text-sm leading-relaxed text-ink-2">
               {excludedCount}{" "}
               {excludedCount === 1 ? "creator is" : "creators are"} missing from
-              this list because they have already been Creator of the Week. It
-              cannot go to the same person twice. Community Favourite can.
+              this list because they have already been Creator of the Week.
+              Community Favourite has no such rule.
             </p>
           )}
 

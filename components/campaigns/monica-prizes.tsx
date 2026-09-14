@@ -29,7 +29,9 @@ export function MonicaPrizes() {
           Win a week, or win the whole thing.
         </p>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-2">
+        {/* items-start: the weekly card has two rows against the final's
+            five, and stretched equal it carried a void at the bottom. */}
+        <div className="mt-12 grid items-start gap-6 lg:grid-cols-2">
           <div className="rounded-xl border border-line-2 bg-card-2 p-6 sm:p-8">
             <div className="flex items-baseline justify-between gap-4">
               <h3 className="text-lg font-bold text-white">Every week</h3>

@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
  * gold the rest of the site already uses, not from another grey rectangle.
  */
 
-type Tone = "plain" | "quiet" | "accent" | "warn" | "danger";
+type Tone = "plain" | "quiet" | "warn" | "danger";
 
 /*
  * The fill percentages here are the fix for "everything is grey boxes", and the
@@ -34,8 +34,6 @@ const TONES: Record<Tone, string> = {
   plain: "",
   /* A hairline, for something that is genuinely a separate object. */
   quiet: "rounded-xl border border-line bg-card",
-  /* The one thing on the page to act on. */
-  accent: "rounded-xl border-l-4 border-brand-gold bg-brand-gold/[0.12] pl-5",
   /* Something to read before continuing. */
   warn: "rounded-xl border-l-4 border-amber-400 bg-amber-400/[0.12] pl-5",
   danger: "rounded-xl border-l-4 border-red-400 bg-red-400/[0.12] pl-5",
