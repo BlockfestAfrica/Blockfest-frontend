@@ -30,7 +30,7 @@ type Lane = "all" | "checked" | "look";
  * The lanes split the queue by whether the link names its author. That is
  * cheaper to review, not free: the check only proves the link belongs to the
  * registered account and says nothing about whether the post answers the week's
- * brief. Approving mints points, so every row still has to be opened, and
+ * challenge. Approving mints points, so every row still has to be opened, and
  * nothing on this page is worded to suggest otherwise.
  */
 export default async function AdminQueuePage({
@@ -103,7 +103,7 @@ export default async function AdminQueuePage({
         <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
           Approving mints points against the prize pool and is recorded against
           your name. Open every link: the check only says whether the link names
-          the right account, not whether the post answers the brief.
+          the right account, not whether the post answers the challenge.
         </p>
       )}
 

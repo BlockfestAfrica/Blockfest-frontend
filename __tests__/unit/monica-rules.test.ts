@@ -17,7 +17,10 @@ import {
 } from "@/lib/monica-rules";
 
 const allText = monicaRules
-  .flatMap((section) => section.paragraphs)
+  .flatMap((section) => [
+    ...section.paragraphs,
+    ...(section.table ? section.table.rows.flat() : []),
+  ])
   .join(" ")
   .toLowerCase();
 
@@ -28,14 +31,13 @@ describe("clauses that must exist before anyone enters", () => {
     ["entries must stay up", "31 october 2026"],
     ["identity verification before payout", "government-issued identification"],
     ["a licence to reshare entries", "licence"],
-    ["mandatory ad disclosure", "#ad"],
     ["no guaranteed returns", "guarantee returns"],
     ["a published tiebreak order", "reached that total first"],
     ["separation from Monica's customer bonus", "customer referral bonus"],
     ["referral points gated on an approved entry", "first approved entry"],
     ["an amendment clause", "may be amended"],
     ["a minimum age", "aged 18 or over"],
-    ["that prizes are naira only", "nigerian naira only"],
+    ["the payout currency", "nigerian naira or the equivalent"],
     ["that prizes are paid gross", "paid gross"],
   ])("covers %s", (_label, needle) => {
     expect(allText).toContain(needle);
@@ -43,8 +45,12 @@ describe("clauses that must exist before anyone enters", () => {
 });
 
 describe("the Community Favourite promise", () => {
-  it("is advisory, not a vote count", () => {
-    expect(allText).toContain("informed by an advisory public vote");
+  it("is decided by the vote, with a manipulation carve-out", () => {
+    // Changed from advisory on 14 Sep 2026 by the campaign team. The
+    // carve-out is the part that must survive every edit: without it a
+    // manipulated vote is a promise we have to honour.
+    expect(allText).toContain("decided by public vote");
+    expect(allText).toContain("manipulated");
   });
 
   it("never promises one vote per person", () => {
@@ -115,6 +121,9 @@ describe("the points clauses", () => {
   });
 
   it("publishes the ceiling on a bonus, since the database enforces one", () => {
+    // The prose sentence was cut on 14 Sep 2026; the points table carries
+    // the caps now. The database enforces them either way, and an enforced
+    // number that is published nowhere is how disputes start.
     expect(allText).toContain("capped at 300");
     expect(allText).toContain("capped at 600");
   });
@@ -153,6 +162,5 @@ describe("the document itself", () => {
     // able to learn both facts before they spend a month making content.
     expect(allText).toContain("aged 18 or over");
     expect(allText).toContain("do not have to live in nigeria");
-    expect(allText).toContain("receive naira");
   });
 });

@@ -26,7 +26,7 @@ const LABELS: Record<string, { name: string; note?: string }> = {
   wildcard_win: { name: "Wildcard win" },
   manual_adjustment: { name: "Manual adjustment", note: "The catch-all, deliberately the tightest." },
   manual_total_cap: { name: "Manual award ceiling", note: "The most one creator can hold from ALL hand awards combined. The max column is the cap." },
-  entry_base: { name: "Entry base (legacy)", note: "No longer read: since 0037 the base lives on each week, edited in the briefs above." },
+  entry_base: { name: "Entry base (legacy)", note: "No longer read: since 0037 the base lives on each week, edited in the challenges above." },
 };
 
 /**
@@ -116,7 +116,7 @@ export function PointRulesEditor({
           ))}
         </div>
         <p className="mt-3 text-sm leading-relaxed text-ink-3">
-          The base is set per week in the briefs above; the two bonuses below
+          The base is set per week in the challenges above; the two bonuses below
           are campaign-wide.
         </p>
       </div>

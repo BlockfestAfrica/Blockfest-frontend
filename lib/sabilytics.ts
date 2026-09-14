@@ -99,7 +99,6 @@ export const CAMPAIGN_EVENTS = {
   /** A creator copied their own referral link, meaning they intend to share. */
   referralCopied: "campaign_monica_referral_copied",
   leaderboardViewed: "campaign_monica_leaderboard_viewed",
-  packViewed: "campaign_monica_pack_viewed",
   rulesViewed: "campaign_monica_rules_viewed",
 } as const;
 

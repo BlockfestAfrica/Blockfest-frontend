@@ -728,48 +728,6 @@ export function RegistrationForm({
           </Labelled>
         </div>
 
-        {/*
-          * On the page for everyone, whatever brought them here.
-          *
-          * This used to hide when /join had set the referral cookie, on the
-          * theory that the cookie made typing redundant. Hiding it also hid
-          * the only place a code could be corrected or added late, and codes
-          * travel as bare strings in WhatsApp messages and lost links far
-          * more than as clicks. So the box always exists: prefilled when a
-          * link carried the code in, empty otherwise, and what is in it is
-          * what the server uses.
-          *
-          * Optional, and wrong codes are ignored rather than refused. A typo
-          * here should cost the referrer their 50 points, not cost the person
-          * registering their place in the campaign.
-          */}
-        <div className="mt-6">
-          <Labelled
-            label="Referral code"
-            htmlFor="referralCode"
-            hint={
-              initialRef
-                ? "This came with the link that brought you here. Edit it if it is not the code you were given; whoever it belongs to gets the credit."
-                : "Optional. If another creator gave you a code, enter it and they get the credit."
-            }
-            error={errors.referralCode}
-          >
-            <input
-              id="referralCode"
-              name="referralCode"
-              value={values.referralCode}
-              onChange={(e) =>
-                set("referralCode")(e.target.value.toUpperCase())
-              }
-              className={inputClass}
-              autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              maxLength={16}
-              placeholder="R3WW9GHF"
-            />
-          </Labelled>
-        </div>
       </Section>
 
       <Section
@@ -854,6 +812,48 @@ export function RegistrationForm({
             />
           </Labelled>
         </div>
+        {/*
+          * On the page for everyone, whatever brought them here.
+          *
+          * This used to hide when /join had set the referral cookie, on the
+          * theory that the cookie made typing redundant. Hiding it also hid
+          * the only place a code could be corrected or added late, and codes
+          * travel as bare strings in WhatsApp messages and lost links far
+          * more than as clicks. So the box always exists: prefilled when a
+          * link carried the code in, empty otherwise, and what is in it is
+          * what the server uses.
+          *
+          * Optional, and wrong codes are ignored rather than refused. A typo
+          * here should cost the referrer their 50 points, not cost the person
+          * registering their place in the campaign.
+          */}
+        <div className="mt-6">
+          <Labelled
+            label="Referral code"
+            htmlFor="referralCode"
+            hint={
+              initialRef
+                ? "This came with the link that brought you here. Edit it if it is not the code you were given; whoever it belongs to gets the credit."
+                : "Optional. If another creator gave you a code, enter it and they get the credit."
+            }
+            error={errors.referralCode}
+          >
+            <input
+              id="referralCode"
+              name="referralCode"
+              value={values.referralCode}
+              onChange={(e) =>
+                set("referralCode")(e.target.value.toUpperCase())
+              }
+              className={inputClass}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              maxLength={16}
+              placeholder="R3WW9GHF"
+            />
+          </Labelled>
+        </div>
       </Section>
 
       <div className="flex flex-col gap-6 border-t border-line-2 pt-8">
@@ -862,6 +862,7 @@ export function RegistrationForm({
             <input
               type="checkbox"
               checked={accepted}
+              required
               onChange={(e) => {
                 setAccepted(e.target.checked);
                 setErrors((err) => ({ ...err, acceptedRules: undefined }));
@@ -885,7 +886,13 @@ export function RegistrationForm({
               >
                 privacy notice
               </Link>
-              .
+              .{" "}
+              <span
+                className="text-base font-bold leading-none text-red-400"
+                aria-hidden="true"
+              >
+                *
+              </span>
             </span>
           </label>
           {errors.acceptedRules && (

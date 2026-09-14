@@ -54,7 +54,6 @@ describe("the taxonomy", () => {
       "referralLinkUsed",
       "submissionStarted",
       "leaderboardViewed",
-      "packViewed",
       "rulesViewed",
     ] as const) {
       expect(CAMPAIGN_EVENTS[key], key).toBeTruthy();

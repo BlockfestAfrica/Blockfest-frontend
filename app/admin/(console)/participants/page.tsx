@@ -33,7 +33,7 @@ const PAGE_SIZE = 500;
  *
  * The review queue only shows work that has arrived, so a creator who
  * registered and went quiet was invisible: no way to ask how many had joined,
- * who had gone silent, or who to chase before a brief closed.
+ * who had gone silent, or who to chase before a challenge closed.
  *
  * The headline figures come from their own count query rather than from the
  * length of the page. They used to be derived from the returned array, which is
@@ -222,7 +222,7 @@ export default async function AdminParticipantsPage({
           <SectionCard id="everyone" title={search ? "Matches" : "Everyone"}>
             <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
               Anyone who has not submitted yet is worth a message before a
-              brief closes.
+              challenge closes.
             </p>
 
             <div className="mt-4">

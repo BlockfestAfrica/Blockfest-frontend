@@ -34,7 +34,7 @@ export function MonicaPrizes() {
         <div className="mt-12 grid items-start gap-6 lg:grid-cols-2">
           <div className="rounded-xl border border-line-2 bg-card-2 p-6 sm:p-8">
             <div className="flex items-baseline justify-between gap-4">
-              <h3 className="text-lg font-bold text-white">Every week</h3>
+              <h3 className="text-lg font-bold text-white">Weekly Pool (x4)</h3>
               <p className="text-lg font-bold tabular-nums text-brand-gold">
                 {formatNaira(monicaWeeklyTotal)}
               </p>
@@ -115,8 +115,9 @@ export function MonicaPrizes() {
             many you bring in.
           </p>
           <p className="mt-4 text-sm leading-relaxed text-ink-2">
-            Other bonuses go to standout work, featured entries and
-            collaborations. The full breakdown is in the{" "}
+            Other bonuses may be awarded for standout work, featured entries,
+            engagement milestones and collaborations. The full breakdown is in
+            the{" "}
             <Link
               href={monicaRoutes.rules}
               className="text-link underline underline-offset-2 hover:text-white"

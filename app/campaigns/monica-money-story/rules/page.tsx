@@ -1,6 +1,7 @@
 import { TrackView } from "@/components/campaigns/track-view";
 import { CAMPAIGN_EVENTS } from "@/lib/sabilytics";
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -141,13 +142,47 @@ export default function MonicaRulesPage() {
                     {section.title}
                   </h2>
                   <div className="mt-4 flex flex-col gap-4">
-                    {section.paragraphs.map((paragraph) => (
-                      <p
-                        key={paragraph}
-                        className="max-w-prose text-base leading-[1.75] text-ink-2"
-                      >
-                        {paragraph}
-                      </p>
+                    {section.paragraphs.map((paragraph, pIndex) => (
+                      <Fragment key={paragraph}>
+                        <p
+                          className="max-w-prose text-base leading-[1.75] text-ink-2"
+                        >
+                          {paragraph}
+                        </p>
+                        {/* The table sits after the first paragraph, so the
+                            sentence introducing the numbers stays above them. */}
+                        {pIndex === 0 && section.table && (
+                          <div className="max-w-prose overflow-x-auto rounded-lg border border-line">
+                            <table className="w-full min-w-[20rem] border-collapse text-left">
+                              <thead>
+                                <tr className="border-b border-line text-xs font-semibold uppercase tracking-wider text-ink-3">
+                                  <th className="px-4 py-3">
+                                    {section.table.head[0]}
+                                  </th>
+                                  <th className="px-4 py-3 text-right">
+                                    {section.table.head[1]}
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {section.table.rows.map(([what, points]) => (
+                                  <tr
+                                    key={what}
+                                    className="border-b border-line last:border-0"
+                                  >
+                                    <td className="px-4 py-3 text-sm leading-relaxed text-ink-2">
+                                      {what}
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-sm font-bold tabular-nums text-white">
+                                      {points}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </Fragment>
                     ))}
                   </div>
                 </section>

@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
   if (!challenge) {
     return fail(
-      "No challenge is open right now. The next brief opens on Monday.",
+      "No challenge is open right now. The next one opens on Monday.",
       409,
     );
   }

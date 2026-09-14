@@ -23,15 +23,15 @@ export function MonicaIntro() {
             <p>
               A story about how we earn it, move it, send it, receive it, spend
               it, and sometimes struggle to get it where it needs to go. Monica
-              has a story too. But this time, we are not telling you the story.{" "}
+              has a story too. But this time, we're not telling you the story.{" "}
               <span className="font-bold text-white">You are.</span>
             </p>
             <p>
               For the next five weeks, creators will take on weekly challenges
               designed to test four skills: Storytelling, Creativity, Education
               and Influence. How you tell the story is entirely up to you. Make
-              us laugh. Make us think. Teach us something. Show us something we
-              have never seen before.
+              us laugh. Make us think. Teach us something. Show us something
+              we've never seen before.
             </p>
             <p className="font-semibold text-white">
               There is &#8358;5,000,000 on the line.{" "}

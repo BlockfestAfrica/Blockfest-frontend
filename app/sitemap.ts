@@ -126,12 +126,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
     {
-      url: `${baseUrl}/campaigns/monica-money-story/pack`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.6,
-    },
-    {
       url: `${baseUrl}/campaigns/monica-money-story/privacy`,
       lastModified: new Date(),
       changeFrequency: "monthly",

@@ -208,7 +208,9 @@ export const monicaRoutes = {
   /** Referral entry point. Sets the ref cookie, then forwards to register. */
   join: `/campaigns/${MONICA_SLUG}/join`,
   rules: `/campaigns/${MONICA_SLUG}/rules`,
-  pack: `/campaigns/${MONICA_SLUG}/pack`,
+  /* The pack page is retired; an external doc link lands here when the
+     team shares it. "#" keeps every "Creator Pack" link inert until then. */
+  pack: "#",
   privacy: `/campaigns/${MONICA_SLUG}/privacy`,
   /** Resolves an access token from a link and asks whose account it opens. */
   enter: `/campaigns/${MONICA_SLUG}/enter`,
@@ -287,7 +289,7 @@ export const monicaStages: CampaignStage[] = [
   {
     number: 1,
     name: "The Discovery",
-    days: [1, 6],
+    days: [1, 7],
     question: "Who is Monica?",
     focus:
       "Introduce Monica to your audience and make the brand understandable.",
@@ -296,7 +298,7 @@ export const monicaStages: CampaignStage[] = [
   {
     number: 2,
     name: "The Problem",
-    days: [8, 13],
+    days: [8, 14],
     question: "Why is money still this complicated?",
     focus:
       "Tell real or relatable stories about financial friction: the fees, the waiting, the rates.",
@@ -305,7 +307,7 @@ export const monicaStages: CampaignStage[] = [
   {
     number: 3,
     name: "The Solution",
-    days: [15, 20],
+    days: [15, 21],
     question: "There's a better way.",
     focus:
       "Explore stablecoins, digital finance and what Monica is actually building.",
@@ -314,7 +316,7 @@ export const monicaStages: CampaignStage[] = [
   {
     number: 4,
     name: "The Proof",
-    days: [22, 27],
+    days: [22, 28],
     question: "Show it working.",
     focus:
       "Make it concrete: what changes for somebody who actually uses it.",
@@ -370,7 +372,7 @@ export const monicaWeeklyPrizes: PrizeAward[] = [
     label: "Community Favourite",
     amount: 100_000,
     count: 4,
-    note: "Shortlisted by Blockfest, informed by a public vote.",
+    note: "Shortlisted by Blockfest. Winner decided by public vote.",
   },
 ];
 
@@ -412,22 +414,22 @@ export const monicaHowItWorks: HowItWorksStep[] = [
   {
     title: "Join",
     detail:
-      "Register once with your handles. You get the Creator Pack: brand assets, product facts, the claims you may and may not make, hashtags and handles.",
+      "Register once with your social handles and get access to the Creator Pack: brand assets, product information, approved claims, hashtags and social handles.",
   },
   {
     title: "Take the challenge",
     detail:
-      "A new brief drops each Monday. How you answer it is yours: a thread, a reel, a skit, a carousel, an explainer, a street interview, an animation.",
+      "A new challenge drops every Monday. How you answer it is up to you: a thread, a reel, a skit, a carousel, an explainer, a street interview, an animation, or something we have not thought of yet.",
   },
   {
     title: "Publish and submit",
     detail:
-      "Post it on your own account, then submit the link. Post the same piece on more than one platform and it still counts as one entry, worth more points.",
+      "Publish your content on your own X, Instagram or TikTok account, then submit the link. Post it on more than one platform and it still counts as one entry, but earns more points.",
   },
   {
     title: "Earn and climb",
     detail:
-      "Approved entries score. Bonuses go to work that is genuinely good, gets featured, or brings another creator in. The leaderboard moves as entries are approved, and weekly winners are announced on Sundays.",
+      "Every approved entry earns points, with more for multi-platform posts, standout content, engagement milestones, features, creator referrals and wildcards. Your points move you up the leaderboard, and weekly winners are announced every Sunday.",
   },
 ];
 
@@ -448,41 +450,77 @@ export const monicaFaqs: CampaignFaq[] = [
   {
     question: "Who can enter?",
     answer:
-      "Any creator with an audience on X, Instagram or TikTok. You do not need a large following. Judging weighs creativity, storytelling, relevance, consistency and reach together, so the competition is not simply won by the biggest account.",
+      "The challenge is open to all creators with an audience on X, Instagram and TikTok. You do not need a minimum follower count to participate.",
   },
   {
     question: "Does it cost anything?",
-    answer: "No. Entering is free, and you keep everything you make.",
+    answer: "No. It is completely free to enter.",
   },
   {
     question: "What counts as an entry?",
     answer:
-      "One piece of content answering the current challenge, published on your own account and submitted as a link. We review it, and once approved it scores.",
+      "An entry is an original piece of content created in response to the active weekly challenge and published on your own X, Instagram or TikTok account, then submitted through the campaign platform.",
   },
   {
-    question: "What if I post the same thing on all three platforms?",
+    question: "Can I post the same content on multiple platforms?",
     answer:
-      "That is encouraged and it is worth more. The first platform is worth 100 points and each one after it is worth 50, so the same piece across X, Instagram and TikTok earns 200. It still counts as one challenge entry, not three.",
+      "Yes. You can publish the same challenge entry on X, Instagram and TikTok. It still counts as one entry, but posting across multiple platforms earns additional points.",
   },
   {
-    question: "How do referrals work?",
+    question: "How do I earn points?",
     answer:
-      "You get a link that brings other creators into the campaign. Each one is worth 50 points, credited once the creator you brought in has their first approved entry, so you are rewarded for bringing in people who actually take part rather than for sending sign-ups.",
+      "You earn points for approved challenge entries, with additional points available for multi-platform submissions, engagement milestones, standout content, features, creator referrals, collaborations and wildcard challenges. See the campaign rules for the full points breakdown.",
+  },
+  {
+    question: "How do creator referrals work?",
+    // 50, not the 10 in the marketing doc: 50 is what the rules promise and
+    // what the database pays, and the three must never disagree.
+    answer:
+      "Every creator gets a unique referral link. Share it with other creators and earn 50 points when a creator you refer joins the campaign and their first entry is approved. There is no limit to the number of creators you can refer.",
   },
   {
     question: "Is this the same as Monica's referral bonus?",
     answer:
-      "No, and the two are kept entirely separate. Monica runs its own customer referral bonus as a product. It has nothing to do with campaign points, the leaderboard or the prize pool.",
+      "No. The Money Story creator referral is a campaign points mechanic. It is completely separate from Monica's customer referral programme and its referral rewards.",
   },
   {
-    question: "Do I have to say it is an ad?",
+    question: "How is Community Favourite chosen?",
     answer:
-      "Yes. Disclose the partnership on every entry. The Creator Pack tells you how, and which claims you may and may not make about a financial product.",
+      "Blockfest will shortlist eligible entries, then open them up to a public vote. The creator with the highest number of valid votes wins Community Favourite and the weekly prize.",
+  },
+  {
+    question: "How is Creator of the Week chosen?",
+    answer:
+      "Creator of the Week is selected by the Blockfest team based on the quality of the creator's work across the campaign criteria, including storytelling, creativity, education, influence, engagement and overall execution.",
+  },
+  {
+    question: "Can I win more than one weekly award?",
+    answer:
+      "You can win Creator of the Week only once. You can still remain eligible for other awards and the final leaderboard.",
+  },
+  {
+    question: "Do I have to disclose that my content is sponsored?",
+    answer: "Yes, where required.",
   },
   {
     question: "Who owns the content I make?",
     answer:
       "You do. By entering you allow Blockfest Africa and Monica to reshare it with credit. The full terms are on the rules page.",
+  },
+  {
+    question: "When does the campaign end?",
+    answer:
+      "The campaign runs from 14 September to 17 October 2026. The final challenge closes on 17 October, after which final leaderboard judging takes place.",
+  },
+  {
+    question: "How can I get my Monica tag?",
+    answer:
+      "Your Monica tag is your unique username on Monica. To get yours, download the Monica app and create your account. Your tag will be assigned to you and can be found in your Monica profile. You need your Monica tag to receive rewards.",
+  },
+  {
+    question: "How are the final winners chosen for the grand prize?",
+    answer:
+      "The final winners are based on the final verified leaderboard. The top five creators with the most points win the grand prizes, subject to final verification.",
   },
 ];
 

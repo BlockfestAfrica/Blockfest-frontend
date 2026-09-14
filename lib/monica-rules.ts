@@ -16,16 +16,18 @@
  * guessed at. An invented eligibility age is worse than an honest gap.
  */
 
-export const MONICA_RULES_VERSION = "1.0";
+export const MONICA_RULES_VERSION = "1.1";
 
 /** ISO date. Rendered in the event's own timezone. */
-export const MONICA_RULES_UPDATED = "2026-09-12";
+export const MONICA_RULES_UPDATED = "2026-09-14";
 
 export interface RuleSection {
   /** Anchor, so a clause can be linked to directly in a dispute. */
   id: string;
   title: string;
   paragraphs: string[];
+  /** An optional table rendered after the first paragraph. */
+  table?: { head: [string, string]; rows: [string, string][] };
 }
 
 export const monicaRules: RuleSection[] = [
@@ -35,8 +37,7 @@ export const monicaRules: RuleSection[] = [
     paragraphs: [
       "The campaign runs from 14 September to 17 October 2026. It is organised by Blockfest Africa, with Monica as headline sponsor. Blockfest Africa is operated by Tevah Synergy, which is the entity responsible for this competition and for paying prizes.",
       "Entry is free and open to creators aged 18 or over with an account on X, Instagram or TikTok. You register once, with the handles you will be publishing from.",
-      "You do not have to live in Nigeria to enter. Prizes are paid in Nigerian naira, though, so you do need an account that can receive naira. Read the payment section before entering if you are outside Nigeria.",
-      "You must be the owner of the accounts you register. Entries published from an account you do not control will be rejected, and prizes are paid only to the person who registered.",
+      "You do not have to live in Nigeria to enter. Prizes are paid in Nigerian naira or equivalent.",
     ],
   },
   {
@@ -52,9 +53,26 @@ export const monicaRules: RuleSection[] = [
   {
     id: "points",
     title: "Points",
+    /* The same numbers the paragraphs state, scannable. The rows mirror the
+       point rules the database actually pays; changing a value there without
+       changing it here is what the paragraphs below call an adjustment. */
+    table: {
+      head: ["What", "Points"],
+      rows: [
+        ["Approved entry, one platform", "100"],
+        ["The same entry on two platforms", "150"],
+        ["The same entry on all three platforms", "200"],
+        ["Creator referral, on their first approved entry", "50"],
+        [
+          "Standout work, audience milestones, featured entries, collaborations",
+          "Case by case, capped at 300 each",
+        ],
+        ["Wildcard challenges", "Case by case, capped at 600"],
+      ],
+    },
     paragraphs: [
       "An approved entry earns 100 points for the first approved platform and 50 for each platform after it, to a maximum of 200 for all three.",
-      "Additional points may be awarded for work judged exceptional, for reaching a notable audience milestone with an entry, for entries featured by Blockfest Africa or by Monica, for collaborations with other creators, and for winning a wildcard challenge. Each of these is capped at 300 points, except a wildcard win which is capped at 600.",
+      "Additional points may be awarded for work judged exceptional, for reaching a notable audience milestone with an entry, for entries featured by Blockfest Africa or by Monica, and for completing a wildcard challenge.",
         "Bonuses are awarded at our discretion. Every one is recorded against your account with the reason, and you can see it on your own page.",
       "Point values may be adjusted during the campaign. Changing a value does not recalculate points already awarded, so a change to the rate never restates what you have already earned.",
         "Points can be taken back in two cases, and only these two: an entry that stops meeting the rules after approval, covered below, and a correction of a mistake we made. A correction is recorded against your account with the reason, the same way an award is.",
@@ -71,19 +89,11 @@ export const monicaRules: RuleSection[] = [
     ],
   },
   {
-    id: "disclosure",
-    title: "Disclosure",
-    paragraphs: [
-      "Every entry must disclose that it is part of a sponsored campaign. Use a clear label such as #ad or #sponsored where your audience will see it, not buried at the end of a caption.",
-      "This is required by Nigerian advertising rules and by the platforms themselves. An entry without disclosure will be rejected.",
-    ],
-  },
-  {
     id: "accuracy",
     title: "What you may and may not say",
     paragraphs: [
       "Monica is a financial product, so accuracy matters more than usual. The Creator Pack lists what may be said about it and what may not.",
-      "Do not promise or guarantee returns, profit, savings or any financial outcome. Do not present Monica as investment advice. Do not state fees, rates or timings that are not in the Creator Pack.",
+      "Do not promise or guarantee returns, profit, savings or any financial outcome. Do not present Monica as investment advice. Do not state fees, rates or timings that are not in the Creator Pack or on Monica's own site and resources.",
       "Entries making claims we cannot stand behind will be rejected, and repeated breaches may end your participation.",
     ],
   },
@@ -109,7 +119,7 @@ export const monicaRules: RuleSection[] = [
     paragraphs: [
       "You own everything you make. Entering does not transfer ownership.",
       "By entering you grant Blockfest Africa and Monica a non-exclusive, worldwide, royalty-free licence to reshare, repost and feature your entries in campaign and event material, with credit to you, for two years from the end of the campaign.",
-      "This covers resharing your work as published. It does not permit either of us to edit your entry into something you did not say, or to use it in paid advertising without asking you first.",
+      "This covers resharing your work as published. It does not permit either of us to edit your entry into something you did not say.",
     ],
   },
   {
@@ -117,7 +127,7 @@ export const monicaRules: RuleSection[] = [
     title: "Winners",
     paragraphs: [
       "Weekly awards are announced each Sunday. The same creator cannot win Creator of the Week more than once, so the award reaches more creators across the campaign.",
-      "Community Favourite is selected by Blockfest Africa, informed by an advisory public vote. The vote guides the decision and does not determine it, which lets us set aside voting we believe to have been manipulated.",
+      "Community Favourite is shortlisted by Blockfest Africa and decided by public vote. The creator with the highest number of valid votes wins. Votes we believe to have been manipulated are set aside.",
       "The final leaderboard is settled on total points. Where creators are level, the order is decided by who reached that total first, then by the number of approved entries, and then at our discretion.",
       "Winning a weekly award does not remove you from the final leaderboard.",
     ],
@@ -126,9 +136,9 @@ export const monicaRules: RuleSection[] = [
     id: "payment",
     title: "Getting paid",
     paragraphs: [
-      "Prizes are paid to the Monica tag you gave when you registered, in Nigerian naira only. Check that tag is right: it is the only detail we use to find you, and we cannot pay a winner we cannot locate. If it is wrong, write to partnership@blockfestafrica.com before the campaign ends.",
-      "Before a prize is paid we will ask you to verify your identity: government-issued identification matching the name you registered with, proof that you control the account you published from, and a bank account in that same name. We do not pay third-party accounts.",
-      "Results are published with a 72-hour window for creators to raise a dispute before funds move.",
+      "Prizes are paid to the Monica tag you gave when you registered, in Nigerian naira or the equivalent in other currencies. Check that tag is right: it is the only detail we use to find you, and we cannot pay a winner we cannot locate. If it is wrong, write to partnership@blockfestafrica.com before the campaign ends.",
+      "Before a prize is paid we will ask you to verify your identity: government-issued identification matching the name you registered with, and proof that you control the account you published from. We do not pay third-party accounts.",
+      "Results are published with a 48-hour window for creators to raise a dispute before funds move.",
       "Prizes are paid gross, with nothing deducted. Any tax due on what you receive is yours to declare and pay, wherever you are resident.",
     ],
   },
