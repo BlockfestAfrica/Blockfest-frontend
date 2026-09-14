@@ -118,3 +118,40 @@ export async function snapshotsTaken(
     };
   });
 }
+
+/**
+ * One snapshot's frozen standings, for the admin viewer.
+ *
+ * Reads the denormalised rows as they were written: display_name survives a
+ * creator later being removed, which is the whole reason the freeze copies
+ * it instead of joining live tables.
+ */
+export async function snapshotRows(
+  admin: AdminIdentity,
+  weekNo: number,
+  version: number,
+): Promise<
+  { rank: number; name: string; points: number; approved: number; takenAt: Date }[]
+> {
+  void admin;
+  const result = await getDb().execute(sql`
+    SELECT s.rank, s.display_name, s.points_total, s.approved_entries, s.taken_at
+      FROM leaderboard_snapshots s
+      JOIN campaigns cm ON cm.id = s.campaign_id
+     WHERE cm.slug = ${MONICA_SLUG}
+       AND s.week_no = ${weekNo}
+       AND s.version = ${version}
+     ORDER BY s.rank ASC
+  `);
+
+  return (result.rows ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      rank: Number(r.rank ?? 0),
+      name: String(r.display_name ?? ""),
+      points: Number(r.points_total ?? 0),
+      approved: Number(r.approved_entries ?? 0),
+      takenAt: new Date(String(r.taken_at)),
+    };
+  });
+}
