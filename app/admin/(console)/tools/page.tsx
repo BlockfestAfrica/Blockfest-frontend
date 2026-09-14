@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/session";
 import { ReissueLink } from "@/components/admin/reissue-link";
-import { RepriceEntry } from "@/components/admin/reprice-entry";
 import { isOwner } from "@/lib/admin/session";
+import { listResources } from "@/lib/admin/resources";
+import { ResourcesEditor } from "@/components/admin/resources-editor";
+import { LinkCheck } from "@/components/admin/link-check";
+import { RepriceEntry } from "@/components/admin/reprice-entry";
 import { SectionHeading } from "@/components/shared/panel";
 
 export const metadata: Metadata = {
@@ -39,11 +42,22 @@ export default async function ToolsPage() {
       />
       <ReissueLink />
 
-      {/* Owner-only: repricing moves money. Reviewers do not see it at all. */}
+      <div className="mt-8">
+        <LinkCheck />
+      </div>
+
+      {/* Owner-only from here down: repricing moves money, and resources
+          render on the public pack page under the campaign's name. Reviewers
+          do not see either. */}
       {isOwner(admin.admin) && (
-        <div className="mt-8">
-          <RepriceEntry />
-        </div>
+        <>
+          <div className="mt-8">
+            <RepriceEntry />
+          </div>
+          <div className="mt-8">
+            <ResourcesEditor rows={await listResources(admin.admin)} />
+          </div>
+        </>
       )}
     </>
   );

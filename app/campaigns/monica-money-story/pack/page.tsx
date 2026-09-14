@@ -1,3 +1,4 @@
+import { LiveResources } from "@/components/campaigns/live-resources";
 import { TrackView } from "@/components/campaigns/track-view";
 import { CAMPAIGN_EVENTS } from "@/lib/sabilytics";
 import type { Metadata } from "next";
@@ -296,6 +297,8 @@ export default function MonicaPackPage() {
                 ))}
               </ul>
             </section>
+
+            <LiveResources />
 
             <p className="mt-14 text-sm leading-relaxed text-white/50">
               Anything you are unsure about goes to{" "}
