@@ -1,85 +1,58 @@
 /**
- * The service worker, checked for what it must never cache.
+ * The service worker's only job is to not exist.
  *
- * The defect this guards against was invisible from the application side. A
- * page can set force-dynamic and revalidate 0, be served with no-store, and
- * still end up written to Cache Storage by the worker, because Next's caching
- * and the browser's Cache Storage are unrelated. Nothing in the page, the route
- * or the database can reach in and remove it, so a cached signed-in page
- * survives signing out, a revoked token and a deleted row.
+ * The previous suite asserted the text of a worker that never executed: its
+ * install handler cached files that were not in public/, cache.addAll rejects
+ * whole, and a rejected install discards the worker. Every assertion about
+ * exclusions and cache eviction was describing dead code, which issue #123
+ * documented in full.
  *
- * The navigation branch is the specific trap: it runs before every other rule
- * and returns, so an exclusion written further down the chain never executes
- * for a page load. That is exactly what happened to the /api/ rule.
- *
- * These assertions read the shipped file rather than importing it, because it
- * is a service worker: it runs against ServiceWorkerGlobalScope, is not a
- * module, and is never imported by anything in the app.
+ * The replacement is a self-destructing worker, and these assert exactly the
+ * three things it must do and the many things it must never start doing
+ * again. If a real PWA is wanted after the campaign, it replaces this file,
+ * this suite, and gets verified on a real device first.
  */
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { monicaRoutes } from "@/lib/campaigns";
 
 const SW = readFileSync(join(process.cwd(), "public/sw.js"), "utf8");
+const CODE = SW.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
-/** Line index of a marker, so ordering can be asserted rather than assumed. */
-function lineOf(needle: string): number {
-  const i = SW.split("\n").findIndex((l) => l.includes(needle));
-  expect(i, `expected to find ${needle} in public/sw.js`).toBeGreaterThan(-1);
-  return i;
-}
-
-describe("private pages", () => {
-  it("are excluded before the navigation branch decides anything", () => {
-    // Ordering is the whole finding. An exclusion after this point does not
-    // run for a page load, which is how the /api/ rule came to be dead for
-    // navigations.
-    const guard = lineOf("isPrivatePath(url.pathname)");
-    const navigation = lineOf('request.mode === "navigate"');
-    expect(guard).toBeLessThan(navigation);
+describe("the kill switch worker", () => {
+  it("unregisters itself", () => {
+    expect(CODE).toContain("registration.unregister()");
   });
 
-  it("covers the creator page, which renders somebody's name and points", () => {
-    expect(SW).toContain(monicaRoutes.me);
+  it("deletes every cache a predecessor might have left", () => {
+    expect(CODE).toContain("caches.keys()");
+    expect(CODE).toContain("caches.delete(");
   });
 
-  it("covers the route that carries an access token", () => {
-    expect(SW).toContain(monicaRoutes.enter);
-  });
-
-  it("covers the admin surface before it exists", () => {
-    // Listed now so the first admin page is not the thing that discovers this.
-    expect(SW).toContain('"/admin"');
-    expect(SW).toContain('"/api/admin"');
-  });
-
-  it("matches whole segments, so a longer path is not caught by accident", () => {
-    // /campaigns/.../me must match, /campaigns/.../mentions must not.
-    expect(SW).toMatch(/pathname === prefix \|\| pathname\.startsWith\(prefix \+ "\/"\)/);
+  it("takes over immediately, so the cleanup does not wait a navigation", () => {
+    expect(CODE).toContain("skipWaiting()");
   });
 });
 
-describe("the cache name", () => {
-  it("was bumped, so anything the previous worker stored is deleted", () => {
-    // The activate handler deletes every blockfest- cache that is not the
-    // current one. Changing behaviour without bumping this leaves the bad
-    // entries in place on every device that already has them.
-    expect(SW).toContain('const CACHE_NAME = "blockfest-v3"');
-    expect(SW).not.toContain('"blockfest-v2"');
+describe("what must never come back without a real device test", () => {
+  it("caches nothing", () => {
+    // The hazard #123 documented: an install-time addAll over a hardcoded
+    // list, one bad entry from either never running or suddenly running.
+    expect(CODE).not.toContain("addAll");
+    expect(CODE).not.toContain("cache.put");
+    expect(CODE).not.toContain("STATIC_CACHE_URLS");
   });
 
-  it("still evicts old caches on activate", () => {
-    expect(SW).toMatch(/name\.startsWith\("blockfest-"\)\s*&&\s*name !== CACHE_NAME/);
+  it("intercepts no requests", () => {
+    // A fetch handler is a proxy in front of every page including /me and
+    // /enter. Nothing here may stand in front of a token-bearing URL.
+    expect(CODE).not.toMatch(/addEventListener\(\s*["']fetch/);
   });
-});
 
-describe("API responses", () => {
-  it("are still not cached", () => {
-    const api = SW.indexOf('url.pathname.startsWith("/api/")');
-    expect(api).toBeGreaterThan(-1);
-    // The branch exists and returns rather than caching.
-    expect(SW.slice(api, api + 200)).toMatch(/return;/);
+  it("declares no cache name to bump", () => {
+    // The bump was believed to be a remote kill switch and was connected to
+    // nothing. No name, no false lever.
+    expect(CODE).not.toContain("CACHE_NAME");
   });
 });
