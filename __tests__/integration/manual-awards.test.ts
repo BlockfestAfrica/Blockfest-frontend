@@ -154,8 +154,9 @@ describe("awarding", () => {
   it("accumulates across sources", async () => {
     const me = await makeCreator();
     await award(me, "quality_bonus", 50, "a");
-    await award(me, "featured_blockfest", 100, "b");
-    expect(await pointsOf(me)).toBe(150);
+    // 50 flat since 0050, the published Featured-by-Blockfest value.
+    await award(me, "featured_blockfest", 50, "b");
+    expect(await pointsOf(me)).toBe(100);
   });
 });
 

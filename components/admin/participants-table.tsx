@@ -612,6 +612,16 @@ function AwardRow({
           {busy ? "Working..." : "Apply"}
         </button>
       </div>
+      {/* The published ladder, where the person choosing the number needs
+          it. Awards outside these figures are refused by the rule bounds
+          anyway; showing the ladder saves the round trip. */}
+      {source === "engagement_milestone" && (
+        <p className="mt-2 text-sm leading-relaxed text-ink-3">
+          The published ladder: 5K views 20 · 10K 40 · 20K 60 · 30K 80 ·
+          50K 100 · 75K 150 · 100K 200. One bonus per entry, highest tier
+          verifiably reached.
+        </p>
+      )}
     </div>
   );
 }

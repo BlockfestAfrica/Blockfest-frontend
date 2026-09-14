@@ -16,7 +16,7 @@
  * guessed at. An invented eligibility age is worse than an honest gap.
  */
 
-export const MONICA_RULES_VERSION = "1.2";
+export const MONICA_RULES_VERSION = "1.3";
 
 /** ISO date. Rendered in the event's own timezone. */
 export const MONICA_RULES_UPDATED = "2026-09-14";
@@ -63,11 +63,12 @@ export const monicaRules: RuleSection[] = [
         ["The same entry on two platforms", "150"],
         ["The same entry on all three platforms", "200"],
         ["Creator referral, on their first approved entry", "10"],
-        [
-          "Standout work, audience milestones, featured entries, collaborations",
-          "Case by case, capped at 300 each",
-        ],
-        ["Wildcard challenges", "Case by case, capped at 600"],
+        ["High quality or original work", "50 to 200"],
+        ["Engagement milestone, tiers below", "20 to 200"],
+        ["Featured by Blockfest", "50"],
+        ["Featured by Monica", "100"],
+        ["Completing a wildcard challenge", "100"],
+        ["Collaborations with other creators", "Case by case, up to 300"],
       ],
     },
     paragraphs: [
@@ -77,6 +78,29 @@ export const monicaRules: RuleSection[] = [
       "Point values may be adjusted during the campaign. Changing a value does not recalculate points already awarded, so a change to the rate never restates what you have already earned.",
         "Points can be taken back in two cases, and only these two: an entry that stops meeting the rules after approval, covered below, and a correction of a mistake we made. A correction is recorded against your account with the reason, the same way an award is.",
       "The leaderboard counts approved entries. Publishing one entry on three platforms earns more points but remains a single entry for that count.",
+    ],
+  },
+  {
+    id: "engagement-milestones",
+    title: "Engagement milestones",
+    /* The team's published ladder, verbatim. Awarded by hand against
+       verified numbers, never automatically: a view count is a platform's
+       claim, and a person checks it before it becomes points. */
+    table: {
+      head: ["Views reached", "Bonus points"],
+      rows: [
+        ["5,000 and above", "20"],
+        ["10,000 and above", "40"],
+        ["20,000 and above", "60"],
+        ["30,000 and above", "80"],
+        ["50,000 and above", "100"],
+        ["75,000 and above", "150"],
+        ["100,000 and above", "200"],
+      ],
+    },
+    paragraphs: [
+      "An entry that reaches a notable audience earns a bonus on the ladder below. These are awarded manually by the Blockfest team against verified view counts, recorded against your account with the reason like every other bonus.",
+      "One engagement bonus per entry, at the highest tier it has verifiably reached when the bonus is awarded.",
     ],
   },
   {
