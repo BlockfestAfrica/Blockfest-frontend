@@ -6,7 +6,7 @@ import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
-import { MONICA_SLUG } from "@/lib/campaigns";
+import { MONICA_SLUG, monicaWeeklyPrizes } from "@/lib/campaigns";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { personalPage, winnerEmail } from "@/lib/email/templates";
 import { campaignCreators, creators } from "@/lib/db/client";
@@ -47,6 +47,26 @@ const schema = z.object({
     .max(5_000_000, "That is more than the whole pool."),
   note: z.string().trim().max(300).optional(),
   publish: z.boolean(),
+}).superRefine((value, ctx) => {
+  /*
+   * The amount is the advertised amount, exactly. The pool is derived from
+   * these figures everywhere else, the rules publish them, and the flat
+   * 5,000,000 ceiling still let a fat-fingered 3,000,000 publish straight
+   * onto the winners page. A deliberate change to the prize structure is a
+   * change to lib/campaigns.ts, not a number typed on a Sunday night.
+   */
+  const advertised = monicaWeeklyPrizes.find(
+    (prize) =>
+      (value.category === "creator_of_week") ===
+      (prize.label === "Creator of the Week"),
+  );
+  if (advertised && value.prizeNaira !== advertised.amount) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["prizeNaira"],
+      message: `${advertised.label} is ${advertised.amount.toLocaleString("en-NG")} naira this campaign. To change the prize structure, change the campaign registry.`,
+    });
+  }
 });
 
 const FORBIDDEN = NextResponse.json(
@@ -57,6 +77,11 @@ const FORBIDDEN = NextResponse.json(
 const MESSAGES: Record<string, string> = {
   P0801:
     "That creator has already been Creator of the Week. The rules say it cannot go to the same person twice, so pick somebody else. Community Favourite has no such limit.",
+  P0802:
+    "This week's winner in that category is already published. A published winner cannot be changed from here.",
+  P0803: "That creator has been removed from the campaign and cannot win.",
+  P0804:
+    "Record the standings for this week before announcing. The announcement commits money against the frozen board.",
   P0201: "That creator is not in this campaign.",
   P0401: "Only a signed-in admin can do this.",
   P0002: "That campaign does not exist.",

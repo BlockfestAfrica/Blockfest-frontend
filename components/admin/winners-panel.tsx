@@ -15,6 +15,7 @@ import {
 } from "@/components/shared/panel";
 import { Confirm } from "@/components/shared/confirm";
 import { naira } from "@/lib/format";
+import { monicaWeeklyPrizes } from "@/lib/campaigns";
 
 export interface CandidateRow {
   enrolmentId: string;
@@ -37,6 +38,18 @@ const CATEGORY_LABEL = {
   creator_of_week: "Creator of the Week",
   community_favourite: "Community Favourite",
 } as const;
+
+/* The advertised amount per category. The API refuses any other figure, so
+   the box arrives filled with the only number it will accept. */
+const CATEGORY_PRIZE: Record<keyof typeof CATEGORY_LABEL, number> =
+  Object.fromEntries(
+    monicaWeeklyPrizes.map((prize) => [
+      prize.label === "Creator of the Week"
+        ? "creator_of_week"
+        : "community_favourite",
+      prize.amount,
+    ]),
+  ) as Record<keyof typeof CATEGORY_LABEL, number>;
 
 type Category = keyof typeof CATEGORY_LABEL;
 
@@ -75,7 +88,7 @@ export function WinnersPanel({
   const [busy, setBusy] = useState(false);
   const [category, setCategory] = useState<Category>("creator_of_week");
   const [enrolmentId, setEnrolmentId] = useState("");
-  const [prize, setPrize] = useState("");
+  const [prize, setPrize] = useState(String(CATEGORY_PRIZE.creator_of_week));
   const [note, setNote] = useState("");
 
   const candidates =
@@ -270,6 +283,7 @@ export function WinnersPanel({
             onChange={(next) => {
               setCategory(next);
               setEnrolmentId("");
+              setPrize(String(CATEGORY_PRIZE[next]));
             }}
             options={(Object.keys(CATEGORY_LABEL) as Category[]).map((key) => ({
               value: key,
