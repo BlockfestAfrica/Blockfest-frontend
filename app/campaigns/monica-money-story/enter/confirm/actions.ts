@@ -48,7 +48,10 @@ export async function enterAsPending(form: FormData) {
    * page, and 32 random bytes leave an enumerator nothing to enumerate.
    */
   const who = (await headers()).get("x-nf-client-connection-ip")?.trim() ?? "";
-  if (!(await allowKey(who, "enter", 600, 3600))) {
+  // Its own bucket since the day-one audit: sharing "enter" with the GET
+  // halved the launch-morning budget that number was calibrated for, and
+  // let unauthenticated GETs drain the confirm action's allowance.
+  if (!(await allowKey(who, "enter-confirm", 600, 3600))) {
     redirect(`${monicaRoutes.enterConfirm}?s=unavailable`);
   }
 

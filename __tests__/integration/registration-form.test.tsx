@@ -482,16 +482,17 @@ describe("the referral code field", () => {
     expect(sent!.ref).toBe("R3WW9GHF");
   });
 
-  it("omits ref entirely when the box is left empty", async () => {
-    // An empty string would reach the database as a code resolving to nobody,
-    // which is indistinguishable from a typo when somebody asks later why a
-    // referral was not credited.
+  it("sends ref as an empty string when the box is left empty", async () => {
+    // Always present on the wire since the day-one audit: an empty string
+    // is how a deliberately cleared box suppresses the referral cookie on
+    // the server, where undefined would let the cookie reinstate the
+    // credit the person just deleted. The route still stores null.
     render(<RegistrationForm opensAt={OPENS_AT} />);
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
     await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
-    expect(sent!.ref).toBeUndefined();
+    expect(sent!.ref).toBe("");
   });
 
   it("is shown prefilled to somebody who arrived through a referral link", () => {
@@ -543,10 +544,10 @@ describe("the referral code field", () => {
     expect(sent!.ref).toBe("AB23CD45");
   });
 
-  it("omits ref when the creator clears a prefilled code", async () => {
-    // Clearing the box is a decision, and the payload respects it. The server
-    // may still fall back to the /join cookie, which is its call to make, but
-    // the form does not resend a value somebody deliberately removed.
+  it("sends an empty ref when the creator clears a prefilled code", async () => {
+    // Clearing the box is a decision, and the empty string is how it wins:
+    // the server only falls back to the /join cookie when the field never
+    // travelled at all, so the cleared box actually clears the credit.
     render(<RegistrationForm opensAt={OPENS_AT} initialRef="RQ4963ZV" />);
     fill();
     fireEvent.change(screen.getByLabelText("Referral code"), {
@@ -555,6 +556,6 @@ describe("the referral code field", () => {
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
     await waitFor(() => expect(sent).not.toBeNull(), { timeout: 5000 });
-    expect(sent!.ref).toBeUndefined();
+    expect(sent!.ref).toBe("");
   });
 });

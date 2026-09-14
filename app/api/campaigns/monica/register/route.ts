@@ -12,6 +12,8 @@ import {
   resolveReferralCode,
 } from "@/lib/campaign-registration";
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
+import { MONICA_RULES_VERSION } from "@/lib/monica-rules";
+import { MONICA_PRIVACY_VERSION } from "@/lib/monica-privacy";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
 import { allow } from "@/lib/throttle";
@@ -141,6 +143,19 @@ export async function POST(request: NextRequest) {
     );
   }
   const input = parsed.data;
+
+  // The stored consent record is dispute evidence, so it is pinned to the
+  // text this server is actually publishing. A stale tab re-accepts rather
+  // than silently recording agreement to rules that no longer exist, and a
+  // curl with an invented version string records nothing.
+  if (input.rulesVersion !== MONICA_RULES_VERSION) {
+    return fail(
+      "The campaign rules have been updated since you loaded this page. Refresh, read them again, and re-accept.",
+      409,
+      "rulesVersion",
+    );
+  }
+
   const { emailCanonical, phoneE164, handles } = canonicalise(input);
 
   // Automated submissions are answered as though they succeeded. A bot told
@@ -149,7 +164,28 @@ export async function POST(request: NextRequest) {
   // logged rather than returned.
   const automated = looksAutomated(input);
   if (automated) {
+    /*
+     * Answered as success so the author of a bot learns nothing, but no
+     * longer answered into a void: a password manager filling the honeypot
+     * or a fast autofill submit is a REAL person who was told they were in
+     * while nothing was written. The attempt row carries the reason and
+     * the canonical email, which is enough for support to find and rescue
+     * a false positive when they write in.
+     */
     console.warn("[campaign/register] rejected as automated:", automated);
+    try {
+      await getDb()
+        .insert(registrationAttempts)
+        .values({
+          ip:
+            request.headers.get("x-nf-client-connection-ip") ??
+            request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+            null,
+          outcome: `automated:${automated}:${emailCanonical}`,
+        });
+    } catch {
+      // The quarantine record is best-effort; the uniform answer is not.
+    }
     return NextResponse.json({
       ok: true,
       referralCode: null,
@@ -207,7 +243,10 @@ export async function POST(request: NextRequest) {
       403,
     );
   }
-  if (!gateOpen && campaign.status !== "active") {
+  // Not softened by the pre-launch flag: that flag lifts the DATE gate so
+  // the flow can be walked early, and a campaign somebody set to draft or
+  // completed is closed for a reason the flag was never about.
+  if (campaign.status !== "active") {
     return fail("This campaign is not accepting registrations.", 403);
   }
 
@@ -311,8 +350,8 @@ export async function POST(request: NextRequest) {
         ${input.audienceSize ?? null}, ${input.location ?? null},
         ${handles.x}, ${handles.instagram}, ${handles.tiktok},
         ${ref || null}, ${ip}, ${userAgent},
-        ${newReferralCode()}, ${input.rulesVersion},
-        ${input.marketingOptIn}, ${input.privacyVersion ?? null},
+        ${newReferralCode()}, ${MONICA_RULES_VERSION},
+        ${input.marketingOptIn}, ${MONICA_PRIVACY_VERSION},
         ${hashAccessToken(accessToken)}
       )
     `);

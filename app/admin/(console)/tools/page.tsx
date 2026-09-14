@@ -35,25 +35,25 @@ export default async function ToolsPage() {
 
   return (
     <div className={SPACING.page}>
-      {/* One rhythm for the whole drawer, and the headline job wears the
-          spine's "now" edge: reissuing a lost link is the tool somebody
-          arrives here needing, the rest is periodic upkeep. */}
-      <JobCard
-        id="reissue"
-        title="Give a creator a new link"
-        state="now"
-        hint="For somebody who has lost the personal link they were given when they registered. Issuing a new one stops the old one working, and emails the new one to the address they registered with."
-      >
-        <ReissueLink />
-      </JobCard>
-
       <LinkCheck />
 
-      {/* Owner-only from here down: repricing moves money, and resources
-          render on the public pack page under the campaign's name. Reviewers
-          do not see either. */}
+      {/* Owner-only from here down. Reissue moved behind the gate in the
+          day-one audit: it mints a working session for any creator from
+          just their email and rotates their real link away, which with
+          handle verification removed is the highest-leverage capability a
+          console session holds. Repricing moves money, and resources render
+          publicly under the campaign's name. The API refuses reviewers on
+          all three independently. */}
       {isOwner(admin.admin) && (
         <>
+          <JobCard
+            id="reissue"
+            title="Give a creator a new link"
+            state="now"
+            hint="For somebody who has lost the personal link they were given when they registered. Issuing a new one stops the old one working, and emails the new one to the address they registered with."
+          >
+            <ReissueLink />
+          </JobCard>
           <RepriceEntry />
           <ResourcesEditor rows={await listResources(admin.admin)} />
         </>
