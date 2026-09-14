@@ -160,14 +160,19 @@ export default function MonicaPackPage() {
               </dl>
             </section>
 
-            {/* The two lists side by side on wide screens, because they are
-                read against each other rather than in sequence. */}
-            <div className="mt-16 grid gap-6 lg:grid-cols-2">
+            {/* Stacked bands, not side-by-side cards: six items against
+                thirteen means equal-height cards leave the short one mostly
+                empty box. Inside each band the list is CSS columns rather than
+                a grid, because grid rows stretch to the tallest cell and these
+                items range from 49 to 232 characters; columns let every item
+                take exactly its own height. mobile-grid-ok: single column
+                below sm. */}
+            <div className="mt-16 flex flex-col gap-6">
               <div className="rounded-xl border border-line-2 bg-card-2 p-5 sm:p-6">
                 <h2 className="text-lg font-bold text-white">You may</h2>
-                <ul className="mt-4 flex flex-col gap-3">
+                <ul className="mt-4 sm:columns-2 sm:gap-x-8">
                   {monicaPackAllowed.map((item) => (
-                    <li key={item} className="flex gap-3">
+                    <li key={item} className="mb-3 flex gap-3 break-inside-avoid">
                       <Check
                         className="mt-1 h-4 w-4 shrink-0 text-green-400"
                         aria-hidden="true"
@@ -182,9 +187,9 @@ export default function MonicaPackPage() {
 
               <div className="rounded-xl border border-red-400/30 bg-red-400/5 p-5 sm:p-6">
                 <h2 className="text-lg font-bold text-white">You may not</h2>
-                <ul className="mt-4 flex flex-col gap-3">
+                <ul className="mt-4 sm:columns-2 sm:gap-x-8">
                   {monicaPackProhibited.map((item) => (
-                    <li key={item} className="flex gap-3">
+                    <li key={item} className="mb-3 flex gap-3 break-inside-avoid">
                       <X
                         className="mt-1 h-4 w-4 shrink-0 text-red-400"
                         aria-hidden="true"

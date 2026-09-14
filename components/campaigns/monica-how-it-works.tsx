@@ -17,7 +17,9 @@ export function MonicaHowItWorks() {
           account. Repeat across all stages.
         </p>
 
-        <ol className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 2x2, not four across: inside container-page four columns give a
+            ~200px prose measure and the steps are full sentences. */}
+        <ol className="mt-12 grid gap-6 sm:grid-cols-2">
           {monicaHowItWorks.map((step, i) => (
             <li
               key={step.title}
