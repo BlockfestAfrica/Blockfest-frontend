@@ -486,7 +486,12 @@ export const monicaFaqs: CampaignFaq[] = [
   {
     question: "How is Community Favourite chosen?",
     answer:
-      "Blockfest will shortlist eligible entries, then open them up to a public vote. The creator with the highest number of valid votes wins Community Favourite and the weekly prize.",
+      "Blockfest shortlists eligible entries from the week's challenge, and the shortlist goes to a public vote on the winners page. You vote with your email address, and a six digit code sent to it verifies your vote. It is one vote per email address each round, and the creator with the most valid votes wins Community Favourite and the weekly prize.",
+  },
+  {
+    question: "How do I vote for Community Favourite?",
+    answer:
+      "Open the winners page on Sunday, pick your favourite from the shortlist and enter your email address. A six digit code arrives in your inbox; type it in and your vote is cast. Votes close on Sunday evening.",
   },
   {
     question: "How is Creator of the Week chosen?",

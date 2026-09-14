@@ -9,6 +9,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { monicaFaqs } from "@/lib/campaigns";
 import {
   monicaRules,
   monicaRulesOpenPoints,
@@ -21,6 +22,14 @@ const allText = monicaRules
     ...section.paragraphs,
     ...(section.table ? section.table.rows.flat() : []),
   ])
+  .join(" ")
+  .toLowerCase();
+
+/* The FAQ answers restate these terms in plainer words, which is exactly
+   where an undeliverable promise slips back in after the rules were made
+   careful. The guard below scans them alongside the rules. */
+const faqText = monicaFaqs
+  .map((faq) => faq.answer)
   .join(" ")
   .toLowerCase();
 
@@ -56,9 +65,27 @@ describe("the Community Favourite promise", () => {
   it("never promises one vote per person", () => {
     // The promise that cannot be kept. Without accounts it is not deliverable,
     // and Nigerian carrier CGNAT means IP cannot stand in for a person. Saying
-    // it here would hand a losing creator a commitment to hold us to.
-    expect(allText).not.toContain("one vote per person");
-    expect(allText).not.toContain("one vote each");
+    // it here would hand a losing creator a commitment to hold us to. The FAQ
+    // answers are scanned too, because a promise dropped from the rules reads
+    // as kept if a friendlier page still makes it.
+    for (const text of [allText, faqText]) {
+      expect(text).not.toContain("one vote per person");
+      expect(text).not.toContain("one vote each");
+    }
+  });
+
+  it("scopes the vote to an email address, the unit we can actually verify", () => {
+    // The deliverable version of the promise above: an inbox can be verified
+    // with a code, a person cannot. The copy must say the deliverable one.
+    expect(allText).toContain("per email address");
+  });
+
+  it("publishes the tie rule before a tie happens", () => {
+    // Ties are settled by the week's recorded standings, the snapshot the
+    // engine requires before a winner can be published. A tiebreak invented
+    // after two creators are level is a decision; one published before is a
+    // rule.
+    expect(allText).toContain("that week's recorded standings");
   });
 });
 

@@ -16,7 +16,7 @@
  * guessed at. An invented eligibility age is worse than an honest gap.
  */
 
-export const MONICA_RULES_VERSION = "1.1";
+export const MONICA_RULES_VERSION = "1.2";
 
 /** ISO date. Rendered in the event's own timezone. */
 export const MONICA_RULES_UPDATED = "2026-09-14";
@@ -128,6 +128,7 @@ export const monicaRules: RuleSection[] = [
     paragraphs: [
       "Weekly awards are announced each Sunday. The same creator cannot win Creator of the Week more than once, so the award reaches more creators across the campaign.",
       "Community Favourite is shortlisted by Blockfest Africa and decided by public vote. The creator with the highest number of valid votes wins. Votes we believe to have been manipulated are set aside.",
+      "Voting takes place on this site, and is one vote per email address per round. A vote counts once the address it was cast from is verified. Where entries finish level on valid votes, the tie is broken by that week's recorded standings, with the higher points total winning. If a round ends with no valid votes, the winner is selected by Blockfest Africa.",
       "The final leaderboard is settled on total points. Where creators are level, the order is decided by who reached that total first, then by the number of approved entries, and then at our discretion.",
       "Winning a weekly award does not remove you from the final leaderboard.",
     ],

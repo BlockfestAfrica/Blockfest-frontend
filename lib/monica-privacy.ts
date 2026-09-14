@@ -25,12 +25,18 @@
  * while somebody still wants them, reaches the same practical place and is
  * defensible, because the thing that makes open-ended retention lawful is the
  * standing ability to end it.
+ *
+ * Voters are covered here too, since 1.1. The Community Favourite vote takes
+ * an email address from people who never registered as creators and were never
+ * shown the registration form, so the only notice they can rely on is this
+ * one, and a notice that described creators alone would read as a complete
+ * account while omitting them.
  */
 
-export const MONICA_PRIVACY_VERSION = "1.0";
+export const MONICA_PRIVACY_VERSION = "1.1";
 
 /** ISO date. Rendered in the event's own timezone. */
-export const MONICA_PRIVACY_UPDATED = "2026-09-12";
+export const MONICA_PRIVACY_UPDATED = "2026-09-14";
 
 /** Where a request about personal data goes. */
 export const PRIVACY_CONTACT = "partnership@blockfestafrica.com";
@@ -131,6 +137,16 @@ export const monicaPrivacySections: PrivacySection[] = [
     paragraphs: [
       "Your social handles and your entries are already public, because the campaign runs on your own accounts. Submitting a link does not make anything public that was not already.",
       "If you appear on a leaderboard or win, we will show the name and handle you registered with. We will not publish your email address, phone number or location.",
+    ],
+  },
+  {
+    id: "voting",
+    title: "If you vote for Community Favourite",
+    paragraphs: [
+      "Anyone can vote for Community Favourite, not only registered creators, so this section is for voters. Casting a vote collects your email address, which we use to send you a verification code and to enforce one vote per email address per round. A vote counts only once its address is verified.",
+      "Alongside the vote we record a hashed form of your IP address and your browser's user agent. These are signals a person reviews when a round's votes look manipulated. They are never used as automatic gates, and no vote is rejected by a machine on the strength of them.",
+      "The verification code itself is stored only as a hash, so we cannot read it back, and it is cleared as soon as it is used.",
+      "Vote records are kept for the campaign's dispute window, so a contested result can be checked against the votes that produced it. A vote removed in review keeps its record, with the reason for the removal, for the same purpose.",
     ],
   },
   {

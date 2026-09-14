@@ -137,6 +137,27 @@ describe("what the notice promises about the sponsor", () => {
   });
 });
 
+describe("what the notice promises voters", () => {
+  /**
+   * Voters never see the registration form, so this section is the only
+   * notice they get. Its two load-bearing promises are that the IP address
+   * and user agent are hashed signals a person reviews, never automatic
+   * gates, and that the vote is scoped to an email address per round. Losing
+   * either in an edit would be silent, the same way the automatic items
+   * above would be.
+   */
+  it("covers the vote's data, hashed and reviewed by a person", () => {
+    const voting = monicaPrivacySections.find((s) => s.id === "voting");
+    expect(voting).toBeTruthy();
+    const text = voting!.paragraphs.join(" ");
+    expect(text).toMatch(/hashed/i);
+    expect(text).toMatch(/never used as automatic gates/i);
+    expect(text).toContain("one vote per email address per round");
+    expect(text).toMatch(/stored only as a hash/i);
+    expect(text).toMatch(/keeps its record/i);
+  });
+});
+
 describe("house style", () => {
   it("uses no em dashes", () => {
     expect(allText).not.toContain("—");

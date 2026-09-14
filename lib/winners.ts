@@ -37,6 +37,20 @@ export interface ShortlistEntry {
   name: string;
   weekNo: number;
   links: { platform: string; url: string }[];
+  /**
+   * The ballot's coordinates, public on purpose. Casting a vote has to name
+   * a round and a seat on it, and both ids identify those objects rather
+   * than a person. entry_id stays unpublished: it is the creator-side key
+   * and it is on the never-publish list below.
+   */
+  roundId: string;
+  nomineeId: string;
+  /**
+   * When the round stops taking votes, as an ISO string. The page compares
+   * it against now to decide whether to render the vote controls; the
+   * engine re-checks it on every cast, so this copy is presentation only.
+   */
+  closesAt: string;
 }
 
 /**
@@ -126,6 +140,9 @@ export async function currentShortlist(): Promise<ShortlistEntry[]> {
       SELECT
         c.full_name AS display_name,
         ch.week_no,
+        r.id AS round_id,
+        n.id AS nominee_id,
+        r.closes_at,
         COALESCE(
           (
             SELECT json_agg(json_build_object('platform', s.platform, 'url', s.url)
@@ -150,10 +167,21 @@ export async function currentShortlist(): Promise<ShortlistEntry[]> {
 
     return (result.rows ?? []).map((row) => {
       const r = row as Record<string, unknown>;
+      // neon-http hands a timestamptz back as a string and PGlite as a
+      // Date; both are pushed through Date so the page always compares one
+      // shape, and an unparseable value becomes the empty string, which the
+      // page reads as not open rather than open forever.
+      const closes =
+        r.closes_at instanceof Date
+          ? r.closes_at
+          : new Date(String(r.closes_at ?? ""));
       return {
         name: String(r.display_name ?? "").trim(),
         weekNo: Number(r.week_no ?? 0),
         links: toLinks(r.links),
+        roundId: String(r.round_id ?? ""),
+        nomineeId: String(r.nominee_id ?? ""),
+        closesAt: Number.isNaN(closes.getTime()) ? "" : closes.toISOString(),
       };
     });
   } catch (error) {
