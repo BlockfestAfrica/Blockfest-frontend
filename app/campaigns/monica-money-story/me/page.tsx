@@ -1,5 +1,6 @@
 import { HandleFix } from "@/components/campaigns/handle-fix";
 import { pointSourceLabel } from "@/lib/point-sources";
+import { PointsHistory } from "@/components/campaigns/points-history";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
@@ -497,41 +498,21 @@ export default async function MonicaCreatorPage() {
                   correct. Refresh in a moment.
                 </p>
               ) : (
-                <ul className="mt-5 divide-y divide-line overflow-hidden rounded-xl border border-line">
-                  {history.map((movement) => (
-                    <li
-                      key={movement.id}
-                      className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-4"
-                    >
-                      <span className="text-sm font-semibold text-white">
-                        {pointSourceLabel(movement.source)}
-                        {movement.weekNo ? ` · week ${movement.weekNo}` : ""}
-                      </span>
-                      {/* Signed, because a correction is a negative row and
-                          showing it as a bare number would read as an award. */}
-                      <span
-                        className={`ml-auto shrink-0 text-base font-bold tabular-nums ${
-                          movement.points < 0 ? "text-red-300" : "text-white"
-                        }`}
-                      >
-                        {movement.points > 0 ? "+" : ""}
-                        {movement.points}
-                      </span>
-                      <span className="w-full text-sm text-ink-3">
-                        {movement.at.toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "long",
-                          timeZone: LAGOS,
-                        })}
-                      </span>
-                      {movement.note && (
-                        <p className="w-full text-sm leading-relaxed text-ink-2">
-                          {movement.note}
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <PointsHistory
+                  movements={history.map((movement) => ({
+                    id: movement.id,
+                    label: `${pointSourceLabel(movement.source)}${
+                      movement.weekNo ? ` · week ${movement.weekNo}` : ""
+                    }`,
+                    points: movement.points,
+                    dateLabel: movement.at.toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "long",
+                      timeZone: LAGOS,
+                    }),
+                    note: movement.note ?? null,
+                  }))}
+                />
               )}
             </SectionCard>
           )}

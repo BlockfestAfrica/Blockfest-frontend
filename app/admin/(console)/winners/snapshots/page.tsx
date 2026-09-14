@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { snapshotRows } from "@/lib/admin/winners";
 import { PageHeader, SectionCard } from "@/components/shared/panel";
+import { SnapshotTable } from "@/components/admin/snapshot-table";
 import { dateTime } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -69,39 +70,14 @@ export default async function SnapshotPage({
 
       {rows.length > 0 && (
         <SectionCard id="standings" className="mt-8">
-          <div className="overflow-x-auto rounded-lg border border-line">
-            <table className="w-full min-w-[28rem] border-collapse text-left">
-              <thead>
-                <tr className="border-b border-line text-xs font-semibold uppercase tracking-wider text-ink-3">
-                  <th className="px-4 py-3">Rank</th>
-                  <th className="px-4 py-3">Creator</th>
-                  <th className="px-4 py-3 text-right">Points</th>
-                  <th className="px-4 py-3 text-right">Approved</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr
-                    key={`${row.rank}-${row.name}`}
-                    className="border-b border-line last:border-0"
-                  >
-                    <td className="px-4 py-3 tabular-nums text-ink-2">
-                      {row.rank}
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-white">
-                      {row.name}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-ink-2">
-                      {row.points}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-ink-2">
-                      {row.approved}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <SnapshotTable
+            rows={rows.map((row) => ({
+              rank: row.rank,
+              name: row.name,
+              points: row.points,
+              approved: row.approved,
+            }))}
+          />
         </SectionCard>
       )}
     </>
