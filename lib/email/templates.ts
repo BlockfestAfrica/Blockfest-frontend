@@ -1,6 +1,6 @@
 import "server-only";
 import { CONTACT_EMAIL } from "@/lib/constants";
-import { monicaRoutes } from "@/lib/campaigns";
+import { monicaPointLadder, monicaRoutes } from "@/lib/campaigns";
 import type { Email } from "@/lib/email/client";
 
 /**
@@ -81,6 +81,21 @@ export function personalPage(): string {
 }
 
 /** First name only, and never empty: some people register with one word. */
+/**
+ * The tier line, derived rather than typed.
+ *
+ * This sentence carried the old 100/200/300 ladder into every approval email
+ * for a day after the rules changed to 100/150/200, which is what a second
+ * copy of a number does. monicaPointLadder is the same array the page and the
+ * engine read.
+ */
+const LADDER_LINE = `Posting the same piece on another platform earns more for the same entry: ${monicaPointLadder
+  .map(
+    (tier) =>
+      `${tier.platforms} platform${tier.platforms > 1 ? "s" : ""} is ${tier.points} points`,
+  )
+  .join(", ")}.`;
+
 export function firstName(fullName: string): string {
   const first = fullName.trim().split(/\s+/)[0];
   return first && first.length > 0 ? first : "there";
@@ -281,7 +296,7 @@ export function approvalEmail(params: {
       ``,
       earned,
       ``,
-      `Posting the same piece on another platform earns more for the same entry: one platform is 100 points, two is 200, three is 300.`,
+      LADDER_LINE,
       ``,
       `Your page: ${params.personalPage}`,
     ].join("\n"),
@@ -294,9 +309,7 @@ export function approvalEmail(params: {
         ),
         boxed("Your points", `${params.pointsTotal}`),
         p(escape(earned)),
-        quiet(
-          "Posting the same piece on another platform earns more for the same entry: one platform is 100 points, two is 200, three is 300.",
-        ),
+        quiet(LADDER_LINE),
       ].join(""),
       action: { label: "See where you stand", href: params.personalPage },
     }),
@@ -407,6 +420,230 @@ export function reissueEmail(params: {
         ),
       ].join(""),
       action: { label: "Open your page", href: params.personalLink },
+    }),
+  };
+}
+
+/**
+ * A creator asked for their handle to be corrected.
+ *
+ * Sent to the team, not the creator: a request that sits unseen is a creator
+ * stuck for days, because their submissions keep being refused against the
+ * old handle until somebody decides. The console shows the queue; this is
+ * what makes somebody open the console.
+ */
+export function handleRequestFiledEmail(params: {
+  to: string;
+  creatorName: string;
+  platform: string;
+  oldHandle: string;
+  requestedHandle: string;
+  reason: string;
+  consoleUrl: string;
+}): Email {
+  const line = `${params.creatorName} asked to change their ${params.platform} handle from @${params.oldHandle} to @${params.requestedHandle}.`;
+
+  return {
+    to: params.to,
+    toName: "Blockfest campaign team",
+    replyTo: CONTACT_EMAIL,
+    subject: `Handle correction requested: @${params.oldHandle} to @${params.requestedHandle}`,
+    text: [
+      line,
+      ``,
+      `Their reason: ${params.reason}`,
+      ``,
+      `Until somebody decides, their entries keep being checked against @${params.oldHandle}.`,
+      ``,
+      `Decide it here: ${params.consoleUrl}`,
+    ].join("\n"),
+    html: layout({
+      preheader: line,
+      heading: "A handle correction is waiting",
+      body: [
+        p(escape(line)),
+        boxed("Their reason", params.reason),
+        quiet(
+          `Until somebody decides, their entries keep being checked against @${escape(params.oldHandle)}.`,
+        ),
+      ].join(""),
+      action: { label: "Open the request", href: params.consoleUrl },
+    }),
+  };
+}
+
+/**
+ * The decision on a handle request, either way.
+ *
+ * Approved is an unblocking: the thing to do next is resubmit, so the mail
+ * says so. Rejected carries the admin's note verbatim, because the note is
+ * the decision and paraphrasing it would put words in the reviewer's mouth.
+ */
+export function handleRequestDecidedEmail(params: {
+  to: string;
+  fullName: string;
+  platform: string;
+  oldHandle: string;
+  requestedHandle: string;
+  approved: boolean;
+  /** Required on a rejection; the database refuses to record one without it. */
+  decisionNote: string | null;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+
+  if (params.approved) {
+    const line = `Your ${params.platform} handle is now @${params.requestedHandle}.`;
+    return {
+      to: params.to,
+      toName: params.fullName,
+      replyTo: CONTACT_EMAIL,
+      subject: `Fixed: your ${params.platform} handle is now @${params.requestedHandle}`,
+      text: [
+        `${name}, the correction you asked for has been made. ${line}`,
+        ``,
+        `If an entry of yours was refused because of the old handle, submit it again now: it is checked against the corrected one.`,
+        ``,
+        `Your page: ${params.personalPage}`,
+      ].join("\n"),
+      html: layout({
+        preheader: line,
+        heading: `Fixed, ${name}`,
+        body: [
+          p(escape(line)),
+          p(
+            "If an entry of yours was refused because of the old handle, submit it again now: it is checked against the corrected one.",
+          ),
+        ].join(""),
+        action: { label: "Submit your entry", href: params.personalPage },
+      }),
+    };
+  }
+
+  const note = params.decisionNote ?? "";
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `About your ${params.platform} handle request`,
+    text: [
+      `${name}, the change you asked for, @${params.oldHandle} to @${params.requestedHandle}, was not applied.`,
+      ``,
+      `The reviewer wrote: ${note}`,
+      ``,
+      `You can send a new request from your page if this does not settle it.`,
+      ``,
+      `Your page: ${params.personalPage}`,
+    ].join("\n"),
+    html: layout({
+      preheader: `The change to @${params.requestedHandle} was not applied.`,
+      heading: `About your request, ${name}`,
+      body: [
+        p(
+          `The change you asked for, @${escape(params.oldHandle)} to @${escape(params.requestedHandle)}, was not applied.`,
+        ),
+        boxed("The reviewer wrote", note),
+        p(
+          "You can send a new request from your page if this does not settle it.",
+        ),
+      ].join(""),
+      action: { label: "Open your page", href: params.personalPage },
+    }),
+  };
+}
+
+/**
+ * The team corrected a handle directly, without a request.
+ *
+ * Sent because the registration changed under the creator, and a change to
+ * what their entries are checked against is a change they must be able to
+ * dispute. Silence here is how a wrong correction goes unnoticed until an
+ * entry is refused for reasons the creator cannot see.
+ */
+export function handleCorrectedEmail(params: {
+  to: string;
+  fullName: string;
+  platform: string;
+  oldHandle: string;
+  newHandle: string;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const line = `Your ${params.platform} handle was corrected from @${params.oldHandle} to @${params.newHandle}.`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `Your ${params.platform} handle is now @${params.newHandle}`,
+    text: [
+      `${name}, ${line}`,
+      ``,
+      `Entries you submit are checked against the corrected handle from now on.`,
+      ``,
+      `If this is not right, reply to this email and we will look at it.`,
+      ``,
+      `Your page: ${params.personalPage}`,
+    ].join("\n"),
+    html: layout({
+      preheader: line,
+      heading: `A correction, ${name}`,
+      body: [
+        p(escape(line)),
+        p("Entries you submit are checked against the corrected handle from now on."),
+        quiet("If this is not right, reply to this email and we will look at it."),
+      ].join(""),
+      action: { label: "Open your page", href: params.personalPage },
+    }),
+  };
+}
+
+/**
+ * You won.
+ *
+ * Sent when a winner is PUBLISHED, never for a draft, because a draft can be
+ * changed and an email cannot. Names the amount and how it is paid, since
+ * "how do I get it" is the reply every winner otherwise sends.
+ */
+export function winnerEmail(params: {
+  to: string;
+  fullName: string;
+  weekNo: number;
+  categoryLabel: string;
+  prizeNaira: number;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const amount = new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(params.prizeNaira);
+  const line = `You are ${params.categoryLabel} for week ${params.weekNo}.`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `You won: ${params.categoryLabel}, week ${params.weekNo}`,
+    text: [
+      `${name}, ${line}`,
+      ``,
+      `The prize is ${amount}. It is paid to the Monica tag you gave when you registered, so check on your page that the tag is right.`,
+      ``,
+      `Your page: ${params.personalPage}`,
+    ].join("\n"),
+    html: layout({
+      preheader: `${line} The prize is ${amount}.`,
+      heading: `You won, ${name}`,
+      body: [
+        p(escape(line)),
+        boxed("The prize", amount),
+        p(
+          "It is paid to the Monica tag you gave when you registered, so check on your page that the tag is right.",
+        ),
+      ].join(""),
+      action: { label: "Check your Monica tag", href: params.personalPage },
     }),
   };
 }
