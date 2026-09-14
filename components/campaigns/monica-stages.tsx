@@ -1,8 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   MONICA_CAMPAIGN_DAYS,
   MONICA_FIRST_LEADERBOARD,
   monicaStages,
 } from "@/lib/campaigns";
+import { LiveResources } from "./live-resources";
 
 /**
  * The campaign, stage by stage.
@@ -12,6 +16,35 @@ import {
  * of zeroes reads as a broken feature; a dated promise reads as a schedule.
  */
 export function MonicaStages() {
+  /*
+   * Live week statuses over the static schedule.
+   *
+   * The admin opens a week on Monday and closes it on Saturday, and this
+   * page used to keep saying whatever was true at the last deploy. The
+   * fetch follows the resources pattern: the page stays static, the API
+   * returns only non-draft weeks, and nothing here renders until it
+   * arrives, so the server HTML never disagrees with the first paint.
+   */
+  const [weeks, setWeeks] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/campaigns/monica/challenges")
+      .then((response) => response.json())
+      .then((data) => {
+        if (cancelled || !Array.isArray(data.challenges)) return;
+        const map: Record<number, string> = {};
+        for (const row of data.challenges) map[row.weekNo] = row.status;
+        setWeeks(map);
+      })
+      .catch(() => {
+        // The static schedule carries the section.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     // Anchored, because the success screen sends a creator straight here.
     // "See the first challenge" landing at the top of the page and leaving
@@ -46,7 +79,10 @@ export function MonicaStages() {
              * number, the dates and a bar the shape of a title, because the
              * schedule is not the secret; the brief is.
              */
-            const revealed = stage.number === 1;
+            const status = weeks[stage.number];
+            // A week the database has opened or closed is revealed even if
+            // the deploy predates it; drafts never reach this component.
+            const revealed = stage.number === 1 || Boolean(status);
 
             return (
               <li
@@ -65,6 +101,20 @@ export function MonicaStages() {
                     <p className="mt-1.5 text-sm tabular-nums text-ink-2">
                       Days {stage.days[0]} to {stage.days[1]}
                     </p>
+                    {status === "active" && (
+                      <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-brand-gold/40 px-2.5 py-0.5 text-xs font-semibold text-brand-gold">
+                        <span
+                          className="h-1.5 w-1.5 rounded-full bg-brand-gold"
+                          aria-hidden="true"
+                        />
+                        Open now
+                      </p>
+                    )}
+                    {status === "closed" && (
+                      <p className="mt-2 inline-flex items-center rounded-full border border-line-2 px-2.5 py-0.5 text-xs font-semibold text-ink-3">
+                        Closed
+                      </p>
+                    )}
                   </div>
 
                   {revealed ? (
@@ -110,6 +160,10 @@ export function MonicaStages() {
             );
           })}
         </ol>
+
+        {/* The pack page's resources, rehomed: published from the console,
+            live within a minute, renders nothing while the list is empty. */}
+        <LiveResources />
 
         <div className="mt-10 rounded-xl border border-dashed border-line-2 p-6 sm:p-8">
           <p className="eyebrow text-ink-3">Leaderboard</p>

@@ -14,7 +14,9 @@ export function MonicaIntro() {
       className="section-y border-t border-line-2 bg-ground"
     >
       <div className="container-page">
-        <div className="max-w-2xl">
+        {/* Full container width by the owner's direction: the capped
+            measure left half the page empty beside the copy. */}
+        <div>
           <h2 id="intro-heading" className="text-display-sm font-bold text-white">
             Money has a story.
           </h2>

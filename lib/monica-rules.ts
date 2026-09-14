@@ -157,7 +157,7 @@ export const monicaRules: RuleSection[] = [
     title: "Decisions and changes",
     paragraphs: [
       "We may reject entries, withhold points and remove creators where these rules have been broken. Our decisions are final.",
-      `These rules may be amended during the campaign, for example as the final wording is settled. The current version is ${MONICA_RULES_VERSION}, and the version you agreed to is recorded when you register. Material changes will be announced on the campaign page.`,
+      "These rules may be amended during the campaign, for example as the final wording is settled. The rules you agreed to are recorded when you register. Material changes will be announced on the campaign page.",
     ],
   },
 ];
