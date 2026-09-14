@@ -251,6 +251,11 @@ const JOB_EDGE: Record<JobState, string> = {
 /**
  * One job: a bounded piece of work with a name and an outcome.
  *
+ * Rendered as a contained hairline card since the console relayout: the
+ * open-edge version, jobs as bare text with only a coloured left rule, was
+ * judged scattered against the /me page and the owner asked for the same
+ * containment here. The 2px status edge survives on the card's left border.
+ *
  * The header rail says what it is and where it stands. The body is how you do
  * it. The foot is what does it. A screen built from these reads as a list of
  * jobs, which is what an operations console is.
@@ -283,9 +288,12 @@ export function JobCard({
       id={id}
       aria-labelledby={`${id}-title`}
       // scroll-mt clears the sticky console bar when a job is linked to.
-      className={`scroll-mt-24 border-l-2 pl-4 sm:pl-5 ${JOB_EDGE[state]}`}
+      // A contained card, not an open edge: jobs rendered as bare text on the
+      // ground read as scattered prose, which is the exact complaint the /me
+      // rebuild answered. The status edge keeps its colour on the card's left.
+      className={`scroll-mt-24 overflow-hidden rounded-xl border border-line-2 border-l-2 bg-card ${JOB_EDGE[state]}`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line pb-3">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3 sm:px-5">
         <div className="min-w-0">
           {step && (
             <p
@@ -306,16 +314,19 @@ export function JobCard({
         {status && <div className="shrink-0">{status}</div>}
       </div>
 
-      {hint && (
-        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
-          {hint}
-        </p>
+      {(hint || children) && (
+        <div className="px-4 py-4 sm:px-5">
+          {hint && (
+            <p className="max-w-prose text-sm leading-relaxed text-ink-2">
+              {hint}
+            </p>
+          )}
+          {children && <div className={hint ? "mt-4" : ""}>{children}</div>}
+        </div>
       )}
 
-      {children && <div className="mt-4">{children}</div>}
-
       {foot && (
-        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+        <div className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-4 sm:px-5">
           {foot}
         </div>
       )}

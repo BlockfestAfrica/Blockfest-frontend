@@ -50,10 +50,10 @@ type Category = keyof typeof CATEGORY_LABEL;
  * headings, by remembering a gap.
  *
  * It is two jobs: freeze the standings on Saturday, announce the winners on
- * Sunday. Each is now an object with a name, a state on its edge, and a foot
- * containing the control that performs it. Nothing here is boxed: a fill over
- * this background lands a few values out of 255, which is the defect already
- * found and rejected once. The boundary is a coloured edge and two hairlines.
+ * Sunday. Each is an object with a name, a state on its edge, and a foot
+ * containing the control that performs it. JobCard renders that object as a
+ * contained hairline card since the console relayout, so the two jobs read
+ * as two things on the page rather than a run of text.
  */
 export function WinnersPanel({
   weekNo,
@@ -241,7 +241,7 @@ export function WinnersPanel({
       >
         <div className="space-y-4">
           {draft && (
-            <div className="rounded-lg border border-line-2 bg-card p-4">
+            <div className="rounded-lg border border-line bg-card-2 p-4">
               <p className="text-sm font-semibold text-white">
                 {draft.name}, {naira(draft.prizeNaira)}
               </p>

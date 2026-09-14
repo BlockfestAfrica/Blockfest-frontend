@@ -34,7 +34,7 @@ export default async function ToolsPage() {
   if (!admin.ok) return null;
 
   return (
-    <div className={SPACING.section}>
+    <div className={SPACING.page}>
       {/* One rhythm for the whole drawer, and the headline job wears the
           spine's "now" edge: reissuing a lost link is the tool somebody
           arrives here needing, the rest is periodic upkeep. */}

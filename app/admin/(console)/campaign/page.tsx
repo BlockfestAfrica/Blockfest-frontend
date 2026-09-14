@@ -3,6 +3,7 @@ import Link from "next/link";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { pauseState } from "@/lib/campaign-pause";
 import { PauseSwitch } from "@/components/admin/pause-switch";
+import { SectionCard } from "@/components/shared/panel";
 import { listChallenges } from "@/lib/admin/challenges";
 import { ChallengeEditor } from "@/components/admin/challenge-editor";
 import { listPointRules } from "@/lib/admin/point-rules";
@@ -66,14 +67,18 @@ export default async function CampaignPage() {
       {/* A fixed height across both states. The running form is tall and the
           paused state is one button, so without this, flipping the switch moves
           everything below it under whatever finger just tapped. */}
-      <div className="mt-8 min-h-[14rem]">
-        <PauseSwitch paused={pause.paused} />
-      </div>
+      <SectionCard id="pause" className="mt-10">
+        {/* The reservation sits on the content, inside the card padding, so
+            the running and paused states keep equal outer heights. */}
+        <div className="min-h-[14rem]">
+          <PauseSwitch paused={pause.paused} />
+        </div>
+      </SectionCard>
 
       {/* The weekly briefs, right where starting and stopping already lives,
           because writing Monday's brief is the other thing an owner does here
           every week (#67). */}
-      <div className="mt-12">
+      <div className="mt-10">
         <ChallengeEditor
           challenges={challenges.map((challenge) => ({
             id: challenge.id,
@@ -89,7 +94,7 @@ export default async function CampaignPage() {
         />
       </div>
 
-      <div className="mt-6">
+      <div className="mt-10">
         <PointRulesEditor rules={rules} weekBase={thisWeek?.basePoints ?? 100} />
       </div>
 

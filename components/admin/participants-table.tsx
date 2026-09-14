@@ -5,7 +5,6 @@ import { Coins } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
-  Panel,
   Pill,
   SectionHeading,
   Segmented,
@@ -225,7 +224,7 @@ export function ParticipantsTable({
            * the first is off screen, and the reviewer is scrolling sideways to
            * read a number. Cards say the same things down the page.
            */}
-          <ul className="mt-6 divide-y divide-line overflow-hidden rounded-xl border border-line md:hidden">
+          <ul className="mt-6 divide-y divide-line overflow-hidden rounded-lg border border-line md:hidden">
             {shown.map((row) => (
               <li key={row.enrolmentId} className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -321,7 +320,7 @@ export function ParticipantsTable({
             ))}
           </ul>
 
-          <div className="mt-6 hidden overflow-x-auto rounded-xl border border-line md:block">
+          <div className="mt-6 hidden overflow-x-auto rounded-lg border border-line bg-ground md:block">
             <table className="w-full min-w-[46rem] border-collapse text-left">
               <thead>
                 <tr className="border-b border-line">
@@ -462,7 +461,7 @@ export function ParticipantsTable({
        */}
       <div ref={awardRef} id="award-panel">
         {selected && (
-          <Panel tone="quiet" className="mt-8">
+          <div className="mt-8 border-t border-line-2 pt-6">
             <SectionHeading label="Points" title={selected.name} />
             <AwardRow
               /*
@@ -478,7 +477,7 @@ export function ParticipantsTable({
                 submitAward(selected.enrolmentId, source, points, note)
               }
             />
-          </Panel>
+          </div>
         )}
       </div>
     </div>

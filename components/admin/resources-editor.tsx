@@ -107,7 +107,7 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
     >
       <ul className="flex flex-col gap-2">
         {rows.map((row) => (
-          <li key={row.id} className="rounded-lg border border-line bg-card p-4">
+          <li key={row.id} className="rounded-lg border border-line p-4">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-semibold text-white">{row.title}</span>
               <Pill>{row.section}</Pill>
