@@ -7,8 +7,13 @@ import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
 import { MONICA_SLUG, monicaWeeklyPrizes } from "@/lib/campaigns";
-import { sendEmailQuietly } from "@/lib/email/client";
-import { personalPage, winnerEmail } from "@/lib/email/templates";
+import { sendEmail, sendEmailQuietly } from "@/lib/email/client";
+import {
+  nomineeResultEmail,
+  personalPage,
+  votingPage,
+  winnerEmail,
+} from "@/lib/email/templates";
 import { campaignCreators, creators } from "@/lib/db/client";
 import { eq } from "drizzle-orm";
 
@@ -134,10 +139,13 @@ export async function POST(request: NextRequest) {
 
     /*
      * The winner hears when it is PUBLISHED, never for a draft: a draft can
-     * be changed and an email cannot. Quietly, because the public page is
-     * live either way and a mail failure is a Monday follow-up, not a reason
-     * to fail the announcement.
+     * be changed and an email cannot. The announcement stands whatever the
+     * mail does, but the result now travels back to the console instead of
+     * dying in a log: a naira-prize winner who never heard is a failure the
+     * person announcing should see on the spot, not on Monday.
      */
+    let emailed: boolean | null = null;
+    let winnerName = "";
     if (publish && Boolean(row.published)) {
       const who = await getDb()
         .select({ email: creators.email, fullName: creators.fullName })
@@ -148,7 +156,8 @@ export async function POST(request: NextRequest) {
         .catch(() => []);
       const winner = who[0];
       if (winner) {
-        await sendEmailQuietly(
+        winnerName = winner.fullName;
+        const sent = await sendEmail(
           winnerEmail({
             to: winner.email,
             fullName: winner.fullName,
@@ -157,14 +166,67 @@ export async function POST(request: NextRequest) {
             prizeNaira,
             personalPage: personalPage(),
           }),
-          `winner announcement week ${weekNo}`,
         );
+        emailed = sent.sent;
+        if (!sent.sent) {
+          logError(
+            "admin/winners",
+            new Error(`winner mail week ${weekNo} not sent: ${sent.reason ?? ""}`),
+          );
+        }
+      } else {
+        emailed = false;
+      }
+    }
+
+    /*
+     * A Community Favourite publish also closes a public contest, and the
+     * nominees who campaigned and did not win find out from this or from
+     * silence. Fail-soft: the result is public either way.
+     */
+    if (
+      publish &&
+      Boolean(row.published) &&
+      category === "community_favourite" &&
+      winnerName
+    ) {
+      try {
+        const others = await getDb().execute(sql`
+          SELECT c.email, c.full_name
+            FROM vote_rounds r
+            JOIN vote_round_nominees n ON n.round_id = r.id
+            JOIN challenge_entries ce  ON ce.id = n.entry_id
+            JOIN campaign_creators cc  ON cc.id = ce.campaign_creator_id
+            JOIN creators c            ON c.id = cc.creator_id
+            JOIN campaigns cp          ON cp.id = r.campaign_id
+           WHERE cp.slug = ${MONICA_SLUG}
+             AND r.week_no = ${weekNo}
+             AND n.withdrawn_at IS NULL
+             AND cc.id <> ${enrolmentId}::uuid
+        `);
+        for (const other of others.rows ?? []) {
+          const person = other as { email?: string; full_name?: string };
+          if (!person.email) continue;
+          await sendEmailQuietly(
+            nomineeResultEmail({
+              to: person.email,
+              fullName: person.full_name ?? "",
+              weekNo,
+              winnerName,
+              votingUrl: votingPage(),
+            }),
+            "nominee result notice",
+          );
+        }
+      } catch (error) {
+        logError("admin/winners nominee result mail", error);
       }
     }
 
     return NextResponse.json({
       ok: true,
       published: Boolean(row.published),
+      emailed,
     });
   } catch (error) {
     const code = pgErrorCode(error);

@@ -7,6 +7,9 @@ import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { allow } from "@/lib/throttle";
 import { pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
+import { POINT_SOURCE_LABELS } from "@/lib/point-sources";
+import { sendEmailQuietly } from "@/lib/email/client";
+import { awardEmail, personalPage } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -144,6 +147,41 @@ export async function POST(request: NextRequest) {
       sql`SELECT * FROM award_points(${enrolmentId}::uuid, ${source}::ledger_source, ${points}::integer, ${note}::text, ${admin.admin.adminId}::uuid, ${parsed.data.entryId ?? null}::uuid)`,
     );
     const row = (result.rows?.[0] ?? {}) as { points_total?: number };
+
+    /*
+     * The movement, announced to its owner. The note is mandatory on every
+     * manual award precisely because it answers the dispute; a ledger row
+     * only a creator who thinks to scroll finds is the note unanswered.
+     * Fail-soft after the commit, like every creator mail.
+     */
+    try {
+      const who = await getDb().execute(sql`
+        SELECT c.email, c.full_name
+          FROM campaign_creators cc
+          JOIN creators c ON c.id = cc.creator_id
+         WHERE cc.id = ${enrolmentId}::uuid
+      `);
+      const person = (who.rows?.[0] ?? null) as {
+        email?: string;
+        full_name?: string;
+      } | null;
+      if (person?.email) {
+        await sendEmailQuietly(
+          awardEmail({
+            to: person.email,
+            fullName: person.full_name ?? "",
+            sourceLabel: POINT_SOURCE_LABELS[source] ?? source,
+            points,
+            note,
+            pointsTotal: Number(row.points_total ?? 0),
+            personalPage: personalPage(),
+          }),
+          "manual award notice",
+        );
+      }
+    } catch (error) {
+      logError("admin/award notice mail", error);
+    }
 
     return NextResponse.json({
       ok: true,

@@ -6,9 +6,18 @@ import { currentCreator } from "@/lib/creator-session";
 import { isPgError } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
 import { allowKey } from "@/lib/throttle";
-import { CAMPAIGN_PLATFORMS } from "@/lib/campaigns";
+import {
+  CAMPAIGN_PLATFORMS,
+  platformLabels,
+  type CampaignPlatform,
+} from "@/lib/campaigns";
 import { sendEmailQuietly } from "@/lib/email/client";
-import { handleRequestFiledEmail } from "@/lib/email/templates";
+import {
+  handleFixAckEmail,
+  handleRequestFiledEmail,
+  personalPage,
+  siteUrl,
+} from "@/lib/email/templates";
 import { handlesForEnrolment } from "@/lib/creator-session";
 import { CONTACT_EMAIL } from "@/lib/constants";
 
@@ -104,10 +113,47 @@ export async function POST(request: NextRequest) {
         oldHandle,
         requestedHandle: parsed.data.handle.replace(/^@+/, "").toLowerCase(),
         reason: parsed.data.reason,
-        consoleUrl: "https://blockfestafrica.com/admin/participants",
+        /* From the configured site, not a literal: a hardcoded production
+           URL in a preview's mail points the reviewer at the wrong console. */
+        consoleUrl: `${siteUrl()}/admin/participants`,
       }),
       "handle request notification",
     );
+
+    /*
+     * And tell the creator it is filed. The gap between filing and deciding
+     * is exactly when they retry the refused entry and conclude the site is
+     * broken; the mail says hold that platform's entry instead. Fail-soft,
+     * address read fresh from the enrolment.
+     */
+    try {
+      const who = await getDb().execute(sql`
+        SELECT c.email, c.full_name
+          FROM campaign_creators cc
+          JOIN creators c ON c.id = cc.creator_id
+         WHERE cc.id = ${creator.enrolmentId}::uuid
+      `);
+      const person = (who.rows?.[0] ?? null) as {
+        email?: string;
+        full_name?: string;
+      } | null;
+      if (person?.email) {
+        await sendEmailQuietly(
+          handleFixAckEmail({
+            to: person.email,
+            fullName: person.full_name ?? creator.name,
+            platformLabel:
+              platformLabels[parsed.data.platform as CampaignPlatform],
+            oldHandle,
+            requestedHandle: parsed.data.handle.replace(/^@+/, "").toLowerCase(),
+            personalPage: personalPage(),
+          }),
+          "handle request receipt",
+        );
+      }
+    } catch (error) {
+      logError("campaign/request-handle-fix receipt mail", error);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {

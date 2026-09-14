@@ -6,6 +6,8 @@ import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { isPgError } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
+import { sendEmailQuietly } from "@/lib/email/client";
+import { personalPage, repriceEmail } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,11 +54,49 @@ export async function POST(request: NextRequest) {
       SELECT * FROM reprice_entry(${parsed.data.entryId}::uuid, ${admin.admin.adminId}::uuid, ${parsed.data.reason}::text)
     `);
     const row = (result.rows?.[0] ?? {}) as { points_before?: number; points_after?: number };
-    return NextResponse.json({
-      ok: true,
-      before: Number(row.points_before ?? 0),
-      after: Number(row.points_after ?? 0),
-    });
+    const before = Number(row.points_before ?? 0);
+    const after = Number(row.points_after ?? 0);
+
+    /*
+     * Tell the creator, but only when the number actually moved: a no-op
+     * reprice is bookkeeping, and mailing "nothing changed" trains people
+     * to ignore the mails that matter. Fail-soft after the commit.
+     */
+    if (before !== after) {
+      try {
+        const who = await getDb().execute(sql`
+          SELECT c.email, c.full_name, ch.week_no
+            FROM challenge_entries ce
+            JOIN challenges ch        ON ch.id = ce.challenge_id
+            JOIN campaign_creators cc ON cc.id = ce.campaign_creator_id
+            JOIN creators c           ON c.id = cc.creator_id
+           WHERE ce.id = ${parsed.data.entryId}::uuid
+        `);
+        const person = (who.rows?.[0] ?? null) as {
+          email?: string;
+          full_name?: string;
+          week_no?: number;
+        } | null;
+        if (person?.email) {
+          await sendEmailQuietly(
+            repriceEmail({
+              to: person.email,
+              fullName: person.full_name ?? "",
+              weekNo: Number(person.week_no ?? 0),
+              before,
+              after,
+              reason: parsed.data.reason,
+              personalPage: personalPage(),
+            }),
+            "reprice notice",
+          );
+        }
+      } catch (error) {
+        logError("admin/reprice notice mail", error);
+      }
+    }
+
+    return NextResponse.json({ ok: true, before, after });
   } catch (error) {
     for (const [code, raise, message] of KNOWN) {
       if (isPgError(error, code, raise)) {

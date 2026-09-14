@@ -13,6 +13,8 @@ import {
 import { MONICA_SLUG } from "@/lib/campaigns";
 import { isPgError } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
+import { sendEmailQuietly } from "@/lib/email/client";
+import { voteReceiptEmail } from "@/lib/email/templates";
 
 /** postgres over HTTP needs Node; see lib/db/client. */
 export const runtime = "nodejs";
@@ -108,5 +110,52 @@ export async function POST(request: NextRequest) {
   // report deliberately stops here. Held is still a verified vote in the
   // voter's eyes and in the engine's audit trail; a human admits or removes
   // it, and the voter is never the one told the cap fired.
+
+  /*
+   * The receipt, after the verdict and blind to it. The lookup reads the
+   * vote's nominee without touching status or held_at, so a counted vote
+   * and a held one produce byte-identical mail, which is the same uniform
+   * rule the response line above enforces. Fail-soft, to the address as
+   * typed: a lost receipt costs nothing, the vote is already in.
+   */
+  try {
+    const meta = await getDb().execute(sql`
+      SELECT c.full_name AS display_name, ch.week_no
+        FROM votes v
+        JOIN vote_round_nominees n ON n.id = v.nominee_id
+        JOIN challenge_entries ce  ON ce.id = n.entry_id
+        JOIN challenges ch         ON ch.id = ce.challenge_id
+        JOIN campaign_creators cc  ON cc.id = ce.campaign_creator_id
+        JOIN creators c            ON c.id = cc.creator_id
+       WHERE v.round_id = ${input.roundId}::uuid
+         AND v.voter_email_canonical = ${emailCanonical}
+         AND v.status = 'counted'
+         AND v.verified_at IS NOT NULL
+       ORDER BY v.created_at DESC
+       LIMIT 1
+    `);
+    /* status = 'counted' keeps removed rows out: an unswept voter who cast
+       again would otherwise race two rows for rows[0] and the receipt could
+       name their PREVIOUS choice. A held vote still has status 'counted'
+       and a verified_at, so the filter changes nothing between counted and
+       held, which is the uniformity the comment above promises. */
+    const row = (meta.rows?.[0] ?? null) as {
+      display_name?: string;
+      week_no?: number;
+    } | null;
+    if (row?.display_name) {
+      await sendEmailQuietly(
+        voteReceiptEmail({
+          to: input.email,
+          nomineeName: row.display_name,
+          weekNo: Number(row.week_no ?? 0),
+        }),
+        "vote receipt",
+      );
+    }
+  } catch (error) {
+    logError("campaign/vote receipt mail", error);
+  }
+
   return NextResponse.json({ ok: true, message: "Your vote is in." });
 }
