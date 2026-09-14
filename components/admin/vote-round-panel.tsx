@@ -465,6 +465,19 @@ export function VoteRoundPanel({
         )
       }
     >
+      {/* The page the voters see, one click from the card that runs it:
+          the shortlist URL is otherwise something an owner reconstructs
+          from memory on a Sunday. */}
+      <p className="mb-4">
+        <a
+          href="/campaigns/monica-money-story/winners#shortlist"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+        >
+          Open the public voting page
+        </a>
+      </p>
       {!round ? (
         <div className={SPACING.section}>
           {candidates.length === 0 ? (

@@ -73,10 +73,21 @@ export default async function WinnersPage() {
             Winners
           </h1>
 
+          {/* Two named sections, present even while empty. The page holds
+              two different things, announced winners and the weekly vote,
+              and an unlabelled empty page taught neither: a visitor saw
+              "Winners" and two loose paragraphs with no shape of what
+              arrives where. */}
+          <section id="weekly" className="mt-12 scroll-mt-24">
+            <SectionHeading
+              label="Every Sunday"
+              title="Weekly winners"
+              hint="Creator of the Week, chosen by Blockfest Africa, and Community Favourite, decided by the public vote below. Both land here each Sunday."
+            />
           {weeks.length === 0 ? (
-            <p className="mt-8 max-w-prose text-base leading-relaxed text-ink-3">
-              Nothing announced yet. Weekly winners are announced on Sundays,
-              starting {MONICA_FIRST_LEADERBOARD}.{" "}
+            <p className="mt-6 max-w-prose text-base leading-relaxed text-ink-3">
+              Nothing announced yet. The first winners appear here on{" "}
+              {MONICA_FIRST_LEADERBOARD}.{" "}
               <Link
                 href={monicaRoutes.leaderboard}
                 className="text-link underline underline-offset-2 hover:text-white"
@@ -86,7 +97,7 @@ export default async function WinnersPage() {
               moves as entries are approved.
             </p>
           ) : (
-            <div className="mt-10 flex flex-col gap-10">
+            <div className="mt-8 flex flex-col gap-10">
               {weeks.map((week) => (
                 <section key={week}>
                   <h2 className="text-xl font-bold text-white">Week {week}</h2>
@@ -144,6 +155,7 @@ export default async function WinnersPage() {
               ))}
             </div>
           )}
+          </section>
 
           {/*
            * The shortlist.
@@ -153,15 +165,31 @@ export default async function WinnersPage() {
            * and listing them three times would split their own vote against
            * themselves. Same grouping rule the leaderboard uses.
            */}
-          {shortlist.length > 0 && (
-            <div id="shortlist" className="mt-16">
-              <SectionHeading
-                // The eyebrow must not say "Open now" above a line that says
-                // voting has closed; the label follows the round's state.
-                label={votingOpen ? "Open now" : "This week"}
-                title="Community Favourite shortlist"
-                hint="Vote for your favourite below. One vote per email address, verified by a six digit code. The creator with the most valid votes wins."
-              />
+          <section id="shortlist" className="mt-16 scroll-mt-24">
+            <SectionHeading
+              // The eyebrow must not say "Open now" above a line that says
+              // voting has closed; the label follows the round's state.
+              label={votingOpen ? "Open now" : "The public vote"}
+              title="Community Favourite vote"
+              hint="Vote for your favourite below. One vote per email address, verified by a six digit code. The creator with the most valid votes wins."
+            />
+          {shortlist.length === 0 ? (
+            <p className="mt-6 max-w-prose text-base leading-relaxed text-ink-3">
+              No vote is open right now. Each week&apos;s shortlist appears
+              here on Sunday morning and voting runs until Sunday evening,
+              Lagos time. Follow{" "}
+              <a
+                href="https://x.com/blockfestafrica"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-link underline underline-offset-2 hover:text-white"
+              >
+                Blockfest on X
+              </a>{" "}
+              for the moment it opens.
+            </p>
+          ) : (
+            <div>
               {!votingOpen && (
                 <p className="mt-4 text-sm text-ink-3">
                   Voting for week {shortlist[0].weekNo} has closed.
@@ -211,6 +239,7 @@ export default async function WinnersPage() {
               </ul>
             </div>
           )}
+          </section>
 
           <p className="mt-14 max-w-prose text-sm leading-relaxed text-ink-3">
             Creator of the Week is selected by Blockfest Africa; Community

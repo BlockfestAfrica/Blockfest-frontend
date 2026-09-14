@@ -284,6 +284,13 @@ export default async function MonicaCreatorPage() {
               className="whitespace-nowrap text-link underline underline-offset-2 hover:text-white"
             >
               See the leaderboard
+            </Link>{" "}
+            <span aria-hidden="true">·</span>{" "}
+            <Link
+              href={`${monicaRoutes.winners}#shortlist`}
+              className="whitespace-nowrap text-link underline underline-offset-2 hover:text-white"
+            >
+              Winners and the vote
             </Link>
           </p>
 

@@ -172,7 +172,14 @@ export function MonicaStages() {
           </p>
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
             The leaderboard moves as entries are approved. Weekly winners are
-            announced on Sundays.
+            announced on Sundays, and the Community Favourite vote runs on
+            the winners page every Sunday.{" "}
+            <a
+              href="/campaigns/monica-money-story/winners#shortlist"
+              className="text-link underline underline-offset-2 hover:text-white"
+            >
+              Winners and the vote
+            </a>
           </p>
         </div>
       </div>
