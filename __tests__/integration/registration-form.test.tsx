@@ -191,7 +191,10 @@ describe("when the server returns no referral code", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(screen.getByText(/You are in/i), { timeout: 5000 }).toBeTruthy());
+    await waitFor(
+      () => expect(screen.getByText(/You are in/i)).toBeTruthy(),
+      { timeout: 5000 },
+    );
     expect(document.body.innerHTML).not.toContain("ref=null");
   });
 });
@@ -381,8 +384,12 @@ describe("a failure that belongs to the whole form", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() =>
-      expect(document.activeElement).toBe(screen.getByLabelText("Phone number"), { timeout: 5000 }),
+    await waitFor(
+      () =>
+        expect(document.activeElement).toBe(
+          screen.getByLabelText("Phone number"),
+        ),
+      { timeout: 5000 },
     );
   });
 });
@@ -430,7 +437,10 @@ describe("the marketing opt-in", () => {
     fill();
     fireEvent.submit(screen.getByRole("button", { name: /register/i }));
 
-    await waitFor(() => expect(screen.getByText(/You are in/i), { timeout: 5000 }).toBeTruthy());
+    await waitFor(
+      () => expect(screen.getByText(/You are in/i)).toBeTruthy(),
+      { timeout: 5000 },
+    );
   });
 
   it("carries the privacy notice version that was on screen", async () => {

@@ -69,7 +69,7 @@ export default function MonicaRulesPage() {
             {CAMPAIGN.name}
           </Link>
 
-          <div className="mt-6 max-w-2xl">
+          <div className="mt-6 max-w-3xl">
             <p className="eyebrow text-brand-gold">{CAMPAIGN.name}</p>
             <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Campaign rules
@@ -80,7 +80,7 @@ export default function MonicaRulesPage() {
             </p>
           </div>
 
-          <div className="mt-12 max-w-2xl">
+          <div className="mt-16 max-w-3xl">
             {monicaRulesOpenPoints.length > 0 && (
               <div className="rounded-xl border border-brand-gold/30 bg-brand-gold/5 p-5 sm:p-6">
                 <p className="text-sm font-semibold text-brand-gold">
@@ -127,7 +127,7 @@ export default function MonicaRulesPage() {
               </ol>
             </nav>
 
-            <div className="mt-14 flex flex-col gap-12">
+            <div className="mt-16 flex flex-col gap-12">
               {monicaRules.map((section, i) => (
                 <section
                   key={section.id}
@@ -154,7 +154,7 @@ export default function MonicaRulesPage() {
               ))}
             </div>
 
-            <p className="mt-14 text-sm leading-relaxed text-ink-4">
+            <p className="mt-16 text-sm leading-relaxed text-ink-4">
               How your details are handled is set out in the{" "}
               <Link
                 href={monicaRoutes.privacy}

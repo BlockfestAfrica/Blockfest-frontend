@@ -56,7 +56,7 @@ export default function MonicaPrivacyPage() {
             {CAMPAIGN.name}
           </Link>
 
-          <div className="mt-6 max-w-2xl">
+          <div className="mt-6 max-w-3xl">
             <p className="eyebrow text-brand-gold">{CAMPAIGN.name}</p>
             <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Campaign privacy notice
@@ -74,7 +74,7 @@ export default function MonicaPrivacyPage() {
             </p>
           </div>
 
-          <div className="mt-12 max-w-2xl">
+          <div className="mt-16 max-w-3xl">
             <section id="collected" className="scroll-mt-24">
               <h2 className="text-xl font-bold text-white">
                 What we collect, and why
@@ -106,7 +106,7 @@ export default function MonicaPrivacyPage() {
               </ul>
             </section>
 
-            <div className="mt-14 flex flex-col gap-12">
+            <div className="mt-16 flex flex-col gap-12">
               {monicaPrivacySections.map((section) => (
                 <section
                   key={section.id}
@@ -130,7 +130,7 @@ export default function MonicaPrivacyPage() {
               ))}
             </div>
 
-            <p className="mt-14 text-sm leading-relaxed text-ink-4">
+            <p className="mt-16 text-sm leading-relaxed text-ink-4">
               Requests and questions go to{" "}
               <a
                 href={`mailto:${PRIVACY_CONTACT}`}
