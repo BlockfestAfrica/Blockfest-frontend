@@ -48,6 +48,26 @@ export function sameOrigin(request: NextRequest): boolean {
 }
 
 /**
+ * The guard for side-effect-free GET downloads a link click must reach.
+ *
+ * sameOrigin fails closed on a missing Origin, which is right for mutations
+ * and wrong for a download link: a same-origin GET navigation carries NO
+ * Origin header in any browser, so the payout export answered 403 through
+ * the console's own links, every time, for everyone. What a GET export
+ * actually needs to refuse is a cross-site request, and the browser says
+ * so: Sec-Fetch-Site is "cross-site" on one, and an Origin that is present
+ * but foreign is the older signal of the same thing. Everything else is a
+ * navigation or same-origin fetch, and requireAdmin remains the real gate.
+ */
+export function notCrossSite(request: NextRequest): boolean {
+  const fetchSite = request.headers.get("sec-fetch-site");
+  if (fetchSite === "cross-site") return false;
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+  return sameOrigin(request);
+}
+
+/**
  * The client address, from the header the platform sets and nothing else.
  *
  * x-forwarded-for is attacker-controlled: anybody can send one. Using it as a

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
-import { sameOrigin } from "@/lib/admin/request";
+import { notCrossSite } from "@/lib/admin/request";
 import { entriesCsv, payoutCsv, payoutLines } from "@/lib/admin/payout";
 
 export const runtime = "nodejs";
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
  * else's machine is the thing worth preventing.
  */
 export async function GET(request: NextRequest) {
-  if (!sameOrigin(request)) {
+  if (!notCrossSite(request)) {
     return NextResponse.json(
       { ok: false, message: "Not allowed." },
       { status: 403 },
