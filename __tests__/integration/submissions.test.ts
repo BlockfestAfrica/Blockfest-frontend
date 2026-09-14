@@ -140,6 +140,12 @@ beforeEach(async () => {
     UPDATE challenges SET starts_at = '2026-10-12 00:00:00+01',
                           ends_at   = '2026-10-17 23:59:59+01' WHERE week_no = 5;
   `);
+  // The campaign's own clock is part of several fixtures now: the
+  // pre-launch override only works before it. Reset it with the windows.
+  await db.exec(
+    `UPDATE campaigns SET starts_at = '2026-09-14 00:00:00+01'
+      WHERE slug = 'monica-money-story'`,
+  );
   const c = await one<{ id: string }>(
     `SELECT id FROM campaigns WHERE slug = 'monica-money-story'`,
   );
@@ -451,7 +457,11 @@ describe("the challenge window", () => {
  * The override lifts exactly one check, and the asymmetry is the safety.
  */
 describe("the pre-launch override", () => {
-  it("allows a week that has not opened yet", async () => {
+  it("allows a week that has not opened yet, while the campaign has not", async () => {
+    await db.query(
+      `UPDATE campaigns SET starts_at = now() + interval '2 days'
+        WHERE id = '${campaignId}'`,
+    );
     await notOpenYet(week2);
     const me = await makeCreator(["x"]);
     await expect(
@@ -459,7 +469,25 @@ describe("the pre-launch override", () => {
     ).resolves.toBeTruthy();
   });
 
+  /**
+   * The override dies with the launch. The env flag behind it outlived
+   * 14 September, and every review Sunday, with no week open, the route
+   * fell through to offering the NEXT week, which the old guard accepted:
+   * entries filed into an unopened challenge a day early, every week.
+   */
+  it("is dead once the campaign has started", async () => {
+    await notOpenYet(week2);
+    const dead = await makeCreator(["x"]);
+    await expect(
+      submit(dead, week2, "x", "https://x.com/preview/3", true),
+    ).rejects.toThrow(/challenge_not_open/);
+  });
+
   it("still refuses that week without it", async () => {
+    await db.query(
+      `UPDATE campaigns SET starts_at = now() + interval '2 days'
+        WHERE id = '${campaignId}'`,
+    );
     await notOpenYet(week2);
     const me = await makeCreator(["x"]);
     await expect(
@@ -495,6 +523,10 @@ describe("the pre-launch override", () => {
 
   it("relaxes nothing else at all", async () => {
     // Every other refusal still applies with the override set.
+    await db.query(
+      `UPDATE campaigns SET starts_at = now() + interval '2 days'
+        WHERE id = '${campaignId}'`,
+    );
     await notOpenYet(week2);
     const me = await makeCreator(["x"]);
     await expect(

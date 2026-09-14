@@ -106,11 +106,22 @@ export async function POST(request: NextRequest) {
   let challenge = open[0];
 
   // Before launch there is no open week, and the flow still has to be walkable
-  // end to end. When the campaign gate is deliberately forced open, the next
-  // week is offered instead. This is read from the server's own environment,
-  // so nothing a client sends can reach it, and after 14 September a week is
-  // open continuously until 17 October, which makes this branch unreachable.
-  if (!challenge && CAMPAIGN_GATE_FORCED_OPEN) {
+  // end to end: when the gate is deliberately forced open pre-launch, the
+  // next week is offered instead. The old comment claimed this branch was
+  // unreachable after 14 September; it was reachable every review Sunday
+  // (Saturday close to Monday open) for as long as the env flag stayed set,
+  // and it offered next week's challenge a day early. Scoped to pre-launch
+  // now, here and again inside submit_entry.
+  const campaignRow = await db
+    .select({ startsAt: campaigns.startsAt })
+    .from(campaigns)
+    .where(eq(campaigns.slug, MONICA_SLUG))
+    .limit(1);
+  const beforeLaunch = Boolean(
+    campaignRow[0]?.startsAt && campaignRow[0].startsAt.getTime() > Date.now(),
+  );
+
+  if (!challenge && CAMPAIGN_GATE_FORCED_OPEN && beforeLaunch) {
     const upcoming = await db
       .select({ id: challenges.id, title: challenges.title })
       .from(challenges)
