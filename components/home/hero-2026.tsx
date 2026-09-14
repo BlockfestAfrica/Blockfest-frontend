@@ -33,7 +33,7 @@ function DaysToEvent() {
   }, []);
 
   return (
-    <p className="text-sm text-white/60">
+    <p className="text-sm text-ink-3">
       <span className="font-semibold tabular-nums text-brand-gold">
         {mounted ? timeLeft.days : "--"} days
       </span>{" "}
@@ -69,7 +69,7 @@ export function HeroSection2026() {
       <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-16 sm:pb-20 sm:pt-24 lg:px-8 lg:pb-28 lg:pt-32">
         <div className="max-w-3xl">
           {/* Where and when, before anything else */}
-          <p className="eyebrow flex flex-wrap items-center gap-x-3 gap-y-1 text-white/60">
+          <p className="eyebrow flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-3">
             <span className="inline-flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
               {blockfest2026Lagos.location.venue}
@@ -89,11 +89,11 @@ export function HeroSection2026() {
             Africa <span className="text-brand-gold">&rsquo;26</span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg text-white/90 sm:text-2xl">
+          <p className="mt-6 max-w-xl text-lg text-ink sm:text-2xl">
             New Trade Routes: Bringing Africa Onchain
           </p>
 
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-3">
             Three days of building, networking and dealmaking with 5,000+
             founders, engineers, investors and policymakers.
           </p>
@@ -111,7 +111,7 @@ export function HeroSection2026() {
             </Button>
             <Button
               asChild
-              className="rounded-full border border-white/20 bg-white/10 px-7 text-base font-semibold text-white hover:bg-white/20"
+              className="rounded-full border border-line-2 bg-card-3 px-7 text-base font-semibold text-white hover:bg-white/20"
             >
               <Link href="#lagos-2026">See the programme</Link>
             </Button>
@@ -122,7 +122,7 @@ export function HeroSection2026() {
             <a
               href={ICS_PATH}
               onClick={() => trackButtonClick("Add to calendar", "Hero")}
-              className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-white/60 hover:text-white"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-ink-3 hover:text-white"
             >
               <CalendarPlus className="h-4 w-4" aria-hidden="true" />
               Add to calendar
@@ -132,22 +132,22 @@ export function HeroSection2026() {
       </div>
 
       {/* Cape Town is history now, so it gets a line rather than equal billing. */}
-      <div className="relative border-t border-white/20">
+      <div className="relative border-t border-line-2">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 lg:px-8">
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-ink-3">
             The South Africa roadshow is a wrap.
           </p>
           <div className="flex flex-wrap items-center gap-x-6">
             <Link
               href="/blockfest-south-africa-2026"
-              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-white/90 hover:text-white"
+              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-ink hover:text-white"
             >
               Cape Town &rsquo;26 recap
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
             <Link
               href="/blockfest-2025"
-              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white"
+              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-ink-3 hover:text-white"
             >
               Lagos 2025 recap
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />

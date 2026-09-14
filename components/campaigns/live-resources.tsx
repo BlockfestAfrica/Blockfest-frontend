@@ -51,7 +51,7 @@ export function LiveResources() {
         {rows.map((row) => (
           <li
             key={`${row.section}-${row.title}`}
-            className="rounded-xl border border-white/12 bg-white/[0.02] p-4"
+            className="rounded-xl border border-line bg-card p-4"
           >
             {row.url ? (
               <a
@@ -61,13 +61,13 @@ export function LiveResources() {
                 className="inline-flex min-h-11 items-center gap-1 font-semibold text-white underline-offset-4 hover:underline"
               >
                 {row.title}
-                <ArrowUpRight className="h-4 w-4 text-white/50" aria-hidden="true" />
+                <ArrowUpRight className="h-4 w-4 text-ink-4" aria-hidden="true" />
               </a>
             ) : (
               <p className="font-semibold text-white">{row.title}</p>
             )}
             {row.body && (
-              <p className="mt-1 max-w-prose text-sm leading-relaxed text-white/70">
+              <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
                 {row.body}
               </p>
             )}

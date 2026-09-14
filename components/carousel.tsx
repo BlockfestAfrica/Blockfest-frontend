@@ -184,14 +184,14 @@ const Speakers: React.FC<PropType> = (props) => {
           <PrevButton
             onClick={onPrevButtonClick}
             disabled={prevBtnDisabled}
-            className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition-colors duration-300 hover:bg-white/20 disabled:opacity-50"
+            className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-line-2 bg-card-3 text-white transition-colors duration-300 hover:bg-white/20 disabled:opacity-50"
           />
         </div>
         <div className="absolute right-0 xl:right-4 top-1/2 -translate-y-1/2 z-10 pointer-events-auto">
           <NextButton
             onClick={onNextButtonClick}
             disabled={nextBtnDisabled}
-            className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition-colors duration-300 hover:bg-white/20 disabled:opacity-50"
+            className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-line-2 bg-card-3 text-white transition-colors duration-300 hover:bg-white/20 disabled:opacity-50"
           />
         </div>
       </div>
@@ -221,7 +221,7 @@ const Speakers: React.FC<PropType> = (props) => {
                 className="block group cursor-pointer w-full"
                 aria-label={`View all speakers including ${speaker.name}`}
               >
-                <div className="mx-auto flex h-full w-full max-w-4xl flex-col justify-center rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10 md:p-8">
+                <div className="mx-auto flex h-full w-full max-w-4xl flex-col justify-center rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3 md:p-8">
                   <div className="flex items-center justify-center md:justify-between gap-6 flex-col-reverse md:flex-row text-center md:text-left">
                     {/* basis-0 + flex-1 so the text takes whatever the portrait
                         leaves. The old md:basis-[60%] against the portrait's
@@ -232,7 +232,7 @@ const Speakers: React.FC<PropType> = (props) => {
                       <h2 className="text-xl min-[360px]:text-2xl lg:text-3xl xl:text-5xl font-bold uppercase tracking-tight leading-tight break-words">
                         {speaker.name}
                       </h2>
-                      <p className="mt-3 text-sm md:text-lg xl:text-2xl leading-relaxed text-white/60 md:mt-4">
+                      <p className="mt-3 text-sm md:text-lg xl:text-2xl leading-relaxed text-ink-3 md:mt-4">
                         {speaker.title}
                       </p>
                     </div>
@@ -242,7 +242,7 @@ const Speakers: React.FC<PropType> = (props) => {
                         comes from aspect-square, so the frame is always square:
                         the previous fixed w/h pairs fought basis-[40%] and left
                         it 147x238 at md and 315x333 at xl. */}
-                    <div className="basis-auto w-full max-w-[240px] md:basis-[46%] md:w-auto md:max-w-[300px] xl:max-w-[340px] aspect-square shrink-0 overflow-hidden rounded-xl border border-white/20 mx-auto md:mx-0">
+                    <div className="basis-auto w-full max-w-[240px] md:basis-[46%] md:w-auto md:max-w-[300px] xl:max-w-[340px] aspect-square shrink-0 overflow-hidden rounded-xl border border-line-2 mx-auto md:mx-0">
                       <Image
                         src={speaker.image}
                         alt={`Portrait of ${speaker.name}, ${speaker.title}`}
@@ -305,10 +305,10 @@ const Speakers: React.FC<PropType> = (props) => {
           <PrevButton
             onClick={onPrevButtonClick}
             disabled={prevBtnDisabled}
-            className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition-colors duration-300 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-line-2 bg-card-3 text-white transition-colors duration-300 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
           />
           {scrollSnaps.length > 1 && (
-            <p className="text-sm tabular-nums text-white/60 md:hidden">
+            <p className="text-sm tabular-nums text-ink-3 md:hidden">
               <span className="sr-only">Slide </span>
               {selectedIndex + 1} of {scrollSnaps.length}
             </p>
@@ -316,7 +316,7 @@ const Speakers: React.FC<PropType> = (props) => {
           <NextButton
             onClick={onNextButtonClick}
             disabled={nextBtnDisabled}
-            className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition-colors duration-300 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-line-2 bg-card-3 text-white transition-colors duration-300 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
@@ -325,7 +325,7 @@ const Speakers: React.FC<PropType> = (props) => {
             type="button"
             onClick={toggleAutoplay}
             aria-pressed={!isPlaying}
-            className="flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-white/20 px-4 text-xs font-semibold text-white/60 transition-colors duration-300 hover:bg-white/10 hover:text-white"
+            className="flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-line-2 px-4 text-xs font-semibold text-ink-3 transition-colors duration-300 hover:bg-card-3 hover:text-white"
           >
             {isPlaying ? "Pause" : "Play"}
             <span className="sr-only"> automatic slideshow</span>

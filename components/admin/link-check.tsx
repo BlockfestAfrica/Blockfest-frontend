@@ -62,7 +62,7 @@ export function LinkCheck() {
     >
       {report && (
         <div className="flex flex-col gap-3">
-          <p className="text-sm text-white/70">
+          <p className="text-sm text-ink-2">
             {report.checked} checked. {report.unverifiable} answered like a bot
             wall and prove nothing either way.
           </p>
@@ -82,12 +82,12 @@ export function LinkCheck() {
                       href={row.url}
                       target="_blank"
                       rel="noopener noreferrer nofollow"
-                      className="min-w-0 break-all font-mono text-sm text-white/85 underline-offset-2 hover:underline"
+                      className="min-w-0 break-all font-mono text-sm text-ink-2 underline-offset-2 hover:underline"
                     >
                       {row.url}
                     </a>
                   </div>
-                  <p className="mt-1 text-sm text-white/60">
+                  <p className="mt-1 text-sm text-ink-3">
                     Open it in a normal browser. If it is really gone, the
                     Decided screen is where the entry is re-opened.
                   </p>

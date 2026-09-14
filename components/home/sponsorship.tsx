@@ -15,17 +15,17 @@ export function SponsorshipSection() {
 
   return (
     <section
-      className="section-y bg-ground border-t border-white/20"
+      className="section-y bg-ground border-t border-line-2"
       id="sponsorship"
     >
       <div className="container-page">
         {/* Header */}
         <div className="mb-10 lg:mb-14 fade-in-on-scroll">
-          <p className="eyebrow text-white/60">PARTNERSHIP OPPORTUNITIES</p>
+          <p className="eyebrow text-ink-3">PARTNERSHIP OPPORTUNITIES</p>
           <h2 className="text-display-sm mt-3 font-bold text-white">
             Become a Sponsor
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
             Reach{" "}
             <span className="font-semibold text-white">
               15,000+ registered attendees
@@ -35,11 +35,11 @@ export function SponsorshipSection() {
         </div>
 
         {/* Contact CTA */}
-        <div className="rounded-xl border border-white/20 bg-white/5 p-6 scale-in lg:p-10">
+        <div className="rounded-xl border border-line-2 bg-card-2 p-6 scale-in lg:p-10">
           <h3 className="text-2xl font-bold text-white lg:text-3xl">
             Get Our Sponsorship Deck
           </h3>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/90">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink">
             Email or message us and we&apos;ll send the Blockf3st Africa 2026
             deck with all packages and benefits.
           </p>
@@ -55,7 +55,7 @@ export function SponsorshipSection() {
               <Mail className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
               <span className="break-all text-center">{contactEmail}</span>
             </Link>
-            <span className="self-center text-sm text-white/60">or</span>
+            <span className="self-center text-sm text-ink-3">or</span>
             <Link
               href="https://t.me/Olanetsoft"
               target="_blank"
@@ -63,7 +63,7 @@ export function SponsorshipSection() {
               onClick={() =>
                 trackButtonClick("Telegram Sponsorship", "Sponsorship Section")
               }
-              className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/20 bg-white/10 px-7 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/20 sm:text-base"
+              className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-line-2 bg-card-3 px-7 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/20 sm:text-base"
             >
               <FaTelegram className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
               <span>Message on Telegram</span>

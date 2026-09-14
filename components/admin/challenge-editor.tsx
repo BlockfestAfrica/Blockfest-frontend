@@ -93,25 +93,36 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     <JobCard
       id="stages"
       title="The weekly briefs"
-      state="todo"
+      /* The edge is derived, not decorative: gold when the live week is
+         still a draft or wearing a seeded placeholder title, which is
+         exactly when this card needs a person before Monday. */
+      state={
+        challenges.some(
+          (c) =>
+            !c.readonly_ &&
+            (c.status === "draft" || c.title === "The Proof"),
+        )
+          ? "now"
+          : "todo"
+      }
       hint="Write next week's brief as a draft, read it over, flip it active on the Monday. A draft is invisible to creators and cannot receive entries; closing stops new entries and leaves what arrived reviewable. A week that has ended is the record of how its winners were decided, so it locks."
     >
       <ul className="flex flex-col gap-3">
         {challenges.map((challenge) => (
-          <li key={challenge.id} className="rounded-lg border border-white/12 p-4">
+          <li key={challenge.id} className="rounded-lg border border-line bg-card p-4">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-semibold text-white">
                 Week {challenge.weekNo}: {challenge.title}
               </span>
               <Pill tone={STATUS_TONE[challenge.status]}>{challenge.status}</Pill>
-              <span className="text-sm text-white/60">
+              <span className="text-sm text-ink-3">
                 {dateTime(challenge.startsAt)} to {dateTime(challenge.endsAt)}
               </span>
-              <span className="text-sm tabular-nums text-white/60">
+              <span className="text-sm tabular-nums text-ink-3">
                 base {challenge.basePoints}
               </span>
               {challenge.readonly_ ? (
-                <span className="ml-auto text-sm text-white/45">ended, locked</span>
+                <span className="ml-auto text-sm text-ink-4">ended, locked</span>
               ) : (
                 <button
                   type="button"
@@ -119,7 +130,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                     open === challenge.id ? setOpen(null) : startEditing(challenge)
                   }
                   aria-expanded={open === challenge.id}
-                  className="ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-white/60 transition-colors hover:text-white"
+                  className="ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-ink-3 transition-colors hover:text-white"
                 >
                   {open === challenge.id ? "Cancel" : "Edit"}
                 </button>

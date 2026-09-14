@@ -9,10 +9,10 @@ import { monicaHowItWorks, monicaSkills } from "@/lib/campaigns";
  */
 export function MonicaHowItWorks() {
   return (
-    <section className="section-y border-t border-white/20 bg-ground">
+    <section className="section-y border-t border-line-2 bg-ground">
       <div className="container-page">
         <h2 className="text-display-sm font-bold text-white">How it works</h2>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
           A new brief every Monday, your own take on it, published on your own
           account. Repeat across all stages.
         </p>
@@ -21,7 +21,7 @@ export function MonicaHowItWorks() {
           {monicaHowItWorks.map((step, i) => (
             <li
               key={step.title}
-              className="rounded-xl border border-white/20 bg-white/5 p-6"
+              className="rounded-xl border border-line-2 bg-card-2 p-6"
             >
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-gold/15 text-sm font-bold tabular-nums text-brand-gold">
                 {i + 1}
@@ -29,7 +29,7 @@ export function MonicaHowItWorks() {
               <h3 className="mt-4 text-lg font-bold text-white">
                 {step.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/60">
+              <p className="mt-2 text-sm leading-relaxed text-ink-3">
                 {step.detail}
               </p>
             </li>
@@ -40,7 +40,7 @@ export function MonicaHowItWorks() {
           <h3 className="text-display-sm font-bold text-white">
             Four skills, tested
           </h3>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
             The ranking is not a view count. Entries are weighed on all four,
             which is how a smaller account with a better idea wins.
           </p>
@@ -53,7 +53,7 @@ export function MonicaHowItWorks() {
             {monicaSkills.map((skill) => (
               <div
                 key={skill.name}
-                className="rounded-xl border border-white/20 bg-white/5 px-5 py-4"
+                className="rounded-xl border border-line-2 bg-card-2 px-5 py-4"
               >
                 <h4 className="text-base font-bold text-white">{skill.name}</h4>
               </div>

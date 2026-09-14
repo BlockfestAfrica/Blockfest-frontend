@@ -27,7 +27,7 @@ export function TicketCTA({
   const styles =
     variant === "gold"
       ? "bg-brand-gold text-black hover:bg-brand-gold-hover"
-      : "bg-white/10 text-white border border-white/20 hover:bg-white/20";
+      : "bg-card-3 text-white border border-line-2 hover:bg-white/20";
 
   /**
    * Rewrite the href just before the browser follows it.

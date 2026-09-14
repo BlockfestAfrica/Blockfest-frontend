@@ -43,7 +43,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
   }, []);
 
   return (
-    <section className="section-y bg-ground border-t border-white/20">
+    <section className="section-y bg-ground border-t border-line-2">
       <div className="container-page">
         {!hideHeader && (
           <div className="mb-10 lg:mb-14 fade-in-on-scroll">
@@ -58,7 +58,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
           {faqData.slice(0, HOMEPAGE_FAQ_COUNT).map((item) => (
             <div
               key={item.id}
-              className="rounded-xl border border-white/20 bg-white/5 transition-colors duration-300 hover:bg-white/10"
+              className="rounded-xl border border-line-2 bg-card-2 transition-colors duration-300 hover:bg-card-3"
             >
               <button
                 type="button"
@@ -77,7 +77,7 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
                     />
                   ) : (
                     <ChevronDownIcon
-                      className="h-4 w-4 text-white/60"
+                      className="h-4 w-4 text-ink-3"
                       aria-hidden="true"
                     />
                   )}
@@ -85,8 +85,8 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
               </button>
 
               {openItems.has(item.id) && (
-                <div className="border-t border-white/20 px-6 pb-6 pt-4">
-                  <p className="max-w-2xl text-base leading-relaxed text-white/60">
+                <div className="border-t border-line-2 px-6 pb-6 pt-4">
+                  <p className="max-w-2xl text-base leading-relaxed text-ink-3">
                     {item.answer}
                   </p>
                 </div>
@@ -96,11 +96,11 @@ export function FAQSection({ hideHeader = false }: FAQSectionProps) {
         </div>
 
         <div className="mt-10 fade-in-on-scroll lg:mt-14">
-          <div className="rounded-xl border border-white/20 bg-white/5 p-6 lg:p-10">
+          <div className="rounded-xl border border-line-2 bg-card-2 p-6 lg:p-10">
             <h3 className="text-2xl font-semibold text-white">
               Still have questions?
             </h3>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/90">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink">
               Our team is here to help.
             </p>
             <a

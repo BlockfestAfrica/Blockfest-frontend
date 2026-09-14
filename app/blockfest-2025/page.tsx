@@ -75,17 +75,17 @@ export default function Blockfest2025Page() {
         <div className="container-page relative">
           <div className="max-w-3xl">
             {/* Badge */}
-            <p className="eyebrow text-white/60">COMPLETED EVENT</p>
+            <p className="eyebrow text-ink-3">COMPLETED EVENT</p>
 
             <h1 className="text-display-sm mt-5 font-bold uppercase text-white">
               Blockfest Africa <span className="text-white">2025</span>
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg text-white/90 sm:text-2xl">
+            <p className="mt-6 max-w-xl text-lg text-ink sm:text-2xl">
               {event.theme}
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/60">
+            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-3">
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" aria-hidden="true" />
                 {event.location.city}, {event.location.country}
@@ -96,7 +96,7 @@ export default function Blockfest2025Page() {
               </span>
             </div>
 
-            <p className="mt-8 inline-flex items-center rounded-full border border-white/20 bg-white/5 px-5 py-2 text-base font-semibold text-white/90">
+            <p className="mt-8 inline-flex items-center rounded-full border border-line-2 bg-card-2 px-5 py-2 text-base font-semibold text-ink">
               {event.tagline}
             </p>
           </div>
@@ -104,44 +104,44 @@ export default function Blockfest2025Page() {
       </section>
 
       {/* Stats Section */}
-      <section className="section-y bg-ground border-t border-white/20">
+      <section className="section-y bg-ground border-t border-line-2">
         <div className="container-page">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10">
+            <div className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                 <Users className="h-5 w-5" aria-hidden="true" />
               </span>
               <p className="mt-4 text-3xl font-bold text-white">
                 {stats.totalRegistrations?.toLocaleString()}+
               </p>
-              <p className="mt-1 text-sm text-white/60">Total Registrations</p>
+              <p className="mt-1 text-sm text-ink-3">Total Registrations</p>
             </div>
-            <div className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10">
+            <div className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                 <Users className="h-5 w-5" aria-hidden="true" />
               </span>
               <p className="mt-4 text-3xl font-bold text-white">
                 {stats.totalAttendees?.toLocaleString()}+
               </p>
-              <p className="mt-1 text-sm text-white/60">Total Attendees</p>
+              <p className="mt-1 text-sm text-ink-3">Total Attendees</p>
             </div>
-            <div className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10">
+            <div className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                 <Mic className="h-5 w-5" aria-hidden="true" />
               </span>
               <p className="mt-4 text-3xl font-bold text-white">
                 {stats.speakers}+
               </p>
-              <p className="mt-1 text-sm text-white/60">Speakers</p>
+              <p className="mt-1 text-sm text-ink-3">Speakers</p>
             </div>
-            <div className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10">
+            <div className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                 <Globe className="h-5 w-5" aria-hidden="true" />
               </span>
               <p className="mt-4 text-3xl font-bold text-white">
                 {stats.countriesRepresented}+
               </p>
-              <p className="mt-1 text-sm text-white/60">Countries</p>
+              <p className="mt-1 text-sm text-ink-3">Countries</p>
             </div>
           </div>
         </div>

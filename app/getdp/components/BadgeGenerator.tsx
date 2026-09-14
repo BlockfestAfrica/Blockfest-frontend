@@ -129,7 +129,7 @@ export default function BadgeGenerator() {
         >
           {/* Form Section */}
           <div className={success ? "lg:col-span-2" : ""}>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl shadow-2xl border border-white/20 p-6 sm:p-8 lg:p-10">
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl shadow-2xl border border-line-2 p-6 sm:p-8 lg:p-10">
               <div className="space-y-6 sm:space-y-7 lg:space-y-8">
                 {/* Name Input */}
                 <div className="space-y-2">
@@ -301,13 +301,13 @@ export default function BadgeGenerator() {
           {success && generatedBadge && (
             <div className="lg:col-span-1 hidden lg:flex lg:items-end lg:justify-center lg:min-h-[400px] lg:pb-16">
               <div className="flex flex-col items-center space-y-3 animate-bounce">
-                <ChevronRight className="w-10 h-10 text-white/90" />
-                <p className="text-white/90 text-base font-medium text-center">
+                <ChevronRight className="w-10 h-10 text-ink" />
+                <p className="text-ink text-base font-medium text-center">
                   Your badge
                   <br />
                   is ready!
                 </p>
-                <ChevronRight className="w-8 h-8 text-white/60" />
+                <ChevronRight className="w-8 h-8 text-ink-3" />
               </div>
             </div>
           )}
@@ -315,7 +315,7 @@ export default function BadgeGenerator() {
           {/* Result Section */}
           {success && generatedBadge && (
             <div className="lg:col-span-2 mt-6 lg:mt-0">
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl shadow-2xl border border-white/20 p-6 sm:p-8 lg:p-10 w-full">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl shadow-2xl border border-line-2 p-6 sm:p-8 lg:p-10 w-full">
                 <div className="text-center space-y-6">
                   {/* Success Header */}
                   <div className="space-y-3">

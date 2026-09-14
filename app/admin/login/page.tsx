@@ -44,7 +44,7 @@ export default async function AdminLoginPage() {
           <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
             Admin
           </h1>
-          <p className="mt-4 text-base leading-relaxed text-white/55">
+          <p className="mt-4 text-base leading-relaxed text-ink-3">
             Sign in with the address you were invited on.
           </p>
           <AdminLogin />

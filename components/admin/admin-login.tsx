@@ -281,7 +281,7 @@ export function AdminLogin() {
       {notice && (
         <p
           role="status"
-          className="rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm leading-relaxed text-white/70"
+          className="rounded-lg border border-line-2 bg-card-2 px-4 py-3 text-sm leading-relaxed text-ink-2"
         >
           {notice}
         </p>
@@ -298,7 +298,7 @@ export function AdminLogin() {
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
+            className="w-full rounded-lg border border-line-2 bg-control px-4 py-3 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
           />
         </div>
       )}
@@ -313,7 +313,7 @@ export function AdminLogin() {
           autoComplete={inviteToken || recovering ? "new-password" : "current-password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white focus:border-brand-gold"
+          className="w-full rounded-lg border border-line-2 bg-ground px-4 py-3 text-base text-white focus:border-brand-gold"
         />
       </div>
 
@@ -324,7 +324,7 @@ export function AdminLogin() {
           password.length === 0 ||
           (!inviteToken && !recovering && !email.trim())
         }
-        className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         {busy
           ? "Please wait..."

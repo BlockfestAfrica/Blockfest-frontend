@@ -68,11 +68,11 @@ export default async function NewsletterPage() {
           <div className="container-page">
             <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_auto] lg:items-start lg:gap-16">
               <div className="max-w-2xl">
-                <p className="eyebrow text-white/60">The newsletter</p>
+                <p className="eyebrow text-ink-3">The newsletter</p>
                 <h1 className="text-display-sm mt-3 font-bold text-white">
                   Everything before everyone else
                 </h1>
-                <p className="mt-4 text-base leading-relaxed text-white/60">
+                <p className="mt-4 text-base leading-relaxed text-ink-3">
                   Speaker announcements, agenda news and ticket deadlines, sent
                   to more than 11,000 people across the continent. Free, and no
                   more often than we have something worth saying.
@@ -97,13 +97,13 @@ export default async function NewsletterPage() {
             should be able to read the newest thing without working out which
             row of a list is newest. */}
         {latest && (
-          <section className="section-y bg-ground border-t border-white/20">
+          <section className="section-y bg-ground border-t border-line-2">
             <div className="container-page">
               <a
                 href={latest.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group grid grid-cols-1 gap-6 rounded-xl border border-brand-blue bg-white/10 p-5 transition-colors duration-300 hover:bg-white/20 sm:p-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-10 lg:p-8"
+                className="group grid grid-cols-1 gap-6 rounded-xl border border-brand-blue bg-card-3 p-5 transition-colors duration-300 hover:bg-white/20 sm:p-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-10 lg:p-8"
               >
                 {latest.coverImage ? (
                   <img
@@ -111,11 +111,11 @@ export default async function NewsletterPage() {
                     alt=""
                     width={640}
                     height={360}
-                    className="aspect-video w-full rounded-lg border border-white/20 bg-brand-blue/15 object-cover lg:order-2"
+                    className="aspect-video w-full rounded-lg border border-line-2 bg-brand-blue/15 object-cover lg:order-2"
                   />
                 ) : (
                   <span
-                    className="flex aspect-video w-full items-center justify-center rounded-lg border border-white/20 bg-brand-blue/15 text-brand-blue-light lg:order-2"
+                    className="flex aspect-video w-full items-center justify-center rounded-lg border border-line-2 bg-brand-blue/15 text-brand-blue-light lg:order-2"
                     aria-hidden="true"
                   >
                     <Mail className="h-8 w-8" />
@@ -126,7 +126,7 @@ export default async function NewsletterPage() {
                   <span className="eyebrow inline-flex rounded-full bg-brand-gold px-3 py-1 text-black">
                     Latest issue
                   </span>
-                  <p className="eyebrow mt-4 text-white/60">
+                  <p className="eyebrow mt-4 text-ink-3">
                     <time dateTime={latest.date}>{latest.displayDate}</time>
                     {" · "}
                     {latest.readingMinutes} min read
@@ -134,7 +134,7 @@ export default async function NewsletterPage() {
                   <h2 className="text-display-sm mt-2 font-bold text-white">
                     {latest.title}
                   </h2>
-                  <p className="mt-4 text-base leading-relaxed text-white/60">
+                  <p className="mt-4 text-base leading-relaxed text-ink-3">
                     {latest.longExcerpt}
                   </p>
                   <span className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors group-hover:bg-brand-gold-hover">
@@ -147,15 +147,15 @@ export default async function NewsletterPage() {
           </section>
         )}
 
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <h2 className="text-display-sm mb-10 font-bold text-white lg:mb-14">
               Past issues
             </h2>
 
             {earlier.length === 0 ? (
-              <div className="rounded-xl border border-white/20 bg-white/5 p-6">
-                <p className="text-base leading-relaxed text-white/60">
+              <div className="rounded-xl border border-line-2 bg-card-2 p-6">
+                <p className="text-base leading-relaxed text-ink-3">
                   {posts.length === 0
                     ? "Past issues are not loading right now. "
                     : "This is the first issue. Earlier ones will appear here. "}
@@ -180,7 +180,7 @@ export default async function NewsletterPage() {
                       href={post.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group grid grid-cols-1 gap-5 rounded-xl border border-white/20 bg-white/5 p-5 transition-colors duration-300 hover:bg-white/10 sm:grid-cols-[200px_1fr] sm:items-start sm:gap-6 sm:p-6"
+                      className="group grid grid-cols-1 gap-5 rounded-xl border border-line-2 bg-card-2 p-5 transition-colors duration-300 hover:bg-card-3 sm:grid-cols-[200px_1fr] sm:items-start sm:gap-6 sm:p-6"
                     >
                       {post.coverImage ? (
                         <img
@@ -191,11 +191,11 @@ export default async function NewsletterPage() {
                           loading={index < 2 ? "eager" : "lazy"}
                           // A cover that fails at Substack's CDN degrades to a branded tile
                           // rather than a broken-image icon.
-                          className="aspect-video w-full rounded-lg border border-white/20 bg-brand-blue/15 object-cover"
+                          className="aspect-video w-full rounded-lg border border-line-2 bg-brand-blue/15 object-cover"
                         />
                       ) : (
                         <span
-                          className="flex aspect-video w-full items-center justify-center rounded-lg border border-white/20 bg-brand-blue/15 text-brand-blue-light"
+                          className="flex aspect-video w-full items-center justify-center rounded-lg border border-line-2 bg-brand-blue/15 text-brand-blue-light"
                           aria-hidden="true"
                         >
                           <Mail className="h-6 w-6" />
@@ -203,7 +203,7 @@ export default async function NewsletterPage() {
                       )}
 
                       <div className="min-w-0">
-                        <p className="eyebrow text-white/60">
+                        <p className="eyebrow text-ink-3">
                           <time dateTime={post.date}>{post.displayDate}</time>
                           {" · "}
                           {post.readingMinutes} min read
@@ -211,7 +211,7 @@ export default async function NewsletterPage() {
                         <h3 className="mt-2 text-lg font-bold text-white lg:text-2xl">
                           {post.title}
                         </h3>
-                        <p className="mt-3 text-sm leading-relaxed text-white/60 lg:text-base">
+                        <p className="mt-3 text-sm leading-relaxed text-ink-3 lg:text-base">
                           {post.excerpt}
                         </p>
                         <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-blue-light group-hover:text-white">
@@ -228,7 +228,7 @@ export default async function NewsletterPage() {
               </ul>
             )}
 
-            <p className="mt-10 text-sm text-white/60">
+            <p className="mt-10 text-sm text-ink-3">
               Every issue lives on{" "}
               <a
                 href={SUBSTACK_URL}

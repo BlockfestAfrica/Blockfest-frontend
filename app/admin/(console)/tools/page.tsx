@@ -6,7 +6,7 @@ import { listResources } from "@/lib/admin/resources";
 import { ResourcesEditor } from "@/components/admin/resources-editor";
 import { LinkCheck } from "@/components/admin/link-check";
 import { RepriceEntry } from "@/components/admin/reprice-entry";
-import { SectionHeading } from "@/components/shared/panel";
+import { JobCard, SPACING } from "@/components/shared/panel";
 
 export const metadata: Metadata = {
   title: "Tools",
@@ -34,31 +34,30 @@ export default async function ToolsPage() {
   if (!admin.ok) return null;
 
   return (
-    <>
-      <SectionHeading
-        label="Support"
+    <div className={SPACING.section}>
+      {/* One rhythm for the whole drawer, and the headline job wears the
+          spine's "now" edge: reissuing a lost link is the tool somebody
+          arrives here needing, the rest is periodic upkeep. */}
+      <JobCard
+        id="reissue"
         title="Give a creator a new link"
+        state="now"
         hint="For somebody who has lost the personal link they were given when they registered. Issuing a new one stops the old one working, and emails the new one to the address they registered with."
-      />
-      <ReissueLink />
+      >
+        <ReissueLink />
+      </JobCard>
 
-      <div className="mt-8">
-        <LinkCheck />
-      </div>
+      <LinkCheck />
 
       {/* Owner-only from here down: repricing moves money, and resources
           render on the public pack page under the campaign's name. Reviewers
           do not see either. */}
       {isOwner(admin.admin) && (
         <>
-          <div className="mt-8">
-            <RepriceEntry />
-          </div>
-          <div className="mt-8">
-            <ResourcesEditor rows={await listResources(admin.admin)} />
-          </div>
+          <RepriceEntry />
+          <ResourcesEditor rows={await listResources(admin.admin)} />
         </>
       )}
-    </>
+    </div>
   );
 }

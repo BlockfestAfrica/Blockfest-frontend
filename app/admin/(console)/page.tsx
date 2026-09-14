@@ -94,13 +94,13 @@ export default async function AdminQueuePage({
       </h1>
 
       {queue.length < shownOf && (
-        <p className="mt-3 text-sm text-white/60">
+        <p className="mt-3 text-sm text-ink-3">
           Oldest first. Showing {queue.length} of {shownOf}. Decide these and
           the next {PAGE_SIZE} appear.
         </p>
       )}
       {total > 0 && (
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
           Approving mints points against the prize pool and is recorded against
           your name. Open every link: the check only says whether the link names
           the right account, not whether the post answers the brief.
@@ -134,7 +134,7 @@ export default async function AdminQueuePage({
       )}
 
       {queue.length === 0 ? (
-        <p className="mt-8 max-w-prose text-base leading-relaxed text-white/60">
+        <p className="mt-8 max-w-prose text-base leading-relaxed text-ink-3">
           {total === 0
             ? "Nothing waiting. Submissions appear here as creators send them in."
             : "Nothing in this lane. Try another filter."}
@@ -191,7 +191,7 @@ function LaneChip({
       className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors ${
         on
           ? "border-brand-gold bg-brand-gold/15 text-brand-gold"
-          : "border-white/20 text-white/60 hover:text-white"
+          : "border-line-2 text-ink-3 hover:text-white"
       }`}
     >
       {label}

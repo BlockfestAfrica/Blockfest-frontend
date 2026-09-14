@@ -25,7 +25,7 @@ function Fact({
 }) {
   return (
     <div>
-      <dt className="eyebrow text-white/50">{label}</dt>
+      <dt className="eyebrow text-ink-4">{label}</dt>
       <dd className="mt-2">{children}</dd>
     </div>
   );
@@ -56,7 +56,7 @@ export function MonicaHero() {
       <div className="container-page">
         <div className="grid gap-10 lg:grid-cols-12 lg:items-center lg:gap-16">
           <div className="lg:col-span-7">
-            <p className="eyebrow text-white/60">
+            <p className="eyebrow text-ink-3">
               Presented by Blockfest Africa
             </p>
 
@@ -71,7 +71,7 @@ export function MonicaHero() {
               {campaign.hook}
             </p>
 
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/60 sm:text-lg">
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-ink-3 sm:text-lg">
               Monica has a story to tell. About money, about payments, about
               moving value across borders. We are not telling it for you. We are
               handing it to the creators, because knowing the story is not the
@@ -102,12 +102,12 @@ export function MonicaHero() {
           </div>
 
           <div className="lg:col-span-5">
-            <dl className="flex flex-col gap-7 rounded-2xl border border-white/20 bg-white/5 p-6 sm:p-8">
+            <dl className="flex flex-col gap-7 rounded-2xl border border-line-2 bg-card-2 p-6 sm:p-8">
               <Fact label="Total reward pool">
                 <p className="text-display-sm font-bold tabular-nums leading-none text-white">
                   {formatNaira(monicaRewardPool)}
                 </p>
-                <p className="mt-2 text-sm text-white/60">
+                <p className="mt-2 text-sm text-ink-3">
                   Weekly prizes plus a final leaderboard.
                 </p>
               </Fact>
@@ -115,7 +115,7 @@ export function MonicaHero() {
               {run && (
                 <Fact label="Runs">
                   <p className="text-base font-semibold text-white">{run}</p>
-                  <p className="mt-1 text-sm text-white/60">
+                  <p className="mt-1 text-sm text-ink-3">
                     {MONICA_CAMPAIGN_DAYS} days, {monicaStages.length} stages.
                   </p>
                 </Fact>
@@ -126,13 +126,13 @@ export function MonicaHero() {
                   {CAMPAIGN_PLATFORMS.map((platform) => (
                     <li
                       key={platform}
-                      className="rounded-full border border-white/20 px-3 py-1 text-sm font-semibold text-white/80"
+                      className="rounded-full border border-line-2 px-3 py-1 text-sm font-semibold text-ink-2"
                     >
                       {platformLabels[platform]}
                     </li>
                   ))}
                 </ul>
-                <p className="mt-2 text-sm text-white/60">
+                <p className="mt-2 text-sm text-ink-3">
                   Post once, or on all three for more points.
                 </p>
               </Fact>

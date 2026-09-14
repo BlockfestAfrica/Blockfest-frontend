@@ -59,7 +59,7 @@ const Footer = () => {
   ];
 
   const linkClasses =
-    "text-base font-medium text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-300 ease-in-out w-fit inline-flex items-center min-h-11";
+    "text-base font-medium text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded transition-colors duration-150 ease-in-out w-fit inline-flex items-center min-h-11";
 
   const columnLabelClasses =
     "flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-nav-gray/50 mb-5";
@@ -68,7 +68,7 @@ const Footer = () => {
 
   return (
     <footer
-      className={`${gotham.className} bg-ground border-t border-white/20`}
+      className={`${gotham.className} bg-ground border-t border-line-2`}
       id="contact"
     >
       <div className="container-page pt-14 lg:pt-20">
@@ -102,7 +102,7 @@ const Footer = () => {
           </Link>
         </div>
 
-        <div className="border-t border-white/20" />
+        <div className="border-t border-line-2" />
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-10 py-10 lg:py-14">
           <div>
@@ -154,7 +154,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`Follow us on ${socialLabels[index]}`}
-                  className="flex items-center justify-center w-11 h-11 rounded-full border border-white/20 text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-300 ease-in-out"
+                  className="flex items-center justify-center w-11 h-11 rounded-full border border-line-2 text-nav-gray hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light transition-colors duration-150 ease-in-out"
                 >
                   {item.icon}
                 </Link>
@@ -167,7 +167,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/20" />
+        <div className="border-t border-line-2" />
       </div>
 
       {/* pb-20 reserves room for the fixed back-to-top button, which sat on

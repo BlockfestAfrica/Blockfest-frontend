@@ -128,7 +128,7 @@ export default async function MonicaCreatorPage() {
             <h1 className="text-display-sm font-bold text-white">
               We could not load your page
             </h1>
-            <p className="mt-4 max-w-prose text-base leading-relaxed text-white/70">
+            <p className="mt-4 max-w-prose text-base leading-relaxed text-ink-2">
               Something went wrong at our end. Your link is fine and nothing you
               have sent is affected. Refresh in a moment.
             </p>
@@ -151,15 +151,15 @@ export default async function MonicaCreatorPage() {
         <section className="section-y">
           <div className="container-page max-w-2xl">
             <h1 className="flex items-center gap-2 text-display-sm font-bold text-white">
-              <Lock className="h-6 w-6 text-white/40" aria-hidden="true" />
+              <Lock className="h-6 w-6 text-ink-4" aria-hidden="true" />
               We do not know who you are
             </h1>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
+            <p className="mt-4 text-base leading-relaxed text-ink-3">
               This page opens from the personal link you were given when you
               registered, and emailed to you at the same time. Open that link
               again and you will land back here.
             </p>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
+            <p className="mt-4 text-base leading-relaxed text-ink-3">
               If you have lost it, write to{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
@@ -267,10 +267,10 @@ export default async function MonicaCreatorPage() {
             {rank === null ? (
               <Pill>Not ranked yet</Pill>
             ) : (
-              <Pill tone="gold">Rank {rank}</Pill>
+              <Pill tone="gold"><span className="tabular-nums">Rank {rank}</span></Pill>
             )}
           </div>
-          <p className="mt-2 text-sm text-white/50">
+          <p className="mt-2 text-sm tabular-nums text-ink-4">
             {creator.pointsTotal} points · {creator.approvedEntries} approved ·
             joined {joined}
           </p>
@@ -299,10 +299,10 @@ export default async function MonicaCreatorPage() {
               {/* The absolute instant, because submit_entry enforces it to the
                   second and a creator posting at 10pm against a 6pm close loses
                   the week to a formatting choice. */}
-              <p className="mt-1 text-sm text-white/55">
+              <p className="mt-1 text-sm text-ink-3">
                 Closes {closingLabel(challenge.endsAt)} Lagos time
               </p>
-              <p className="mt-3 max-w-prose text-base leading-relaxed text-white/75">
+              <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-2">
                 {challenge.description}
               </p>
 
@@ -315,7 +315,7 @@ export default async function MonicaCreatorPage() {
                   const state = entry ? statusPill(entry.status) : null;
                   return (
                     <li key={platform}>
-                      <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-ground/60 py-1 pl-3 pr-1.5 text-sm text-white/70">
+                      <span className="inline-flex items-center gap-2 rounded-full border border-line-2 bg-ground/60 py-1 pl-3 pr-1.5 text-sm text-ink-2">
                         {platformLabels[platform as CampaignPlatform] ??
                           platform}
                         {state ? (
@@ -329,26 +329,6 @@ export default async function MonicaCreatorPage() {
                 })}
               </ul>
 
-              {/* Derived from the registry, never typed here. This line
-                  carried the old 100/200/300 ladder for a day after the rules
-                  changed, which is exactly what a second copy of a number
-                  does. */}
-              <p className="mt-4 text-sm leading-relaxed text-white/70">
-                {monicaPointLadder
-                  .map(
-                    (tier) =>
-                      `${tier.points} points for ${
-                        tier.platforms === 1
-                          ? "the first platform"
-                          : tier.platforms === 2
-                            ? "two"
-                            : "all three"
-                      }`,
-                  )
-                  .join(", ")}
-                . It stays one entry either way.
-              </p>
-
               {rejectedThisWeek.length > 0 && (
                 <Panel tone="warn" className="mt-5">
                   <p className="text-sm font-semibold text-amber-200">
@@ -359,7 +339,7 @@ export default async function MonicaCreatorPage() {
                   {rejectedThisWeek.map((entry) => (
                     <p
                       key={entry.id}
-                      className="mt-2 text-sm leading-relaxed text-white/75"
+                      className="mt-2 text-sm leading-relaxed text-ink-2"
                     >
                       <span className="font-semibold text-white">
                         {platformLabels[entry.platform as CampaignPlatform] ??
@@ -371,7 +351,7 @@ export default async function MonicaCreatorPage() {
                   ))}
                   {/* The whole point of migration 0011. Saying so here is the
                       difference between a dead end and an instruction. */}
-                  <p className="mt-3 text-sm leading-relaxed text-white/60">
+                  <p className="mt-3 text-sm leading-relaxed text-ink-3">
                     The week is still open, so you can fix it and send it again
                     below.
                   </p>
@@ -384,14 +364,14 @@ export default async function MonicaCreatorPage() {
                     <p className="text-sm font-semibold text-amber-200">
                       Submissions are paused
                     </p>
-                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/75">
+                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
                       {/* pauseState returns null for a blank reason, and this
                           is the most alarming state the page can show. It does
                           not get to have a hole in the middle of it. */}
                       {pause.reason ??
                         "We have stopped submissions for a moment. Nothing you have already sent is affected."}
                     </p>
-                    <p className="mt-2 text-sm leading-relaxed text-white/55">
+                    <p className="mt-2 text-sm leading-relaxed text-ink-3">
                       The brief above still stands, so you can keep working.
                       Come back and paste your link when this clears.
                     </p>
@@ -408,23 +388,45 @@ export default async function MonicaCreatorPage() {
                     <p className="text-sm font-semibold text-amber-200">
                       We could not load your accounts
                     </p>
-                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/75">
+                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
                       This is at our end, not yours, and it is not a sign that
                       anything is missing. Refresh in a moment and the form will
                       be here.
                     </p>
                   </Panel>
                 ) : stillToSubmit.length === 0 ? (
-                  <p className="text-sm leading-relaxed text-white/60">
+                  <p className="text-sm leading-relaxed text-ink-3">
                     Everything you registered is in for this week. Each platform
                     is reviewed on its own, so they can land at different times.
                   </p>
                 ) : (
-                  <SubmissionForm
-                    platforms={platforms as CampaignPlatform[]}
-                    alreadySubmitted={usedThisWeek}
-                    challengeTitle={challenge.title}
-                  />
+                  <>
+                    <SubmissionForm
+                      platforms={platforms as CampaignPlatform[]}
+                      alreadySubmitted={usedThisWeek}
+                      challengeTitle={challenge.title}
+                    />
+
+              {/* Derived from the registry, never typed here. This line
+                  carried the old 100/200/300 ladder for a day after the rules
+                  changed, which is exactly what a second copy of a number
+                  does. */}
+              <p className="mt-5 text-sm leading-relaxed text-ink-2">
+                {monicaPointLadder
+                  .map(
+                    (tier) =>
+                      `${tier.points} points for ${
+                        tier.platforms === 1
+                          ? "the first platform"
+                          : tier.platforms === 2
+                            ? "two"
+                            : "all three"
+                      }`,
+                  )
+                  .join(", ")}
+                . It stays one entry either way.
+              </p>
+                  </>
                 )}
               </div>
             </HeadedPanel>
@@ -433,7 +435,7 @@ export default async function MonicaCreatorPage() {
               <h2 className="text-xl font-bold text-white">
                 We could not load this week
               </h2>
-              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
                 Something went wrong at our end, not with your entry. Refresh in
                 a moment. Nothing you have already sent is affected.
               </p>
@@ -445,7 +447,7 @@ export default async function MonicaCreatorPage() {
                   ? "The first brief opens Monday 14 September"
                   : "No brief is open"}
               </h2>
-              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/60">
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
                 A new one opens each Monday. When it does it appears here, with
                 somewhere to paste your link.
               </p>
@@ -461,10 +463,11 @@ export default async function MonicaCreatorPage() {
           {/* Figures, below the action. One shared rule so three numbers read as
               one row, and no hint on any of them: a hint under one figure hangs
               it two lines below its siblings and the rules stop lining up. */}
-          {/* Contained like every section below, not floating on a hairline.
-              The figures stay where the redesign put them, under the week,
-              because the week is the reason for the visit. */}
-          <div className="mt-8 rounded-xl border border-white/12 bg-white/[0.02] p-5 sm:p-6">
+          {/* A quiet rule over the figures, deliberately NOT another card:
+              the week above and the sections below are contained, and a third
+              identical box in between made the page monotone. Varying the
+              rhythm is what lets the week stay the loudest thing here. */}
+          <div className="mt-8 border-t border-line-2 pt-5">
             {/* Three one-word labels over numbers, about 104px each at 360px.
                 Stacking them costs roughly 300px on the screen creators open
                 weekly, which is the space this redesign exists to reclaim.
@@ -484,7 +487,7 @@ export default async function MonicaCreatorPage() {
                 value={creator.approvedEntries}
               />
             </div>
-            <p className="mt-3 text-sm text-white/45">
+            <p className="mt-3 text-sm text-ink-4">
               {rank === null
                 ? "You are ranked once you have your first approved entry."
                 : "Standings update as entries are approved."}{" "}
@@ -519,7 +522,7 @@ export default async function MonicaCreatorPage() {
                   correct. Refresh in a moment.
                 </p>
               ) : (
-                <ul className="mt-5 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/12">
+                <ul className="mt-5 divide-y divide-line overflow-hidden rounded-xl border border-line">
                   {history.map((movement) => (
                     <li
                       key={movement.id}
@@ -539,7 +542,7 @@ export default async function MonicaCreatorPage() {
                         {movement.points > 0 ? "+" : ""}
                         {movement.points}
                       </span>
-                      <span className="w-full text-sm text-white/55">
+                      <span className="w-full text-sm text-ink-3">
                         {movement.at.toLocaleDateString("en-GB", {
                           day: "numeric",
                           month: "long",
@@ -547,7 +550,7 @@ export default async function MonicaCreatorPage() {
                         })}
                       </span>
                       {movement.note && (
-                        <p className="w-full text-sm leading-relaxed text-white/70">
+                        <p className="w-full text-sm leading-relaxed text-ink-2">
                           {movement.note}
                         </p>
                       )}
@@ -572,12 +575,12 @@ export default async function MonicaCreatorPage() {
                 in a moment.
               </p>
             ) : mine.length === 0 ? (
-              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/55">
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
                 Nothing yet. Publish your answer on your own account, then paste
                 the link above.
               </p>
             ) : (
-              <ul className="mt-5 flex flex-col gap-px overflow-hidden rounded-xl bg-white/10">
+              <ul className="mt-5 flex flex-col gap-px overflow-hidden rounded-xl bg-card-3">
                 {mine.map((entry) => {
                   const state = statusPill(entry.status);
                   return (
@@ -586,7 +589,7 @@ export default async function MonicaCreatorPage() {
                         <span className="text-sm font-semibold text-white">
                           Week {entry.weekNo}
                         </span>
-                        <span className="text-sm text-white/45">
+                        <span className="text-sm text-ink-4">
                           {platformLabels[entry.platform as CampaignPlatform] ??
                             entry.platform}
                         </span>
@@ -601,7 +604,7 @@ export default async function MonicaCreatorPage() {
                         href={entry.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-2 block break-words text-sm leading-relaxed text-white/45 underline underline-offset-2 [overflow-wrap:anywhere] hover:text-white/70"
+                        className="mt-2 block break-words text-sm leading-relaxed text-ink-4 underline underline-offset-2 [overflow-wrap:anywhere] hover:text-ink-2"
                       >
                         {entry.url}
                       </a>
@@ -610,15 +613,15 @@ export default async function MonicaCreatorPage() {
                           className={`mt-3 border-l-2 pl-3 ${
                             entry.status === "rejected"
                               ? "border-red-400/60"
-                              : "border-white/20"
+                              : "border-line-2"
                           }`}
                         >
-                          <p className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-ink-4">
                             {entry.status === "rejected"
                               ? "What to change"
                               : "Note from the reviewer"}
                           </p>
-                          <p className="mt-1 text-sm leading-relaxed text-white/75">
+                          <p className="mt-1 text-sm leading-relaxed text-ink-2">
                             {entry.reviewNote}
                           </p>
                         </div>
@@ -636,7 +639,7 @@ export default async function MonicaCreatorPage() {
               a ?ref= link on /join. */}
           {handles.length > 0 && (
             <SectionCard id="accounts" title="Your accounts" className="mt-6">
-              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
                 Entries only count from these. If one is wrong, ask for a
                 correction: the team reviews every request by hand before
                 anything changes.
@@ -650,7 +653,7 @@ export default async function MonicaCreatorPage() {
           )}
 
           <SectionCard id="referral" title="Bring a creator in" className="mt-6">
-            <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/55">
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
               Worth 50 points each, credited when they get their first approved
               entry rather than when they register.
             </p>
@@ -664,22 +667,22 @@ export default async function MonicaCreatorPage() {
 
           {/* Last, and collapsed. Needed once, by the person it happens to. */}
           <details className="group mt-12">
-            <summary className="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-semibold text-white/70 hover:text-white">
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-semibold text-ink-2 hover:text-white">
               Keeping your way back in
             </summary>
             <Panel tone="quiet" className="mt-3">
-              <p className="max-w-prose text-sm leading-relaxed text-white/70">
+              <p className="max-w-prose text-sm leading-relaxed text-ink-2">
                 This page remembers you on this browser. The trap is opening
                 your link inside WhatsApp or Instagram: that is a different
                 browser from your normal one, so the page will not know you when
                 you open Chrome or Safari later.
               </p>
-              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
                 Bookmark this page in the browser you actually use, or add it to
                 your home screen. Keep the email we sent at registration as
                 well, since it has your link in it.
               </p>
-              <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/55">
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
                 {/* No copy button. The address bar here is just /me, and pasted
                     anywhere else it shows the locked page: a button would hand
                     somebody a link that looks like a rescue and is not one. */}

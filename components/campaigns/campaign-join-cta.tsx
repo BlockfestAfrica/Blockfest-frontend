@@ -54,12 +54,12 @@ export function CampaignJoinCTA({
   }, [opensAt]);
 
   const base =
-    "inline-flex min-h-12 items-center gap-2 rounded-full px-8 text-base font-semibold transition-colors duration-300";
+    "inline-flex min-h-12 items-center gap-2 rounded-full px-8 text-base font-semibold transition-colors duration-150";
 
   if (!open) {
     return (
       <span
-        className={`${base} cursor-not-allowed border border-white/20 bg-white/5 text-white/70 ${className}`}
+        className={`${base} cursor-not-allowed border border-line-2 bg-card-2 text-ink-2 ${className}`}
         // Not a button. There is nothing to press, and a disabled button still
         // announces itself as one to a screen reader.
         role="status"

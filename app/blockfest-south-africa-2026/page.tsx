@@ -62,23 +62,23 @@ export default function BlockfestSouthAfrica2026Page() {
         <div className="container-page relative">
           <div className="max-w-3xl">
             {/* Badge */}
-            <p className="eyebrow text-white/60">
+            <p className="eyebrow text-ink-3">
               SOUTH AFRICA ROADSHOW · THAT&apos;S A WRAP
             </p>
 
             <h1 className="text-display-sm mt-5 font-bold uppercase text-white">
               Blockf<span className="text-brand-blue-light">3</span>st Africa{" "}
               <span className="text-brand-gold">&apos;26</span>
-              <span className="mt-2 block text-2xl text-white/90 sm:text-3xl">
+              <span className="mt-2 block text-2xl text-ink sm:text-3xl">
                 South Africa
               </span>
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg text-white/90 sm:text-2xl">
+            <p className="mt-6 max-w-xl text-lg text-ink sm:text-2xl">
               {event.tagline}
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/60">
+            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-3">
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" aria-hidden="true" />
                 {event.location.city}, {event.location.country}

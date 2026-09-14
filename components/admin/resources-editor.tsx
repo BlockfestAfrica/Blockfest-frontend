@@ -102,12 +102,12 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
     <JobCard
       id="resources"
       title="Pack resources"
-      state="todo"
+      state={rows.some((r) => r.isPublished) ? "todo" : "now"}
       hint="Links and notes on the public pack page, live within a minute of saving, no deploy. Plain text only: anything that looks like HTML renders as the characters themselves, on purpose. Links must be https."
     >
       <ul className="flex flex-col gap-2">
         {rows.map((row) => (
-          <li key={row.id} className="rounded-lg border border-white/12 p-4">
+          <li key={row.id} className="rounded-lg border border-line bg-card p-4">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-semibold text-white">{row.title}</span>
               <Pill>{row.section}</Pill>
@@ -118,7 +118,7 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
                 <button
                   type="button"
                   onClick={() => startEditing(row)}
-                  className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-white/60 transition-colors hover:text-white"
+                  className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-ink-3 transition-colors hover:text-white"
                 >
                   Edit
                 </button>
@@ -132,16 +132,16 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
                 </button>
               </span>
             </div>
-            {row.url && <p className="mt-1 break-all font-mono text-sm text-white/55">{row.url}</p>}
+            {row.url && <p className="mt-1 break-all font-mono text-sm text-ink-3">{row.url}</p>}
           </li>
         ))}
         {rows.length === 0 && (
-          <li className="text-sm text-white/60">Nothing yet. Add the first one below.</li>
+          <li className="text-sm text-ink-3">Nothing yet. Add the first one below.</li>
         )}
       </ul>
 
       {open ? (
-        <div className="mt-4 flex flex-col gap-4 rounded-lg border border-white/12 p-4">
+        <div className="mt-4 flex flex-col gap-4 rounded-lg border border-line p-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="res-title" label="Title">
               <input id="res-title" value={form.title} maxLength={160}

@@ -77,12 +77,12 @@ export function ReissueLink() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="The email they registered with"
-          className="w-full flex-1 rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
+          className="w-full flex-1 rounded-lg border border-line-2 bg-control px-4 py-3 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
         />
         <button
           type="submit"
           disabled={busy || !email.trim()}
-          className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/20 px-6 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line-2 px-6 text-sm font-semibold text-white transition-colors duration-150 hover:bg-card-3 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {busy ? "Working..." : "Issue a new link"}
         </button>
@@ -96,12 +96,12 @@ export function ReissueLink() {
               ? " Also emailed to the address they registered with."
               : " The email did not go, so this copy is the only one. Pass it on now."}
           </p>
-          <p className="mt-1 max-w-prose text-sm leading-relaxed text-white/60">
+          <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
             Send it to them yourself. It is not emailed, and it cannot be shown
             again.
           </p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-            <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+            <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-line-2 bg-ground px-4 py-3 text-sm text-white">
               {issued.link}
             </code>
             <button
@@ -111,7 +111,7 @@ export function ReissueLink() {
                 setCopied(true);
                 toast.success("Copied");
               }}
-              className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+              className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-line-2 px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-card-3"
             >
               {copied ? (
                 <Check className="h-4 w-4" aria-hidden="true" />

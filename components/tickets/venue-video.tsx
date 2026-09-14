@@ -44,11 +44,11 @@ export function VenueVideo() {
   return (
     <section
       id="venue"
-      className="section-y bg-ground border-t border-white/20"
+      className="section-y bg-ground border-t border-line-2"
       aria-label="Venue announcement"
     >
       <div className="container-page">
-        <div className="overflow-hidden rounded-xl border border-white/20 bg-white/5">
+        <div className="overflow-hidden rounded-xl border border-line-2 bg-card-2">
           {/* biome-ignore lint/a11y/useMediaCaption: no caption track supplied yet; the video carries on-screen titles and the surrounding copy states what it shows */}
           <video
             className="block aspect-video h-auto w-full"
@@ -60,7 +60,7 @@ export function VenueVideo() {
             height={VENUE_VIDEO.height}
           >
             <source src={VENUE_VIDEO.src} type="video/mp4" />
-            <p className="p-6 text-sm text-white/60">
+            <p className="p-6 text-sm text-ink-3">
               Your browser cannot play this video.{" "}
               <a
                 href={VENUE_VIDEO.src}
@@ -73,7 +73,7 @@ export function VenueVideo() {
           </video>
         </div>
 
-        <p className="mt-4 text-sm text-white/60">
+        <p className="mt-4 text-sm text-ink-3">
           {minutes}:{String(seconds).padStart(2, "0")} · {EVENT.location.venue}{" "}
           · plays only when you press play
         </p>

@@ -73,7 +73,7 @@ export function CopyField({
           the width, and a nowrap URL contributes its full length as the
           container's cross size. The card then grows past the viewport and
           html/body clip it, cutting the whole page rather than the URL. */}
-      <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+      <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-line-2 bg-ground px-4 py-3 text-sm text-white">
         {value}
       </code>
       <div className="flex gap-2">
@@ -81,7 +81,7 @@ export function CopyField({
           type="button"
           onClick={copy}
           aria-label={label}
-          className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-white/10 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/15 sm:flex-none"
+          className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-card-3 px-5 text-sm font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-card-3 active:scale-[0.98] sm:flex-none"
         >
           {copied ? (
             <Check className="h-4 w-4" aria-hidden="true" />
@@ -94,7 +94,7 @@ export function CopyField({
           <button
             type="button"
             onClick={share}
-            className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-gold px-5 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
+            className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-gold px-5 text-sm font-semibold text-black transition-[background-color,transform] duration-150 hover:bg-brand-gold-hover active:scale-[0.98]"
           >
             <Share2 className="h-4 w-4" aria-hidden="true" />
             Share

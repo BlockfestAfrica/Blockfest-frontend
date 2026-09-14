@@ -128,7 +128,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
   }
 
   return (
-    <ul className="mt-6 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/12">
+    <ul className="mt-6 divide-y divide-line overflow-hidden rounded-xl border border-line">
       {items.map((item) => {
         const isOpen = open === item.id;
         return (
@@ -150,31 +150,31 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
               type="button"
               onClick={() => start(item)}
               aria-expanded={isOpen}
-              className="flex min-h-16 w-full cursor-pointer items-center gap-3 py-3 pl-4 pr-3 text-left transition-colors hover:bg-white/[0.03]"
+              className="flex min-h-16 w-full cursor-pointer items-center gap-3 py-3 pl-4 pr-3 text-left transition-colors hover:bg-card"
             >
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-base font-semibold text-white">
                   {item.creatorName}
-                  {item.contested && (
-                    /*
-                     * Two creators claim this exact post; approving pays only
-                     * the first and the second is refused by name. Without
-                     * this the queue is worked oldest first, the thief who
-                     * filed first is reviewed first, and the reviewer learns
-                     * a tie existed only from the refusal.
-                     */
-                    <span className="ml-2 inline-flex min-h-6 items-center rounded-full border border-amber-400/40 px-2 text-xs font-semibold text-amber-300">
-                      Contested: another creator entered this same post
-                    </span>
-                  )}
                 </span>
-                <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-white/60">
+                <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-3">
                   {item.registeredHandle ? (
-                    <span className="truncate font-mono text-brand-gold">
+                    /* Ink, not gold. Gold is the accent and an accent on
+                       every row of the busiest screen is no accent; the
+                       handle is metadata the eye compares, not a status. */
+                    <span className="truncate font-mono text-ink-2">
                       @{item.registeredHandle}
                     </span>
                   ) : (
                     <Pill tone="bad">no handle</Pill>
+                  )}
+                  {item.contested && (
+                    /*
+                     * Two creators claim this exact post; approving pays only
+                     * the first. On the meta row rather than inside the
+                     * truncating name span, where a long name swallowed the
+                     * one flag a reviewer must not miss.
+                     */
+                    <Pill tone="warn">Contested</Pill>
                   )}
                   <span>
                     W{item.weekNo} · {item.platformLabel}
@@ -183,7 +183,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
               </span>
               <WaitedFor since={item.submittedAt} />
               <ChevronDown
-                className={`h-4 w-4 shrink-0 text-white/60 transition-transform ${
+                className={`h-4 w-4 shrink-0 text-ink-3 transition-transform ${
                   isOpen ? "rotate-180" : ""
                 }`}
                 aria-hidden="true"
@@ -191,7 +191,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
             </button>
 
             {isOpen && (
-              <div className="border-t border-white/10 bg-white/[0.02] p-4">
+              <div className="border-t border-line bg-card p-4">
                 {item.autoChecked ? (
                   <p className="flex items-center gap-2 text-sm text-green-300">
                     <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -211,18 +211,18 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                   </p>
                 )}
 
-                <p className="mt-1 text-sm text-white/60">
+                <p className="mt-1 text-sm text-ink-3">
                   Week {item.weekNo}: {item.challengeTitle}
                 </p>
 
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                  <code className="min-w-0 flex-1 break-all rounded-lg border border-white/12 bg-ground px-4 py-3 text-sm leading-relaxed text-white/85">
+                  <code className="min-w-0 flex-1 break-all rounded-lg border border-line bg-ground px-4 py-3 text-sm leading-relaxed text-ink-2">
                     {item.url}
                   </code>
                   <button
                     type="button"
                     onClick={() => start(item)}
-                    className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+                    className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-line-2 px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-card-3"
                   >
                     {copied === item.id ? (
                       <Check className="h-4 w-4" aria-hidden="true" />
@@ -245,7 +245,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                     }
                     maxLength={500}
                     placeholder="Reason, required to reject. The creator sees it."
-                    className="min-w-0 flex-1 rounded-lg border border-white/12 bg-ground px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
+                    className="min-w-0 flex-1 rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
                   />
                   {/* Separated, and reject sits on the far side. They were
                       adjacent, the same size and the same shape, each flex-1
@@ -256,16 +256,16 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                       type="button"
                       disabled={busy === item.id}
                       onClick={() => decide(item.id, "approved")}
-                      className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-colors duration-300 hover:bg-green-400/25 disabled:opacity-60 sm:flex-none"
+                      className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-[background-color,transform] duration-150 hover:bg-green-400/25 active:scale-[0.98] disabled:opacity-60 sm:flex-none"
                     >
                       <Check className="h-4 w-4" aria-hidden="true" />
-                      {busy === item.id ? "Working..." : "Approve"}
+                      {busy === item.id ? "Approving…" : "Approve"}
                     </button>
                     <button
                       type="button"
                       disabled={busy === item.id}
                       onClick={() => decide(item.id, "rejected")}
-                      className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-colors duration-300 hover:bg-red-400/15 disabled:opacity-60"
+                      className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-[background-color,transform] duration-150 hover:bg-red-400/15 active:scale-[0.98] disabled:opacity-60"
                     >
                       <X className="h-4 w-4" aria-hidden="true" />
                       Reject
@@ -302,7 +302,7 @@ function WaitedFor({ since }: { since: string }) {
   }, [since]);
 
   return (
-    <span className="shrink-0 text-sm tabular-nums text-white/55">
+    <span className="shrink-0 text-sm tabular-nums text-ink-3">
       {label ?? ""}
     </span>
   );

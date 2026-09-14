@@ -232,7 +232,7 @@ export function WinnersPanel({
               onConfirm={() => save(true)}
             />
             {!ready && (
-              <p className="text-sm text-white/70">
+              <p className="text-sm text-ink-2">
                 Pick a creator and enter the prize to continue.
               </p>
             )}
@@ -246,18 +246,18 @@ export function WinnersPanel({
                 Draft saved: {draft.name}, {naira(draft.prizeNaira)}
               </p>
               {draft.note && (
-                <p className="mt-1 max-w-prose text-sm leading-relaxed text-white/70">
+                <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
                   {draft.note}
                 </p>
               )}
-              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
                 Not public. Load it below to announce it, or pick somebody
                 else, which replaces this draft when you save.
               </p>
               <button
                 type="button"
                 onClick={loadDraft}
-                className="mt-3 inline-flex min-h-11 cursor-pointer items-center rounded-full border border-white/20 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                className="mt-3 inline-flex min-h-11 cursor-pointer items-center rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-3"
               >
                 Load the draft into the form
               </button>
@@ -281,7 +281,7 @@ export function WinnersPanel({
               index refuses it, the candidate list omits them, and this says
               why a name somebody is looking for is not there. */}
           {category === "creator_of_week" && excludedCount > 0 && (
-            <p className="max-w-prose text-sm leading-relaxed text-white/70">
+            <p className="max-w-prose text-sm leading-relaxed text-ink-2">
               {excludedCount}{" "}
               {excludedCount === 1 ? "creator is" : "creators are"} missing from
               this list because they have already been Creator of the Week. It

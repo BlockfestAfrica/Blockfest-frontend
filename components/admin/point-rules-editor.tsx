@@ -100,7 +100,7 @@ export function PointRulesEditor({
     >
       {/* The tiers as absolute totals, which is how the team reasons about
           them: "a three platform entry is worth X", never stacking deltas. */}
-      <div className="mb-6 rounded-lg border border-white/12 p-4">
+      <div className="mb-6 rounded-lg border border-line p-4">
         <p className="text-sm font-semibold text-white">This week, an approved entry is worth</p>
         {/* mobile-grid-ok: three numerals with one-word labels. */}
         <div className="mt-3 grid grid-cols-3 gap-4 text-center">
@@ -111,11 +111,11 @@ export function PointRulesEditor({
           ].map((tier) => (
             <div key={tier.label}>
               <p className="text-2xl font-bold tabular-nums text-white">{tier.total}</p>
-              <p className="mt-1 text-sm text-white/60">{tier.label}</p>
+              <p className="mt-1 text-sm text-ink-3">{tier.label}</p>
             </div>
           ))}
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-white/60">
+        <p className="mt-3 text-sm leading-relaxed text-ink-3">
           The base is set per week in the briefs above; the two bonuses below
           are campaign-wide.
         </p>
@@ -126,10 +126,10 @@ export function PointRulesEditor({
           const meta = LABELS[rule.key] ?? { name: rule.key };
           const legacy = rule.key === "entry_base";
           return (
-            <li key={rule.id} className={`rounded-lg border border-white/12 p-4 ${legacy ? "opacity-60" : ""}`}>
+            <li key={rule.id} className={`rounded-lg border border-line p-4 ${legacy ? "opacity-60" : ""}`}>
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <span className="font-semibold text-white">{meta.name}</span>
-                <span className="text-sm tabular-nums text-white/70">
+                <span className="text-sm tabular-nums text-ink-2">
                   {rule.defaultPoints}
                   {rule.minPoints !== null || rule.maxPoints !== null
                     ? ` (${rule.minPoints ?? "no floor"} to ${rule.maxPoints ?? "no ceiling"})`
@@ -139,13 +139,13 @@ export function PointRulesEditor({
                   type="button"
                   onClick={() => (open === rule.id ? setOpen(null) : startEditing(rule))}
                   aria-expanded={open === rule.id}
-                  className="ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-white/60 transition-colors hover:text-white"
+                  className="ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-ink-3 transition-colors hover:text-white"
                 >
                   {open === rule.id ? "Cancel" : "Edit"}
                 </button>
               </div>
               {meta.note && (
-                <p className="mt-1 max-w-prose text-sm leading-relaxed text-white/55">{meta.note}</p>
+                <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">{meta.note}</p>
               )}
 
               {open === rule.id && (

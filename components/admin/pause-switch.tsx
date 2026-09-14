@@ -75,12 +75,12 @@ export function PauseSwitch({ paused }: { paused: boolean }) {
           type="button"
           disabled={busy}
           onClick={() => flip(false)}
-          className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:opacity-60"
+          className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover disabled:opacity-60"
         >
           <Play className="h-4 w-4" aria-hidden="true" />
           {busy ? "Working..." : "Start the campaign again"}
         </button>
-        <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/60">
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
           Registration and submissions resume at once. Nothing anybody has
           already sent is affected.
         </p>
@@ -91,7 +91,7 @@ export function PauseSwitch({ paused }: { paused: boolean }) {
   return (
     <div className="max-w-2xl">
       <h2 className="text-xl font-bold text-white">Pause the campaign</h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/50">
+      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-4">
         Stops registration and submissions at once. Every page stays readable,
         so creators can still see the rules and the leaderboard. Takes effect on
         their next click, not on the next deploy.
@@ -107,13 +107,13 @@ export function PauseSwitch({ paused }: { paused: boolean }) {
           onChange={(e) => setDraft(e.target.value)}
           maxLength={300}
           placeholder="Why. Creators see this exactly as written."
-          className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-red-400/60"
+          className="min-w-0 flex-1 rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-3 focus:border-red-400/60"
         />
         <button
           type="button"
           disabled={busy || !draft.trim()}
           onClick={() => flip(true)}
-          className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-red-400/15 px-6 text-sm font-semibold text-red-300 transition-colors duration-300 hover:bg-red-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-red-400/15 px-6 text-sm font-semibold text-red-300 transition-colors duration-150 hover:bg-red-400/25 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Pause className="h-4 w-4" aria-hidden="true" />
           Pause

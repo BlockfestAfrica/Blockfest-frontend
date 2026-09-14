@@ -10,7 +10,7 @@ import { CONTACT_EMAIL } from "@/lib/constants";
 import { useRouter, usePathname } from "next/navigation";
 
 const navLinkClasses =
-  "text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-2.5 inline-flex items-center min-h-11 transition-colors duration-300 ease-in-out";
+  "text-base font-normal text-nav-gray hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light rounded px-1 py-2.5 inline-flex items-center min-h-11 transition-colors duration-150 ease-in-out";
 
 /** Current page gets a gold underline, so you can always see where you are. */
 const activeNavClasses =
@@ -75,7 +75,7 @@ const Navbar = () => {
 
   return (
     <header
-      className={`${gotham.className} bg-ground sticky top-0 z-50 border-b border-white/10`}
+      className={`${gotham.className} bg-ground sticky top-0 z-50 border-b border-line`}
     >
       <div className="container-page flex items-center justify-between py-4 lg:py-5">
       {/* Logo */}
@@ -125,14 +125,14 @@ const Navbar = () => {
           {pastEventsOpen && (
             <div
               role="menu"
-              className="absolute left-0 top-full mt-2 min-w-[190px] rounded-md bg-ground border border-white/20 shadow-lg py-2 z-50"
+              className="absolute left-0 top-full mt-2 min-w-[190px] rounded-md bg-ground border border-line-2 shadow-lg py-2 z-50"
             >
               <Link
                 href="/blockfest-south-africa-2026"
                 role="menuitem"
                 aria-current={pathname === "/blockfest-south-africa-2026" ? "page" : undefined}
                 onClick={() => setPastEventsOpen(false)}
-                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white transition-colors duration-200 ease-in-out"
+                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-card-2 focus-visible:text-white transition-colors duration-200 ease-in-out"
               >
                 South Africa &apos;26
               </Link>
@@ -141,7 +141,7 @@ const Navbar = () => {
                 role="menuitem"
                 aria-current={pathname === "/blockfest-2025" ? "page" : undefined}
                 onClick={() => setPastEventsOpen(false)}
-                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-white/5 focus-visible:text-white transition-colors duration-200 ease-in-out"
+                className="block px-4 py-2.5 text-base font-normal text-nav-gray hover:text-white hover:bg-card-2 focus-visible:text-white transition-colors duration-200 ease-in-out"
               >
                 2025 Recap
               </Link>
@@ -175,7 +175,7 @@ const Navbar = () => {
       <div className="flex items-center gap-x-5">
         <Link
           href="/tickets"
-          className="text-sm lg:text-base font-medium text-black w-fit bg-brand-gold hidden shadow-xs hover:bg-brand-gold-hover min-h-11 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-300 ease-in-out"
+          className="text-sm lg:text-base font-medium text-black w-fit bg-brand-gold hidden shadow-xs hover:bg-brand-gold-hover min-h-11 px-5 py-2 md:flex items-center justify-center rounded-md transition-colors duration-150 ease-in-out"
         >
           Get Tickets
         </Link>
@@ -239,7 +239,7 @@ const MobileMenu = () => {
           <button
             type="button"
             aria-label="Close menu"
-            className="flex items-center justify-center w-11 h-11 rounded-full hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light"
+            className="flex items-center justify-center w-11 h-11 rounded-full hover:bg-card-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-light"
           >
             <X size={28} className="text-white" />
           </button>
@@ -288,7 +288,7 @@ const MobileMenu = () => {
           </button>
 
           {pastEventsOpen && (
-            <div className="flex flex-col gap-y-4 mt-4 pl-4 border-l border-white/20">
+            <div className="flex flex-col gap-y-4 mt-4 pl-4 border-l border-line-2">
               <SheetClose asChild>
                 <Link
                   href="/blockfest-south-africa-2026"

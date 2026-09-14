@@ -293,7 +293,7 @@ export default async function SpeakerPage({
             >
               Don&apos;t Miss Out
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               Join {speaker.name.split(" ")[0]} and other industry leaders in Lagos,
               October 22&ndash;24, 2026.
             </p>
@@ -310,7 +310,7 @@ export default async function SpeakerPage({
               </Button>
               <Button
                 asChild
-                className="rounded-full border border-white/20 bg-white/10 px-7 text-base font-semibold text-white hover:bg-white/20"
+                className="rounded-full border border-line-2 bg-card-3 px-7 text-base font-semibold text-white hover:bg-white/20"
               >
                 <Link href="/speakers">View All Speakers</Link>
               </Button>

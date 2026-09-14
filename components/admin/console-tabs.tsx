@@ -44,7 +44,7 @@ export function ConsoleTabs({ tabs }: { tabs: ConsoleTab[] }) {
             className={`-mb-px inline-flex min-h-12 items-center whitespace-nowrap border-b-2 px-3 text-sm font-semibold transition-colors ${
               active
                 ? "border-brand-gold text-brand-gold"
-                : "border-transparent text-white/60 hover:text-white"
+                : "border-transparent text-ink-3 hover:text-white"
             }`}
           >
             {tab.label}
