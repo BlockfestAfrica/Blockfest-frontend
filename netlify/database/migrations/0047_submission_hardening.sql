@@ -1,10 +1,10 @@
 -- Submission window and authorship hardening, from the day-one audit.
 --
--- Numbered 0047, renamed from 0043 before it was ever applied: the PRs
--- carrying 0043 and 0044 merged in the opposite order to their numbers,
--- 0044 deployed first, and Netlify then refused 0043 as out of order on
--- every later deploy. A migration that has never been applied may be
--- renamed; one that has, never.
+-- Numbered 0047, renamed from 0043 before it was ever applied: the PR
+-- carrying 0045 merged and deployed before the PRs carrying 0043 and
+-- 0044, so Netlify refused both lower numbers as out of order on every
+-- later deploy. 0044 became 0049 in the follow-up repair. A migration
+-- that has never been applied may be renamed; one that has, never.
 --
 -- Two holes, one migration, both functions regenerated from their 0037
 -- definitions with everything else verbatim:
