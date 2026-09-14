@@ -145,3 +145,33 @@ describe("host matching on its own", () => {
     expect(hostMatchesPlatform("::::", "x")).toBe(false);
   });
 });
+
+describe("percent-encoded spellings of one post", () => {
+  it("collapses an encoded id to the plain form", () => {
+    expect(canonicalUrl("https://x.com/ada/status/12%339")).toBe(
+      canonicalUrl("https://x.com/ada/status/1239"),
+    );
+  });
+
+  it("collapses an encoded handle the same way", () => {
+    expect(canonicalUrl("https://x.com/%61da/status/1239")).toBe(
+      "https://x.com/ada/status/1239",
+    );
+  });
+
+  it("unwinds double encoding to the same single spelling", () => {
+    expect(canonicalUrl("https://x.com/ada/status/123%2539")).toBe(
+      "https://x.com/ada/status/1239",
+    );
+  });
+
+  it("leaves a malformed escape alone rather than throwing", () => {
+    expect(() => canonicalUrl("https://x.com/ada/status/12%ZZ")).not.toThrow();
+  });
+
+  it("still strips query, fragment and the trailing slash", () => {
+    expect(
+      canonicalUrl("https://x.com/ada/status/1239/?utm_source=share#top"),
+    ).toBe("https://x.com/ada/status/1239");
+  });
+});
