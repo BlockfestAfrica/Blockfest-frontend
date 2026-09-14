@@ -8,6 +8,7 @@ import { CAMPAIGN_GATE_FORCED_OPEN, monicaRoutes } from "@/lib/campaigns";
 import { MONICA_RULES_VERSION } from "@/lib/monica-rules";
 import { MONICA_PRIVACY_VERSION } from "@/lib/monica-privacy";
 import { toast } from "sonner";
+import { control } from "@/components/shared/panel";
 import { CAMPAIGN_EVENTS, track } from "@/lib/sabilytics";
 
 type Field =
@@ -61,8 +62,15 @@ const EMPTY: Record<Field, string> = {
   acceptedRules: "",
 };
 
-const inputClass =
-  "w-full rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-4 transition-colors focus:border-brand-gold focus:bg-control";
+/*
+ * The system's recipe, not a local twin of it. This file carried its own
+ * input string, and by the time the design review looked it had drifted from
+ * `control` on three counts: the softer border tier, the missing min-height
+ * guarantee, and a gold focus border firing beside the global blue ring, the
+ * exact double focus voice the craft pass removed from the system. A local
+ * copy of a recipe is where the next drift starts, so there is no copy.
+ */
+const inputClass = control;
 
 /** A titled group of fields, so the form reads as three short asks. */
 function Section({

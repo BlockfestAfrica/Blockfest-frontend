@@ -569,7 +569,7 @@ function AwardRow({
           id="award-source"
           value={source}
           onChange={(e) => setSource(e.target.value)}
-          className="min-h-12 cursor-pointer rounded-lg border border-line bg-ground px-4 text-base text-white focus:border-brand-gold lg:w-56"
+          className="min-h-12 cursor-pointer rounded-lg border border-line bg-ground px-4 text-base text-white lg:w-56"
         >
           {AWARD_SOURCES.map((s) => (
             <option key={s.key} value={s.key}>
@@ -587,7 +587,7 @@ function AwardRow({
           onChange={(e) => setPoints(e.target.value.replace(/[^0-9-]/g, ""))}
           inputMode="numeric"
           placeholder="Points, or -points"
-          className="min-h-12 rounded-lg border border-line bg-control px-4 text-base text-white placeholder:text-ink-3 focus:border-brand-gold lg:w-44"
+          className="min-h-12 rounded-lg border border-line bg-control px-4 text-base text-white placeholder:text-ink-3 lg:w-44"
         />
 
         <label htmlFor="award-note" className="sr-only">
@@ -599,7 +599,7 @@ function AwardRow({
           onChange={(e) => setNote(e.target.value)}
           maxLength={300}
           placeholder="Why. Required, and kept against the award."
-          className="min-h-12 min-w-0 flex-1 rounded-lg border border-line bg-control px-4 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
+          className="min-h-12 min-w-0 flex-1 rounded-lg border border-line bg-control px-4 text-base text-white placeholder:text-ink-3"
         />
 
         <button
@@ -705,7 +705,7 @@ function CorrectHandle({
           autoCapitalize="none"
           spellCheck={false}
           placeholder="the-right-username"
-          className="min-h-11 w-full rounded-lg border border-line-2 bg-control px-4 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
+          className="min-h-11 w-full rounded-lg border border-line-2 bg-control px-4 text-base text-white placeholder:text-ink-3"
         />
         <label htmlFor={`fix-why-${enrolmentId}-${platform}`} className="sr-only">
           Why it is being corrected
@@ -716,7 +716,7 @@ function CorrectHandle({
           onChange={(event) => setReason(event.target.value)}
           maxLength={300}
           placeholder="Why: they wrote in from their registered email…"
-          className="min-h-11 w-full rounded-lg border border-line-2 bg-control px-4 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
+          className="min-h-11 w-full rounded-lg border border-line-2 bg-control px-4 text-base text-white placeholder:text-ink-3"
         />
         <div className="flex gap-2">
           <button

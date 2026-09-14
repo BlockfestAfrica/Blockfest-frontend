@@ -109,7 +109,7 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
                   onChange={(event) => setNote(event.target.value)}
                   maxLength={300}
                   placeholder="Why not, in a sentence the creator will read"
-                  className="min-h-11 w-full rounded-lg border border-line-2 bg-control px-4 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
+                  className="min-h-11 w-full rounded-lg border border-line-2 bg-control px-4 text-base text-white placeholder:text-ink-3"
                 />
                 <div className="flex gap-2">
                   <button

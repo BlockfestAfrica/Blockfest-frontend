@@ -69,3 +69,15 @@ confirm.tsx. Extract on second reuse; never a fourth text tier by hand.
 without mobile-grid-ok · wide content scrolls in its own container · no
 external script hosts in any CSP. Design changes must pass them; they have
 caught real regressions from this very pass.
+
+
+## Rulings from the first post-system design review (this file is why)
+
+- One focus voice, site-wide: the global blue ring owns :focus-visible.
+  focus:border-brand-gold beside it was the double announcement the craft
+  pass removed from `control`; ten survivors were swept from six files the
+  first time new UI was reviewed against this document.
+- No local twins of a recipe. registration-form carried its own inputClass
+  and it had already drifted on three counts by review time. If a file needs
+  the control recipe, it imports `control`; a divergence is a proposal to
+  change the system, made here, not a private fork.

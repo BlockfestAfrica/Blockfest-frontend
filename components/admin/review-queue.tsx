@@ -245,7 +245,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                     }
                     maxLength={500}
                     placeholder="Reason, required to reject. The creator sees it."
-                    className="min-w-0 flex-1 rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
+                    className="min-w-0 flex-1 rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-3"
                   />
                   {/* Separated, and reject sits on the far side. They were
                       adjacent, the same size and the same shape, each flex-1
