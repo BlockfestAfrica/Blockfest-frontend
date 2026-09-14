@@ -458,3 +458,88 @@ describe("a rejected submission", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("the pre-0030 snapshot repair (0042)", () => {
+  /*
+   * The defect this recreates was found in production on day one: an entry
+   * created before 0030 froze the linear ladder (bonus_2 100, bonus_3 200)
+   * and paid 300 for three platforms after launch, while every published
+   * number said 200. The repair re-snapshots exactly the old pair and lets
+   * recompute_entry_award write the difference as a correction row.
+   */
+  it("brings an old-ladder entry to the published total, by a correction row", async () => {
+    const { entryId, enrolmentId } = await makeEntry();
+    await db.query(`
+      UPDATE challenge_entries
+         SET bonus_2_snapshot = 100, bonus_3_snapshot = 200
+       WHERE id = '${entryId}'`);
+
+    await submit(entryId, ["x", "instagram", "tiktok"]);
+    for (const p of ["x", "instagram", "tiktok"]) {
+      await reviewPlatform(entryId, p, "approved");
+    }
+    // The bug, reproduced: the old snapshots pay 100 per platform.
+    expect(await awardedPoints(entryId)).toBe(300);
+
+    // The migration's repair block, scoped to this fixture's entry the way
+    // 0042 scopes to the campaign slug.
+    await db.query(`
+      DO $$
+      DECLARE v_entry uuid;
+      BEGIN
+        FOR v_entry IN
+          SELECT e.id FROM challenge_entries e
+           WHERE e.id = '${entryId}'
+             AND e.bonus_2_snapshot = 100 AND e.bonus_3_snapshot = 200
+        LOOP
+          UPDATE challenge_entries
+             SET bonus_2_snapshot = 50, bonus_3_snapshot = 100, updated_at = now()
+           WHERE id = v_entry;
+          PERFORM recompute_entry_award(v_entry);
+        END LOOP;
+      END $$;`);
+
+    expect(await awardedPoints(entryId)).toBe(THREE);
+    const total = await one<{ total: number }>(`
+      SELECT COALESCE(sum(points),0)::int AS total FROM point_ledger
+       WHERE campaign_creator_id = '${enrolmentId}' AND source = 'challenge_entry'`);
+    expect(Number(total.total)).toBe(THREE);
+    // History is corrected, never rewritten: the three +100 rows stand and
+    // a single -100 row brings the sum to the published number.
+    const correction = await one<{ n: number }>(`
+      SELECT count(*)::int AS n FROM point_ledger
+       WHERE entry_id = '${entryId}' AND points = ${THREE - 300}`);
+    expect(Number(correction.n)).toBe(1);
+  });
+
+  it("does not touch an entry already on the published ladder", async () => {
+    const { entryId } = await makeEntry();
+    await submit(entryId, ["x", "instagram"]);
+    for (const p of ["x", "instagram"]) {
+      await reviewPlatform(entryId, p, "approved");
+    }
+    expect(await awardedPoints(entryId)).toBe(TWO);
+
+    const before = await one<{ n: number }>(`
+      SELECT count(*)::int AS n FROM point_ledger WHERE entry_id = '${entryId}'`);
+    await db.query(`
+      DO $$
+      DECLARE v_entry uuid;
+      BEGIN
+        FOR v_entry IN
+          SELECT e.id FROM challenge_entries e
+           WHERE e.id = '${entryId}'
+             AND e.bonus_2_snapshot = 100 AND e.bonus_3_snapshot = 200
+        LOOP
+          UPDATE challenge_entries
+             SET bonus_2_snapshot = 50, bonus_3_snapshot = 100, updated_at = now()
+           WHERE id = v_entry;
+          PERFORM recompute_entry_award(v_entry);
+        END LOOP;
+      END $$;`);
+    const after = await one<{ n: number }>(`
+      SELECT count(*)::int AS n FROM point_ledger WHERE entry_id = '${entryId}'`);
+    expect(Number(after.n)).toBe(Number(before.n));
+    expect(await awardedPoints(entryId)).toBe(TWO);
+  });
+});
