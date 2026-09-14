@@ -82,6 +82,12 @@ const MESSAGES: Record<string, string> = {
   P0803: "That creator has been removed from the campaign and cannot win.",
   P0804:
     "Record the standings for this week before announcing. The announcement commits money against the frozen board.",
+  P0805:
+    "This week's vote is not settled. Close the round, sweep suspicious votes, and mark the review complete, then announce.",
+  P0806:
+    "The vote decided this one, and that is not the winner. The tally names the Community Favourite; to dispute the result, remove fraudulent votes in the round review and the tally changes with it.",
+  P0807:
+    "With no countable votes, the Community Favourite is picked from the shortlist people were shown. That creator was not on it.",
   P0201: "That creator is not in this campaign.",
   P0401: "Only a signed-in admin can do this.",
   P0002: "That campaign does not exist.",
