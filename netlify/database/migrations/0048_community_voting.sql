@@ -1,5 +1,9 @@
 -- Community Favourite voting, the engine.
 --
+-- Numbered 0048: written as 0046, renumbered before ever applying so it
+-- sorts after 0047, the renamed submission-hardening migration that
+-- unblocked the deploy pipeline.
+--
 -- The tables have existed since 0000 with the hard rules in their
 -- constraints: one COUNTED vote per canonical email per round, nomination
 -- at entry level, removal that keeps the row. This adds what votes:
