@@ -544,3 +544,27 @@ describe("creator access tokens", () => {
     ).toBe(1);
   });
 });
+
+describe("0044 registration integrity", () => {
+  it("a voided referrer's code no longer resolves", async () => {
+    await register({ email: "ref@a.com", phone: "+2341", code: "REFCODE1" });
+    await db.query(
+      `UPDATE campaign_creators SET status = 'disqualified'
+        WHERE referral_code = 'REFCODE1'`,
+    );
+    await register({ email: "new@a.com", phone: "+2342", ref: "REFCODE1" });
+    const { rows } = await db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM referrals`,
+    );
+    expect(Number((rows[0] as { n: number }).n)).toBe(0);
+  });
+
+  it("an active referrer's code still resolves", async () => {
+    await register({ email: "ref@b.com", phone: "+2343", code: "REFCODE2" });
+    await register({ email: "new@b.com", phone: "+2344", ref: "REFCODE2" });
+    const { rows } = await db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM referrals`,
+    );
+    expect(Number((rows[0] as { n: number }).n)).toBe(1);
+  });
+});

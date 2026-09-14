@@ -407,9 +407,10 @@ export function RegistrationForm({
             location: values.location || undefined,
             acceptedRules: true,
             // Named `ref` on the wire because that is what /join's cookie and
-            // the schema already call it. Omitted when blank so an empty string
-            // never looks like a code that failed to resolve.
-            ref: values.referralCode.trim() || undefined,
+            // the schema already call it. Always sent, even blank: an empty
+            // string is how a deliberately cleared box suppresses the cookie
+            // fallback instead of being silently re-credited from it.
+            ref: values.referralCode.trim(),
             rulesVersion: MONICA_RULES_VERSION,
             marketingOptIn: marketing,
             privacyVersion: MONICA_PRIVACY_VERSION,

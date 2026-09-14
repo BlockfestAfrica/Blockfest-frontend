@@ -37,7 +37,9 @@ describe("canonicalEmail", () => {
   });
 
   it("applies the same rule to googlemail, which is the same service", () => {
-    expect(canonicalEmail("a.b@googlemail.com")).toBe("ab@googlemail.com");
+    // Folded onto gmail.com since the day-one audit: googlemail.com is the
+    // same inbox, and without the fold one mailbox made two unique accounts.
+    expect(canonicalEmail("a.b@googlemail.com")).toBe("ab@gmail.com");
   });
 
   it("does not strip dots for providers that treat them as significant", () => {
@@ -294,14 +296,14 @@ describe("resolveReferralCode", () => {
     );
   });
 
-  it("falls back to the cookie when nothing was typed", () => {
-    // A /join arrival whose box ends up empty still carries the click that
-    // was recorded, so clearing the field never costs the referrer a credit
-    // the link already earned.
+  it("falls back to the cookie only when the field never travelled", () => {
+    // A /join arrival that submits without the field still carries the
+    // click that was recorded. But a PRESENT empty field is a person who
+    // deleted the prefilled code: that is a decision, and the old
+    // fallthrough silently reinstated the credit from the cookie.
     expect(resolveReferralCode({ cookie: "RQ4963ZV" })).toBe("RQ4963ZV");
-    expect(resolveReferralCode({ typed: "   ", cookie: "RQ4963ZV" })).toBe(
-      "RQ4963ZV",
-    );
+    expect(resolveReferralCode({ typed: "", cookie: "RQ4963ZV" })).toBe("");
+    expect(resolveReferralCode({ typed: "   ", cookie: "RQ4963ZV" })).toBe("");
   });
 
   it("resolves to empty when neither source has a code", () => {

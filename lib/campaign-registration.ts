@@ -64,7 +64,11 @@ export function resolveReferralCode({
   typed?: string;
   cookie?: string;
 }): string {
-  return typed?.trim() || cookie?.trim() || "";
+  // The cookie fills an ABSENT field, never overrides a present one: a
+  // person who deletes the prefilled code has said no credit, and the old
+  // fallthrough on empty string silently reinstated it from the cookie.
+  if (typed !== undefined) return typed.trim();
+  return cookie?.trim() ?? "";
 }
 
 /**
@@ -105,6 +109,11 @@ export function canonicalEmail(input: string): string {
   const plus = local.indexOf("+");
   if (plus > 0) local = local.slice(0, plus);
   if (DOT_INSENSITIVE.has(domain)) local = local.replaceAll(".", "");
+  // googlemail.com IS gmail.com: one inbox, two spellings, and without the
+  // fold one mailbox yields two unique accounts.
+  if (domain === "googlemail.com") {
+    return `${local}@gmail.com`;
+  }
 
   return `${local}@${domain}`;
 }
