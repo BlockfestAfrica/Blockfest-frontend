@@ -34,7 +34,7 @@ export default async function CampaignPage() {
         <h1 className="text-display-sm font-bold uppercase tracking-[-0.03em] text-white">
           Owners only
         </h1>
-        <p className="mt-4 max-w-prose text-base leading-relaxed text-white/60">
+        <p className="mt-4 max-w-prose text-base leading-relaxed text-ink-3">
           Starting and stopping the campaign is restricted to owners. Everything
           else in the console is open to you.
         </p>
@@ -57,7 +57,7 @@ export default async function CampaignPage() {
       <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-white">
         {pause.paused ? "Paused" : "Running"}
       </h1>
-      <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/60">
+      <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
         {pause.paused
           ? `Nobody can register or submit. Creators are being told: ${pause.reason ?? "no reason recorded"}. They can still read the rules, the brief and the leaderboard.`
           : "Registration and submissions are open. Pausing takes effect on a creator's next click, not on the next deploy."}
@@ -104,14 +104,14 @@ export default async function CampaignPage() {
        * which are the same two conditions the database enforces.
        */}
       {beforeLaunch && pause.paused && (
-        <div className="mt-12 border-t border-white/12 pt-8">
+        <div className="mt-12 border-t border-line pt-8">
           <Link
             href="/admin/campaign/clear"
             className="inline-flex min-h-11 items-center text-sm font-semibold text-red-300 underline underline-offset-4 hover:text-red-200"
           >
             Clear the test data
           </Link>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/55">
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
             Deletes every creator, entry and point in this campaign. Stops
             working the moment registration opens.
           </p>

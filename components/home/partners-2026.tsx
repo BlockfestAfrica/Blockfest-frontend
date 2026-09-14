@@ -10,7 +10,7 @@ import { XBadge } from "../icons/xbadge";
 
 function PartnerCard({ logo, twitter }: PartnerLogo) {
   const card = (
-    <div className="group relative flex h-20 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-white/5 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D7A64B]/50 hover:bg-white/10 hover:shadow-[0_0_24px_-6px_rgba(215,166,75,0.35)] lg:h-24">
+    <div className="group relative flex h-20 items-center justify-center overflow-hidden rounded-xl border border-line-2 bg-card-2 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D7A64B]/50 hover:bg-card-3 hover:shadow-[0_0_24px_-6px_rgba(215,166,75,0.35)] lg:h-24">
       <Image
         src={logo}
         alt="Partner logo"
@@ -53,7 +53,7 @@ function HeadlineSpotlight({ headline }: { headline: PartnerLogo[] }) {
       <div className={`mt-4 grid w-full gap-4 px-1 ${headline.length > 1 ? "md:grid-cols-2" : "grid-cols-1"}`}>
         {headline.map((sponsor) => {
           const inner = (
-            <div className="flex h-24 w-full items-center justify-center rounded-2xl border border-white/15 bg-white p-4 transition-colors duration-300 hover:bg-white/90 md:h-32 md:p-6">
+            <div className="flex h-24 w-full items-center justify-center rounded-2xl border border-line-2 bg-white p-4 transition-colors duration-300 hover:bg-white/90 md:h-32 md:p-6">
               <Image
                 src={sponsor.logo}
                 alt="Headline sponsor logo"
@@ -92,14 +92,14 @@ function SilverSpotlight({ silver }: { silver: PartnerLogo[] }) {
     <div className="mt-6 flex w-full lg:w-[55%] md:w-[65%] flex-col items-center justify-center">
       <p className="eyebrow text-center text-white">
         SILVER{" "}
-        <span className="text-white/70 px-1">
+        <span className="text-ink-2 px-1">
           {silver.length === 1 ? "SPONSOR" : "SPONSORS"}
         </span>
       </p>
       <div className={`mt-4 grid w-full gap-4 px-1 ${silver.length > 1 ? "sm:grid-cols-2" : "grid-cols-1"}`}>
         {silver.map((sponsor) => {
           const inner = (
-            <div className="flex h-20 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/95 p-4 transition-colors duration-300 hover:bg-white/90 md:h-28 md:p-5">
+            <div className="flex h-20 w-full items-center justify-center rounded-2xl border border-line-2 bg-white/95 p-4 transition-colors duration-300 hover:bg-white/90 md:h-28 md:p-5">
               <Image
                 src={sponsor.logo}
                 alt="Silver sponsor logo"
@@ -137,7 +137,7 @@ function PartnerGroup({ label, items = [] }: { label: string; items?: PartnerLog
     <div className="mb-12 lg:mb-16">
       <div className="mb-5 flex items-baseline justify-between lg:mb-6">
         <h3 className="text-xl font-bold text-white lg:text-2xl">{label}</h3>
-        <span className="text-sm font-medium text-white/40">{items.length}</span>
+        <span className="text-sm font-medium text-ink-4">{items.length}</span>
       </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6 lg:gap-4">
         {items.map((item) => (
@@ -152,14 +152,14 @@ export function PartnersSection2026() {
   useSubtleAnimations();
 
   return (
-    <section className="section-y border-t border-white/20 bg-ground">
+    <section className="section-y border-t border-line-2 bg-ground">
       <div className="container-page flex flex-col justify-center md:items-center">
         <div className="mb-10 flex w-full flex-col items-center justify-center text-center lg:mb-14">
-          <p className="eyebrow text-white/60">2026 PARTNERS</p>
+          <p className="eyebrow text-ink-3">2026 PARTNERS</p>
           <h2 className="text-display-sm mt-3 font-bold text-white fade-in-on-scroll">
             Our Partners
           </h2>
-          <p className="mt-4 w-full lg:w-[50%] md:w-[70%] px-2 text-base leading-relaxed text-white/60 md:px-0">
+          <p className="mt-4 w-full lg:w-[50%] md:w-[70%] px-2 text-base leading-relaxed text-ink-3 md:px-0">
             The brands, communities, and media backing Blockfest Africa 2026
             from South Africa to Lagos this October.
           </p>

@@ -61,7 +61,7 @@ export default async function MonicaRegisterPage() {
             <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Join the campaign
             </h1>
-            <p className="mt-4 max-w-prose text-base leading-relaxed text-white/55">
+            <p className="mt-4 max-w-prose text-base leading-relaxed text-ink-3">
               One form, once. A new brief every Monday.
             </p>
           </div>
@@ -81,7 +81,7 @@ export default async function MonicaRegisterPage() {
                 each week is the thing creators get wrong, and it is worth
                 answering where they are deciding rather than in the rules. */}
             <aside className="lg:col-span-5">
-              <div className="rounded-2xl border border-white/15 p-6 sm:p-8">
+              <div className="rounded-2xl border border-line-2 p-6 sm:p-8">
                 <h2 className="text-lg font-bold text-white">
                   What happens after this
                 </h2>
@@ -116,7 +116,7 @@ export default async function MonicaRegisterPage() {
                         <p className="text-base font-semibold text-white">
                           {step.title}
                         </p>
-                        <p className="mt-1 text-sm leading-relaxed text-white/60">
+                        <p className="mt-1 text-sm leading-relaxed text-ink-3">
                           {step.detail}
                         </p>
                       </div>
@@ -125,7 +125,7 @@ export default async function MonicaRegisterPage() {
                 </ol>
               </div>
 
-              <p className="mt-6 text-sm leading-relaxed text-white/50">
+              <p className="mt-6 text-sm leading-relaxed text-ink-4">
                 We use your details to run the campaign: to contact you about
                 entries, to check the accounts you publish from are yours, and
                 to pay you if you win. The{" "}

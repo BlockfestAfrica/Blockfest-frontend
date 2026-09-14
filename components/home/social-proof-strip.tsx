@@ -29,7 +29,7 @@ const photos = [
 
 export function SocialProofStrip() {
   return (
-    <section className="relative w-full overflow-hidden border-t border-white/20 bg-ground">
+    <section className="relative w-full overflow-hidden border-t border-line-2 bg-ground">
       <div className="grid grid-cols-3 md:grid-cols-6">
         {photos.map((photo) => (
           <div key={photo.src} className="relative aspect-square overflow-hidden">
@@ -50,7 +50,7 @@ export function SocialProofStrip() {
         aria-hidden="true"
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-4 px-4 text-center lg:px-8">
-        <p className="eyebrow text-white/90">
+        <p className="eyebrow text-ink">
           South Africa roadshow · next stop Lagos
         </p>
       </div>

@@ -17,7 +17,7 @@ import { monicaFaqs, monicaRoutes } from "@/lib/campaigns";
  */
 export function MonicaFaq() {
   return (
-    <section className="section-y border-t border-white/20 bg-ground">
+    <section className="section-y border-t border-line-2 bg-ground">
       <div className="container-page">
         <h2 className="text-display-sm font-bold text-white">Questions</h2>
 
@@ -28,14 +28,14 @@ export function MonicaFaq() {
                 <AccordionTrigger className="text-left text-base font-semibold text-white">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-base leading-relaxed text-white/60">
+                <AccordionContent className="text-base leading-relaxed text-ink-3">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
 
-          <p className="mt-8 text-sm leading-relaxed text-white/60">
+          <p className="mt-8 text-sm leading-relaxed text-ink-3">
             Anything else is covered by the{" "}
             <Link
               href={monicaRoutes.rules}

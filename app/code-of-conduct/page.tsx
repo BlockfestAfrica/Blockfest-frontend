@@ -46,11 +46,11 @@ export default function CodeOfConductPage() {
       <main id="main">
         <section className="section-y bg-ground">
           <div className="container-page">
-            <p className="eyebrow text-white/60">Everyone who attends</p>
+            <p className="eyebrow text-ink-3">Everyone who attends</p>
             <h1 className="text-display-sm mt-3 max-w-3xl font-bold text-white">
               Code of Conduct
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               Blockf3st Africa is a place to build, learn and do business. That
               only works if everyone in the room is safe and treated with
               respect. This applies to attendees, speakers, sponsors, partners,
@@ -59,7 +59,7 @@ export default function CodeOfConductPage() {
           </div>
         </section>
 
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <Panel title="What we expect">
@@ -104,11 +104,11 @@ export default function CodeOfConductPage() {
               </Panel>
             </div>
 
-            <div className="mt-6 rounded-xl border border-white/20 bg-white/5 p-6">
+            <div className="mt-6 rounded-xl border border-line-2 bg-card-2 p-6">
               <h2 className="text-lg font-bold text-white lg:text-2xl">
                 Reporting a problem
               </h2>
-              <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-white/60 lg:text-base">
+              <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-ink-3 lg:text-base">
                 <p>
                   If something happens, or you see something happen, tell any
                   member of staff at {EVENT.location.venue}. Staff are
@@ -141,11 +141,11 @@ export default function CodeOfConductPage() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-xl border border-white/20 bg-white/5 p-6">
+            <div className="mt-6 rounded-xl border border-line-2 bg-card-2 p-6">
               <h2 className="text-lg font-bold text-white lg:text-2xl">
                 What happens next
               </h2>
-              <p className="mt-4 text-sm leading-relaxed text-white/60 lg:text-base">
+              <p className="mt-4 text-sm leading-relaxed text-ink-3 lg:text-base">
                 Organisers may take any action they judge appropriate, including
                 a warning, removal from a session or the venue, revoking a pass
                 without refund, or a ban from future editions. Speakers,
@@ -154,7 +154,7 @@ export default function CodeOfConductPage() {
               </p>
             </div>
 
-            <p className="mt-8 text-sm text-white/60">
+            <p className="mt-8 text-sm text-ink-3">
               Questions about this policy:{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
@@ -185,9 +185,9 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-white/20 bg-white/5 p-6">
+    <div className="rounded-xl border border-line-2 bg-card-2 p-6">
       <h2 className="text-lg font-bold text-white lg:text-2xl">{title}</h2>
-      <div className="mt-4 text-sm leading-relaxed text-white/60 lg:text-base">
+      <div className="mt-4 text-sm leading-relaxed text-ink-3 lg:text-base">
         {children}
       </div>
     </div>

@@ -35,7 +35,7 @@ export function ComingSoonNotice({
         </div>
         <Link
           href={action.href}
-          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-brand-blue px-6 py-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-brand-blue-dark"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-brand-blue px-6 py-3 text-sm font-semibold text-white transition-colors duration-150 hover:bg-brand-blue-dark"
         >
           {action.label}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

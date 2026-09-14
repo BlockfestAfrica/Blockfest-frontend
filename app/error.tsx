@@ -75,7 +75,7 @@ export default function Error({
             Need help?{" "}
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="text-white/60 hover:text-white hover:underline"
+              className="text-ink-3 hover:text-white hover:underline"
             >
               Contact Support
             </a>

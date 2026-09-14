@@ -74,7 +74,7 @@ export default function MonicaRulesPage() {
             <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Campaign rules
             </h1>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
+            <p className="mt-4 text-base leading-relaxed text-ink-3">
               Version {MONICA_RULES_VERSION}, last updated {updated}. The
               version in force when you register is recorded against your entry.
             </p>
@@ -86,17 +86,17 @@ export default function MonicaRulesPage() {
                 <p className="text-sm font-semibold text-brand-gold">
                   Still being finalised
                 </p>
-                <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 marker:text-white/30">
+                <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 marker:text-ink-4">
                   {monicaRulesOpenPoints.map((point) => (
                     <li
                       key={point}
-                      className="text-sm leading-relaxed text-white/70"
+                      className="text-sm leading-relaxed text-ink-2"
                     >
                       {point}
                     </li>
                   ))}
                 </ul>
-                <p className="mt-4 text-sm leading-relaxed text-white/50">
+                <p className="mt-4 text-sm leading-relaxed text-ink-4">
                   These will be confirmed here before they affect anyone, and
                   announced on the campaign page.
                 </p>
@@ -107,17 +107,17 @@ export default function MonicaRulesPage() {
                 the ragged wrapped line of underlined links this was. */}
             <nav
               aria-label="Rules contents"
-              className="mt-10 rounded-xl border-l-2 border-white/20 bg-white/[0.03] p-5 pl-5 sm:p-6 sm:pl-6"
+              className="mt-10 rounded-xl border-l-2 border-line-2 bg-card p-5 pl-5 sm:p-6 sm:pl-6"
             >
-              <p className="eyebrow text-white/50">Contents</p>
+              <p className="eyebrow text-ink-4">Contents</p>
               <ol className="mt-4 grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
                 {monicaRules.map((section, i) => (
                   <li key={section.id}>
                     <a
                       href={`#${section.id}`}
-                      className="flex gap-2.5 text-sm leading-snug text-white/70 transition-colors duration-200 hover:text-white"
+                      className="flex gap-2.5 text-sm leading-snug text-ink-2 transition-colors duration-200 hover:text-white"
                     >
-                      <span className="tabular-nums text-white/30">
+                      <span className="tabular-nums text-ink-4">
                         {i + 1}
                       </span>
                       {section.title}
@@ -144,7 +144,7 @@ export default function MonicaRulesPage() {
                     {section.paragraphs.map((paragraph) => (
                       <p
                         key={paragraph}
-                        className="max-w-prose text-base leading-[1.75] text-white/75"
+                        className="max-w-prose text-base leading-[1.75] text-ink-2"
                       >
                         {paragraph}
                       </p>
@@ -154,7 +154,7 @@ export default function MonicaRulesPage() {
               ))}
             </div>
 
-            <p className="mt-14 text-sm leading-relaxed text-white/50">
+            <p className="mt-14 text-sm leading-relaxed text-ink-4">
               How your details are handled is set out in the{" "}
               <Link
                 href={monicaRoutes.privacy}
@@ -172,7 +172,7 @@ export default function MonicaRulesPage() {
               .
             </p>
 
-            <p className="mt-4 text-sm leading-relaxed text-white/50">
+            <p className="mt-4 text-sm leading-relaxed text-ink-4">
               Questions about these rules go to{" "}
               <a
                 href="mailto:partnership@blockfestafrica.com"

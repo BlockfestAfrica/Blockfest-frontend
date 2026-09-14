@@ -46,7 +46,7 @@ export default function PrivacyPage() {
             <h1 className="text-display-sm font-bold text-white">
               Privacy policy
             </h1>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
+            <p className="mt-4 text-base leading-relaxed text-ink-3">
               Version {PRIVACY_VERSION}, last updated {updated}. Running a
               campaign has its own notice, which goes further: see the{" "}
               <Link
@@ -64,7 +64,7 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-bold text-white">
                 What we ask for, and who holds it
               </h2>
-              <p className="mt-4 max-w-prose text-base leading-7 text-white/75">
+              <p className="mt-4 max-w-prose text-base leading-7 text-ink-2">
                 Every place on this site that asks you for something. Where a
                 provider holds the record rather than us, it says so, because
                 that decides who can act on a request.
@@ -74,7 +74,7 @@ export default function PrivacyPage() {
                 {privacySurfaces.map((surface) => (
                   <li
                     key={surface.name}
-                    className="rounded-xl border border-white/15 bg-white/5 p-4 sm:p-5"
+                    className="rounded-xl border border-line-2 bg-card-2 p-4 sm:p-5"
                   >
                     <p className="flex flex-wrap items-center gap-2 text-base font-semibold text-white">
                       {surface.name}
@@ -82,16 +82,16 @@ export default function PrivacyPage() {
                         className={
                           surface.heldByUs
                             ? "rounded-full border border-brand-gold/40 bg-brand-gold/10 px-2.5 py-0.5 text-xs font-semibold text-brand-gold"
-                            : "rounded-full border border-white/20 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-white/60"
+                            : "rounded-full border border-line-2 bg-card-2 px-2.5 py-0.5 text-xs font-semibold text-ink-3"
                         }
                       >
                         {surface.heldByUs ? "We hold this" : "Held elsewhere"}
                       </span>
                     </p>
-                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
                       {surface.collects}
                     </p>
-                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/50">
+                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-4">
                       {surface.destination}
                     </p>
                   </li>
@@ -113,7 +113,7 @@ export default function PrivacyPage() {
                     {section.paragraphs.map((paragraph) => (
                       <p
                         key={paragraph}
-                        className="max-w-prose text-base leading-7 text-white/75"
+                        className="max-w-prose text-base leading-7 text-ink-2"
                       >
                         {paragraph}
                       </p>
@@ -123,7 +123,7 @@ export default function PrivacyPage() {
               ))}
             </div>
 
-            <p className="mt-14 text-sm leading-relaxed text-white/50">
+            <p className="mt-14 text-sm leading-relaxed text-ink-4">
               Requests and questions go to{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}

@@ -59,21 +59,21 @@ export default async function MonicaLeaderboardPage() {
 
           {rows.length === 0 ? (
             <div className="mt-8 max-w-prose">
-              <p className="text-base leading-relaxed text-white/60">
+              <p className="text-base leading-relaxed text-ink-3">
                 Nothing to show yet. Points land when an entry is approved and
                 this board moves within a minute of each one. Weekly winners are
                 announced from {MONICA_FIRST_LEADERBOARD}.
               </p>
               <Link
                 href={monicaRoutes.register}
-                className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
+                className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover"
               >
                 Join the campaign
               </Link>
             </div>
           ) : (
             <>
-              <p className="mt-4 max-w-prose text-sm leading-relaxed text-white/50">
+              <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-4">
                 Total points first. Level creators are separated by who reached
                 that total first, then by approved entries.
               </p>
@@ -89,7 +89,7 @@ export default async function MonicaLeaderboardPage() {
             See the weekly winners
           </Link>
 
-          <p className="mt-6 text-sm leading-relaxed text-white/45">
+          <p className="mt-6 text-sm leading-relaxed text-ink-4">
             This board moves as entries are approved. Weekly winners are
             announced {MONICA_FIRST_LEADERBOARD} and every Sunday after that.
             How points are earned is in the{" "}

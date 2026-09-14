@@ -54,13 +54,13 @@ export function LeaderboardTable({ rows }: { rows: BoardRow[] }) {
      * phone would be clipped with no scrollbar and no sign anything was
      * missing. Keeping the overflow local means it can actually be scrolled.
      */
-    <div className="mt-10 overflow-x-auto rounded-xl border border-white/12">
+    <div className="mt-10 overflow-x-auto rounded-xl border border-line">
       <table className="w-full min-w-[30rem] border-collapse text-left">
         <caption className="sr-only">
           Campaign standings, sortable by rank, name, points or approved entries
         </caption>
         <thead>
-          <tr className="border-b border-white/12">
+          <tr className="border-b border-line">
             <Th onClick={() => sortBy("rank")} active={sort === "rank"} ascending={ascending} numeric>
               #
             </Th>
@@ -79,17 +79,17 @@ export function LeaderboardTable({ rows }: { rows: BoardRow[] }) {
           {shown.map((row) => (
             <tr
               key={`${row.rank}-${row.name}`}
-              className="border-b border-white/[0.06] last:border-0"
+              className="border-b border-line last:border-0"
             >
               <td
                 className={`w-14 px-4 py-4 text-right text-lg font-bold tabular-nums ${
-                  row.rank <= 3 ? "text-brand-gold" : "text-white/30"
+                  row.rank <= 3 ? "text-brand-gold" : "text-ink-2"
                 }`}
               >
                 {row.rank}
               </td>
-              <td className="px-4 py-4 font-semibold text-white">{row.name}</td>
-              <td className="px-4 py-4 text-right tabular-nums text-white/55">
+              <td className="px-4 py-4 font-medium text-ink-2">{row.name}</td>
+              <td className="px-4 py-4 text-right tabular-nums text-ink-3">
                 {row.approvedEntries}
               </td>
               <td className="px-4 py-4 text-right text-lg font-bold tabular-nums text-white">
@@ -126,9 +126,9 @@ function Th({
       <button
         type="button"
         onClick={onClick}
-        className={`inline-flex min-h-11 w-full cursor-pointer items-center gap-1 px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors hover:text-white ${
+        className={`inline-flex min-h-11 w-full cursor-pointer items-center gap-1 px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors ${
           numeric ? "justify-end" : "justify-start"
-        } ${active ? "text-brand-gold" : "text-white/40"}`}
+        } ${active ? "text-brand-gold" : "text-ink-4 hover:text-white"}`}
       >
         {children}
         <span aria-hidden="true" className="text-[0.65rem]">

@@ -61,7 +61,7 @@ export default function MonicaPrivacyPage() {
             <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Campaign privacy notice
             </h1>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
+            <p className="mt-4 text-base leading-relaxed text-ink-3">
               Version {MONICA_PRIVACY_VERSION}, last updated {updated}. This
               covers {CAMPAIGN.name} specifically. The{" "}
               <Link
@@ -79,7 +79,7 @@ export default function MonicaPrivacyPage() {
               <h2 className="text-xl font-bold text-white">
                 What we collect, and why
               </h2>
-              <p className="mt-4 max-w-prose text-base leading-7 text-white/75">
+              <p className="mt-4 max-w-prose text-base leading-7 text-ink-2">
                 Everything the registration form asks for, plus the three things
                 recorded automatically that you would not otherwise know about.
               </p>
@@ -88,7 +88,7 @@ export default function MonicaPrivacyPage() {
                 {monicaPrivacyCollected.map((item) => (
                   <li
                     key={item.what}
-                    className="rounded-xl border border-white/15 bg-white/5 p-4 sm:p-5"
+                    className="rounded-xl border border-line-2 bg-card-2 p-4 sm:p-5"
                   >
                     <p className="flex flex-wrap items-center gap-2 text-base font-semibold text-white">
                       {item.what}
@@ -98,7 +98,7 @@ export default function MonicaPrivacyPage() {
                         </span>
                       )}
                     </p>
-                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/65">
+                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
                       {item.why}
                     </p>
                   </li>
@@ -120,7 +120,7 @@ export default function MonicaPrivacyPage() {
                     {section.paragraphs.map((paragraph) => (
                       <p
                         key={paragraph}
-                        className="max-w-prose text-base leading-[1.75] text-white/75"
+                        className="max-w-prose text-base leading-[1.75] text-ink-2"
                       >
                         {paragraph}
                       </p>
@@ -130,7 +130,7 @@ export default function MonicaPrivacyPage() {
               ))}
             </div>
 
-            <p className="mt-14 text-sm leading-relaxed text-white/50">
+            <p className="mt-14 text-sm leading-relaxed text-ink-4">
               Requests and questions go to{" "}
               <a
                 href={`mailto:${PRIVACY_CONTACT}`}

@@ -61,7 +61,7 @@ export default async function WinnersPage() {
           </h1>
 
           {weeks.length === 0 ? (
-            <p className="mt-8 max-w-prose text-base leading-relaxed text-white/60">
+            <p className="mt-8 max-w-prose text-base leading-relaxed text-ink-3">
               Nothing announced yet. Weekly winners are announced on Sundays,
               starting {MONICA_FIRST_LEADERBOARD}.{" "}
               <Link
@@ -82,7 +82,12 @@ export default async function WinnersPage() {
                       .filter((w) => w.weekNo === week)
                       .map((w) => (
                         <li key={`${w.weekNo}-${w.category}`}>
-                          <Panel tone="accent">
+                          {/* Gold means "the news". When every week of the
+                              campaign wears the accent, the newest win only
+                              wins by scroll position, which is no hierarchy
+                              at all. Earlier weeks are the record; the
+                              latest is the announcement. */}
+                          <Panel tone={week === weeks[0] ? "accent" : "quiet"}>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                               <Trophy
                                 className="h-5 w-5 shrink-0 text-brand-gold"
@@ -97,7 +102,7 @@ export default async function WinnersPage() {
                               {w.name}
                             </p>
                             {w.note && (
-                              <p className="mt-2 max-w-prose text-base leading-relaxed text-white/75">
+                              <p className="mt-2 max-w-prose text-base leading-relaxed text-ink-2">
                                 {w.note}
                               </p>
                             )}
@@ -109,7 +114,7 @@ export default async function WinnersPage() {
                                       href={link.url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-3"
                                     >
                                       {platformLabels[
                                         link.platform as CampaignPlatform
@@ -151,12 +156,12 @@ export default async function WinnersPage() {
                 {shortlist.map((entry, index) => (
                   <li
                     key={`${entry.name}-${index}`}
-                    className="rounded-xl border border-white/12 bg-white/[0.03] p-5"
+                    className="rounded-xl border border-line bg-card p-5"
                   >
                     <p className="text-base font-semibold text-white">
                       {entry.name}
                     </p>
-                    <p className="mt-1 text-sm text-white/55">
+                    <p className="mt-1 text-sm text-ink-3">
                       Week {entry.weekNo}
                     </p>
                     <ul className="mt-3 flex flex-wrap gap-2">
@@ -185,7 +190,7 @@ export default async function WinnersPage() {
             </div>
           )}
 
-          <p className="mt-14 max-w-prose text-sm leading-relaxed text-white/55">
+          <p className="mt-14 max-w-prose text-sm leading-relaxed text-ink-3">
             Winners are selected by Blockfest Africa, informed by an advisory
             public vote. How points are earned is in the{" "}
             <Link

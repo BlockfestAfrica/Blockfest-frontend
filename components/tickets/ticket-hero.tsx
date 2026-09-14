@@ -41,7 +41,7 @@ function EventCountdown() {
           <span className="block text-2xl font-bold tabular-nums text-white sm:text-3xl">
             {mounted ? String(unit.value).padStart(2, "0") : "--"}
           </span>
-          <span className="eyebrow mt-1 block text-white/60">{unit.label}</span>
+          <span className="eyebrow mt-1 block text-ink-3">{unit.label}</span>
         </div>
       ))}
     </div>
@@ -55,7 +55,7 @@ export function TicketHero() {
         <div className="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-12">
           {/* Where and when, before anything else */}
           <div className="max-w-2xl lg:col-span-7">
-            <p className="eyebrow flex flex-wrap items-center gap-x-3 gap-y-1 text-white/60">
+            <p className="eyebrow flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-3">
               <span className="inline-flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" aria-hidden="true" />
                 {blockfest2026Lagos.date.displayDate}
@@ -83,7 +83,7 @@ export function TicketHero() {
               Secure Your Seat
             </h1>
 
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/60 sm:text-lg">
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-ink-3 sm:text-lg">
               Africa&apos;s leading convention across AI, Web3, venture capital,
               technology, culture and careers.
             </p>
@@ -94,15 +94,15 @@ export function TicketHero() {
 
             Panel, not a card: it wraps the primary CTA rather than being
             clickable itself, so it deliberately omits the card recipe's
-            `transition-colors duration-300 hover:bg-white/10` tail — a
+            `transition-colors duration-300 hover:bg-card-3` tail — a
             container that lights up on hover but does nothing is a phantom
             affordance. Same treatment as the CTA panels in home/sponsorship,
             home/partners and home/faq. The hover tail belongs to repeating
             grid cards (ticket-about, ticket-policy, ideal-audience).
           */}
           <div className="lg:col-span-5">
-            <div className="rounded-xl border border-white/20 bg-white/5 p-6">
-              <p className="eyebrow text-white/60">Doors open in</p>
+            <div className="rounded-xl border border-line-2 bg-card-2 p-6">
+              <p className="eyebrow text-ink-3">Doors open in</p>
 
               <div className="mt-4">
                 <EventCountdown />
@@ -115,7 +115,7 @@ export function TicketHero() {
                 Get your ticket
               </TicketCTA>
 
-              <p className="mt-4 text-xs text-white/60">
+              <p className="mt-4 text-xs text-ink-3">
                 Passes from{" "}
                 <span className="font-semibold text-brand-gold">
                   {formatNaira(lowestTicketPrice)}

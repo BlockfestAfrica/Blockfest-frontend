@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 /**
  * The few shapes every campaign and admin screen is built from.
  *
- * These pages were card after identical card: rounded-xl, border-white/20,
- * bg-white/5, every one the same weight. Nothing drew the eye, so a page read
+ * These pages were card after identical card: rounded-xl, border-line-2,
+ * bg-card-2, every one the same weight. Nothing drew the eye, so a page read
  * as an undifferentiated list and you had to read all of it to find the one
  * thing you came for.
  *
@@ -33,7 +33,7 @@ const TONES: Record<Tone, string> = {
   /* No chrome at all. The default, and most content should use it. */
   plain: "",
   /* A hairline, for something that is genuinely a separate object. */
-  quiet: "rounded-xl border border-white/12 bg-white/[0.03]",
+  quiet: "rounded-xl border border-line bg-card",
   /* The one thing on the page to act on. */
   accent: "rounded-xl border-l-4 border-brand-gold bg-brand-gold/[0.12] pl-5",
   /* Something to read before continuing. */
@@ -121,7 +121,7 @@ export function SectionHeading({
         {title}
       </h2>
       {hint && (
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/55">
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
           {hint}
         </p>
       )}
@@ -154,15 +154,15 @@ export function Stat({
   rule?: boolean;
 }) {
   return (
-    <div className={rule ? "border-t border-white/15 pt-4" : ""}>
-      <p className="eyebrow text-white/45">{label}</p>
+    <div className={rule ? "border-t border-line-2 pt-4" : ""}>
+      <p className="eyebrow text-ink-4">{label}</p>
       {/* Smaller on a phone. Four of these at 36px filled most of a narrow
           screen before any data, and a four digit total in a 104px column was
           already tight. */}
       <p className="mt-2 text-3xl font-bold tabular-nums leading-none text-white sm:text-4xl">
         {value}
       </p>
-      {hint && <p className="mt-2 text-sm text-white/45">{hint}</p>}
+      {hint && <p className="mt-2 text-sm text-ink-4">{hint}</p>}
     </div>
   );
 }
@@ -177,18 +177,22 @@ export function Pill({
   tone = "neutral",
   children,
 }: {
-  tone?: "neutral" | "good" | "bad" | "gold";
+  tone?: "neutral" | "good" | "bad" | "gold" | "warn";
   children: ReactNode;
 }) {
   const tones = {
-    neutral: "border-white/20 text-white/65",
+    neutral: "border-line-2 text-ink-3",
     good: "border-green-400/40 bg-green-400/10 text-green-300",
     bad: "border-red-400/40 bg-red-400/10 text-red-300",
+    /* Waiting on a human. Red means rejected or blocked everywhere else in
+       the spine, so a queue count wearing red read as an error rather than
+       as work; amber is the colour of "somebody should look". */
+    warn: "border-amber-400/40 bg-amber-400/10 text-amber-300",
     gold: "border-brand-gold/40 bg-brand-gold/10 text-brand-gold",
   };
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${tones[tone]}`}
+      className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs tabular-nums font-semibold ${tones[tone]}`}
     >
       {children}
     </span>
@@ -253,7 +257,7 @@ export function SectionCard({
     <section
       id={id}
       aria-labelledby={title ? `${id}-title` : undefined}
-      className={`rounded-xl border border-white/12 bg-white/[0.02] p-5 sm:p-6 ${className}`}
+      className={`rounded-xl border border-line bg-card p-5 sm:p-6 ${className}`}
     >
       {title && (
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -319,12 +323,12 @@ export function JobCard({
       // scroll-mt clears the sticky console bar when a job is linked to.
       className={`scroll-mt-24 border-l-2 pl-4 sm:pl-5 ${JOB_EDGE[state]}`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-white/10 pb-3">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line pb-3">
         <div className="min-w-0">
           {step && (
             <p
               className={`eyebrow ${
-                state === "now" ? "text-brand-gold" : "text-white/45"
+                state === "now" ? "text-brand-gold" : "text-ink-4"
               }`}
             >
               {step}
@@ -341,7 +345,7 @@ export function JobCard({
       </div>
 
       {hint && (
-        <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
           {hint}
         </p>
       )}
@@ -349,7 +353,7 @@ export function JobCard({
       {children && <div className="mt-4">{children}</div>}
 
       {foot && (
-        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
+        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-4">
           {foot}
         </div>
       )}
@@ -384,7 +388,7 @@ export function PageHeader({
         {title}
       </h1>
       {hint && (
-        <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
           {hint}
         </p>
       )}
@@ -420,7 +424,7 @@ export function Field({
         {label}
       </label>
       {children}
-      {hint && !error && <p className="text-sm text-white/70">{hint}</p>}
+      {hint && !error && <p className="text-sm text-ink-2">{hint}</p>}
       {error && (
         <p role="alert" className="text-sm text-red-300">
           {error}
@@ -441,7 +445,7 @@ export function Field({
  * in a form.
  */
 export const control =
-  "w-full min-h-12 rounded-lg border border-white/15 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 transition-colors focus:border-brand-gold";
+  "w-full min-h-12 rounded-lg border border-line-2 bg-control px-4 py-3 text-base text-ink placeholder:text-ink-4 transition-colors duration-150";
 
 /**
  * A native select needs its own colours declared.
@@ -449,15 +453,26 @@ export const control =
  * The option list is drawn by the operating system, not the page, so on Windows
  * in dark mode an undeclared select renders dark text on dark and is unreadable.
  */
-export const selectControl = `${control} cursor-pointer bg-ground [&>option]:bg-ground [&>option]:text-white`;
+// One fill for every control, options included: the inset token reads as
+// "type or choose here" and the dropdown no longer jumps to a second surface.
+export const selectControl = `${control} cursor-pointer [&>option]:bg-control [&>option]:text-white`;
 
-type Intent = "primary" | "secondary" | "quiet" | "danger";
+type Intent =
+  | "primary"
+  | "secondary"
+  | "quiet"
+  | "danger"
+  | "success"
+  | "dangerFill";
 
 const INTENT: Record<Intent, string> = {
   primary: "bg-brand-gold text-black hover:bg-brand-gold-hover",
-  secondary: "border border-white/20 text-white hover:bg-white/10",
-  quiet: "text-white/70 hover:text-white hover:bg-white/5",
+  secondary: "border border-line-2 text-white hover:bg-card-3",
+  quiet: "text-ink-2 hover:text-white hover:bg-card-2",
   danger: "border border-red-400/40 text-red-300 hover:bg-red-400/15",
+  /* The green and red the decide moments hand-rolled four times over. */
+  success: "bg-green-400/15 text-green-300 hover:bg-green-400/25",
+  dangerFill: "bg-red-400/15 text-red-300 hover:bg-red-400/25",
 };
 
 /**
@@ -468,7 +483,14 @@ const INTENT: Record<Intent, string> = {
  * real link. Without a class-only export those two get hand-rolled and drift.
  */
 export function buttonClass(intent: Intent = "secondary", className = ""): string {
-  return `inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-6 text-sm font-semibold transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-60 ${INTENT[intent]} ${className}`.trim();
+  /*
+   * 150ms, not 300: a button pressed dozens of times a shift must feel
+   * instant, and 300ms reads as the interface thinking about it. The press
+   * scale is the tactile half: confirmation the click was heard, never below
+   * 0.97 so it stays felt rather than watched. Transform and colour only,
+   * both compositor-cheap.
+   */
+  return `inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-6 text-sm font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${INTENT[intent]} ${className}`.trim();
 }
 
 /**
@@ -491,7 +513,7 @@ export function Segmented<T extends string>({
 }) {
   return (
     <fieldset>
-      <legend className="eyebrow text-white/45">{legend}</legend>
+      <legend className="eyebrow text-ink-4">{legend}</legend>
       <div className="mt-2 flex flex-wrap gap-2">
         {options.map((option) => {
           const on = option.value === value;
@@ -501,10 +523,10 @@ export function Segmented<T extends string>({
               type="button"
               onClick={() => onChange(option.value)}
               aria-pressed={on}
-              className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-semibold transition-colors ${
+              className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98] ${
                 on
                   ? "border-brand-gold bg-brand-gold/15 text-brand-gold"
-                  : "border-white/20 text-white/70 hover:text-white"
+                  : "border-line-2 text-ink-2 hover:text-white"
               }`}
             >
               {option.label}

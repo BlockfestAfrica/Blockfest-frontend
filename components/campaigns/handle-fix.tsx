@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { control } from "@/components/shared/panel";
 import type { HandleRequestState, RegisteredHandle } from "@/lib/creator-session";
 
 /**
@@ -78,13 +79,13 @@ export function HandleFix({
         return (
           <li
             key={`${h.platform}-${h.handle}`}
-            className="rounded-lg border border-white/12 p-4"
+            className="rounded-lg border border-line bg-card p-4"
           >
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="font-semibold text-white">
                 {platformLabels[h.platform] ?? h.platform}
               </span>
-              <span className="font-mono text-white/80">@{h.handle}</span>
+              <span className="font-mono text-ink-2">@{h.handle}</span>
 
               {pending ? (
                 <span className="text-sm text-amber-300">
@@ -100,7 +101,7 @@ export function HandleFix({
                     setReason("");
                   }}
                   aria-expanded={isOpen}
-                  className="ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-white/60 transition-colors hover:text-white"
+                  className="ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-ink-3 transition-colors hover:text-white"
                 >
                   {isOpen ? "Cancel" : "Wrong username?"}
                 </button>
@@ -108,14 +109,14 @@ export function HandleFix({
             </div>
 
             {rejected && request.decisionNote && !isOpen && (
-              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
                 Your last request was not applied: {request.decisionNote}
               </p>
             )}
 
             {isOpen && !pending && (
               <div className="mt-3 flex flex-col gap-2">
-                <p className="max-w-prose text-sm leading-relaxed text-white/70">
+                <p className="max-w-prose text-sm leading-relaxed text-ink-2">
                   Nothing changes until the campaign team reads this and
                   approves it. Entries you submit keep being checked against
                   @{h.handle} in the meantime.
@@ -131,7 +132,7 @@ export function HandleFix({
                   autoCapitalize="none"
                   spellCheck={false}
                   placeholder="the-right-username"
-                  className="min-h-12 w-full rounded-lg border border-white/15 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
+                  className={control}
                 />
                 <label htmlFor={`fix-why-${h.platform}`} className="sr-only">
                   What went wrong
@@ -142,7 +143,7 @@ export function HandleFix({
                   onChange={(event) => setReason(event.target.value)}
                   maxLength={300}
                   placeholder="What went wrong, in a sentence"
-                  className="min-h-12 w-full rounded-lg border border-white/15 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
+                  className={control}
                 />
                 <button
                   type="button"

@@ -101,9 +101,9 @@ export default async function ConfirmEntryPage({
                   {handles.map((h) => (
                     <li
                       key={`${h.platform}-${h.handle}`}
-                      className="text-sm text-white/70"
+                      className="text-sm text-ink-2"
                     >
-                      <span className="uppercase tracking-wider text-white/45">
+                      <span className="uppercase tracking-wider text-ink-4">
                         {h.platform}
                       </span>{" "}
                       <span className="font-mono">@{h.handle}</span>
@@ -119,14 +119,14 @@ export default async function ConfirmEntryPage({
                  * than as a warning, because for two creators sharing a phone
                  * it is the ordinary thing to do and not a problem.
                  */
-                <p className="mt-4 text-base leading-relaxed text-white/75">
+                <p className="mt-4 text-base leading-relaxed text-ink-2">
                   You are signed in as {signedInAs}. Continuing swaps this
                   browser over to {holder!.name} and signs {signedInAs} out. If
                   that is not what you expected, this link belongs to somebody
                   else and you should not continue.
                 </p>
               ) : (
-                <p className="mt-4 text-base leading-relaxed text-white/75">
+                <p className="mt-4 text-base leading-relaxed text-ink-2">
                   If that is not your name, or those are not your accounts,
                   this link belongs to somebody else.
                   Do not continue: anything you submit would be filed under
@@ -187,8 +187,8 @@ function Problem({ kind }: { kind: string }) {
       <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-pretty text-white">
         {title}
       </h1>
-      <p className="mt-4 text-base leading-relaxed text-white/75">{body}</p>
-      <p className="mt-4 text-base leading-relaxed text-white/75">
+      <p className="mt-4 text-base leading-relaxed text-ink-2">{body}</p>
+      <p className="mt-4 text-base leading-relaxed text-ink-2">
         If you cannot find the email, write to{" "}
         <a
           href="mailto:partnership@blockfestafrica.com"

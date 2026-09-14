@@ -6,7 +6,7 @@ import { ConsoleTabs, type ConsoleTab } from "@/components/admin/console-tabs";
 import { ConsoleNav } from "@/components/admin/console-nav";
 import { SignOut } from "@/components/admin/sign-out";
 import { SessionClock } from "@/components/admin/session-clock";
-import { Pill } from "@/components/shared/panel";
+import { buttonClass, Pill } from "@/components/shared/panel";
 import { campaignBySlug, MONICA_SLUG } from "@/lib/campaigns";
 
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
@@ -73,10 +73,10 @@ export default async function AdminLayout({
             * sign in", click Sign in, succeed again, and land back here. The
             * second sentence is the one that would have saved them the loop.
             */}
-          <p className="mt-4 text-base leading-relaxed text-white/70">
+          <p className="mt-4 text-base leading-relaxed text-ink-2">
             You need to sign in to see this.
           </p>
-          <p className="mt-3 text-base leading-relaxed text-white/70">
+          <p className="mt-3 text-base leading-relaxed text-ink-2">
             If you have just signed in and are still seeing this, your address
             has not been added to the console yet. Being invited in Netlify is
             only half of it. Ask an owner to add you, or write to{" "}
@@ -90,7 +90,7 @@ export default async function AdminLayout({
           </p>
           <Link
             href="/admin/login"
-            className="mt-8 inline-flex min-h-12 items-center rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
+            className={buttonClass("primary", "mt-8 px-8 text-base")}
           >
             Sign in
           </Link>
@@ -147,7 +147,7 @@ export default async function AdminLayout({
      * pills. One-handed reviewing on launch weekend is the constraint there.
      */
     <main id="main" className="min-h-dvh bg-ground lg:grid lg:grid-cols-[230px_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-white/10 py-6 pl-4 pr-2 lg:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line py-6 pl-4 pr-2 lg:flex">
         <div className="px-4">
           <p className="eyebrow text-brand-gold">Blockfest</p>
           <p className="mt-1 text-lg font-bold text-white">Console</p>
@@ -159,9 +159,9 @@ export default async function AdminLayout({
 
         {/* Who is signed in, pinned to the bottom of the rail where a
             dashboard keeps its account block. */}
-        <div className="flex flex-col gap-2 border-t border-white/10 px-4 pt-4">
+        <div className="flex flex-col gap-2 border-t border-line px-4 pt-4">
           <div className="flex items-center gap-2">{statePills}</div>
-          <p className="truncate text-sm text-white/60" title={admin.admin.email}>
+          <p className="truncate text-sm text-ink-3" title={admin.admin.email}>
             {admin.admin.email}
           </p>
           <div className="flex items-center justify-between gap-2">
@@ -177,7 +177,7 @@ export default async function AdminLayout({
       <div className="min-w-0">
         {/* z-40 sits under the skip link at z-100 and over the desktop table's
             sticky first column at z-10. */}
-        <header className="sticky top-0 z-40 border-b border-white/12 bg-ground/95 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-40 border-b border-line bg-ground/95 backdrop-blur lg:hidden">
           <div className="flex w-full items-center gap-3 px-4">
             <ConsoleTabs tabs={tabs} />
             <div className="ml-auto flex shrink-0 items-center gap-2">

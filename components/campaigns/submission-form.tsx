@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { control, selectControl } from "@/components/shared/panel";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 import { CAMPAIGN_EVENTS, track } from "@/lib/sabilytics";
 
@@ -71,7 +72,7 @@ export function SubmissionForm({
 
   if (available.length === 0) {
     return (
-      <p className="max-w-prose text-sm leading-relaxed text-white/60">
+      <p className="max-w-prose text-sm leading-relaxed text-ink-3">
         You have submitted on every account you registered for this challenge.
         Entries are reviewed before they score, and each platform is reviewed on
         its own.
@@ -129,7 +130,7 @@ export function SubmissionForm({
           id="platform"
           value={selected}
           onChange={(e) => setPlatform(e.target.value)}
-          className="w-full cursor-pointer rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white focus:border-brand-gold"
+          className={selectControl}
         >
           {available.map((p) => (
             <option key={p} value={p}>
@@ -148,7 +149,7 @@ export function SubmissionForm({
         <label htmlFor="url" className="block text-sm font-semibold text-white">
           Link to your post
         </label>
-        <p className="text-sm text-white/50">
+        <p className="text-sm text-ink-4">
           The public link, the way you would send it to a friend.
         </p>
         <input
@@ -165,7 +166,7 @@ export function SubmissionForm({
           }}
           inputMode="url"
           placeholder="https://"
-          className="w-full rounded-lg border border-white/15 bg-ground px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-brand-gold"
+          className={control}
         />
         {error?.field === "url" && (
           <p role="alert" className="text-sm text-red-300">
@@ -186,10 +187,10 @@ export function SubmissionForm({
       <button
         type="submit"
         disabled={submitting || !url.trim()}
-        className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60 sm:self-start"
+        className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60 sm:self-start"
       >
-        {submitting ? "Submitting..." : "Submit this entry"}
-        {!submitting && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+        {submitting ? "Submitting…" : "Submit this entry"}
+        {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ArrowRight className="h-4 w-4" aria-hidden="true" />}
       </button>
     </form>
   );

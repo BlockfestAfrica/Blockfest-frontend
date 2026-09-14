@@ -31,14 +31,14 @@ export function IdealAudience() {
   return (
     <section
       id="who-its-for"
-      className="section-y bg-ground border-t border-white/20"
+      className="section-y bg-ground border-t border-line-2"
     >
       <div className="container-page">
         <div className="mb-10 lg:mb-14">
           <h2 className="text-display-sm font-bold text-white">
             Who It&apos;s For
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
             The people shaping what Africa ships next.
           </p>
         </div>
@@ -49,7 +49,7 @@ export function IdealAudience() {
             return (
               <div
                 key={audience.title}
-                className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10"
+                className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3"
               >
                 <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                   <Icon className="h-5 w-5" aria-hidden="true" />
@@ -57,7 +57,7 @@ export function IdealAudience() {
                 <h3 className="text-base font-bold text-white lg:text-lg">
                   {audience.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/60">
+                <p className="mt-2 text-sm leading-relaxed text-ink-3">
                   {audience.description}
                 </p>
               </div>

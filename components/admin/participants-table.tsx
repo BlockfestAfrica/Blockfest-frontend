@@ -207,13 +207,13 @@ export function ParticipantsTable({
           from their own query and these are not. Both numbers are true and they
           answer different questions, which is exactly the sort of thing that
           gets misread when nothing says so. */}
-      <p className="mt-3 text-sm text-white/60">
+      <p className="mt-3 text-sm text-ink-3">
         These narrow the {rows.length} rows loaded here. Use the search above
         the table to reach anybody else.
       </p>
 
       {shown.length === 0 ? (
-        <p className="mt-10 text-base leading-relaxed text-white/60">
+        <p className="mt-10 text-base leading-relaxed text-ink-3">
           Nobody here matches that.
         </p>
       ) : (
@@ -226,7 +226,7 @@ export function ParticipantsTable({
            * the first is off screen, and the reviewer is scrolling sideways to
            * read a number. Cards say the same things down the page.
            */}
-          <ul className="mt-6 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/12 md:hidden">
+          <ul className="mt-6 divide-y divide-line overflow-hidden rounded-xl border border-line md:hidden">
             {shown.map((row) => (
               <li key={row.enrolmentId} className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -234,7 +234,7 @@ export function ParticipantsTable({
                     <p className="truncate text-base font-semibold text-white">
                       {row.name}
                     </p>
-                    <p className="truncate text-sm text-white/60">
+                    <p className="truncate text-sm text-ink-3">
                       {row.email}
                     </p>
                   </div>
@@ -271,7 +271,7 @@ export function ParticipantsTable({
                                 fixing?.enrolmentId === row.enrolmentId &&
                                 fixing.platform === platform
                               }
-                              className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-2 text-xs font-semibold text-white/50 transition-colors hover:text-white"
+                              className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-2 text-xs font-semibold text-ink-4 transition-colors hover:text-white"
                             >
                               fix
                             </button>
@@ -292,7 +292,7 @@ export function ParticipantsTable({
                   />
                 )}
 
-                <p className="mt-2 text-sm text-white/60">
+                <p className="mt-2 text-sm text-ink-3">
                   {row.submitted} sent · {row.approved} approved · joined{" "}
                   {new Date(row.joinedAt).toLocaleDateString("en-GB", {
                     day: "numeric",
@@ -311,7 +311,7 @@ export function ParticipantsTable({
                     }
                     aria-expanded={awarding === row.enrolmentId}
                     aria-controls="award-panel"
-                    className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                    className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-2"
                   >
                     <Coins className="h-4 w-4" aria-hidden="true" />
                     {awarding === row.enrolmentId ? "Close" : "Points"}
@@ -322,10 +322,10 @@ export function ParticipantsTable({
             ))}
           </ul>
 
-          <div className="mt-6 hidden overflow-x-auto rounded-xl border border-white/12 md:block">
+          <div className="mt-6 hidden overflow-x-auto rounded-xl border border-line md:block">
             <table className="w-full min-w-[46rem] border-collapse text-left">
               <thead>
-                <tr className="border-b border-white/12">
+                <tr className="border-b border-line">
                   <Th
                     onClick={() => sortBy("name")}
                     active={sort === "name"}
@@ -334,7 +334,7 @@ export function ParticipantsTable({
                   >
                     Creator
                   </Th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white/60">
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-ink-3">
                     Handles
                   </th>
                   <Th
@@ -368,7 +368,7 @@ export function ParticipantsTable({
                   >
                     Points
                   </Th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white/60">
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-ink-3">
                     Award
                   </th>
                 </tr>
@@ -377,7 +377,7 @@ export function ParticipantsTable({
                 {shown.map((row) => (
                   <tr
                     key={row.enrolmentId}
-                    className="border-b border-white/[0.06] last:border-0"
+                    className="border-b border-line last:border-0"
                   >
                     {/* Pinned. Scrolling right to reach the points column used
                         to leave an unlabelled row under the cursor, which is
@@ -386,7 +386,7 @@ export function ParticipantsTable({
                       <span className="block font-semibold text-white">
                         {row.name}
                       </span>
-                      <span className="block text-sm text-white/60">
+                      <span className="block text-sm text-ink-3">
                         {row.email}
                       </span>
                       {!row.active && (
@@ -395,7 +395,7 @@ export function ParticipantsTable({
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 align-top text-sm text-white/60">
+                    <td className="px-4 py-3 align-top text-sm text-ink-3">
                       {row.handles.length === 0 ? (
                         <span className="text-red-300">none</span>
                       ) : (
@@ -403,24 +403,24 @@ export function ParticipantsTable({
                           const [platform, handle] = h.split(":");
                           return (
                             <span key={h} className="block font-mono text-xs">
-                              <span className="text-white/60">{platform}</span>{" "}
+                              <span className="text-ink-3">{platform}</span>{" "}
                               @{handle}
                             </span>
                           );
                         })
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 align-top text-sm text-white/60">
+                    <td className="whitespace-nowrap px-4 py-3 align-top text-sm text-ink-3">
                       {new Date(row.joinedAt).toLocaleDateString("en-GB", {
                         day: "numeric",
                         month: "short",
                         timeZone: "Africa/Lagos",
                       })}
                     </td>
-                    <td className="px-4 py-3 text-right align-top tabular-nums text-white/70">
+                    <td className="px-4 py-3 text-right align-top tabular-nums text-ink-2">
                       {row.submitted}
                     </td>
-                    <td className="px-4 py-3 text-right align-top tabular-nums text-white/70">
+                    <td className="px-4 py-3 text-right align-top tabular-nums text-ink-2">
                       {row.approved}
                     </td>
                     <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-white">
@@ -438,7 +438,7 @@ export function ParticipantsTable({
                         }
                         aria-expanded={awarding === row.enrolmentId}
                         aria-controls="award-panel"
-                        className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/20 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+                        className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-2"
                       >
                         <Coins className="h-4 w-4" aria-hidden="true" />
                         {awarding === row.enrolmentId ? "Close" : "Points"}
@@ -516,7 +516,7 @@ function Th({
         onClick={onClick}
         className={`inline-flex min-h-11 w-full cursor-pointer items-center gap-1 px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors hover:text-white ${
           numeric ? "justify-end" : "justify-start"
-        } ${active ? "text-brand-gold" : "text-white/60"}`}
+        } ${active ? "text-brand-gold" : "text-ink-3"}`}
       >
         {children}
         <span aria-hidden="true" className="text-[0.65rem]">
@@ -555,7 +555,7 @@ function AwardRow({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-white/55">
+      <p className="text-sm text-ink-3">
         Points for <span className="font-semibold text-white">{name}</span>. A
         negative number takes points back, and leaves the original award in the
         ledger.
@@ -569,7 +569,7 @@ function AwardRow({
           id="award-source"
           value={source}
           onChange={(e) => setSource(e.target.value)}
-          className="min-h-12 cursor-pointer rounded-lg border border-white/12 bg-ground px-4 text-base text-white focus:border-brand-gold lg:w-56"
+          className="min-h-12 cursor-pointer rounded-lg border border-line bg-ground px-4 text-base text-white focus:border-brand-gold lg:w-56"
         >
           {AWARD_SOURCES.map((s) => (
             <option key={s.key} value={s.key}>
@@ -587,7 +587,7 @@ function AwardRow({
           onChange={(e) => setPoints(e.target.value.replace(/[^0-9-]/g, ""))}
           inputMode="numeric"
           placeholder="Points, or -points"
-          className="min-h-12 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold lg:w-44"
+          className="min-h-12 rounded-lg border border-line bg-control px-4 text-base text-white placeholder:text-ink-3 focus:border-brand-gold lg:w-44"
         />
 
         <label htmlFor="award-note" className="sr-only">
@@ -599,7 +599,7 @@ function AwardRow({
           onChange={(e) => setNote(e.target.value)}
           maxLength={300}
           placeholder="Why. Required, and kept against the award."
-          className="min-h-12 min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
+          className="min-h-12 min-w-0 flex-1 rounded-lg border border-line bg-control px-4 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
         />
 
         <button
@@ -608,7 +608,7 @@ function AwardRow({
             busy || !note.trim() || !Number.isFinite(value) || value === 0
           }
           onClick={() => onSubmit(source, value, note)}
-          className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           {busy ? "Working..." : "Apply"}
         </button>
@@ -684,11 +684,11 @@ function CorrectHandle({
   }
 
   return (
-    <div className="mt-3 rounded-lg border border-white/15 bg-white/[0.03] p-4">
+    <div className="mt-3 rounded-lg border border-line-2 bg-card p-4">
       <p className="text-sm font-semibold text-white">
         Correct the {platform} handle
       </p>
-      <p className="mt-1 max-w-prose text-sm leading-relaxed text-white/70">
+      <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
         Currently @{current}. Their next submission is checked against whatever
         you save here, so make sure it is the account they actually publish
         from.
@@ -705,7 +705,7 @@ function CorrectHandle({
           autoCapitalize="none"
           spellCheck={false}
           placeholder="the-right-username"
-          className="min-h-11 w-full rounded-lg border border-white/15 bg-ground px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
+          className="min-h-11 w-full rounded-lg border border-line-2 bg-control px-4 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
         />
         <label htmlFor={`fix-why-${enrolmentId}-${platform}`} className="sr-only">
           Why it is being corrected
@@ -716,7 +716,7 @@ function CorrectHandle({
           onChange={(event) => setReason(event.target.value)}
           maxLength={300}
           placeholder="Why: they wrote in from their registered email…"
-          className="min-h-11 w-full rounded-lg border border-white/15 bg-ground px-4 text-base text-white placeholder:text-white/55 focus:border-brand-gold"
+          className="min-h-11 w-full rounded-lg border border-line-2 bg-control px-4 text-base text-white placeholder:text-ink-3 focus:border-brand-gold"
         />
         <div className="flex gap-2">
           <button
@@ -730,7 +730,7 @@ function CorrectHandle({
           <button
             type="button"
             onClick={onDone}
-            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-semibold text-white/70 transition-colors hover:text-white"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-semibold text-ink-2 transition-colors hover:text-white"
           >
             Cancel
           </button>

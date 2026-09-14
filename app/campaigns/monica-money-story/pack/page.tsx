@@ -83,7 +83,7 @@ export default function MonicaPackPage() {
             <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Creator Pack
             </h1>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
+            <p className="mt-4 text-base leading-relaxed text-ink-3">
               Version {MONICA_PACK_VERSION}, last updated {updated}. The{" "}
               <Link
                 href={monicaRoutes.rules}
@@ -100,26 +100,26 @@ export default function MonicaPackPage() {
                 a creator who reads nothing else still leaves with it. */}
             <div className="rounded-xl border border-brand-gold/30 bg-brand-gold/5 p-5 sm:p-6">
               <p className="eyebrow text-brand-gold">Start here</p>
-              <p className="mt-3 max-w-prose text-base leading-7 text-white/80">
+              <p className="mt-3 max-w-prose text-base leading-7 text-ink-2">
                 {monicaPackPrinciple}
               </p>
             </div>
 
             {monicaPackOpenPoints.length > 0 && (
-              <div className="mt-6 rounded-xl border border-white/20 bg-white/5 p-5 sm:p-6">
+              <div className="mt-6 rounded-xl border border-line-2 bg-card-2 p-5 sm:p-6">
                 <p className="text-sm font-semibold text-white">
                   Still coming from Monica
                 </p>
-                <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+                <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
                   These are not yet confirmed, so nothing in them may be stated
                   in an entry. They will be added here before they affect
                   anyone.
                 </p>
-                <ul className="mt-4 flex list-disc flex-col gap-2 pl-5 marker:text-white/30">
+                <ul className="mt-4 flex list-disc flex-col gap-2 pl-5 marker:text-ink-4">
                   {monicaPackOpenPoints.map((point) => (
                     <li
                       key={point}
-                      className="text-sm leading-relaxed text-white/70"
+                      className="text-sm leading-relaxed text-ink-2"
                     >
                       {point}
                     </li>
@@ -137,7 +137,7 @@ export default function MonicaPackPage() {
               <h2 className="text-xl font-bold text-white">
                 Confirmed facts you may state
               </h2>
-              <p className="mt-4 max-w-prose text-base leading-7 text-white/75">
+              <p className="mt-4 max-w-prose text-base leading-7 text-ink-2">
                 Taken from Monica&apos;s own published terms, dated{" "}
                 {MONICA_SOURCE_DATE}. Say these as they are written here.
                 Several are accurate only in this exact form.
@@ -147,12 +147,12 @@ export default function MonicaPackPage() {
                 {monicaPackFacts.map((fact) => (
                   <div
                     key={fact.label}
-                    className="rounded-xl border border-white/15 bg-white/5 p-4 sm:p-5"
+                    className="rounded-xl border border-line-2 bg-card-2 p-4 sm:p-5"
                   >
                     <dt className="text-base font-semibold text-white">
                       {fact.label}
                     </dt>
-                    <dd className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+                    <dd className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
                       {fact.detail}
                     </dd>
                   </div>
@@ -163,7 +163,7 @@ export default function MonicaPackPage() {
             {/* The two lists side by side on wide screens, because they are
                 read against each other rather than in sequence. */}
             <div className="mt-14 grid gap-6 lg:grid-cols-2">
-              <div className="rounded-xl border border-white/20 bg-white/5 p-5 sm:p-6">
+              <div className="rounded-xl border border-line-2 bg-card-2 p-5 sm:p-6">
                 <h2 className="text-lg font-bold text-white">You may</h2>
                 <ul className="mt-4 flex flex-col gap-3">
                   {monicaPackAllowed.map((item) => (
@@ -172,7 +172,7 @@ export default function MonicaPackPage() {
                         className="mt-1 h-4 w-4 shrink-0 text-green-400"
                         aria-hidden="true"
                       />
-                      <span className="text-sm leading-relaxed text-white/75">
+                      <span className="text-sm leading-relaxed text-ink-2">
                         {item}
                       </span>
                     </li>
@@ -189,7 +189,7 @@ export default function MonicaPackPage() {
                         className="mt-1 h-4 w-4 shrink-0 text-red-400"
                         aria-hidden="true"
                       />
-                      <span className="text-sm leading-relaxed text-white/75">
+                      <span className="text-sm leading-relaxed text-ink-2">
                         {item}
                       </span>
                     </li>
@@ -206,13 +206,13 @@ export default function MonicaPackPage() {
                 {monicaPackDisclosure.paragraphs.map((paragraph) => (
                   <p
                     key={paragraph}
-                    className="max-w-prose text-base leading-[1.75] text-white/75"
+                    className="max-w-prose text-base leading-[1.75] text-ink-2"
                   >
                     {paragraph}
                   </p>
                 ))}
               </div>
-              <p className="mt-5 text-sm leading-relaxed text-white/70">
+              <p className="mt-5 text-sm leading-relaxed text-ink-2">
                 Tag {monicaPackDisclosure.tag}
               </p>
 
@@ -220,7 +220,7 @@ export default function MonicaPackPage() {
                 {monicaPackDisclosure.labels.map((label) => (
                   <li
                     key={label}
-                    className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-white"
+                    className="rounded-full border border-line-2 bg-card-2 px-4 py-2 text-sm font-semibold text-white"
                   >
                     {label}
                   </li>
@@ -238,7 +238,7 @@ export default function MonicaPackPage() {
                     {section.paragraphs.map((paragraph) => (
                       <p
                         key={paragraph}
-                        className="max-w-prose text-base leading-[1.75] text-white/75"
+                        className="max-w-prose text-base leading-[1.75] text-ink-2"
                       >
                         {paragraph}
                       </p>
@@ -252,7 +252,7 @@ export default function MonicaPackPage() {
               <h2 className="text-xl font-bold text-white">
                 Logo and brand assets
               </h2>
-              <p className="mt-2 max-w-prose text-base leading-7 text-white/75">
+              <p className="mt-2 max-w-prose text-base leading-7 text-ink-2">
                 Monica&apos;s own folder. Linked rather than copied here, so you
                 always get the current files rather than whatever was correct
                 when this page was written.
@@ -261,12 +261,12 @@ export default function MonicaPackPage() {
                 href={MONICA_BRAND_ASSETS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-full border border-brand-gold/50 bg-brand-gold/10 px-6 text-sm font-semibold text-brand-gold transition-colors duration-300 hover:bg-brand-gold/20"
+                className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-full border border-brand-gold/50 bg-brand-gold/10 px-6 text-sm font-semibold text-brand-gold transition-colors duration-150 hover:bg-brand-gold/20"
               >
                 Open Monica&apos;s brand assets
                 <ExternalLink className="h-4 w-4" aria-hidden="true" />
               </a>
-              <p className="mt-3 text-sm leading-relaxed text-white/45">
+              <p className="mt-3 text-sm leading-relaxed text-ink-4">
                 Open to anyone with the link, so no Google account and no
                 request needed. If that ever changes, tell us at
                 partnership@blockfestafrica.com rather than waiting: chasing it
@@ -278,16 +278,16 @@ export default function MonicaPackPage() {
               <h2 className="text-xl font-bold text-white">
                 Monica&apos;s accounts
               </h2>
-              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/55">
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
                 The real ones. A near-miss handle tags somebody else entirely.
               </p>
-              <ul className="mt-5 flex flex-col gap-px overflow-hidden rounded-xl bg-white/10">
+              <ul className="mt-5 flex flex-col gap-px overflow-hidden rounded-xl bg-card-3">
                 {monicaChannels.map((channel) => (
                   <li
                     key={channel.label}
                     className="flex flex-wrap items-baseline gap-x-3 gap-y-1 bg-ground px-4 py-3"
                   >
-                    <span className="w-24 shrink-0 text-sm text-white/45">
+                    <span className="w-24 shrink-0 text-sm text-ink-4">
                       {channel.label}
                     </span>
                     <span className="font-mono text-sm text-brand-gold">
@@ -300,7 +300,7 @@ export default function MonicaPackPage() {
 
             <LiveResources />
 
-            <p className="mt-14 text-sm leading-relaxed text-white/50">
+            <p className="mt-14 text-sm leading-relaxed text-ink-4">
               Anything you are unsure about goes to{" "}
               <a
                 href="mailto:partnership@blockfestafrica.com"

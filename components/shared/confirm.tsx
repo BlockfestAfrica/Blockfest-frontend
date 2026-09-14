@@ -63,7 +63,7 @@ export function Confirm({
       className="w-full rounded-lg border-l-2 border-brand-gold bg-brand-gold/[0.08] p-4"
     >
       <p className="text-sm font-semibold text-white">{question}</p>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
         {consequence}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">

@@ -18,13 +18,13 @@ export function MonicaStages() {
     // them to scroll for it is the same as not linking to it.
     <section
       id="stages"
-      className="section-y scroll-mt-20 border-t border-white/20 bg-ground"
+      className="section-y scroll-mt-20 border-t border-line-2 bg-ground"
     >
       <div className="container-page">
         <h2 className="text-display-sm font-bold text-white">
           The {MONICA_CAMPAIGN_DAYS}-day journey
         </h2>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/70">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-2">
           {monicaStages.length} stages, each with its own question. Stage 1 is
           published. The rest are revealed on the Monday they open.
         </p>
@@ -53,8 +53,8 @@ export function MonicaStages() {
                 key={stage.number}
                 className={`rounded-xl border p-6 sm:p-8 ${
                   revealed
-                    ? "border-white/20 bg-white/5"
-                    : "border-dashed border-white/15"
+                    ? "border-line-2 bg-card-2"
+                    : "border-dashed border-line-2"
                 }`}
               >
                 <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-10">
@@ -62,7 +62,7 @@ export function MonicaStages() {
                     <p className="eyebrow text-brand-gold">
                       Stage {stage.number}
                     </p>
-                    <p className="mt-1.5 text-sm tabular-nums text-white/70">
+                    <p className="mt-1.5 text-sm tabular-nums text-ink-2">
                       Days {stage.days[0]} to {stage.days[1]}
                     </p>
                   </div>
@@ -72,17 +72,17 @@ export function MonicaStages() {
                       <h3 className="text-xl font-bold text-white">
                         {stage.name}
                       </h3>
-                      <p className="mt-1 text-base font-semibold text-white/80">
+                      <p className="mt-1 text-base font-semibold text-ink-2">
                         {stage.question}
                       </p>
-                      <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/70">
+                      <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
                         {stage.focus}
                       </p>
                       <ul className="mt-4 flex flex-wrap gap-2">
                         {stage.skills.map((skill) => (
                           <li
                             key={skill}
-                            className="rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-white/70"
+                            className="rounded-full border border-line-2 px-3 py-1 text-xs font-semibold text-ink-2"
                           >
                             {skill}
                           </li>
@@ -98,9 +98,9 @@ export function MonicaStages() {
                         aria-hidden="true"
                       >
                         <span className="h-5 w-48 rounded-md bg-white/20 blur-[6px] sm:w-64" />
-                        <span className="h-4 w-64 rounded-md bg-white/10 blur-[6px] sm:w-80" />
+                        <span className="h-4 w-64 rounded-md bg-card-3 blur-[6px] sm:w-80" />
                       </div>
-                      <p className="mt-5 text-sm leading-relaxed text-white/60">
+                      <p className="mt-5 text-sm leading-relaxed text-ink-3">
                         Revealed on the Monday it opens.
                       </p>
                     </div>
@@ -111,12 +111,12 @@ export function MonicaStages() {
           })}
         </ol>
 
-        <div className="mt-10 rounded-xl border border-dashed border-white/20 p-6 sm:p-8">
-          <p className="eyebrow text-white/60">Leaderboard</p>
+        <div className="mt-10 rounded-xl border border-dashed border-line-2 p-6 sm:p-8">
+          <p className="eyebrow text-ink-3">Leaderboard</p>
           <p className="mt-2 text-lg font-semibold text-white">
             First standings: {MONICA_FIRST_LEADERBOARD}
           </p>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
             The leaderboard moves as entries are approved. Weekly winners are
             announced on Sundays.
           </p>

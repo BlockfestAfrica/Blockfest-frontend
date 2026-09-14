@@ -70,18 +70,18 @@ export default function VolunteerPage() {
         {/* ---------- The ask ---------- */}
         <section className="section-y bg-ground">
           <div className="container-page">
-            <p className="eyebrow text-white/60">Join the team</p>
+            <p className="eyebrow text-ink-3">Join the team</p>
             <h1 className="text-display-sm mt-3 max-w-3xl font-bold text-white">
               Volunteer at Blockf3st Africa
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               Volunteers are not event helpers here. They are part of the team
               that builds Blockf3st, before, during and after. Depending on your
               department you might be writing, filming, designing, running a
               stage, moving equipment or looking after the people who came a
               long way to be in the room.
             </p>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               We are looking for reliable, proactive people. Placement is based
               on your skills, experience and availability, and on what the event
               actually needs.
@@ -94,7 +94,7 @@ export default function VolunteerPage() {
             <div className="mt-8">
               <a
                 href="#departments"
-                className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-7 text-base font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+                className="inline-flex min-h-12 items-center gap-2 rounded-full border border-line-2 px-7 text-base font-semibold text-white transition-colors duration-300 hover:bg-card-3"
               >
                 See the {volunteerTeams.length} departments
                 <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -104,12 +104,12 @@ export default function VolunteerPage() {
         </section>
 
         {/* ---------- When ---------- */}
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <h2 className="text-display-sm font-bold text-white">
               Two days on the floor
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               {EVENT.location.venue}. Expect long days, a lot of standing and
               walking, and problems to solve as they arrive.
             </p>
@@ -118,7 +118,7 @@ export default function VolunteerPage() {
               {volunteerDays.map((day) => (
                 <div
                   key={day.date}
-                  className="rounded-xl border border-white/20 bg-white/5 p-6"
+                  className="rounded-xl border border-line-2 bg-card-2 p-6"
                 >
                   <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                     <CalendarDays className="h-5 w-5" aria-hidden="true" />
@@ -129,7 +129,7 @@ export default function VolunteerPage() {
                   <h3 className="mt-2 text-lg font-bold text-white lg:text-2xl">
                     {day.title}
                   </h3>
-                  <p className="mt-3 text-sm leading-relaxed text-white/60 lg:text-base">
+                  <p className="mt-3 text-sm leading-relaxed text-ink-3 lg:text-base">
                     {day.description}
                   </p>
                 </div>
@@ -139,7 +139,7 @@ export default function VolunteerPage() {
             {/* The sentence is one flex item, not three. Left unwrapped, the
                 icon, the label and the link each become their own column and
                 the link gets squeezed to a few characters wide on a phone. */}
-            <p className="mt-6 flex items-start gap-2 text-sm text-white/60">
+            <p className="mt-6 flex items-start gap-2 text-sm text-ink-3">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <span>
                 Travelling in?{" "}
@@ -158,13 +158,13 @@ export default function VolunteerPage() {
         {/* ---------- Departments ---------- */}
         <section
           id="departments"
-          className="section-y bg-ground border-t border-white/20"
+          className="section-y bg-ground border-t border-line-2"
         >
           <div className="container-page">
             <h2 className="text-display-sm font-bold text-white">
               {volunteerTeams.length} departments
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               Open the one you are drawn to and read what it actually involves
               before you apply. You pick a department on the form, and the
               honest answer to &ldquo;which one?&rdquo; is usually in this list.
@@ -175,14 +175,14 @@ export default function VolunteerPage() {
                 <details
                   key={team.id}
                   id={team.id}
-                  className="group rounded-xl border border-white/20 bg-white/5 transition-colors duration-300 open:bg-white/10 hover:bg-white/10"
+                  className="group rounded-xl border border-line-2 bg-card-2 transition-colors duration-300 open:bg-card-3 hover:bg-card-3"
                 >
                   <summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 sm:p-6 [&::-webkit-details-marker]:hidden">
                     <span className="min-w-0">
                       <span className="block text-lg font-bold text-white lg:text-2xl">
                         {team.name}
                       </span>
-                      <span className="mt-2 block text-sm leading-relaxed text-white/60 lg:text-base">
+                      <span className="mt-2 block text-sm leading-relaxed text-ink-3 lg:text-base">
                         {team.purpose}
                       </span>
                     </span>
@@ -192,8 +192,8 @@ export default function VolunteerPage() {
                     />
                   </summary>
 
-                  <div className="border-t border-white/20 p-5 sm:p-6">
-                    <p className="eyebrow text-white/60">What you would do</p>
+                  <div className="border-t border-line-2 p-5 sm:p-6">
+                    <p className="eyebrow text-ink-3">What you would do</p>
                     <ul className="mt-4 flex flex-col gap-2.5">
                       {team.responsibilities.map((item) => (
                         <li key={item} className="flex items-start gap-3">
@@ -201,16 +201,16 @@ export default function VolunteerPage() {
                             className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-blue-light"
                             aria-hidden="true"
                           />
-                          <span className="text-sm leading-relaxed text-white/60 lg:text-base">
+                          <span className="text-sm leading-relaxed text-ink-3 lg:text-base">
                             {item}
                           </span>
                         </li>
                       ))}
                     </ul>
 
-                    <div className="mt-6 border-t border-white/20 pt-4">
-                      <p className="eyebrow text-white/60">Ideal for</p>
-                      <p className="mt-2 text-sm leading-relaxed text-white/60 lg:text-base">
+                    <div className="mt-6 border-t border-line-2 pt-4">
+                      <p className="eyebrow text-ink-3">Ideal for</p>
+                      <p className="mt-2 text-sm leading-relaxed text-ink-3 lg:text-base">
                         {team.idealFor}
                       </p>
                     </div>
@@ -223,25 +223,25 @@ export default function VolunteerPage() {
         </section>
 
         {/* ---------- What the form will ask ---------- */}
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <h2 className="text-display-sm font-bold text-white">
               Before you open the form
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               It is short, but two answers are worth preparing rather than
               improvising.
             </p>
 
             <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="rounded-xl border border-white/20 bg-white/5 p-6">
+              <div className="rounded-xl border border-line-2 bg-card-2 p-6">
                 <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                   <ClipboardList className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <h3 className="text-lg font-bold text-white lg:text-2xl">
                   If you are applying to a creative team
                 </h3>
-                <p className="mt-3 text-sm leading-relaxed text-white/60 lg:text-base">
+                <p className="mt-3 text-sm leading-relaxed text-ink-3 lg:text-base">
                   {creativeTeams.map((t) => t.name).join(", ")}. You will be
                   asked what kind of creative you are, for{" "}
                   <span className="font-semibold text-white">
@@ -252,14 +252,14 @@ export default function VolunteerPage() {
                 </p>
               </div>
 
-              <div className="rounded-xl border border-white/20 bg-white/5 p-6">
+              <div className="rounded-xl border border-line-2 bg-card-2 p-6">
                 <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                   <ClipboardList className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <h3 className="text-lg font-bold text-white lg:text-2xl">
                   If you are applying to an operations team
                 </h3>
-                <p className="mt-3 text-sm leading-relaxed text-white/60 lg:text-base">
+                <p className="mt-3 text-sm leading-relaxed text-ink-3 lg:text-base">
                   You will be asked about any experience with crowd management,
                   customer service, AV equipment or venue operations, and to
                   describe{" "}
@@ -271,14 +271,14 @@ export default function VolunteerPage() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-xl border border-white/20 bg-white/5 p-6">
+            <div className="mt-6 rounded-xl border border-line-2 bg-card-2 p-6">
               <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                 <MessageCircle className="h-5 w-5" aria-hidden="true" />
               </span>
               <h3 className="text-lg font-bold text-white lg:text-2xl">
                 Give a phone number that works on WhatsApp
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-white/60 lg:text-base">
+              <p className="mt-3 text-sm leading-relaxed text-ink-3 lg:text-base">
                 Everything after selection happens on WhatsApp. If the number on
                 your form is not reachable there, you will miss it.
               </p>
@@ -287,12 +287,12 @@ export default function VolunteerPage() {
         </section>
 
         {/* ---------- Expectations ---------- */}
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <h2 className="text-display-sm font-bold text-white">
               What we ask of every volunteer
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               Whichever department you land in. The form asks you to confirm you
               understand this before you submit.
             </p>
@@ -310,7 +310,7 @@ export default function VolunteerPage() {
                     className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-gold"
                     aria-hidden="true"
                   />
-                  <span className="text-sm leading-relaxed text-white/60 lg:text-base">
+                  <span className="text-sm leading-relaxed text-ink-3 lg:text-base">
                     {item}
                   </span>
                 </li>
@@ -320,13 +320,13 @@ export default function VolunteerPage() {
         </section>
 
         {/* ---------- Apply ---------- */}
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <div className="max-w-2xl">
               <h2 className="text-display-sm font-bold text-white">
                 Apply
               </h2>
-              <p className="mt-4 text-base leading-relaxed text-white/60">
+              <p className="mt-4 text-base leading-relaxed text-ink-3">
                 Shortlisted volunteers are contacted for the next stage of
                 selection. The email comes from a blockfestafrica.com address,
                 so check your spam folder for it, and everything after that

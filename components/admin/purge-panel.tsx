@@ -58,11 +58,11 @@ export function PurgePanel({ paused }: { paused: boolean }) {
     const kept = done.filter((row) => row.rows > 0);
     return (
       <div>
-        <p className="eyebrow text-white/60">Cleared</p>
+        <p className="eyebrow text-ink-3">Cleared</p>
         <h2 className="mt-2 text-xl font-bold text-white">
           The campaign is empty
         </h2>
-        <p className="mt-3 max-w-prose text-sm leading-relaxed text-white/60">
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
           The campaign, the weekly challenges, the point rules and every admin
           are untouched. Start the campaign again when you are ready.
         </p>
@@ -70,8 +70,8 @@ export function PurgePanel({ paused }: { paused: boolean }) {
           <dl className="mt-5 grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
             {kept.map((row) => (
               <div key={row.table} className="flex justify-between gap-4">
-                <dt className="text-white/60">{row.table}</dt>
-                <dd className="tabular-nums text-white/70">{row.rows}</dd>
+                <dt className="text-ink-3">{row.table}</dt>
+                <dd className="tabular-nums text-ink-2">{row.rows}</dd>
               </div>
             ))}
           </dl>
@@ -83,12 +83,12 @@ export function PurgePanel({ paused }: { paused: boolean }) {
   return (
     <div>
       <h2 className="mt-2 text-xl font-bold text-white">Clear the test data</h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
         Deletes every creator, entry, submission and point in this campaign, and
         nothing else: the campaign itself, the weekly challenges, the point rules
         and every admin sign-in stay exactly as they are. There is no undo.
       </p>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
         This stops working the moment the campaign opens.
       </p>
 
@@ -111,13 +111,13 @@ export function PurgePanel({ paused }: { paused: boolean }) {
           autoComplete="off"
           spellCheck={false}
           placeholder={`Type ${MONICA_SLUG} to confirm`}
-          className="min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/55 focus:border-red-400/60 disabled:opacity-50"
+          className="min-w-0 flex-1 rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-3 focus:border-red-400/60 disabled:opacity-50"
         />
         <button
           type="button"
           disabled={busy || !paused || typed.trim() !== MONICA_SLUG}
           onClick={purge}
-          className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-red-400/15 px-6 text-sm font-semibold text-red-300 transition-colors duration-300 hover:bg-red-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-red-400/15 px-6 text-sm font-semibold text-red-300 transition-colors duration-150 hover:bg-red-400/25 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
           {busy ? "Clearing..." : "Clear everything"}

@@ -93,14 +93,14 @@ export default function CallForSpeakersPage() {
                 hero uses. */}
             <div className="grid gap-x-12 gap-y-6 lg:grid-cols-12 lg:items-start">
               <div className="lg:col-span-6">
-                <p className="eyebrow text-white/60">Call for speakers</p>
+                <p className="eyebrow text-ink-3">Call for speakers</p>
                 <h1 className="text-display-sm mt-3 font-bold text-white">
                   Take the stage in Lagos
                 </h1>
               </div>
 
               <div className="lg:col-span-6 lg:pt-2">
-                <p className="max-w-xl text-base leading-relaxed text-white/60 lg:max-w-none">
+                <p className="max-w-xl text-base leading-relaxed text-ink-3 lg:max-w-none">
                   {speakingDays}. This year&rsquo;s theme is{" "}
                   <span className="font-semibold text-white">
                     {EVENT.tagline}
@@ -108,7 +108,7 @@ export default function CallForSpeakersPage() {
                   . What it takes to move African work onto open rails, and
                   what changes once it is there.
                 </p>
-                <p className="mt-4 max-w-xl text-base leading-relaxed text-white/60 lg:max-w-none">
+                <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-3 lg:max-w-none">
                   We are looking for builders, operators, investors,
                   policymakers and creators with something specific to say. A
                   talk about one thing you have actually done beats a survey of
@@ -125,7 +125,7 @@ export default function CallForSpeakersPage() {
             <div className="mt-8">
               <a
                 href="#formats"
-                className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-7 text-base font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+                className="inline-flex min-h-12 items-center gap-2 rounded-full border border-line-2 px-7 text-base font-semibold text-white transition-colors duration-300 hover:bg-card-3"
               >
                 What we are looking for
                 <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -139,13 +139,13 @@ export default function CallForSpeakersPage() {
             top of the heading this link jumps to. Matches the FAQ anchors. */}
         <section
           id="formats"
-          className="section-y bg-ground scroll-mt-24 border-t border-white/20"
+          className="section-y bg-ground scroll-mt-24 border-t border-line-2"
         >
           <div className="container-page">
             <h2 className="text-display-sm font-bold text-white">
               {sessionFormats.length} formats, across two days
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               Each day has its own shape, and each format belongs to one of
               them. Pick the one that fits the idea, not the one that sounds
               most senior. A sharp seven minutes is often worth more than a talk
@@ -161,7 +161,7 @@ export default function CallForSpeakersPage() {
               {speakingDayShape.map((day) => (
                 <div
                   key={day.label}
-                  className="rounded-xl border border-white/20 bg-white/5 p-6"
+                  className="rounded-xl border border-line-2 bg-card-2 p-6"
                 >
                   <div className="flex flex-wrap items-baseline gap-x-3">
                     <h3 className="text-lg font-bold text-white">
@@ -169,14 +169,14 @@ export default function CallForSpeakersPage() {
                     </h3>
                     <span className="eyebrow text-brand-gold">{day.time}</span>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed text-white/60">
+                  <p className="mt-2 text-sm leading-relaxed text-ink-3">
                     {day.detail}
                   </p>
                 </div>
               ))}
             </div>
 
-            <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink-3">
               You can also apply as open to either day.
             </p>
 
@@ -184,7 +184,7 @@ export default function CallForSpeakersPage() {
               {sessionFormats.map((format) => (
                 <div
                   key={format.name}
-                  className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10"
+                  className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3"
                 >
                   <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
                     <Mic className="h-5 w-5" aria-hidden="true" />
@@ -197,7 +197,7 @@ export default function CallForSpeakersPage() {
                       {format.length}
                     </span>
                   </div>
-                  <p className="mt-3 text-sm leading-relaxed text-white/60 lg:text-base">
+                  <p className="mt-3 text-sm leading-relaxed text-ink-3 lg:text-base">
                     {format.description}
                   </p>
                 </div>
@@ -207,7 +207,7 @@ export default function CallForSpeakersPage() {
         </section>
 
         {/* ---------- Tracks ---------- */}
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <h2 className="text-display-sm font-bold text-white">
               {lagos2026Tracks.length} tracks
@@ -215,7 +215,7 @@ export default function CallForSpeakersPage() {
             {/* Deliberately does not claim the form's track question offers
                 these exact six labels — it groups them differently, and
                 naming its options here would go stale the moment it changes. */}
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               The programme runs on these six. The application asks you to place
               your session, and lets you pick more than one, so if it sits
               across two, say so and say why.
@@ -225,12 +225,12 @@ export default function CallForSpeakersPage() {
               {lagos2026Tracks.map((track) => (
                 <div
                   key={track.title}
-                  className="rounded-xl border border-white/20 bg-white/5 p-6"
+                  className="rounded-xl border border-line-2 bg-card-2 p-6"
                 >
                   <h3 className="text-lg font-bold text-white">
                     {track.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-white/60">
+                  <p className="mt-2 text-sm leading-relaxed text-ink-3">
                     {track.description}
                   </p>
                 </div>
@@ -240,12 +240,12 @@ export default function CallForSpeakersPage() {
         </section>
 
         {/* ---------- What to prepare ---------- */}
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <h2 className="text-display-sm font-bold text-white">
               Have these ready
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               The form needs a Google account and saves a draft as you go, so
               you can leave and come back. The writing is the slow part, though,
               and twenty minutes gathering this first is the difference between
@@ -259,7 +259,7 @@ export default function CallForSpeakersPage() {
               {applicationChecklist.map((item, index) => (
                 <li
                   key={item.title}
-                  className="flex items-start gap-5 rounded-xl border border-white/20 bg-white/5 p-5 sm:p-6"
+                  className="flex items-start gap-5 rounded-xl border border-line-2 bg-card-2 p-5 sm:p-6"
                 >
                   <span
                     className="eyebrow mt-0.5 shrink-0 tabular-nums text-brand-gold"
@@ -271,7 +271,7 @@ export default function CallForSpeakersPage() {
                     <h3 className="text-base font-bold text-white lg:text-lg">
                       {item.title}
                     </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-white/60 lg:text-base">
+                    <p className="mt-2 text-sm leading-relaxed text-ink-3 lg:text-base">
                       {item.detail}
                     </p>
                   </div>
@@ -282,12 +282,12 @@ export default function CallForSpeakersPage() {
         </section>
 
         {/* ---------- Terms ---------- */}
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <h2 className="text-display-sm font-bold text-white">
               Before you apply
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               {speakerTerms.length} consent questions close the form. None of it
               should be a surprise by the time you get there.
             </p>
@@ -302,7 +302,7 @@ export default function CallForSpeakersPage() {
                     className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-gold"
                     aria-hidden="true"
                   />
-                  <span className="text-sm leading-relaxed text-white/60 lg:text-base">
+                  <span className="text-sm leading-relaxed text-ink-3 lg:text-base">
                     {term}
                   </span>
                 </li>
@@ -312,7 +312,7 @@ export default function CallForSpeakersPage() {
         </section>
 
         {/* ---------- Apply ---------- */}
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <div className="max-w-2xl">
               <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
@@ -321,7 +321,7 @@ export default function CallForSpeakersPage() {
               <h2 className="text-display-sm font-bold text-white">
                 {isSpeakerFormOpen ? "Apply" : "Applications open soon"}
               </h2>
-              <p className="mt-4 text-base leading-relaxed text-white/60">
+              <p className="mt-4 text-base leading-relaxed text-ink-3">
                 {isSpeakerFormOpen
                   ? "Sessions are selected on the strength of the idea and the fit with the programme, not on follower count."
                   : "The form is not live yet. Get what is above ready now and you will be able to move quickly when it opens. We announce it on X first."}
@@ -337,7 +337,7 @@ export default function CallForSpeakersPage() {
                 </Link>
               </div>
 
-              <p className="mt-8 text-sm leading-relaxed text-white/60">
+              <p className="mt-8 text-sm leading-relaxed text-ink-3">
                 Coming in from outside Lagos?{" "}
                 <Link
                   href="/travel"

@@ -58,28 +58,28 @@ export default async function OverviewPage() {
 
       {/* mobile-grid-ok: three one-word labels over numbers, two columns below
           sm so no column is narrower than about 150px. */}
+      {/* The figure and its meaning as one object. These carried the raw
+          count at Stat size while the number that matters, percent of the
+          target promised to the sponsor, sat in a prose list below: data as
+          presentation. The hint is the story; the ul is gone.
+          mobile-grid-ok: short labels over numbers, two per row below sm. */}
       <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
-        <Stat label="Creators" value={metrics.creators} />
-        <Stat label="Submissions" value={metrics.submissions} />
-        <Stat label="Approved URLs" value={metrics.approvedUrls} />
+        <Stat
+          label="Creators"
+          value={metrics.creators}
+          hint={`of ${TARGETS.creators} target · ${pct(metrics.creators, TARGETS.creators)}%`}
+        />
+        <Stat
+          label="Submissions"
+          value={metrics.submissions}
+          hint={`of ${TARGETS.submissions} target · ${pct(metrics.submissions, TARGETS.submissions)}%`}
+        />
+        <Stat
+          label="Approved URLs"
+          value={metrics.approvedUrls}
+          hint={`of ${TARGETS.approvedUrls} target · ${pct(metrics.approvedUrls, TARGETS.approvedUrls)}% · one per platform`}
+        />
       </div>
-
-      <ul className="mt-4 flex flex-col gap-1 text-sm text-white/60">
-        <li>
-          Creators: {metrics.creators} of {TARGETS.creators} target (
-          {pct(metrics.creators, TARGETS.creators)}%)
-        </li>
-        <li>
-          Submissions: {metrics.submissions} of {TARGETS.submissions} target (
-          {pct(metrics.submissions, TARGETS.submissions)}%)
-        </li>
-        <li>
-          Approved URLs: {metrics.approvedUrls} of {TARGETS.approvedUrls} target
-          ({pct(metrics.approvedUrls, TARGETS.approvedUrls)}%). One per platform,
-          because the same piece on three platforms is three published artefacts
-          and the target is about artefacts.
-        </li>
-      </ul>
 
       {/* mobile-grid-ok: short labels over numbers, two per row below sm. */}
       <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
@@ -92,10 +92,10 @@ export default async function OverviewPage() {
 
       <div className="mt-10">
         <h2 className="text-xl font-bold text-white">By week</h2>
-        <div className="mt-4 overflow-x-auto rounded-xl border border-white/12">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-line">
           <table className="w-full min-w-[34rem] border-collapse text-left">
             <thead>
-              <tr className="border-b border-white/12 text-xs font-semibold uppercase tracking-wider text-white/60">
+              <tr className="border-b border-line text-xs font-semibold uppercase tracking-wider text-ink-3">
                 <th className="px-4 py-3">Week</th>
                 <th className="px-4 py-3 text-right">Entries</th>
                 <th className="px-4 py-3 text-right">Sent</th>
@@ -107,21 +107,21 @@ export default async function OverviewPage() {
               {weeks.map((week) => (
                 <tr
                   key={week.weekNo}
-                  className="border-b border-white/[0.06] last:border-0"
+                  className="border-b border-line last:border-0"
                 >
                   <td className="px-4 py-3">
                     <span className="font-semibold text-white">
                       W{week.weekNo}
                     </span>{" "}
-                    <span className="text-sm text-white/60">{week.title}</span>
+                    <span className="text-sm text-ink-3">{week.title}</span>
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-white/70">
+                  <td className="px-4 py-3 text-right tabular-nums text-ink-2">
                     {week.entries}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-white/70">
+                  <td className="px-4 py-3 text-right tabular-nums text-ink-2">
                     {week.submissions}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-white/70">
+                  <td className="px-4 py-3 text-right tabular-nums text-ink-2">
                     {week.approved}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-white">
@@ -136,7 +136,7 @@ export default async function OverviewPage() {
 
       <div className="mt-10">
         <h2 className="text-xl font-bold text-white">Referrals</h2>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
           {metrics.referralsPaid} paid, {metrics.referralsPending} recorded and
           waiting. A referral pays when the creator who was brought in has their
           first approved entry, so a large waiting number means people arrived
@@ -149,7 +149,7 @@ export default async function OverviewPage() {
           <h2 className="text-xl font-bold text-white">
             Registrations sharing an address
           </h2>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
             For a person to look at, never acted on automatically. Nigerian
             mobile carriers put very large numbers of subscribers behind each
             address, so this is far more likely to be two creators on the same
@@ -158,16 +158,16 @@ export default async function OverviewPage() {
             forbid, and a human comparing the names and the work can tell those
             apart where a threshold cannot.
           </p>
-          <ul className="mt-4 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/12">
+          <ul className="mt-4 divide-y divide-line overflow-hidden rounded-xl border border-line">
             {clusters.map((cluster) => (
               <li key={cluster.ip} className="p-4">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-mono text-sm text-white/70">
+                  <span className="font-mono text-sm text-ink-2">
                     {cluster.ip}
                   </span>
                   <Pill tone="bad">{cluster.creators} creators</Pill>
                 </div>
-                <p className="mt-1 text-sm text-white/60">
+                <p className="mt-1 text-sm text-ink-3">
                   {cluster.names.join(", ")}
                 </p>
               </li>
@@ -184,9 +184,9 @@ export default async function OverviewPage() {
        * which only the creator can see. A number here would be a guess wearing
        * the clothes of a measurement.
        */}
-      <div className="mt-10 border-t border-white/12 pt-8">
+      <div className="mt-10 border-t border-line pt-8">
         <h2 className="text-xl font-bold text-white">Impressions</h2>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
           Not measurable from here, and not estimated. On-site traffic is in
           Sabilytics; reach on each post is in that platform&apos;s own analytics
           and only the creator can see it. Any figure this page produced would be

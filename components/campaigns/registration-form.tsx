@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Check, Copy, Lock } from "lucide-react";
+import { ArrowRight, Check, Copy, Loader2, Lock } from "lucide-react";
 import { hasPassed } from "@/lib/countdown";
 import { CAMPAIGN_GATE_FORCED_OPEN, monicaRoutes } from "@/lib/campaigns";
 import { MONICA_RULES_VERSION } from "@/lib/monica-rules";
@@ -62,7 +62,7 @@ const EMPTY: Record<Field, string> = {
 };
 
 const inputClass =
-  "w-full rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 text-base text-white placeholder:text-white/30 transition-colors focus:border-brand-gold focus:bg-white/[0.05]";
+  "w-full rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-4 transition-colors focus:border-brand-gold focus:bg-control";
 
 /** A titled group of fields, so the form reads as three short asks. */
 function Section({
@@ -82,10 +82,10 @@ function Section({
      * group the same weight and made a short form look like a long one. A
      * hairline and real space between groups reads faster and asks for less.
      */
-    <section className="border-t border-white/12 pt-8 first:border-0 first:pt-0">
+    <section className="border-t border-line pt-8 first:border-0 first:pt-0">
       <h2 className="eyebrow text-brand-gold">{title}</h2>
       {hint && (
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/50">
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-4">
           {hint}
         </p>
       )}
@@ -158,7 +158,7 @@ function Labelled({
         )}
       </div>
 
-      <div>{hint && <p className="mt-1 text-sm text-white/50">{hint}</p>}</div>
+      <div>{hint && <p className="mt-1 text-sm text-ink-4">{hint}</p>}</div>
 
       <div className="pt-2">{children}</div>
 
@@ -442,12 +442,12 @@ export function RegistrationForm({
 
   if (!checked || !open) {
     return (
-      <div className="rounded-xl border-l-2 border-white/25 bg-white/[0.03] p-6 pl-5 sm:p-8 sm:pl-6">
+      <div className="rounded-xl border-l-2 border-line-3 bg-card p-6 pl-5 sm:p-8 sm:pl-6">
         <p className="flex items-center gap-2 text-base font-semibold text-white">
           <Lock className="h-4 w-4" aria-hidden="true" />
           Entries are not open yet
         </p>
-        <p className="mt-3 max-w-prose text-base leading-relaxed text-white/60">
+        <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-3">
           Registration opens when the campaign starts on Monday 14 September.
           Read the{" "}
           <Link
@@ -459,9 +459,9 @@ export function RegistrationForm({
           in the meantime, so you are ready to go on day one.
         </p>
         {process.env.NODE_ENV !== "production" && (
-          <p className="mt-4 rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-sm text-white/50">
+          <p className="mt-4 rounded-lg border border-line-2 bg-card-2 px-4 py-3 text-sm text-ink-4">
             Developing locally? Add{" "}
-            <code className="text-white/80">?preview=open</code> to this URL to
+            <code className="text-ink-2">?preview=open</code> to this URL to
             work on the form before the campaign starts. The flag is compiled
             out of production builds.
           </p>
@@ -472,12 +472,12 @@ export function RegistrationForm({
 
   if (done) {
     return (
-      <div className="rounded-xl border border-white/12 bg-white/[0.03] p-6 sm:p-8">
+      <div className="rounded-xl border border-line bg-card p-6 sm:p-8">
         <p className="flex items-center gap-2 text-lg font-bold text-white">
           <Check className="h-5 w-5 text-brand-gold" aria-hidden="true" />
           You are in, {done.name.split(" ")[0]}
         </p>
-        <p className="mt-3 max-w-prose text-base leading-relaxed text-white/70">
+        <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-2">
           The first challenge is on the campaign page. Publish your entry on
           your own account, then come back and submit the link.
         </p>
@@ -488,12 +488,16 @@ export function RegistrationForm({
             replay is a secret that can be taken from us. The cost is that
             losing the link means asking for a new one, so the warning has to
             be unmissable rather than tucked under the fold. */}
+        {/* The house warn voice, because on this screen the gold CTA below
+            would otherwise be the strongest element, and the thing that
+            cannot be recovered has to outrank the thing that can be clicked
+            any time. */}
         {done.accessToken && (
-          <div className="mt-6 rounded-lg border border-white/15 bg-white/[0.05] p-4 sm:p-5">
+          <div className="mt-6 rounded-xl border-l-4 border-amber-400 bg-amber-400/[0.12] p-4 pl-5 sm:p-5 sm:pl-5">
             <p className="text-sm font-semibold text-white">
               Save this link. It is shown once.
             </p>
-            <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
               It opens your own page, where your points and entries live and
               where you will submit each entry. We store only a fingerprint of
               it, so we cannot send it to you again. Bookmark it, or send it to
@@ -502,7 +506,7 @@ export function RegistrationForm({
               with and we will issue a new one.
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+              <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-line-2 bg-ground px-4 py-3 text-sm text-white">
                 {accessLink}
               </code>
               <button
@@ -512,7 +516,7 @@ export function RegistrationForm({
                   setSavedLink(true);
                   toast.success("Your personal link is copied");
                 }}
-                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-line-2 px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-card-3"
               >
                 {savedLink ? (
                   <Check className="h-4 w-4" aria-hidden="true" />
@@ -527,14 +531,14 @@ export function RegistrationForm({
 
         {shareLink ? (
           <div className="mt-6">
-            <p className="eyebrow text-white/60">Your referral link</p>
-            <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/60">
+            <p className="eyebrow text-ink-3">Your referral link</p>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
               Bring another creator in with this. Points land once they have
               their first approved entry, so it is worth sending to people who
               will actually post.
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-ground px-4 py-3 text-sm text-white">
+              <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-line-2 bg-ground px-4 py-3 text-sm text-white">
                 {shareLink}
               </code>
               <button
@@ -549,7 +553,7 @@ export function RegistrationForm({
                   toast.success("Referral link copied");
                   track(CAMPAIGN_EVENTS.referralCopied);
                 }}
-                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/20 px-5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/10"
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-line-2 px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-card-3"
               >
                 {copied ? (
                   <Check className="h-4 w-4" aria-hidden="true" />
@@ -565,7 +569,7 @@ export function RegistrationForm({
           // nothing about referrals and point at the campaign. This is the
           // path a false positive on the bot checks lands on, and it must not
           // hand somebody a broken link dressed as a reward.
-          <p className="mt-6 max-w-prose text-sm leading-relaxed text-white/60">
+          <p className="mt-6 max-w-prose text-sm leading-relaxed text-ink-3">
             Your referral link will be on your dashboard shortly. If you do not
             see it, get in touch at partnership@blockfestafrica.com.
           </p>
@@ -573,7 +577,7 @@ export function RegistrationForm({
 
         <Link
           href={`${monicaRoutes.landing}#stages`}
-          className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover"
+          className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover"
         >
           See the first challenge
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -592,7 +596,7 @@ export function RegistrationForm({
       {CAMPAIGN_GATE_FORCED_OPEN && !hasPassed(opensAt) && (
         <p
           role="status"
-          className="rounded-lg border border-white/15 bg-white/[0.05] px-4 py-3 text-sm leading-relaxed text-white/80"
+          className="rounded-lg border border-line-2 bg-card-2 px-4 py-3 text-sm leading-relaxed text-ink-2"
         >
           <strong className="font-semibold text-white">
             This is a test run.
@@ -755,11 +759,11 @@ export function RegistrationForm({
             // beside it, so the three rows line up as one control instead of
             // three mismatched ones.
             <div key={field}>
-              <div className="flex items-center gap-0 overflow-hidden rounded-lg border border-white/12 bg-white/[0.03] transition-colors focus-within:border-brand-gold">
-                <span className="w-24 shrink-0 border-r border-white/12 px-3 py-3 text-sm text-white/55">
+              <div className="flex items-center gap-0 rounded-lg border border-line bg-control transition-colors duration-150 focus-within:border-line-3">
+                <span className="w-24 shrink-0 border-r border-line px-3 py-3 text-sm text-ink-3">
                   {label}
                 </span>
-                <span className="pl-3 text-white/30" aria-hidden="true">
+                <span className="pl-3 text-ink-4" aria-hidden="true">
                   @
                 </span>
                 <input
@@ -768,7 +772,7 @@ export function RegistrationForm({
                   aria-label={`${label} username`}
                   value={values[field]}
                   onChange={(e) => set(field)(e.target.value)}
-                  className="w-full bg-transparent px-2 py-3 text-base text-white placeholder:text-white/30"
+                  className="w-full bg-transparent px-2 py-3 text-base text-white placeholder:text-ink-4"
                   placeholder="yourhandle"
                 />
               </div>
@@ -823,7 +827,7 @@ export function RegistrationForm({
         </div>
       </Section>
 
-      <div className="flex flex-col gap-6 border-t border-white/15 pt-8">
+      <div className="flex flex-col gap-6 border-t border-line-2 pt-8">
         <div>
           <label className="flex cursor-pointer items-start gap-3">
             <input
@@ -835,7 +839,7 @@ export function RegistrationForm({
               }}
               className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-brand-gold"
             />
-            <span className="text-sm leading-relaxed text-white/70">
+            <span className="text-sm leading-relaxed text-ink-2">
               I have read and accept the{" "}
               <Link
                 href={monicaRoutes.rules}
@@ -876,12 +880,12 @@ export function RegistrationForm({
               onChange={(e) => setMarketing(e.target.checked)}
               className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-brand-gold"
             />
-            <span className="text-sm leading-relaxed text-white/70">
+            <span className="text-sm leading-relaxed text-ink-2">
               Optional. Tell me about future Blockfest Africa campaigns and
               events by email.
             </span>
           </label>
-          <p className="mt-2 pl-7 text-sm leading-relaxed text-white/40">
+          <p className="mt-2 pl-7 text-sm leading-relaxed text-ink-4">
             Nothing to do with this campaign. Leaving it unticked has no effect
             on your entry or your chances, and you can stop the emails at any
             time.
@@ -900,10 +904,14 @@ export function RegistrationForm({
         <button
           type="submit"
           disabled={submitting}
-          className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60 sm:self-start"
+          className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-gold px-8 text-base font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60 sm:self-start"
         >
-          {submitting ? "Registering..." : "Register for the campaign"}
-          {!submitting && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+          {submitting ? "Registering…" : "Register for the campaign"}
+          {submitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          )}
         </button>
       </div>
     </form>

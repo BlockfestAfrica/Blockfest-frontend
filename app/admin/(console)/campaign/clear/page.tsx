@@ -46,7 +46,7 @@ export default async function ClearPage() {
 
       {!allowed ? (
         <Panel tone="quiet" className="mt-8">
-          <p className="max-w-prose text-base leading-relaxed text-white/70">
+          <p className="max-w-prose text-base leading-relaxed text-ink-2">
             {!isOwner(admin.admin)
               ? "This is restricted to owners."
               : "The campaign has opened. Everything in it now belongs to somebody who entered, so it cannot be cleared from here."}

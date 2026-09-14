@@ -32,7 +32,7 @@ export function AnnouncementBar() {
         />
         <span>Tickets are live for Lagos &apos;26</span>
         <span className="hidden text-white/20 sm:inline">·</span>
-        <span className="font-normal text-white/60">
+        <span className="font-normal text-ink-3">
           {`Passes from ${formatNaira(lowestTicketPrice)}`}
         </span>
         <span className="inline-flex items-center gap-1 text-brand-gold underline underline-offset-2 group-hover:text-brand-gold-hover">

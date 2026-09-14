@@ -37,8 +37,8 @@ export function ConsoleNav({ tabs }: { tabs: ConsoleTab[] }) {
             aria-current={active ? "page" : undefined}
             className={`inline-flex min-h-11 items-center rounded-r-lg border-l-2 px-4 text-sm font-semibold transition-colors ${
               active
-                ? "border-l-brand-gold bg-white/[0.05] text-white"
-                : "border-l-transparent text-white/60 hover:bg-white/[0.03] hover:text-white"
+                ? "border-l-brand-gold bg-card-2 text-white"
+                : "border-l-transparent text-ink-3 hover:bg-card hover:text-white"
             }`}
           >
             {tab.label}

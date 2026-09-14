@@ -49,7 +49,7 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
   return (
     <Link
       href={`/campaigns/${campaign.slug}`}
-      className="group flex flex-col rounded-2xl border border-white/20 bg-white/5 transition-colors duration-300 hover:border-white/30 hover:bg-white/[0.07] lg:col-span-2"
+      className="group flex flex-col rounded-2xl border border-line-2 bg-card-2 transition-colors duration-150 hover:border-line-3 hover:bg-card-2 lg:col-span-2"
     >
       <div className="flex flex-1 flex-col gap-6 p-5 sm:p-6 md:flex-row md:gap-10 lg:p-8">
         <div className="flex flex-1 flex-col">
@@ -70,7 +70,7 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
           <span className="mt-auto pt-6">
             {/* A span, not a nested link. The whole card is already the link,
                 and a link inside a link is invalid and unpredictable. */}
-            <span className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-300 group-hover:bg-brand-gold-hover">
+            <span className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-150 group-hover:bg-brand-gold-hover">
               See the campaign
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </span>
@@ -81,10 +81,10 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
             does. Top-aligned, its divider ran on past the last item and the
             card read as unfinished. The left column already pins its button to
             the bottom, so this balances against it. */}
-        <dl className="flex flex-col justify-between gap-5 border-t border-white/15 pt-6 md:w-52 md:shrink-0 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+        <dl className="flex flex-col justify-between gap-5 border-t border-line-2 pt-6 md:w-52 md:shrink-0 md:border-l md:border-t-0 md:pl-10 md:pt-0">
           {campaign.rewardPool && (
             <div>
-              <dt className="eyebrow text-white/60">Prize pool</dt>
+              <dt className="eyebrow text-ink-3">Prize pool</dt>
               <dd className="mt-1.5 text-3xl font-bold tabular-nums text-white">
                 {formatNaira(campaign.rewardPool)}
               </dd>
@@ -92,8 +92,8 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
           )}
           {dates && (
             <div>
-              <dt className="eyebrow text-white/60">Runs</dt>
-              <dd className="mt-1.5 text-sm leading-relaxed text-white/80">
+              <dt className="eyebrow text-ink-3">Runs</dt>
+              <dd className="mt-1.5 text-sm leading-relaxed text-ink-2">
                 {dates}
               </dd>
             </div>
@@ -139,8 +139,8 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
  */
 function UpcomingCampaign() {
   return (
-    <div className="flex flex-col rounded-2xl border border-dashed border-white/20 p-6 sm:p-8 lg:p-10">
-      <span className="inline-flex w-fit items-center rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-white/60">
+    <div className="flex flex-col rounded-2xl border border-dashed border-line-2 p-6 sm:p-8 lg:p-10">
+      <span className="inline-flex w-fit items-center rounded-full border border-line-2 px-3 py-1 text-xs font-semibold text-ink-3">
         Coming soon
       </span>
 
@@ -151,10 +151,10 @@ function UpcomingCampaign() {
         aria-hidden="true"
       >
         <span className="h-7 w-32 rounded-md bg-white/25 blur-[6px] sm:h-9 sm:w-40" />
-        <span className="h-7 w-20 rounded-md bg-white/15 blur-[6px] sm:h-9 sm:w-24" />
+        <span className="h-7 w-20 rounded-md bg-card-3 blur-[6px] sm:h-9 sm:w-24" />
       </div>
 
-      <p className="mt-7 text-base leading-relaxed text-white/60">
+      <p className="mt-7 text-base leading-relaxed text-ink-3">
         The next campaign. We are not saying who yet.
       </p>
     </div>
@@ -191,7 +191,7 @@ export default function CampaignsPage() {
                 Campaigns
               </h1>
             </div>
-            <p className="max-w-md text-base leading-relaxed text-white/70 lg:pb-2 lg:text-right">
+            <p className="max-w-md text-base leading-relaxed text-ink-2 lg:pb-2 lg:text-right">
               Real briefs, real prize money, your own audience. You keep the
               work.
             </p>

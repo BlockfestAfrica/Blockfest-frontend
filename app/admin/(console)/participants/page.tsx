@@ -122,7 +122,7 @@ export default async function AdminParticipantsPage({
          * phone it was four stacked rows of it above an empty table. The screen
          * earns them back the moment somebody registers.
          */
-        <p className="max-w-prose text-base leading-relaxed text-white/70">
+        <p className="max-w-prose text-base leading-relaxed text-ink-2">
           Nobody has registered yet. Everyone who joins appears here, whether or
           not they have submitted anything.
         </p>
@@ -222,7 +222,7 @@ export default async function AdminParticipantsPage({
             <h2 id="everyone" className="text-xl font-bold text-white">
               {search ? "Matches" : "Everyone"}
             </h2>
-            <p className="max-w-prose text-sm leading-relaxed text-white/70">
+            <p className="max-w-prose text-sm leading-relaxed text-ink-2">
               {counts.silent} {counts.silent === 1 ? "has" : "have"} not
               submitted anything yet. That is the group worth a message before a
               brief closes.

@@ -96,13 +96,13 @@ export default function MonicaMoneyStoryPage() {
       <MonicaPrizes />
       <MonicaFaq />
 
-      <section className="section-y border-t border-white/20 bg-ground">
+      <section className="section-y border-t border-line-2 bg-ground">
         <div className="container-page">
           <div className="max-w-2xl">
             <h2 className="text-display-sm font-bold text-white">
               {CAMPAIGN.hook}
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-white/60">
+            <p className="mt-4 text-base leading-relaxed text-ink-3">
               {MONICA_CAMPAIGN_DAYS} days, one story, told by the community.
               Register once and the first brief is waiting.
             </p>

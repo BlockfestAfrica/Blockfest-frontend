@@ -17,11 +17,11 @@ export function EventCta({
   ctaHref: string;
 }) {
   return (
-    <section className="section-y bg-ground border-t border-white/20">
+    <section className="section-y bg-ground border-t border-line-2">
       <div className="container-page">
         <div className="max-w-2xl">
           <h2 className="text-display-sm font-bold text-white">{title}</h2>
-          <p className="mt-4 text-base leading-relaxed text-white/90">
+          <p className="mt-4 text-base leading-relaxed text-ink">
             {description}
           </p>
           <div className="mt-8">

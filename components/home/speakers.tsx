@@ -18,15 +18,15 @@ export function SpeakersSection() {
   useSubtleAnimations();
 
   return (
-    <section className="section-y bg-ground border-t border-white/20">
+    <section className="section-y bg-ground border-t border-line-2">
       <div className="container-page">
         {/* Header sits on the same left edge as the hero headline. */}
         <div className="mb-10 lg:mb-14">
-          <p className="eyebrow text-white/60">OUR SPEAKERS</p>
+          <p className="eyebrow text-ink-3">OUR SPEAKERS</p>
           <h2 className="text-display-sm mt-3 font-bold text-white fade-in-on-scroll">
             They&apos;ve Graced Our Stage
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
             Founders, policymakers and thought leaders who have shaped the
             conversation at Blockfest Africa
           </p>
@@ -39,7 +39,7 @@ export function SpeakersSection() {
 
         {/* 2026 Speaker CTA */}
         <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-lg text-white/90">
+          <p className="text-lg text-ink">
             Want to speak at or help run Blockf3st Africa 2026?
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

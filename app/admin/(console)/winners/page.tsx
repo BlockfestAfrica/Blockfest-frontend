@@ -113,7 +113,7 @@ export default async function WinnersPage() {
         <h2 id="paperwork" className="text-xl font-bold text-white">
           Paperwork
         </h2>
-        <p className="max-w-prose text-sm leading-relaxed text-white/70">
+        <p className="max-w-prose text-sm leading-relaxed text-ink-2">
           Every ledger row for the top five, with the date, the source, the
           amount, the admin who awarded it and what they wrote. This is the
           document a dispute is answered with. It carries no bank details,
@@ -122,14 +122,14 @@ export default async function WinnersPage() {
         <div className="flex flex-wrap gap-3">
           <a
             href="/api/admin/payout"
-            className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-white/20 px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
           >
             <Download className="h-4 w-4" aria-hidden="true" />
             Points, with the working
           </a>
           <a
             href="/api/admin/payout?of=entries"
-            className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-white/20 px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
           >
             <Download className="h-4 w-4" aria-hidden="true" />
             The entries they were paid for
@@ -138,23 +138,23 @@ export default async function WinnersPage() {
 
         {snapshots.length > 0 && (
           <div className="pt-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-ink-4">
               Recorded so far
             </h3>
             {/* A definition list, because every row is week then facts about
                 that week. It was four spans in a flex row, which on a phone
                 wrapped into a shape with no grammar. */}
-            <dl className="mt-3 divide-y divide-white/10 border-y border-white/10">
+            <dl className="mt-3 divide-y divide-line border-y border-line">
               {snapshots.map((s) => (
                 <div
                   key={`${s.weekNo}-${s.version}`}
                   className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
                 >
                   <dt className="font-semibold text-white">Week {s.weekNo}</dt>
-                  <dd className="text-sm text-white/60">
+                  <dd className="text-sm text-ink-3">
                     {count(s.rows)} creators
                     {s.version > 1 && ` · version ${s.version}`}
-                    <span className="ml-2 text-white/45">
+                    <span className="ml-2 text-ink-4">
                       {dateTime(s.takenAt)}
                     </span>
                   </dd>
