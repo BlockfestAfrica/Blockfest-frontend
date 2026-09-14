@@ -234,6 +234,7 @@ export default async function AdminParticipantsPage({
                 email: row.email,
                 joinedAt: row.joinedAt.toISOString(),
                 handles: row.handles,
+                entries: row.entries,
                 submitted: row.submitted,
                 approved: row.approved,
                 points: row.points,

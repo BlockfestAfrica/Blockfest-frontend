@@ -167,7 +167,9 @@ describe("the aggregate ceiling on manual awards", () => {
     const me = await enrol();
     for (let i = 0; i < CAP / 200; i += 1) await award(me.enrolmentId, 200);
 
-    await expect(award(me.enrolmentId, 1)).rejects.toThrow(
+    // 50 is quality's published floor since 0050; a 1-point probe would
+    // trip below_published_floor before ever reaching the cap.
+    await expect(award(me.enrolmentId, 50)).rejects.toThrow(
       /manual_cap_exceeded: cap 2000 holds 2000/,
     );
     expect(await pointsOf(me.enrolmentId), "unchanged").toBe(CAP);
@@ -288,7 +290,10 @@ describe("the manual floor (0028)", () => {
 
     await expect(
       award(me.enrolmentId, -300, "Draining a rival"),
-    ).rejects.toThrow(/manual_floor_exceeded: holds 0 manual/);
+      // The per-source floor from 0050 answers first and more precisely:
+      // quality can only take back what quality gave. The old aggregate
+      // floor stands behind it as belt.
+    ).rejects.toThrow(/source_floor_exceeded/);
     expect(await pointsOf(me.enrolmentId), "untouched").toBe(500);
   });
 

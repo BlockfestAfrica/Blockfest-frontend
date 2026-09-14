@@ -318,7 +318,7 @@ describe("taking points back below zero", () => {
 
     await expect(
       award(me, "quality_bonus", -100, "Reversing, wrong creator"),
-    ).rejects.toThrow(/manual_floor_exceeded: holds 50 manual/);
+    ).rejects.toThrow(/source_floor_exceeded/);
 
     expect(await pointsOf(me), "unchanged").toBe(50);
   });
@@ -335,7 +335,7 @@ describe("taking points back below zero", () => {
     const me = await makeCreator();
     await expect(
       award(me, "quality_bonus", -10, "Nothing to take"),
-    ).rejects.toThrow(/manual_floor_exceeded: holds 0 manual/);
+    ).rejects.toThrow(/source_floor_exceeded/);
   });
 
   /**
@@ -353,9 +353,104 @@ describe("taking points back below zero", () => {
     );
     await expect(
       award(me, "manual_adjustment", -300, "Draining a rival"),
-    ).rejects.toThrow(/manual_floor_exceeded: holds 0 manual/);
+    ).rejects.toThrow(/source_floor_exceeded/);
     expect(await pointsOf(me), "untouched").toBe(0);
     // pointsOf reads the cache, which the refused award never recomputed;
     // the ledger row above was inserted directly so the truth is 500.
+  });
+});
+
+describe("the published shape of each award (0050)", () => {
+  const awardEntry = (
+    enrolment: string,
+    source: string,
+    points: number,
+    entry: string | null,
+  ) =>
+    db.query(
+      `SELECT * FROM award_points($1::uuid, $2::ledger_source, $3::integer, 'shape test', $4::uuid, $5::uuid)`,
+      [enrolment, source, points, adminId, entry],
+    );
+
+  /** An entry of this creator's, for the engagement linkage. */
+  async function entryOf(enrolment: string) {
+    const ch = await one<{ id: string }>(
+      `SELECT id FROM challenges ORDER BY week_no LIMIT 1`,
+    );
+    return (
+      await one<{ id: string }>(`
+        INSERT INTO challenge_entries
+          (campaign_creator_id, challenge_id, base_points_snapshot, bonus_2_snapshot, bonus_3_snapshot)
+        VALUES ('${enrolment}', '${ch.id}', 100, 50, 100) RETURNING id`)
+    ).id;
+  }
+
+  it("a flat value takes exactly that value", async () => {
+    const me = await makeCreator();
+    await expect(
+      award(me, "featured_blockfest", 40, "under"),
+    ).rejects.toThrow(/not_the_published_value/);
+    await expect(
+      award(me, "featured_blockfest", 50, "exact"),
+    ).resolves.toBeTruthy();
+    await expect(award(me, "wildcard_win", 99, "under")).rejects.toThrow(
+      /not_the_published_value/,
+    );
+  });
+
+  it("engagement moves only on the ladder, attached to an entry, once", async () => {
+    const me = await makeCreator();
+    const entry = await entryOf(me);
+    await expect(
+      awardEntry(me, "engagement_milestone", 73, entry),
+    ).rejects.toThrow(/not_on_ladder/);
+    await expect(
+      awardEntry(me, "engagement_milestone", 150, null),
+    ).rejects.toThrow(/entry_required/);
+
+    const other = await makeCreator();
+    await expect(
+      awardEntry(other, "engagement_milestone", 150, entry),
+    ).rejects.toThrow(/entry_not_theirs/);
+
+    await expect(
+      awardEntry(me, "engagement_milestone", 150, entry),
+    ).resolves.toBeTruthy();
+    // The published rule: one bonus per entry, so the higher tier later
+    // is a correction plus re-award, not a stack.
+    await expect(
+      awardEntry(me, "engagement_milestone", 200, entry),
+    ).rejects.toThrow(/engagement_already_awarded/);
+  });
+
+  it("quality holds its published floor", async () => {
+    const me = await makeCreator();
+    await expect(award(me, "quality_bonus", 30, "under")).rejects.toThrow(
+      /below_published_floor/,
+    );
+    await expect(award(me, "quality_bonus", 50, "floor")).resolves.toBeTruthy();
+  });
+
+  it("an entry on a non-engagement source refuses", async () => {
+    const me = await makeCreator();
+    const entry = await entryOf(me);
+    await expect(
+      awardEntry(me, "quality_bonus", 100, entry),
+    ).rejects.toThrow(/entry_only_for_engagement/);
+  });
+
+  it("a missing aggregate cap row freezes positive awards instead of unbounding them", async () => {
+    const me = await makeCreator();
+    await db.query(
+      `UPDATE point_rules SET max_points = 0
+        WHERE campaign_id = '${campaignId}' AND key = 'manual_total_cap'`,
+    );
+    await expect(award(me, "quality_bonus", 50, "frozen")).rejects.toThrow(
+      /manual_cap_not_configured/,
+    );
+    await db.query(
+      `UPDATE point_rules SET max_points = 2000
+        WHERE campaign_id = '${campaignId}' AND key = 'manual_total_cap'`,
+    );
   });
 });

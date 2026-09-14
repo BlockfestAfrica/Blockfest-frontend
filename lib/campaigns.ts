@@ -473,8 +473,9 @@ export const monicaFaqs: CampaignFaq[] = [
   },
   {
     question: "How do creator referrals work?",
-    // 50, not the 10 in the marketing doc: 50 is what the rules promise and
-    // what the database pays, and the three must never disagree.
+    // 10 since migration 0041 adopted the team's revised figure: it is
+    // what the rules promise and what the database pays, and the three
+    // must never disagree.
     answer:
       "Every creator gets a unique referral link. Share it with other creators and earn 10 points when a creator you refer joins the campaign and their first entry is approved. There is no limit to the number of creators you can refer.",
   },

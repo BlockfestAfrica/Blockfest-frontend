@@ -162,3 +162,17 @@ describe("repricing one entry, on purpose", () => {
     expect(Number(snap.bonus_2_snapshot)).toBe(50);
   });
 });
+
+describe("repricing a finished week (0050)", () => {
+  it("refuses: the record its winners were decided on stays as it ran", async () => {
+    const { entryId } = await creatorWithApprovedEntry();
+    await db.query(
+      `UPDATE challenges SET starts_at = now() - interval '20 days',
+                             ends_at = now() - interval '13 days'
+        WHERE id = (SELECT challenge_id FROM challenge_entries WHERE id = '${entryId}')`,
+    );
+    await expect(
+      db.query(`SELECT * FROM reprice_entry('${entryId}', '${adminId}', 'late fix')`),
+    ).rejects.toThrow(/challenge_readonly/);
+  });
+});
