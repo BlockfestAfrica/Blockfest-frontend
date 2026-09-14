@@ -57,7 +57,7 @@ repeat-use animates longer than 200ms.
 
 ## Components (use what exists)
 
-panel.tsx owns: Panel, HeadedPanel, Pill, Stat, JobCard (spine + rail +
+panel.tsx owns: Panel, Pill, Stat, JobCard (spine + rail +
 foot), SectionCard (contained section), PageHeader, Field, Segmented,
 `control`/`selectControl` (inset), `buttonClass(intent)` with primary gold /
 secondary line-2 / quiet / danger. Confirm (two-step, cancel-first) in
@@ -72,6 +72,18 @@ caught real regressions from this very pass.
 
 
 ## Rulings from the first post-system design review (this file is why)
+
+### No filled gold header strips
+
+HeadedPanel (gold-filled header bar plus gold-tinted body) is deleted. The
+user rejected gold framing three separate times; the third was the week
+panel on /me. Focal weight comes from position (first object after the
+identity line) and from gold on the status text itself (eyebrow, clock,
+submit button), never from a filled or tinted container. If a block needs a
+persistent header row, it is a hairline: `border-b border-line` inside a
+plain `border-line-2 bg-card` card.
+
+
 
 - One focus voice, site-wide: the global blue ring owns :focus-visible.
   focus:border-brand-gold beside it was the double announcement the craft

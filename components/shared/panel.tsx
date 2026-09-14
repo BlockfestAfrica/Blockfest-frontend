@@ -59,42 +59,6 @@ export function Panel({
 }
 
 /**
- * A card with a filled header strip.
- *
- * For the one block on a page that is the reason for the visit. An edge and a
- * tint can separate an object from its background; they cannot say "start
- * here". A filled bar can, and it gives the persistent facts, the week and the
- * time left, somewhere to live that stays put while the body below changes
- * between open, submitted, paused and closed.
- *
- * Deliberately not a new tone on Panel. A tone is a treatment applied to one
- * box; this is two boxes with different rules about what goes in each, and
- * flattening that into a string would mean every caller re-deciding where the
- * divide falls.
- */
-export function HeadedPanel({
-  head,
-  className = "",
-  children,
-}: {
-  /** Sits in the filled strip. Dark text: the strip is gold. */
-  head: ReactNode;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <section
-      className={`overflow-hidden rounded-xl border border-brand-gold/30 ${className}`.trim()}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 bg-brand-gold px-5 py-3 text-black sm:px-6">
-        {head}
-      </div>
-      <div className="bg-brand-gold/[0.06] p-5 sm:p-6">{children}</div>
-    </section>
-  );
-}
-
-/**
  * A heading with its label above it.
  *
  * The eyebrow carries the category so the heading itself can be short. Two
