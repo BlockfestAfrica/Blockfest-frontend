@@ -35,6 +35,13 @@ export interface Campaign {
   name: string;
   /** The line that does the selling, e.g. "Are you skillful?". */
   hook: string;
+  /**
+   * A photograph for the campaign card, under a legibility gradient. The
+   * marketing team asked for pictures to give the cards life; until a real
+   * photo lands at this path the card stands on its gradient treatment, so
+   * an absent file must never be referenced here.
+   */
+  cardImage?: string;
   sponsor: string;
   /** Sponsor logo, reusing the partner asset already in the repo. */
   sponsorLogo?: string;
