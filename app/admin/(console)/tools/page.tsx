@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/session";
 import { ReissueLink } from "@/components/admin/reissue-link";
+import { RepriceEntry } from "@/components/admin/reprice-entry";
+import { isOwner } from "@/lib/admin/session";
 import { SectionHeading } from "@/components/shared/panel";
 
 export const metadata: Metadata = {
@@ -36,6 +38,13 @@ export default async function ToolsPage() {
         hint="For somebody who has lost the personal link they were given when they registered. Issuing a new one stops the old one working, and emails the new one to the address they registered with."
       />
       <ReissueLink />
+
+      {/* Owner-only: repricing moves money. Reviewers do not see it at all. */}
+      {isOwner(admin.admin) && (
+        <div className="mt-8">
+          <RepriceEntry />
+        </div>
+      )}
     </>
   );
 }
