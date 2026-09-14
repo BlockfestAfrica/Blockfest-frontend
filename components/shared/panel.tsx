@@ -224,6 +224,50 @@ const GAP = {
 
 export const SPACING = GAP;
 
+/**
+ * A contained section: one functional unit, visibly one thing.
+ *
+ * The dashboard complaint was "disconnected looking table and data on the
+ * screen", and its cause was sections separated by nothing but vertical
+ * margin, so every h2 floated on the ground with its content loose beneath
+ * it. This is the one containment treatment both signed-in surfaces use: a
+ * hairline and a fill two values off the ground, which is the same language
+ * the form controls already speak, and not the recessed tone-on-tone panel
+ * that was rejected for landing invisible.
+ */
+export function SectionCard({
+  id,
+  title,
+  aside,
+  children,
+  className = "",
+}: {
+  id: string;
+  title?: ReactNode;
+  /** A small right-aligned affordance beside the title, usually a link. */
+  aside?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      id={id}
+      aria-labelledby={title ? `${id}-title` : undefined}
+      className={`rounded-xl border border-white/12 bg-white/[0.02] p-5 sm:p-6 ${className}`}
+    >
+      {title && (
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id={`${id}-title`} className="text-xl font-bold text-white">
+            {title}
+          </h2>
+          {aside}
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
+
 type JobState = "todo" | "now" | "done";
 
 /**
