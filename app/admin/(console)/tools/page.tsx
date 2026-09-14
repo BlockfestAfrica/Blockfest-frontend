@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/session";
 import { ReissueLink } from "@/components/admin/reissue-link";
+import { isOwner } from "@/lib/admin/session";
+import { listResources } from "@/lib/admin/resources";
+import { ResourcesEditor } from "@/components/admin/resources-editor";
+import { LinkCheck } from "@/components/admin/link-check";
 import { SectionHeading } from "@/components/shared/panel";
 
 export const metadata: Metadata = {
@@ -36,6 +40,18 @@ export default async function ToolsPage() {
         hint="For somebody who has lost the personal link they were given when they registered. Issuing a new one stops the old one working, and emails the new one to the address they registered with."
       />
       <ReissueLink />
+
+      <div className="mt-8">
+        <LinkCheck />
+      </div>
+
+      {/* Owner-only: these render on the public pack page under the
+          campaign's name. */}
+      {isOwner(admin.admin) && (
+        <div className="mt-8">
+          <ResourcesEditor rows={await listResources(admin.admin)} />
+        </div>
+      )}
     </>
   );
 }
