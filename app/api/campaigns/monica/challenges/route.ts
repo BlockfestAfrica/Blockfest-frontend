@@ -10,10 +10,17 @@ export const runtime = "nodejs";
  *
  * Public and unauthenticated on purpose, like the resources route: a week
  * that is open or closed is a fact the whole landing page already implies.
- * The WHERE is the privacy boundary: drafts never leave the database, so a
- * challenge the team has written for a future week is invisible here until
- * the Monday it is flipped active. Only the week number, the status and the
- * title travel; the description stays on the creator's own page.
+ *
+ * Two boundaries, both enforced here because the seeds rest every week at
+ * 'active' with a future window and submit_entry gates on the window, not
+ * the status. Status alone told this endpoint that all five weeks were
+ * open on day one, and the landing page revealed the whole schedule.
+ *
+ * So: drafts never leave the database, and neither does a week whose
+ * window has not started, whatever its status row says. A week past its
+ * end reports closed even before the console records it. Only the week
+ * number, the derived status and the title travel; the description stays
+ * on the creator's own page.
  */
 export async function GET() {
   try {
@@ -22,14 +29,28 @@ export async function GET() {
         weekNo: challenges.weekNo,
         status: challenges.status,
         title: challenges.title,
+        startsAt: challenges.startsAt,
+        endsAt: challenges.endsAt,
       })
       .from(challenges)
       .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
       .where(and(eq(campaigns.slug, MONICA_SLUG), ne(challenges.status, "draft")))
       .orderBy(asc(challenges.weekNo));
 
+    const now = Date.now();
+    const started = rows
+      .filter((row) => row.startsAt.getTime() <= now)
+      .map((row) => ({
+        weekNo: row.weekNo,
+        status:
+          row.status === "closed" || row.endsAt.getTime() < now
+            ? "closed"
+            : "active",
+        title: row.title,
+      }));
+
     return NextResponse.json(
-      { ok: true, challenges: rows },
+      { ok: true, challenges: started },
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
     );
   } catch {
