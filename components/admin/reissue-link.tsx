@@ -98,8 +98,9 @@ export function ReissueLink() {
               : " The email did not go, so this copy is the only one. Pass it on now."}
           </p>
           <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-3">
-            Send it to them yourself. It is not emailed, and it cannot be shown
-            again.
+            {issued.emailed
+              ? "Prefer the email they already have; only hand this copy over if that mail cannot reach them, and only to the creator directly."
+              : "Send it to them yourself, directly. It cannot be shown again."}
           </p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
             <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-line-2 bg-ground px-4 py-3 text-sm text-white">

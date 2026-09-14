@@ -100,3 +100,19 @@ export async function discardPending() {
   jar.delete({ name: CREATOR_PENDING_COOKIE, path: pendingCookieOptions().path });
   redirect(monicaRoutes.landing);
 }
+
+/**
+ * End the session on this device.
+ *
+ * The gap this closes: the confirm page treats two creators sharing a phone
+ * as the ordinary case, yet once a session existed nothing could end it short
+ * of clearing site data by hand, for ninety sliding days. The emailed link
+ * signs the owner straight back in, so leaving costs one tap to return; the
+ * clearing Set-Cookie carries the session cookie's own path or it would be
+ * a no-op, same rule as the pending delete above.
+ */
+export async function signOut() {
+  const jar = await cookies();
+  jar.delete({ name: CREATOR_SESSION_COOKIE, path: sessionCookieOptions().path });
+  redirect(monicaRoutes.landing);
+}

@@ -21,6 +21,7 @@ import {
   hashAccessToken,
   looksLikeAccessToken,
 } from "@/lib/creator-access";
+import { logWarning } from "@/lib/log";
 
 /**
  * Cookie options, in one place.
@@ -435,9 +436,9 @@ export async function creatorPageData(
     try {
       return { value: await load(), failed: false };
     } catch (error) {
-      console.warn(
-        `[creator-page] ${what} unavailable:`,
-        error instanceof Error ? error.message : String(error),
+      logWarning(
+        "creator-page",
+        `${what} unavailable: ${error instanceof Error ? error.message : String(error)}`,
       );
       return { value: fallback, failed: true };
     }

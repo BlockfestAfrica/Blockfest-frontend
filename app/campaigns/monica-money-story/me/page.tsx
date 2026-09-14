@@ -27,6 +27,8 @@ import {
   monicaPointLadder,
 } from "@/lib/campaigns";
 import { CONTACT_EMAIL } from "@/lib/constants";
+import { logWarning } from "@/lib/log";
+import { signOut } from "@/app/campaigns/monica-money-story/enter/confirm/actions";
 
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://blockfestafrica.com";
@@ -115,9 +117,9 @@ export default async function MonicaCreatorPage() {
     creator = await currentCreator();
   } catch (error) {
     sessionUnavailable = true;
-    console.warn(
-      "[creator-page] session could not be read:",
-      error instanceof Error ? error.message : String(error),
+    logWarning(
+      "creator-page",
+      `session could not be read: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 
@@ -662,6 +664,23 @@ export default async function MonicaCreatorPage() {
               </p>
             </Panel>
           </details>
+
+          {/* On a borrowed phone, leaving must be possible: the session
+              otherwise runs ninety sliding days with nothing to end it.
+              Quiet, because for the owner on their own phone it is the one
+              control here they should never need. */}
+          <form action={signOut} className="mt-6">
+            <button
+              type="submit"
+              className="inline-flex min-h-11 cursor-pointer items-center text-sm text-ink-3 underline underline-offset-4 transition-colors hover:text-white"
+            >
+              Sign out on this device
+            </button>
+            <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-4">
+              The link in your email signs you back in. Use this if you are on
+              somebody else&apos;s phone.
+            </p>
+          </form>
         </div>
       </section>
     </main>

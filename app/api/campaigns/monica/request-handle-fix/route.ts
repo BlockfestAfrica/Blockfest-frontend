@@ -3,6 +3,7 @@ import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { currentCreator } from "@/lib/creator-session";
+import { sameOrigin } from "@/lib/admin/request";
 import { isPgError } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
 import { allowKey } from "@/lib/throttle";
@@ -52,7 +53,24 @@ const KNOWN: Array<[code: string, raise: string, message: string]> = [
   ["P0502", "reason_required", "Say what went wrong, so whoever reviews this can check it."],
 ];
 
+/** A platform, a handle, and a short reason. Anything larger is not a request. */
+const MAX_BODY_BYTES = 8 * 1024;
+
 export async function POST(request: NextRequest) {
+  /*
+   * Same-origin, checked before the cookie is even consulted. SameSite=Lax
+   * keeps the session cookie off cross-site POSTs in every current browser,
+   * but a mutation that files a review request should not rest on one
+   * browser default: the admin routes already carry this guard and it is
+   * calibrated for Netlify's forwarded host.
+   */
+  if (!sameOrigin(request)) {
+    return NextResponse.json(
+      { ok: false, message: "Not allowed." },
+      { status: 403 },
+    );
+  }
+
   const creator = await currentCreator();
   if (!creator) {
     return NextResponse.json(
@@ -74,9 +92,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // The App Router has no body limit for route handlers; cap it like the
+  // public routes do rather than buffering whatever arrives.
+  const declared = Number(request.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY_BYTES) {
+    return NextResponse.json({ ok: false, message: "That request is too large." }, { status: 413 });
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    const raw = await request.text();
+    if (raw.length > MAX_BODY_BYTES) {
+      return NextResponse.json({ ok: false, message: "That request is too large." }, { status: 413 });
+    }
+    body = JSON.parse(raw);
   } catch {
     return NextResponse.json({ ok: false, message: "We could not read that." }, { status: 400 });
   }
