@@ -26,8 +26,10 @@ export interface CandidateRow {
 export interface PickedRow {
   weekNo: number;
   category: "creator_of_week" | "community_favourite";
+  enrolmentId: string;
   name: string;
   prizeNaira: number;
+  note: string | null;
   publishedAt: string | null;
 }
 
@@ -85,6 +87,28 @@ export function WinnersPanel({
   const announcedThisWeek = picked.filter(
     (p) => p.weekNo === weekNo && p.publishedAt,
   ).length;
+
+  /*
+   * The saved draft for the selected category, surfaced.
+   *
+   * Saving a draft used to clear the form and render nothing anywhere: the
+   * row sat in weekly_winners with published_at null and the screen showed no
+   * trace of it, so the owner who saved on Saturday came back on Sunday to a
+   * blank form and concluded the draft was lost. The upsert means one row per
+   * week and category, which is also why the banner warns that saving a
+   * different pick replaces it.
+   */
+  const draft =
+    picked.find(
+      (p) => p.weekNo === weekNo && p.category === category && !p.publishedAt,
+    ) ?? null;
+
+  function loadDraft() {
+    if (!draft) return;
+    setEnrolmentId(draft.enrolmentId);
+    setPrize(String(draft.prizeNaira));
+    setNote(draft.note ?? "");
+  }
 
   async function save(publish: boolean) {
     if (!ready) {
@@ -182,7 +206,12 @@ export function WinnersPanel({
         step="Sunday"
         title={`Announce the week ${weekNo} winners`}
         state={announcedThisWeek >= 2 ? "done" : frozen ? "now" : "todo"}
-        status={<Pill>{announcedThisWeek} of 2 announced</Pill>}
+        status={
+          <>
+            <Pill>{announcedThisWeek} of 2 announced</Pill>
+            {draft && <Pill tone="gold">draft saved</Pill>}
+          </>
+        }
         hint="Chosen by a person, never automatically. A draft is invisible on the public page until you announce it."
         foot={
           <>
@@ -211,6 +240,30 @@ export function WinnersPanel({
         }
       >
         <div className="space-y-4">
+          {draft && (
+            <div className="rounded-lg border border-brand-gold/40 bg-brand-gold/[0.06] p-4">
+              <p className="text-sm font-semibold text-white">
+                Draft saved: {draft.name}, {naira(draft.prizeNaira)}
+              </p>
+              {draft.note && (
+                <p className="mt-1 max-w-prose text-sm leading-relaxed text-white/70">
+                  {draft.note}
+                </p>
+              )}
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+                Not public. Load it below to announce it, or pick somebody
+                else, which replaces this draft when you save.
+              </p>
+              <button
+                type="button"
+                onClick={loadDraft}
+                className="mt-3 inline-flex min-h-11 cursor-pointer items-center rounded-full border border-white/20 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              >
+                Load the draft into the form
+              </button>
+            </div>
+          )}
+
           <Segmented<Category>
             legend="Which prize"
             value={category}
