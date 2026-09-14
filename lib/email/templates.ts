@@ -646,3 +646,60 @@ export function winnerEmail(params: {
     }),
   };
 }
+
+/**
+ * The voting code.
+ *
+ * Sent to anyone who casts a Community Favourite vote, which means the
+ * recipient may have typed somebody else's address, so the last line says
+ * plainly that ignoring the mail leaves nothing counted. The code leads and
+ * is set large: this message is read in a notification shade with an input
+ * waiting in the other tab, and everything after the six digits is context.
+ *
+ * Names the nominee it confirms, because the code is bound to the cast: a
+ * voter who changed their mind and cast again holds a mail whose code is
+ * dead, and the name is how they tell the two mails apart.
+ */
+export function voteVerificationEmail(params: {
+  to: string;
+  code: string;
+  nomineeName: string;
+  weekNo: number;
+}): Email {
+  const confirms = `It confirms your Community Favourite vote for ${params.nomineeName}, week ${params.weekNo}.`;
+
+  return {
+    to: params.to,
+    replyTo: CONTACT_EMAIL,
+    subject: `Your voting code: ${params.code}`,
+    text: [
+      `Your code: ${params.code}`,
+      ``,
+      confirms,
+      ``,
+      `Enter it on the winners page within 15 minutes. After that it expires, and you can cast your vote again for a fresh one.`,
+      `One vote per email address each round.`,
+      ``,
+      `If you did not vote in Monica: The Money Story, ignore this email and nothing is counted.`,
+    ].join("\n"),
+    html: layout({
+      preheader: confirms,
+      heading: "Your voting code",
+      body: [
+        `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 16px;">
+           <tr><td align="center" style="padding:18px 16px;background:#f7f8fa;border:1px solid ${LINE};border-radius:10px;">
+             <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:34px;line-height:1.2;font-weight:700;letter-spacing:8px;color:${INK};">${escape(params.code)}</p>
+           </td></tr>
+         </table>`,
+        p(escape(confirms)),
+        p(
+          "Enter it on the winners page within <strong>15 minutes</strong>. After that it expires, and you can cast your vote again for a fresh one.",
+        ),
+        quiet("One vote per email address each round."),
+        quiet(
+          "If you did not vote in Monica: The Money Story, ignore this email and nothing is counted.",
+        ),
+      ].join(""),
+    }),
+  };
+}

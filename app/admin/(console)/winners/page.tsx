@@ -7,8 +7,14 @@ import {
   winnerCandidates,
   winnersSoFar,
 } from "@/lib/admin/winners";
+import {
+  candidateEntries,
+  currentRound,
+  roundTally,
+} from "@/lib/admin/vote-round";
 import { leaderboard } from "@/lib/leaderboard";
 import { WinnersPanel } from "@/components/admin/winners-panel";
+import { VoteRoundPanel } from "@/components/admin/vote-round-panel";
 import { PageHeader, SectionCard, SPACING } from "@/components/shared/panel";
 import { currentWeekNo } from "@/lib/campaigns";
 import { count, dateTime } from "@/lib/format";
@@ -50,13 +56,24 @@ export default async function WinnersPage() {
 
   const weekNo = currentWeekNo();
 
-  const [creators, favourites, picked, snapshots, board] = await Promise.all([
-    winnerCandidates(admin.admin, "creator_of_week"),
-    winnerCandidates(admin.admin, "community_favourite"),
-    winnersSoFar(admin.admin),
-    snapshotsTaken(admin.admin),
-    leaderboard(500),
-  ]);
+  const [creators, favourites, picked, snapshots, board, round, entries] =
+    await Promise.all([
+      winnerCandidates(admin.admin, "creator_of_week"),
+      winnerCandidates(admin.admin, "community_favourite"),
+      winnersSoFar(admin.admin),
+      snapshotsTaken(admin.admin),
+      leaderboard(500),
+      currentRound(admin.admin, weekNo),
+      candidateEntries(admin.admin, weekNo),
+    ]);
+
+  /*
+   * The tally needs the round's id, so it cannot join the Promise.all above,
+   * and a week with no round has no tally to fetch at all.
+   */
+  const tally = round ? await roundTally(admin.admin, round.roundId) : null;
+
+  const frozen = snapshots.some((s) => s.weekNo === weekNo);
 
   /*
    * How many names the no-repeat rule removed.
@@ -100,7 +117,46 @@ export default async function WinnersPage() {
           note: p.note,
           publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
         }))}
-        frozen={snapshots.some((s) => s.weekNo === weekNo)}
+        frozen={frozen}
+      />
+
+      <VoteRoundPanel
+        weekNo={weekNo}
+        frozen={frozen}
+        round={
+          round
+            ? {
+                roundId: round.roundId,
+                status: round.status,
+                opensAt: round.opensAt.toISOString(),
+                closesAt: round.closesAt.toISOString(),
+                reviewedAt: round.reviewedAt
+                  ? round.reviewedAt.toISOString()
+                  : null,
+              }
+            : null
+        }
+        candidates={entries}
+        tally={
+          tally
+            ? {
+                nominees: tally.nominees.map((n) => ({
+                  nomineeId: n.nomineeId,
+                  name: n.name,
+                  votes: n.votes,
+                })),
+                domains: tally.domains,
+                ips: tally.ips,
+                held: tally.held.map((h) => ({
+                  voteId: h.voteId,
+                  email: h.email,
+                  domain: h.domain,
+                  createdAt: h.createdAt.toISOString(),
+                })),
+                unverified: tally.unverified,
+              }
+            : null
+        }
       />
 
       {/*

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, Trophy } from "lucide-react";
 import { currentShortlist, publishedWinners } from "@/lib/winners";
 import { Panel, Pill, SectionHeading } from "@/components/shared/panel";
+import { VotePanel } from "@/components/campaigns/vote-panel";
 import {
   campaignBySlug,
   monicaRoutes,
@@ -42,6 +43,18 @@ export default async function WinnersPage() {
   ]);
 
   const weeks = [...new Set(winners.map((w) => w.weekNo))].sort((a, b) => b - a);
+
+  /*
+   * Whether the shortlist's round is still taking votes. All entries share
+   * one round, so the first row answers for all of them. Presentation only:
+   * the engine re-checks the window on every cast, so the worst this page's
+   * sixty second cache can do is show a Vote button that answers honestly
+   * that voting has closed.
+   */
+  const votingOpen =
+    shortlist.length > 0 &&
+    shortlist[0].closesAt !== "" &&
+    new Date(shortlist[0].closesAt).getTime() > Date.now();
 
   return (
     <main id="main" className="bg-ground">
@@ -141,12 +154,19 @@ export default async function WinnersPage() {
            * themselves. Same grouping rule the leaderboard uses.
            */}
           {shortlist.length > 0 && (
-            <div className="mt-16">
+            <div id="shortlist" className="mt-16">
               <SectionHeading
-                label="Open now"
+                // The eyebrow must not say "Open now" above a line that says
+                // voting has closed; the label follows the round's state.
+                label={votingOpen ? "Open now" : "This week"}
                 title="Community Favourite shortlist"
-                hint="Voting runs as a poll on Monica's own channels, not here, so the vote reaches the audience it is meant to. The creator with the most valid votes wins."
+                hint="Vote for your favourite below. One vote per email address, verified by a six digit code. The creator with the most valid votes wins."
               />
+              {!votingOpen && (
+                <p className="mt-4 text-sm text-ink-3">
+                  Voting for week {shortlist[0].weekNo} has closed.
+                </p>
+              )}
               <ul className="mt-6 grid gap-4 sm:grid-cols-2">
                 {shortlist.map((entry, index) => (
                   <li
@@ -179,6 +199,13 @@ export default async function WinnersPage() {
                         </li>
                       ))}
                     </ul>
+                    {votingOpen && (
+                      <VotePanel
+                        roundId={entry.roundId}
+                        nomineeId={entry.nomineeId}
+                        nomineeName={entry.name}
+                      />
+                    )}
                   </li>
                 ))}
               </ul>
