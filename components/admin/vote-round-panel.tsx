@@ -495,7 +495,7 @@ export function VoteRoundPanel({
                         onChange={() => toggle(c.entryId)}
                         className="h-4 w-4 shrink-0 cursor-pointer accent-brand-gold"
                       />
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">
+                      <span className="w-full min-w-0 flex-1 truncate text-sm font-semibold text-white">
                         {c.name}
                       </span>
                       <span className="shrink-0 text-sm tabular-nums text-ink-3">
