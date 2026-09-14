@@ -513,13 +513,12 @@ export function RegistrationForm({
             replay is a secret that can be taken from us. The cost is that
             losing the link means asking for a new one, so the warning has to
             be unmissable rather than tucked under the fold. */}
-        {/* The house warn voice, because on this screen the gold CTA below
-            would otherwise be the strongest element, and the thing that
-            cannot be recovered has to outrank the thing that can be clicked
-            any time. */}
+        {/* A hairline card, not the amber warn bar: the owner ruled coloured
+            containers out and the screen reads calmer for it. The warning
+            weight lives in the headline type instead. */}
         {done.accessToken && (
-          <div className="mt-6 rounded-xl border-l-4 border-amber-400 bg-amber-400/[0.12] p-4 pl-5 sm:p-5 sm:pl-5">
-            <p className="text-sm font-semibold text-white">
+          <div className="mt-6 rounded-xl border border-line-2 bg-card p-4 sm:p-5">
+            <p className="text-base font-bold text-white">
               Save this link. It is shown once.
             </p>
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
@@ -600,13 +599,18 @@ export function RegistrationForm({
           </p>
         )}
 
-        <Link
-          href={`${monicaRoutes.landing}#stages`}
+        {/* Their own page, not the landing anchor. The stages list is
+            read-only and registering ends with nothing to click there; the
+            personal page holds the challenge, the submit box and their
+            status, and landing on it once more makes it a bookmark. The
+            anchor fallback only serves the rare state with no token. */}
+        <a
+          href={done.accessToken ? accessLink : `${monicaRoutes.landing}#stages`}
           className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover"
         >
-          See the first challenge
+          Open your page, the challenge is there
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
+        </a>
       </div>
     );
   }

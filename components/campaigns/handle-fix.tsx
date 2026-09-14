@@ -85,10 +85,10 @@ export function HandleFix({
               <span className="font-semibold text-white">
                 {platformLabels[h.platform] ?? h.platform}
               </span>
-              <span className="font-mono text-ink-2">@{h.handle}</span>
+              <span className="font-mono text-ink-2 [overflow-wrap:anywhere]">@{h.handle}</span>
 
               {pending ? (
-                <span className="text-sm text-amber-300">
+                <span className="text-sm text-amber-300 [overflow-wrap:anywhere]">
                   Change to @{request.requestedHandle} requested, waiting for
                   review
                 </span>
@@ -118,8 +118,9 @@ export function HandleFix({
               <div className="mt-3 flex flex-col gap-2">
                 <p className="max-w-prose text-sm leading-relaxed text-ink-2">
                   Nothing changes until the campaign team reads this and
-                  approves it. Entries you submit keep being checked against
-                  @{h.handle} in the meantime.
+                  approves it. Entries you submit keep being checked against{" "}
+                  <span className="[overflow-wrap:anywhere]">@{h.handle}</span>{" "}
+                  in the meantime.
                 </p>
                 <label htmlFor={`fix-${h.platform}`} className="sr-only">
                   The correct username

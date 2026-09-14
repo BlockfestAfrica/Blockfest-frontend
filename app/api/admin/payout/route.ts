@@ -28,8 +28,10 @@ export async function GET(request: NextRequest) {
 
   const admin = await requireAdmin();
   if (!admin.ok || !isOwner(admin.admin)) {
+    // Distinct from the cross-site refusal above: both used to say
+    // "Not allowed.", which made a screenshot of a failure undiagnosable.
     return NextResponse.json(
-      { ok: false, message: "Not allowed." },
+      { ok: false, message: "Sign in to the console as an owner to download this." },
       { status: 403 },
     );
   }
