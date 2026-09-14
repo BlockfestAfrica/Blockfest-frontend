@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
   Pill,
+  selectControl,
   SectionHeading,
   Segmented,
 } from "@/components/shared/panel";
@@ -567,7 +568,7 @@ function AwardRow({
           id="award-source"
           value={source}
           onChange={(e) => setSource(e.target.value)}
-          className="min-h-12 cursor-pointer rounded-lg border border-line bg-ground px-4 text-base text-white lg:w-56"
+          className={`${selectControl} lg:max-w-56`}
         >
           {AWARD_SOURCES.map((s) => (
             <option key={s.key} value={s.key}>

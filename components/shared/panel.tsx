@@ -428,7 +428,7 @@ export const control =
  */
 // One fill for every control, options included: the inset token reads as
 // "type or choose here" and the dropdown no longer jumps to a second surface.
-export const selectControl = `${control} cursor-pointer [&>option]:bg-control [&>option]:text-white`;
+export const selectControl = `${control} select-chevron cursor-pointer appearance-none truncate pr-11 [&>option]:bg-control [&>option]:text-white`;
 
 type Intent =
   | "primary"

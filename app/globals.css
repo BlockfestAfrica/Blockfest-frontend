@@ -331,6 +331,17 @@ html {
 }
 
 /* Letterspaced uppercase label used above section headings. */
+/* The one dropdown arrow. Selects remove the native appearance, because
+   iOS and Android paint their own chrome under the dark border: bevels, a
+   misplaced arrow, off-centre text. With appearance gone this supplies the
+   affordance on every platform. */
+.select-chevron {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 1rem;
+}
+
 .eyebrow {
   font-size: 0.75rem;
   font-weight: 600;
