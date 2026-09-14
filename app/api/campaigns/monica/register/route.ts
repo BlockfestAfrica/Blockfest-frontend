@@ -9,6 +9,7 @@ import {
   looksAutomated,
   REFERRAL_COOKIE,
   registrationSchema,
+  resolveReferralCode,
 } from "@/lib/campaign-registration";
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
@@ -269,26 +270,27 @@ export async function POST(request: NextRequest) {
   }
 
   /*
-   * The referral code, from the cookie /join set or from the form.
+   * The referral code, from the visible field first and the cookie /join set
+   * as the fallback.
    *
-   * The cookie was the only path, which assumed every referral arrives as a
-   * click. Creators are sent their code by email and share it as a bare string
-   * in a WhatsApp message, and somebody who types that code had no way to be
-   * credited to whoever gave it to them.
-   *
-   * The cookie wins when both are present. It records an actual click on an
-   * actual link, which is the stronger evidence, and preferring the typed value
-   * would let a cookie set moments earlier be overridden by a stale code
-   * autofilled by a browser.
+   * The order flipped when the field did. While the field was hidden for
+   * anyone who arrived through /join, the cookie was the stronger evidence
+   * and it won. The field is now always on the page and prefilled with
+   * whatever code the server already knows, so what the creator sees and can
+   * edit has to be what is used: a hidden cookie silently overriding a
+   * visible, edited value would be the interface lying. The cookie remains
+   * the fallback for a /join arrival whose box ends up empty, so a recorded
+   * click is never lost to a cleared field. resolveReferralCode carries the
+   * full reasoning, and the tests that hold the order.
    *
    * Either way it is passed straight through to the database function, which
    * resolves it, ignores one that belongs to nobody, and ignores one that
    * belongs to the person registering.
    */
-  const ref =
-    request.cookies.get(REFERRAL_COOKIE)?.value?.trim() ||
-    parsed.data.ref?.trim() ||
-    "";
+  const ref = resolveReferralCode({
+    typed: parsed.data.ref,
+    cookie: request.cookies.get(REFERRAL_COOKIE)?.value,
+  });
 
   // Minted here and returned once. Only its hash is stored, so this value
   // cannot be recovered later by us or by anybody who reads the database.

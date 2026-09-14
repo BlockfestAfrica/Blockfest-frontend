@@ -431,15 +431,23 @@ describe("the marketing opt-in", () => {
 });
 
 /**
- * The referral code, typed rather than clicked.
+ * The referral code, always on the page.
  *
  * /join sets a cookie, which covers somebody who follows a link. It did not
  * cover the creator who was sent a bare code in a WhatsApp message, which is
  * how codes actually travel: each creator is emailed their own code, and a code
- * forwards far more easily than a URL.
+ * forwards far more easily than a URL. So the box exists for everyone,
+ * prefilled when a link carried the code in, and what is in the box is what
+ * the server uses.
  */
-describe("entering a referral code by hand", () => {
-  it("sends it as ref, upper-cased as the creator types", async () => {
+describe("the referral code field", () => {
+  it("is on the page for a direct visitor, empty", () => {
+    render(<RegistrationForm opensAt={OPENS_AT} />);
+    const box = screen.getByLabelText("Referral code") as HTMLInputElement;
+    expect(box.value).toBe("");
+  });
+
+  it("sends what is typed as ref, upper-cased as the creator types", async () => {
     render(<RegistrationForm opensAt={OPENS_AT} />);
     fill();
     fireEvent.change(screen.getByLabelText("Referral code"), {
@@ -463,10 +471,67 @@ describe("entering a referral code by hand", () => {
     expect(sent!.ref).toBeUndefined();
   });
 
-  it("is not shown to somebody who arrived through a referral link", () => {
-    // Their cookie already carries it, and an empty box beside it invites the
-    // question of whether they need to type something too.
-    render(<RegistrationForm opensAt={OPENS_AT} arrivedViaReferral />);
-    expect(screen.queryByLabelText("Referral code")).toBeNull();
+  it("is shown prefilled to somebody who arrived through a referral link", () => {
+    /*
+     * This test's predecessor asserted the exact opposite: the field was
+     * hidden when a referral cookie existed, because the cookie already
+     * carried the code. Hidden, it was also the one place a wrong or stale
+     * code could never be seen or corrected, and the cookie silently outranked
+     * anything the creator might have typed. The field now renders for
+     * everyone, carries the code the server already knows, and stays
+     * editable.
+     */
+    render(
+      <RegistrationForm
+        opensAt={OPENS_AT}
+        arrivedViaReferral
+        initialRef="RQ4963ZV"
+      />,
+    );
+    const box = screen.getByLabelText("Referral code") as HTMLInputElement;
+    expect(box.value).toBe("RQ4963ZV");
+    // And the hint says where the code came from, so nobody wonders whether
+    // they were supposed to type something else.
+    expect(
+      screen.getByText(/came with the link that brought you here/i),
+    ).toBeTruthy();
+  });
+
+  it("sends the prefilled code untouched when the creator leaves it alone", async () => {
+    render(<RegistrationForm opensAt={OPENS_AT} initialRef="RQ4963ZV" />);
+    fill();
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent!.ref).toBe("RQ4963ZV");
+  });
+
+  it("sends the edited value when the creator corrects a prefilled code", async () => {
+    // The point of showing the code at all. A prefill that could not be
+    // corrected would just be the cookie wearing an input's clothes.
+    render(<RegistrationForm opensAt={OPENS_AT} initialRef="RQ4963ZV" />);
+    fill();
+    fireEvent.change(screen.getByLabelText("Referral code"), {
+      target: { value: "AB23CD45" },
+    });
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent!.ref).toBe("AB23CD45");
+  });
+
+  it("omits ref when the creator clears a prefilled code", async () => {
+    // Clearing the box is a decision, and the payload respects it. The server
+    // may still fall back to the /join cookie, which is its call to make, but
+    // the form does not resend a value somebody deliberately removed.
+    render(<RegistrationForm opensAt={OPENS_AT} initialRef="RQ4963ZV" />);
+    fill();
+    fireEvent.change(screen.getByLabelText("Referral code"), {
+      target: { value: "" },
+    });
+    fireEvent.submit(screen.getByRole("button", { name: /register/i }));
+
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent!.ref).toBeUndefined();
   });
 });
