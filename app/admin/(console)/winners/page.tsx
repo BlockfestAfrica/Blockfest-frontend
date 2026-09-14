@@ -93,8 +93,10 @@ export default async function WinnersPage() {
         picked={picked.map((p) => ({
           weekNo: p.weekNo,
           category: p.category,
+          enrolmentId: p.enrolmentId,
           name: p.name,
           prizeNaira: p.prizeNaira,
+          note: p.note,
           publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
         }))}
         frozen={snapshots.some((s) => s.weekNo === weekNo)}
