@@ -69,10 +69,42 @@ describe("a saved draft", () => {
     renderWithDraft();
     fireEvent.click(screen.getByRole("button", { name: /load the draft/i }));
 
-    const select = screen.getByLabelText("Creator") as HTMLSelectElement;
-    expect(select.value).toBe(CANDIDATE.enrolmentId);
+    // The picker is a combobox now; the loaded draft reads back as the
+    // chosen creator's row, not a raw id.
+    const picker = screen.getByLabelText("Creator") as HTMLInputElement;
+    expect(picker.value).toContain("Amara Obi");
     const prize = screen.getByLabelText("Prize") as HTMLInputElement;
     expect(prize.value).toBe("300000");
+  });
+
+  it("a draft naming a creator the list no longer contains cannot be saved blind", () => {
+    render(
+      <WinnersPanel
+        weekNo={1}
+        creatorCandidates={[CANDIDATE]}
+        favouriteCandidates={[CANDIDATE]}
+        excludedCount={0}
+        vote={null}
+        frozen
+        picked={[
+          {
+            weekNo: 1,
+            category: "creator_of_week",
+            enrolmentId: "99999999-9999-9999-9999-999999999999",
+            name: "Gone Creator",
+            prizeNaira: 300_000,
+            note: null,
+            publishedAt: null,
+          },
+        ]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /load the draft/i }));
+
+    // The picker cannot name the id, so the form must not be armed: an
+    // invisible id travelling to the API is how the wrong person wins.
+    const save = screen.getByRole("button", { name: /save as draft/i });
+    expect((save as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("does not haunt the screen once published", () => {
