@@ -3,6 +3,11 @@ import Link from "next/link";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { pauseState } from "@/lib/campaign-pause";
 import { PauseSwitch } from "@/components/admin/pause-switch";
+import { listChallenges } from "@/lib/admin/challenges";
+import { ChallengeEditor } from "@/components/admin/challenge-editor";
+import { listPointRules } from "@/lib/admin/point-rules";
+import { PointRulesEditor } from "@/components/admin/point-rules-editor";
+import { currentWeekNo } from "@/lib/campaigns";
 
 export const metadata: Metadata = {
   title: "Campaign",
@@ -37,7 +42,12 @@ export default async function CampaignPage() {
     );
   }
 
-  const pause = await pauseState();
+  const [pause, challenges, rules] = await Promise.all([
+    pauseState(),
+    listChallenges(admin.admin),
+    listPointRules(admin.admin),
+  ]);
+  const thisWeek = challenges.find((c) => c.weekNo === currentWeekNo());
   const beforeLaunch =
     pause.startsAt !== null && pause.startsAt > new Date();
 
@@ -58,6 +68,29 @@ export default async function CampaignPage() {
           everything below it under whatever finger just tapped. */}
       <div className="mt-8 min-h-[14rem]">
         <PauseSwitch paused={pause.paused} />
+      </div>
+
+      {/* The weekly briefs, right where starting and stopping already lives,
+          because writing Monday's brief is the other thing an owner does here
+          every week (#67). */}
+      <div className="mt-12">
+        <ChallengeEditor
+          challenges={challenges.map((challenge) => ({
+            id: challenge.id,
+            weekNo: challenge.weekNo,
+            title: challenge.title,
+            description: challenge.description,
+            basePoints: challenge.basePoints,
+            status: challenge.status,
+            startsAt: challenge.startsAt.toISOString(),
+            endsAt: challenge.endsAt.toISOString(),
+            readonly_: challenge.endsAt < new Date(),
+          }))}
+        />
+      </div>
+
+      <div className="mt-6">
+        <PointRulesEditor rules={rules} weekBase={thisWeek?.basePoints ?? 100} />
       </div>
 
       {/*
