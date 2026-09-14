@@ -147,7 +147,11 @@ export default async function AdminLayout({
      * pills. One-handed reviewing on launch weekend is the constraint there.
      */
     <main id="main" className="min-h-dvh bg-ground lg:grid lg:grid-cols-[230px_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line py-6 pl-4 pr-2 lg:flex">
+      {/* The border lives on the grid track, not the sticky aside: the
+          aside is one viewport tall, the track is as tall as the page, and
+          a border on the aside stopped mid-page on anything long. */}
+      <div className="hidden border-r border-line lg:block">
+        <aside className="sticky top-0 flex h-dvh flex-col py-6 pl-4 pr-2">
         <div className="px-4">
           <p className="eyebrow text-brand-gold">Blockfest</p>
           <p className="mt-1 text-lg font-bold text-white">Console</p>
@@ -172,7 +176,8 @@ export default async function AdminLayout({
             <SignOut />
           </div>
         </div>
-      </aside>
+        </aside>
+      </div>
 
       <div className="min-w-0">
         {/* z-40 sits under the skip link at z-100 and over the desktop table's

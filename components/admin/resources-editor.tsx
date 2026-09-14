@@ -103,7 +103,7 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
       id="resources"
       title="Pack resources"
       state={rows.some((r) => r.isPublished) ? "todo" : "now"}
-      hint="Links and notes on the public pack page, live within a minute of saving, no deploy. Plain text only: anything that looks like HTML renders as the characters themselves, on purpose. Links must be https."
+      hint="Links and notes under Resources on the campaign landing page, live within a minute of saving, no deploy. Plain text only: anything that looks like HTML renders as the characters themselves, on purpose. Links must be https."
     >
       <ul className="flex flex-col gap-2">
         {rows.map((row) => (
@@ -163,7 +163,10 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
               onChange={(e) => setForm({ ...form, body: e.target.value })}
               className={`${control} min-h-20 resize-y`} />
           </Field>
-          <div className="flex flex-wrap items-center gap-4">
+          {/* items-end, not center: the Order field is a label over an input
+              and the checkbox is one line, so centring floated the checkbox
+              against the taller field. Both now sit on the input row. */}
+          <div className="flex flex-wrap items-end gap-4">
             <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-semibold text-white">
               <input type="checkbox" checked={form.isPublished}
                 onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}

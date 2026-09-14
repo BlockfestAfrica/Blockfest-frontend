@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
@@ -140,20 +141,26 @@ export default async function WinnersPage() {
             {/* A definition list, because every row is week then facts about
                 that week. It was four spans in a flex row, which on a phone
                 wrapped into a shape with no grammar. */}
+            {/* Each row opens the frozen table it names: the freeze is the
+                payout record, and a record nobody can open is a rumour. */}
             <dl className="mt-3 divide-y divide-line border-y border-line">
               {snapshots.map((s) => (
-                <div
-                  key={`${s.weekNo}-${s.version}`}
-                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
-                >
-                  <dt className="font-semibold text-white">Week {s.weekNo}</dt>
-                  <dd className="text-sm text-ink-3">
-                    {count(s.rows)} creators
-                    {s.version > 1 && ` · version ${s.version}`}
-                    <span className="ml-2 text-ink-4">
-                      {dateTime(s.takenAt)}
-                    </span>
-                  </dd>
+                <div key={`${s.weekNo}-${s.version}`}>
+                  <Link
+                    href={`/admin/winners/snapshots?week=${s.weekNo}&version=${s.version}`}
+                    className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 transition-colors hover:bg-card-2"
+                  >
+                    <dt className="font-semibold text-link underline underline-offset-4">
+                      Week {s.weekNo}
+                    </dt>
+                    <dd className="text-sm text-ink-3">
+                      {count(s.rows)} creators
+                      {s.version > 1 && ` · version ${s.version}`}
+                      <span className="ml-2 text-ink-4">
+                        {dateTime(s.takenAt)}
+                      </span>
+                    </dd>
+                  </Link>
                 </div>
               ))}
             </dl>
