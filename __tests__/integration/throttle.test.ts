@@ -62,11 +62,31 @@ describe("taking tokens", () => {
   });
 
   it("resets when the window turns over", async () => {
-    // A one second window, then wait for it to pass.
-    for (let i = 0; i < 3; i += 1) await take("w:1.2.3.4", 3, 1);
-    expect(await take("w:1.2.3.4", 3, 1)).toBe(false);
-    await new Promise((resolve) => setTimeout(resolve, 1100));
-    expect(await take("w:1.2.3.4", 3, 1), "a new window, a new budget").toBe(true);
+    /*
+     * Deterministic, after blocking a production deploy as a flake.
+     *
+     * The first version used a one second epoch-aligned window and slept
+     * across it. On Netlify's loaded builder the wall clock crossed a second
+     * boundary BETWEEN the three takes and the fourth, so the fourth landed
+     * in a fresh window and was legitimately allowed, and the deploy gate
+     * went red at 1:39am on launch night. A test that depends on where the
+     * epoch boundary falls relative to its own scheduling is a coin toss
+     * wired to the deploy button.
+     *
+     * So: fill a one hour window, which no scheduler can straddle, then move
+     * the stored window into the past by hand. The next take computes the
+     * current window, finds no row for it, and starts a fresh budget, which
+     * is exactly what the passage of real time would have done.
+     */
+    for (let i = 0; i < 3; i += 1) await take("w:1.2.3.4", 3, 3600);
+    expect(await take("w:1.2.3.4", 3, 3600), "the budget is spent").toBe(false);
+
+    await db.query(
+      `UPDATE request_throttle SET window_start = window_start - interval '2 hours'
+        WHERE bucket = 'w:1.2.3.4'`,
+    );
+
+    expect(await take("w:1.2.3.4", 3, 3600), "a new window, a new budget").toBe(true);
   });
 
   it("does not throttle an empty bucket", async () => {
