@@ -92,11 +92,6 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
         <p className="mt-1 text-lg font-semibold text-brand-gold">
           {campaign.hook}
         </p>
-        <p className="mt-3 max-w-sm text-base leading-relaxed text-ink-2">
-          Create, share your story and compete for a share of{" "}
-          {campaign.rewardPool ? formatNaira(campaign.rewardPool) : "the pool"}.
-        </p>
-
         {/* The two facts a creator decides on, as labelled figures. */}
         <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-4">
           {campaign.rewardPool && (
@@ -174,10 +169,10 @@ function UpcomingCampaign() {
         </span>
 
         <h2 className="mt-5 text-display-sm font-bold text-white">
-          The next campaign is loading.
+          We know who is next
         </h2>
         <p className="mt-3 text-base leading-relaxed text-ink-3">
-          We are not saying who yet.
+          You will find out soon
         </p>
 
         {/* Where the name will go. Decorative, hidden from screen readers. */}

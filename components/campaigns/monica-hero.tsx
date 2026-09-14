@@ -72,13 +72,6 @@ export function MonicaHero() {
               {campaign.hook}
             </p>
 
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-ink-3 sm:text-lg">
-              Monica has a story to tell. About money, about payments, about
-              moving value across borders. We are not telling it for you. We are
-              handing it to the creators, because knowing the story is not the
-              point. Telling it well is.
-            </p>
-
             {/* One wrapping row of actions. As underlined text links these
                 stacked one per line on a phone, three loose blue lines under
                 the button; as buttons they share the CTA's shape and wrap

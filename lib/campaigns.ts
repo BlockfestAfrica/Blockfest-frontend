@@ -59,6 +59,10 @@ export const campaigns: Campaign[] = [
     slug: "monica-money-story",
     name: "Monica: The Money Story",
     hook: "Are you skillful?",
+    /* Monica's own campaign art. The right half of the poster, the phone and
+       the coins, is what the card's object-right crop shows; the poster's own
+       headline sits on the left, under the solid side of the gradient. */
+    cardImage: "/images/monica/monica-card.jpg",
     sponsor: "Monica",
     sponsorLogo: "/2026/sponsors/Monica.png",
     sponsorUrl: "https://x.com/monicanigeria",
