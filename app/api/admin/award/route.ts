@@ -48,6 +48,16 @@ const awardSchema = z.object({
     .trim()
     .min(1, "Say why. It is what a dispute is answered with.")
     .max(300),
+  /** The entry an engagement bonus is for; the ladder attaches to work. */
+  entryId: z.string().uuid().optional(),
+}).superRefine((value, ctx) => {
+  if (value.source === "engagement_milestone" && !value.entryId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["entryId"],
+      message: "Pick the entry that reached the milestone.",
+    });
+  }
 });
 
 const FORBIDDEN = NextResponse.json(
@@ -76,6 +86,17 @@ const MESSAGES: Record<string, string> = {
   P0509: "Manual awards cannot take back more than manual awards gave. Removing engine points is a disqualification, which the void does with a reason and a clawback.",
   P0201: "That creator does not exist.",
   P0401: "Only a signed-in admin can award points.",
+  P0510:
+    "That award is a fixed value in the published rules; only the exact figure can be given.",
+  P0511:
+    "Engagement bonuses move on the published ladder: 20, 40, 60, 80, 100, 150 or 200.",
+  P0512: "That is below the published floor for this kind of award.",
+  P0513:
+    "That kind of award cannot take back more than it gave this creator.",
+  P0514: "Engagement bonuses attach to the entry that earned the views.",
+  P0515: "That entry does not belong to this creator.",
+  P0516:
+    "This entry already has its engagement bonus. Take the old one back first if the tier changed.",
 };
 
 export async function POST(request: NextRequest) {
@@ -120,7 +141,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await getDb().execute(
-      sql`SELECT * FROM award_points(${enrolmentId}::uuid, ${source}::ledger_source, ${points}::integer, ${note}::text, ${admin.admin.adminId}::uuid)`,
+      sql`SELECT * FROM award_points(${enrolmentId}::uuid, ${source}::ledger_source, ${points}::integer, ${note}::text, ${admin.admin.adminId}::uuid, ${parsed.data.entryId ?? null}::uuid)`,
     );
     const row = (result.rows?.[0] ?? {}) as { points_total?: number };
 

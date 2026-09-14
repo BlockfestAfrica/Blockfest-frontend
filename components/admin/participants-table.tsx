@@ -28,6 +28,8 @@ export interface ParticipantRow {
   email: string;
   joinedAt: string;
   handles: string[];
+  /** Approved entries, for the engagement bonus picker. */
+  entries: { id: string; weekNo: number }[];
   submitted: number;
   approved: number;
   points: number;
@@ -102,6 +104,7 @@ export function ParticipantsTable({
     source: string,
     points: number,
     note: string,
+    entryId?: string,
   ) {
     if (!note.trim()) {
       toast.error("Say why. It is what a dispute is answered with.");
@@ -121,7 +124,7 @@ export function ParticipantsTable({
           enrolmentId,
           source,
           points,
-          note: note.trim(),
+          note: note.trim(), entryId,
         }),
       });
       const result = await response.json();
@@ -473,9 +476,10 @@ export function ParticipantsTable({
                */
               key={selected.enrolmentId}
               name={selected.name}
+              entries={selected.entries}
               busy={busy}
-              onSubmit={(source, points, note) =>
-                submitAward(selected.enrolmentId, source, points, note)
+              onSubmit={(source, points, note, entryId) =>
+                submitAward(selected.enrolmentId, source, points, note, entryId)
               }
             />
           </div>
@@ -539,16 +543,24 @@ function Th({
  */
 function AwardRow({
   name,
+  entries,
   busy,
   onSubmit,
 }: {
   name: string;
+  entries: { id: string; weekNo: number }[];
   busy: boolean;
-  onSubmit: (source: string, points: number, note: string) => void;
+  onSubmit: (
+    source: string,
+    points: number,
+    note: string,
+    entryId?: string,
+  ) => void;
 }) {
   const [source, setSource] = useState<string>(AWARD_SOURCES[0].key);
   const [points, setPoints] = useState("");
   const [note, setNote] = useState("");
+  const [entryId, setEntryId] = useState("");
 
   const value = Number.parseInt(points, 10);
 
@@ -604,9 +616,13 @@ function AwardRow({
         <button
           type="button"
           disabled={
-            busy || !note.trim() || !Number.isFinite(value) || value === 0
+            busy ||
+            !note.trim() ||
+            !Number.isFinite(value) ||
+            value === 0 ||
+            (source === "engagement_milestone" && !entryId)
           }
-          onClick={() => onSubmit(source, value, note)}
+          onClick={() => onSubmit(source, value, note, entryId || undefined)}
           className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           {busy ? "Working..." : "Apply"}
@@ -616,11 +632,31 @@ function AwardRow({
           it. Awards outside these figures are refused by the rule bounds
           anyway; showing the ladder saves the round trip. */}
       {source === "engagement_milestone" && (
-        <p className="mt-2 text-sm leading-relaxed text-ink-3">
-          The published ladder: 5K views 20 · 10K 40 · 20K 60 · 30K 80 ·
-          50K 100 · 75K 150 · 100K 200. One bonus per entry, highest tier
-          verifiably reached.
-        </p>
+        <>
+          <label htmlFor="award-entry" className="sr-only">
+            Which entry reached the milestone
+          </label>
+          {/* The bonus attaches to the entry that earned the views; the
+              database refuses one without it, and one per entry. */}
+          <select
+            id="award-entry"
+            value={entryId}
+            onChange={(e) => setEntryId(e.target.value)}
+            className={`${selectControl} mt-2 lg:max-w-56`}
+          >
+            <option value="">Which entry reached it...</option>
+            {entries.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                Week {entry.weekNo} entry
+              </option>
+            ))}
+          </select>
+          <p className="mt-2 text-sm leading-relaxed text-ink-3">
+            The published ladder: 5K views 20 · 10K 40 · 20K 60 · 30K 80 ·
+            50K 100 · 75K 150 · 100K 200. One bonus per entry, highest tier
+            verifiably reached.
+          </p>
+        </>
       )}
     </div>
   );

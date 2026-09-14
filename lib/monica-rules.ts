@@ -74,7 +74,7 @@ export const monicaRules: RuleSection[] = [
     paragraphs: [
       "An approved entry earns 100 points for the first approved platform and 50 for each platform after it, to a maximum of 200 for all three.",
       "Additional points may be awarded for work judged exceptional, for reaching a notable audience milestone with an entry, for entries featured by Blockfest Africa or by Monica, and for completing a wildcard challenge.",
-        "Bonuses are awarded at our discretion. Every one is recorded against your account with the reason, and you can see it on your own page.",
+        "Bonuses are awarded at our discretion. Every one is recorded against your account with the reason, and you can see it on your own page. Bonuses are capped at 2,000 points per creator across the campaign, and a single discretionary adjustment never moves more than 300 points.",
       "Point values may be adjusted during the campaign. Changing a value does not recalculate points already awarded, so a change to the rate never restates what you have already earned.",
         "Points can be taken back in two cases, and only these two: an entry that stops meeting the rules after approval, covered below, and a correction of a mistake we made. A correction is recorded against your account with the reason, the same way an award is.",
       "The leaderboard counts approved entries. Publishing one entry on three platforms earns more points but remains a single entry for that count.",

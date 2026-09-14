@@ -653,9 +653,15 @@ export const pointLedger = pgTable(
     check("ledger_points_non_zero", sql`${t.points} <> 0`),
     check(
       "ledger_entry_id_iff_entry_source",
-      sql`(${t.source} = 'challenge_entry' AND ${t.entryId} IS NOT NULL)
-          OR (${t.source} <> 'challenge_entry' AND ${t.entryId} IS NULL)`,
+      // Engagement joined challenge_entry in 0050: its bonuses attach to
+      // the entry that earned the views, which is what makes the published
+      // one-bonus-per-entry rule enforceable at all.
+      sql`(${t.source} IN ('challenge_entry', 'engagement_milestone') AND ${t.entryId} IS NOT NULL)
+          OR (${t.source} NOT IN ('challenge_entry', 'engagement_milestone') AND ${t.entryId} IS NULL)`,
     ),
+    uniqueIndex("one_engagement_bonus_per_entry")
+      .on(t.entryId)
+      .where(sql`source = 'engagement_milestone' AND points > 0`),
     /** Every human-decided award is attributable and explained. */
     check(
       "ledger_manual_awards_attributed",

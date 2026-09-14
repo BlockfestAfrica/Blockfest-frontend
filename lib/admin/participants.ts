@@ -34,6 +34,8 @@ export type ParticipantFilter = "all" | "submitted" | "silent" | "approved";
 
 export interface Participant {
   enrolmentId: string;
+  /** Approved entries, for the engagement bonus picker. */
+  entries: { id: string; weekNo: number }[];
   name: string;
   email: string;
   joinedAt: Date;
@@ -84,6 +86,20 @@ export async function participants(
        AND s.status = 'approved'
   )`;
 
+  /*
+   * Approved entries, id and week, for the award panel's engagement
+   * picker: since 0050 an engagement bonus attaches to the entry that
+   * earned the views, so the person awarding needs the list to pick from.
+   */
+  const entryList = sql<{ id: string; weekNo: number }[]>`(
+    SELECT COALESCE(json_agg(json_build_object('id', ce.id, 'weekNo', ch.week_no)
+                    ORDER BY ch.week_no), '[]'::json)
+      FROM ${challengeEntries} ce
+      JOIN challenges ch ON ch.id = ce.challenge_id
+     WHERE ce.campaign_creator_id = ${campaignCreators.id}
+       AND ce.approved_platform_count >= 1
+  )`;
+
   const handleList = sql<string[]>`(
     SELECT COALESCE(array_agg(h.platform || ':' || h.handle ORDER BY h.platform), '{}')
       FROM ${creatorSocialHandles} h
@@ -126,6 +142,7 @@ export async function participants(
       email: creators.email,
       joinedAt: campaignCreators.joinedAt,
       handles: handleList,
+      entries: entryList,
       submitted: submittedCount,
       approved: approvedCount,
       points: campaignCreators.pointsTotal,
@@ -144,6 +161,7 @@ export async function participants(
     email: row.email,
     joinedAt: row.joinedAt,
     handles: Array.isArray(row.handles) ? row.handles : [],
+    entries: Array.isArray(row.entries) ? row.entries : [],
     submitted: Number(row.submitted ?? 0),
     approved: Number(row.approved ?? 0),
     points: Number(row.points ?? 0),

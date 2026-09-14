@@ -228,22 +228,38 @@ describe("paying once", () => {
     ).toBe(1);
   });
 
-  it("does not pay again after an approval is taken back and regiven", async () => {
-    // first_approved_at never moves once set, so the second approval is not a
-    // first approval and must not pay.
+  it("reverses on rejection and pays exactly once again on re-approval", async () => {
+    // 0050 replaced the first-approval latch with reconciliation from the
+    // ledger's net: the referral follows the truth of the approvals in
+    // both directions, and the suffixed idempotency keys make each swing
+    // land exactly once.
     const referrer = await makeCreator();
     const referred = await makeCreator();
     await link(referrer, referred);
 
     const entry = await approveAnEntry(referred, "https://x.com/a/8");
     const afterFirst = await pointsOf(referrer);
+    expect(afterFirst).toBeGreaterThan(0);
 
     const sub = await one<{ id: string }>(
       `SELECT id FROM submissions WHERE entry_id = '${entry}'`,
     );
+    // Rejection takes the approvals to zero, so the payment reverses: the
+    // referrer holds nothing paid for work that no longer exists.
     await db.query(`SELECT review('${sub.id}', 'rejected', '${adminId}', 'no')`);
-    await db.query(`SELECT review('${sub.id}', 'approved', '${adminId}', NULL)`);
+    expect(await pointsOf(referrer)).toBe(0);
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM point_ledger
+          WHERE source = 'referral' AND points < 0`,
+      ),
+    ).toBe(1);
 
+    // Re-approval reinstates, once, to exactly the original figure.
+    await db.query(`SELECT review('${sub.id}', 'approved', '${adminId}', NULL)`);
+    expect(await pointsOf(referrer)).toBe(afterFirst);
+    await db.query(`SELECT review('${sub.id}', 'rejected', '${adminId}', 'no2')`);
+    await db.query(`SELECT review('${sub.id}', 'approved', '${adminId}', NULL)`);
     expect(await pointsOf(referrer)).toBe(afterFirst);
   });
 });
