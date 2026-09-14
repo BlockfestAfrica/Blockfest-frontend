@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarDays, Trophy } from "lucide-react";
 import { campaignRun, campaigns, type Campaign } from "@/lib/campaigns";
 import { formatNaira } from "@/lib/tickets";
 import { SITE_URL } from "@/lib/seo-event";
@@ -35,13 +35,18 @@ export const metadata: Metadata = {
 };
 
 /**
- * A campaign that is open.
+ * A campaign that is open, as the marketing team sketched it.
  *
- * Laid out in two parts rather than one column: what the campaign is on the
- * left, and the facts a creator decides on reading down the right. Stacking all
- * of it vertically was the problem with the first pass. The prize, the dates
- * and the sponsor are not prose, and setting them as a rail lets the prize
- * carry the weight it deserves while the summary keeps a readable measure.
+ * Their mockup made two calls this implements: the two cards are EQUAL, side
+ * by side, because "coming soon" earning half the room made the page read as
+ * one product and a leftover; and each card carries a picture, because a
+ * prize card with no life in it is a spreadsheet row. The photograph sits
+ * under a left-heavy gradient so the text never fights it, and until a real
+ * photo lands in the registry the gradient treatment stands on its own.
+ *
+ * The content order is theirs too: state, name, the hook, one selling line,
+ * then the two facts a creator decides on (the pool, the dates), the CTA,
+ * and the sponsor signing the card at the foot.
  */
 function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
   const dates = campaignRun(campaign);
@@ -49,114 +54,138 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
   return (
     <Link
       href={`/campaigns/${campaign.slug}`}
-      className="group flex flex-col rounded-2xl border border-line-2 bg-card-2 transition-colors duration-150 hover:border-line-3 hover:bg-card-2 lg:col-span-2"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-line-2 bg-card transition-colors duration-150 hover:border-line-3"
     >
-      <div className="flex flex-1 flex-col gap-6 p-5 sm:p-6 md:flex-row md:gap-10 lg:p-8">
-        <div className="flex flex-1 flex-col">
-          <span className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-gold/15 px-3 py-1 text-xs font-semibold text-brand-gold">
-            <span
-              className="h-1.5 w-1.5 rounded-full bg-brand-gold"
-              aria-hidden="true"
-            />
-            Open now
-          </span>
+      {/* The picture layer, behind everything. object-cover from the right
+          so a portrait reads while the text column stays clean. */}
+      {campaign.cardImage && (
+        <Image
+          src={campaign.cardImage}
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          className="object-cover object-right"
+          aria-hidden="true"
+        />
+      )}
+      {/* Legibility gradient: solid ground on the text side, opening to the
+          image on the right; a low gold wash keeps the card alive when no
+          photo has landed yet. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-gradient-to-r from-ground via-ground/90 to-ground/30"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(242,203,69,0.14),transparent_60%)]"
+      />
 
-          <h2 className="text-display-sm mt-4 font-bold text-white">
-            {campaign.name}
-          </h2>
-          <p className="mt-2 text-lg font-semibold text-brand-gold">
-            {campaign.hook}
-          </p>
-          <span className="mt-auto pt-6">
-            {/* A span, not a nested link. The whole card is already the link,
-                and a link inside a link is invalid and unpredictable. */}
-            <span className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-150 group-hover:bg-brand-gold-hover">
-              See the campaign
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </span>
-          </span>
-        </div>
+      <div className="relative flex flex-1 flex-col p-6 sm:p-7">
+        <span className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-gold/15 px-3 py-1 text-xs font-semibold text-brand-gold">
+          <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
+          Open now
+        </span>
 
-        {/* Spread over the full height so the rail ends where the column rule
-            does. Top-aligned, its divider ran on past the last item and the
-            card read as unfinished. The left column already pins its button to
-            the bottom, so this balances against it. */}
-        <dl className="flex flex-col justify-between gap-5 border-t border-line-2 pt-6 md:w-52 md:shrink-0 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+        <h2 className="mt-5 text-display-sm font-bold text-white">
+          {campaign.name}
+        </h2>
+        <p className="mt-1 text-lg font-semibold text-brand-gold">
+          {campaign.hook}
+        </p>
+        <p className="mt-3 max-w-sm text-base leading-relaxed text-ink-2">
+          Create, share your story and compete for a share of{" "}
+          {campaign.rewardPool ? formatNaira(campaign.rewardPool) : "the pool"}.
+        </p>
+
+        {/* The two facts a creator decides on, as labelled figures. */}
+        <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-4">
           {campaign.rewardPool && (
-            <div>
-              <dt className="eyebrow text-ink-3">Prize pool</dt>
-              <dd className="mt-1.5 text-3xl font-bold tabular-nums text-white">
-                {formatNaira(campaign.rewardPool)}
-              </dd>
+            <div className="flex items-start gap-2.5">
+              <Trophy className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold" aria-hidden="true" />
+              <div>
+                <dt className="eyebrow text-ink-3">Prize pool</dt>
+                <dd className="mt-0.5 font-bold tabular-nums text-white">
+                  {formatNaira(campaign.rewardPool)}
+                </dd>
+              </div>
             </div>
           )}
           {dates && (
-            <div>
-              <dt className="eyebrow text-ink-3">Runs</dt>
-              <dd className="mt-1.5 text-sm leading-relaxed text-ink-2">
-                {dates}
-              </dd>
-            </div>
-          )}
-          {campaign.sponsorLogo && (
-            <div>
-              {/* The logo, with no "Sponsor" label above it. The label was a
-                  word explaining a thing that explains itself, and the card has
-                  to fit a phone. */}
-              <dd className="mt-2">
-                <span className="inline-flex items-center rounded-md bg-white px-3 py-2">
-                  <Image
-                    src={campaign.sponsorLogo}
-                    alt={campaign.sponsor}
-                    width={120}
-                    height={28}
-                    className="h-5 w-auto object-contain"
-                  />
-                </span>
-              </dd>
+            <div className="flex items-start gap-2.5">
+              <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold" aria-hidden="true" />
+              <div>
+                <dt className="eyebrow text-ink-3">Runs</dt>
+                <dd className="mt-0.5 text-sm font-semibold text-ink">{dates}</dd>
+              </div>
             </div>
           )}
         </dl>
+
+        <div className="mt-auto flex flex-wrap items-end justify-between gap-4 pt-8">
+          {/* A span, not a nested link: the whole card is the link already. */}
+          <span className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-150 group-hover:bg-brand-gold-hover">
+            Enter the campaign
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </span>
+
+          {campaign.sponsorLogo && (
+            <span className="flex flex-col items-end gap-1.5">
+              <span className="text-xs text-ink-4">Headline sponsor</span>
+              <span className="inline-flex items-center rounded-md bg-white px-3 py-1.5">
+                <Image
+                  src={campaign.sponsorLogo}
+                  alt={campaign.sponsor}
+                  width={110}
+                  height={26}
+                  className="h-5 w-auto object-contain"
+                />
+              </span>
+            </span>
+          )}
+        </div>
       </div>
     </Link>
   );
 }
 
 /**
- * A campaign that has been announced but not named.
+ * A campaign announced but not named, now the same size as the open one.
  *
- * The point is that a visitor knows something is coming without learning what,
- * so the name is not rendered at all. A CSS blur would not do: the text would
- * still be in the markup and readable from view-source, which is concealment
- * that only works on people who do not look. What renders instead is a pair of
- * bars roughly the shape of a name, blurred, leaking nothing because there is
- * nothing there to leak. The registry keeps the real name for our own use.
- *
- * Deliberately not a link and not focusable: a card that looks clickable and
- * does nothing is worse than one that plainly says it is not ready. Its content
- * sits at the top rather than stretching, so a short card reads as compact
- * instead of as a tall box somebody forgot to fill.
+ * The marketing mockup's second call: half-width made this read as a
+ * leftover, and equal framing makes the programme read as a programme. The
+ * veiled-object treatment is theirs too, done in gradients rather than a
+ * staged photograph, so there is nothing in the markup to leak. The name
+ * itself is still never rendered: bars stand where it will go, because a
+ * CSS blur over real text is concealment only from people who do not view
+ * source.
  */
 function UpcomingCampaign() {
   return (
-    <div className="flex flex-col rounded-2xl border border-dashed border-line-2 p-6 sm:p-8 lg:p-10">
-      <span className="inline-flex w-fit items-center rounded-full border border-line-2 px-3 py-1 text-xs font-semibold text-ink-3">
-        Coming soon
-      </span>
-
-      {/* Where the name will go. Decorative, so it is hidden from screen
-          readers and the real message is given as text below. */}
+    <div className="relative flex flex-col overflow-hidden rounded-2xl border border-dashed border-line-2">
+      {/* The veil: a cold violet glow rising from the covered thing. */}
       <div
-        className="mt-6 flex select-none items-center gap-3"
         aria-hidden="true"
-      >
-        <span className="h-7 w-32 rounded-md bg-white/25 blur-[6px] sm:h-9 sm:w-40" />
-        <span className="h-7 w-20 rounded-md bg-card-3 blur-[6px] sm:h-9 sm:w-24" />
-      </div>
+        className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(109,74,255,0.22),transparent_55%),radial-gradient(ellipse_at_top_left,rgba(27,100,228,0.10),transparent_50%)]"
+      />
 
-      <p className="mt-7 text-base leading-relaxed text-ink-3">
-        The next campaign. We are not saying who yet.
-      </p>
+      <div className="relative flex flex-1 flex-col p-6 sm:p-7">
+        <span className="inline-flex w-fit items-center rounded-full border border-line-2 px-3 py-1 text-xs font-semibold text-ink-3">
+          Coming soon
+        </span>
+
+        <h2 className="mt-5 text-display-sm font-bold text-white">
+          The next campaign is loading.
+        </h2>
+        <p className="mt-3 text-base leading-relaxed text-ink-3">
+          We are not saying who yet.
+        </p>
+
+        {/* Where the name will go. Decorative, hidden from screen readers. */}
+        <div className="mt-auto flex select-none items-center gap-3 pt-8" aria-hidden="true">
+          <span className="h-8 w-36 rounded-md bg-white/20 blur-[6px] sm:h-9 sm:w-44" />
+          <span className="h-8 w-24 rounded-md bg-white/10 blur-[6px] sm:h-9 sm:w-28" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -185,19 +214,26 @@ export default function CampaignsPage() {
           {/* Title and lead sit side by side above the large breakpoint. In one
               column the lead left half the width empty at exactly the point the
               page is meant to look considered. */}
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
-            <div>
-              <h1 className="text-display mt-3 font-bold uppercase text-white">
-                Campaigns
-              </h1>
-            </div>
-            <p className="max-w-md text-base leading-relaxed text-ink-2 lg:pb-2 lg:text-right">
-              Real briefs, real prize money, your own audience. You keep the
-              work.
+          {/* The selling line IS the headline, per the marketing team's
+              mockup: the page's one promise stated at display size, its
+              second half in the accent because that half is about the
+              creator. The word Campaigns drops to the eyebrow where a
+              category label belongs. */}
+          <div className="max-w-3xl">
+            <p className="eyebrow text-brand-gold">Campaigns</p>
+            <h1 className="mt-3 text-display font-bold text-white">
+              Real briefs. Real prize money.{" "}
+              <span className="block text-brand-gold">
+                Your audience. Your work.
+              </span>
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-2">
+              Partner campaigns for creators. Build your audience, create on
+              your own terms, and compete for real money.
             </p>
           </div>
 
-          <div className="mt-12 grid gap-6 lg:mt-16 lg:grid-cols-3 lg:items-start">
+          <div className="mt-12 grid gap-6 lg:mt-16 lg:grid-cols-2 lg:items-stretch">
             {live.map((campaign) => (
               <FeaturedCampaign key={campaign.slug} campaign={campaign} />
             ))}

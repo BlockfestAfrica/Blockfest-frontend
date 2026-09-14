@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CampaignJoinCTA } from "@/components/campaigns/campaign-join-cta";
 import { MonicaHero } from "@/components/campaigns/monica-hero";
+import { MonicaIntro } from "@/components/campaigns/monica-intro";
 import { MonicaHowItWorks } from "@/components/campaigns/monica-how-it-works";
 import { MonicaStages } from "@/components/campaigns/monica-stages";
 import { MonicaPrizes } from "@/components/campaigns/monica-prizes";
@@ -91,6 +92,7 @@ export default function MonicaMoneyStoryPage() {
       </nav>
 
       <MonicaHero />
+      <MonicaIntro />
       <MonicaHowItWorks />
       <MonicaStages />
       <MonicaPrizes />
