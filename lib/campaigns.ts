@@ -218,6 +218,14 @@ export const monicaRoutes = {
   enterConfirm: `/campaigns/${MONICA_SLUG}/enter/confirm`,
   /** The creator's own page. Reads the cookie; never takes a token in the URL. */
   me: `/campaigns/${MONICA_SLUG}/me`,
+  /** The "lost your link?" form: type your email address. */
+  recover: `/campaigns/${MONICA_SLUG}/recover`,
+  /** Where the mailed confirmation link points. Resolves the recovery token
+   *  and asks whose account it opens; never rotates anything itself. */
+  recoverOpen: `/campaigns/${MONICA_SLUG}/recover/open`,
+  /** Names the account a recovery link opens, and takes the confirming POST
+   *  that rotates the access token and signs the person in. */
+  recoverConfirm: `/campaigns/${MONICA_SLUG}/recover/confirm`,
   leaderboard: `/campaigns/${MONICA_SLUG}/leaderboard`,
   winners: `/campaigns/${MONICA_SLUG}/winners`,
 } as const;

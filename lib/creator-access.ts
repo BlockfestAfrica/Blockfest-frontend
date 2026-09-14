@@ -42,6 +42,28 @@ export const CREATOR_PENDING_COOKIE = "monica_pending";
 export const CREATOR_PENDING_MAX_AGE = 60 * 10;
 export const CREATOR_PENDING_PATH = "/campaigns/monica-money-story/enter";
 
+/**
+ * Where a recovery token waits between the confirmation link being opened
+ * and a person confirming it is theirs.
+ *
+ * The same shape as CREATOR_PENDING_COOKIE, and for the same reason: opening
+ * a mailed link is not a decision anybody made on purpose, since a mail
+ * client can prefetch it or a group chat can forward it. This cookie only
+ * ever lets somebody reach the confirm screen; only the POST from that
+ * screen rotates anything.
+ */
+export const CREATOR_RECOVERY_PENDING_COOKIE = "monica_recovery_pending";
+export const CREATOR_RECOVERY_PENDING_MAX_AGE = 60 * 10;
+export const CREATOR_RECOVERY_PENDING_PATH =
+  "/campaigns/monica-money-story/recover";
+
+/**
+ * How long a minted recovery token is honoured before it must be requested
+ * again. Short, because unlike the access link this one is not meant to be
+ * kept: it exists for the few minutes between an inbox and a click.
+ */
+export const RECOVERY_TOKEN_MAX_AGE_SECONDS = 60 * 30;
+
 /** Base64url, so it survives a URL, a cookie and a WhatsApp message intact. */
 export function newAccessToken(): string {
   return randomBytes(TOKEN_BYTES).toString("base64url");

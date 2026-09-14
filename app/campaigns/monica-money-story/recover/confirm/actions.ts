@@ -1,0 +1,105 @@
+"use server";
+
+import { cookies, headers } from "next/headers";
+import { redirect } from "next/navigation";
+import {
+  CREATOR_RECOVERY_PENDING_COOKIE,
+  CREATOR_SESSION_COOKIE,
+} from "@/lib/creator-access";
+import {
+  recoveryPendingCookieOptions,
+  sessionCookieOptions,
+} from "@/lib/creator-session";
+import {
+  confirmAccessRecovery,
+  recoveryHolderByToken,
+} from "@/lib/creator-recovery";
+import { monicaRoutes } from "@/lib/campaigns";
+import { allowKey } from "@/lib/throttle";
+
+/**
+ * Turn a confirmed recovery claim into a rotated session. Closes #206.
+ *
+ * This is the only thing that rotates the access token outside the admin
+ * console, and it is a POST for the same reason #78 made the entry link's
+ * sign-in a POST: Next checks the Origin of a server action against the
+ * host before the body runs, so a link, a forward, or a mail prefetcher
+ * cannot drive this. Requesting recovery changes nothing; this action is
+ * the only thing that does.
+ */
+export async function confirmRecovery(form: FormData) {
+  // The enrolment the page actually displayed. Without it there is the same
+  // gap #78's enterAsPending closes: the page names account A, the pending
+  // cookie is swapped for a token naming B in another tab before the tap
+  // lands, and the person who confirmed "I am A" is signed in as B.
+  const shown = String(form.get("enrolment") ?? "").trim();
+
+  const who = (await headers()).get("x-nf-client-connection-ip")?.trim() ?? "";
+  if (!(await allowKey(who, "recover-confirm", 300, 3600))) {
+    redirect(`${monicaRoutes.recoverConfirm}?s=unavailable`);
+  }
+
+  const jar = await cookies();
+  const token = jar.get(CREATOR_RECOVERY_PENDING_COOKIE)?.value?.trim() ?? "";
+
+  /*
+   * Re-checked at the point of use rather than trusted from the render, the
+   * same discipline #78 applies to the entry link: a moment is enough for
+   * this exact token to have expired or already been used elsewhere.
+   */
+  let holder: Awaited<ReturnType<typeof recoveryHolderByToken>> = null;
+  let unavailable = false;
+  try {
+    holder = await recoveryHolderByToken(token);
+  } catch {
+    unavailable = true;
+  }
+
+  if (unavailable) {
+    redirect(`${monicaRoutes.recoverConfirm}?s=unavailable`);
+  }
+
+  if (!holder || holder.enrolmentId !== shown) {
+    jar.delete({
+      name: CREATOR_RECOVERY_PENDING_COOKIE,
+      path: recoveryPendingCookieOptions().path,
+    });
+    redirect(`${monicaRoutes.recoverConfirm}?s=expired`);
+  }
+
+  let confirmed: Awaited<ReturnType<typeof confirmAccessRecovery>> = null;
+  try {
+    confirmed = await confirmAccessRecovery(token);
+  } catch {
+    redirect(`${monicaRoutes.recoverConfirm}?s=unavailable`);
+  }
+
+  if (!confirmed) {
+    // The window closed between the check above and this update, e.g. two
+    // tabs racing the same confirmation. Treated as expired: retrying means
+    // asking for a fresh link.
+    jar.delete({
+      name: CREATOR_RECOVERY_PENDING_COOKIE,
+      path: recoveryPendingCookieOptions().path,
+    });
+    redirect(`${monicaRoutes.recoverConfirm}?s=expired`);
+  }
+
+  jar.set(CREATOR_SESSION_COOKIE, confirmed.accessToken, sessionCookieOptions());
+  jar.delete({
+    name: CREATOR_RECOVERY_PENDING_COOKIE,
+    path: recoveryPendingCookieOptions().path,
+  });
+
+  redirect(monicaRoutes.me);
+}
+
+/** Drop the claim without acting on it. */
+export async function discardRecoveryPending() {
+  const jar = await cookies();
+  jar.delete({
+    name: CREATOR_RECOVERY_PENDING_COOKIE,
+    path: recoveryPendingCookieOptions().path,
+  });
+  redirect(monicaRoutes.landing);
+}

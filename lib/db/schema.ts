@@ -332,6 +332,17 @@ export const campaignCreators = pgTable(
       withTimezone: true,
     }),
     /**
+     * SHA-256 of a pending self-service recovery token, and when it expires.
+     *
+     * Deliberately not the same field as accessTokenHash: minting this must
+     * never touch the working link, only clicking the confirmation email
+     * does. See 0053_creator_link_recovery.sql.
+     */
+    recoveryTokenHash: text("recovery_token_hash"),
+    recoveryTokenExpiresAt: timestamp("recovery_token_expires_at", {
+      withTimezone: true,
+    }),
+    /**
      * Which version of the rules this creator accepted, and when.
      *
      * The rules page tells every registrant that the version in force when they
