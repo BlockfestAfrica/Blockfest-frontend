@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db/client";
 import { currentCreator } from "@/lib/creator-session";
 import { isPgError } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
-import { allow } from "@/lib/throttle";
+import { allowKey } from "@/lib/throttle";
 import { CAMPAIGN_PLATFORMS } from "@/lib/campaigns";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { handleRequestFiledEmail } from "@/lib/email/templates";
@@ -53,9 +53,12 @@ export async function POST(request: NextRequest) {
   }
 
   // A correction is filed once or twice in a campaign; ten an hour is a
-  // person, and a script gains nothing here anyway since filing changes
-  // nothing. Fails open like every other limit.
-  if (!(await allow(request, "handle-request", 10, 3600))) {
+  // person. Keyed to the enrolment, not the address: Nigerian carriers put
+  // very large numbers of subscribers behind one NAT IP, so a per-address
+  // key both wrongly blocked co-located creators and let one of them spend
+  // everybody's budget. The route has already authenticated, so the person
+  // is known. Fails open like every other limit.
+  if (!(await allowKey(`enrolment:${creator.enrolmentId}`, "handle-request", 10, 3600))) {
     return NextResponse.json(
       { ok: false, message: "That is a lot of requests. Wait a while and try again." },
       { status: 429 },

@@ -10,7 +10,7 @@ import {
   creators,
   getDb,
 } from "@/lib/db/client";
-import { requireAdmin } from "@/lib/admin/session";
+import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { hashAccessToken, newAccessToken } from "@/lib/creator-access";
 import { canonicalEmail } from "@/lib/campaign-registration";
@@ -52,7 +52,12 @@ export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return FORBIDDEN;
 
   const admin = await requireAdmin();
-  if (!admin.ok) return FORBIDDEN;
+  // Owner-only since the day-one audit. This mints a working session for
+  // any creator from nothing but their email and rotates their real link
+  // away, which with handle verification removed is the highest-leverage
+  // capability a console session holds. The same reasoning that makes
+  // correct-handle owner-only applies with more force here.
+  if (!admin.ok || !isOwner(admin.admin)) return FORBIDDEN;
 
   const read = await readJsonBody(request);
   if (!read.ok) {
