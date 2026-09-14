@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { REFERRAL_COOKIE } from "@/lib/campaign-registration";
+import { REFERRAL_COOKIE, refFromQuery } from "@/lib/campaign-registration";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -33,16 +33,36 @@ export const metadata: Metadata = {
  * rest of the campaign, and means a page built before launch does not have "not
  * open yet" frozen into it.
  */
-export default async function MonicaRegisterPage() {
+export default async function MonicaRegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string | string[] }>;
+}) {
   /*
-   * Read here rather than in the browser.
+   * The cookie, read here rather than in the browser.
    *
-   * /join sets this cookie httpOnly, so document.cookie cannot see it. The
-   * client can only know somebody arrived through a referral if the server
-   * tells it.
+   * /join sets it httpOnly, so document.cookie cannot see it. The client can
+   * only know somebody arrived through a referral if the server tells it, and
+   * only the server can hand the code itself to the form.
    */
-  const arrivedViaReferral =
-    (await cookies()).get(REFERRAL_COOKIE)?.value !== undefined;
+  const cookieRef = (await cookies()).get(REFERRAL_COOKIE)?.value;
+
+  /*
+   * The code can also arrive on this page's own URL. /join?ref=CODE is the
+   * durable path, because its cookie survives a closed tab, but
+   * /register?ref=CODE is the link people build by hand from the URL they can
+   * see, and it used to be silently dropped: the visitor registered, nothing
+   * failed, and the referrer was never credited. refFromQuery refuses
+   * anything that is not shaped like a code, so garbage on the URL prefills
+   * nothing rather than rendering into the page.
+   *
+   * When both exist the URL wins the prefill. It is the fresher signal, and
+   * the creator sees it in the box and can change it either way.
+   */
+  const urlRef = refFromQuery((await searchParams).ref);
+  const initialRef = urlRef || refFromQuery(cookieRef);
+
+  const arrivedViaReferral = cookieRef !== undefined || urlRef !== "";
 
   return (
     <main id="main" className="bg-ground">
@@ -72,6 +92,7 @@ export default async function MonicaRegisterPage() {
                 <RegistrationForm
                   opensAt={CAMPAIGN.startsAt}
                   arrivedViaReferral={arrivedViaReferral}
+                  initialRef={initialRef}
                 />
               )}
             </div>

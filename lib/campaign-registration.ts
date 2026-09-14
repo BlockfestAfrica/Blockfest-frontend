@@ -11,6 +11,63 @@ import { z } from "zod";
 export const REFERRAL_COOKIE = "monica_ref";
 
 /**
+ * A referral code as it arrives on a URL, reduced to something safe to prefill
+ * a visible input with.
+ *
+ * Codes reach the register page two ways now: /join?ref=CODE sets the cookie,
+ * and /register?ref=CODE is the link people actually build by hand, because
+ * the register page is the URL they can see in their browser. The second form
+ * used to be dropped on the floor, which cost the referrer their credit and
+ * showed nobody an error.
+ *
+ * The shape check mirrors what /join accepts, folded to upper case the same
+ * way, but capped at sixteen characters rather than sixty-four. Minted codes
+ * are eight characters from an uppercase alphabet, the visible field caps its
+ * own typing at sixteen, and a longer string on the URL is not a code anyone
+ * was given: prefilling it would render junk into the one box the creator is
+ * asked to trust. Repeated parameters are refused for the same reason. A
+ * ?ref that appears twice came from tooling, not from a WhatsApp message.
+ *
+ * Anything that fails the check becomes the empty string, never an error. A
+ * mangled link should cost the referrer their credit, not stop a registration.
+ */
+export function refFromQuery(value: string | string[] | undefined): string {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!/^[A-Za-z0-9_-]{1,16}$/.test(trimmed)) return "";
+  return trimmed.toUpperCase();
+}
+
+/**
+ * Which referral code a registration is credited to.
+ *
+ * The typed field wins and the cookie /join set is the fallback. It used to be
+ * the other way around, and the order mattered less then because the field was
+ * hidden whenever the cookie existed. Now the field is always on the page,
+ * prefilled with whatever code the server already knows, and the creator can
+ * correct it. A hidden cookie silently overriding a value somebody can see and
+ * has edited would be the interface lying: what is in the box has to be what
+ * is used.
+ *
+ * The cookie still matters. A /join arrival who leaves the box alone submits
+ * the prefill, and one whose code never made it into the box for any reason is
+ * still credited from the click that was recorded. Empty means empty: neither
+ * source present resolves to "", which the route passes as null so an empty
+ * string never reaches the database looking like a code that failed to
+ * resolve. The database function keeps the last word either way, ignoring
+ * codes that belong to nobody and codes that belong to the person registering.
+ */
+export function resolveReferralCode({
+  typed,
+  cookie,
+}: {
+  typed?: string;
+  cookie?: string;
+}): string {
+  return typed?.trim() || cookie?.trim() || "";
+}
+
+/**
  * Registering for a campaign.
  *
  * The validation here is the anti-fraud story. Points convert to money, the

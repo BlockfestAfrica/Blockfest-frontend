@@ -195,14 +195,29 @@ function Labelled({
 export function RegistrationForm({
   opensAt,
   arrivedViaReferral = false,
+  initialRef = "",
 }: {
   opensAt: string;
-  /** True when /join set a referral cookie before sending them here. */
+  /**
+   * True when they arrived carrying a referral: the /join cookie, or ?ref on
+   * this page's own URL. Analytics only now. The referral field below is on
+   * the page for everyone, so nothing renders or hides on this.
+   */
   arrivedViaReferral?: boolean;
+  /**
+   * A code the server already knows, from the URL or the /join cookie. It
+   * prefills the visible field, where the creator can see it and change it.
+   */
+  initialRef?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [values, setValues] = useState<Record<Field, string>>(EMPTY);
+  const [values, setValues] = useState<Record<Field, string>>(() => ({
+    ...EMPTY,
+    // Upper-cased defensively, so a prefill can never break the invariant the
+    // input maintains as somebody types.
+    referralCode: initialRef.toUpperCase(),
+  }));
   const [accepted, setAccepted] = useState(false);
   /**
    * Optional, and false until somebody actively says otherwise. Refusing it
@@ -253,7 +268,8 @@ export function RegistrationForm({
       track(CAMPAIGN_EVENTS.registerStarted);
 
       /*
-       * Arrived through somebody's referral link.
+       * Arrived through somebody's referral link, by either path: the /join
+       * cookie or ?ref on the register URL itself.
        *
        * Passed down from the server, because the cookie /join sets is
        * httpOnly and document.cookie cannot see it. Reading it here would
@@ -705,42 +721,47 @@ export function RegistrationForm({
         </div>
 
         {/*
-          * Shown only to somebody who did not arrive through a referral link.
+          * On the page for everyone, whatever brought them here.
           *
-          * The link path already sets a cookie and needs no typing. What had no
-          * path at all was the creator who was sent a bare code in a WhatsApp
-          * message, which is how codes actually travel: we email each creator
-          * their code, and a code is far easier to forward than a URL.
+          * This used to hide when /join had set the referral cookie, on the
+          * theory that the cookie made typing redundant. Hiding it also hid
+          * the only place a code could be corrected or added late, and codes
+          * travel as bare strings in WhatsApp messages and lost links far
+          * more than as clicks. So the box always exists: prefilled when a
+          * link carried the code in, empty otherwise, and what is in it is
+          * what the server uses.
           *
           * Optional, and wrong codes are ignored rather than refused. A typo
           * here should cost the referrer their 50 points, not cost the person
           * registering their place in the campaign.
           */}
-        {!arrivedViaReferral && (
-          <div className="mt-6">
-            <Labelled
-              label="Referral code"
-              htmlFor="referralCode"
-              hint="Optional. If another creator gave you a code, enter it and they get the credit."
-              error={errors.referralCode}
-            >
-              <input
-                id="referralCode"
-                name="referralCode"
-                value={values.referralCode}
-                onChange={(e) =>
-                  set("referralCode")(e.target.value.toUpperCase())
-                }
-                className={inputClass}
-                autoComplete="off"
-                autoCapitalize="characters"
-                spellCheck={false}
-                maxLength={16}
-                placeholder="R3WW9GHF"
-              />
-            </Labelled>
-          </div>
-        )}
+        <div className="mt-6">
+          <Labelled
+            label="Referral code"
+            htmlFor="referralCode"
+            hint={
+              initialRef
+                ? "This came with the link that brought you here. Edit it if it is not the code you were given; whoever it belongs to gets the credit."
+                : "Optional. If another creator gave you a code, enter it and they get the credit."
+            }
+            error={errors.referralCode}
+          >
+            <input
+              id="referralCode"
+              name="referralCode"
+              value={values.referralCode}
+              onChange={(e) =>
+                set("referralCode")(e.target.value.toUpperCase())
+              }
+              className={inputClass}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              maxLength={16}
+              placeholder="R3WW9GHF"
+            />
+          </Labelled>
+        </div>
       </Section>
 
       <Section

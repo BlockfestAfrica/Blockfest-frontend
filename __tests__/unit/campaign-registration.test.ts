@@ -16,7 +16,9 @@ import {
   canonicalPhone,
   looksAutomated,
   MIN_HUMAN_FILL_MS,
+  refFromQuery,
   registrationSchema,
+  resolveReferralCode,
 } from "@/lib/campaign-registration";
 
 describe("canonicalEmail", () => {
@@ -226,5 +228,121 @@ describe("the honeypot in the parsed form", () => {
     // runs and the schema does the rejecting with a visible error instead.
     const result = registrationSchema.safeParse({ ...valid, hp_contact: "x" });
     expect(result.success).toBe(true);
+  });
+});
+
+/**
+ * A ?ref on the register page's own URL.
+ *
+ * /register?ref=CODE is the link people build by hand from the URL they can
+ * see, and it used to be dropped without a word: the visitor registered fine
+ * and the referrer was never credited. Whatever passes this check is prefilled
+ * into a visible input, so the check is also what keeps arbitrary query
+ * strings out of the one box a creator is asked to trust.
+ */
+describe("refFromQuery", () => {
+  it("accepts a code and folds it to upper case, as /join does", () => {
+    // Codes are minted from an uppercase alphabet, and a lower-case one on a
+    // URL is a code somebody retyped. Folding here keeps the prefill
+    // consistent with the cookie and with what the input enforces as you type.
+    expect(refFromQuery("rq4963zv")).toBe("RQ4963ZV");
+    expect(refFromQuery("  RQ4963ZV  ")).toBe("RQ4963ZV");
+  });
+
+  it("refuses anything not shaped like a code", () => {
+    // None of these are codes anyone was given. They are probing, or a
+    // mangled link, and every one of them would otherwise be rendered into a
+    // visible input as if we vouched for it.
+    expect(refFromQuery("../../etc/passwd")).toBe("");
+    expect(refFromQuery("<script>alert(1)</script>")).toBe("");
+    expect(refFromQuery("RQ49 63ZV")).toBe("");
+    expect(refFromQuery("A".repeat(500))).toBe("");
+    expect(refFromQuery("")).toBe("");
+  });
+
+  it("caps the length at the visible field's own limit", () => {
+    // Minted codes are eight characters and the input stops typing at
+    // sixteen. A seventeen-character string is not one of ours, and
+    // prefilling it would show a creator junk they never typed.
+    expect(refFromQuery("A".repeat(16))).toBe("A".repeat(16));
+    expect(refFromQuery("A".repeat(17))).toBe("");
+  });
+
+  it("refuses a repeated parameter rather than guessing", () => {
+    // ?ref twice on one URL came from tooling, not from a forwarded message.
+    // Picking one would be inventing an attribution.
+    expect(refFromQuery(["RQ4963ZV", "AB23CD45"])).toBe("");
+    expect(refFromQuery(undefined)).toBe("");
+  });
+});
+
+/**
+ * Which code a registration is credited to when the field and the cookie
+ * disagree.
+ *
+ * The order flipped when the field became always visible. These tests are
+ * what hold the flip: run with the old cookie-first order injected, the first
+ * of them fails by name.
+ */
+describe("resolveReferralCode", () => {
+  it("lets the visible field beat the cookie", () => {
+    // The field is on the page, prefilled, and editable. If a hidden cookie
+    // could override what the creator sees and has corrected, the interface
+    // would be lying about which referrer gets the credit.
+    expect(resolveReferralCode({ typed: "AB23CD45", cookie: "RQ4963ZV" })).toBe(
+      "AB23CD45",
+    );
+  });
+
+  it("falls back to the cookie when nothing was typed", () => {
+    // A /join arrival whose box ends up empty still carries the click that
+    // was recorded, so clearing the field never costs the referrer a credit
+    // the link already earned.
+    expect(resolveReferralCode({ cookie: "RQ4963ZV" })).toBe("RQ4963ZV");
+    expect(resolveReferralCode({ typed: "   ", cookie: "RQ4963ZV" })).toBe(
+      "RQ4963ZV",
+    );
+  });
+
+  it("resolves to empty when neither source has a code", () => {
+    // Empty is empty. The route turns it into null so an empty string never
+    // reaches the database looking like a code that failed to resolve.
+    expect(resolveReferralCode({})).toBe("");
+    expect(resolveReferralCode({ typed: "", cookie: "  " })).toBe("");
+  });
+});
+
+describe("the referral wiring", () => {
+  /*
+   * The pattern this repository keeps rediscovering: a helper written, tested
+   * in isolation, and called by nothing. The honeypot did it, the throttle
+   * did it. These read the source of the two call sites, so the helpers above
+   * cannot quietly stop being the code that runs.
+   */
+  it("the register page reads ?ref through refFromQuery and hands it to the form", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const src = readFileSync(
+      join(process.cwd(), "app/campaigns/monica-money-story/register/page.tsx"),
+      "utf8",
+    );
+    expect(src, "the page must validate the ref it reads").toContain(
+      "refFromQuery(",
+    );
+    expect(src, "and must pass the result to the form").toContain(
+      "initialRef={initialRef}",
+    );
+  });
+
+  it("the register route resolves the code through resolveReferralCode", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const src = readFileSync(
+      join(process.cwd(), "app/api/campaigns/monica/register/route.ts"),
+      "utf8",
+    );
+    expect(src, "the route must use the shared precedence").toContain(
+      "resolveReferralCode(",
+    );
   });
 });
