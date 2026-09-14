@@ -1,5 +1,11 @@
 -- Registration integrity, from the day-one audit.
 --
+-- Numbered 0049, renamed from 0044 before it was ever applied. The
+-- winners-integrity PR carrying 0045 merged before the PRs carrying 0043
+-- and 0044, the database moved to version 45, and both lower numbers
+-- became permanently out of order; 0043 became 0047 in the first repair
+-- and this is the second. Only never-applied migrations may be renamed.
+--
 -- register_creator regenerated from 0032, its latest definition, with two
 -- changes and everything else verbatim:
 --
