@@ -24,19 +24,32 @@ type SortKey = "rank" | "name" | "points" | "approvedEntries";
  * hundred rows, and a round trip per column click on a page people share would
  * make it feel broken.
  */
+/** Rows shown before the reader asks for more. */
+const PAGE = 10;
+
 export function LeaderboardTable({ rows }: { rows: BoardRow[] }) {
   const [sort, setSort] = useState<SortKey>("rank");
   const [ascending, setAscending] = useState(true);
+  /*
+   * Ten at a time, revealed rather than paged. The board holds up to a
+   * hundred rows, and on the phones this campaign lives on that is a long
+   * scroll past everything below the table. Reveal keeps the reader's
+   * place; a page swap would lose it. Re-sorting resets the window because
+   * the question changed.
+   */
+  const [visible, setVisible] = useState(PAGE);
 
-  const shown = useMemo(() => {
+  const sorted = useMemo(() => {
     const direction = ascending ? 1 : -1;
     return [...rows].sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name) * direction;
       return (a[sort] - b[sort]) * direction;
     });
   }, [rows, sort, ascending]);
+  const shown = sorted.slice(0, visible);
 
   function sortBy(key: SortKey) {
+    setVisible(PAGE);
     if (key === sort) {
       setAscending((a) => !a);
       return;
@@ -99,6 +112,17 @@ export function LeaderboardTable({ rows }: { rows: BoardRow[] }) {
           ))}
         </tbody>
       </table>
+      {sorted.length > visible && (
+        <div className="border-t border-line p-3">
+          <button
+            type="button"
+            onClick={() => setVisible((v) => v + PAGE)}
+            className="flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
+          >
+            Show more ({sorted.length - visible} more)
+          </button>
+        </div>
+      )}
     </div>
   );
 }
