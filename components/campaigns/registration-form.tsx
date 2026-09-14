@@ -730,6 +730,23 @@ export function RegistrationForm({
               spellCheck={false}
               placeholder="yourname"
             />
+            {/* Plenty of creators arrive without a Monica account at all,
+                and the tag is where prize money goes, so the way to get one
+                lives beside the box that demands it. New tab: filling the
+                rest of this form must survive the trip to the app store. */}
+            <p className="mt-2 text-sm leading-relaxed text-ink-3">
+              No Monica tag yet?{" "}
+              <a
+                href="https://monica.cash/"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="text-link underline underline-offset-2 hover:text-white"
+              >
+                Get yours on Monica
+              </a>
+              : download the app, register, verify your identity, and your tag
+              appears in your profile. Then come back and enter it here.
+            </p>
           </Labelled>
         </div>
 
