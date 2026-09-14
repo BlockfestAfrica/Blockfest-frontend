@@ -46,13 +46,17 @@ const snapshot = (week: number) =>
     [SLUG, week, adminId],
   );
 
-const publish = (
+const publish = async (
   week: number,
   category: string,
   enrolment: string,
   opts: { prize?: number; publish?: boolean; note?: string } = {},
-) =>
-  db.query<{ winner_id: string; published: boolean }>(
+) => {
+  // 0045: announcing requires the week's standings to be recorded first,
+  // matching the real Saturday-freeze-then-Sunday-announce order. Drafts
+  // do not need it, and tests that assert the guard call the function raw.
+  if (opts.publish !== false) await snapshot(week);
+  return db.query<{ winner_id: string; published: boolean }>(
     `SELECT * FROM publish_weekly_winner($1, $2::smallint, $3::winner_category, $4::uuid, NULL, $5::integer, $6::text, $7::uuid, $8::boolean)`,
     [
       SLUG,
@@ -65,6 +69,7 @@ const publish = (
       opts.publish ?? true,
     ],
   );
+};
 
 beforeAll(async () => {
   db = new PGlite();
@@ -312,5 +317,52 @@ describe("who may still be offered", () => {
       "Second",
       "Third",
     ]);
+  });
+});
+
+describe("0045 winners integrity", () => {
+  it("a published winner is immutable: repeat, replace and un-publish all refuse", async () => {
+    const ada = await creatorWith("Ada", 300);
+    const ben = await creatorWith("Ben", 200);
+    await publish(1, "community_favourite", ada);
+    // The same announcement again: refused, which is also what ends the
+    // duplicate congratulation email.
+    await expect(publish(1, "community_favourite", ada)).rejects.toThrow(
+      /winner_already_published/,
+    );
+    // A different name into the published slot: refused.
+    await expect(publish(1, "community_favourite", ben)).rejects.toThrow(
+      /winner_already_published/,
+    );
+    // A draft over the published row would un-publish it: refused.
+    await expect(
+      publish(1, "community_favourite", ben, { publish: false }),
+    ).rejects.toThrow(/winner_already_published/);
+  });
+
+  it("a disqualified creator cannot be announced", async () => {
+    const ada = await creatorWith("Ada", 300);
+    await db.query(
+      `UPDATE campaign_creators SET status = 'disqualified' WHERE id = '${ada}'`,
+    );
+    await expect(publish(1, "community_favourite", ada)).rejects.toThrow(
+      /creator_not_active/,
+    );
+  });
+
+  it("publishing requires the week to be frozen; a draft does not", async () => {
+    const ada = await creatorWith("Ada", 300);
+    // Raw call, skipping the helper's freeze: the Sunday-before-Saturday
+    // mistake the guard exists for.
+    await expect(
+      db.query(
+        `SELECT * FROM publish_weekly_winner($1, 3::smallint, 'community_favourite'::winner_category, $2::uuid, NULL, 100000, NULL, $3::uuid, true)`,
+        [SLUG, ada, adminId],
+      ),
+    ).rejects.toThrow(/week_not_frozen/);
+    // The draft path commits nothing and stays open.
+    await expect(
+      publish(3, "community_favourite", ada, { publish: false }),
+    ).resolves.toBeTruthy();
   });
 });
