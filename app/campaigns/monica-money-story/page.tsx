@@ -141,6 +141,12 @@ export default function MonicaMoneyStoryPage() {
               >
                 Privacy notice
               </Link>
+              <Link
+                href={monicaRoutes.recover}
+                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+              >
+                Lost your link?
+              </Link>
             </div>
           </div>
         </div>

@@ -175,6 +175,31 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        /*
+         * The same tightening again, for the same reason: /recover/open
+         * carries the recovery token in its query the way /enter carries
+         * the entry token, and /recover/confirm can be loaded with it still
+         * in the address bar once the platform re-appends the query on
+         * redirect.
+         */
+        source: "/campaigns/monica-money-story/recover/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "no-referrer",
+          },
+        ],
+      },
+      {
         source: "/api/admin/:path*",
         headers: [
           {

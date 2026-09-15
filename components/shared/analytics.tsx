@@ -50,6 +50,7 @@ const OFF_LIMITS = [
   "/api/admin",
   "/campaigns/monica-money-story/enter",
   "/campaigns/monica-money-story/me",
+  "/campaigns/monica-money-story/recover",
   /* The register success screen renders the raw personal link into the DOM.
      The confirm action refuses to put a token in HTML that shares a page
      with a third-party script; the same rule has to hold here, and the

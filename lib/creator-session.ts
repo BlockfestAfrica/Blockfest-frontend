@@ -16,6 +16,8 @@ import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 import {
   CREATOR_PENDING_MAX_AGE,
   CREATOR_PENDING_PATH,
+  CREATOR_RECOVERY_PENDING_MAX_AGE,
+  CREATOR_RECOVERY_PENDING_PATH,
   CREATOR_SESSION_COOKIE,
   CREATOR_SESSION_MAX_AGE,
   hashAccessToken,
@@ -47,6 +49,12 @@ export const pendingCookieOptions = () => ({
   ...cookieBase(),
   path: CREATOR_PENDING_PATH,
   maxAge: CREATOR_PENDING_MAX_AGE,
+});
+
+export const recoveryPendingCookieOptions = () => ({
+  ...cookieBase(),
+  path: CREATOR_RECOVERY_PENDING_PATH,
+  maxAge: CREATOR_RECOVERY_PENDING_MAX_AGE,
 });
 
 /** Who a token belongs to, for naming an account before anybody enters it. */

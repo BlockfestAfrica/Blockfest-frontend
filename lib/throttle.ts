@@ -38,6 +38,48 @@ export async function allow(
 }
 
 /**
+ * The same question, answered the opposite way when the database cannot be
+ * asked.
+ *
+ * allowKey's fail-open is correct for the routes that use it: none of them
+ * would become unsafe if the limiter vanished, only slower to enumerate. An
+ * endpoint that sends mail is a different shape of risk. A throttle that
+ * cannot be read must refuse the request rather than quietly become an
+ * unmetered mailer, since the failure mode of failing open here is not
+ * "enumeration got a little faster", it is "somebody's inbox, or ZeptoMail's
+ * whole sending reputation, absorbs whatever a script sends at this route
+ * while the database is down."
+ *
+ * Unlike allowKey, an absent or shared key is not given a pass here either:
+ * this throttle guards a mailer, not a page view, so there is no bucket safe
+ * to leave uncounted.
+ */
+export async function allowKeyStrict(
+  key: string,
+  name: string,
+  limit: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  try {
+    const result = await getDb().execute(
+      sql`SELECT take_token(${`${name}:${key}`}, ${limit}, ${windowSeconds}) AS ok`,
+    );
+    const ok = (result.rows?.[0] as { ok?: boolean } | undefined)?.ok;
+    if (ok === false) {
+      logWarning("throttle", `${name} limit reached`);
+    }
+    return ok === true;
+  } catch (error) {
+    // The one line that differs from allowKey: refuse rather than allow.
+    logWarning(
+      "throttle",
+      `could not be read, refusing (fail-closed): ${error instanceof Error ? error.name : "unknown"}`,
+    );
+    return false;
+  }
+}
+
+/**
  * The same, keyed directly, for server actions where there is no NextRequest.
  * Callers read x-nf-client-connection-ip from headers() themselves.
  */

@@ -85,6 +85,17 @@ export function personalPage(): string {
   return `${siteUrl()}${monicaRoutes.me}`;
 }
 
+/**
+ * The self-service recovery confirmation link.
+ *
+ * Carries a token that is single use and expires in thirty minutes, unlike
+ * personalLink's token, which is the whole point: this one exists to be
+ * clicked once, not kept.
+ */
+export function recoveryLink(recoveryToken: string): string {
+  return `${siteUrl()}${monicaRoutes.recoverOpen}?t=${encodeURIComponent(recoveryToken)}`;
+}
+
 /** First name only, and never empty: some people register with one word. */
 /**
  * The tier line, derived rather than typed.
@@ -433,6 +444,58 @@ export function reissueEmail(params: {
         ),
       ].join(""),
       action: { label: "Open your page", href: params.personalLink },
+    }),
+  };
+}
+
+/**
+ * A self-service recovery link. Closes #206, successor to #78.
+ *
+ * Sent when somebody, hopefully the creator, types this address into the
+ * "lost your link?" form. States plainly that clicking is what does
+ * something, because the mail may have been requested by somebody other
+ * than the creator and the one thing that must be unambiguous is that
+ * reading this mail and doing nothing leaves the working link untouched.
+ *
+ * Unlike reissueEmail, the old link has NOT stopped working yet when this
+ * arrives: rotation happens only on the click, so the mail is careful not to
+ * say otherwise.
+ */
+export function recoveryRequestEmail(params: {
+  to: string;
+  fullName: string;
+  confirmLink: string;
+}): Email {
+  const name = firstName(params.fullName);
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: "Get back into your Monica campaign page",
+    text: [
+      `${name}, somebody asked to get back into your Monica campaign page from this address.`,
+      ``,
+      `If that was you, confirm it here:`,
+      params.confirmLink,
+      ``,
+      `Confirming replaces your old link with a new one; the old one stops working right after. This mail alone changes nothing: if you did not ask for this, ignore it and your existing link keeps working exactly as it does now.`,
+      ``,
+      `The link above expires in 30 minutes and works once.`,
+    ].join("\n"),
+    html: layout({
+      preheader: "Confirm it was you, and this mail alone changes nothing.",
+      heading: `${name}, was this you?`,
+      body: [
+        p(
+          "Somebody asked to get back into your Monica campaign page from this address. If that was you, confirm it below.",
+        ),
+        quiet(
+          "Confirming replaces your old link with a new one; the old one stops working right after you click. Requesting this mail changes nothing on its own: if you did not ask for this, ignore it and your existing link keeps working exactly as it does now.",
+        ),
+        quiet("This link expires in 30 minutes and works once."),
+      ].join(""),
+      action: { label: "Confirm it was me", href: params.confirmLink },
     }),
   };
 }
