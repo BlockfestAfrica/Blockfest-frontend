@@ -36,7 +36,9 @@ export const revalidate = 0;
  *
  * The screens had no shared measure: the queue was max-w-4xl and the
  * participants table was the bare 72rem container, so moving between them
- * jumped the left edge by 128 pixels. One max-w-5xl here settles it.
+ * jumped the left edge by 128 pixels. One measure here settles it; it grew
+ * from max-w-5xl to max-w-7xl once the tables earned the room, and it must
+ * stay ONE measure, whatever it is.
  *
  * The signed-out block was written out twice, once per page, which is two
  * chances for them to drift and two places to remember when a third screen is
@@ -193,7 +195,7 @@ export default async function AdminLayout({
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-5xl px-4 py-8 lg:px-10 lg:py-10">
+        <div className="mx-auto w-full max-w-7xl px-4 py-8 lg:px-10 lg:py-10">
           {children}
         </div>
       </div>

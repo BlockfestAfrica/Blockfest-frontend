@@ -96,7 +96,63 @@ const MESSAGES: Record<string, string> = {
   P0201: "That creator is not in this campaign.",
   P0401: "Only a signed-in admin can do this.",
   P0002: "That campaign does not exist.",
+  P0808: "There is no draft to discard for that week and category.",
 };
+
+const discardSchema = z.object({
+  weekNo: z.number().int().min(1).max(4),
+  category: z.enum(CATEGORIES),
+});
+
+/**
+ * Discard a saved draft. Owners only, same as saving one: the draft is a
+ * provisional money decision, and removing it is part of making it.
+ * Publishing stays immutable; the engine refuses a published slot by name.
+ */
+export async function DELETE(request: NextRequest) {
+  if (!sameOrigin(request)) return FORBIDDEN;
+
+  const admin = await requireAdmin();
+  if (!admin.ok) return FORBIDDEN;
+  if (!isOwner(admin.admin)) return FORBIDDEN;
+
+  const read = await readJsonBody(request);
+  if (!read.ok) {
+    return NextResponse.json(
+      { ok: false, message: "We could not read that." },
+      { status: 400 },
+    );
+  }
+
+  const parsed = discardSchema.safeParse(read.body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, message: parsed.error.issues[0]?.message ?? "Check the request." },
+      { status: 400 },
+    );
+  }
+
+  try {
+    await getDb().execute(
+      sql`SELECT discard_winner_draft(
+            ${MONICA_SLUG}, ${parsed.data.weekNo}::smallint,
+            ${parsed.data.category}::winner_category, ${admin.admin.adminId}::uuid
+          )`,
+    );
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const code = pgErrorCode(error);
+    const known = code ? MESSAGES[code] : undefined;
+    if (known) {
+      return NextResponse.json({ ok: false, message: known }, { status: 400 });
+    }
+    logError("admin/winners discard", error);
+    return NextResponse.json(
+      { ok: false, message: "Something went wrong at our end." },
+      { status: 500 },
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return FORBIDDEN;

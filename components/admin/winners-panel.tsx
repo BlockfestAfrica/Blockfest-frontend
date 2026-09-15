@@ -221,6 +221,28 @@ export function WinnersPanel({
     }
   }
 
+  async function discardDraft() {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/winners", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weekNo, category }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        toast.error(result.message ?? "That did not work.");
+        return;
+      }
+      toast.success("Draft discarded. Nothing was ever public.");
+      await router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function snapshot() {
     setBusy(true);
     try {
@@ -324,13 +346,27 @@ export function WinnersPanel({
                 Not public. Load it below to announce it, or pick somebody
                 else, which replaces this draft when you save.
               </p>
-              <button
-                type="button"
-                onClick={loadDraft}
-                className="mt-3 inline-flex min-h-11 cursor-pointer items-center rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-3"
-              >
-                Load the draft into the form
-              </button>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={loadDraft}
+                  className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-3"
+                >
+                  Load the draft into the form
+                </button>
+                {/* Discarding was previously only possible by overwriting
+                    with a different pick, which forced the wrong name to be
+                    replaced by another name instead of by nothing. */}
+                <Confirm
+                  label="Discard this draft"
+                  question={`Discard the ${CATEGORY_LABEL[category]} draft for week ${weekNo} (${draft.name}, ${naira(draft.prizeNaira)})?`}
+                  consequence="The draft is deleted. It was never public, and announcing this week will start from a blank form."
+                  confirmLabel="Yes, discard it"
+                  intent="danger"
+                  pending={busy}
+                  onConfirm={discardDraft}
+                />
+              </div>
             </div>
           )}
 
