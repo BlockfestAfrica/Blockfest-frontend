@@ -22,6 +22,9 @@ const AWARD_SOURCES = [
   { key: "manual_adjustment", label: "Correction" },
 ] as const;
 
+/** Rows shown before the reader asks for more. */
+const PAGE = 10;
+
 export interface ParticipantRow {
   enrolmentId: string;
   name: string;
@@ -72,8 +75,14 @@ export function ParticipantsTable({
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<SortKey>("joinedAt");
   const [ascending, setAscending] = useState(false);
+  /*
+   * Ten rows at a time, and one window for both shapes: the cards and the
+   * table slice the same array, so the reveal moves them together. Narrowing
+   * or re-sorting resets the window because the question changed.
+   */
+  const [visible, setVisible] = useState(PAGE);
 
-  const shown = useMemo(() => {
+  const matching = useMemo(() => {
     // Searching lives on the page now and runs in the database, so this only
     // narrows by the chips.
     const filtered = rows.filter((row) => {
@@ -98,6 +107,7 @@ export function ParticipantsTable({
       }
     });
   }, [rows, filter, sort, ascending]);
+  const shown = matching.slice(0, visible);
 
   async function submitAward(
     enrolmentId: string,
@@ -147,6 +157,7 @@ export function ParticipantsTable({
   }
 
   function sortBy(key: SortKey) {
+    setVisible(PAGE);
     if (key === sort) {
       setAscending((a) => !a);
       return;
@@ -197,7 +208,10 @@ export function ParticipantsTable({
       <Segmented<Filter>
         legend="Show"
         value={filter}
-        onChange={setFilter}
+        onChange={(next) => {
+          setFilter(next);
+          setVisible(PAGE);
+        }}
         options={[
           { value: "all", label: `Everyone (${counts.all})` },
           { value: "submitted", label: `Submitted (${counts.submitted})` },
@@ -451,6 +465,20 @@ export function ParticipantsTable({
               </tbody>
             </table>
           </div>
+
+          {matching.length > visible ? (
+            <button
+              type="button"
+              onClick={() => setVisible((v) => v + PAGE)}
+              className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
+            >
+              Show more ({matching.length - visible} more)
+            </button>
+          ) : (
+            <p className="mt-3 text-sm text-ink-4">
+              Showing all {matching.length} who match.
+            </p>
+          )}
         </>
       )}
 

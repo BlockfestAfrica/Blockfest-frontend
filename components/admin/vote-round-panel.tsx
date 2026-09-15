@@ -16,6 +16,9 @@ import {
 import { Confirm } from "@/components/shared/confirm";
 import { count, dateTime } from "@/lib/format";
 
+/** Rows shown before the reader asks for more. */
+const PAGE = 10;
+
 export interface RoundView {
   roundId: string;
   status: "draft" | "open" | "closed" | "published";
@@ -85,6 +88,17 @@ export function VoteRoundPanel({
   const [removing, setRemoving] = useState<string | null>(null);
   const [removeReason, setRemoveReason] = useState("");
   const [removeMode, setRemoveMode] = useState<RemoveMode>("fraud");
+  /*
+   * Each list reveals ten rows at a time and keeps its own window, so
+   * opening the long IP list never scrolls the ballot. Ticked nominees are
+   * keyed by entry id, never by position, so a tick out of sight survives
+   * the reveal; the held window only ever grows, so an open reason form
+   * keeps its row.
+   */
+  const [visibleCandidates, setVisibleCandidates] = useState(PAGE);
+  const [visibleDomains, setVisibleDomains] = useState(PAGE);
+  const [visibleIps, setVisibleIps] = useState(PAGE);
+  const [visibleHeld, setVisibleHeld] = useState(PAGE);
 
   const reviewed = Boolean(
     round && (round.reviewedAt || round.status === "published"),
@@ -223,7 +237,7 @@ export function VoteRoundPanel({
             Votes by domain, big consumer providers left out
           </p>
           <dl className="mt-2 divide-y divide-line border-y border-line">
-            {tally.domains.map((d) => (
+            {tally.domains.slice(0, visibleDomains).map((d) => (
               <div
                 key={d.domain}
                 className="flex items-baseline justify-between gap-4 py-2"
@@ -235,6 +249,20 @@ export function VoteRoundPanel({
               </div>
             ))}
           </dl>
+          {tally.domains.length > visibleDomains ? (
+            <button
+              type="button"
+              onClick={() => setVisibleDomains((v) => v + PAGE)}
+              className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
+            >
+              Show more ({tally.domains.length - visibleDomains} more)
+            </button>
+          ) : (
+            <p className="mt-3 text-sm text-ink-4">
+              Showing all {tally.domains.length}{" "}
+              {tally.domains.length === 1 ? "domain" : "domains"}.
+            </p>
+          )}
         </div>
       ) : (
         <p className="text-sm text-ink-3">
@@ -248,7 +276,7 @@ export function VoteRoundPanel({
             Same connection, three votes or more
           </p>
           <dl className="mt-2 divide-y divide-line border-y border-line">
-            {tally.ips.map((ip) => (
+            {tally.ips.slice(0, visibleIps).map((ip) => (
               <div
                 key={ip.ipHash}
                 className="flex items-baseline justify-between gap-4 py-2"
@@ -262,6 +290,20 @@ export function VoteRoundPanel({
               </div>
             ))}
           </dl>
+          {tally.ips.length > visibleIps ? (
+            <button
+              type="button"
+              onClick={() => setVisibleIps((v) => v + PAGE)}
+              className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
+            >
+              Show more ({tally.ips.length - visibleIps} more)
+            </button>
+          ) : (
+            <p className="mt-3 text-sm text-ink-4">
+              Showing all {tally.ips.length}{" "}
+              {tally.ips.length === 1 ? "cluster" : "clusters"}.
+            </p>
+          )}
         </div>
       )}
 
@@ -275,7 +317,7 @@ export function VoteRoundPanel({
             the tally; remove the rest with the reason recorded.
           </p>
           <div className="mt-2 border-b border-line">
-            {tally.held.map((h) => (
+            {tally.held.slice(0, visibleHeld).map((h) => (
               <div key={h.voteId} className="border-t border-line py-3">
                 <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                   <div className="min-w-0">
@@ -396,6 +438,20 @@ export function VoteRoundPanel({
               </div>
             ))}
           </div>
+          {heldCount > visibleHeld ? (
+            <button
+              type="button"
+              onClick={() => setVisibleHeld((v) => v + PAGE)}
+              className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
+            >
+              Show more ({heldCount - visibleHeld} more)
+            </button>
+          ) : (
+            <p className="mt-3 text-sm text-ink-4">
+              Showing all {heldCount} held{" "}
+              {heldCount === 1 ? "vote" : "votes"}.
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -494,7 +550,7 @@ export function VoteRoundPanel({
                 The approved entries of the week, strongest first.
               </p>
               <div className="mt-3 divide-y divide-line border-y border-line">
-                {candidates.map((c) => {
+                {candidates.slice(0, visibleCandidates).map((c) => {
                   const on = selected.includes(c.entryId);
                   return (
                     <label
@@ -520,6 +576,20 @@ export function VoteRoundPanel({
                   );
                 })}
               </div>
+              {candidates.length > visibleCandidates ? (
+                <button
+                  type="button"
+                  onClick={() => setVisibleCandidates((v) => v + PAGE)}
+                  className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
+                >
+                  Show more ({candidates.length - visibleCandidates} more)
+                </button>
+              ) : (
+                <p className="mt-3 text-sm text-ink-4">
+                  Showing all {candidates.length} approved{" "}
+                  {candidates.length === 1 ? "entry" : "entries"}.
+                </p>
+              )}
             </fieldset>
           )}
 

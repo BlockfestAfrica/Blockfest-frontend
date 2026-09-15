@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { JobCard, Pill } from "@/components/shared/panel";
 
+/** Rows shown before the reader asks for more. */
+const PAGE = 10;
+
 export interface RequestRow {
   id: string;
   creatorName: string;
@@ -30,6 +33,13 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  /*
+   * Ten at a time. Each request carries a quoted reason and two buttons, so
+   * a backlog rendered whole buries the card below it. Reveal keeps the
+   * admin's place while they work down the list.
+   */
+  const [visible, setVisible] = useState(PAGE);
+  const shown = requests.slice(0, visible);
 
   async function decide(id: string, approve: boolean, decisionNote = "") {
     setBusy(id);
@@ -71,7 +81,7 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
       hint="Each of these creators is stuck: their submissions are checked against the old handle until you decide. Approving applies the change through the same audited path as a direct fix."
     >
       <ul className="flex flex-col gap-4">
-        {requests.map((request) => (
+        {shown.map((request) => (
           <li
             key={request.id}
             className="rounded-lg border border-line p-4"
@@ -155,6 +165,19 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
           </li>
         ))}
       </ul>
+      {requests.length > visible ? (
+        <button
+          type="button"
+          onClick={() => setVisible((v) => v + PAGE)}
+          className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
+        >
+          Show more ({requests.length - visible} more)
+        </button>
+      ) : (
+        <p className="mt-3 text-sm text-ink-4">
+          Showing all {requests.length} requests.
+        </p>
+      )}
     </JobCard>
   );
 }

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/session";
 import { decidedSubmissions } from "@/lib/admin/review";
-import { PageHeader, Pill } from "@/components/shared/panel";
+import { PageHeader } from "@/components/shared/panel";
+import { DecidedList } from "@/components/admin/decided-list";
+import { dateTime } from "@/lib/format";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 
 export const metadata: Metadata = {
@@ -47,53 +49,20 @@ export default async function DecidedPage() {
           Nothing decided yet.
         </p>
       ) : (
-        <ul className="mt-6 divide-y divide-line overflow-hidden rounded-xl border border-line">
-          {decided.map((item) => (
-            <li
-              key={item.id}
-              /* The status spine: the same 2px edge the queue, the job cards
-                 and the rail speak. Scanned down the column it answers the
-                 screen's one question, which of these was a mis-tap, without
-                 reading a single pill. */
-              className={`border-l-2 p-4 ${
-                item.status === "approved"
-                  ? "border-l-green-400/70"
-                  : "border-l-red-400/70"
-              }`}
-            >
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <Pill tone={item.status === "approved" ? "good" : "bad"}>
-                  {item.status === "approved" ? "Approved" : "Rejected"}
-                </Pill>
-                <span className="text-base font-semibold text-white">
-                  {item.creatorName}
-                </span>
-                <span className="text-sm text-ink-3">
-                  W{item.weekNo} ·{" "}
-                  {platformLabels[item.platform as CampaignPlatform] ??
-                    item.platform}
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-ink-3">
-                {item.reviewerEmail ?? "reviewer no longer listed"}
-                {item.reviewedAt
-                  ? ` · ${item.reviewedAt.toLocaleString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      hour: "numeric",
-                      minute: "2-digit",
-                      timeZone: "Africa/Lagos",
-                    })}`
-                  : ""}
-              </p>
-              {item.reviewNote && (
-                <p className="mt-2 border-l-2 border-line-2 pl-3 text-sm leading-relaxed text-ink-2">
-                  {item.reviewNote}
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
+        <DecidedList
+          items={decided.map((item) => ({
+            id: item.id,
+            status: item.status,
+            creatorName: item.creatorName,
+            weekNo: item.weekNo,
+            platformLabel:
+              platformLabels[item.platform as CampaignPlatform] ??
+              item.platform,
+            reviewerEmail: item.reviewerEmail,
+            reviewedAtLabel: item.reviewedAt ? dateTime(item.reviewedAt) : null,
+            reviewNote: item.reviewNote,
+          }))}
+        />
       )}
 
       {/* Honest about what "changing a decision" actually does. There is no

@@ -10,6 +10,9 @@ interface LiveResource {
   url: string | null;
 }
 
+/** Rows shown before the reader asks for more. */
+const PAGE = 10;
+
 /**
  * Resources the team publishes without a deploy (#70).
  *
@@ -21,9 +24,14 @@ interface LiveResource {
  *
  * Renders nothing at all until there is something to show: an empty heading
  * would read as a broken section on the page creators keep open all week.
+ *
+ * Ten rows at a time, because the console can keep adding resources without
+ * a deploy, so nothing bounds this list, and every extra row pushes whatever
+ * follows it further down that same page.
  */
 export function LiveResources() {
   const [rows, setRows] = useState<LiveResource[]>([]);
+  const [visible, setVisible] = useState(PAGE);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,13 +50,15 @@ export function LiveResources() {
 
   if (rows.length === 0) return null;
 
+  const shown = rows.slice(0, visible);
+
   return (
     <section aria-labelledby="live-resources" className="mt-12">
       <h2 id="live-resources" className="text-xl font-bold text-white">
         Resources
       </h2>
       <ul className="mt-4 flex flex-col gap-3">
-        {rows.map((row) => (
+        {shown.map((row) => (
           <li
             key={`${row.section}-${row.title}`}
             className="rounded-xl border border-line bg-card p-4"
@@ -74,6 +84,19 @@ export function LiveResources() {
           </li>
         ))}
       </ul>
+      {rows.length > visible ? (
+        <button
+          type="button"
+          onClick={() => setVisible((v) => v + PAGE)}
+          className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
+        >
+          Show more ({rows.length - visible} more)
+        </button>
+      ) : (
+        <p className="mt-3 text-sm text-ink-4">
+          Showing all {rows.length} resources.
+        </p>
+      )}
     </section>
   );
 }
