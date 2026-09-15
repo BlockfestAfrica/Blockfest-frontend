@@ -63,6 +63,16 @@ export interface CollectedItem {
 
 export const monicaPrivacyCollected: CollectedItem[] = [
   {
+    what: "How pages are used, and a visit counter",
+    why: "A privacy-friendly measurement script counts page views so we know which parts of the campaign people actually reach. It runs on public pages only: never on your own page, the entry links, the registration result or the console, because those carry your details or your sign-in link. It stores a random identifier in your browser to tell a returning visit from a new one, and no advertising network receives it.",
+    automatic: true,
+  },
+  {
+    what: "Cookies this site sets",
+    why: "A sign-in cookie that keeps you on your own page after you open your personal link, a short-lived cookie while you confirm that link, and a referral cookie if you arrived through somebody's code. They are read by this site only, and nothing here is sold or shared for advertising.",
+    automatic: true,
+  },
+  {
     what: "Your name",
     why: "To identify your entries, announce winners, and pay a prize to the right person.",
   },

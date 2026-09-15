@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
    * Recorded in audit_log, not only in stdout.
    *
    * This mints a working session for a named creator from nothing but their
-   * email address, and it is open to reviewers as well as owners. A stdout line
+   * email address, and it is owner-only. A stdout line
    * is not a record: it is not queryable, it is not retained with the campaign,
    * and it is not what a dispute about who entered what gets answered from.
    * Every other action that moves a creator's standing writes an audit row, and

@@ -348,3 +348,21 @@ describe("the referral wiring", () => {
     );
   });
 });
+
+describe("a pasted URL names the author, not the post", () => {
+  it("takes the first path segment, where every platform puts the handle", () => {
+    // Taking the last segment registered "123" from a status URL: it
+    // passes the shape check, so nothing told the creator, and their
+    // entries then failed the wrong-account test against a post id.
+    expect(canonicalHandle("https://x.com/realcreator/status/123")).toBe("realcreator");
+    expect(canonicalHandle("https://www.tiktok.com/@creator/video/456")).toBe("creator");
+    expect(canonicalHandle("https://instagram.com/someone/p/abc")).toBe("someone");
+  });
+
+  it("leaves the simple forms alone", () => {
+    expect(canonicalHandle("@Name")).toBe("name");
+    expect(canonicalHandle("https://x.com/justme")).toBe("justme");
+    expect(canonicalHandle("x.com/barehost")).toBe("barehost");
+    expect(canonicalHandle("plain")).toBe("plain");
+  });
+});
