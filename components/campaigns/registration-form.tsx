@@ -504,8 +504,9 @@ export function RegistrationForm({
           You are in, {done.name.split(" ")[0]}
         </p>
         <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-2">
-          The first challenge is on the campaign page. Publish your entry on
-          your own account, then come back and submit the link.
+          Your page has this week&apos;s challenge and the box you paste your
+          link into. Publish your entry on your own account first, then send
+          us the link from there.
         </p>
 
         {/* Shown once, and genuinely once.
@@ -522,13 +523,28 @@ export function RegistrationForm({
             <p className="text-base font-bold text-white">
               Save this link. It is shown once.
             </p>
+            {/* Two sentences here were false, and this is the thirty
+                seconds in which somebody decides whether to bother saving
+                anything. The link IS emailed, a few lines above this in
+                the route, and losing it is now self-service. Claiming to be
+                unable to resend it, beside an inbox that already has it,
+                teaches people the product does not know itself. */}
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
               It opens your own page, where your points and entries live and
-              where you will submit each entry. We store only a fingerprint of
-              it, so we cannot send it to you again. Bookmark it, or send it to
-              yourself now. If you do lose it, write to
-              partnership@blockfestafrica.com from the address you registered
-              with and we will issue a new one.
+              where you send each entry. We have emailed it to you as well, so
+              it is in your inbox already. Bookmark it, or keep that email.
+            </p>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
+              Lose both and the{" "}
+              <Link
+                href={monicaRoutes.recover}
+                className="text-link underline underline-offset-2 hover:text-white"
+              >
+                Lost your link
+              </Link>{" "}
+              page mails a fresh one to that same address. We store only a
+              fingerprint of this link, so nobody can read it back to you,
+              which is why a new one is the only way.
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
               <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-line-2 bg-ground px-4 py-3 text-sm text-white">
