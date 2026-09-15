@@ -17,6 +17,8 @@ interface LiveWeek {
   title: string;
   description: string;
   basePoints: number;
+  /** Present so the pre-launch "upcoming" reveal can say when it opens. */
+  startsAt: string;
   endsAt: string;
 }
 
@@ -55,6 +57,7 @@ export function MonicaStages() {
             title: String(row.title ?? ""),
             description: String(row.description ?? ""),
             basePoints: Number(row.basePoints ?? 100),
+            startsAt: String(row.startsAt ?? ""),
             endsAt: String(row.endsAt ?? ""),
           };
         }
@@ -226,6 +229,16 @@ export function MonicaStages() {
                               ))}
 
                               <dl className="mt-5 space-y-1 border-t border-line pt-4 text-sm">
+                                {week.status === "upcoming" && week.startsAt && (
+                                  <div className="flex flex-wrap gap-x-2">
+                                    <dt className="font-semibold text-white">
+                                      Opens:
+                                    </dt>
+                                    <dd className="tabular-nums text-ink-2">
+                                      {closingAt(week.startsAt)}, Lagos time.
+                                    </dd>
+                                  </div>
+                                )}
                                 <div className="flex flex-wrap gap-x-2">
                                   <dt className="font-semibold text-white">
                                     Points:

@@ -46,20 +46,33 @@ export async function GET() {
      * what the week expects, and a brief only participants can read is a
      * campaign that looks empty from the outside. What stays hidden is
      * unchanged: drafts, and any week whose window has not opened.
+     *
+     * With one exception, learned the day the restructure moved launch two
+     * days out: BEFORE the campaign's first window opens, the earliest
+     * published week is revealed as "upcoming". The team publishes stage 1
+     * ahead of launch on purpose; the first challenge is the campaign's own
+     * advertisement, and hiding it until midnight hides the thing
+     * registration is selling. The exception closes itself the moment any
+     * window opens, so stages 2 to 4 still surface only on their Monday.
      */
-    const started = rows
-      .filter((row) => row.startsAt.getTime() <= now)
-      .map((row) => ({
-        weekNo: row.weekNo,
-        status:
-          row.status === "closed" || row.endsAt.getTime() < now
+    const visible = rows.filter((row) => row.startsAt.getTime() <= now);
+    const nothingStartedYet = visible.length === 0 && rows.length > 0;
+    if (nothingStartedYet) visible.push(rows[0]);
+
+    const started = visible.map((row) => ({
+      weekNo: row.weekNo,
+      status:
+        row.startsAt.getTime() > now
+          ? "upcoming"
+          : row.status === "closed" || row.endsAt.getTime() < now
             ? "closed"
             : "active",
-        title: row.title,
-        description: row.description,
-        basePoints: row.basePoints,
-        endsAt: row.endsAt.toISOString(),
-      }));
+      title: row.title,
+      description: row.description,
+      basePoints: row.basePoints,
+      startsAt: row.startsAt.toISOString(),
+      endsAt: row.endsAt.toISOString(),
+    }));
 
     return NextResponse.json(
       { ok: true, challenges: started },
