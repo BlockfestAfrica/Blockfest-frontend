@@ -23,8 +23,15 @@ const FORBIDDEN = NextResponse.json({ ok: false, message: "Not allowed." }, { st
 
 const schema = z.object({
   challengeId: z.string().uuid(),
-  title: z.string().trim().max(120).optional(),
-  description: z.string().trim().max(2000).optional(),
+  title: z.string().trim().max(120, "The title fits in 120 characters.").optional(),
+  description: z
+    .string()
+    .trim()
+    .max(
+      2000,
+      "The brief fits in 2,000 characters. Trim it, and put the long version in the Creator Pack.",
+    )
+    .optional(),
   basePoints: z.number().int().positive().max(10_000).optional(),
   status: z.enum(["draft", "active", "closed"]).optional(),
   startsAt: z.string().datetime({ offset: true }).optional(),

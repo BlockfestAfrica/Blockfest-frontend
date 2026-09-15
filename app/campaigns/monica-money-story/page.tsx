@@ -118,12 +118,17 @@ export default function MonicaMoneyStoryPage() {
                   opensLabel={OPENS_LABEL}
                 />
               )}
-              <Link
+              {/* A plain anchor: the pack is an external doc, and Next's
+                  Link buys nothing for an off-site URL. New tab, so the
+                  campaign page stays where the reader left it. */}
+              <a
                 href={monicaRoutes.pack}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
               >
                 See the Creator Pack
-              </Link>
+              </a>
               <Link
                 href={monicaRoutes.leaderboard}
                 className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"

@@ -208,9 +208,9 @@ export const monicaRoutes = {
   /** Referral entry point. Sets the ref cookie, then forwards to register. */
   join: `/campaigns/${MONICA_SLUG}/join`,
   rules: `/campaigns/${MONICA_SLUG}/rules`,
-  /* The pack page is retired; an external doc link lands here when the
-     team shares it. "#" keeps every "Creator Pack" link inert until then. */
-  pack: "#",
+  /* The pack page is retired; the pack lives in the team's shared doc.
+     External, so every consumer renders it target _blank. */
+  pack: "https://app.notion.com/p/MONICA-THE-MONEY-STORY-3dbd155078a180a6b1a3e811f433b0ab",
   privacy: `/campaigns/${MONICA_SLUG}/privacy`,
   /** Resolves an access token from a link and asks whose account it opens. */
   enter: `/campaigns/${MONICA_SLUG}/enter`,
