@@ -7,7 +7,8 @@ import {
   campaignMetrics,
   weeklyActivity,
 } from "@/lib/admin/metrics";
-import { Pill, SectionCard, Stat } from "@/components/shared/panel";
+import { SectionCard, Stat } from "@/components/shared/panel";
+import { AddressClusters } from "@/components/admin/address-clusters";
 import { SABILYTICS_SHARE_URL } from "@/lib/sabilytics";
 
 export const metadata: Metadata = {
@@ -165,21 +166,13 @@ export default async function OverviewPage() {
               cannot.
             </p>
           </details>
-          <ul className="mt-4 divide-y divide-line overflow-hidden rounded-lg border border-line">
-            {clusters.map((cluster) => (
-              <li key={cluster.ip} className="p-4">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-mono text-sm text-ink-2">
-                    {cluster.ip}
-                  </span>
-                  <Pill tone="bad">{cluster.creators} creators</Pill>
-                </div>
-                <p className="mt-1 text-sm text-ink-3">
-                  {cluster.names.join(", ")}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <AddressClusters
+            clusters={clusters.map((cluster) => ({
+              ip: cluster.ip,
+              creators: cluster.creators,
+              names: cluster.names,
+            }))}
+          />
         </SectionCard>
       )}
 

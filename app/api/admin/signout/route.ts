@@ -55,9 +55,30 @@ export async function POST(request: NextRequest) {
   let ok = true;
   if (looksLikeAdminSessionToken(token)) {
     try {
-      await getDb().execute(
-        sql`DELETE FROM admin_sessions WHERE token_hash = ${hashAdminSessionToken(token)}`,
+      /*
+       * RETURNING, because the row is the last thing that knows whose
+       * session this was: the audit trail wants "session ended at T" so a
+       * stolen-cookie timeline can say whether use continued past the
+       * owner's own sign-out. Fail-soft on the audit write itself; the
+       * delete is the security action and it has already happened.
+       */
+      const gone = await getDb().execute(
+        sql`DELETE FROM admin_sessions
+             WHERE token_hash = ${hashAdminSessionToken(token)}
+             RETURNING admin_id, id`,
       );
+      const row = (gone.rows?.[0] ?? null) as {
+        admin_id?: string;
+        id?: string;
+      } | null;
+      if (row?.admin_id) {
+        await getDb()
+          .execute(
+            sql`INSERT INTO audit_log (actor_admin_id, action, entity_type, entity_id)
+                VALUES (${row.admin_id}::uuid, 'admin.signed_out', 'admin_session', ${row.id ?? null}::uuid)`,
+          )
+          .catch((error) => logError("admin/signout audit", error));
+      }
     } catch (error) {
       ok = false;
       logError("admin/signout", error);

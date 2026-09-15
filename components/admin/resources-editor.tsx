@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buttonClass, control, Field, JobCard, Pill } from "@/components/shared/panel";
 
+/** Rows shown before the reader asks for more. */
+const PAGE = 10;
+
 export interface ResourceRow {
   id: string;
   section: string;
@@ -29,6 +32,12 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
   const [form, setForm] = useState(EMPTY);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  /*
+   * Ten at a time, because a season's worth of resources buries the add
+   * form below the fold on a phone. The window only grows, so an open
+   * editor keeps its place.
+   */
+  const [visible, setVisible] = useState(PAGE);
 
   function startEditing(row: ResourceRow) {
     setForm({
@@ -106,7 +115,7 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
       hint="Links and notes under Resources on the campaign landing page, live within a minute of saving, no deploy. Plain text only: anything that looks like HTML renders as the characters themselves, on purpose. Links must be https."
     >
       <ul className="flex flex-col gap-2">
-        {rows.map((row) => (
+        {rows.slice(0, visible).map((row) => (
           <li key={row.id} className="rounded-lg border border-line p-4">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-semibold text-white">{row.title}</span>
@@ -139,6 +148,22 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
           <li className="text-sm text-ink-3">Nothing yet. Add the first one below.</li>
         )}
       </ul>
+      {rows.length > visible ? (
+        <button
+          type="button"
+          onClick={() => setVisible((v) => v + PAGE)}
+          className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
+        >
+          Show more ({rows.length - visible} more)
+        </button>
+      ) : (
+        rows.length > 0 && (
+          <p className="mt-3 text-sm text-ink-4">
+            Showing all {rows.length}{" "}
+            {rows.length === 1 ? "resource" : "resources"}.
+          </p>
+        )
+      )}
 
       {open ? (
         <div className="mt-4 flex flex-col gap-4 rounded-lg border border-line p-4">

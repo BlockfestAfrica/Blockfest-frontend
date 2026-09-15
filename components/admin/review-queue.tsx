@@ -13,6 +13,9 @@ import {
 import { Pill } from "@/components/shared/panel";
 import { toast } from "sonner";
 
+/** Rows shown before the reviewer asks for more. */
+const PAGE = 10;
+
 export interface QueueItem {
   id: string;
   url: string;
@@ -64,6 +67,13 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [open, setOpen] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  /*
+   * Ten rows at a time, revealed rather than paged. The server loads up to
+   * fifty, and fifty coloured edges on a phone are a wall again. Reveal
+   * keeps the reviewer's place in a queue they work oldest first.
+   */
+  const [visible, setVisible] = useState(PAGE);
+  const shown = items.slice(0, visible);
 
   async function decide(id: string, decision: "approved" | "rejected") {
     const note = notes[id]?.trim() ?? "";
@@ -128,154 +138,169 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
   }
 
   return (
-    <ul className="mt-6 divide-y divide-line overflow-hidden rounded-xl border border-line">
-      {items.map((item) => {
-        const isOpen = open === item.id;
-        return (
-          <li
-            key={item.id}
-            /*
-             * The attribution state as a left edge.
-             *
-             * Green means the server could match the link's author to the
-             * registered handle. Amber means it could not and a human has to.
-             * As an edge it can be scanned down the column at a glance, which
-             * a sentence in the middle of a row cannot be.
-             */
-            className={`border-l-2 ${
-              item.autoChecked ? "border-l-green-400/70" : "border-l-amber-400"
-            }`}
-          >
-            <button
-              type="button"
-              onClick={() => start(item)}
-              aria-expanded={isOpen}
-              className="flex min-h-16 w-full cursor-pointer items-center gap-3 py-3 pl-4 pr-3 text-left transition-colors hover:bg-card"
+    <>
+      <ul className="mt-6 divide-y divide-line overflow-hidden rounded-xl border border-line">
+        {shown.map((item) => {
+          const isOpen = open === item.id;
+          return (
+            <li
+              key={item.id}
+              /*
+               * The attribution state as a left edge.
+               *
+               * Green means the server could match the link's author to the
+               * registered handle. Amber means it could not and a human has to.
+               * As an edge it can be scanned down the column at a glance, which
+               * a sentence in the middle of a row cannot be.
+               */
+              className={`border-l-2 ${
+                item.autoChecked ? "border-l-green-400/70" : "border-l-amber-400"
+              }`}
             >
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-base font-semibold text-white">
-                  {item.creatorName}
-                </span>
-                <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-3">
-                  {item.registeredHandle ? (
-                    /* Ink, not gold. Gold is the accent and an accent on
-                       every row of the busiest screen is no accent; the
-                       handle is metadata the eye compares, not a status. */
-                    <span className="truncate font-mono text-ink-2">
-                      @{item.registeredHandle}
+              <button
+                type="button"
+                onClick={() => start(item)}
+                aria-expanded={isOpen}
+                className="flex min-h-16 w-full cursor-pointer items-center gap-3 py-3 pl-4 pr-3 text-left transition-colors hover:bg-card"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-base font-semibold text-white">
+                    {item.creatorName}
+                  </span>
+                  <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-3">
+                    {item.registeredHandle ? (
+                      /* Ink, not gold. Gold is the accent and an accent on
+                         every row of the busiest screen is no accent; the
+                         handle is metadata the eye compares, not a status. */
+                      <span className="truncate font-mono text-ink-2">
+                        @{item.registeredHandle}
+                      </span>
+                    ) : (
+                      <Pill tone="bad">no handle</Pill>
+                    )}
+                    {item.contested && (
+                      /*
+                       * Two creators claim this exact post; approving pays only
+                       * the first. On the meta row rather than inside the
+                       * truncating name span, where a long name swallowed the
+                       * one flag a reviewer must not miss.
+                       */
+                      <Pill tone="warn">Contested</Pill>
+                    )}
+                    <span>
+                      W{item.weekNo} · {item.platformLabel}
                     </span>
-                  ) : (
-                    <Pill tone="bad">no handle</Pill>
-                  )}
-                  {item.contested && (
-                    /*
-                     * Two creators claim this exact post; approving pays only
-                     * the first. On the meta row rather than inside the
-                     * truncating name span, where a long name swallowed the
-                     * one flag a reviewer must not miss.
-                     */
-                    <Pill tone="warn">Contested</Pill>
-                  )}
-                  <span>
-                    W{item.weekNo} · {item.platformLabel}
                   </span>
                 </span>
-              </span>
-              <WaitedFor since={item.submittedAt} />
-              <ChevronDown
-                className={`h-4 w-4 shrink-0 text-ink-3 transition-transform ${
-                  isOpen ? "rotate-180" : ""
-                }`}
-                aria-hidden="true"
-              />
-            </button>
+                <WaitedFor since={item.submittedAt} />
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-ink-3 transition-transform ${
+                    isOpen ? "rotate-180" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
 
-            {isOpen && (
-              <div className="border-t border-line bg-card p-4">
-                {item.autoChecked ? (
-                  <p className="flex items-center gap-2 text-sm text-green-300">
-                    <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    The link names this account. Still open it and check it
-                    answers the challenge.
-                  </p>
-                ) : (
-                  <p className="flex items-start gap-2 text-sm text-amber-300">
-                    <ShieldAlert
-                      className="mt-0.5 h-4 w-4 shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span>
-                      This link does not name its author. Open it and confirm it
-                      is the account above.
-                    </span>
-                  </p>
-                )}
+              {isOpen && (
+                <div className="border-t border-line bg-card p-4">
+                  {item.autoChecked ? (
+                    <p className="flex items-center gap-2 text-sm text-green-300">
+                      <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      The link names this account. Still open it and check it
+                      answers the challenge.
+                    </p>
+                  ) : (
+                    <p className="flex items-start gap-2 text-sm text-amber-300">
+                      <ShieldAlert
+                        className="mt-0.5 h-4 w-4 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>
+                        This link does not name its author. Open it and confirm it
+                        is the account above.
+                      </span>
+                    </p>
+                  )}
 
-                <p className="mt-1 text-sm text-ink-3">{item.challengeTitle}</p>
+                  <p className="mt-1 text-sm text-ink-3">{item.challengeTitle}</p>
 
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                  <code className="min-w-0 flex-1 break-all rounded-lg border border-line bg-ground px-4 py-3 text-sm leading-relaxed text-ink-2">
-                    {item.url}
-                  </code>
-                  <button
-                    type="button"
-                    onClick={() => start(item)}
-                    className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-line-2 px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-card-3"
-                  >
-                    {copied === item.id ? (
-                      <Check className="h-4 w-4" aria-hidden="true" />
-                    ) : (
-                      <Copy className="h-4 w-4" aria-hidden="true" />
-                    )}
-                    {copied === item.id ? "Copied" : "Copy"}
-                  </button>
-                </div>
-
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <label htmlFor={`note-${item.id}`} className="sr-only">
-                    Reason, required to reject
-                  </label>
-                  <input
-                    id={`note-${item.id}`}
-                    value={notes[item.id] ?? ""}
-                    onChange={(e) =>
-                      setNotes((n) => ({ ...n, [item.id]: e.target.value }))
-                    }
-                    maxLength={500}
-                    placeholder="Reason, required to reject. The creator sees it."
-                    className="min-w-0 flex-1 rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-3"
-                  />
-                  {/* Separated, and reject sits on the far side. They were
-                      adjacent, the same size and the same shape, each flex-1
-                      under one thumb, with approve firing immediately and
-                      irreversibly. */}
-                  <div className="flex shrink-0 gap-2">
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <code className="min-w-0 flex-1 break-all rounded-lg border border-line bg-ground px-4 py-3 text-sm leading-relaxed text-ink-2">
+                      {item.url}
+                    </code>
                     <button
                       type="button"
-                      disabled={busy === item.id}
-                      onClick={() => decide(item.id, "approved")}
-                      className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-[background-color,transform] duration-150 hover:bg-green-400/25 active:scale-[0.98] disabled:opacity-60 sm:flex-none"
+                      onClick={() => start(item)}
+                      className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-line-2 px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-card-3"
                     >
-                      <Check className="h-4 w-4" aria-hidden="true" />
-                      {busy === item.id ? "Approving…" : "Approve"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy === item.id}
-                      onClick={() => decide(item.id, "rejected")}
-                      className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-[background-color,transform] duration-150 hover:bg-red-400/15 active:scale-[0.98] disabled:opacity-60"
-                    >
-                      <X className="h-4 w-4" aria-hidden="true" />
-                      Reject
+                      {copied === item.id ? (
+                        <Check className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <Copy className="h-4 w-4" aria-hidden="true" />
+                      )}
+                      {copied === item.id ? "Copied" : "Copy"}
                     </button>
                   </div>
+
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <label htmlFor={`note-${item.id}`} className="sr-only">
+                      Reason, required to reject
+                    </label>
+                    <input
+                      id={`note-${item.id}`}
+                      value={notes[item.id] ?? ""}
+                      onChange={(e) =>
+                        setNotes((n) => ({ ...n, [item.id]: e.target.value }))
+                      }
+                      maxLength={500}
+                      placeholder="Reason, required to reject. The creator sees it."
+                      className="min-w-0 flex-1 rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-3"
+                    />
+                    {/* Separated, and reject sits on the far side. They were
+                        adjacent, the same size and the same shape, each flex-1
+                        under one thumb, with approve firing immediately and
+                        irreversibly. */}
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        type="button"
+                        disabled={busy === item.id}
+                        onClick={() => decide(item.id, "approved")}
+                        className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-[background-color,transform] duration-150 hover:bg-green-400/25 active:scale-[0.98] disabled:opacity-60 sm:flex-none"
+                      >
+                        <Check className="h-4 w-4" aria-hidden="true" />
+                        {busy === item.id ? "Approving…" : "Approve"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy === item.id}
+                        onClick={() => decide(item.id, "rejected")}
+                        className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-[background-color,transform] duration-150 hover:bg-red-400/15 active:scale-[0.98] disabled:opacity-60"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                        Reject
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {items.length > visible ? (
+        <button
+          type="button"
+          onClick={() => setVisible((v) => v + PAGE)}
+          className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
+        >
+          Show more ({items.length - visible} more)
+        </button>
+      ) : (
+        <p className="mt-3 text-sm text-ink-4">
+          Showing all {items.length} submissions loaded here.
+        </p>
+      )}
+    </>
   );
 }
 

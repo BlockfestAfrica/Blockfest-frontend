@@ -95,8 +95,8 @@ export default async function AdminQueuePage({
 
       {queue.length < shownOf && (
         <p className="mt-3 text-sm text-ink-3">
-          Oldest first. Showing {queue.length} of {shownOf}. Decide these and
-          the next {PAGE_SIZE} appear.
+          Oldest first. This page holds {queue.length} of {shownOf}. Decide
+          these and the next {PAGE_SIZE} appear.
         </p>
       )}
       {total > 0 && (
