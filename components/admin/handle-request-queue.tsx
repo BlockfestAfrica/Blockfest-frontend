@@ -15,6 +15,8 @@ export interface RequestRow {
   platform: string;
   oldHandle: string;
   requestedHandle: string;
+  /** Another creator already holds it. The approval is refused (P0911). */
+  takenBy: string | null;
   reason: string;
   createdAt: string;
 }
@@ -114,6 +116,18 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
               <span className="mx-2 text-ink-4">to</span>
               <span className="text-brand-gold">@{request.requestedHandle}</span>
             </p>
+
+            {/* The fact the reviewer needs and never had. 0034 removed
+                handle verification and named this person as the defence
+                against squatting; deciding without knowing the handle is
+                already somebody's account is deciding blind. */}
+            {request.takenBy && (
+              <p className="mt-2 rounded-lg border border-red-400/40 bg-red-400/5 px-3 py-2 text-sm text-red-200">
+                @{request.requestedHandle} is already registered to{" "}
+                <strong className="font-semibold">{request.takenBy}</strong>.
+                Approving is refused while that is true.
+              </p>
+            )}
 
             {/* The creator's own words, quoted rather than paraphrased,
                 because they are what is being judged. */}

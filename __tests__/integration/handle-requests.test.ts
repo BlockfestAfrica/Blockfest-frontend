@@ -257,3 +257,40 @@ describe("the decision binds to what the owner saw", () => {
     ).resolves.toBeTruthy();
   });
 });
+
+describe("a handle change cannot take somebody else's handle", () => {
+  it("refuses at filing time, so the queue never fills with the ungrantable", async () => {
+    const victim = await enrolWith("bigcreator");
+    const squatter = await enrolWith("nobody");
+    void victim;
+
+    await expect(file(squatter, "bigcreator")).rejects.toThrow(/handle_taken/);
+  });
+
+  it("refuses the approval too, which is the check that binds", async () => {
+    // Filed while the handle was free, approved after somebody took it:
+    // the guard lives in correct_social_handle because that is the one
+    // statement every change passes through.
+    const squatter = await enrolWith("nobody2");
+    await file(squatter, "laterclaimed");
+    const request = await one<{ id: string }>(
+      `SELECT id FROM handle_change_requests WHERE campaign_creator_id = '${squatter}'`,
+    );
+    await enrolWith("laterclaimed");
+
+    await expect(
+      decide(request.id, true, "", adminId, "laterclaimed"),
+    ).rejects.toThrow(/handle_taken/);
+  });
+
+  it("still lets a creator correct their own typo", async () => {
+    const me = await enrolWith("mytpyo");
+    await file(me, "mytypo");
+    const request = await one<{ id: string }>(
+      `SELECT id FROM handle_change_requests WHERE campaign_creator_id = '${me}'`,
+    );
+    await expect(
+      decide(request.id, true, "", adminId, "mytypo"),
+    ).resolves.toBeTruthy();
+  });
+});
