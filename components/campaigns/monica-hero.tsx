@@ -92,6 +92,24 @@ export function MonicaHero() {
                 Leaderboard
               </Link>
             </div>
+
+            {/* The door for somebody who has already joined.
+                Registering was reachable three ways and coming BACK was
+                reachable none: the only visible door for a returning
+                creator was "Lost your link?", which rotates their token
+                and kills the welcome email they were told to keep. This
+                is the daily-use path for five weeks. Safe signed out:
+                the page renders its own locked state with a way back. */}
+            <p className="mt-4 text-sm text-ink-3">
+              Already registered?{" "}
+              <Link
+                href={monicaRoutes.me}
+                className="font-semibold text-link underline underline-offset-4 hover:text-white"
+              >
+                Open your page
+              </Link>{" "}
+              to see this week&apos;s challenge and send your entry.
+            </p>
           </div>
 
           <div className="lg:col-span-5">

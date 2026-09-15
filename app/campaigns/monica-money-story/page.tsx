@@ -159,6 +159,16 @@ export default function MonicaMoneyStoryPage() {
               >
                 Privacy notice
               </Link>
+              {/* Your page BEFORE Lost your link, deliberately: recovery
+                  rotates the token and kills the welcome email's link, so
+                  it must not be the first thing a returning creator
+                  reaches for. */}
+              <Link
+                href={monicaRoutes.me}
+                className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+              >
+                Your page
+              </Link>
               <Link
                 href={monicaRoutes.recover}
                 className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"

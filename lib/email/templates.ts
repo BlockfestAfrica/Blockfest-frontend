@@ -1136,6 +1136,84 @@ export function handleFixAckEmail(params: {
 }
 
 /**
+ * A new stage is live.
+ *
+ * The one email the campaign promised and never had. Every other template
+ * here is reactive: it fires because a creator did something, or because
+ * an admin did something to them. Nothing fired because the CAMPAIGN
+ * moved, so "a new challenge drops with every stage" was delivered by no
+ * channel at all, and four Mondays of retention rested on people
+ * remembering to open a bookmarked link.
+ *
+ * Links the page, NOT a personal link, and that is a constraint rather
+ * than a choice: only a hash of each creator's token is stored, so no
+ * bulk sender can rebuild one. Which is the right answer anyway. A
+ * signed-in creator lands on their page; anybody else meets the locked
+ * screen, which already offers a way back. It also means this, the only
+ * mail the campaign sends to everybody at once, carries no credential.
+ *
+ * The brief is the admin's own words from the console, not a registry
+ * copy, so it cannot go stale beside what the landing page shows.
+ */
+export function challengeLiveEmail(params: {
+  to: string;
+  fullName: string;
+  weekNo: number;
+  title: string;
+  /** The question line, when the console has one. */
+  question?: string | null;
+  /** The brief as written in the console. Trimmed to a readable opening;
+      the full text lives on the page the button opens. */
+  brief: string;
+  basePoints: number;
+  /** Already formatted for Lagos, e.g. "Saturday, 3 October, 12:00 pm". */
+  closesAtLagos: string;
+  /** The tokenless page. See the note above on why it is not a link. */
+  pageUrl: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const opening = params.brief.trim().split(/\n{2,}/)[0]?.slice(0, 400) ?? "";
+  const headline = params.question?.trim() || params.title;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `Stage ${params.weekNo} is live: ${params.title}`,
+    text: [
+      `${name}, stage ${params.weekNo} is open.`,
+      ``,
+      `${params.title}: ${headline}`,
+      ``,
+      opening,
+      ``,
+      `Worth ${params.basePoints} points for completing it, and more for posting the same piece on more than one platform.`,
+      `Submissions close ${params.closesAtLagos}, Lagos time.`,
+      ``,
+      `Publish on your own account, then paste the link on your page:`,
+      params.pageUrl,
+    ].join("\n"),
+    html: layout({
+      preheader: `${params.title}. Closes ${params.closesAtLagos}, Lagos time.`,
+      heading: `Stage ${params.weekNo} is live, ${name}`,
+      body: [
+        p(`<strong>${escape(params.title)}</strong>`),
+        p(escape(headline)),
+        opening ? p(escape(opening)) : "",
+        boxed("Closes", `${params.closesAtLagos}, Lagos time`),
+        p(
+          `Worth <strong>${params.basePoints} points</strong> for completing it, and more for posting the same piece on more than one platform.`,
+        ),
+        quiet(
+          "Publish on your own account first, then paste the link on your page. If the button asks who you are, open the link from your welcome email once and it will remember you.",
+        ),
+      ].join(""),
+      action: { label: "Open your page and submit", href: params.pageUrl },
+    }),
+  };
+}
+
+/**
  * Removed from the campaign.
  *
  * The one decision in this system that took something away and told

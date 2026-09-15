@@ -477,6 +477,14 @@ export default async function MonicaCreatorPage() {
                     <>
                       <SubmissionForm
                         platforms={platforms as CampaignPlatform[]}
+                        /* The registered account per platform, so the form
+                           can name the rule it refuses on most often. The
+                           data was already loaded for the panel far below
+                           the fold; it just never reached the one place a
+                           creator could still act on it. */
+                        handles={Object.fromEntries(
+                          handles.map((h) => [h.platform, h.handle]),
+                        )}
                         alreadySubmitted={usedThisWeek}
                         challengeTitle={challenge.title}
                       />

@@ -22,11 +22,15 @@ import { CAMPAIGN_EVENTS, track } from "@/lib/sabilytics";
  */
 export function SubmissionForm({
   platforms,
+  handles,
   alreadySubmitted,
   challengeTitle,
 }: {
   /** Platforms the creator registered. */
   platforms: CampaignPlatform[];
+  /** The account registered for each platform, so the form can name the
+      one rule it refuses on most: the post has to come from it. */
+  handles?: Partial<Record<string, string>>;
   /** Platforms already used for the open challenge. */
   alreadySubmitted: string[];
   challengeTitle: string;
@@ -149,6 +153,18 @@ export function SubmissionForm({
         <label htmlFor="url" className="block text-sm font-semibold text-white">
           Link to your post
         </label>
+        {/* The rule at the moment it can still be obeyed. It was written
+            down in five places, none of them this one, and "the way you
+            would send it to a friend" frames the opposite of it: a friend
+            would accept anybody's post. Changes with the select, because
+            the creator may hold three different accounts. */}
+        {handles?.[platform] && (
+          <p className="text-sm font-semibold text-brand-gold">
+            It has to be a post from @{handles[platform]}, the{" "}
+            {platformLabels[platform as CampaignPlatform]} account you
+            registered.
+          </p>
+        )}
         <p className="text-sm text-ink-4">
           The public link, the way you would send it to a friend.
         </p>
