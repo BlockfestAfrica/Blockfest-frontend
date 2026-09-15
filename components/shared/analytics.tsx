@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import {
   SABILYTICS_API,
@@ -64,6 +65,29 @@ export function Analytics() {
   const blocked = OFF_LIMITS.some(
     (p) => pathname === p || pathname?.startsWith(`${p}/`),
   );
+
+  /*
+   * Returning null removes the TAG; it does not undo the SCRIPT.
+   *
+   * The audit found the gap: the vendor patches history.pushState on
+   * load, so once it has run anywhere, a client-side navigation into an
+   * off-limits page still fired a pageview from that page. React removing
+   * the element changes nothing, because the code is already resident.
+   * On these paths the URL can carry a credential and the DOM carries a
+   * creator's own data, which is the whole reason the list exists.
+   *
+   * So the blocked branch actively disables it rather than merely
+   * declining to add it. The flag is what the vendor snapshot checks
+   * before beaconing; the delete removes the API that lib/sabilytics
+   * calls. Both are cheap, and both survive a soft navigation.
+   */
+  useEffect(() => {
+    if (!blocked) return;
+    const w = window as unknown as Record<string, unknown>;
+    w.__sabilyticsDisabled = true;
+    delete w.sabilytics;
+  }, [blocked, pathname]);
+
   if (blocked) return null;
 
   return (

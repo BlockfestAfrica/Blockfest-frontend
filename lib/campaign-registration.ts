@@ -161,10 +161,25 @@ export function canonicalPhone(input: string): string | null {
 export function canonicalHandle(input: string): string {
   let value = input.trim().toLowerCase();
 
-  // A pasted profile URL: take the last meaningful path segment.
+  /*
+   * A pasted URL: take the segment where these platforms put the AUTHOR,
+   * which is the first one after the host, not the last.
+   *
+   * Taking the last worked for a bare profile URL and silently lied for
+   * anything deeper: x.com/realcreator/status/123 registered "123" as the
+   * handle, tiktok.com/@creator/video/456 registered "456". Both pass the
+   * shape check, so the creator was told nothing and their entries then
+   * failed the wrong-account test against a handle that is a post id.
+   */
   if (value.includes("/")) {
-    const parts = value.split("?")[0].split("/").filter(Boolean);
-    value = parts[parts.length - 1] ?? "";
+    const parts = value.split(/[?#]/)[0].split("/").filter(Boolean);
+    // Drop a scheme and host when the paste carries them.
+    const afterHost = parts[0]?.includes(":")
+      ? parts.slice(2)
+      : parts[0]?.includes(".")
+        ? parts.slice(1)
+        : parts;
+    value = afterHost[0] ?? parts[parts.length - 1] ?? "";
   }
 
   return value.replace(/^@+/, "").trim();

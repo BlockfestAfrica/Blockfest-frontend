@@ -70,7 +70,7 @@ export function LiveResources() {
           <a
             href={monicaRoutes.pack}
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer nofollow"
             className="text-link underline underline-offset-2 hover:text-white"
           >
             Creator Pack
