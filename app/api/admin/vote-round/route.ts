@@ -13,6 +13,12 @@ import { shortlistEmail, votingPage } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/* The open action commits the round and then mails its nominees. At ten
+   seconds a send and five nominees, the default budget could kill the
+   handler AFTER the round existed, so the console said "we could not reach
+   the server" about a round that was already open, and the retry hit the
+   one-round-per-week index. Room for the commit plus one batch. */
+export const maxDuration = 30;
 
 /**
  * Run the Community Favourite round: open it, close it, sweep it, mark the
@@ -180,24 +186,29 @@ export async function POST(request: NextRequest) {
             JOIN creators c           ON c.id = cc.creator_id
            WHERE ce.id IN (${entryIdListAgain})
         `);
-        for (const nominee of nominees.rows ?? []) {
-          const person = nominee as { email?: string; full_name?: string };
-          if (!person.email) continue;
-          await sendEmailQuietly(
-            shortlistEmail({
-              to: person.email,
-              fullName: person.full_name ?? "",
-              weekNo: action.weekNo,
-              closesAtLagos: closingAt(action.closesAt),
-              opensAtLagos:
-                new Date(action.opensAt).getTime() > Date.now()
-                  ? closingAt(action.opensAt)
-                  : undefined,
-              votingUrl: votingPage(),
-            }),
-            "shortlist notice",
-          );
-        }
+        /* Together, not one after another: five sequential sends against a
+           slow provider is five times one timeout, and the round is
+           already committed by the time they run. */
+        await Promise.allSettled(
+          (nominees.rows ?? []).map((nominee) => {
+            const person = nominee as { email?: string; full_name?: string };
+            if (!person.email) return Promise.resolve();
+            return sendEmailQuietly(
+              shortlistEmail({
+                to: person.email,
+                fullName: person.full_name ?? "",
+                weekNo: action.weekNo,
+                closesAtLagos: closingAt(action.closesAt),
+                opensAtLagos:
+                  new Date(action.opensAt).getTime() > Date.now()
+                    ? closingAt(action.opensAt)
+                    : undefined,
+                votingUrl: votingPage(),
+              }),
+              "shortlist notice",
+            );
+          }),
+        );
       } catch (error) {
         logError("admin/vote-round shortlist mail", error);
       }
