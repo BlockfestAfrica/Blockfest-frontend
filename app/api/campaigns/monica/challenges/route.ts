@@ -17,10 +17,17 @@ export const runtime = "nodejs";
  * open on day one, and the landing page revealed the whole schedule.
  *
  * So: drafts never leave the database, and neither does a week whose
- * window has not started, whatever its status row says. A week past its
- * end reports closed even before the console records it. Only the week
- * number, the derived status and the title travel; the description stays
- * on the creator's own page.
+ * window has not started, whatever its status row says, with the single
+ * pre-launch exception below. A week past its end reports closed even
+ * before the console records it.
+ *
+ * What travels for a week that HAS started is the published brief: week
+ * number, derived status, title, description, question, focus, skills,
+ * base points and the window. That is deliberate and the landing page
+ * renders all of it. This note used to say only the number, status and
+ * title travelled, which stopped being true when the brief moved onto the
+ * stage cards; a docblock describing a boundary the code does not keep is
+ * worse than none, because it is what the next reader trusts.
  */
 export async function GET() {
   try {

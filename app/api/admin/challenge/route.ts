@@ -48,6 +48,10 @@ const KNOWN: Array<[string, string, string]> = [
   ["P0908", "window_inverted", "The window has to end after it starts."],
   ["P0503", "points_required", "Base points have to be a positive number."],
   ["P0202", "unknown_challenge", "That challenge does not exist."],
+  /* Fixable by moving the other week, so it must say so: answering a
+     schedule clash as a server fault sends an admin to the logs instead of
+     to the overlapping week. */
+  ["P0910", "window_overlaps", "Another week already covers those dates. Move that week first: two open windows would file entries against whichever one the lookup found."],
 ];
 
 export async function POST(request: NextRequest) {

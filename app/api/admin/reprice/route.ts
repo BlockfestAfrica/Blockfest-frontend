@@ -31,6 +31,10 @@ const schema = z.object({
 const KNOWN: Array<[string, string, string]> = [
   ["P0911", "entry_not_found", "That entry does not exist."],
   ["P0502", "reason_required", "Say why. It is what a dispute is answered with."],
+  /* The ordinary refusal, previously unmapped: repricing an entry of a week
+     that has ended answered as a server fault, which reads as a bug rather
+     than the rule it is. Same wording the challenge editor already uses. */
+  ["P0907", "challenge_readonly", "That week has ended. A finished week is the record of how its winners were decided, so it stays as it ran."],
 ];
 
 export async function POST(request: NextRequest) {

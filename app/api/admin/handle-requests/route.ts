@@ -27,11 +27,15 @@ const FORBIDDEN = NextResponse.json({ ok: false, message: "Not allowed." }, { st
 const schema = z.object({
   requestId: z.string().uuid(),
   approve: z.boolean(),
+  /* What the console rendered. The engine refuses to apply a different
+     value than the one the owner read (P0909). */
+  expectedHandle: z.string().trim().min(1).max(120).optional(),
   note: z.string().trim().max(300).optional().default(""),
 });
 
 const KNOWN: Array<[code: string, raise: string, message: string]> = [
   ["P0906", "request_already_decided", "Somebody has already decided this request."],
+  ["P0909", "request_changed", "The creator changed this request after the page loaded. Reload and read the new handle before deciding."],
   ["P0904", "request_not_found", "That request does not exist."],
   ["P0502", "note_required", "Say why. The creator reads this on their page."],
   ["P0903", "handle_invalid", "The requested username no longer passes the shape check."],
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { requestId, approve, note } = parsed.data;
+  const { requestId, approve, note, expectedHandle } = parsed.data;
 
   try {
     /*
@@ -82,7 +86,7 @@ export async function POST(request: NextRequest) {
     } | null;
 
     const result = await getDb().execute(
-      sql`SELECT * FROM decide_handle_request(${requestId}::uuid, ${admin.admin.adminId}::uuid, ${approve}::boolean, ${note}::text)`,
+      sql`SELECT * FROM decide_handle_request(${requestId}::uuid, ${admin.admin.adminId}::uuid, ${approve}::boolean, ${note}::text, ${expectedHandle ?? null}::text)`,
     );
     const row = (result.rows?.[0] ?? {}) as {
       outcome?: string;

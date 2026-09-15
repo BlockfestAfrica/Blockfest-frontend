@@ -41,13 +41,26 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
   const [visible, setVisible] = useState(PAGE);
   const shown = requests.slice(0, visible);
 
-  async function decide(id: string, approve: boolean, decisionNote = "") {
+  /* expectedHandle travels with every decision: the engine refuses to
+     apply a value the owner did not read (P0909), which is what a creator
+     re-filing while the queue sits open would otherwise cause. */
+  async function decide(
+    id: string,
+    approve: boolean,
+    decisionNote = "",
+    expectedHandle?: string,
+  ) {
     setBusy(id);
     try {
       const response = await fetch("/api/admin/handle-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId: id, approve, note: decisionNote }),
+        body: JSON.stringify({
+          requestId: id,
+          approve,
+          note: decisionNote,
+          expectedHandle,
+        }),
       });
       const result = await response.json();
       if (!response.ok || !result.ok) {
@@ -125,7 +138,7 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
                   <button
                     type="button"
                     disabled={busy === request.id || !note.trim()}
-                    onClick={() => decide(request.id, false, note.trim())}
+                    onClick={() => decide(request.id, false, note.trim(), request.requestedHandle)}
                     className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-[background-color,transform] duration-150 hover:bg-red-400/15 active:scale-[0.98] disabled:opacity-60"
                   >
                     {busy === request.id ? "Rejecting…" : "Reject with this note"}
@@ -147,7 +160,7 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
                 <button
                   type="button"
                   disabled={busy === request.id}
-                  onClick={() => decide(request.id, true)}
+                  onClick={() => decide(request.id, true, "", request.requestedHandle)}
                   className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-[background-color,transform] duration-150 hover:bg-green-400/25 active:scale-[0.98] disabled:opacity-60"
                 >
                   {busy === request.id ? "Approving…" : "Approve the change"}
