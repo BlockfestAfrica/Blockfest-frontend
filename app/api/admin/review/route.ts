@@ -9,7 +9,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/session";
 import { reviewSubmission } from "@/lib/admin/review";
-import { readJsonBody, sameOrigin } from "@/lib/admin/request";
+import { readJsonBody, sameOrigin, throttleKey } from "@/lib/admin/request";
+import { allowKeyStrict } from "@/lib/throttle";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +54,20 @@ export async function POST(request: NextRequest) {
 
   const admin = await requireAdmin();
   if (!admin.ok) return FORBIDDEN;
+
+  /*
+   * A throttle on a route that mails. Reviewing is idempotent in the engine
+   * but not in the inbox: re-submitting the same decision sends the creator
+   * another approval or rejection every time, and nothing bounded how often
+   * that could happen. Strict, because what is being rationed is outbound
+   * mail, which is the exact case allowKeyStrict was written for.
+   */
+  if (!(await allowKeyStrict(throttleKey(request), "admin-review", 240, 3600))) {
+    return NextResponse.json(
+      { ok: false, message: "That is a lot of decisions at once. Wait a moment and try again." },
+      { status: 429 },
+    );
+  }
 
   const read = await readJsonBody(request);
   if (!read.ok) {

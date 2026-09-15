@@ -29,7 +29,7 @@ export async function GET() {
 
     return NextResponse.json(
       { ok: true, resources: rows },
-      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
+      { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=45" } },
     );
   } catch {
     // The pack page renders its static content regardless; an empty list is

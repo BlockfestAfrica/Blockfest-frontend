@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
-import { MONICA_SLUG } from "@/lib/campaigns";
+import { currentWeekNo, MONICA_SLUG } from "@/lib/campaigns";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +19,11 @@ export const dynamic = "force-dynamic";
  * wait on one person being awake.
  *
  * Re-taking makes a new version rather than replacing the old one, so there is
- * no confirmation step here: nothing can be lost by pressing it twice.
+ * no confirmation step here: no recorded standing is lost by pressing it twice.
+ *
+ * One thing a re-take used to move, and no longer does: a closed vote round
+ * pins the snapshot version its tie-break reads (0059), so recording again
+ * after the round closed cannot re-base a settled Community Favourite.
  */
 
 const schema = z.object({
@@ -50,6 +54,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { ok: false, message: "Pick a week between 1 and 4." },
       { status: 400 },
+    );
+  }
+
+  /*
+   * The week is the server's to decide, not the caller's.
+   *
+   * The body used to name any week 1 to 4 and the route took it: a
+   * reviewer, who cannot announce anything, could POST week 4 during week 1
+   * and mint a version-1 "frozen record" of a week that had not happened,
+   * which is the row the announce gate checks for and the row a dispute is
+   * answered from. The number stays in the body as a confirmation that the
+   * page and the server agree, and a disagreement is refused rather than
+   * silently resolved in the caller's favour.
+   */
+  if (parsed.data.weekNo !== currentWeekNo()) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "That is not the week that is running. Reload the page and record the current week.",
+      },
+      { status: 409 },
     );
   }
 
