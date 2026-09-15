@@ -473,7 +473,8 @@ export function RegistrationForm({
           Entries are not open yet
         </p>
         <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-3">
-          Registration opens when the campaign starts on Monday 14 September.
+          Registration opens when the campaign starts on Wednesday 16
+          September.
           Read the{" "}
           <Link
             href={monicaRoutes.rules}
@@ -630,7 +631,7 @@ export function RegistrationForm({
           <strong className="font-semibold text-white">
             This is a test run.
           </strong>{" "}
-          The campaign opens on Monday 14 September and everything registered
+          The campaign opens on Wednesday 16 September and everything registered
           before then is deleted beforehand. Please register again on launch day
           so your entry and referrals count.
         </p>

@@ -249,7 +249,7 @@ export function registrationEmail(params: {
       `Your referral code: ${params.referralCode}`,
       `You earn 10 points when somebody who joins with your code gets their first entry approved.`,
       ``,
-      `A new challenge opens every Monday. Publish your answer on your own account, then paste the link on your page.`,
+      `A new challenge drops with every stage; from Stage 2 onward that is every Monday. Publish your answer on your own account, then paste the link on your page.`,
       ``,
       `Rules: ${link}${monicaRoutes.rules}`,
       ``,
@@ -272,7 +272,7 @@ export function registrationEmail(params: {
           "You earn <strong>10 points</strong> when a creator who joins with your code gets their first entry approved. Not when they register, when their work is accepted.",
         ),
         p(
-          "A new challenge opens every Monday. Publish your answer on your own account, then paste the link on your page.",
+          "A new challenge drops with every stage; from Stage 2 onward that is every Monday. Publish your answer on your own account, then paste the link on your page.",
         ),
       ].join(""),
       action: { label: "Open your page", href: params.personalLink },

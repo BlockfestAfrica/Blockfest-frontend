@@ -76,7 +76,9 @@ export const campaigns: Campaign[] = [
       "A creator competition about the everyday stories behind money, and how Monica is building a better way through them.",
     status: "live",
     rewardPool: 5_000_000,
-    startsAt: "2026-09-14T00:00:00+01:00",
+    /* The 16th, not the 14th: the launch moved two days and the team's
+       restructure brief of 15 September is the source of truth. */
+    startsAt: "2026-09-16T00:00:00+01:00",
     endsAt: "2026-10-17T23:59:59+01:00",
   },
   {
@@ -102,7 +104,7 @@ export const campaigns: Campaign[] = [
 const CAMPAIGN_TIME_ZONE = "Africa/Lagos";
 
 /**
- * The run of a campaign as one line, e.g. "14 September – 17 October 2026".
+ * The run of a campaign as one line, e.g. "16 September – 17 October 2026".
  *
  * The year appears once, on the end date, because repeating it reads as two
  * separate dates rather than a span. An en dash, not an em dash: this is a
@@ -124,10 +126,10 @@ export function campaignRun(campaign: Campaign): string | null {
 }
 
 /**
- * When entries open, worded for a button, e.g. "Monday 14 September".
+ * When entries open, worded for a button, e.g. "Wednesday 16 September".
  *
- * The weekday is included deliberately. "14 September" asks the reader to go
- * and check what day that is; "Monday 14 September" answers it.
+ * The weekday is included deliberately. "16 September" asks the reader to go
+ * and check what day that is; "Wednesday 16 September" answers it.
  */
 export function campaignOpensLabel(campaign: Campaign): string | null {
   if (!campaign.startsAt) return null;
@@ -152,26 +154,28 @@ export const liveCampaigns = campaigns.filter((c) => c.status === "live");
 
 /** The slug lives here so the routes are built from one string. */
 /**
- * Which campaign stage it is, 1 to 5.
+ * Which campaign stage it is, 1 to 4.
  *
- * Derived from the campaign's own start rather than from a stored value, so it
- * cannot drift from the challenge windows, which are the same five Mondays.
- * The stages run Monday to Saturday with Sunday between them, so they are not
- * contiguous, but they still begin exactly seven days apart and the arithmetic
- * is unchanged.
+ * No longer seven-day arithmetic: the restructure gave Stage 1 nine days
+ * for its Wednesday launch, so the stages do not begin a fixed interval
+ * apart and the only honest source is the stage windows themselves. The
+ * answer is the latest stage that has started, which also gives the right
+ * reading on the review days between stages: on the Sunday stage 1's
+ * results are announced, stage 2 has not started and this still says 1,
+ * which is the stage the winners screen should be pointed at.
  *
- * Clamped at both ends on purpose. Before the campaign opens this answers 1,
- * which is what the winners screen should be pointed at while the team
- * rehearses; after it closes it answers 5, so the final stage stays selected
- * rather than the screen offering a stage no constraint would accept.
+ * Clamped at both ends on purpose. Before the campaign opens this answers
+ * 1, which is what the console should show while the team rehearses; after
+ * the last window it answers 4, so the final stage stays selected rather
+ * than the screen offering a stage no constraint would accept.
  */
 export function currentWeekNo(now: Date = new Date()): number {
-  const campaign = campaigns.find((c) => c.slug === MONICA_SLUG);
-  if (!campaign?.startsAt) return 1;
-
-  const start = new Date(campaign.startsAt).getTime();
-  const elapsedDays = Math.floor((now.getTime() - start) / 86_400_000);
-  return Math.min(5, Math.max(1, Math.floor(elapsedDays / 7) + 1));
+  const started = monicaStages.filter(
+    (stage) => new Date(stage.startsAt).getTime() <= now.getTime(),
+  );
+  return started.length === 0
+    ? 1
+    : Math.min(4, started[started.length - 1].number);
 }
 
 export const MONICA_SLUG = "monica-money-story";
@@ -193,8 +197,8 @@ export const MONICA_SLUG = "monica-money-story";
  * leaves the gate shut. Turning it off means removing the variable and
  * redeploying, since the value is compiled into the client bundle.
  *
- * After 14 September this flag stops mattering: the date has passed and the
- * gate is open on its own.
+ * After launch day, 16 September, this flag stops mattering: the date has
+ * passed and the gate is open on its own.
  */
 export const CAMPAIGN_GATE_FORCED_OPEN =
   process.env.NEXT_PUBLIC_CAMPAIGN_GATE_OPEN === "true";
@@ -259,84 +263,86 @@ export const monicaSkills: CampaignSkill[] = [
 ];
 
 /**
- * How many days the campaign runs.
+ * How many days the campaign runs, as the team positions it.
  *
- * Day 1 is 14 September, so day 33 is 16 October and the published end date of
- * 17 October is the close: the final standings, on the Saturday the standings
- * always land on.
+ * "30 days. 4 stages. ₦5M on the line." The launch moved from Monday the
+ * 14th to Wednesday 16 September, the end date held at 17 October, and the
+ * repositioning brief names the run a 30-Day Creator Challenge. This is the
+ * published figure, not a computed one: the team's number is the number.
  */
-export const MONICA_CAMPAIGN_DAYS = 34;
+export const MONICA_CAMPAIGN_DAYS = 30;
 
 export interface CampaignStage {
   number: number;
   name: string;
-  /** Inclusive day range within the campaign, as the brief numbers them. */
-  days: [number, number];
-  question: string;
-  focus: string;
+  /** The stage's dates as the card prints them, e.g. "16 – 24 September". */
+  dates: string;
+  /** The create-and-submit window, Lagos instants. Boundaries for logic;
+      the display string above is for eyes. */
+  startsAt: string;
+  endsAt: string;
+  /** The narrative framing. Absent on stages whose challenge is written in
+      the console when it drops: their card carries the database brief, and
+      a registry sentence would only go stale beside it. */
+  question?: string;
+  focus?: string;
   /** Which of the four skills this stage is testing. */
   skills: string[];
 }
 
 /**
- * The five stages.
+ * The four stages. This array is the team's restructure brief of
+ * 15 September, verbatim in dates and shape, and it replaces the original
+ * five-stage plan everywhere the site speaks.
  *
- * Each runs Monday to Saturday, with the Sunday between them kept clear: that
- * is when the week's entries are reviewed and the weekly winners announced, so
- * a stage never ends on the day its own result is published.
+ * Stage 1 is the exception to the weekly rhythm: the campaign launches on a
+ * Wednesday, so the opening stage runs nine days and closes on a Thursday
+ * night, giving creators time to understand the format. From Stage 2 the
+ * cadence settles: a new challenge drops on the Monday, creating runs
+ * Monday to Saturday, submissions close Saturday at 12:00 noon Lagos, and
+ * results land on the Sunday. The gaps between the windows are the review
+ * days, so a stage never ends on the day its own result is published.
  *
- * Day 1 is Monday 14 September and day 34 is Saturday 17 October. The four
- * Sundays in between are days 7, 14, 21 and 28, which is why the ranges below
- * have gaps in them rather than running end to end.
- *
- * Weekly prizes are decided after stages 1 to 4. Stage 5 is the finale: it
- * carries the final prize rather than a fifth weekly one, which is why the
- * weekly pool is still described as four rounds.
+ * Stage 1 carries its narrative here because it is published from day one.
+ * Stages 2 to 4 deliberately carry none: their challenges are written in
+ * the console when each drops, the card shows that database brief, and a
+ * registry sentence beside it would only ever be stale.
  */
 export const monicaStages: CampaignStage[] = [
   {
     number: 1,
     name: "The Discovery",
-    days: [1, 7],
-    question: "Who is Monica?",
+    dates: "16 – 24 September",
+    startsAt: "2026-09-16T00:00:00+01:00",
+    endsAt: "2026-09-24T23:59:59+01:00",
+    question: "Make Them Curious",
     focus:
-      "Introduce Monica to your audience and make the brand understandable.",
-    skills: ["Education", "Storytelling"],
+      "Get people discovering Monica: The Money Story. Make someone who has never heard of Monica stop and ask what this is. Light, accessible, and built to travel.",
+    skills: ["Creativity", "Storytelling", "Influence"],
   },
   {
     number: 2,
-    name: "The Problem",
-    days: [8, 14],
-    question: "Why is money still this complicated?",
-    focus:
-      "Tell real or relatable stories about financial friction: the fees, the waiting, the rates.",
-    skills: ["Storytelling", "Creativity"],
+    name: "Stage Two",
+    dates: "28 September – 3 October",
+    startsAt: "2026-09-28T00:00:00+01:00",
+    endsAt: "2026-10-03T12:00:00+01:00",
+    skills: [],
   },
   {
     number: 3,
-    name: "The Solution",
-    days: [15, 21],
-    question: "There's a better way.",
-    focus:
-      "Explore stablecoins, digital finance and what Monica is actually building.",
-    skills: ["Education", "Influence"],
+    name: "Stage Three",
+    dates: "5 – 10 October",
+    startsAt: "2026-10-05T00:00:00+01:00",
+    endsAt: "2026-10-10T12:00:00+01:00",
+    skills: [],
   },
   {
     number: 4,
-    name: "The Proof",
-    days: [22, 28],
-    question: "Show it working.",
-    focus:
-      "Make it concrete: what changes for somebody who actually uses it.",
-    skills: ["Influence", "Education"],
-  },
-  {
-    number: 5,
-    name: "The Money Story",
-    days: [29, MONICA_CAMPAIGN_DAYS],
-    question: "Tell Monica's story your way.",
-    focus: "Maximum creative freedom, and your strongest single piece of work.",
-    skills: ["Storytelling", "Creativity", "Education", "Influence"],
+    name: "Stage Four",
+    dates: "12 – 17 October",
+    startsAt: "2026-10-12T00:00:00+01:00",
+    endsAt: "2026-10-17T12:00:00+01:00",
+    skills: [],
   },
 ];
 
@@ -427,7 +433,7 @@ export const monicaHowItWorks: HowItWorksStep[] = [
   {
     title: "Take the challenge",
     detail:
-      "A new challenge drops every Monday. How you answer it is up to you: a thread, a reel, a skit, a carousel, an explainer, a street interview, an animation, or something we have not thought of yet.",
+      "A new challenge drops with every stage; from Stage 2 onward that is every Monday. How you answer it is up to you: a thread, a reel, a skit, a carousel, an explainer, a street interview, an animation, or something we have not thought of yet.",
   },
   {
     title: "Publish and submit",
@@ -524,7 +530,7 @@ export const monicaFaqs: CampaignFaq[] = [
   {
     question: "When does the campaign end?",
     answer:
-      "The campaign runs from 14 September to 17 October 2026. The final challenge closes on 17 October, after which final leaderboard judging takes place.",
+      "The creator challenge runs from 16 September to 17 October 2026. The final challenge closes on 17 October at 12:00 noon Lagos time, and the final results are announced on 18 October.",
   },
   {
     question: "How can I get my Monica tag?",
@@ -549,7 +555,7 @@ export const monicaFaqs: CampaignFaq[] = [
  * and a creator told the board updates weekly has no reason to come back on
  * Tuesday after an approval.
  */
-export const MONICA_FIRST_LEADERBOARD = "Sunday 20 September";
+export const MONICA_FIRST_LEADERBOARD = "Sunday 27 September";
 
 /** Where campaign conversation happens, and how entries are found. */
 export const MONICA_HASHTAGS = ["#TheMoneyStory", "#AreYouSkillful"] as const;

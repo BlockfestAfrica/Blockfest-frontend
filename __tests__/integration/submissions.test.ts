@@ -163,12 +163,13 @@ beforeEach(async () => {
 });
 
 describe("the seeded challenges", () => {
-  it("publishes all five stages", async () => {
+  it("publishes all four stages", async () => {
+    // Four since the 15 September restructure: 0055 retired the finale row.
     expect(
       await count(
         `SELECT count(*)::int AS n FROM challenges WHERE campaign_id = '${campaignId}'`,
       ),
-    ).toBe(5);
+    ).toBe(4);
   });
 
   it("starts week 1 on the day the campaign opens", async () => {
@@ -237,7 +238,7 @@ describe("the seeded challenges", () => {
       await count(
         `SELECT count(*)::int AS n FROM challenges WHERE campaign_id = '${campaignId}'`,
       ),
-    ).toBe(5);
+    ).toBe(4);
   });
 });
 

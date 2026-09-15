@@ -122,45 +122,70 @@ describe("the campaign registry", () => {
 });
 
 describe("the stages and skills", () => {
-  it("runs five stages, numbered in order", () => {
-    expect(monicaStages.map((s) => s.number)).toEqual([1, 2, 3, 4, 5]);
+  it("runs four stages, numbered in order", () => {
+    // Four since the 15 September restructure. Five anywhere is the old
+    // structure leaking back.
+    expect(monicaStages.map((s) => s.number)).toEqual([1, 2, 3, 4]);
   });
 
   /**
-   * The gap between stages is deliberate and exactly one day.
+   * The windows are ordered with review days between them.
    *
-   * Stages run Monday to Saturday; the Sunday between them is when the week's
-   * entries are reviewed and the weekly winners announced, so a stage never
-   * ends on the day its own result is published. The earlier shape ran the
-   * stages end to end, which is why the site said Saturday in one place and
-   * Sunday in another.
-   *
-   * Asserted as exactly one day, not merely "no overlap", so a stage cannot
-   * quietly swallow the Sunday or leave a second day nobody can submit in.
+   * The gaps are deliberate: results land on the Sunday no stage is
+   * running, so a stage never ends on the day its own result is published.
+   * Stage 1's gap is wider still (24 to 28 September) because the launch
+   * stage gets two review days before results.
    */
-  it("covers the calendar with no gap and no overlap", () => {
-    // The displayed spans became full weeks on 14 Sep 2026, marketing's
-    // framing: the week belongs to its stage, winners day included. The
-    // submission windows are still Monday to Saturday in the database;
-    // these spans only describe the stage.
+  it("keeps every stage after the last one closed, never overlapping", () => {
     monicaStages.forEach((stage, i) => {
-      const [from, to] = stage.days;
-      expect(to).toBeGreaterThanOrEqual(from);
-      if (i > 0) expect(from).toBe(monicaStages[i - 1].days[1] + 1);
+      expect(
+        new Date(stage.endsAt).getTime(),
+        stage.name,
+      ).toBeGreaterThan(new Date(stage.startsAt).getTime());
+      if (i > 0) {
+        expect(
+          new Date(stage.startsAt).getTime(),
+          `${stage.name} starts after ${monicaStages[i - 1].name} ends`,
+        ).toBeGreaterThan(new Date(monicaStages[i - 1].endsAt).getTime());
+      }
     });
-    expect(monicaStages[0].days[0]).toBe(1);
   });
 
-  it("is a full week per stage, with the shorter final run", () => {
-    for (const stage of monicaStages.slice(0, -1)) {
-      expect(stage.days[1] - stage.days[0], stage.name).toBe(6);
+  /** Day of week in Lagos, because midnight +01:00 is the previous day in
+      UTC and getUTCDay answers for the wrong calendar. */
+  const lagosWeekday = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-GB", {
+      weekday: "long",
+      timeZone: "Africa/Lagos",
+    });
+
+  it("opens stage 1 with the campaign, on Wednesday 16 September", () => {
+    const campaign = campaignBySlug("monica-money-story")!;
+    expect(monicaStages[0].startsAt).toBe(campaign.startsAt);
+    expect(lagosWeekday(monicaStages[0].startsAt)).toBe("Wednesday");
+  });
+
+  it("gives the launch stage its long window, closing Thursday night", () => {
+    // Nine days and a 23:59 close: the one exception to the weekly rhythm,
+    // per the restructure brief.
+    const first = monicaStages[0];
+    expect(first.dates).toBe("16 \u2013 24 September");
+    expect(first.endsAt).toBe("2026-09-24T23:59:59+01:00");
+  });
+
+  it("settles stages 2 to 4 on Monday opens and Saturday noon closes", () => {
+    for (const stage of monicaStages.slice(1)) {
+      expect(lagosWeekday(stage.startsAt), `${stage.name} opens Monday`).toBe("Monday");
+      expect(lagosWeekday(stage.endsAt), `${stage.name} closes Saturday`).toBe("Saturday");
+      expect(stage.endsAt.endsWith("T12:00:00+01:00"), `${stage.name} closes at noon`).toBe(true);
     }
-    const last = monicaStages.at(-1)!;
-    expect(last.days[1] - last.days[0], last.name).toBe(5);
   });
 
-  it("ends on the last day of the campaign", () => {
-    expect(monicaStages.at(-1)!.days[1]).toBe(MONICA_CAMPAIGN_DAYS);
+  it("ends the last stage on the campaign's published end date", () => {
+    const campaign = campaignBySlug("monica-money-story")!;
+    expect(
+      new Date(monicaStages.at(-1)!.endsAt).toDateString(),
+    ).toBe(new Date(campaign.endsAt!).toDateString());
   });
 
   it("only names skills that exist", () => {
@@ -170,39 +195,32 @@ describe("the stages and skills", () => {
     }
   });
 
-  it("tests all four skills in the final stage", () => {
-    expect(monicaStages.at(-1)!.skills).toHaveLength(monicaSkills.length);
+  it("gives only stage 1 a registry narrative", () => {
+    // Stages 2 to 4 are written in the console when each drops; a registry
+    // sentence beside the database brief would only ever be stale.
+    expect(monicaStages[0].question).toBeTruthy();
+    for (const stage of monicaStages.slice(1)) {
+      expect(stage.question, stage.name).toBeUndefined();
+      expect(stage.focus, stage.name).toBeUndefined();
+    }
   });
 });
 
 describe("the campaign length", () => {
-  const campaign = campaignBySlug("monica-money-story")!;
-  const dayOne = new Date(campaign.startsAt!);
-  const lastDay = new Date(campaign.endsAt!);
-
-  /** The calendar date a given campaign day falls on. */
-  const dateOfDay = (day: number) =>
-    new Date(dayOne.getTime() + (day - 1) * 24 * 60 * 60 * 1000);
-
-  it("runs for the number of days the stages account for", () => {
-    // The brief said 30 days while giving dates that do not make 30. If the
-    // stages and the constant ever disagree again, a creator reading "day 33"
-    // on the page and counting the calendar will find the gap before we do.
-    const finalStage = monicaStages[monicaStages.length - 1];
-    expect(finalStage.days[1]).toBe(MONICA_CAMPAIGN_DAYS);
+  it("advertises the figure the team positions, thirty days", () => {
+    // "30 days. 4 stages. \u20a65M on the line." The team's number is the
+    // number; this pins it against a stray recalculation.
+    expect(MONICA_CAMPAIGN_DAYS).toBe(30);
   });
 
-  it("fits inside the published dates", () => {
-    // Day 33 is 16 October and the campaign closes on the 17th, which is a
-    // Saturday: the day standings are published every week. The last day must
-    // never fall past the end date.
-    expect(dateOfDay(MONICA_CAMPAIGN_DAYS).getTime()).toBeLessThanOrEqual(
-      lastDay.getTime(),
-    );
-  });
-
-  it("starts on day one and not before", () => {
-    expect(dateOfDay(1).toDateString()).toBe(dayOne.toDateString());
+  it("keeps every stage inside the published campaign dates", () => {
+    const campaign = campaignBySlug("monica-money-story")!;
+    const opens = new Date(campaign.startsAt!).getTime();
+    const closes = new Date(campaign.endsAt!).getTime();
+    for (const stage of monicaStages) {
+      expect(new Date(stage.startsAt).getTime(), stage.name).toBeGreaterThanOrEqual(opens);
+      expect(new Date(stage.endsAt).getTime(), stage.name).toBeLessThanOrEqual(closes);
+    }
   });
 });
 
@@ -210,7 +228,7 @@ describe("campaignRun", () => {
   it("writes the span with the year stated once", () => {
     // Repeating the year reads as two dates rather than one span.
     const run = campaignRun(campaignBySlug("monica-money-story")!);
-    expect(run).toBe("14 September \u2013 17 October 2026");
+    expect(run).toBe("16 September \u2013 17 October 2026");
   });
 
   it("uses an en dash, never an em dash", () => {
@@ -308,32 +326,40 @@ describe("what we publish about the leaderboard", () => {
 /**
  * Which week the winners screen should be pointed at.
  *
- * Derived from the campaign start rather than stored, so it cannot drift from
- * the challenge windows, which are the same four Mondays.
+ * Read from the stage windows rather than seven-day arithmetic: the
+ * restructure gave stage 1 nine days, so the stages no longer begin a
+ * fixed interval apart and the windows are the only honest source.
  */
 describe("the current campaign week", () => {
   const on = (iso: string) => currentWeekNo(new Date(iso));
 
-  it("is week 1 on launch day", () => {
-    expect(on("2026-09-14T09:00:00+01:00")).toBe(1);
+  it("is week 1 on launch day, Wednesday 16 September", () => {
+    expect(on("2026-09-16T09:00:00+01:00")).toBe(1);
   });
 
-  it("turns over on the Monday, with the challenge window", () => {
-    expect(on("2026-09-20T23:00:00+01:00"), "still week 1 on Sunday").toBe(1);
-    expect(on("2026-09-21T00:30:00+01:00"), "week 2 once Monday lands").toBe(2);
+  it("stays week 1 through the launch stage's review days", () => {
+    // Stage 1 closes Thursday the 24th and its results land Sunday the
+    // 27th. The console is reviewing and announcing WEEK 1 on those days.
+    expect(on("2026-09-25T10:00:00+01:00"), "review Friday").toBe(1);
+    expect(on("2026-09-27T18:00:00+01:00"), "results Sunday").toBe(1);
+  });
+
+  it("turns over on the Monday stage 2 opens", () => {
+    expect(on("2026-09-27T23:00:00+01:00"), "still week 1 on Sunday").toBe(1);
+    expect(on("2026-09-28T00:30:00+01:00"), "week 2 once Monday lands").toBe(2);
   });
 
   it("reaches week 4 in the last stage", () => {
-    expect(on("2026-10-05T10:00:00+01:00")).toBe(4);
+    expect(on("2026-10-13T10:00:00+01:00")).toBe(4);
   });
 
   it("clamps before the campaign opens rather than answering zero", () => {
-    // The team rehearses on the Saturday before. Pointing the screen at week 0
-    // would offer a week no constraint accepts.
-    expect(on("2026-09-12T20:00:00+01:00")).toBe(1);
+    // The team rehearses on the days before launch. Pointing the screen at
+    // week 0 would offer a week no constraint accepts.
+    expect(on("2026-09-15T20:00:00+01:00")).toBe(1);
   });
 
-  it("clamps after it closes rather than offering a sixth stage", () => {
-    expect(on("2026-10-20T10:00:00+01:00")).toBe(5);
+  it("clamps after it closes rather than offering a fifth stage", () => {
+    expect(on("2026-10-20T10:00:00+01:00")).toBe(4);
   });
 });

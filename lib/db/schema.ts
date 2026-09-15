@@ -386,12 +386,12 @@ export const challenges = pgTable(
     description: text("description").notNull(),
 
     /**
-     * week_no 1..5. The campaign is 34 days: four Mon-Sat stages carrying
-     * the four weekly prizes, then a fifth Mon-Sat stage (12 - 17 Oct) which
-     * is the finale and carries the final prize, not a weekly one. The Sunday
-     * between stages is kept clear for review and the weekly announcement.
-     * `stage` is 1..4 and is NULL for the finale, which is what marks a week
-     * as one of the four weekly rounds rather than the final one.
+     * week_no 1..4 since the 15 September restructure (0055 retired the
+     * old week-5 finale row). Four stages, each carrying a weekly prize:
+     * stage 1 runs long for the Wednesday launch (16 - 24 Sept, closing
+     * Thursday night), stages 2 to 4 run Monday to Saturday noon. The days
+     * between a stage's close and the next Monday are kept clear for
+     * review and the Sunday announcement. `stage` mirrors week_no 1..4.
      */
     weekNo: smallint("week_no").notNull(),
     stage: smallint("stage"),

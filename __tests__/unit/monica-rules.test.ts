@@ -46,6 +46,11 @@ describe("clauses that must exist before anyone enters", () => {
     ["referral points gated on an approved entry", "first approved entry"],
     ["an amendment clause", "may be amended"],
     ["a minimum age", "aged 18 or over"],
+    ["the four-stage structure", "four stages"],
+    ["the stage 1 deadline", "thursday 24 september at 11:59 pm"],
+    ["the noon deadline for stages 2 to 4", "12:00 noon lagos time"],
+    ["the final results date", "18 october"],
+    ["one Creator of the Week award per stage", "once per stage"],
     ["the payout currency", "nigerian naira or the equivalent"],
     ["that prizes are paid gross", "paid gross"],
   ])("covers %s", (_label, needle) => {
@@ -86,6 +91,28 @@ describe("the Community Favourite promise", () => {
     // after two creators are level is a decision; one published before is a
     // rule.
     expect(allText).toContain("that week's recorded standings");
+  });
+});
+
+describe("the restructure of 15 September", () => {
+  it("carries no trace of the five-stage plan", () => {
+    // The campaign moved from five stages launching Monday the 14th to four
+    // stages launching Wednesday 16 September. The FAQ is scanned alongside
+    // the rules for the same reason as the vote promise above: a retired
+    // structure reads as current if a friendlier page still describes it.
+    for (const text of [allText, faqText]) {
+      expect(text).not.toContain("five stages");
+      expect(text).not.toContain("fifth stage");
+      expect(text).not.toContain("14 september");
+    }
+  });
+
+  it("states the cadence per stage, not per Monday alone", () => {
+    // "Every Monday" on its own is now wrong twice over: the campaign
+    // launches on a Wednesday, and Stage 1 closes on a Thursday. Mondays
+    // only hold from Stage 2 onward, so the published cadence is a
+    // challenge with every stage.
+    expect(allText).toContain("a new challenge drops with every stage");
   });
 });
 

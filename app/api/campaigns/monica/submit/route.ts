@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
   // Before launch there is no open week, and the flow still has to be walkable
   // end to end: when the gate is deliberately forced open pre-launch, the
   // next week is offered instead. The old comment claimed this branch was
-  // unreachable after 14 September; it was reachable every review Sunday
+  // unreachable after launch day; it was reachable every review Sunday
   // (Saturday close to Monday open) for as long as the env flag stayed set,
   // and it offered next week's challenge a day early. Scoped to pre-launch
   // now, here and again inside submit_entry.
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
 
   if (!challenge) {
     return fail(
-      "No challenge is open right now. The next one opens on Monday.",
+      "No challenge is open right now. The next one opens with the next stage.",
       409,
     );
   }
