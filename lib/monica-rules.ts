@@ -16,10 +16,10 @@
  * guessed at. An invented eligibility age is worse than an honest gap.
  */
 
-export const MONICA_RULES_VERSION = "1.3";
+export const MONICA_RULES_VERSION = "1.4";
 
 /** ISO date. Rendered in the event's own timezone. */
-export const MONICA_RULES_UPDATED = "2026-09-14";
+export const MONICA_RULES_UPDATED = "2026-09-15";
 
 export interface RuleSection {
   /** Anchor, so a clause can be linked to directly in a dispute. */
@@ -35,7 +35,7 @@ export const monicaRules: RuleSection[] = [
     id: "entering",
     title: "Entering",
     paragraphs: [
-      "The campaign runs from 14 September to 17 October 2026. It is organised by Blockfest Africa, with Monica as headline sponsor. Blockfest Africa is operated by Tevah Synergy, which is the entity responsible for this competition and for paying prizes.",
+      "The campaign runs from 16 September to 17 October 2026, in four stages, and the final results are announced on 18 October. It is organised by Blockfest Africa, with Monica as headline sponsor. Blockfest Africa is operated by Tevah Synergy, which is the entity responsible for this competition and for paying prizes.",
       "Entry is free and open to creators aged 18 or over with an account on X, Instagram or TikTok. You register once, with the handles you will be publishing from.",
       "You do not have to live in Nigeria to enter. Prizes are paid in Nigerian naira or equivalent.",
     ],
@@ -48,6 +48,31 @@ export const monicaRules: RuleSection[] = [
       "Publish on your own account, then submit the public link. We do not host your content and we do not need a copy of the file.",
       "Entries are reviewed before they score. We may reject an entry that does not answer the challenge, breaches these rules, or cannot be viewed at the link given.",
       "Where an entry is published on more than one platform, each platform is reviewed separately. One platform being rejected does not reject the others.",
+    ],
+  },
+  {
+    id: "stages",
+    title: "Stages and deadlines",
+    /* These windows mirror monicaStages in lib/campaigns.ts, which carries
+       the team's restructure brief of 15 September. The engine closes
+       submissions at these instants, so a deadline enforced there but never
+       published here would be a term nobody agreed to. All times Lagos. */
+    table: {
+      head: ["Stage", "Submissions close"],
+      rows: [
+        [
+          "Stage 1, The Discovery, 16 to 24 September",
+          "Thursday 24 September, 11:59 PM",
+        ],
+        ["Stage 2, 28 September to 3 October", "Saturday 3 October, 12:00 noon"],
+        ["Stage 3, 5 to 10 October", "Saturday 10 October, 12:00 noon"],
+        ["Stage 4, 12 to 17 October", "Saturday 17 October, 12:00 noon"],
+      ],
+    },
+    paragraphs: [
+      "The campaign runs in four stages. A new challenge drops with every stage. From Stage 2 onward, new challenges drop every Monday.",
+      "Stage 1 closes on Thursday 24 September at 11:59 PM Lagos time. Stages 2 to 4 close on Saturdays at 12:00 noon Lagos time. An entry submitted after a stage's deadline does not count for that stage.",
+      "Results for each stage are announced on the Sunday after it closes. The final results are announced on 18 October.",
     ],
   },
   {
@@ -150,7 +175,7 @@ export const monicaRules: RuleSection[] = [
     id: "winners",
     title: "Winners",
     paragraphs: [
-      "Weekly awards are announced each Sunday. The same creator cannot win Creator of the Week more than once, so the award reaches more creators across the campaign.",
+      "Weekly winners are announced every Sunday. Creator of the Week is awarded once per stage, four awards in all, and the same creator cannot win it more than once, so the award reaches more creators across the campaign.",
       "Community Favourite is shortlisted by Blockfest Africa and decided by public vote. The creator with the highest number of valid votes wins. Votes we believe to have been manipulated are set aside.",
       "Voting takes place on this site, and is one vote per email address per round. A vote counts once the address it was cast from is verified. Where entries finish level on valid votes, the tie is broken by that week's recorded standings, with the higher points total winning. If a round ends with no valid votes, the winner is selected by Blockfest Africa.",
       "The final leaderboard is settled on total points. Where creators are level, the order is decided by who reached that total first, then by the number of approved entries, and then at our discretion.",

@@ -21,6 +21,7 @@ import { SectionCard, Panel, Pill } from "@/components/shared/panel";
 import { pauseState } from "@/lib/campaign-pause";
 import {
   campaignBySlug,
+  campaignOpensLabel,
   monicaRoutes,
   MONICA_SLUG,
   platformLabels,
@@ -470,18 +471,19 @@ export default async function MonicaCreatorPage() {
             <Panel tone="quiet" className="mt-8">
               <h2 className="text-xl font-bold text-white">
                 {CAMPAIGN.startsAt && new Date(CAMPAIGN.startsAt) > new Date()
-                  ? "The first challenge opens Monday 14 September"
+                  ? `The first challenge opens ${campaignOpensLabel(CAMPAIGN)}`
                   : "No challenge is open"}
               </h2>
               <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
-                A new one opens each Monday. When it does it appears here, with
-                somewhere to paste your link.
+                A new challenge drops with every stage; from Stage 2 onward that
+                is every Monday. When it does it appears here, with somewhere
+                to paste your link.
               </p>
               <Link
                 href={`${monicaRoutes.landing}#stages`}
                 className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
               >
-                See all five challenges
+                See all four challenges
               </Link>
             </Panel>
           )}

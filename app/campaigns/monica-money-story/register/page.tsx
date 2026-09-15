@@ -82,7 +82,7 @@ export default async function MonicaRegisterPage({
               Join the campaign
             </h1>
             <p className="mt-4 max-w-prose text-base leading-relaxed text-ink-3">
-              Fill the form once. A new challenge every Monday.
+              Fill the form once. A new challenge with every stage.
             </p>
           </div>
 
@@ -99,7 +99,7 @@ export default async function MonicaRegisterPage({
 
             {/* What happens next, beside the form rather than after it. The
                 distinction between registering once and submitting an entry
-                each week is the thing creators get wrong, and it is worth
+                each stage is the thing creators get wrong, and it is worth
                 answering where they are deciding rather than in the rules. */}
             <aside className="lg:col-span-5">
               <div className="rounded-2xl border border-line-2 p-6 sm:p-8">
@@ -114,9 +114,9 @@ export default async function MonicaRegisterPage({
                         "Straight away, on this page. Share it to bring other creators in.",
                     },
                     {
-                      title: "A challenge drops every Monday",
+                      title: "A challenge drops with every stage",
                       detail:
-                        "One per week. You do not register again for any of them.",
+                        "From Stage 2 onward that is every Monday. You do not register again for any of them.",
                     },
                     {
                       title: "You publish, then submit the link",

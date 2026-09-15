@@ -13,8 +13,9 @@ export function MonicaHowItWorks() {
       <div className="container-page">
         <h2 className="text-display-sm font-bold text-white">How it works</h2>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
-          Every Monday, a new challenge drops. You create it your way, publish
-          it on your own social account, submit your entry and earn points.
+          A new challenge drops with every stage; from Stage 2 onward that is
+          every Monday. You create it your way, publish it on your own social
+          account, submit your entry and earn points.
         </p>
 
         {/* 2x2, not four across: inside container-page four columns give a

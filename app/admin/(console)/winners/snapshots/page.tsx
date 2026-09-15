@@ -42,7 +42,7 @@ export default async function SnapshotPage({
 
   const params = await searchParams;
   // Clamped parses, because this arrives from a URL anybody can type.
-  const weekNo = Math.min(5, Math.max(1, Number(params.week) || 1));
+  const weekNo = Math.min(4, Math.max(1, Number(params.week) || 1));
   const version = Math.min(99, Math.max(1, Number(params.version) || 1));
   const rows = await snapshotRows(admin.admin, weekNo, version);
 

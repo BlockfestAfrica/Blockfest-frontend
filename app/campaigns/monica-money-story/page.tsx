@@ -25,9 +25,12 @@ const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
 const OPENS_LABEL = campaignOpensLabel(CAMPAIGN);
 
 const OG_TITLE = "Monica: The Money Story | Blockf3st Africa";
-const OG_DESCRIPTION = `A ${MONICA_CAMPAIGN_DAYS}-day creator competition from Blockfest Africa. ${formatNaira(
+// The team's positioning line, verbatim: "30 days. 4 stages. ₦5,000,000 on
+// the line." The figures are read from the registry so the description can
+// never disagree with the page it describes.
+const OG_DESCRIPTION = `A creator competition from Blockfest Africa. ${MONICA_CAMPAIGN_DAYS} days. 4 stages. ${formatNaira(
   monicaRewardPool,
-)} in prizes across five stages. Are you skillful?`;
+)} on the line. Are you skillful?`;
 
 export const metadata: Metadata = {
   // The root layout appends "| Blockf3st Africa 2026", so branding here would
@@ -107,8 +110,9 @@ export default function MonicaMoneyStoryPage() {
               {CAMPAIGN.hook}
             </h2>
             <p className="mt-4 text-base leading-relaxed text-ink-3">
-              {MONICA_CAMPAIGN_DAYS} days, one story, told by the community.
-              Register once and the first challenge is waiting.
+              {MONICA_CAMPAIGN_DAYS} days. 4 stages.{" "}
+              {formatNaira(monicaRewardPool)} on the line. Register once and
+              the first challenge is waiting.
             </p>
             <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
               {CAMPAIGN.startsAt && OPENS_LABEL && (

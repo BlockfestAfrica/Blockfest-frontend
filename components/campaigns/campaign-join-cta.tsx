@@ -12,8 +12,8 @@ import { CAMPAIGN_GATE_FORCED_OPEN } from "@/lib/campaigns";
  * Two things decide how this is built.
  *
  * The page is statically prerendered, so the date cannot be read at build time:
- * a page built on the 11th would have "not open yet" baked into it and would
- * still say so on the 14th, until someone happened to redeploy. The check
+ * a page built before launch would have "not open yet" baked into it and
+ * would still say so on the 16th, until someone happened to redeploy. The check
  * therefore runs after mount, the same way the ticket announcement bar resolves
  * its own deadline.
  *
@@ -39,7 +39,7 @@ export function CampaignJoinCTA({
   href: string;
   /** ISO timestamp the campaign opens. */
   opensAt: string;
-  /** How the opening is worded while it is still shut, e.g. "Monday 14 September". */
+  /** How the opening is worded while it is still shut, e.g. "Wednesday 16 September". */
   opensLabel: string;
   children?: React.ReactNode;
   className?: string;

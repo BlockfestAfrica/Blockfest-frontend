@@ -81,8 +81,9 @@ export function MonicaStages() {
           The {MONICA_CAMPAIGN_DAYS}-day journey
         </h2>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-2">
-          {monicaStages.length} stages, each with its own question. Stage 1 is
-          published. The rest are revealed on the Monday they open.
+          {monicaStages.length} stages, one challenge each. Stage 1 is
+          published; from Stage 2 onward, a new challenge drops on the Monday
+          its stage opens.
         </p>
 
         <ol className="mt-12 flex flex-col gap-4">
@@ -90,8 +91,8 @@ export function MonicaStages() {
             /*
              * Only the first stage is published.
              *
-             * A creator who can read all five briefs on day one can write all
-             * five in week one, which is the opposite of a campaign that builds.
+             * A creator who can read all four briefs on day one can write all
+             * four in week one, which is the opposite of a campaign that builds.
              * Holding them back also means a brief can still be adjusted after
              * seeing what week one produced.
              *
@@ -136,7 +137,7 @@ export function MonicaStages() {
                       Stage {stage.number}
                     </p>
                     <p className="mt-1.5 text-sm tabular-nums text-ink-2">
-                      Days {stage.days[0]} to {stage.days[1]}
+                      {stage.dates}
                     </p>
                     {status === "active" && (
                       <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-brand-gold/40 px-2.5 py-0.5 text-xs font-semibold text-brand-gold">
@@ -162,12 +163,20 @@ export function MonicaStages() {
                       <h3 className="text-xl font-bold text-white">
                         {week?.title || stage.name}
                       </h3>
-                      <p className="mt-1 text-base font-semibold text-ink-2">
-                        {stage.question}
-                      </p>
-                      <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
-                        {stage.focus}
-                      </p>
+                      {/* Stages whose challenge is written in the console
+                          when they drop carry no registry narrative: the
+                          database brief below is their voice, and a stale
+                          registry sentence beside it would argue with it. */}
+                      {stage.question && (
+                        <p className="mt-1 text-base font-semibold text-ink-2">
+                          {stage.question}
+                        </p>
+                      )}
+                      {stage.focus && (
+                        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
+                          {stage.focus}
+                        </p>
+                      )}
                       <ul className="mt-4 flex flex-wrap gap-2">
                         {stage.skills.map((skill) => (
                           <li

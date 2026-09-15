@@ -13,7 +13,7 @@ export const runtime = "nodejs";
  *
  * Two boundaries, both enforced here because the seeds rest every week at
  * 'active' with a future window and submit_entry gates on the window, not
- * the status. Status alone told this endpoint that all five weeks were
+ * the status. Status alone told this endpoint that all four stages were
  * open on day one, and the landing page revealed the whole schedule.
  *
  * So: drafts never leave the database, and neither does a week whose
@@ -45,7 +45,7 @@ export async function GET() {
      * page at first, but the flow sends a fresh registrant here to read
      * what the week expects, and a brief only participants can read is a
      * campaign that looks empty from the outside. What stays hidden is
-     * unchanged: drafts, and any week whose Monday has not arrived.
+     * unchanged: drafts, and any week whose window has not opened.
      */
     const started = rows
       .filter((row) => row.startsAt.getTime() <= now)
