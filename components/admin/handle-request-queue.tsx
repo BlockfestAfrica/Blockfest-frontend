@@ -15,6 +15,8 @@ export interface RequestRow {
   platform: string;
   oldHandle: string;
   requestedHandle: string;
+  /** Another creator already holds it. The approval is refused (P0911). */
+  takenBy: string | null;
   reason: string;
   createdAt: string;
 }
@@ -41,13 +43,26 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
   const [visible, setVisible] = useState(PAGE);
   const shown = requests.slice(0, visible);
 
-  async function decide(id: string, approve: boolean, decisionNote = "") {
+  /* expectedHandle travels with every decision: the engine refuses to
+     apply a value the owner did not read (P0909), which is what a creator
+     re-filing while the queue sits open would otherwise cause. */
+  async function decide(
+    id: string,
+    approve: boolean,
+    decisionNote = "",
+    expectedHandle?: string,
+  ) {
     setBusy(id);
     try {
       const response = await fetch("/api/admin/handle-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId: id, approve, note: decisionNote }),
+        body: JSON.stringify({
+          requestId: id,
+          approve,
+          note: decisionNote,
+          expectedHandle,
+        }),
       });
       const result = await response.json();
       if (!response.ok || !result.ok) {
@@ -102,6 +117,18 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
               <span className="text-brand-gold">@{request.requestedHandle}</span>
             </p>
 
+            {/* The fact the reviewer needs and never had. 0034 removed
+                handle verification and named this person as the defence
+                against squatting; deciding without knowing the handle is
+                already somebody's account is deciding blind. */}
+            {request.takenBy && (
+              <p className="mt-2 rounded-lg border border-red-400/40 bg-red-400/5 px-3 py-2 text-sm text-red-200">
+                @{request.requestedHandle} is already registered to{" "}
+                <strong className="font-semibold">{request.takenBy}</strong>.
+                Approving is refused while that is true.
+              </p>
+            )}
+
             {/* The creator's own words, quoted rather than paraphrased,
                 because they are what is being judged. */}
             <blockquote className="mt-2 max-w-prose border-l-2 border-line-2 pl-3 text-sm leading-relaxed text-ink-2">
@@ -125,7 +152,7 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
                   <button
                     type="button"
                     disabled={busy === request.id || !note.trim()}
-                    onClick={() => decide(request.id, false, note.trim())}
+                    onClick={() => decide(request.id, false, note.trim(), request.requestedHandle)}
                     className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-[background-color,transform] duration-150 hover:bg-red-400/15 active:scale-[0.98] disabled:opacity-60"
                   >
                     {busy === request.id ? "Rejecting…" : "Reject with this note"}
@@ -147,7 +174,7 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
                 <button
                   type="button"
                   disabled={busy === request.id}
-                  onClick={() => decide(request.id, true)}
+                  onClick={() => decide(request.id, true, "", request.requestedHandle)}
                   className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-[background-color,transform] duration-150 hover:bg-green-400/25 active:scale-[0.98] disabled:opacity-60"
                 >
                   {busy === request.id ? "Approving…" : "Approve the change"}

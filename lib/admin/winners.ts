@@ -126,6 +126,45 @@ export async function snapshotsTaken(
  * creator later being removed, which is the whole reason the freeze copies
  * it instead of joining live tables.
  */
+/**
+ * The frozen points the engine will break a vote tie on, by enrolment.
+ *
+ * The console used to judge a tied Community Favourite on LIVE standings
+ * while publish_weekly_winner judged on the recorded ones, so a Sunday
+ * approval could make the page name one winner and the engine refuse
+ * exactly that person, with no picker on screen to choose anybody else.
+ * Reads the version the round pinned at close (0059), falling back to the
+ * newest, which is what the engine's own COALESCE does.
+ */
+export async function tiebreakPoints(
+  admin: AdminIdentity,
+  weekNo: number,
+): Promise<Record<string, number>> {
+  void admin;
+  const result = await getDb().execute(sql`
+    SELECT s.campaign_creator_id, s.points_total
+      FROM leaderboard_snapshots s
+      JOIN campaigns cm ON cm.id = s.campaign_id
+     WHERE cm.slug = ${MONICA_SLUG}
+       AND s.week_no = ${weekNo}
+       AND s.version = COALESCE(
+             (SELECT r.tiebreak_snapshot_version FROM vote_rounds r
+               WHERE r.campaign_id = s.campaign_id AND r.week_no = ${weekNo}),
+             (SELECT max(version) FROM leaderboard_snapshots s2
+               WHERE s2.campaign_id = s.campaign_id AND s2.week_no = ${weekNo})
+           )
+  `);
+
+  const points: Record<string, number> = {};
+  for (const row of result.rows ?? []) {
+    const r = row as Record<string, unknown>;
+    if (r.campaign_creator_id) {
+      points[String(r.campaign_creator_id)] = Number(r.points_total ?? 0);
+    }
+  }
+  return points;
+}
+
 export async function snapshotRows(
   admin: AdminIdentity,
   weekNo: number,

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { campaigns, challenges, getDb } from "@/lib/db/client";
 import { currentCreator, handlesForEnrolment } from "@/lib/creator-session";
 import { sameOrigin } from "@/lib/admin/request";
+import { allowKey } from "@/lib/throttle";
 import { pauseState } from "@/lib/campaign-pause";
 import { logError } from "@/lib/log";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
@@ -77,6 +78,22 @@ export async function POST(request: NextRequest) {
     return fail(
       "We do not know who you are. Open your personal link and try again.",
       401,
+    );
+  }
+
+  /*
+   * The only mutating creator route that metered nothing. Every call costs
+   * several round trips even when it is refused, so a cookie-holding
+   * creator could loop rejected submissions against Neon all through the
+   * scoring window for free. Keyed to the enrolment, not the address,
+   * because Nigerian carriers put very large numbers of real creators
+   * behind one NAT: sixty an hour is far above honest use (three platforms
+   * a week) and far below a loop.
+   */
+  if (!(await allowKey(`enrolment:${creator.enrolmentId}`, "submit", 60, 3600))) {
+    return fail(
+      "That is a lot of submissions at once. Wait a moment and try again.",
+      429,
     );
   }
 

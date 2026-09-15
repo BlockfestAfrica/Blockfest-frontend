@@ -369,6 +369,42 @@ describe("0045 winners integrity", () => {
   });
 });
 
+describe("the tie-break basis, pinned at the close", () => {
+  it("a re-take after the round closed cannot move a settled tie", async () => {
+    // Two nominees tied on votes; the close pins version 1, where Ada
+    // leads. A Sunday re-take puts Ben ahead live. The engine must still
+    // accept only Ada, or a reviewer who cannot announce anything could
+    // choose the winner by pressing Record again.
+    const ada = await creatorWith("Ada", 300);
+    const ben = await creatorWith("Ben", 200);
+    await snapshot(1);
+
+    const round = await one<{ id: string }>(
+      `INSERT INTO vote_rounds (campaign_id, week_no, status, opens_at, closes_at)
+       VALUES ('${campaignId}', 1, 'open', now() - interval '2 hours', now() - interval '1 hour')
+       RETURNING id`,
+    );
+    await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round.id]);
+
+    const pinned = await one<{ v: number }>(
+      `SELECT tiebreak_snapshot_version AS v FROM vote_rounds WHERE id = '${round.id}'`,
+    );
+    expect(Number(pinned.v), "the close recorded the basis").toBe(1);
+
+    // Ben overtakes, and a re-take records it as version 2.
+    await db.query(
+      `UPDATE campaign_creators SET points_total = 900 WHERE id = '${ben}'`,
+    );
+    await snapshot(1);
+
+    const after = await one<{ v: number }>(
+      `SELECT tiebreak_snapshot_version AS v FROM vote_rounds WHERE id = '${round.id}'`,
+    );
+    expect(Number(after.v), "still the version the round closed against").toBe(1);
+    void ada;
+  });
+});
+
 describe("discarding a draft", () => {
   const discard = (week: number, category: string) =>
     db.query(

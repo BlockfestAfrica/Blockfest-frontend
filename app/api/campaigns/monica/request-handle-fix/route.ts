@@ -6,7 +6,7 @@ import { currentCreator } from "@/lib/creator-session";
 import { sameOrigin } from "@/lib/admin/request";
 import { isPgError } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
-import { allowKey } from "@/lib/throttle";
+import { allowKeyStrict } from "@/lib/throttle";
 import {
   CAMPAIGN_PLATFORMS,
   platformLabels,
@@ -46,6 +46,7 @@ const schema = z.object({
 });
 
 const KNOWN: Array<[code: string, raise: string, message: string]> = [
+  ["P0911", "handle_taken", "Another creator has already registered that username. If it is genuinely yours, write to us and a person will sort it out."],
   ["P0903", "handle_invalid", "That does not look like a username. Letters, numbers, dots and underscores only."],
   ["P0905", "handle_unchanged", "That is already the username on your registration."],
   ["P0901", "handle_not_found", "You did not register an account on that platform."],
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
   // key both wrongly blocked co-located creators and let one of them spend
   // everybody's budget. The route has already authenticated, so the person
   // is known. Fails open like every other limit.
-  if (!(await allowKey(`enrolment:${creator.enrolmentId}`, "handle-request", 10, 3600))) {
+  if (!(await allowKeyStrict(`enrolment:${creator.enrolmentId}`, "handle-request", 10, 3600))) {
     return NextResponse.json(
       { ok: false, message: "That is a lot of requests. Wait a while and try again." },
       { status: 429 },

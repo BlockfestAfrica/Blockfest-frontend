@@ -56,10 +56,11 @@ const decide = (
   approve: boolean,
   note = "",
   admin: string | null = adminId,
+  expectedHandle: string | null = null,
 ) =>
   db.query(
-    `SELECT * FROM decide_handle_request($1::uuid, $2::uuid, $3::boolean, $4::text)`,
-    [request, admin, approve, note],
+    `SELECT * FROM decide_handle_request($1::uuid, $2::uuid, $3::boolean, $4::text, $5::text)`,
+    [request, admin, approve, note, expectedHandle],
   );
 
 const pendingId = async (enrolment: string) =>
@@ -224,5 +225,72 @@ describe("the race two admins can run", () => {
     const me = await enrolWith("amaraa");
     await file(me, "amara");
     await expect(decide(await pendingId(me), true, "", null)).rejects.toThrow(/admin_required/);
+  });
+});
+
+describe("the decision binds to what the owner saw", () => {
+  it("refuses when the creator re-filed after the page loaded", async () => {
+    // request_handle_change updates the pending row in place, so the
+    // handle on screen and the handle a click applies can differ. The
+    // owner approved "@shown"; by then the row says something else.
+    const enrolment = await enrolWith("original1");
+    await file(enrolment, "shown");
+    const request = await one<{ id: string }>(
+      `SELECT id FROM handle_change_requests WHERE campaign_creator_id = '${enrolment}'`,
+    );
+    await file(enrolment, "swapped");
+
+    await expect(
+      decide(request.id, true, "", adminId, "shown"),
+    ).rejects.toThrow(/request_changed/);
+  });
+
+  it("applies normally when the page and the row agree", async () => {
+    const enrolment = await enrolWith("original2");
+    await file(enrolment, "agreed");
+    const request = await one<{ id: string }>(
+      `SELECT id FROM handle_change_requests WHERE campaign_creator_id = '${enrolment}'`,
+    );
+
+    await expect(
+      decide(request.id, true, "", adminId, "agreed"),
+    ).resolves.toBeTruthy();
+  });
+});
+
+describe("a handle change cannot take somebody else's handle", () => {
+  it("refuses at filing time, so the queue never fills with the ungrantable", async () => {
+    const victim = await enrolWith("bigcreator");
+    const squatter = await enrolWith("nobody");
+    void victim;
+
+    await expect(file(squatter, "bigcreator")).rejects.toThrow(/handle_taken/);
+  });
+
+  it("refuses the approval too, which is the check that binds", async () => {
+    // Filed while the handle was free, approved after somebody took it:
+    // the guard lives in correct_social_handle because that is the one
+    // statement every change passes through.
+    const squatter = await enrolWith("nobody2");
+    await file(squatter, "laterclaimed");
+    const request = await one<{ id: string }>(
+      `SELECT id FROM handle_change_requests WHERE campaign_creator_id = '${squatter}'`,
+    );
+    await enrolWith("laterclaimed");
+
+    await expect(
+      decide(request.id, true, "", adminId, "laterclaimed"),
+    ).rejects.toThrow(/handle_taken/);
+  });
+
+  it("still lets a creator correct their own typo", async () => {
+    const me = await enrolWith("mytpyo");
+    await file(me, "mytypo");
+    const request = await one<{ id: string }>(
+      `SELECT id FROM handle_change_requests WHERE campaign_creator_id = '${me}'`,
+    );
+    await expect(
+      decide(request.id, true, "", adminId, "mytypo"),
+    ).resolves.toBeTruthy();
   });
 });

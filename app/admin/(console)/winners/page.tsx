@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import {
   snapshotsTaken,
+  tiebreakPoints,
   winnerCandidates,
   winnersSoFar,
 } from "@/lib/admin/winners";
@@ -56,12 +57,13 @@ export default async function WinnersPage() {
 
   const weekNo = currentWeekNo();
 
-  const [creators, favourites, picked, snapshots, board, round, entries] =
+  const [creators, favourites, picked, snapshots, frozenPoints, board, round, entries] =
     await Promise.all([
       winnerCandidates(admin.admin, "creator_of_week"),
       winnerCandidates(admin.admin, "community_favourite"),
       winnersSoFar(admin.admin),
       snapshotsTaken(admin.admin),
+    tiebreakPoints(admin.admin, weekNo),
       leaderboard(500),
       currentRound(admin.admin, weekNo),
       candidateEntries(admin.admin, weekNo),
@@ -98,13 +100,24 @@ export default async function WinnersPage() {
           if (top === 0) {
             return { state: "zero" as const, winner: null, nomineeEnrolmentIds };
           }
-          const pointsOf = (id: string) =>
-            favourites.find((c) => c.enrolmentId === id)?.points ?? 0;
-          const winner = tally.nominees
-            .filter((n) => n.votes === top)
-            .reduce((a, b) =>
-              pointsOf(b.enrolmentId) > pointsOf(a.enrolmentId) ? b : a,
-            );
+          /* The FROZEN points, which is what publish_weekly_winner breaks
+             a tie on. Judging on live standings here let a Sunday approval
+             make this page name one winner while the engine accepted only
+             the other, with no picker on screen to resolve it. */
+          const pointsOf = (id: string) => frozenPoints[id] ?? 0;
+          const tied = tally.nominees.filter((n) => n.votes === top);
+          const winner = tied.reduce((a, b) =>
+            pointsOf(b.enrolmentId) > pointsOf(a.enrolmentId) ? b : a,
+          );
+          /* A tie the frozen standings cannot break either: the engine will
+             accept any of them, so the page must offer the choice rather
+             than assert a winner it cannot justify. */
+          const stillTied =
+            tied.filter((n) => pointsOf(n.enrolmentId) === pointsOf(winner.enrolmentId))
+              .length > 1;
+          if (stillTied) {
+            return { state: "zero" as const, winner: null, nomineeEnrolmentIds };
+          }
           return {
             state: "decided" as const,
             winner: {

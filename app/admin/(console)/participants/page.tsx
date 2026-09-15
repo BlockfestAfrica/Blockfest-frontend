@@ -109,6 +109,7 @@ export default async function AdminParticipantsPage({
             platform: r.platform,
             oldHandle: r.oldHandle,
             requestedHandle: r.requestedHandle,
+            takenBy: r.takenBy,
             reason: r.reason,
             createdAt: r.createdAt.toISOString(),
           }))}
