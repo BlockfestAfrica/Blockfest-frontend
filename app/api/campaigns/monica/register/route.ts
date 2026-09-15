@@ -13,6 +13,7 @@ import {
 } from "@/lib/campaign-registration";
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 import { MONICA_RULES_VERSION } from "@/lib/monica-rules";
+import { sameOrigin } from "@/lib/admin/request";
 import { MONICA_PRIVACY_VERSION } from "@/lib/monica-privacy";
 import { isPgError, PG, pgErrorCode, pgErrorMessage } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
@@ -120,6 +121,21 @@ export async function POST(request: NextRequest) {
     return fail("That request is too large.", 413);
   }
 
+  /*
+   * Same-origin, and JSON only. The handler reads the body with text() then
+   * JSON.parse, so without the content-type check a cross-site text/plain
+   * form posts here with no preflight, and every visitor of an attacker's
+   * page files a registration carrying THEIR address and user agent: the
+   * one fraud signal the console has, poisoned, and a stranger's per-IP
+   * budget spent. Nothing authenticated rides along, which is why this is
+   * hardening rather than an incident, but the three public siblings all
+   * check and this one did not.
+   */
+  if (!sameOrigin(request)) return fail("Not allowed.", 403);
+  if (!(request.headers.get("content-type") ?? "").includes("application/json")) {
+    return fail("We could not read that. Please try again.", 415);
+  }
+
   let body: unknown;
   try {
     const raw = await request.text();
@@ -148,6 +164,21 @@ export async function POST(request: NextRequest) {
   // text this server is actually publishing. A stale tab re-accepts rather
   // than silently recording agreement to rules that no longer exist, and a
   // curl with an invented version string records nothing.
+  /*
+   * The privacy notice gets the same treatment as the rules, for the same
+   * reason: the stored consent is dispute evidence. The field was accepted,
+   * documented as "which notice was on screen", then discarded and replaced
+   * by the server's current constant, so the column asserted a notice the
+   * registrant may never have seen. A stale tab now re-accepts instead.
+   */
+  if (input.privacyVersion && input.privacyVersion !== MONICA_PRIVACY_VERSION) {
+    return fail(
+      "The privacy notice has been updated since this page loaded. Reload and read it before registering.",
+      409,
+      "privacyVersion",
+    );
+  }
+
   if (input.rulesVersion !== MONICA_RULES_VERSION) {
     return fail(
       "The campaign rules have been updated since you loaded this page. Refresh, read them again, and re-accept.",
