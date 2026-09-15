@@ -117,10 +117,17 @@ export function MonicaStages() {
             return (
               <li
                 key={stage.number}
+                /* The live week carries the same gold left edge the console's
+                   JobCards use for their active state, so "what is happening
+                   now" reads identically on both sides of the product. The
+                   chip already says it in words; the edge says it at a
+                   scroll-past glance. */
                 className={`rounded-xl border p-6 sm:p-8 ${
-                  revealed
-                    ? "border-line-2 bg-card-2"
-                    : "border-dashed border-line-2"
+                  status === "active"
+                    ? "border-line-2 border-l-2 border-l-brand-gold bg-card-2"
+                    : revealed
+                      ? "border-line-2 bg-card-2"
+                      : "border-dashed border-line-2"
                 }`}
               >
                 <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-10">
