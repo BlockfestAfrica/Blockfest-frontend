@@ -14,6 +14,7 @@ import { MONICA_SLUG } from "@/lib/campaigns";
 import { isPgError } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
 import { sendEmailQuietly } from "@/lib/email/client";
+import { sameOrigin } from "@/lib/admin/request";
 import { voteReceiptEmail } from "@/lib/email/templates";
 
 /** postgres over HTTP needs Node; see lib/db/client. */
@@ -47,6 +48,17 @@ function fail(message: string, status: number) {
 const MAX_BODY_BYTES = 8 * 1024;
 
 export async function POST(request: NextRequest) {
+  /*
+   * Same-origin and JSON only, for the same reason the cast route carries
+   * them: without both, a cross-site page can auto-submit a text/plain
+   * form here with no preflight, and the redemption half of the vote
+   * becomes drivable from any visitor's browser.
+   */
+  if (!sameOrigin(request)) return fail("Not allowed.", 403);
+  if (!(request.headers.get("content-type") ?? "").includes("application/json")) {
+    return fail("We could not read that. Please try again.", 415);
+  }
+
   // The App Router has no body limit for route handlers, and this is the one
   // public route that skipped the cap its siblings carry: request.json()
   // buffers whatever arrives, so a multi-megabyte body makes the cheapest
