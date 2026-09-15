@@ -132,7 +132,7 @@ export default async function WinnersPage() {
                                     <a
                                       href={link.url}
                                       target="_blank"
-                                      rel="noopener noreferrer"
+                                      rel="noopener noreferrer nofollow"
                                       className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-3"
                                     >
                                       {platformLabels[
@@ -181,7 +181,7 @@ export default async function WinnersPage() {
               <a
                 href="https://x.com/blockfestafrica"
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer nofollow"
                 className="text-link underline underline-offset-2 hover:text-white"
               >
                 Blockfest on X
@@ -213,7 +213,7 @@ export default async function WinnersPage() {
                           <a
                             href={link.url}
                             target="_blank"
-                            rel="noopener noreferrer"
+                            rel="noopener noreferrer nofollow"
                             className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
                           >
                             {platformLabels[

@@ -644,13 +644,22 @@ export function RegistrationForm({
         aria-hidden="true"
         className="absolute left-[-9999px] h-0 w-0 overflow-hidden"
       >
-        <label htmlFor="website">Website</label>
+        {/* Named for nothing a password manager recognises. It was
+            id/name="website" with the label "Website", which is exactly
+            what autofill heuristics target, so a manager filling the form
+            tripped the honeypot and the creator was told they had
+            registered while nothing was written. autoComplete="new-password"
+            and the ignore attributes are the belt to that braces. */}
+        <label htmlFor="hp-contact-ref">Leave this field empty</label>
         <input
-          id="website"
-          name="website"
+          id="hp-contact-ref"
+          name="hp-contact-ref"
           type="text"
           tabIndex={-1}
-          autoComplete="off"
+          autoComplete="new-password"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-form-type="other"
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
         />
