@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Confirm } from "@/components/shared/confirm";
 import {
   buttonClass,
   control,
@@ -67,6 +68,41 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
       basePoints: String(challenge.basePoints),
       status: challenge.status,
     });
+  }
+
+  /**
+   * Tell every active creator a stage is live.
+   *
+   * Deliberately a separate press from Save. The team edits a challenge
+   * repeatedly while writing it, and a send that rode along with the edit
+   * would mail the whole campaign on a typo fix. The route refuses a
+   * second announcement of the same stage, so a double click costs
+   * nothing.
+   */
+  async function announce(challenge: EditableChallenge) {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/announce-challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeId: challenge.id }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        toast.error(result.message ?? "That did not work.");
+        return;
+      }
+      toast.success(
+        result.failed
+          ? `Week ${challenge.weekNo} announced to ${result.sent}. ${result.failed} did not send.`
+          : `Week ${challenge.weekNo} announced to ${result.sent} creators.`,
+      );
+      router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function save(challenge: EditableChallenge) {
@@ -274,14 +310,32 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                   </Field>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => save(challenge)}
-                  className={buttonClass("primary", "w-fit")}
-                >
-                  {busy ? "Saving…" : `Save week ${challenge.weekNo}`}
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => save(challenge)}
+                    className={buttonClass("primary", "w-fit")}
+                  >
+                    {busy ? "Saving…" : `Save week ${challenge.weekNo}`}
+                  </button>
+
+                  {/* Only for a week that is actually live, because the
+                      mail tells creators to go and submit. Separate from
+                      Save on purpose: the brief gets edited repeatedly
+                      while it is being written, and a send riding along
+                      with an edit would mail the campaign on a typo. */}
+                  {challenge.status === "active" && (
+                    <Confirm
+                      label="Announce to creators"
+                      question={`Email every active creator that week ${challenge.weekNo} is live?`}
+                      consequence="One email each, with the brief and the deadline. It can only be sent once per stage, and the audit log records who sent it and how many reached their inbox."
+                      confirmLabel="Yes, announce it"
+                      pending={busy}
+                      onConfirm={() => announce(challenge)}
+                    />
+                  )}
+                </div>
               </div>
             )}
           </li>
