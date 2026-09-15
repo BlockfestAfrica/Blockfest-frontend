@@ -6,7 +6,7 @@ import { currentCreator } from "@/lib/creator-session";
 import { sameOrigin } from "@/lib/admin/request";
 import { isPgError } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
-import { allowKey } from "@/lib/throttle";
+import { allowKeyStrict } from "@/lib/throttle";
 import {
   CAMPAIGN_PLATFORMS,
   platformLabels,
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
   // key both wrongly blocked co-located creators and let one of them spend
   // everybody's budget. The route has already authenticated, so the person
   // is known. Fails open like every other limit.
-  if (!(await allowKey(`enrolment:${creator.enrolmentId}`, "handle-request", 10, 3600))) {
+  if (!(await allowKeyStrict(`enrolment:${creator.enrolmentId}`, "handle-request", 10, 3600))) {
     return NextResponse.json(
       { ok: false, message: "That is a lot of requests. Wait a while and try again." },
       { status: 429 },
