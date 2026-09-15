@@ -533,6 +533,11 @@ export const monicaFaqs: CampaignFaq[] = [
       "The creator challenge runs from 16 September to 17 October 2026. The final challenge closes on 17 October at 12:00 noon Lagos time, and the final results are announced on 18 October.",
   },
   {
+    question: "I lost my personal link. How do I get back in?",
+    answer:
+      "Use the Lost your link page on the campaign site: type your registered email address and a confirmation goes to that inbox. Confirming mails you a fresh link and switches the old one off. If you no longer have access to that inbox, write to partnership@blockfestafrica.com and a person will sort it out.",
+  },
+  {
     question: "How can I get my Monica tag?",
     answer:
       "Your Monica tag is your unique username on Monica. To get yours, download the Monica app and create your account. Your tag will be assigned to you and can be found in your Monica profile. You need your Monica tag to receive rewards.",
