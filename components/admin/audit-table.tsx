@@ -25,6 +25,7 @@ const ACTION_LABELS: Record<string, string> = {
   "entry.repriced": "Entry re-scored",
   "point_rule.updated": "Point rule changed",
   "challenge.updated": "Challenge edited",
+  "challenge.announced": "Stage announced to creators",
   "campaign.paused": "Campaign paused",
   "campaign.resumed": "Campaign resumed",
   "campaign.purged": "Test data purged",
