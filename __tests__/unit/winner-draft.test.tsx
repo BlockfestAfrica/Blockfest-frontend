@@ -65,6 +65,13 @@ describe("a saved draft", () => {
     expect(screen.getByText(/replaces this draft/)).toBeTruthy();
   });
 
+  it("offers to discard it, not only to overwrite it", () => {
+    renderWithDraft();
+    expect(
+      screen.getByRole("button", { name: /discard this draft/i }),
+    ).toBeTruthy();
+  });
+
   it("loads into the form on one click", () => {
     renderWithDraft();
     fireEvent.click(screen.getByRole("button", { name: /load the draft/i }));

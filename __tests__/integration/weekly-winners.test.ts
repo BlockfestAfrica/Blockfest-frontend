@@ -368,3 +368,53 @@ describe("0045 winners integrity", () => {
     ).resolves.toBeTruthy();
   });
 });
+
+describe("discarding a draft", () => {
+  const discard = (week: number, category: string) =>
+    db.query(
+      `SELECT discard_winner_draft($1, $2::smallint, $3::winner_category, $4::uuid)`,
+      [SLUG, week, category, adminId],
+    );
+
+  it("deletes the draft and writes the audit row, with the pick preserved in it", async () => {
+    const ada = await creatorWith("Ada", 300);
+    await publish(1, "creator_of_week", ada, { publish: false, prize: 300000 });
+
+    await discard(1, "creator_of_week");
+
+    expect(
+      await count(`SELECT count(*)::int AS n FROM weekly_winners`),
+    ).toBe(0);
+    const row = await one<{ before: { prize_amount_naira: number } }>(
+      `SELECT before FROM audit_log WHERE action = 'winner.draft_discarded'`,
+    );
+    expect(row.before.prize_amount_naira).toBe(300000);
+  });
+
+  it("refuses a published winner by its own name", async () => {
+    const ada = await creatorWith("Ada", 300);
+    await publish(1, "creator_of_week", ada);
+
+    await expect(discard(1, "creator_of_week")).rejects.toThrow(
+      /winner_already_published/,
+    );
+    expect(
+      await count(`SELECT count(*)::int AS n FROM weekly_winners`),
+    ).toBe(1);
+  });
+
+  it("says so when there was never a draft to discard", async () => {
+    await expect(discard(2, "creator_of_week")).rejects.toThrow(
+      /draft_not_found/,
+    );
+  });
+
+  it("needs an admin, like every console mutation", async () => {
+    await expect(
+      db.query(
+        `SELECT discard_winner_draft($1, 1::smallint, 'creator_of_week'::winner_category, NULL::uuid)`,
+        [SLUG],
+      ),
+    ).rejects.toThrow(/admin_required/);
+  });
+});

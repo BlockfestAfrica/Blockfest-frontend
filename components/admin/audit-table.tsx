@@ -20,6 +20,7 @@ const ACTION_LABELS: Record<string, string> = {
   "points.awarded": "Points moved by hand",
   "winner.published": "Winner announced",
   "winner.drafted": "Winner drafted",
+  "winner.draft_discarded": "Winner draft discarded",
   "leaderboard.snapshot": "Standings recorded",
   "entry.repriced": "Entry re-scored",
   "point_rule.updated": "Point rule changed",
