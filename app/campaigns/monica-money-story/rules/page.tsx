@@ -153,10 +153,10 @@ export default function MonicaRulesPage() {
                         </p>
                         {/* The table sits after the first paragraph, so the
                             sentence introducing the numbers stays above them. */}
+                        {/* Tables take the section's full width, not the
+                            prose measure: a points table at 65ch wraps its
+                            own headers, and digits are not sentences. */}
                         {pIndex === 0 && section.table && (
-                          {/* Tables take the section's full width, not the
-                              prose measure: a points table at 65ch wraps its
-                              own headers, and digits are not sentences. */}
                           <div className="overflow-x-auto rounded-lg border border-line">
                             <table className="w-full min-w-[20rem] border-collapse text-left">
                               <thead>
