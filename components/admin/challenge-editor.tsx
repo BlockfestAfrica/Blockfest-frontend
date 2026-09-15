@@ -18,6 +18,11 @@ export interface EditableChallenge {
   weekNo: number;
   title: string;
   description: string;
+  /** The card narrative. Null means the registry copy in code still speaks;
+      once an admin writes something, the database is the voice. */
+  question: string | null;
+  focus: string | null;
+  skills: string[] | null;
   basePoints: number;
   status: "draft" | "active" | "closed";
   startsAt: string;
@@ -41,13 +46,24 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ title: "", description: "", basePoints: "", status: "" });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    question: "",
+    focus: "",
+    skills: "",
+    basePoints: "",
+    status: "",
+  });
 
   function startEditing(challenge: EditableChallenge) {
     setOpen(challenge.id);
     setForm({
       title: challenge.title,
       description: challenge.description,
+      question: challenge.question ?? "",
+      focus: challenge.focus ?? "",
+      skills: (challenge.skills ?? []).join(", "),
       basePoints: String(challenge.basePoints),
       status: challenge.status,
     });
@@ -69,6 +85,14 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
           challengeId: challenge.id,
           title: form.title.trim(),
           description: form.description.trim(),
+          question: form.question.trim(),
+          focus: form.focus.trim(),
+          /* Comma separated in the box, an array on the wire. Empty means
+             keep what is there, same rule as every other field here. */
+          skills: form.skills
+            .split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean),
           basePoints: points,
           status: form.status,
         }),
@@ -161,6 +185,57 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                     maxLength={2000}
                     rows={4}
                     className={`${control} min-h-28 resize-y`}
+                  />
+                </Field>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field
+                    id={`question-${challenge.id}`}
+                    label="Question line"
+                    hint="The bold line under the title, e.g. Make Them Curious."
+                  >
+                    <input
+                      id={`question-${challenge.id}`}
+                      value={form.question}
+                      onChange={(event) =>
+                        setForm({ ...form, question: event.target.value })
+                      }
+                      maxLength={120}
+                      className={control}
+                    />
+                  </Field>
+
+                  <Field
+                    id={`skills-${challenge.id}`}
+                    label="Skill chips"
+                    hint="Comma separated. The campaign's four: Creativity, Storytelling, Education, Influence."
+                  >
+                    <input
+                      id={`skills-${challenge.id}`}
+                      value={form.skills}
+                      onChange={(event) =>
+                        setForm({ ...form, skills: event.target.value })
+                      }
+                      maxLength={120}
+                      className={control}
+                    />
+                  </Field>
+                </div>
+
+                <Field
+                  id={`focus-${challenge.id}`}
+                  label="Focus line"
+                  hint="The short paragraph on the stage card. The full brief above is what unfolds; this is the glance."
+                >
+                  <textarea
+                    id={`focus-${challenge.id}`}
+                    value={form.focus}
+                    onChange={(event) =>
+                      setForm({ ...form, focus: event.target.value })
+                    }
+                    maxLength={300}
+                    rows={2}
+                    className={`${control} min-h-20 resize-y`}
                   />
                 </Field>
 

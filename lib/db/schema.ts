@@ -384,6 +384,15 @@ export const challenges = pgTable(
 
     title: text("title").notNull(),
     description: text("description").notNull(),
+    /*
+     * The card narrative, console-owned since 0057. NULL falls back to the
+     * registry copy in lib/campaigns.ts, so nothing changes until an admin
+     * writes something; once written, the database is the voice, same as
+     * the title always was.
+     */
+    question: text("question"),
+    focus: text("focus"),
+    skills: text("skills").array(),
 
     /**
      * week_no 1..4 since the 15 September restructure (0055 retired the

@@ -24,11 +24,11 @@ const one = async <T = Record<string, unknown>>(sql: string, p: unknown[] = []):
 
 const edit = (
   challenge: string,
-  fields: Partial<{ title: string; description: string; basePoints: number; status: string; startsAt: string; endsAt: string }>,
+  fields: Partial<{ title: string; description: string; basePoints: number; status: string; startsAt: string; endsAt: string; question: string; focus: string; skills: string[] }>,
   admin: string | null = adminId,
 ) =>
   db.query(
-    `SELECT * FROM update_challenge($1::uuid, $2::uuid, $3::text, $4::text, $5::integer, $6::challenge_status, $7::timestamptz, $8::timestamptz)`,
+    `SELECT * FROM update_challenge($1::uuid, $2::uuid, $3::text, $4::text, $5::integer, $6::challenge_status, $7::timestamptz, $8::timestamptz, $9::text, $10::text, $11::text[])`,
     [
       challenge,
       admin,
@@ -38,6 +38,9 @@ const edit = (
       fields.status ?? null,
       fields.startsAt ?? null,
       fields.endsAt ?? null,
+      fields.question ?? null,
+      fields.focus ?? null,
+      fields.skills ?? null,
     ],
   );
 
@@ -180,5 +183,40 @@ describe("what it refuses", () => {
         endsAt: "2026-09-23T23:59:59+01:00",
       }),
     ).rejects.toThrow(/window_overlaps/);
+  });
+});
+
+describe("the stage narrative, console-owned since 0057", () => {
+  it("writes question, focus and chips, and audits each as a diff", async () => {
+    await edit(week2, {
+      question: "Make Them Curious",
+      focus: "Light, accessible, built to travel.",
+      skills: ["Creativity", "Storytelling", "Influence"],
+    });
+
+    const row = await one<{ question: string; focus: string; skills: string[] }>(
+      `SELECT question, focus, skills FROM challenges WHERE id = '${week2}'`,
+    );
+    expect(row.question).toBe("Make Them Curious");
+    expect(row.focus).toBe("Light, accessible, built to travel.");
+    expect(row.skills).toEqual(["Creativity", "Storytelling", "Influence"]);
+
+    const audit = await one<{ after: Record<string, { to: unknown }> }>(
+      `SELECT after FROM audit_log WHERE action = 'challenge.updated'
+        ORDER BY created_at DESC LIMIT 1`,
+    );
+    expect(audit.after.question.to).toBe("Make Them Curious");
+    expect(audit.after.skills.to).toEqual(["Creativity", "Storytelling", "Influence"]);
+  });
+
+  it("keeps what is there when a field arrives empty, same as the title", async () => {
+    await edit(week2, { question: "Make Them Curious" });
+    await edit(week2, { title: "Renamed", question: "" });
+
+    const row = await one<{ question: string; title: string }>(
+      `SELECT question, title FROM challenges WHERE id = '${week2}'`,
+    );
+    expect(row.title).toBe("Renamed");
+    expect(row.question, "empty means keep, never clear").toBe("Make Them Curious");
   });
 });

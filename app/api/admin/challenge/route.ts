@@ -32,6 +32,11 @@ const schema = z.object({
       "The brief fits in 2,000 characters. Trim it, and put the long version in the Creator Pack.",
     )
     .optional(),
+  question: z.string().trim().max(120).optional(),
+  focus: z.string().trim().max(300).optional(),
+  /* Chips, not prose: a handful of short words. The count and length caps
+     keep a paste of the brief from becoming eight enormous chips. */
+  skills: z.array(z.string().trim().min(1).max(24)).max(6).optional(),
   basePoints: z.number().int().positive().max(10_000).optional(),
   status: z.enum(["draft", "active", "closed"]).optional(),
   startsAt: z.string().datetime({ offset: true }).optional(),
@@ -67,12 +72,29 @@ export async function POST(request: NextRequest) {
   const c = parsed.data;
 
   try {
+    /*
+     * The array built element by element, the same way the vote-round route
+     * builds its uuid[]: the HTTP driver has no reliable serialisation for
+     * a bare JavaScript array parameter, and a wrong guess fails only in
+     * production. An empty or absent list travels as NULL, which the
+     * function reads as "keep".
+     */
+    const skillsSql =
+      c.skills && c.skills.length > 0
+        ? sql`ARRAY[${sql.join(
+            c.skills.map((skill) => sql`${skill}`),
+            sql`, `,
+          )}]::text[]`
+        : sql`NULL::text[]`;
+
     const result = await getDb().execute(sql`
       SELECT * FROM update_challenge(
         ${c.challengeId}::uuid, ${admin.admin.adminId}::uuid,
         ${c.title ?? null}::text, ${c.description ?? null}::text,
         ${c.basePoints ?? null}::integer, ${c.status ?? null}::challenge_status,
-        ${c.startsAt ?? null}::timestamptz, ${c.endsAt ?? null}::timestamptz
+        ${c.startsAt ?? null}::timestamptz, ${c.endsAt ?? null}::timestamptz,
+        ${c.question ?? null}::text, ${c.focus ?? null}::text,
+        ${skillsSql}
       )
     `);
     const row = (result.rows?.[0] ?? {}) as { week_no?: number };

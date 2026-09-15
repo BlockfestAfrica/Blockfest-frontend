@@ -9,6 +9,10 @@ export interface ChallengeRow {
   weekNo: number;
   title: string;
   description: string;
+  /** Console-owned narrative since 0057; null means the registry speaks. */
+  question: string | null;
+  focus: string | null;
+  skills: string[] | null;
   basePoints: number;
   status: "draft" | "active" | "closed";
   startsAt: Date;
@@ -25,6 +29,9 @@ export async function listChallenges(admin: AdminIdentity): Promise<ChallengeRow
       weekNo: challenges.weekNo,
       title: challenges.title,
       description: challenges.description,
+      question: challenges.question,
+      focus: challenges.focus,
+      skills: challenges.skills,
       basePoints: challenges.basePoints,
       status: challenges.status,
       startsAt: challenges.startsAt,
