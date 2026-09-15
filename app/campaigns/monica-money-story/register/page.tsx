@@ -158,6 +158,20 @@ export default async function MonicaRegisterPage({
                 </Link>{" "}
                 set out what that involves.
               </p>
+
+              {/* The person most likely to be re-registering is somebody who
+                  lost their link; the form refuses a known address, so this
+                  is the door they actually need. */}
+              <p className="mt-4 text-sm leading-relaxed text-ink-4">
+                Already registered but lost your personal link?{" "}
+                <Link
+                  href={monicaRoutes.recover}
+                  className="text-link underline underline-offset-2 hover:text-white"
+                >
+                  Get a new one here
+                </Link>
+                , no need to register again.
+              </p>
             </aside>
           </div>
         </div>

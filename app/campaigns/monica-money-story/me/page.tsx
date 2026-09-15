@@ -165,17 +165,30 @@ export default async function MonicaCreatorPage() {
               again and you will land back here.
             </p>
             <p className="mt-4 text-base leading-relaxed text-ink-3">
-              If you have lost it, write to{" "}
+              If you have lost it, you can get a new one yourself: type your
+              registered email address and a confirmation goes to that inbox.
+              We cannot read your old link back to you, which is why a new one
+              is the only way: a link we could recover is a link somebody else
+              could take.
+            </p>
+            {/* Self-service first, support second. This screen is where a
+                locked-out creator actually stands, so the recovery door
+                belongs here more than anywhere. */}
+            <Link
+              href={monicaRoutes.recover}
+              className="mt-6 inline-flex min-h-11 items-center rounded-full bg-brand-gold px-6 text-sm font-bold text-black transition-opacity hover:opacity-90"
+            >
+              Get a new link
+            </Link>
+            <p className="mt-4 text-sm leading-relaxed text-ink-4">
+              No longer have access to that inbox? Write to{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="text-link underline underline-offset-2 hover:text-white"
               >
                 {CONTACT_EMAIL}
               </a>{" "}
-              from the email address you registered with and we will issue a new
-              one. We cannot read your old link back to you, which is why a new
-              one is the only way: a link we could recover is a link somebody
-              else could take.
+              and a person sorts it out.
             </p>
             <Link
               href={monicaRoutes.landing}
@@ -620,17 +633,24 @@ export default async function MonicaCreatorPage() {
                 {/* No copy button. The address bar here is just /me, and pasted
                     anywhere else it shows the locked page: a button would hand
                     somebody a link that looks like a rescue and is not one. */}
-                Lost it entirely?{" "}
+                Lost it entirely? The{" "}
+                <Link
+                  href={monicaRoutes.recover}
+                  className="text-link underline underline-offset-2 hover:text-white"
+                >
+                  Lost your link
+                </Link>{" "}
+                page mails a new one to your registered address, which stops
+                the old one working. If that inbox itself is gone,{" "}
                 <a
                   href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
                     `Lost my campaign link (${creator.referralCode})`,
                   )}`}
                   className="text-link underline underline-offset-2 hover:text-white"
                 >
-                  Email us
+                  email us
                 </a>{" "}
-                from the address you registered with and we will issue a new
-                one, which stops the old one working.
+                and a person sorts it out.
               </p>
             </Panel>
           </details>

@@ -129,25 +129,33 @@ export default function MonicaMoneyStoryPage() {
                 href={monicaRoutes.pack}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+                className="inline-flex min-h-11 items-center gap-2 whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
               >
                 See the Creator Pack
               </a>
+            </div>
+            {/* The utilities, on their own quiet line. Five controls in one
+                row read fine stacked on a phone and jampacked side by side
+                on a laptop: the gold action and its one companion keep the
+                row, and the reference links breathe below it. Nowrap,
+                because "Privacy notice" split across two lines reads as
+                two links. */}
+            <div className="mt-5 flex flex-wrap items-center gap-x-7 gap-y-1">
               <Link
                 href={monicaRoutes.leaderboard}
-                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+                className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
               >
                 Leaderboard
               </Link>
               <Link
                 href={monicaRoutes.privacy}
-                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+                className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
               >
                 Privacy notice
               </Link>
               <Link
                 href={monicaRoutes.recover}
-                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+                className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
               >
                 Lost your link?
               </Link>
