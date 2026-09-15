@@ -418,6 +418,10 @@ export async function pointHistory(
  * creator concludes their work was lost and submits it again.
  */
 export interface CreatorPageData {
+  /** 'active' normally. A disqualified creator's page must say so rather
+      than keep offering the form: they used to find out by filming a
+      week's work and meeting a refusal. */
+  status: string;
   challenge: OpenChallenge | null;
   platforms: string[];
   submissions: CreatorSubmission[];
@@ -452,8 +456,20 @@ export async function creatorPageData(
     }
   };
 
-  const [challenge, platforms, submissions, history, handles] =
+  const [status, challenge, platforms, submissions, history, handles] =
     await Promise.all([
+      soft(
+        async () => {
+          const rows = await getDb()
+            .select({ status: campaignCreators.status })
+            .from(campaignCreators)
+            .where(eq(campaignCreators.id, enrolmentId))
+            .limit(1);
+          return String(rows[0]?.status ?? "active");
+        },
+        "active",
+        "standing",
+      ),
       soft(() => openChallenge(), null as OpenChallenge | null, "this week"),
       soft(() => registeredPlatforms(enrolmentId), [] as string[], "platforms"),
       soft(
@@ -470,6 +486,9 @@ export async function creatorPageData(
     ]);
 
   return {
+    /* Defaults to active on a read failure, deliberately: a blip must not
+       tell somebody in good standing that they have been removed. */
+    status: status.value,
     challenge: challenge.value,
     platforms: platforms.value,
     submissions: submissions.value,
