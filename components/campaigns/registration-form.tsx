@@ -725,7 +725,7 @@ export function RegistrationForm({
             label="Monica tag"
             htmlFor="monicaTag"
             required
-            hint="Your username on Monica. This is how prize money reaches you, so check it."
+            hint="Your username on Monica. Prize money goes here, so check it."
             error={errors.monicaTag}
           >
             <input
@@ -743,19 +743,25 @@ export function RegistrationForm({
             {/* Plenty of creators arrive without a Monica account at all,
                 and the tag is where prize money goes, so the way to get one
                 lives beside the box that demands it. New tab: filling the
-                rest of this form must survive the trip to the app store. */}
+                rest of this form must survive the trip to the app store.
+
+                One line, not four. The columns share explicit grid rows so
+                labels and inputs stay level across them, which means a
+                four-line helper in the last row leaves the same four lines
+                of dead space under the phone field beside it. The steps it
+                used to list (download, register, verify) are what the app
+                itself says on arrival, so the link can carry them. */}
             <p className="mt-2 text-sm leading-relaxed text-ink-3">
-              No Monica tag yet?{" "}
+              No tag yet?{" "}
               <a
                 href="https://monica.cash/"
                 target="_blank"
                 rel="noopener noreferrer nofollow"
                 className="text-link underline underline-offset-2 hover:text-white"
               >
-                Get yours on Monica
+                Get one on Monica
               </a>
-              : download the app, register, verify your identity, and your tag
-              appears in your profile. Then come back and enter it here.
+              , then come back and enter it.
             </p>
           </Labelled>
         </div>
