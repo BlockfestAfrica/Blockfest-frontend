@@ -69,7 +69,7 @@ export default function MonicaRulesPage() {
             {CAMPAIGN.name}
           </Link>
 
-          <div className="mt-6 max-w-3xl">
+          <div className="mt-6 max-w-4xl">
             <p className="eyebrow text-brand-gold">{CAMPAIGN.name}</p>
             <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
               Campaign rules
@@ -80,7 +80,10 @@ export default function MonicaRulesPage() {
             </p>
           </div>
 
-          <div className="mt-16 max-w-3xl">
+          {/* One step wider than the old max-w-3xl: running text inside
+              still caps at max-w-prose, so the room goes to the points and
+              stages tables, which were the cramped part. */}
+          <div className="mt-16 max-w-4xl">
             {monicaRulesOpenPoints.length > 0 && (
               <div className="rounded-xl border border-brand-gold/30 bg-brand-gold/5 p-5 sm:p-6">
                 <p className="text-sm font-semibold text-brand-gold">
@@ -150,8 +153,11 @@ export default function MonicaRulesPage() {
                         </p>
                         {/* The table sits after the first paragraph, so the
                             sentence introducing the numbers stays above them. */}
+                        {/* Tables take the section's full width, not the
+                            prose measure: a points table at 65ch wraps its
+                            own headers, and digits are not sentences. */}
                         {pIndex === 0 && section.table && (
-                          <div className="max-w-prose overflow-x-auto rounded-lg border border-line">
+                          <div className="overflow-x-auto rounded-lg border border-line">
                             <table className="w-full min-w-[20rem] border-collapse text-left">
                               <thead>
                                 <tr className="border-b border-line text-xs font-semibold uppercase tracking-wider text-ink-3">
