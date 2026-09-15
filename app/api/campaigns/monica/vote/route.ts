@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, after } from "next/server";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
@@ -11,6 +11,7 @@ import {
   voteEmailSchema,
 } from "@/lib/campaign-vote";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { sameOrigin } from "@/lib/admin/request";
 import { isPgError } from "@/lib/db/errors";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { voteVerificationEmail } from "@/lib/email/templates";
@@ -38,6 +39,23 @@ const schema = z.object({
 const CAST_MESSAGE =
   "If this address has not voted in this round yet, a six digit code is on its way to its inbox.";
 
+/**
+ * A floor under how fast a cast can answer, so the merged branches cost the
+ * same wall clock. The send itself now happens after the response, so the
+ * only thing left to hide is the handful of milliseconds between an engine
+ * refusal and a successful insert. Same device the recovery route uses, and
+ * the same reason: a message that merges states is not a merge if a
+ * stopwatch separates them.
+ */
+const TIMING_FLOOR_MS = 400;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function uniformCast(started: number) {
+  await sleep(Math.max(0, TIMING_FLOOR_MS - (Date.now() - started)));
+  return NextResponse.json({ ok: true, message: CAST_MESSAGE });
+}
+
 function fail(message: string, status: number) {
   return NextResponse.json({ ok: false, message }, { status });
 }
@@ -53,6 +71,26 @@ function fail(message: string, status: number) {
  * an attacker anything the engine hid on purpose.
  */
 export async function POST(request: NextRequest) {
+  const started = Date.now();
+
+  /*
+   * Same-origin, and JSON only, before anything else.
+   *
+   * Without both, a page anywhere on the internet can auto-submit a
+   * text/plain form here: a CORS-safelisted body needs no preflight, and
+   * request.text() does not care what content type produced it, so the
+   * JSON arrives intact. Every innocent visitor then casts one ballot
+   * under the attacker's address, and because the row stores the VISITOR's
+   * address hash, both controls this route relies on are blinded at once:
+   * the per-IP cast ration never fires, and the console's same-connection
+   * cluster screen has nothing to cluster. The reviewer sweeps a clean
+   * board and the prize is announced against a laundered tally.
+   */
+  if (!sameOrigin(request)) return fail("Not allowed.", 403);
+  if (!(request.headers.get("content-type") ?? "").includes("application/json")) {
+    return fail("We could not read that. Please try again.", 415);
+  }
+
   // A vote is well under a kilobyte, and this endpoint is public and
   // unauthenticated. The register route explains why the App Router needs
   // the cap at all; the same reasoning applies unchanged here.
@@ -112,6 +150,20 @@ export async function POST(request: NextRequest) {
       429,
     );
   }
+  /*
+   * And an address-only bucket, because the pair above is only as strong as
+   * the IP half: residential proxy exits are a commodity, and a fresh exit
+   * is a fresh (address, IP) bucket worth three more sends to the same
+   * inbox. Five an hour per address, whatever the connection, so the
+   * mail-bomb this file's comments promise to prevent stays prevented.
+   * Mirrors the recover-request-address bucket on the recovery route.
+   */
+  if (!(await allowVoteKey(`vote-send-address:${emailCanonical}`, "vote-send-address", 5, 3600))) {
+    return fail(
+      "That is a lot of codes for one address. Wait a while and try again.",
+      429,
+    );
+  }
   if (!(await allowVoteKey(`vote-ip:${ipHash}`, "vote-cast", 30, 3600))) {
     return fail(
       "That is a lot of votes from one place. Wait a while and try again.",
@@ -134,9 +186,10 @@ export async function POST(request: NextRequest) {
       )
     `);
   } catch (error) {
-    // The uniform branch. See CAST_MESSAGE for why this is a success shape.
+    // The uniform branch. See CAST_MESSAGE for why this is a success shape,
+    // and uniformCast for why it waits before saying it.
     if (isPgError(error, "P0816", "already_voted")) {
-      return NextResponse.json({ ok: true, message: CAST_MESSAGE });
+      return uniformCast(started);
     }
     // These two are honest: a closed round and a wrong ballot say nothing
     // about any email address, so there is nothing to hide.
@@ -159,41 +212,51 @@ export async function POST(request: NextRequest) {
    * pending vote holds a code nobody was sent, the voter hears the same
    * uniform answer, and casting again replaces the code. Failing the whole
    * request here would roll nothing back and only advertise the hiccup.
+   *
+   * After the response, not inside it. CAST_MESSAGE is worded to merge a
+   * fresh address with one that already voted, is held, or is fraud-barred,
+   * but the merge was only true in words: the already_voted branch returned
+   * immediately while this branch waited on a mail round trip, so a
+   * stopwatch told the two apart and an operator could enumerate which of
+   * their own addresses the sweep had caught. after() keeps the work inside
+   * the invocation without the caller waiting on it.
    */
-  try {
-    const meta = await getDb().execute(sql`
-      SELECT c.full_name AS display_name, ch.week_no
-        FROM vote_round_nominees n
-        JOIN challenge_entries ce ON ce.id = n.entry_id
-        JOIN challenges ch        ON ch.id = ce.challenge_id
-        JOIN campaign_creators cc ON cc.id = ce.campaign_creator_id
-        JOIN creators c           ON c.id = cc.creator_id
-       WHERE n.id = ${input.nomineeId}::uuid
-         AND n.round_id = ${input.roundId}::uuid
-    `);
-    const row = (meta.rows?.[0] ?? null) as {
-      display_name?: string;
-      week_no?: number;
-    } | null;
+  after(async () => {
+    try {
+      const meta = await getDb().execute(sql`
+        SELECT c.full_name AS display_name, ch.week_no
+          FROM vote_round_nominees n
+          JOIN challenge_entries ce ON ce.id = n.entry_id
+          JOIN challenges ch        ON ch.id = ce.challenge_id
+          JOIN campaign_creators cc ON cc.id = ce.campaign_creator_id
+          JOIN creators c           ON c.id = cc.creator_id
+         WHERE n.id = ${input.nomineeId}::uuid
+           AND n.round_id = ${input.roundId}::uuid
+      `);
+      const row = (meta.rows?.[0] ?? null) as {
+        display_name?: string;
+        week_no?: number;
+      } | null;
 
-    if (row?.display_name) {
-      // To the address as typed, never the canonical form: canonicalEmail's
-      // own contract is that its output is compared, not mailed.
-      await sendEmailQuietly(
-        voteVerificationEmail({
-          to: input.email,
-          code,
-          nomineeName: row.display_name,
-          weekNo: Number(row.week_no ?? 0),
-        }),
-        "vote code",
-      );
-    } else {
-      logWarning("campaign/vote", "nominee lookup returned nothing after a successful cast");
+      if (row?.display_name) {
+        // To the address as typed, never the canonical form: canonicalEmail's
+        // own contract is that its output is compared, not mailed.
+        await sendEmailQuietly(
+          voteVerificationEmail({
+            to: input.email,
+            code,
+            nomineeName: row.display_name,
+            weekNo: Number(row.week_no ?? 0),
+          }),
+          "vote code",
+        );
+      } else {
+        logWarning("campaign/vote", "nominee lookup returned nothing after a successful cast");
+      }
+    } catch (error) {
+      logError("campaign/vote code mail", error);
     }
-  } catch (error) {
-    logError("campaign/vote code mail", error);
-  }
+  });
 
-  return NextResponse.json({ ok: true, message: CAST_MESSAGE });
+  return uniformCast(started);
 }
