@@ -29,6 +29,8 @@ export async function GET() {
         weekNo: challenges.weekNo,
         status: challenges.status,
         title: challenges.title,
+        description: challenges.description,
+        basePoints: challenges.basePoints,
         startsAt: challenges.startsAt,
         endsAt: challenges.endsAt,
       })
@@ -38,6 +40,13 @@ export async function GET() {
       .orderBy(asc(challenges.weekNo));
 
     const now = Date.now();
+    /*
+     * A started week's brief is public. It was held to the creator's own
+     * page at first, but the flow sends a fresh registrant here to read
+     * what the week expects, and a brief only participants can read is a
+     * campaign that looks empty from the outside. What stays hidden is
+     * unchanged: drafts, and any week whose Monday has not arrived.
+     */
     const started = rows
       .filter((row) => row.startsAt.getTime() <= now)
       .map((row) => ({
@@ -47,11 +56,21 @@ export async function GET() {
             ? "closed"
             : "active",
         title: row.title,
+        description: row.description,
+        basePoints: row.basePoints,
+        endsAt: row.endsAt.toISOString(),
       }));
 
     return NextResponse.json(
       { ok: true, challenges: started },
-      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
+      /*
+       * Fifteen seconds, down from sixty with five minutes of
+       * stale-while-revalidate. The old numbers meant an admin's edit could
+       * take five minutes to reach the page, which reads as the edit not
+       * working; the query is one indexed select and the traffic is one
+       * fetch per landing view, so the shorter window costs nothing real.
+       */
+      { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=45" } },
     );
   } catch {
     // The landing page renders its static schedule regardless; no statuses

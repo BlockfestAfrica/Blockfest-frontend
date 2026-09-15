@@ -197,12 +197,14 @@ export default function MonicaRulesPage() {
                 campaign privacy notice
               </Link>
               , and what you may say about Monica in an entry is in the{" "}
-              <Link
+              <a
                 href={monicaRoutes.pack}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-link underline underline-offset-2 hover:text-white"
               >
                 Creator Pack
-              </Link>
+              </a>
               .
             </p>
 
