@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
@@ -16,6 +17,8 @@ import {
 } from "@/lib/creator-recovery";
 import { monicaRoutes } from "@/lib/campaigns";
 import { allowKey } from "@/lib/throttle";
+import { personalLink, reissueEmail } from "@/lib/email/templates";
+import { sendEmailQuietly } from "@/lib/email/client";
 
 /**
  * Turn a confirmed recovery claim into a rotated session. Closes #206.
@@ -89,6 +92,25 @@ export async function confirmRecovery(form: FormData) {
   jar.delete({
     name: CREATOR_RECOVERY_PENDING_COOKIE,
     path: recoveryPendingCookieOptions().path,
+  });
+
+  /*
+   * After the response, not before: the creator does not wait on ZeptoMail
+   * to reach their own page. This is also the only durable copy of the new
+   * link that leaves this request. Without it, the moment the session
+   * cookie in this one browser is lost, the creator is back to exactly the
+   * trap the admin reissue route's own comments name: nothing left able to
+   * get them back in. Reusing reissueEmail rather than a new template is
+   * deliberate, since it is the same fact reissuing a link always states.
+   */
+  const mailTo = confirmed.email;
+  const mailName = confirmed.name;
+  const mailLink = personalLink(confirmed.accessToken);
+  after(async () => {
+    await sendEmailQuietly(
+      reissueEmail({ to: mailTo, fullName: mailName, personalLink: mailLink }),
+      "recovery confirmed",
+    );
   });
 
   redirect(monicaRoutes.me);

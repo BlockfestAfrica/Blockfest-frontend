@@ -182,6 +182,90 @@ describe("confirming a recovery, at the SQL level", () => {
     const result = await confirm("never-issued", "access-a");
     expect(result.rows).toHaveLength(0);
   });
+
+  it(
+    "matches on hash and expiry alone, with no campaign scope: pinning the " +
+      "current shape rather than the campaign-scoped lookup " +
+      "recoveryHolderByToken uses, per the maintainer review on #209/#206",
+    async () => {
+      const { rows: a } = await register();
+      const enrolmentA = a[0].campaign_creator_id;
+
+      await db.exec(
+        `INSERT INTO campaigns (slug, name, status) VALUES ('other-campaign', 'Other', 'active')`,
+      );
+      const { rows: otherCampaign } = await db.query<{ id: string }>(
+        `SELECT id FROM campaigns WHERE slug = 'other-campaign'`,
+      );
+      const { rows: creatorB } = await db.query<{ id: string }>(
+        `INSERT INTO creators (full_name, email, email_canonical, phone, phone_e164)
+         VALUES ('Creator B', 'b@e.com', 'b@e.com', '08099999999', '+2348099999999')
+         RETURNING id`,
+      );
+      const { rows: enrolmentB } = await db.query<{ id: string }>(
+        `INSERT INTO campaign_creators (campaign_id, creator_id, referral_code)
+         VALUES ($1, $2, 'CODEB')
+         RETURNING id`,
+        [otherCampaign[0].id, creatorB[0].id],
+      );
+
+      // The same recovery token hash issued to an enrolment in a campaign
+      // other than Monica.
+      await db.query(
+        `UPDATE campaign_creators
+            SET recovery_token_hash = 'cross-campaign-hash',
+                recovery_token_expires_at = now() + interval '30 minutes'
+          WHERE id = $1`,
+        [enrolmentB[0].id],
+      );
+
+      const result = await confirm("cross-campaign-hash", "access-cross");
+      expect(
+        result.rows.map((r) => r.id),
+        "confirmAccessRecovery's query is not scoped to a campaign: it matches whatever enrolment holds the hash",
+      ).toEqual([enrolmentB[0].id]);
+      expect(result.rows[0].id).not.toBe(enrolmentA);
+    },
+  );
+});
+
+describe("requesting recovery a second time", () => {
+  it("overwrites the first pending token rather than leaving both live", async () => {
+    const { rows } = await register();
+    const enrolmentId = rows[0].campaign_creator_id;
+
+    await db.query(
+      `UPDATE campaign_creators
+          SET recovery_token_hash = 'first-hash',
+              recovery_token_expires_at = now() + interval '30 minutes'
+        WHERE id = $1`,
+      [enrolmentId],
+    );
+
+    // A second request for the same address, the shape
+    // requestAccessRecovery issues: a plain overwrite, no WHERE on the old
+    // hash. This is what turns the re-request grief attack (spam somebody's
+    // inbox with recovery mail) into something that also destroys the
+    // usefulness of an already-stolen link: whichever mail is confirmed
+    // last, wins.
+    await db.query(
+      `UPDATE campaign_creators
+          SET recovery_token_hash = 'second-hash',
+              recovery_token_expires_at = now() + interval '30 minutes'
+        WHERE id = $1`,
+      [enrolmentId],
+    );
+
+    const stale = await confirm("first-hash", "access-stale");
+    expect(
+      stale.rows,
+      "the first token must stop working once a second request overwrites it",
+    ).toHaveLength(0);
+
+    const fresh = await confirm("second-hash", "access-fresh");
+    expect(fresh.rows).toHaveLength(1);
+    expect(fresh.rows[0].id).toBe(enrolmentId);
+  });
 });
 
 describe("the wiring", () => {

@@ -50,9 +50,9 @@ export async function allow(
  * whole sending reputation, absorbs whatever a script sends at this route
  * while the database is down."
  *
- * A request with no client address still passes, exactly as allowKey does:
- * the platform sets that header itself, and its absence means the platform
- * changed, not that anybody is evading anything.
+ * Unlike allowKey, an absent or shared key is not given a pass here either:
+ * this throttle guards a mailer, not a page view, so there is no bucket safe
+ * to leave uncounted.
  */
 export async function allowKeyStrict(
   key: string,
@@ -60,8 +60,6 @@ export async function allowKeyStrict(
   limit: number,
   windowSeconds: number,
 ): Promise<boolean> {
-  if (!key || key === SHARED_BUCKET) return true;
-
   try {
     const result = await getDb().execute(
       sql`SELECT take_token(${`${name}:${key}`}, ${limit}, ${windowSeconds}) AS ok`,
@@ -70,7 +68,7 @@ export async function allowKeyStrict(
     if (ok === false) {
       logWarning("throttle", `${name} limit reached`);
     }
-    return ok !== false;
+    return ok === true;
   } catch (error) {
     // The one line that differs from allowKey: refuse rather than allow.
     logWarning(

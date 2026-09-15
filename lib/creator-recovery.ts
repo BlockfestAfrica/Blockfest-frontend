@@ -131,6 +131,9 @@ export interface ConfirmedRecovery {
   enrolmentId: string;
   campaignId: string;
   accessToken: string;
+  name: string;
+  /** As registered, for the same reason requestAccessRecovery's does. */
+  email: string;
 }
 
 /**
@@ -141,6 +144,12 @@ export interface ConfirmedRecovery {
  * single use: a second attempt with the same token matches no row, because
  * the first attempt already cleared recovery_token_hash. There is no
  * separate "mark consumed" step for a race to land between.
+ *
+ * Matched on the hash and expiry alone, not scoped to a campaign the way
+ * recoveryHolderByToken is: there is only one campaign issuing these tokens
+ * today, and the token itself is a random 256-bit value, so a cross-campaign
+ * collision is not a reachable failure. Pinned by a test rather than guarded
+ * in code so a second campaign is a deliberate decision, not a silent gap.
  *
  * Returns null on anything that is not a live, unexpired, matching token:
  * already used, expired, or never existed. The caller does not need to and
@@ -172,10 +181,17 @@ export async function confirmAccessRecovery(
     .returning({
       enrolmentId: campaignCreators.id,
       campaignId: campaignCreators.campaignId,
+      creatorId: campaignCreators.creatorId,
     });
 
   const row = rows[0];
   if (!row) return null;
+
+  const creator = await db
+    .select({ name: creators.fullName, email: creators.email })
+    .from(creators)
+    .where(eq(creators.id, row.creatorId))
+    .limit(1);
 
   /*
    * Recorded in audit_log for the same reason the admin reissue tool is: this
@@ -195,5 +211,7 @@ export async function confirmAccessRecovery(
     enrolmentId: row.enrolmentId,
     campaignId: row.campaignId,
     accessToken: newToken,
+    name: creator[0]?.name ?? "",
+    email: creator[0]?.email ?? "",
   };
 }

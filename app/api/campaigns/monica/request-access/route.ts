@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, after } from "next/server";
 import { z } from "zod";
 import { canonicalEmail } from "@/lib/campaign-registration";
 import { requestAccessRecovery } from "@/lib/creator-recovery";
@@ -28,7 +28,12 @@ export const dynamic = "force-dynamic";
  */
 
 const schema = z.object({
-  email: z.string().trim().min(3, "Enter your email address.").max(254),
+  email: z
+    .string()
+    .trim()
+    .min(3, "Enter your email address.")
+    .max(254)
+    .email("Enter your email address."),
 });
 
 /** The exact sentence, either way. Wording that differs is a second oracle. */
@@ -116,25 +121,38 @@ export async function POST(request: NextRequest) {
     return uniform();
   }
 
-  try {
-    const found = await requestAccessRecovery(parsed.data.email);
+  /*
+   * The lookup, the token write, and the mail all happen after the response
+   * is on its way, not before it. Awaiting any of them here, even just the
+   * send, puts a real HTTPS round trip to ZeptoMail (or a second database
+   * write) on the one path this route promises is indistinguishable from
+   * the other, and a handful of timed samples is enough to split the two
+   * distributions apart. after() is what next/server gives specifically for
+   * work that must still finish, and finish inside this invocation on
+   * serverless, without the caller waiting on it; a bare fire-and-forget
+   * call has no such guarantee once the response is written.
+   */
+  after(async () => {
+    try {
+      const found = await requestAccessRecovery(parsed.data.email);
 
-    if (found) {
-      await sendEmailQuietly(
-        recoveryRequestEmail({
-          to: found.target.email,
-          fullName: found.target.name,
-          confirmLink: recoveryLink(found.token),
-        }),
-        "recovery request",
-      );
+      if (found) {
+        await sendEmailQuietly(
+          recoveryRequestEmail({
+            to: found.target.email,
+            fullName: found.target.name,
+            confirmLink: recoveryLink(found.token),
+          }),
+          "recovery request",
+        );
+      }
+    } catch (error) {
+      // A database or mail failure here must read exactly like "not
+      // registered" from the outside: logged for us, never surfaced as a
+      // different response shape or a different wait.
+      logError("campaigns/monica/request-access", error);
     }
-  } catch (error) {
-    // A database or mail failure here must read exactly like "not
-    // registered" from the outside: logged for us, never surfaced as a
-    // different response shape or a different wait.
-    logError("campaigns/monica/request-access", error);
-  }
+  });
 
   await sleep(Math.max(0, TIMING_FLOOR_MS - (Date.now() - started)));
   return uniform();
