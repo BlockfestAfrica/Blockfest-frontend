@@ -46,6 +46,7 @@ const schema = z.object({
 });
 
 const KNOWN: Array<[code: string, raise: string, message: string]> = [
+  ["P0911", "handle_taken", "Another creator has already registered that username. If it is genuinely yours, write to us and a person will sort it out."],
   ["P0903", "handle_invalid", "That does not look like a username. Letters, numbers, dots and underscores only."],
   ["P0905", "handle_unchanged", "That is already the username on your registration."],
   ["P0901", "handle_not_found", "You did not register an account on that platform."],
