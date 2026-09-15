@@ -4,6 +4,7 @@ import { campaigns, challengeEntries, challenges, getDb, submissions } from "@/l
 import { requireAdmin } from "@/lib/admin/session";
 import { sameOrigin } from "@/lib/admin/request";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { allow } from "@/lib/throttle";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,6 +67,20 @@ export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return FORBIDDEN;
   const admin = await requireAdmin();
   if (!admin.ok) return FORBIDDEN;
+
+  /*
+   * Forty outbound fetches a call, reachable by any reviewer, with no
+   * budget of its own. Two runs per five minutes is far above honest use
+   * (the button is pressed when somebody wonders about link rot) and far
+   * below a loop that turns the campaign's own function into a small
+   * scanner aimed at three social hosts.
+   */
+  if (!(await allow(request, "admin-link-check", 2, 300))) {
+    return NextResponse.json(
+      { ok: false, message: "That check is already running. Give it a few minutes." },
+      { status: 429 },
+    );
+  }
 
   const rows = await getDb()
     .select({ id: submissions.id, url: submissions.url, platform: submissions.platform })

@@ -11,6 +11,7 @@ import {
   voteEmailSchema,
 } from "@/lib/campaign-vote";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { pauseState } from "@/lib/campaign-pause";
 import { isPgError } from "@/lib/db/errors";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { voteVerificationEmail } from "@/lib/email/templates";
@@ -116,6 +117,20 @@ export async function POST(request: NextRequest) {
     return fail(
       "That is a lot of votes from one place. Wait a while and try again.",
       429,
+    );
+  }
+
+  /*
+   * The pause switch reaches voting too. It stopped submissions and
+   * nothing else, so the one lever the team has for "stop everything
+   * while we work out what is happening" left a live round accepting
+   * ballots, which is the surface most likely to need stopping.
+   */
+  const paused = await pauseState();
+  if (paused.paused) {
+    return fail(
+      paused.reason ?? "Voting is paused. Please try again shortly.",
+      503,
     );
   }
 

@@ -5,6 +5,8 @@ import { Coins } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
+  buttonClass,
+  control,
   Pill,
   selectControl,
   SectionHeading,
@@ -64,6 +66,9 @@ export function ParticipantsTable({
 }) {
   const router = useRouter();
   /** Which handle is being corrected: one at a time, keyed by row and platform. */
+  /** Which row is being disqualified, and the reason being typed for it. */
+  const [voiding, setVoiding] = useState<string | null>(null);
+  const [voidReason, setVoidReason] = useState("");
   const [fixing, setFixing] = useState<{
     enrolmentId: string;
     platform: string;
@@ -148,6 +153,44 @@ export function ParticipantsTable({
         `${points > 0 ? "Awarded" : "Removed"} ${Math.abs(points)} points`,
       );
       setAwarding(null);
+      router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * Disqualification. The engine reverses the points this enrolment earned
+   * and claws back referral payouts it triggered, all inside one function
+   * with its own audit row; this only carries the reason, which SQL
+   * requires because a disqualification with no reason cannot be answered.
+   */
+  async function voidEnrolment(enrolmentId: string, name: string) {
+    const reason = voidReason.trim();
+    if (!reason) {
+      toast.error("Say why. It is what a dispute is answered with.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/void", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enrolmentId, reason }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        toast.error(result.message ?? "That did not work.");
+        return;
+      }
+      toast.success(
+        `${name} is disqualified. ${result.pointsReversed ?? 0} points reversed.`,
+      );
+      setVoiding(null);
+      setVoidReason("");
       router.refresh();
     } catch {
       toast.error("We could not reach the server.");
@@ -298,6 +341,51 @@ export function ParticipantsTable({
                   </ul>
                 )}
 
+                {voiding === row.enrolmentId && (
+                  <div className="mt-3 rounded-lg border border-red-400/40 bg-red-400/5 p-4">
+                    <p className="max-w-prose text-sm leading-relaxed text-ink-2">
+                      Their entries stop being accepted, the points those
+                      entries earned are reversed, and referral payouts they
+                      triggered are clawed back. This is recorded against your
+                      name.
+                    </p>
+                    <label
+                      htmlFor={`void-why-${row.enrolmentId}`}
+                      className="mt-3 block text-sm font-semibold text-white"
+                    >
+                      Why
+                    </label>
+                    <input
+                      id={`void-why-${row.enrolmentId}`}
+                      value={voidReason}
+                      onChange={(event) => setVoidReason(event.target.value)}
+                      maxLength={300}
+                      placeholder="Bought engagement on two entries, evidence in the thread"
+                      className={`${control} mt-1`}
+                    />
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => voidEnrolment(row.enrolmentId, row.name)}
+                        className={buttonClass("dangerFill")}
+                      >
+                        {busy ? "Working…" : `Disqualify ${row.name}`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVoiding(null);
+                          setVoidReason("");
+                        }}
+                        className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink-3 hover:text-white"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {fixing?.enrolmentId === row.enrolmentId && (
                   <CorrectHandle
                     key={`${fixing.enrolmentId}-${fixing.platform}`}
@@ -317,7 +405,7 @@ export function ParticipantsTable({
                   })}
                 </p>
 
-                <div className="mt-3 flex items-center gap-3">
+                <div className="mt-3 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
                     onClick={() =>
@@ -332,6 +420,25 @@ export function ParticipantsTable({
                     <Coins className="h-4 w-4" aria-hidden="true" />
                     {awarding === row.enrolmentId ? "Close" : "Points"}
                   </button>
+                  {/* Disqualification, which void_enrolment has enforced
+                      since 0027 while being reachable by nobody: no route,
+                      no control, psql only. A rule that cannot be invoked
+                      is a rule the campaign does not have. Owner-only, and
+                      two steps because it takes points back. */}
+                  {canCorrectHandles && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVoiding(
+                          voiding === row.enrolmentId ? null : row.enrolmentId,
+                        )
+                      }
+                      aria-expanded={voiding === row.enrolmentId}
+                      className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-line-2 px-4 text-sm font-semibold text-ink-3 transition-colors hover:border-red-400/50 hover:text-red-200"
+                    >
+                      Disqualify
+                    </button>
+                  )}
                   {!row.active && <Pill tone="bad">removed</Pill>}
                 </div>
               </li>
