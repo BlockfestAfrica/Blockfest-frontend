@@ -78,6 +78,19 @@ export default async function MonicaLeaderboardPage() {
               >
                 Join the campaign
               </Link>
+              {/* Most people reading a leaderboard are ON it. Offering
+                  them only "Join" is offering the one thing they have
+                  already done. */}
+              <p className="mt-4 text-sm text-ink-3">
+                Already in?{" "}
+                <Link
+                  href={monicaRoutes.me}
+                  className="font-semibold text-link underline underline-offset-4 hover:text-white"
+                >
+                  Open your page
+                </Link>
+                .
+              </p>
             </div>
           ) : (
             <>
