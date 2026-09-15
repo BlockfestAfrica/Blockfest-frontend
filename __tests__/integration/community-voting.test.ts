@@ -392,6 +392,20 @@ describe("close, review, announce", () => {
     await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]);
     await expect(announce()).rejects.toThrow(/round_not_reviewed/);
 
+    // The grace has to pass before the sweep can be certified: an
+    // outstanding code is still redeemable for fifteen minutes past the
+    // close, and certifying inside that window certifies a board that can
+    // still move (P0821).
+    await expect(
+      db.query(`SELECT mark_round_reviewed($1::uuid, $2::uuid)`, [adminId, round]),
+    ).rejects.toThrow(/codes_still_live/);
+    await db.query(
+      `UPDATE vote_rounds SET opens_at = now() - interval '3 hours',
+                              closes_at = now() - interval '20 minutes'
+        WHERE id = $1::uuid`,
+      [round],
+    );
+
     await db.query(`SELECT mark_round_reviewed($1::uuid, $2::uuid)`, [adminId, round]);
     await expect(announce()).resolves.toBeTruthy();
 
@@ -403,6 +417,39 @@ describe("close, review, announce", () => {
     expect(
       (await one<{ entry_id: string }>(`SELECT entry_id FROM weekly_winners LIMIT 1`)).entry_id,
     ).toBe(entries[0]);
+  });
+
+  it("a swept round stops accepting votes, however live the code looks", async () => {
+    // The attack this closes: cast late, do not verify, wait for the admin
+    // to close and certify a board with nothing on it, then redeem every
+    // held code afterwards. The tally moved after the human signed it off.
+    const entries = [await approvedEntry(1), await approvedEntry(1), await approvedEntry(1)];
+    const round = (await openRound(1, entries)).rows[0].round_id;
+    const nominee = await nomineeOf(round, entries[0]);
+    await cast(round, nominee, "late@gmail.com");
+
+    await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]);
+    await db.query(
+      `UPDATE vote_rounds SET opens_at = now() - interval '3 hours',
+                              closes_at = now() - interval '20 minutes'
+        WHERE id = $1::uuid`,
+      [round],
+    );
+    await db.query(`SELECT mark_round_reviewed($1::uuid, $2::uuid)`, [adminId, round]);
+
+    await expect(verify(round, "late@gmail.com")).rejects.toThrow(/round_not_open/);
+    expect(await count(`SELECT count(*)::int AS n FROM countable_votes`)).toBe(0);
+  });
+
+  it("the sweep cannot be certified while a code is still redeemable", async () => {
+    const entries = [await approvedEntry(1), await approvedEntry(1), await approvedEntry(1)];
+    const round = (await openRound(1, entries)).rows[0].round_id;
+    await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]);
+
+    // Closed early, inside the fifteen minute grace: refused by name.
+    await expect(
+      db.query(`SELECT mark_round_reviewed($1::uuid, $2::uuid)`, [adminId, round]),
+    ).rejects.toThrow(/codes_still_live/);
   });
 
   it("a week with no round announces exactly as before", async () => {
@@ -437,12 +484,28 @@ describe("close, review, announce", () => {
       ["monica-money-story", enrolment, adminId],
     );
 
+  /**
+   * Saturday's freeze, the close, the grace, the sweep.
+   *
+   * The window is pushed into the past before the review, because that is
+   * the only order production can produce: mark_round_reviewed refuses
+   * while an outstanding code can still be redeemed (P0821), so certifying
+   * a round whose closes_at is still an hour away is not a thing an admin
+   * can do. The fixture used to do exactly that, which is how the hole it
+   * now guards went unnoticed.
+   */
   const settleRound = async (round: string) => {
     await db.query(
       `SELECT * FROM take_leaderboard_snapshot($1, 1::smallint, $2::uuid)`,
       ["monica-money-story", adminId],
     );
     await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]);
+    await db.query(
+      `UPDATE vote_rounds SET opens_at = now() - interval '3 hours',
+                              closes_at = now() - interval '20 minutes'
+        WHERE id = $1::uuid`,
+      [round],
+    );
     await db.query(`SELECT mark_round_reviewed($1::uuid, $2::uuid)`, [adminId, round]);
   };
 

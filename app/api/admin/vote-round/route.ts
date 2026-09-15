@@ -100,6 +100,8 @@ const MESSAGES: Record<string, string> = {
   P0819:
     "That vote is not there any more, or is not held. Reload to see the current list.",
   P0820: "Close the round before marking the review complete.",
+  P0821:
+    "Codes sent before the close can still be redeemed for fifteen minutes after it. Wait for that window to pass, then mark the review complete: certifying now would certify a board that can still move.",
   P0908: "The vote has to close after it opens. Check the window.",
   P0502: "A removal needs a reason.",
   P0401: "Only a signed-in admin can do this.",
