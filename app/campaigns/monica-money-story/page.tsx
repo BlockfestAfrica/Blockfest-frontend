@@ -147,6 +147,12 @@ export default function MonicaMoneyStoryPage() {
               >
                 Leaderboard
               </Link>
+              <a
+                href="#resources"
+                className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+              >
+                Resources
+              </a>
               <Link
                 href={monicaRoutes.privacy}
                 className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"

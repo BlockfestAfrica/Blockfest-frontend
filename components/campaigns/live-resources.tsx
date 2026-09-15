@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
+import { monicaRoutes } from "@/lib/campaigns";
 
 interface LiveResource {
   section: string;
@@ -22,8 +23,11 @@ const PAGE = 10;
  * server refuses any URL that is not https, so the anchor below can never be
  * handed a javascript: href.
  *
- * Renders nothing at all until there is something to show: an empty heading
- * would read as a broken section on the page creators keep open all week.
+ * Renders its shell even while empty, since the hero and the creator's own
+ * page link straight to #resources: a link that lands on nothing teaches
+ * people the link is broken, so the empty state is a promise instead of a
+ * hole. It used to render nothing at all, which was the right call before
+ * anything linked here and the wrong one after.
  *
  * Ten rows at a time, because the console can keep adding resources without
  * a deploy, so nothing bounds this list, and every extra row pushes whatever
@@ -48,15 +52,32 @@ export function LiveResources() {
     };
   }, []);
 
-  if (rows.length === 0) return null;
-
   const shown = rows.slice(0, visible);
 
   return (
-    <section aria-labelledby="live-resources" className="mt-12">
+    <section
+      id="resources"
+      aria-labelledby="live-resources"
+      className="mt-12 scroll-mt-20"
+    >
       <h2 id="live-resources" className="text-xl font-bold text-white">
         Resources
       </h2>
+      {rows.length === 0 && (
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
+          Hashtags, handles, templates and anything else the team shares
+          during the campaign lands here, alongside the{" "}
+          <a
+            href={monicaRoutes.pack}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-link underline underline-offset-2 hover:text-white"
+          >
+            Creator Pack
+          </a>
+          .
+        </p>
+      )}
       <ul className="mt-4 flex flex-col gap-3">
         {shown.map((row) => (
           <li

@@ -16,6 +16,10 @@ interface LiveWeek {
   status: string;
   title: string;
   description: string;
+  /** Console-owned narrative since 0057. Null means the registry speaks. */
+  question: string | null;
+  focus: string | null;
+  skills: string[] | null;
   basePoints: number;
   /** Present so the pre-launch "upcoming" reveal can say when it opens. */
   startsAt: string;
@@ -56,6 +60,11 @@ export function MonicaStages() {
             status: String(row.status ?? ""),
             title: String(row.title ?? ""),
             description: String(row.description ?? ""),
+            question: row.question ? String(row.question) : null,
+            focus: row.focus ? String(row.focus) : null,
+            skills: Array.isArray(row.skills)
+              ? row.skills.map(String).filter(Boolean)
+              : null,
             basePoints: Number(row.basePoints ?? 100),
             startsAt: String(row.startsAt ?? ""),
             endsAt: String(row.endsAt ?? ""),
@@ -166,29 +175,32 @@ export function MonicaStages() {
                       <h3 className="text-xl font-bold text-white">
                         {week?.title || stage.name}
                       </h3>
-                      {/* Stages whose challenge is written in the console
-                          when they drop carry no registry narrative: the
-                          database brief below is their voice, and a stale
-                          registry sentence beside it would argue with it. */}
-                      {stage.question && (
+                      {/* Console first, registry second, per field: the
+                          question line, the focus paragraph and the chips
+                          are all editable beside the brief since 0057, and
+                          a stale registry sentence must never argue with
+                          what an admin just wrote. */}
+                      {(week?.question ?? stage.question) && (
                         <p className="mt-1 text-base font-semibold text-ink-2">
-                          {stage.question}
+                          {week?.question ?? stage.question}
                         </p>
                       )}
-                      {stage.focus && (
+                      {(week?.focus ?? stage.focus) && (
                         <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
-                          {stage.focus}
+                          {week?.focus ?? stage.focus}
                         </p>
                       )}
                       <ul className="mt-4 flex flex-wrap gap-2">
-                        {stage.skills.map((skill) => (
-                          <li
-                            key={skill}
-                            className="rounded-full border border-line-2 px-3 py-1 text-xs font-semibold text-ink-2"
-                          >
-                            {skill}
-                          </li>
-                        ))}
+                        {(week?.skills?.length ? week.skills : stage.skills).map(
+                          (skill) => (
+                            <li
+                              key={skill}
+                              className="rounded-full border border-line-2 px-3 py-1 text-xs font-semibold text-ink-2"
+                            >
+                              {skill}
+                            </li>
+                          ),
+                        )}
                       </ul>
 
                       {brief && (
@@ -264,6 +276,13 @@ export function MonicaStages() {
                               <p className="mt-4 text-sm text-ink-2">
                                 Hashtags, handles and everything else you need
                                 are in the{" "}
+                                <a
+                                  href="#resources"
+                                  className="text-link underline underline-offset-2 hover:text-white"
+                                >
+                                  resources below
+                                </a>{" "}
+                                and the{" "}
                                 <a
                                   href={monicaRoutes.pack}
                                   target="_blank"

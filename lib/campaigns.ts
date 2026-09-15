@@ -232,6 +232,8 @@ export const monicaRoutes = {
   recoverConfirm: `/campaigns/${MONICA_SLUG}/recover/confirm`,
   leaderboard: `/campaigns/${MONICA_SLUG}/leaderboard`,
   winners: `/campaigns/${MONICA_SLUG}/winners`,
+  /** The console-published resources list, anchored on the landing page. */
+  resources: `/campaigns/${MONICA_SLUG}#resources`,
 } as const;
 
 export interface CampaignSkill {
