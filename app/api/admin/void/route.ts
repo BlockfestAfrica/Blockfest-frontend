@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, after } from "next/server";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
@@ -6,6 +6,12 @@ import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { pgErrorCode } from "@/lib/db/errors";
 import { logError } from "@/lib/log";
+import { sendEmailQuietly } from "@/lib/email/client";
+import {
+  awardEmail,
+  disqualifiedEmail,
+  personalPage,
+} from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,10 +82,84 @@ export async function POST(request: NextRequest) {
       sql`SELECT void_enrolment(${parsed.data.enrolmentId}::uuid, ${admin.admin.adminId}::uuid, ${parsed.data.reason}::text) AS reversed`,
     );
     const row = (result.rows?.[0] ?? {}) as { reversed?: number };
-    return NextResponse.json({
-      ok: true,
-      pointsReversed: Number(row.reversed ?? 0),
+    const reversed = Number(row.reversed ?? 0);
+
+    /*
+     * Tell them, and tell whoever loses points because of them.
+     *
+     * The mandatory reason exists, in this route's own words, to make a
+     * disqualification answerable later. It was answerable to admins and
+     * to nobody else: the creator found out by filming a week's work,
+     * publishing it, pasting the link and meeting a refusal that named a
+     * support address but never the reason. Fail-soft after the commit,
+     * like every other creator mail: the decision stands whatever the
+     * provider does.
+     */
+    after(async () => {
+      try {
+        const who = await getDb().execute(sql`
+          SELECT c.email, c.full_name
+            FROM campaign_creators cc
+            JOIN creators c ON c.id = cc.creator_id
+           WHERE cc.id = ${parsed.data.enrolmentId}::uuid
+        `);
+        const person = (who.rows?.[0] ?? null) as {
+          email?: string;
+          full_name?: string;
+        } | null;
+        if (person?.email) {
+          await sendEmailQuietly(
+            disqualifiedEmail({
+              to: person.email,
+              fullName: person.full_name ?? "",
+              reason: parsed.data.reason,
+              pointsReversed: reversed,
+              personalPage: personalPage(),
+            }),
+            "disqualification notice",
+          );
+        }
+
+        /*
+         * And the referrer, whose points were clawed back for somebody
+         * else's misconduct. It is the only downward movement in the
+         * system caused by another person, and it was the only one that
+         * went unannounced: the clawback is a direct ledger insert, so no
+         * award notice fires for it.
+         */
+        const referrers = await getDb().execute(sql`
+          SELECT c.email, c.full_name, cc.points_total
+            FROM referrals r
+            JOIN campaign_creators cc ON cc.id = r.referrer_campaign_creator_id
+            JOIN creators c           ON c.id = cc.creator_id
+           WHERE r.referred_campaign_creator_id = ${parsed.data.enrolmentId}::uuid
+        `);
+        for (const ref of referrers.rows ?? []) {
+          const person = ref as {
+            email?: string;
+            full_name?: string;
+            points_total?: number;
+          };
+          if (!person.email) continue;
+          await sendEmailQuietly(
+            awardEmail({
+              to: person.email,
+              fullName: person.full_name ?? "",
+              sourceLabel: "Referral reversed",
+              points: -10,
+              note: "A creator you referred was removed from the campaign, so the referral points they earned you have been reversed. Nothing else about your standing changes.",
+              pointsTotal: Number(person.points_total ?? 0),
+              personalPage: personalPage(),
+            }),
+            "referral clawback notice",
+          );
+        }
+      } catch (error) {
+        logError("admin/void notices", error);
+      }
     });
+
+    return NextResponse.json({ ok: true, pointsReversed: reversed });
   } catch (error) {
     const code = pgErrorCode(error);
     const known = code ? MESSAGES[code] : undefined;

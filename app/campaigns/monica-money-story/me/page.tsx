@@ -224,6 +224,7 @@ export default async function MonicaCreatorPage() {
   ]);
 
   const {
+    status,
     challenge,
     platforms,
     submissions: mine,
@@ -405,7 +406,34 @@ export default async function MonicaCreatorPage() {
                 )}
 
                 <div className="mt-6">
-                  {pause.paused ? (
+                  {/* Removed from the campaign. First, because every branch
+                      below offers work that will be refused: the form, the
+                      pause note, the what-is-left line. A creator used to
+                      discover this by filming a week's work, publishing it
+                      to three platforms and pasting the link. */}
+                  {status !== "active" ? (
+                    <Panel tone="warn">
+                      <p className="text-sm font-semibold text-amber-200">
+                        Your place in the campaign has been removed
+                      </p>
+                      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
+                        Entries are not being scored, and anything you send
+                        now will be refused. We emailed the reason to the
+                        address you registered with.
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-ink-3">
+                        If you believe this is wrong, reply to that email, or
+                        write to{" "}
+                        <a
+                          href={`mailto:${CONTACT_EMAIL}`}
+                          className="text-link underline underline-offset-2 hover:text-white"
+                        >
+                          {CONTACT_EMAIL}
+                        </a>{" "}
+                        from that same address and a person will look at it.
+                      </p>
+                    </Panel>
+                  ) : pause.paused ? (
                     <Panel tone="warn">
                       <p className="text-sm font-semibold text-amber-200">
                         Submissions are paused

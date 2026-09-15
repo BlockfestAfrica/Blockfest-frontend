@@ -1134,3 +1134,118 @@ export function handleFixAckEmail(params: {
     }),
   };
 }
+
+/**
+ * Removed from the campaign.
+ *
+ * The one decision in this system that took something away and told
+ * nobody. void_enrolment has always written a perfect audit row with a
+ * mandatory reason, and the route's own comment says that reason "is what
+ * makes a disqualification answerable later" — it was answerable to
+ * admins and to nobody else. A creator found out by filming a week's
+ * work, publishing it to three platforms, pasting the link, and meeting a
+ * refusal that named a support address but never the reason.
+ *
+ * The reason is quoted rather than paraphrased, the way a rejection note
+ * is, because it is the thing being appealed. No evidence detail: the
+ * decision and the appeal path, so the notice cannot be used to tune a
+ * second attempt.
+ */
+export function disqualifiedEmail(params: {
+  to: string;
+  fullName: string;
+  reason: string;
+  pointsReversed: number;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const points =
+    params.pointsReversed > 0
+      ? `The ${params.pointsReversed} points those entries had earned have been reversed.`
+      : "";
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: "Your place in the Monica campaign has been removed",
+    text: [
+      `${name}, your entry in Monica: The Money Story has been removed and your work is no longer being scored.`,
+      ``,
+      `The reason recorded: ${params.reason}`,
+      ``,
+      points,
+      ``,
+      `If you believe this is wrong, reply to this email from this address and a person will look at it. Please do not keep submitting in the meantime; entries are refused while this stands.`,
+    ]
+      .filter((line, i, all) => !(line === "" && all[i - 1] === ""))
+      .join("\n"),
+    html: layout({
+      preheader: "Your entries are no longer being scored. The reason is inside.",
+      heading: `${name}, your place has been removed`,
+      body: [
+        p(
+          "Your entry in Monica: The Money Story has been removed, and your work is no longer being scored.",
+        ),
+        boxed("The reason recorded", params.reason),
+        points ? p(escape(points)) : "",
+        p(
+          "If you believe this is wrong, reply to this email from this address and a person will look at it.",
+        ),
+        quiet(
+          "Please do not keep submitting in the meantime. Entries are refused while this stands, so the work would not be scored.",
+        ),
+      ].join(""),
+      action: { label: "Your campaign page", href: params.personalPage },
+    }),
+  };
+}
+
+/**
+ * Submissions are open again.
+ *
+ * The pause panel tells creators to "come back and paste your link when
+ * this clears", which is an instruction to poll a page that gives no
+ * signal. The people most harmed by that are the ones who obeyed it and
+ * waited. Resuming is the campaign moving, so the campaign says so.
+ */
+export function resumedEmail(params: {
+  to: string;
+  fullName: string;
+  /** When the open week closes, already formatted for Lagos. */
+  closesAtLagos: string | null;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const deadline = params.closesAtLagos
+    ? `This week still closes ${params.closesAtLagos}, Lagos time.`
+    : "";
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: "Submissions are open again",
+    text: [
+      `${name}, submissions are open again.`,
+      ``,
+      deadline,
+      ``,
+      `If you were waiting to send an entry, you can send it now: ${params.personalPage}`,
+    ]
+      .filter((line, i, all) => !(line === "" && all[i - 1] === ""))
+      .join("\n"),
+    html: layout({
+      preheader: "If you were waiting to send an entry, you can send it now.",
+      heading: `Open again, ${name}`,
+      body: [
+        p("Submissions are open again."),
+        deadline ? p(escape(deadline)) : "",
+        quiet(
+          "If you were holding an entry back while we paused, this is the moment to send it.",
+        ),
+      ].join(""),
+      action: { label: "Send your entry", href: params.personalPage },
+    }),
+  };
+}
