@@ -1344,6 +1344,69 @@ export function resumedEmail(params: {
  * creator can tell their own action from somebody else's at a glance,
  * and says what to do if it was not them.
  */
+/**
+ * Somebody you brought in got their first entry approved.
+ *
+ * The rules promise this in two places and the engine has paid it since
+ * migration 0014, on the first approval of the creator you referred rather
+ * than on their signup, which is the wording's whole point. Nothing ever
+ * said so. A creator who shared their code watched their total move and
+ * had to guess why, and the one mechanic that grows the campaign was the
+ * only one that never spoke.
+ *
+ * Names the person, because "a referral was credited" is a receipt and
+ * "Chidi's first entry was approved" is a reason to send the code to
+ * somebody else.
+ */
+export function referralCreditEmail(params: {
+  to: string;
+  fullName: string;
+  referredName: string;
+  points: number;
+  pointsTotal: number;
+  referralCode: string;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const who = firstName(params.referredName);
+  const line = `${who} had their first entry approved, so your ${params.points} referral points are in. You are on ${params.pointsTotal}.`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `You earned ${params.points} points: ${who} is in`,
+    text: [
+      `${name}, somebody you brought into the campaign just made it count.`,
+      ``,
+      line,
+      ``,
+      `Referral points land on a first approved entry, not on a signup, so this one is somebody who actually showed up and posted.`,
+      ``,
+      `Your referral code: ${params.referralCode}`,
+      ``,
+      `Your page: ${params.personalPage}`,
+    ].join("\n"),
+    html: layout({
+      preheader: line,
+      heading: `Nice one, ${name}`,
+      body: [
+        p(
+          `Somebody you brought into the campaign just made it count. ${escape(who)} had their first entry approved.`,
+        ),
+        boxed("Your points", `${params.pointsTotal}`),
+        p(escape(line)),
+        quiet(
+          "Referral points land on a first approved entry, not on a signup, so this is somebody who actually showed up and posted. Your code is " +
+            escape(params.referralCode) +
+            ".",
+        ),
+      ].join(""),
+      action: { label: "See where you stand", href: params.personalPage },
+    }),
+  };
+}
+
 export function withdrawnEmail(params: {
   to: string;
   fullName: string;
