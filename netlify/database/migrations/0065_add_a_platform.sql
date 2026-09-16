@@ -72,9 +72,13 @@ BEGIN
 
   /*
    * Locked before the existence check, so two tabs adding the same platform
-   * cannot both find nothing and both insert. The partial unique index on
-   * (creator_id, platform) would catch the second, but as a constraint
-   * violation rather than the sentence this raises.
+   * cannot both find nothing and both insert. The unique index
+   * social_handle_one_per_creator_platform would catch the second anyway,
+   * but as a constraint violation rather than the sentence this raises.
+   * That index is unconditional; the PARTIAL one on this table is
+   * social_handle_unique_verified, a different index on a different pair,
+   * which 0002 made conditional on verified_at so an unproven claim could
+   * not permanently lock a real creator out.
    */
   PERFORM 1 FROM campaign_creators WHERE id = p_enrolment FOR UPDATE;
 

@@ -22,9 +22,12 @@ import { buttonClass, control } from "@/components/shared/panel";
 export function AddPlatform({
   missing,
   platformLabels,
+  paused = false,
 }: {
   missing: string[];
   platformLabels: Record<string, string>;
+  /** Submissions are paused campaign-wide, so "straight away" is not true. */
+  paused?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(null);
@@ -52,7 +55,9 @@ export function AddPlatform({
         return;
       }
       toast.success(
-        `${platformLabels[platform] ?? platform} added. You can send a post from it now.`,
+        paused
+          ? `${platformLabels[platform] ?? platform} added. It is ready for when submissions reopen.`
+          : `${platformLabels[platform] ?? platform} added. You can send a post from it now.`,
       );
       setOpen(null);
       setHandle("");
@@ -70,8 +75,9 @@ export function AddPlatform({
         Publishing somewhere else too?
       </p>
       <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
-        Add the account and you can send posts from it straight away. The same
-        piece on more platforms counts as one entry and is worth more points.
+        {paused
+          ? "Add the account now and it is ready for when submissions reopen. The same piece on more platforms counts as one entry and is worth more points."
+          : "Add the account and you can send posts from it straight away. The same piece on more platforms counts as one entry and is worth more points."}
       </p>
 
       <div className="mt-3 flex flex-col gap-2">
@@ -101,8 +107,8 @@ export function AddPlatform({
                     Your {label} username
                   </label>
                   <p className="mt-1 text-sm text-ink-4">
-                    Exactly as it appears on your profile. Posts you send must
-                    come from this account.
+                    Your username, or paste your profile link and we will take
+                    it from there. Posts you send must come from this account.
                   </p>
                   <input
                     id={`add-${platform}`}

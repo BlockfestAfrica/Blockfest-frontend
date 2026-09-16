@@ -670,13 +670,23 @@ export default async function MonicaCreatorPage() {
               />
               {/* The other half of "your accounts": registration takes all
                   three and every one is optional, so somebody who only had X
-                  that day had no way back to add Instagram later. */}
-              <AddPlatform
-                missing={(["x", "instagram", "tiktok"] as const).filter(
-                  (p) => !handles.some((h) => h.platform === p),
-                )}
-                platformLabels={platformLabels}
-              />
+                  that day had no way back to add Instagram later.
+
+                  Not offered once the enrolment stops being active. The
+                  engine refuses it either way, but this page has already
+                  told them their place was removed and swapped the submit
+                  form for that notice, and then invited them to set up a
+                  platform to submit from. A control that cannot work is its
+                  own defect, whatever the server does with it. */}
+              {status === "active" && (
+                <AddPlatform
+                  missing={(["x", "instagram", "tiktok"] as const).filter(
+                    (p) => !handles.some((h) => h.platform === p),
+                  )}
+                  platformLabels={platformLabels}
+                  paused={pause.paused}
+                />
+              )}
             </SectionCard>
           )}
 

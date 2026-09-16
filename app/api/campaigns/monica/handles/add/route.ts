@@ -10,6 +10,7 @@ import { logError } from "@/lib/log";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { handleAddedEmail, personalPage } from "@/lib/email/templates";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
+import { canonicalHandle } from "@/lib/campaign-registration";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,11 +20,21 @@ const MAX_BODY_BYTES = 4 * 1024;
 
 const schema = z.object({
   platform: z.enum(["x", "instagram", "tiktok"]),
+  /*
+   * The same transform registration uses, not a stricter one.
+   *
+   * canonicalHandle pulls the username out of a pasted profile URL, which is
+   * what people actually do: they open their profile, copy the address bar
+   * and paste it. Registration was built to accept that. This field started
+   * out refusing it on length, so the two screens asking for the same thing
+   * disagreed about what the thing looks like.
+   */
   handle: z
     .string()
     .trim()
-    .min(1, "Type your handle.")
-    .max(41, "That is longer than any handle."),
+    .max(200, "That looks too long for a username.")
+    .transform((v) => canonicalHandle(v))
+    .refine((v) => v !== "", { message: "Type your handle." }),
 });
 
 function fail(message: string, status = 400) {
