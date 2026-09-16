@@ -19,6 +19,21 @@ import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { applyMigrations } from "../helpers/migrations";
 
+/*
+ * The schema lives in statements, not in prose.
+ *
+ * The table scan below matches /create table .../ across every migration
+ * file, comments included. A migration comment containing the words "reads
+ * every CREATE TABLE in this directory" therefore invented a table called
+ * "in" and failed the completeness check, which is the same class of bug
+ * the check was written to catch: a reader that reports what it can see
+ * rather than what is there. Comments are stripped first so that describing
+ * the schema in English can never again be mistaken for declaring it.
+ */
+function statementsOnly(sql: string): string {
+  return sql.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/--[^\n]*/g, " ");
+}
+
 const SLUG = "monica-money-story";
 const MIGRATIONS = join(process.cwd(), "netlify/database/migrations");
 
@@ -334,10 +349,12 @@ describe("the list stays complete", () => {
   });
 
   it("classifies every table as purged or kept", async () => {
-    const sql = readdirSync(MIGRATIONS)
-      .filter((f) => f.endsWith(".sql"))
-      .map((f) => readFileSync(join(MIGRATIONS, f), "utf8"))
-      .join("\n");
+    const sql = statementsOnly(
+      readdirSync(MIGRATIONS)
+        .filter((f) => f.endsWith(".sql"))
+        .map((f) => readFileSync(join(MIGRATIONS, f), "utf8"))
+        .join("\n"),
+    );
 
     const tables = [
       ...sql.matchAll(/create table (?:if not exists )?"?([a-z_]+)"?/gi),
@@ -371,10 +388,12 @@ describe("the list stays complete", () => {
     await useTheCampaign();
     await purge();
 
-    const sql = readdirSync(MIGRATIONS)
-      .filter((f) => f.endsWith(".sql"))
-      .map((f) => readFileSync(join(MIGRATIONS, f), "utf8"))
-      .join("\n");
+    const sql = statementsOnly(
+      readdirSync(MIGRATIONS)
+        .filter((f) => f.endsWith(".sql"))
+        .map((f) => readFileSync(join(MIGRATIONS, f), "utf8"))
+        .join("\n"),
+    );
     const tables = [
       ...new Set(
         [...sql.matchAll(/create table (?:if not exists )?"?([a-z_]+)"?/gi)].map(
