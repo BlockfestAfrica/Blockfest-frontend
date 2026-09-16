@@ -159,50 +159,71 @@ export default async function MonicaCreatorPage() {
               <Lock className="h-6 w-6 text-ink-4" aria-hidden="true" />
               We do not know who you are
             </h1>
-            {/* The common case, said first and said plainly.
-                The link in the welcome email is not spent by being used:
-                it signs you in again, today and in a month. Landing here
-                usually means a cleared cookie, a different phone or a
-                sign-out, none of which touches the link.
-
-                This screen previously led with a gold "Get a new link",
-                and gold is the primary action everywhere else on the
-                site, so the eye went to the one path that COSTS
-                something: recovery rotates the token and kills the link
-                sitting in that same inbox. The paragraph said the right
-                thing and nobody reads a paragraph when a gold button is
-                under it. */}
+            {/*
+             * A junction, not a wall.
+             *
+             * This is where every signed-out creator lands, so it has to
+             * answer "how do I carry on" with things a person can press,
+             * not with prose. Two ways in, both visible as controls, in
+             * the order that costs the reader least.
+             *
+             * The first is free: the welcome email's link does not expire
+             * and is not used up by being opened, so a cleared cookie or
+             * a new phone needs nothing but that email. The second works
+             * whatever happened, and costs the first: recovery rotates
+             * the token and kills the link sitting in that same inbox.
+             *
+             * Both extremes have been wrong here. A lone gold "Get a new
+             * link" sent people down the expensive path by default; then
+             * burying recovery inside a sentence left the page reading
+             * like a dead end, which is what somebody who cannot find
+             * that email actually meets.
+             */}
             <p className="mt-4 text-base leading-relaxed text-ink-3">
-              Open the link in your welcome email and you will land straight
-              back here. It does not expire and it does not get used up, so
-              the same link works every time, on any device.
+              Two ways back in. Either works; the first costs nothing.
             </p>
-            <div className="mt-5 rounded-xl border border-line-2 bg-card p-5">
-              <p className="text-sm font-semibold text-white">
-                Search your inbox for
-              </p>
-              <p className="mt-1 font-mono text-sm text-brand-gold">
-                Your Monica campaign link, keep this email
-              </p>
-              <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
-                Check your spam or promotions folder too. It came from
-                noreply@blockfestafrica.com on the day you registered.
-              </p>
+
+            <div className="mt-6 flex flex-col gap-4">
+              <div className="rounded-xl border border-line-2 bg-card p-5">
+                <p className="text-base font-bold text-white">
+                  1. Open your welcome email
+                </p>
+                <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
+                  The link in it signs you straight back in. It does not
+                  expire and opening it does not use it up, so the same link
+                  works every time, on any device.
+                </p>
+                <p className="mt-3 text-sm font-semibold text-white">
+                  Search your inbox for
+                </p>
+                <p className="mt-1 font-mono text-sm text-brand-gold">
+                  Your Monica campaign link, keep this email
+                </p>
+                <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
+                  Check spam and promotions too. It came from
+                  noreply@blockfestafrica.com on the day you registered.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-line-2 bg-card p-5">
+                <p className="text-base font-bold text-white">
+                  2. Cannot find it? Get a new link
+                </p>
+                <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
+                  Type your registered email address and we send a fresh link
+                  to that inbox. It replaces the old one, so the link in that
+                  email stops working.
+                </p>
+                <Link
+                  href={monicaRoutes.recover}
+                  className="mt-4 inline-flex min-h-11 items-center rounded-full border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-2"
+                >
+                  Get a new link
+                </Link>
+              </div>
             </div>
 
-            {/* Second, and quieter, because it costs the thing above. */}
-            <p className="mt-6 max-w-prose text-sm leading-relaxed text-ink-3">
-              Genuinely cannot find that email?{" "}
-              <Link
-                href={monicaRoutes.recover}
-                className="font-semibold text-link underline underline-offset-4 hover:text-white"
-              >
-                Get a new link
-              </Link>
-              . It goes to the address you registered with, and it replaces
-              the old one, so the link in that email stops working.
-            </p>
-            <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-4">
+            <p className="mt-5 max-w-prose text-sm leading-relaxed text-ink-4">
               No longer have access to that inbox at all? Write to{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}

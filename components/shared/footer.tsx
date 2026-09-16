@@ -23,6 +23,10 @@ const infoMenu: Menu[] = [
   // The campaign surface had no inbound link from anywhere on the site: the
   // only link ran upward, from the campaign page to the index.
   { path: "/campaigns", title: "Campaigns" },
+  /* A creator signed out on a borrowed phone should not have to know a
+     URL. Every other door to recovery sits on a campaign page they have
+     to reach first, which is the one thing they cannot currently do. */
+  { path: "/campaigns/monica-money-story/me", title: "Your creator page" },
   { path: "/newsletter", title: "Newsletter" },
   { path: "/faq", title: "FAQ" },
   { path: "/travel", title: "Travel & Visa" },
