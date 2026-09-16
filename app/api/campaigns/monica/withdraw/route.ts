@@ -89,6 +89,32 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    /*
+     * The week this entry belongs to, read before the row goes.
+     *
+     * The mail used to take its week from whichever challenge was open at
+     * the time, which is not the same question. Stage 1 closes 24 September
+     * and stage 2 opens on the 28th, so across the whole results-night
+     * weekend nothing is open and every withdrawal announced itself as
+     * "your week 0 entry" - to creators whose real week 1 entries are
+     * sitting in the review queue, which is exactly who withdraws then.
+     *
+     * Scoped to the enrolment like the withdrawal itself, so this cannot
+     * read the week of somebody else's submission, and only used when the
+     * withdrawal actually succeeded.
+     */
+    const belongsTo = await getDb().execute(sql`
+      SELECT ch.week_no
+        FROM submissions sub
+        JOIN challenge_entries ce ON ce.id = sub.entry_id
+        JOIN challenges ch        ON ch.id = ce.challenge_id
+       WHERE sub.id = ${parsed.data.submissionId}::uuid
+         AND ce.campaign_creator_id = ${creator.enrolmentId}::uuid
+    `);
+    const entryWeek = Number(
+      (belongsTo.rows?.[0] as { week_no?: number } | undefined)?.week_no ?? 0,
+    );
+
     const result = await getDb().execute(
       sql`SELECT * FROM withdraw_submission(${creator.enrolmentId}::uuid, ${parsed.data.submissionId}::uuid)`,
     );
@@ -119,8 +145,10 @@ export async function POST(request: NextRequest) {
             JOIN creators c ON c.id = cc.creator_id
            WHERE cc.id = ${creator.enrolmentId}::uuid
         `);
+        /* Only for the deadline. Which week the entry belonged to is
+           answered above, by the entry, not by the calendar. */
         const open = await getDb().execute(sql`
-          SELECT ch.week_no, ch.ends_at
+          SELECT ch.ends_at
             FROM challenges ch
             JOIN campaigns cp ON cp.id = ch.campaign_id
            WHERE cp.slug = ${MONICA_SLUG}
@@ -133,7 +161,6 @@ export async function POST(request: NextRequest) {
           full_name?: string;
         } | null;
         const week = (open.rows?.[0] ?? null) as {
-          week_no?: number;
           ends_at?: string;
         } | null;
         if (person?.email && row.url) {
@@ -144,7 +171,7 @@ export async function POST(request: NextRequest) {
               platformLabel:
                 platformLabels[row.platform as CampaignPlatform] ??
                 String(row.platform ?? ""),
-              weekNo: Number(week?.week_no ?? 0),
+              weekNo: entryWeek,
               url: row.url,
               closesAtLagos: week?.ends_at ? closingAt(String(week.ends_at)) : null,
               personalPage: personalPage(),

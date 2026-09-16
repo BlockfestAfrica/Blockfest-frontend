@@ -33,7 +33,9 @@ export interface CandidateRow {
 export interface VoteVerdict {
   /** pending: round open or review incomplete. decided: a winner exists.
       zero: closed and reviewed with no countable votes. */
-  state: "pending" | "decided" | "zero";
+  state: "pending" | "decided" | "zero" | "tied";
+  /** Votes the leaders hold. Zero only when nobody voted. */
+  votes?: number;
   winner: { enrolmentId: string; name: string; votes: number } | null;
   /** The shortlist, for the zero-vote fallback where only nominees may win. */
   nomineeEnrolmentIds: string[];
@@ -119,13 +121,19 @@ export function WinnersPanel({
    */
   const verdict = category === "community_favourite" ? vote : null;
   const decided = verdict?.state === "decided" ? verdict.winner : null;
+  /* Both states hand the announcer a choice, and the engine accepts a
+     different set in each: any shortlisted name when nobody voted (P0807),
+     but only a tied leader when the vote tied (P0806). Same picker, two
+     different lists and two different sentences. */
   const shortlistOnly = verdict?.state === "zero";
+  const tiedTop = verdict?.state === "tied";
+  const pickFromVerdict = shortlistOnly || tiedTop;
   const votePending = verdict?.state === "pending";
 
   const candidates =
     category === "creator_of_week"
       ? creatorCandidates
-      : shortlistOnly && verdict
+      : pickFromVerdict && verdict
         ? favouriteCandidates.filter((c) =>
             verdict.nomineeEnrolmentIds.includes(c.enrolmentId),
           )
@@ -424,9 +432,11 @@ export function WinnersPanel({
               id="winner"
               label="Creator"
               hint={
-                shortlistOnly
-                  ? "No countable votes came in, so the rules fall back to Blockfest selecting, from the shortlist people were shown."
-                  : "Type any part of a name. Ranked by the standings, so the leader is first."
+                tiedTop
+                  ? `The vote is an exact tie on ${verdict?.votes ?? 0} votes, and the recorded standings do not separate them either. Only these names can be announced; any other is refused.`
+                  : shortlistOnly
+                    ? "No countable votes came in, so the rules fall back to Blockfest selecting, from the shortlist people were shown."
+                    : "Type any part of a name. Ranked by the standings, so the leader is first."
               }
             >
               <CreatorPicker

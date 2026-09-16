@@ -194,3 +194,83 @@ export async function snapshotRows(
     };
   });
 }
+
+export interface VoteNominee {
+  enrolmentId: string;
+  name: string;
+  votes: number;
+}
+
+export type VoteVerdict =
+  | { state: "pending"; winner: null; votes: number; nomineeEnrolmentIds: string[] }
+  | { state: "zero"; winner: null; votes: number; nomineeEnrolmentIds: string[] }
+  | { state: "tied"; winner: null; votes: number; nomineeEnrolmentIds: string[] }
+  | {
+      state: "decided";
+      winner: { enrolmentId: string; name: string; votes: number };
+      votes: number;
+      nomineeEnrolmentIds: string[];
+    };
+
+/**
+ * What the announce card may claim about a finished vote.
+ *
+ * Four states, because the engine enforces four different things and a
+ * screen that collapses any two of them tells the announcer something
+ * false at the moment it matters most.
+ *
+ * The one that was wrong: an exact tie shared the "zero" state with a round
+ * nobody voted in, so the console said "No countable votes came in" above a
+ * card reading 31, 31, 24, and offered a picker of every nominee. Those are
+ * different rules. Nobody voting falls back to Blockfest choosing from the
+ * whole shortlist (P0807); a tie does not, and publish_weekly_winner
+ * accepts a tied leader and refuses everyone else with P0806.
+ *
+ * Ties break on the FROZEN points, which is what the engine breaks them on.
+ * Judging on live standings let a Sunday approval make this page name one
+ * winner while the engine accepted only the other.
+ */
+export function voteVerdict(
+  nominees: VoteNominee[],
+  frozenPoints: Record<string, number>,
+  settled: boolean,
+): VoteVerdict {
+  const nomineeEnrolmentIds = nominees.map((n) => n.enrolmentId);
+  if (!settled) {
+    return { state: "pending", winner: null, votes: 0, nomineeEnrolmentIds };
+  }
+
+  const top = Math.max(0, ...nominees.map((n) => n.votes));
+  if (top === 0) {
+    return { state: "zero", winner: null, votes: 0, nomineeEnrolmentIds };
+  }
+
+  const pointsOf = (id: string) => frozenPoints[id] ?? 0;
+  const tied = nominees.filter((n) => n.votes === top);
+  const leader = tied.reduce((a, b) =>
+    pointsOf(b.enrolmentId) > pointsOf(a.enrolmentId) ? b : a,
+  );
+  const tiedTop = tied.filter(
+    (n) => pointsOf(n.enrolmentId) === pointsOf(leader.enrolmentId),
+  );
+
+  if (tiedTop.length > 1) {
+    return {
+      state: "tied",
+      winner: null,
+      votes: top,
+      nomineeEnrolmentIds: tiedTop.map((n) => n.enrolmentId),
+    };
+  }
+
+  return {
+    state: "decided",
+    winner: {
+      enrolmentId: leader.enrolmentId,
+      name: leader.name,
+      votes: leader.votes,
+    },
+    votes: top,
+    nomineeEnrolmentIds,
+  };
+}
