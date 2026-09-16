@@ -17,6 +17,7 @@ import {
   repriceEmail,
   shortlistEmail,
   submissionReceivedEmail,
+  referralCreditEmail,
   voteReceiptEmail,
   votingPage,
   withdrawnEmail,
@@ -247,5 +248,40 @@ describe("the withdrawal notice", () => {
   it("carries the not-me path, because a thief can withdraw too", () => {
     expect(mail().text).toMatch(/somebody else has your personal link/i);
     expect(mail().text).toContain("/recover");
+  });
+});
+
+describe("the referral credit notice", () => {
+  const mail = (over = {}) =>
+    referralCreditEmail({
+      to: "referrer@example.com",
+      fullName: "Amara Obi",
+      referredName: "Chidi Nwosu",
+      points: 50,
+      pointsTotal: 310,
+      referralCode: "AMARA7K",
+      personalPage: "https://blockfestafrica.com/campaigns/monica-money-story/me",
+      ...over,
+    });
+
+  it("names the person, not just the payout", () => {
+    // "A referral was credited" is a receipt. "Chidi's entry was approved"
+    // is a reason to send the code to somebody else.
+    const m = mail();
+    expect(m.subject).toContain("Chidi");
+    expect(m.text).toContain("Chidi");
+    expect(m.text).toContain("50");
+    expect(m.text).toContain("310");
+  });
+
+  it("states the rule that makes the timing make sense", () => {
+    // Creators ask why a signup paid nothing. The rule is on approval,
+    // and the mail is the only place they will read it.
+    expect(mail().text).toMatch(/first approved entry, not on a signup/i);
+  });
+
+  it("carries the code so the next share needs no hunting", () => {
+    expect(mail().text).toContain("AMARA7K");
+    expect(mail().html).toContain("AMARA7K");
   });
 });

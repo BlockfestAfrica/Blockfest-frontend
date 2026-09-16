@@ -1,16 +1,20 @@
-import { sendEmailQuietly } from "@/lib/email/client";
+import { sendEmail, sendEmailQuietly } from "@/lib/email/client";
 import {
   approvalEmail,
   personalPage,
+  referralCreditEmail,
   rejectionEmail,
 } from "@/lib/email/templates";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, after } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/session";
 import { reviewSubmission } from "@/lib/admin/review";
 import { readJsonBody, sameOrigin, throttleKey } from "@/lib/admin/request";
 import { allowKeyStrict } from "@/lib/throttle";
+import { getDb } from "@/lib/db/client";
+import { sql } from "drizzle-orm";
+import { logError } from "@/lib/log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -210,6 +214,105 @@ export async function POST(request: NextRequest) {
         }),
     `${decision} for submission ${submissionId}`,
   );
+
+  /*
+   * And tell whoever brought them in.
+   *
+   * The referral bonus has paid automatically since migration 0014, on the
+   * first approval of the creator who was referred, and it has never said a
+   * word to the person who earned it. That is the one mechanic that grows
+   * the campaign, paying out in silence.
+   *
+   * Only on an approval, and only the first: the query asks for a referral
+   * that is already awarded and has no 'referral.credited' row against it,
+   * so a re-approval or a second entry finds nothing. The audit row is the
+   * ledger, the same shape the stage announcement uses, which means the
+   * record of who was told is the same record that stops them being told
+   * twice.
+   *
+   * After the response, because the reviewer is waiting and none of this
+   * changes their decision.
+   */
+  if (decision === "approved") {
+    after(async () => {
+      try {
+        const db = getDb();
+        const found = await db.execute(sql`
+          SELECT r.id, r.campaign_id, r.code_used,
+                 ref.email        AS referrer_email,
+                 ref.full_name    AS referrer_name,
+                 brought.full_name AS referred_name,
+                 rcc.points_total AS referrer_total,
+                 pl.points        AS points
+            FROM referrals r
+            JOIN campaign_creators rcc ON rcc.id = r.referrer_campaign_creator_id
+            JOIN creators ref         ON ref.id = rcc.creator_id
+            JOIN campaign_creators bcc ON bcc.id = r.referred_campaign_creator_id
+            JOIN creators brought     ON brought.id = bcc.creator_id
+            LEFT JOIN point_ledger pl ON pl.id = r.awarded_ledger_id
+           WHERE r.referred_campaign_creator_id = ${outcome.creator.enrolmentId}::uuid
+             AND r.awarded_at IS NOT NULL
+             AND COALESCE(rcc.status, 'active') = 'active'
+             AND NOT EXISTS (
+               SELECT 1 FROM audit_log al
+                WHERE al.action = 'referral.credited'
+                  AND al.entity_id = r.id
+             )
+           LIMIT 1
+        `);
+        const paid = (found.rows?.[0] ?? null) as {
+          id?: string;
+          campaign_id?: string;
+          code_used?: string;
+          referrer_email?: string;
+          referrer_name?: string;
+          referred_name?: string;
+          referrer_total?: number;
+          points?: number;
+        } | null;
+
+        if (!paid?.id || !paid.referrer_email) return;
+
+        /* sendEmail, not sendEmailQuietly: the quiet one returns void, so
+           the audit row below would have recorded notified:false on every
+           successful send. An audit trail that lies is worse than none. */
+        const result = await sendEmail(
+          referralCreditEmail({
+            to: paid.referrer_email,
+            fullName: paid.referrer_name ?? "",
+            referredName: paid.referred_name ?? "someone",
+            points: Number(paid.points ?? 0),
+            pointsTotal: Number(paid.referrer_total ?? 0),
+            referralCode: String(paid.code_used ?? ""),
+            personalPage: personalPage(),
+          }),
+        );
+        if (!result.sent) {
+          logError(
+            "admin/review referral notice",
+            new Error(`referral credit ${paid.id} not sent`),
+          );
+        }
+
+        /*
+         * Written whether or not the mail left, carrying which it was. A
+         * failed send that is not recorded would be retried on every later
+         * approval of the same creator, and there is no later approval to
+         * hang it on anyway: this is a once-per-referral event.
+         */
+        await db.execute(sql`
+          INSERT INTO audit_log (campaign_id, actor_admin_id, action, entity_type, entity_id, after)
+          VALUES (
+            ${paid.campaign_id}::uuid, NULL,
+            'referral.credited', 'referral', ${paid.id}::uuid,
+            ${JSON.stringify({ points: Number(paid.points ?? 0), notified: result.sent })}::jsonb
+          )
+        `);
+      } catch (error) {
+        logError("admin/review referral notice", error);
+      }
+    });
+  }
 
   return NextResponse.json({ ok: true, decision, entryId: outcome.entryId });
 }

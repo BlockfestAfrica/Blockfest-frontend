@@ -40,6 +40,8 @@ export type ReviewDecision = "approved" | "rejected";
  * reading it twice invites the two reads to disagree.
  */
 export interface ReviewedEntry {
+  /** The enrolment, so the caller can find a referral this approval paid. */
+  enrolmentId: string;
   email: string;
   fullName: string;
   weekNo: number;
@@ -141,6 +143,7 @@ export async function reviewSubmission(
       ok: true,
       entryId: row.entryId,
       creator: {
+        enrolmentId: row.enrolmentId,
         email: row.email,
         fullName: row.fullName,
         weekNo: row.weekNo,
