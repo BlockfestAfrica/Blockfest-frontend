@@ -19,6 +19,7 @@ import {
   MONICA_SLUG,
 } from "@/lib/campaigns";
 import { formatNaira } from "@/lib/tickets";
+import { buttonClass } from "@/components/shared/panel";
 import { SITE_URL } from "@/lib/seo-event";
 
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
@@ -122,60 +123,48 @@ export default function MonicaMoneyStoryPage() {
                   opensLabel={OPENS_LABEL}
                 />
               )}
-              {/* A plain anchor: the pack is an external doc, and Next's
-                  Link buys nothing for an off-site URL. New tab, so the
-                  campaign page stays where the reader left it. */}
+              {/* A plain anchor, but the house secondary SHAPE: it sits
+                  beside the gold action and shared its row while being
+                  drawn as body text, so the two read as a button and a
+                  sentence rather than as two things you can press. */}
               <a
                 href={monicaRoutes.pack}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center gap-2 whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+                className={buttonClass("secondary", "whitespace-nowrap")}
               >
                 See the Creator Pack
               </a>
             </div>
-            {/* The utilities, on their own quiet line. Five controls in one
-                row read fine stacked on a phone and jampacked side by side
-                on a laptop: the gold action and its one companion keep the
-                row, and the reference links breathe below it. Nowrap,
-                because "Privacy notice" split across two lines reads as
-                two links. */}
-            <div className="mt-5 flex flex-wrap items-center gap-x-7 gap-y-1">
-              <Link
-                href={monicaRoutes.leaderboard}
-                className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
-              >
-                Leaderboard
-              </Link>
-              <a
-                href="#resources"
-                className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
-              >
-                Resources
-              </a>
-              <Link
-                href={monicaRoutes.privacy}
-                className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
-              >
-                Privacy notice
-              </Link>
-              {/* Your page BEFORE Lost your link, deliberately: recovery
-                  rotates the token and kills the welcome email's link, so
-                  it must not be the first thing a returning creator
-                  reaches for. */}
-              <Link
-                href={monicaRoutes.me}
-                className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
-              >
-                Your page
-              </Link>
-              <Link
-                href={monicaRoutes.recover}
-                className="inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
-              >
-                Lost your link?
-              </Link>
-            </div>
+            {/* The utilities as chips, not as five underlined phrases in a
+                row. Drawn as text they read as one run of prose the eye
+                has to parse before it can use any of it, and on a laptop
+                they crowded the gold action above them. A shape each, a
+                tap target each, and a wrap that never strands one alone.
+                Your page BEFORE Lost your link, deliberately: recovery
+                rotates the token and kills the welcome email's link, so
+                it must not be the first thing a returning creator
+                reaches for. */}
+            <nav aria-label="Campaign links" className="mt-6">
+              <ul className="flex flex-wrap items-center gap-2">
+                {[
+                  { href: monicaRoutes.leaderboard, label: "Leaderboard" },
+                  { href: "#resources", label: "Resources" },
+                  { href: monicaRoutes.privacy, label: "Privacy notice" },
+                  { href: monicaRoutes.me, label: "Your page" },
+                  { href: monicaRoutes.recover, label: "Lost your link?" },
+                ].map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full border border-line-2 px-4 text-sm font-semibold text-ink-2 transition-colors hover:bg-card-2 hover:text-white"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
         </div>
       </section>
