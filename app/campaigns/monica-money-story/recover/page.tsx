@@ -32,6 +32,19 @@ export default function RecoverAccessPage() {
             you a fresh one. Nothing happens until you click that link.
           </p>
 
+          {/* A way out for somebody who arrived here by accident. The
+              welcome email's link never expires and is not used up by
+              being opened, so most people who reach this page did not
+              need to: they only lost the cookie. Confirming here rotates
+              the token and kills that email's link, which is a real cost
+              to somebody who could simply have opened it. */}
+          <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-3">
+            Still have your welcome email? You do not need this. Open the link
+            in it and you are back in: it never expires, and opening it does
+            not use it up. Finishing here replaces that link, so the one in
+            your inbox stops working.
+          </p>
+
           <div className="mt-6">
             <RecoverAccessForm />
           </div>
