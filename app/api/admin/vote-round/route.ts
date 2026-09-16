@@ -10,6 +10,7 @@ import { MONICA_SLUG } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { shortlistEmail, votingPage } from "@/lib/email/templates";
+import { findVotesByEmail } from "@/lib/admin/vote-round";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,12 +81,30 @@ const releaseSchema = z.object({
   voteId: z.string().uuid("That is not a vote."),
 });
 
+/*
+ * Find the votes one address cast, so a reviewer can act on a vote they
+ * already know about. The cluster panels cover "who looks suspicious"; this
+ * covers the rehearsal vote the runbook says to remove, which comes from a
+ * consumer inbox and is therefore filtered out of the domain signals.
+ */
+const lookupSchema = z.object({
+  action: z.literal("lookup"),
+  roundId: z.string().uuid("That is not a round."),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("That is not an email address.")
+    .max(320),
+});
+
 const schema = z.discriminatedUnion("action", [
   openSchema,
   closeSchema,
   reviewSchema,
   removeSchema,
   releaseSchema,
+  lookupSchema,
 ]);
 
 const FORBIDDEN = NextResponse.json(
@@ -228,6 +247,22 @@ export async function POST(request: NextRequest) {
         sql`SELECT mark_round_reviewed(${adminId}::uuid, ${action.roundId}::uuid)`,
       );
       return NextResponse.json({ ok: true });
+    }
+
+    if (action.action === "lookup") {
+      /* A read. No audit row and no state change: it answers a question the
+         console could already answer for held votes and simply could not
+         for the rest. */
+      const votes = await findVotesByEmail(action.roundId, action.email);
+      return NextResponse.json({
+        ok: true,
+        votes: votes.map((v) => ({
+          voteId: v.voteId,
+          email: v.email,
+          createdAt: v.createdAt.toISOString(),
+          held: v.held,
+        })),
+      });
     }
 
     if (action.action === "remove") {

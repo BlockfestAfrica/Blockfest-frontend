@@ -46,14 +46,33 @@ export interface NomineeTally {
   votes: number;
 }
 
+/**
+ * One vote inside a cluster, carrying the id the remove action needs.
+ *
+ * The signal panels used to report only "this connection cast 18 votes" and
+ * name no vote, so a reviewer who judged a cluster fraudulent had nothing to
+ * click: the only ids the console ever rendered were the held ones, and the
+ * domain cap holds nothing from gmail, yahoo or outlook. The engine always
+ * accepted the removal. The screen simply never said which votes they were.
+ */
+export interface ClusterMember {
+  voteId: string;
+  email: string;
+  createdAt: Date;
+  /** True when the domain cap already held it, so it is not double listed. */
+  held: boolean;
+}
+
 export interface DomainCluster {
   domain: string;
   votes: number;
+  members: ClusterMember[];
 }
 
 export interface IpCluster {
   ipHash: string;
   votes: number;
+  members: ClusterMember[];
 }
 
 export interface HeldVote {
@@ -153,10 +172,10 @@ export async function candidateEntries(
  * forty from one catch-all is a farm. Pure, and exported, so the exclusion
  * can be tested without a database.
  */
-export function withoutAllowlistedDomains(
-  clusters: DomainCluster[],
+export function withoutAllowlistedDomains<T extends { domain: string }>(
+  clusters: T[],
   allowlist: Iterable<string>,
-): DomainCluster[] {
+): T[] {
   const exempt = new Set(
     Array.from(allowlist, (domain) => domain.toLowerCase()),
   );
@@ -175,6 +194,38 @@ export function withoutAllowlistedDomains(
  * that slipped under the cap. Unverified casts count nothing and appear only
  * as their total, which is itself a signal when it is large.
  */
+/**
+ * json_agg gives back whatever the driver decided: already-parsed rows on one
+ * path, a JSON string on another. Both are handled rather than assumed,
+ * because a reviewer staring at a cluster they cannot act on is the exact
+ * failure this whole change exists to remove, and a thrown parse here would
+ * reproduce it silently.
+ */
+export function readMembers(raw: unknown): ClusterMember[] {
+  let rows: unknown = raw;
+  if (typeof raw === "string") {
+    try {
+      rows = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((row) => {
+    const r = row as Record<string, unknown> | null;
+    if (!r?.voteId) return [];
+    const at = new Date(String(r.createdAt ?? ""));
+    return [
+      {
+        voteId: String(r.voteId),
+        email: String(r.email ?? ""),
+        createdAt: Number.isNaN(at.getTime()) ? new Date(0) : at,
+        held: Boolean(r.held),
+      },
+    ];
+  });
+}
+
 export async function roundTally(
   admin: AdminIdentity,
   roundId: string,
@@ -196,7 +247,13 @@ export async function roundTally(
     `),
     db.execute(sql`
       SELECT split_part(v.voter_email_canonical, '@', 2) AS domain,
-             count(*)::int AS votes
+             count(*)::int AS votes,
+             json_agg(json_build_object(
+               'voteId', v.id,
+               'email', v.voter_email_canonical,
+               'createdAt', v.created_at,
+               'held', v.held_at IS NOT NULL
+             ) ORDER BY v.created_at) AS members
         FROM votes v
        WHERE v.round_id = ${roundId}
          AND v.status = 'counted'
@@ -205,7 +262,13 @@ export async function roundTally(
        ORDER BY votes DESC, domain ASC
     `),
     db.execute(sql`
-      SELECT v.ip_hash, count(*)::int AS votes
+      SELECT v.ip_hash, count(*)::int AS votes,
+             json_agg(json_build_object(
+               'voteId', v.id,
+               'email', v.voter_email_canonical,
+               'createdAt', v.created_at,
+               'held', v.held_at IS NOT NULL
+             ) ORDER BY v.created_at) AS members
         FROM votes v
        WHERE v.round_id = ${roundId}
          AND v.status = 'counted'
@@ -251,6 +314,7 @@ export async function roundTally(
         return {
           domain: String(r.domain ?? ""),
           votes: Number(r.votes ?? 0),
+          members: readMembers(r.members),
         };
       }),
       ALLOWLISTED_DOMAINS,
@@ -260,6 +324,7 @@ export async function roundTally(
       return {
         ipHash: String(r.ip_hash ?? ""),
         votes: Number(r.votes ?? 0),
+        members: readMembers(r.members),
       };
     }),
     held: (held.rows ?? []).map((row) => {
@@ -276,4 +341,44 @@ export async function roundTally(
         ?.unverified ?? 0,
     ),
   };
+}
+
+/**
+ * The votes one exact address cast in one round.
+ *
+ * The cluster panels answer "who is suspicious"; this answers "where is the
+ * vote I already know about". Two cases need it and neither reaches a
+ * cluster: the rehearsal vote the runbook tells the owner to cast and then
+ * remove, which comes from a consumer inbox and so is filtered out of the
+ * domain list entirely, and a vote somebody reports to us by name.
+ *
+ * Exact match only, and scoped to one round. A prefix or partial search here
+ * would turn an owner-only console into a way to ask which addresses voted,
+ * and the answer to that question is nobody's business including ours.
+ */
+export async function findVotesByEmail(
+  roundId: string,
+  email: string,
+): Promise<ClusterMember[]> {
+  const canonical = email.trim().toLowerCase();
+  if (!canonical) return [];
+  const found = await getDb().execute(sql`
+    SELECT v.id, v.voter_email_canonical, v.created_at,
+           v.held_at IS NOT NULL AS held
+      FROM votes v
+     WHERE v.round_id = ${roundId}::uuid
+       AND v.status = 'counted'
+       AND v.voter_email_canonical = ${canonical}
+     ORDER BY v.created_at ASC
+  `);
+  return (found.rows ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    const at = new Date(String(r.created_at ?? ""));
+    return {
+      voteId: String(r.id),
+      email: String(r.voter_email_canonical ?? ""),
+      createdAt: Number.isNaN(at.getTime()) ? new Date(0) : at,
+      held: Boolean(r.held),
+    };
+  });
 }

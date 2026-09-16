@@ -34,10 +34,18 @@ export interface EntryCandidateRow {
   approvedPlatforms: number;
 }
 
+/** A vote inside a signal cluster, carrying the id Remove needs. */
+export interface ClusterVote {
+  voteId: string;
+  email: string;
+  createdAt: string;
+  held: boolean;
+}
+
 export interface TallyView {
   nominees: { nomineeId: string; name: string; votes: number }[];
-  domains: { domain: string; votes: number }[];
-  ips: { ipHash: string; votes: number }[];
+  domains: { domain: string; votes: number; members: ClusterVote[] }[];
+  ips: { ipHash: string; votes: number; members: ClusterVote[] }[];
   held: { voteId: string; email: string; domain: string; createdAt: string }[];
   unverified: number;
 }
@@ -86,6 +94,9 @@ export function VoteRoundPanel({
   const [closesTime, setClosesTime] = useState("18:00");
   const [fewReason, setFewReason] = useState("");
   const [removing, setRemoving] = useState<string | null>(null);
+  const [openCluster, setOpenCluster] = useState<string | null>(null);
+  const [lookupEmail, setLookupEmail] = useState("");
+  const [lookupResult, setLookupResult] = useState<ClusterVote[] | null>(null);
   const [removeReason, setRemoveReason] = useState("");
   const [removeMode, setRemoveMode] = useState<RemoveMode>("fraud");
   /*
@@ -222,6 +233,126 @@ export function VoteRoundPanel({
     </div>
   );
 
+  /*
+   * The votes behind a cluster, each with the control the panel previously
+   * withheld. Held ones are marked: they also appear in the list below, and
+   * a reviewer should know they are looking at the same vote twice rather
+   * than two votes from one address.
+   */
+  const renderMembers = (members: ClusterVote[]) => (
+    <div className="border-t border-line bg-card-2/40 px-3">
+      {members.map((m) => (
+        <div key={m.voteId} className="border-b border-line py-3 last:border-b-0">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-white">
+                {m.email}
+              </p>
+              <p className="text-sm text-ink-4">
+                {dateTime(m.createdAt)}
+                {m.held ? " · already held below" : ""}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setRemoving(m.voteId);
+                setRemoveReason("");
+                setRemoveMode("fraud");
+              }}
+              className={buttonClass("danger")}
+            >
+              Remove…
+            </button>
+          </div>
+          {removing === m.voteId && renderRemoveForm(m.voteId, m.email)}
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderRemoveForm = (voteId: string, email: string) => (
+    <div className={`mt-4 ${SPACING.related}`}>
+                <Field
+                  id={`remove-reason-${voteId}`}
+                  label="Why it goes"
+                  hint="Recorded in the audit log beside your name."
+                >
+                  <input
+                    id={`remove-reason-${voteId}`}
+                    name="remove-reason"
+                    autoComplete="off"
+                    value={removeReason}
+                    onChange={(event) =>
+                      setRemoveReason(event.target.value)
+                    }
+                    maxLength={300}
+                    placeholder="Forty votes from one catch-all domain…"
+                    className={control}
+                  />
+                </Field>
+                <Segmented<RemoveMode>
+                  legend="How it was meant"
+                  value={removeMode}
+                  onChange={setRemoveMode}
+                  options={[
+                    { value: "fraud", label: "Fraud, bar this email" },
+                    {
+                      value: "unsweep",
+                      label: "Unsweep, they may vote again",
+                    },
+                  ]}
+                />
+                <div className="flex flex-wrap items-center gap-3">
+                  {removeReason.trim() ? (
+                    <Confirm
+                      label="Remove this vote"
+                      intent="danger"
+                      question={
+                        removeMode === "fraud"
+                          ? `Remove the vote from ${email} as fraud?`
+                          : `Remove the vote from ${email} and free them to vote again?`
+                      }
+                      consequence={
+                        removeMode === "fraud"
+                          ? "It stops counting and the email is barred from this round. The voter is not told; the public answer never changes."
+                          : "It stops counting and the email may cast a fresh vote while the round is open."
+                      }
+                      confirmLabel="Yes, remove it"
+                      pending={busy}
+                      onConfirm={() =>
+                        act(
+                          {
+                            action: "remove",
+                            voteId: voteId,
+                            reason: removeReason.trim(),
+                            mode: removeMode,
+                          },
+                          removeMode === "fraud"
+                            ? "Removed as fraud. The email is barred for the round."
+                            : "Removed. They may vote again.",
+                        )
+                      }
+                    />
+                  ) : (
+                    <p className="text-sm text-ink-2">
+                      Give the reason first.
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setRemoving(null)}
+                    className={buttonClass("quiet")}
+                  >
+                    Never mind
+                  </button>
+                </div>
+    </div>
+  );
+
+
+
   const signalsBlock = tally && (
     <div className={SPACING.related}>
       <h3 className="eyebrow text-ink-4">Signals</h3>
@@ -237,17 +368,31 @@ export function VoteRoundPanel({
             Votes by domain, big consumer providers left out
           </p>
           <dl className="mt-2 divide-y divide-line border-y border-line">
-            {tally.domains.slice(0, visibleDomains).map((d) => (
-              <div
-                key={d.domain}
-                className="flex items-baseline justify-between gap-4 py-2"
-              >
-                <dt className="truncate text-sm text-ink-2">{d.domain}</dt>
-                <dd className="tabular-nums text-sm text-ink-2">
-                  {count(d.votes)}
-                </dd>
-              </div>
-            ))}
+            {tally.domains.slice(0, visibleDomains).map((d) => {
+              const key = `domain:${d.domain}`;
+              const open = openCluster === key;
+              return (
+                <div key={d.domain}>
+                  <button
+                    type="button"
+                    aria-expanded={open}
+                    onClick={() => setOpenCluster(open ? null : key)}
+                    className="flex min-h-11 w-full cursor-pointer items-baseline justify-between gap-4 py-2 text-left transition-colors hover:bg-card-2"
+                  >
+                    <dt className="truncate text-sm text-ink-2">
+                      {d.domain}
+                      <span className="ml-2 text-ink-4">
+                        {open ? "hide" : "show votes"}
+                      </span>
+                    </dt>
+                    <dd className="tabular-nums text-sm text-ink-2">
+                      {count(d.votes)}
+                    </dd>
+                  </button>
+                  {open && renderMembers(d.members)}
+                </div>
+              );
+            })}
           </dl>
           {tally.domains.length > visibleDomains ? (
             <button
@@ -276,19 +421,31 @@ export function VoteRoundPanel({
             Same connection, three votes or more
           </p>
           <dl className="mt-2 divide-y divide-line border-y border-line">
-            {tally.ips.slice(0, visibleIps).map((ip) => (
-              <div
-                key={ip.ipHash}
-                className="flex items-baseline justify-between gap-4 py-2"
-              >
-                <dt className="truncate font-mono text-sm text-ink-2">
-                  {ip.ipHash.slice(0, 16)}…
-                </dt>
-                <dd className="tabular-nums text-sm text-ink-2">
-                  {count(ip.votes)}
-                </dd>
-              </div>
-            ))}
+            {tally.ips.slice(0, visibleIps).map((ip) => {
+              const key = `ip:${ip.ipHash}`;
+              const open = openCluster === key;
+              return (
+                <div key={ip.ipHash}>
+                  <button
+                    type="button"
+                    aria-expanded={open}
+                    onClick={() => setOpenCluster(open ? null : key)}
+                    className="flex min-h-11 w-full cursor-pointer items-baseline justify-between gap-4 py-2 text-left transition-colors hover:bg-card-2"
+                  >
+                    <dt className="truncate font-mono text-sm text-ink-2">
+                      {ip.ipHash.slice(0, 16)}…
+                      <span className="ml-2 font-sans text-ink-4">
+                        {open ? "hide" : "show votes"}
+                      </span>
+                    </dt>
+                    <dd className="tabular-nums text-sm text-ink-2">
+                      {count(ip.votes)}
+                    </dd>
+                  </button>
+                  {open && renderMembers(ip.members)}
+                </div>
+              );
+            })}
           </dl>
           {tally.ips.length > visibleIps ? (
             <button
@@ -306,6 +463,50 @@ export function VoteRoundPanel({
           )}
         </div>
       )}
+
+      <div>
+        <p className="text-sm font-semibold text-white">Find a vote</p>
+        <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
+          For a vote you already know about: the rehearsal one you cast
+          yourself, or one somebody reported. Consumer inboxes are left out
+          of the signals above, so this is the only way to reach them.
+        </p>
+        <div className="mt-2 flex flex-wrap items-end gap-3">
+          <Field id="lookup-email" label="Their email">
+            <input
+              id="lookup-email"
+              name="lookup-email"
+              type="email"
+              autoComplete="off"
+              value={lookupEmail}
+              onChange={(event) => {
+                setLookupEmail(event.target.value);
+                setLookupResult(null);
+              }}
+              placeholder="name@example.com"
+              className={control}
+            />
+          </Field>
+          <button
+            type="button"
+            disabled={busy || !lookupEmail.trim()}
+            onClick={lookup}
+            className={buttonClass("secondary")}
+          >
+            Find it
+          </button>
+        </div>
+        {lookupResult !== null &&
+          (lookupResult.length === 0 ? (
+            <p className="mt-3 text-sm text-ink-3">
+              No counted vote from that address in this round.
+            </p>
+          ) : (
+            <div className="mt-3 border-y border-line">
+              {renderMembers(lookupResult)}
+            </div>
+          ))}
+      </div>
 
       {heldCount > 0 && (
         <div>
@@ -357,84 +558,8 @@ export function VoteRoundPanel({
                   </div>
                 </div>
 
-                {removing === h.voteId && (
-                  <div className={`mt-4 ${SPACING.related}`}>
-                    <Field
-                      id={`remove-reason-${h.voteId}`}
-                      label="Why it goes"
-                      hint="Recorded in the audit log beside your name."
-                    >
-                      <input
-                        id={`remove-reason-${h.voteId}`}
-                        name="remove-reason"
-                        autoComplete="off"
-                        value={removeReason}
-                        onChange={(event) =>
-                          setRemoveReason(event.target.value)
-                        }
-                        maxLength={300}
-                        placeholder="Forty votes from one catch-all domain…"
-                        className={control}
-                      />
-                    </Field>
-                    <Segmented<RemoveMode>
-                      legend="How it was meant"
-                      value={removeMode}
-                      onChange={setRemoveMode}
-                      options={[
-                        { value: "fraud", label: "Fraud, bar this email" },
-                        {
-                          value: "unsweep",
-                          label: "Unsweep, they may vote again",
-                        },
-                      ]}
-                    />
-                    <div className="flex flex-wrap items-center gap-3">
-                      {removeReason.trim() ? (
-                        <Confirm
-                          label="Remove this vote"
-                          intent="danger"
-                          question={
-                            removeMode === "fraud"
-                              ? `Remove the vote from ${h.email} as fraud?`
-                              : `Remove the vote from ${h.email} and free them to vote again?`
-                          }
-                          consequence={
-                            removeMode === "fraud"
-                              ? "It stops counting and the email is barred from this round. The voter is not told; the public answer never changes."
-                              : "It stops counting and the email may cast a fresh vote while the round is open."
-                          }
-                          confirmLabel="Yes, remove it"
-                          pending={busy}
-                          onConfirm={() =>
-                            act(
-                              {
-                                action: "remove",
-                                voteId: h.voteId,
-                                reason: removeReason.trim(),
-                                mode: removeMode,
-                              },
-                              removeMode === "fraud"
-                                ? "Removed as fraud. The email is barred for the round."
-                                : "Removed. They may vote again.",
-                            )
-                          }
-                        />
-                      ) : (
-                        <p className="text-sm text-ink-2">
-                          Give the reason first.
-                        </p>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setRemoving(null)}
-                        className={buttonClass("quiet")}
-                      >
-                        Never mind
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {removing === h.voteId &&
+                  renderRemoveForm(h.voteId, h.email)}
               </div>
             ))}
           </div>
@@ -458,6 +583,49 @@ export function VoteRoundPanel({
   );
 
   /* -------------------------------------------------------------------- */
+
+  /*
+   * One remove form, three callers.
+   *
+   * It used to live inline in the held list and nowhere else, which is the
+   * whole of the defect this change fixes: the held list was the only place
+   * the console ever printed a vote id, and the domain cap holds nothing
+   * from gmail, yahoo or outlook. A reviewer reading "eighteen votes from
+   * one connection" had no control to press, and P0806 then refuses to
+   * announce anyone but the leader those votes chose.
+   */
+  /*
+   * Find one address's votes.
+   *
+   * A read, so it does not go through act(): nothing refreshes, nothing is
+   * recorded, and a miss is an answer rather than an error.
+   */
+  async function lookup() {
+    const email = lookupEmail.trim().toLowerCase();
+    if (!email || !round) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/vote-round", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "lookup",
+          roundId: round.roundId,
+          email,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        toast.error(result.message ?? "That did not work.");
+        return;
+      }
+      setLookupResult(result.votes ?? []);
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <JobCard

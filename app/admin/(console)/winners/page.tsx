@@ -12,6 +12,7 @@ import {
   candidateEntries,
   currentRound,
   roundTally,
+  type ClusterMember,
 } from "@/lib/admin/vote-round";
 import { leaderboard } from "@/lib/leaderboard";
 import { WinnersPanel } from "@/components/admin/winners-panel";
@@ -41,6 +42,16 @@ export const revalidate = 0;
  * "Freeze week 3", in an alarm colour, for the ordinary condition of a Saturday
  * morning. The job now says "Not yet" on itself.
  */
+
+/** Cluster members reach the client as plain JSON, like the held list does. */
+function serialiseMember(m: ClusterMember) {
+  return {
+    voteId: m.voteId,
+    email: m.email,
+    createdAt: m.createdAt.toISOString(),
+    held: m.held,
+  };
+}
 export default async function WinnersPage() {
   const admin = await requireAdmin();
   if (!admin.ok) return null;
@@ -201,8 +212,19 @@ export default async function WinnersPage() {
                   name: n.name,
                   votes: n.votes,
                 })),
-                domains: tally.domains,
-                ips: tally.ips,
+                /* Dates cross to the client as strings, members included:
+                   the cluster rows carry the vote ids the Remove control
+                   needs, which the panel never used to receive. */
+                domains: tally.domains.map((d) => ({
+                  domain: d.domain,
+                  votes: d.votes,
+                  members: d.members.map(serialiseMember),
+                })),
+                ips: tally.ips.map((ip) => ({
+                  ipHash: ip.ipHash,
+                  votes: ip.votes,
+                  members: ip.members.map(serialiseMember),
+                })),
                 held: tally.held.map((h) => ({
                   voteId: h.voteId,
                   email: h.email,
