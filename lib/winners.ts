@@ -50,6 +50,7 @@ export interface ShortlistEntry {
    * it against now to decide whether to render the vote controls; the
    * engine re-checks it on every cast, so this copy is presentation only.
    */
+  opensAt: string;
   closesAt: string;
 }
 
@@ -142,6 +143,7 @@ export async function currentShortlist(): Promise<ShortlistEntry[]> {
         ch.week_no,
         r.id AS round_id,
         n.id AS nominee_id,
+        r.opens_at,
         r.closes_at,
         COALESCE(
           (
@@ -175,12 +177,22 @@ export async function currentShortlist(): Promise<ShortlistEntry[]> {
         r.closes_at instanceof Date
           ? r.closes_at
           : new Date(String(r.closes_at ?? ""));
+      /* Same treatment for the open edge. A round is staged the day before
+         it runs, so 'status = open' above means the round exists, not that
+         it is taking votes: only opens_at says that. An unparseable value
+         becomes the empty string, which the page reads as not yet open
+         rather than open early. */
+      const opens =
+        r.opens_at instanceof Date
+          ? r.opens_at
+          : new Date(String(r.opens_at ?? ""));
       return {
         name: String(r.display_name ?? "").trim(),
         weekNo: Number(r.week_no ?? 0),
         links: toLinks(r.links),
         roundId: String(r.round_id ?? ""),
         nomineeId: String(r.nominee_id ?? ""),
+        opensAt: Number.isNaN(opens.getTime()) ? "" : opens.toISOString(),
         closesAt: Number.isNaN(closes.getTime()) ? "" : closes.toISOString(),
       };
     });
@@ -213,3 +225,33 @@ export const WINNER_NEVER_PUBLISH = [
   "creator_id",
   "entry_id",
 ] as const;
+
+export type VoteWindowState = "none" | "before" | "open" | "closed";
+
+/**
+ * Where a shortlist's round sits in its own window.
+ *
+ * Three states, not two. Reading only closes_at rendered a round staged on
+ * Saturday for a Sunday morning open as "Open now", with live ballots, for
+ * fourteen hours: cast_vote refused every one of them while the nominees'
+ * email correctly said the vote opened Sunday. Two public statements about
+ * one vote, contradicting each other, on the night nominees push the link
+ * hardest.
+ *
+ * An unreadable opens_at resolves to open, not to before. The engine
+ * re-checks the window on every cast and refuses an early one on its own,
+ * so the cost of guessing open is a button that answers honestly; the cost
+ * of guessing not-yet is a live vote nobody can reach.
+ */
+export function voteWindowState(
+  entry: Pick<ShortlistEntry, "opensAt" | "closesAt"> | undefined,
+  now: number = Date.now(),
+): VoteWindowState {
+  if (!entry) return "none";
+  const closes = new Date(entry.closesAt).getTime();
+  if (entry.closesAt === "" || Number.isNaN(closes)) return "none";
+  if (closes <= now) return "closed";
+  const opens = new Date(entry.opensAt).getTime();
+  if (entry.opensAt !== "" && !Number.isNaN(opens) && opens > now) return "before";
+  return "open";
+}
