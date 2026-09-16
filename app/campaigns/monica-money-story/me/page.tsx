@@ -292,32 +292,38 @@ export default async function MonicaCreatorPage() {
           {/* The only place the figures live. A card below the week repeated
               all three of them and the page opened by saying the same numbers
               twice, which is most of what read as scatter. */}
-          <p className="mt-2 text-sm text-ink-4">
-            <span className="tabular-nums">
-              {creator.pointsTotal} points · {creator.approvedEntries} approved
-              · joined {joined}
-            </span>{" "}
-            <Link
-              href={monicaRoutes.leaderboard}
-              className="whitespace-nowrap text-link underline underline-offset-2 hover:text-white"
-            >
-              See the leaderboard
-            </Link>{" "}
-            <span aria-hidden="true">·</span>{" "}
-            <Link
-              href={`${monicaRoutes.winners}#shortlist`}
-              className="whitespace-nowrap text-link underline underline-offset-2 hover:text-white"
-            >
-              Winners and the vote
-            </Link>{" "}
-            <span aria-hidden="true">·</span>{" "}
-            <Link
-              href={monicaRoutes.resources}
-              className="whitespace-nowrap text-link underline underline-offset-2 hover:text-white"
-            >
-              Resources
-            </Link>
+          <p className="mt-2 text-sm tabular-nums text-ink-4">
+            {creator.pointsTotal} points · {creator.approvedEntries} approved ·
+            joined {joined}
           </p>
+
+          {/* The three places to go, as controls rather than as the tail of
+              a sentence about points. They were underlined links run on
+              after the figures with middots between, so one line carried
+              two unrelated jobs, read as text, and had to be picked apart
+              before any of it could be used. Chips give them a shape, a
+              tap target, and a wrap that does not strand one link alone. */}
+          <nav aria-label="Elsewhere in the campaign" className="mt-3">
+            <ul className="flex flex-wrap items-center gap-2">
+              {[
+                { href: monicaRoutes.leaderboard, label: "Leaderboard" },
+                {
+                  href: `${monicaRoutes.winners}#shortlist`,
+                  label: "Winners and the vote",
+                },
+                { href: monicaRoutes.resources, label: "Resources" },
+              ].map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="inline-flex min-h-11 items-center rounded-full border border-line-2 px-4 text-sm font-semibold text-ink-2 transition-colors hover:border-line-2 hover:bg-card-2 hover:text-white"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
           {/* THE WEEK. The reason for the visit, roughly 235px down instead of
               640px. The head is present in every state so the clock never
