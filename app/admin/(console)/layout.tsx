@@ -118,6 +118,9 @@ export default async function AdminLayout({
           { href: "/admin/winners", label: "Winners" },
           { href: "/admin/campaign", label: "Campaign" },
           { href: "/admin/audit", label: "Audit" },
+          // Names every admin and whose access is live, so it sits with the
+          // audit log behind the same role check.
+          { href: "/admin/admins", label: "Admins" },
         ]
       : []),
   ];
