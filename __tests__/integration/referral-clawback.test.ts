@@ -226,3 +226,97 @@ describe("the clamp", () => {
     ).toBe(1);
   });
 });
+
+describe("a clawed-back referral stays clawed back", () => {
+  /*
+   * The hole this closes, found by auditing the results-night path.
+   *
+   * recompute_entry_award decided whether to pay by netting the referral's
+   * own ledger rows. The clawback made that net zero, which reads exactly
+   * like "never paid". So the next recompute on the voided creator's entry
+   * paid the referrer a second time, and rejecting their leftover pending
+   * work is enough to trigger one: 0024 explicitly permits a reviewer to
+   * dispose of a disqualified creator's queue.
+   *
+   * There was no way back either. void_enrolment wrote its reversal under
+   * an unsuffixed key, so a second void collided on ledger_idempotency_key
+   * and reported success having done nothing, and award_points refuses
+   * source = 'referral' outright. The points stayed on a leaderboard that
+   * settles real prize money.
+   */
+
+  /** An approved entry plus a second submission still sitting pending. */
+  async function farmedWithLeftoverWork(referrer: string, tag: string) {
+    const farmed = await makeCreator();
+    await link(referrer, farmed);
+    await approveAnEntry(farmed, `https://x.com/h2/status/${tag}`);
+    const entry = await one<{ id: string }>(
+      `SELECT id FROM challenge_entries WHERE campaign_creator_id = '${farmed}'`,
+    );
+    const pending = await one<{ id: string }>(`
+      INSERT INTO submissions (entry_id, platform, url)
+      VALUES ('${entry.id}', 'instagram', 'https://www.instagram.com/p/L${tag}/')
+      RETURNING id`);
+    return { farmed, pending: pending.id };
+  }
+
+  it("is not re-paid when the voided creator's leftover work is rejected", async () => {
+    const referrer = await makeCreator();
+    const { farmed, pending } = await farmedWithLeftoverWork(referrer, "900");
+
+    expect(await pointsOf(referrer), "paid on the first approval").toBeGreaterThan(0);
+    await voidIt(farmed);
+    expect(await pointsOf(referrer), "taken back on the void").toBe(0);
+
+    // The reviewer clears the queue, which 0024 allows for a voided creator.
+    await db.query(
+      `SELECT review('${pending}', 'rejected', '${adminId}', 'Not their own post')`,
+    );
+
+    expect(
+      await pointsOf(referrer),
+      "still zero: the creator is still disqualified",
+    ).toBe(0);
+  });
+
+  it("does not deduct twice when the same creator is voided again", async () => {
+    const referrer = await makeCreator();
+    const { farmed } = await farmedWithLeftoverWork(referrer, "901");
+
+    await voidIt(farmed);
+    await voidIt(farmed);
+
+    expect(await pointsOf(referrer)).toBe(0);
+    expect(
+      await count(
+        `SELECT count(*) n FROM point_ledger WHERE source = 'referral' AND points < 0`,
+      ),
+      "one reversal, not two: nothing outstanding means nothing to take",
+    ).toBe(1);
+  });
+
+  it("can still take it back if a second payment ever lands", async () => {
+    const referrer = await makeCreator();
+    const { farmed, pending } = await farmedWithLeftoverWork(referrer, "902");
+    await voidIt(farmed);
+    expect(await pointsOf(referrer)).toBe(0);
+
+    /*
+     * Re-activating is not a console action. It is here because it is the
+     * only way left to make the pay branch fire twice, and the point of the
+     * assertion is the reversal side: under the old unsuffixed key a second
+     * void hit the unique constraint and was swallowed as "already
+     * reversed", so a re-paid referral could never be taken back at all.
+     */
+    await db.query(
+      `UPDATE campaign_creators SET status = 'active' WHERE id = '${farmed}'`,
+    );
+    await db.query(
+      `SELECT review('${pending}', 'rejected', '${adminId}', 'Cleared')`,
+    );
+    expect(await pointsOf(referrer), "paid again once active").toBeGreaterThan(0);
+
+    await voidIt(farmed);
+    expect(await pointsOf(referrer), "and the second void reverses it").toBe(0);
+  });
+});

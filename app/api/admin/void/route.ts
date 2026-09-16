@@ -82,7 +82,26 @@ export async function POST(request: NextRequest) {
       sql`SELECT void_enrolment(${parsed.data.enrolmentId}::uuid, ${admin.admin.adminId}::uuid, ${parsed.data.reason}::text) AS reversed`,
     );
     const row = (result.rows?.[0] ?? {}) as { reversed?: number };
-    const reversed = Number(row.reversed ?? 0);
+    /*
+     * void_enrolment returns the number of social handles it released, not
+     * points: the name this route gave it was simply wrong, and the figure
+     * was being quoted to a disqualified creator as the points they lost.
+     * The real numbers are both in the audit row the function writes, in
+     * the same transaction, so they are readable the moment it returns.
+     */
+    const handlesReleased = Number(row.reversed ?? 0);
+
+    const ledger = await getDb().execute(sql`
+      SELECT (after->>'referral_points_reversed')::int AS points
+        FROM audit_log
+       WHERE action = 'enrolment.voided'
+         AND entity_id = ${parsed.data.enrolmentId}::uuid
+       ORDER BY created_at DESC
+       LIMIT 1
+    `);
+    const pointsReversed = Number(
+      (ledger.rows?.[0] as { points?: number } | undefined)?.points ?? 0,
+    );
 
     /*
      * Tell them, and tell whoever loses points because of them.
@@ -113,7 +132,7 @@ export async function POST(request: NextRequest) {
               to: person.email,
               fullName: person.full_name ?? "",
               reason: parsed.data.reason,
-              pointsReversed: reversed,
+              pointsReversed,
               personalPage: personalPage(),
             }),
             "disqualification notice",
@@ -127,18 +146,47 @@ export async function POST(request: NextRequest) {
          * went unannounced: the clawback is a direct ledger insert, so no
          * award notice fires for it.
          */
+        /*
+         * Only the referrers who actually lost something, and only what
+         * they actually lost.
+         *
+         * This used to mail every referrer of the voided creator a flat
+         * "-10 points", which was wrong three ways: the referral is worth
+         * whatever point_rules says and not ten, the reversal is clamped to
+         * what the referrer still held, and a referral that was never paid
+         * has nothing to take back. People who lost nothing were being told
+         * they had, during the week a one and a half million naira
+         * leaderboard settles, about points their own history page does not
+         * show.
+         *
+         * Joining the reversal row itself means the figure in the mail is
+         * the figure in the ledger, and a referrer with no reversal row
+         * produces no mail.
+         */
+        if (pointsReversed <= 0) return;
+
         const referrers = await getDb().execute(sql`
-          SELECT c.email, c.full_name, cc.points_total
+          SELECT DISTINCT ON (r.id)
+                 c.email, c.full_name, cc.points_total,
+                 (-pl.points) AS reversed
             FROM referrals r
             JOIN campaign_creators cc ON cc.id = r.referrer_campaign_creator_id
             JOIN creators c           ON c.id = cc.creator_id
+            JOIN point_ledger pl
+              ON pl.campaign_creator_id = cc.id
+             AND pl.source = 'referral'
+             AND pl.points < 0
+             AND (pl.idempotency_key = 'referral_reversal:' || r.id::text
+                  OR pl.idempotency_key LIKE 'referral_reversal:' || r.id::text || ':%')
            WHERE r.referred_campaign_creator_id = ${parsed.data.enrolmentId}::uuid
+           ORDER BY r.id, pl.created_at DESC
         `);
         for (const ref of referrers.rows ?? []) {
           const person = ref as {
             email?: string;
             full_name?: string;
             points_total?: number;
+            reversed?: number;
           };
           if (!person.email) continue;
           await sendEmailQuietly(
@@ -146,7 +194,7 @@ export async function POST(request: NextRequest) {
               to: person.email,
               fullName: person.full_name ?? "",
               sourceLabel: "Referral reversed",
-              points: -10,
+              points: -Number(person.reversed ?? 0),
               note: "A creator you referred was removed from the campaign, so the referral points they earned you have been reversed. Nothing else about your standing changes.",
               pointsTotal: Number(person.points_total ?? 0),
               personalPage: personalPage(),
@@ -159,7 +207,11 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ ok: true, pointsReversed: reversed });
+    return NextResponse.json({
+      ok: true,
+      pointsReversed,
+      handlesReleased,
+    });
   } catch (error) {
     const code = pgErrorCode(error);
     const known = code ? MESSAGES[code] : undefined;

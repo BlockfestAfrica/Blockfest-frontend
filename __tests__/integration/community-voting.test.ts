@@ -232,14 +232,26 @@ describe("casting and verifying", () => {
   });
 
   it("refuses casting outside the window and into a withdrawn nominee", async () => {
+    /* Both ends, not just the close. The round is opened at a JS timestamp
+       sixty seconds back and this moves the close to a Postgres now() sixty
+       seconds back, so the two land in the same millisecond and
+       round_window_ordered rejects the update: the test failed on a race it
+       was never trying to exercise. An explicit past window says what it
+       means. */
     await db.query(
-      `UPDATE vote_rounds SET closes_at = now() - interval '1 minute' WHERE id = '${round}'`,
+      `UPDATE vote_rounds
+          SET opens_at  = now() - interval '2 hours',
+              closes_at = now() - interval '1 hour'
+        WHERE id = '${round}'`,
     );
     await expect(cast(round, nominee, "late@gmail.com")).rejects.toThrow(
       /round_not_open/,
     );
     await db.query(
-      `UPDATE vote_rounds SET closes_at = now() + interval '1 hour' WHERE id = '${round}'`,
+      `UPDATE vote_rounds
+          SET opens_at  = now() - interval '1 hour',
+              closes_at = now() + interval '1 hour'
+        WHERE id = '${round}'`,
     );
     await db.query(
       `UPDATE vote_round_nominees SET withdrawn_at = now(), withdrawn_reason = 'test'
@@ -389,6 +401,13 @@ describe("close, review, announce", () => {
     // Open round: the sweep has not happened, announce refuses by name.
     await expect(announce()).rejects.toThrow(/round_not_reviewed/);
 
+    // Record the standings first: the close pins them as the tie-break
+    // basis and refuses without one, so a tie can never be re-settled by a
+    // board taken after the vote ended (P0804).
+    await db.query(
+      `SELECT * FROM take_leaderboard_snapshot('monica-money-story', 1::smallint, $1::uuid)`,
+      [adminId],
+    );
     await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]);
     await expect(announce()).rejects.toThrow(/round_not_reviewed/);
 
@@ -428,6 +447,13 @@ describe("close, review, announce", () => {
     const nominee = await nomineeOf(round, entries[0]);
     await cast(round, nominee, "late@gmail.com");
 
+    // Record the standings first: the close pins them as the tie-break
+    // basis and refuses without one, so a tie can never be re-settled by a
+    // board taken after the vote ended (P0804).
+    await db.query(
+      `SELECT * FROM take_leaderboard_snapshot('monica-money-story', 1::smallint, $1::uuid)`,
+      [adminId],
+    );
     await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]);
     await db.query(
       `UPDATE vote_rounds SET opens_at = now() - interval '3 hours',
@@ -444,6 +470,13 @@ describe("close, review, announce", () => {
   it("the sweep cannot be certified while a code is still redeemable", async () => {
     const entries = [await approvedEntry(1), await approvedEntry(1), await approvedEntry(1)];
     const round = (await openRound(1, entries)).rows[0].round_id;
+    // Record the standings first: the close pins them as the tie-break
+    // basis and refuses without one, so a tie can never be re-settled by a
+    // board taken after the vote ended (P0804).
+    await db.query(
+      `SELECT * FROM take_leaderboard_snapshot('monica-money-story', 1::smallint, $1::uuid)`,
+      [adminId],
+    );
     await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]);
 
     // Closed early, inside the fifteen minute grace: refused by name.
@@ -498,6 +531,13 @@ describe("close, review, announce", () => {
     await db.query(
       `SELECT * FROM take_leaderboard_snapshot($1, 1::smallint, $2::uuid)`,
       ["monica-money-story", adminId],
+    );
+    // Record the standings first: the close pins them as the tie-break
+    // basis and refuses without one, so a tie can never be re-settled by a
+    // board taken after the vote ended (P0804).
+    await db.query(
+      `SELECT * FROM take_leaderboard_snapshot('monica-money-story', 1::smallint, $1::uuid)`,
+      [adminId],
     );
     await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]);
     await db.query(
@@ -569,5 +609,55 @@ describe("close, review, announce", () => {
     expect(
       (await one<{ entry_id: string }>(`SELECT entry_id FROM weekly_winners LIMIT 1`)).entry_id,
     ).toBe(entries[2]);
+  });
+});
+
+describe("the tie-break basis is pinned at the close, or there is no close", () => {
+  /*
+   * 0059 pins max(snapshot version) when the round closes, and reasoned a
+   * NULL pin was harmless because announcing refuses an unfrozen week
+   * separately (P0804). The freeze can arrive between the two.
+   *
+   * Close on Sunday with no snapshot, pin NULL, then record the standings
+   * to satisfy the announce gate: the COALESCE fallback resolves the pin to
+   * whichever snapshot was taken AFTER voting ended. A tie settled by the
+   * board at the close would be re-settled by a board that did not exist
+   * yet, moved by a reviewer pressing a button the console truthfully
+   * describes as losing nothing.
+   *
+   * So the basis is required at the close rather than repaired later, which
+   * also makes the ordering a refusal a human can act on.
+   */
+
+  it("refuses to close a round for a week whose standings were never recorded", async () => {
+    const entries = [
+      await approvedEntry(1),
+      await approvedEntry(1),
+      await approvedEntry(1),
+    ];
+    const round = (await openRound(1, entries)).rows[0].round_id;
+    await expect(
+      db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]),
+    ).rejects.toThrow(/week_not_frozen/);
+  });
+
+  it("closes once the standings exist, and pins that exact version", async () => {
+    const entries = [
+      await approvedEntry(1),
+      await approvedEntry(1),
+      await approvedEntry(1),
+    ];
+    const round = (await openRound(1, entries)).rows[0].round_id;
+    await db.query(
+      `SELECT * FROM take_leaderboard_snapshot('monica-money-story', 1::smallint, $1::uuid)`,
+      [adminId],
+    );
+    await db.query(`SELECT close_vote_round($1::uuid, $2::uuid)`, [adminId, round]);
+
+    const pinned = await db.query<{ v: number | null }>(
+      `SELECT tiebreak_snapshot_version AS v FROM vote_rounds WHERE id = $1::uuid`,
+      [round],
+    );
+    expect(pinned.rows[0].v, "pinned, never left to mean 'newest'").not.toBeNull();
   });
 });
