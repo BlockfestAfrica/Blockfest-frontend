@@ -17,6 +17,7 @@ import {
   repriceEmail,
   shortlistEmail,
   submissionReceivedEmail,
+  handleAddedEmail,
   referralCreditEmail,
   voteReceiptEmail,
   votingPage,
@@ -283,5 +284,31 @@ describe("the referral credit notice", () => {
   it("carries the code so the next share needs no hunting", () => {
     expect(mail().text).toContain("AMARA7K");
     expect(mail().html).toContain("AMARA7K");
+  });
+});
+
+describe("the platform added notice", () => {
+  const mail = (over = {}) =>
+    handleAddedEmail({
+      to: "creator@example.com",
+      fullName: "Amara Obi",
+      platformLabel: "Instagram",
+      handle: "amara.obi",
+      personalPage: "https://blockfestafrica.com/campaigns/monica-money-story/me",
+      ...over,
+    });
+
+  it("names the platform and the handle that was added", () => {
+    const m = mail();
+    expect(m.subject).toContain("Instagram");
+    expect(m.text).toContain("amara.obi");
+  });
+
+  it("says the work counts as one entry, which is the reason to bother", () => {
+    expect(mail().text).toMatch(/worth more/i);
+  });
+
+  it("carries the not-me path, because adding a handle changes attribution", () => {
+    expect(mail().text).toMatch(/somebody else has your personal link/i);
   });
 });
