@@ -1,3 +1,4 @@
+import { AddPlatform } from "@/components/campaigns/add-platform";
 import { HandleFix } from "@/components/campaigns/handle-fix";
 import { pointSourceLabel } from "@/lib/point-sources";
 import { PointsHistory } from "@/components/campaigns/points-history";
@@ -665,6 +666,15 @@ export default async function MonicaCreatorPage() {
               <HandleFix
                 handles={handles}
                 requests={handleRequests}
+                platformLabels={platformLabels}
+              />
+              {/* The other half of "your accounts": registration takes all
+                  three and every one is optional, so somebody who only had X
+                  that day had no way back to add Instagram later. */}
+              <AddPlatform
+                missing={(["x", "instagram", "tiktok"] as const).filter(
+                  (p) => !handles.some((h) => h.platform === p),
+                )}
                 platformLabels={platformLabels}
               />
             </SectionCard>

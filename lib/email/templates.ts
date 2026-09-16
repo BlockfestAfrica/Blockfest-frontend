@@ -1407,6 +1407,58 @@ export function referralCreditEmail(params: {
   };
 }
 
+/**
+ * A creator added a platform they did not register with.
+ *
+ * Sent for the same reason the withdrawal notice is: adding a handle is a
+ * change to how work gets attributed, and the only person who must not be
+ * surprised by it is the person it belongs to. If somebody else is holding
+ * their link, this is the mail that says so.
+ */
+export function handleAddedEmail(params: {
+  to: string;
+  fullName: string;
+  platformLabel: string;
+  handle: string;
+  personalPage: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const line = `You can now submit ${params.platformLabel} posts, and they count toward the same entry as the rest.`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `${params.platformLabel} added to your account`,
+    text: [
+      `${name}, you added a ${params.platformLabel} handle: @${params.handle}`,
+      ``,
+      line,
+      ``,
+      `The same piece posted on more platforms is worth more, so if the work is already up there, send the link.`,
+      ``,
+      `Your page: ${params.personalPage}`,
+      ``,
+      `If this was not you, somebody else has your personal link. Get a new one straight away: it stops the old one working, and ends any session using it.`,
+    ].join("\n"),
+    html: layout({
+      preheader: line,
+      heading: `${escape(params.platformLabel)} added, ${name}`,
+      body: [
+        boxed(`Your ${escape(params.platformLabel)} handle`, `@${escape(params.handle)}`),
+        p(escape(line)),
+        p(
+          "The same piece posted on more platforms is worth more, so if the work is already up there, send the link.",
+        ),
+        quiet(
+          "If this was not you, somebody else has your personal link. Get a new one straight away: it stops the old one working, and ends any session using it.",
+        ),
+      ].join(""),
+      action: { label: "Send a post", href: params.personalPage },
+    }),
+  };
+}
+
 export function withdrawnEmail(params: {
   to: string;
   fullName: string;
