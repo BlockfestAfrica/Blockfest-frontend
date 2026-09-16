@@ -328,8 +328,21 @@ describe("applying the migration to data that already collides", () => {
         [made[1]],
       );
 
+      /*
+       * 0023 and no further.
+       *
+       * This applied every migration from 0023 onward, which is broader
+       * than what it is testing and coupled it to migrations that did not
+       * exist when it was written. The coupling came due: 0064 purges the
+       * campaign's test data, so it deleted the collision this seeds and
+       * the assertions below then measured an empty table.
+       *
+       * The comment above already says the intent is "applying 0023 over
+       * it". Applying exactly that keeps the test pinned to its own
+       * subject and stops a later migration changing what it means.
+       */
       await expect(
-        applyMigrations(fresh, { from: "0023" }),
+        applyMigrations(fresh, { from: "0023", upTo: "0023" }),
         "0023 must not fail on data the old rule permitted",
       ).resolves.not.toThrow();
 
