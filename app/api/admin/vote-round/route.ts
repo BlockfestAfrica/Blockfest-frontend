@@ -125,8 +125,12 @@ const MESSAGES: Record<string, string> = {
   P0819:
     "That vote is not there any more, or is not held. Reload to see the current list.",
   P0820: "Close the round before marking the review complete.",
+  /* Deliberately vague about the instant: the exact deadline depends on the
+     round and is filled in below, because the engine measures from the
+     SCHEDULED close and this message used to imply it measured from the
+     button. See the P0821 block in the catch. */
   P0821:
-    "Codes sent before the close can still be redeemed for fifteen minutes after it. Wait for that window to pass, then mark the review complete: certifying now would certify a board that can still move.",
+    "Codes sent before the close can still be redeemed for fifteen minutes past the round's scheduled closing time. Wait for that window to pass, then mark the review complete: certifying now would certify a board that can still move.",
   P0908: "The vote has to close after it opens. Check the window.",
   P0502: "A removal needs a reason.",
   P0401: "Only a signed-in admin can do this.",
@@ -282,6 +286,40 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const code = pgErrorCode(error);
     const known = code ? MESSAGES[code] : undefined;
+
+    /*
+     * Name the actual deadline.
+     *
+     * verify_vote honours a code for fifteen minutes past closes_at, and
+     * mark_round_reviewed refuses until that same instant. Closing early
+     * does not move it: close at five against a six o'clock scheduled
+     * close and the wait is until 18:15, not 17:15. The old message said
+     * "fifteen minutes after the close", so an owner pressing the button
+     * at 17:16, 17:31 and 17:46 was told the same fifteen minutes each
+     * time, with nothing on screen connecting the wait to the round's
+     * window, and no way to amend that window either.
+     */
+    if (code === "P0821" && known && action.action === "review") {
+      try {
+        const when = await getDb().execute(sql`
+          SELECT closes_at + interval '15 minutes' AS ready
+            FROM vote_rounds WHERE id = ${action.roundId}::uuid
+        `);
+        const ready = (when.rows?.[0] as { ready?: string } | undefined)?.ready;
+        if (ready) {
+          return NextResponse.json(
+            {
+              ok: false,
+              message: `${known} That is ${closingAt(String(ready))}, Lagos time.`,
+            },
+            { status: 400 },
+          );
+        }
+      } catch {
+        // Fall through to the message without the instant, which is still
+        // truthful. A failed read here must not turn a refusal into a 500.
+      }
+    }
 
     if (known) {
       return NextResponse.json({ ok: false, message: known }, { status: 400 });
