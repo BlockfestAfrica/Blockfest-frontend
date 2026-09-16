@@ -151,8 +151,17 @@ export async function POST(request: NextRequest) {
         { status: 500 },
       );
     }
+    /* Reached when the row is gone, which now has an ordinary cause: the
+       creator took the entry back before anybody ruled on it, so a queue
+       left open on a screen can name a submission that no longer exists.
+       Still merged with wrong_campaign, so the reason cannot be used to
+       ask which ids are real. */
     return NextResponse.json(
-      { ok: false, message: "That submission is not reviewable." },
+      {
+        ok: false,
+        message:
+          "That submission is not reviewable any more. The creator may have taken it back before review. Reload the queue to see what is left.",
+      },
       { status: 404 },
     );
   }

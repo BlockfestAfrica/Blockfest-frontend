@@ -1327,3 +1327,80 @@ export function resumedEmail(params: {
     }),
   };
 }
+
+/**
+ * An entry was taken back.
+ *
+ * The withdrawal feature cuts both ways, and this is the half that makes
+ * it safe. Before it existed, somebody holding a stolen personal link
+ * could only ADD a submission, and submit_entry refuses a post that is
+ * not from the registered handle, so the worst case was narrow. Being
+ * able to REMOVE a pending entry is a new power, and in the wrong hands
+ * it deletes a creator's real week quietly.
+ *
+ * So every withdrawal is announced, including the ones the creator did
+ * themselves: a receipt nobody needed costs a glance, and a silent
+ * deletion costs a week. It names the platform and the URL so the
+ * creator can tell their own action from somebody else's at a glance,
+ * and says what to do if it was not them.
+ */
+export function withdrawnEmail(params: {
+  to: string;
+  fullName: string;
+  platformLabel: string;
+  weekNo: number;
+  url: string;
+  /** When the open week closes, formatted for Lagos. Null when no week is
+      open, which changes the advice from "send another" to "you cannot". */
+  closesAtLagos: string | null;
+  personalPage: string;
+  recoverUrl: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const line = `Your week ${params.weekNo} entry on ${params.platformLabel} was taken back before review.`;
+  /*
+   * The next step, and it has to be honest in both directions. A creator
+   * who withdraws while the week is open can send another and should be
+   * told the deadline; one who withdraws after it closed cannot, and
+   * telling them to "send the right one" would be advice they cannot
+   * follow, which is the exact bug that made this feature necessary.
+   */
+  const next = params.closesAtLagos
+    ? `That platform is free again. Send your replacement before ${params.closesAtLagos}, Lagos time, or this week has no entry from you on ${params.platformLabel}.`
+    : `No challenge is open right now, so this one cannot be replaced. The next stage is your next chance.`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `Your week ${params.weekNo} entry was taken back`,
+    text: [
+      `${name}, ${line}`,
+      ``,
+      `The entry removed:`,
+      params.url,
+      ``,
+      next,
+      ``,
+      `Your page: ${params.personalPage}`,
+      ``,
+      `If this was not you, somebody else has your personal link. Get a new one straight away, which stops the old one working: ${params.recoverUrl}`,
+    ].join("\n"),
+    html: layout({
+      preheader: line,
+      heading: `Taken back, ${name}`,
+      body: [
+        p(escape(line)),
+        boxed("The entry removed", params.url),
+        p(escape(next)),
+        quiet(
+          `If this was not you, somebody else has your personal link. Get a new one at ${escape(params.recoverUrl)} straight away: it stops the old one working, and ends any session using it.`,
+        ),
+      ].join(""),
+      /* The page, not recovery: the common case by far is a creator who
+         meant to do this and now needs to send another. The line above
+         carries the "not me" path for the rare case. */
+      action: { label: "Send a replacement", href: params.personalPage },
+    }),
+  };
+}
