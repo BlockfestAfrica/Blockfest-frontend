@@ -159,29 +159,51 @@ export default async function MonicaCreatorPage() {
               <Lock className="h-6 w-6 text-ink-4" aria-hidden="true" />
               We do not know who you are
             </h1>
+            {/* The common case, said first and said plainly.
+                The link in the welcome email is not spent by being used:
+                it signs you in again, today and in a month. Landing here
+                usually means a cleared cookie, a different phone or a
+                sign-out, none of which touches the link.
+
+                This screen previously led with a gold "Get a new link",
+                and gold is the primary action everywhere else on the
+                site, so the eye went to the one path that COSTS
+                something: recovery rotates the token and kills the link
+                sitting in that same inbox. The paragraph said the right
+                thing and nobody reads a paragraph when a gold button is
+                under it. */}
             <p className="mt-4 text-base leading-relaxed text-ink-3">
-              This page opens from the personal link you were given when you
-              registered, and emailed to you at the same time. Open that link
-              again and you will land back here.
+              Open the link in your welcome email and you will land straight
+              back here. It does not expire and it does not get used up, so
+              the same link works every time, on any device.
             </p>
-            <p className="mt-4 text-base leading-relaxed text-ink-3">
-              If you have lost it, you can get a new one yourself: type your
-              registered email address and a confirmation goes to that inbox.
-              We cannot read your old link back to you, which is why a new one
-              is the only way: a link we could recover is a link somebody else
-              could take.
+            <div className="mt-5 rounded-xl border border-line-2 bg-card p-5">
+              <p className="text-sm font-semibold text-white">
+                Search your inbox for
+              </p>
+              <p className="mt-1 font-mono text-sm text-brand-gold">
+                Your Monica campaign link, keep this email
+              </p>
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
+                Check your spam or promotions folder too. It came from
+                noreply@blockfestafrica.com on the day you registered.
+              </p>
+            </div>
+
+            {/* Second, and quieter, because it costs the thing above. */}
+            <p className="mt-6 max-w-prose text-sm leading-relaxed text-ink-3">
+              Genuinely cannot find that email?{" "}
+              <Link
+                href={monicaRoutes.recover}
+                className="font-semibold text-link underline underline-offset-4 hover:text-white"
+              >
+                Get a new link
+              </Link>
+              . It goes to the address you registered with, and it replaces
+              the old one, so the link in that email stops working.
             </p>
-            {/* Self-service first, support second. This screen is where a
-                locked-out creator actually stands, so the recovery door
-                belongs here more than anywhere. */}
-            <Link
-              href={monicaRoutes.recover}
-              className="mt-6 inline-flex min-h-11 items-center rounded-full bg-brand-gold px-6 text-sm font-bold text-black transition-opacity hover:opacity-90"
-            >
-              Get a new link
-            </Link>
-            <p className="mt-4 text-sm leading-relaxed text-ink-4">
-              No longer have access to that inbox? Write to{" "}
+            <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-4">
+              No longer have access to that inbox at all? Write to{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="text-link underline underline-offset-2 hover:text-white"
