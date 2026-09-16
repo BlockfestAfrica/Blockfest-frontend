@@ -454,3 +454,47 @@ describe("discarding a draft", () => {
     ).rejects.toThrow(/admin_required/);
   });
 });
+
+describe("a draft is not a win", () => {
+  /*
+   * weekly_winners holds drafts and published rows in one table, and the
+   * candidate list excluded anyone with a row in it at all. So saving a
+   * Creator of the Week draft removed that creator from the very list the
+   * announce step picks from, and the console reported her missing with
+   * "they have already been Creator of the Week" about somebody who has
+   * won nothing.
+   *
+   * At eight on a Sunday evening that reads as a rule, and it invites
+   * announcing the next name down.
+   */
+
+  it("keeps a drafted Creator of the Week in her own candidate list", async () => {
+    const ada = await creatorWith("Ada", 300);
+    await creatorWith("Bola", 200);
+
+    await publish(1, "creator_of_week", ada, { publish: false });
+
+    const after = await db.query<{ display_name: string }>(
+      `SELECT display_name FROM weekly_winner_candidates($1, 'creator_of_week')`,
+      [SLUG],
+    );
+    expect(
+      after.rows.map((r) => r.display_name),
+      "a draft is a decision in progress, not a past win",
+    ).toEqual(["Ada", "Bola"]);
+  });
+
+  it("still drops her once the draft is actually announced", async () => {
+    const ada = await creatorWith("Ada", 300);
+    await creatorWith("Bola", 200);
+
+    await publish(1, "creator_of_week", ada, { publish: false });
+    await publish(1, "creator_of_week", ada);
+
+    const after = await db.query<{ display_name: string }>(
+      `SELECT display_name FROM weekly_winner_candidates($1, 'creator_of_week')`,
+      [SLUG],
+    );
+    expect(after.rows.map((r) => r.display_name)).toEqual(["Bola"]);
+  });
+});
