@@ -19,6 +19,7 @@ import {
   submissionReceivedEmail,
   voteReceiptEmail,
   votingPage,
+  withdrawnEmail,
 } from "@/lib/email/templates";
 
 const ORIGINAL = { ...process.env };
@@ -211,5 +212,40 @@ describe("the public voting page link", () => {
     expect(votingPage()).toBe(
       "https://blockfestafrica.com/campaigns/monica-money-story/winners#shortlist",
     );
+  });
+});
+
+describe("the withdrawal notice", () => {
+  const mail = (over = {}) =>
+    withdrawnEmail({
+      to: "creator@example.com",
+      fullName: "Amara Obi",
+      platformLabel: "TikTok",
+      weekNo: 2,
+      url: "https://www.tiktok.com/@amara/video/123",
+      closesAtLagos: "Saturday, 3 October, 12:00 pm",
+      personalPage: "https://blockfestafrica.com/campaigns/monica-money-story/me",
+      recoverUrl: "https://blockfestafrica.com/campaigns/monica-money-story/recover",
+      ...over,
+    });
+
+  it("names the deadline for the replacement, which is the point of it", () => {
+    const m = mail();
+    expect(m.text).toContain("Saturday, 3 October, 12:00 pm");
+    expect(m.text).toContain("https://www.tiktok.com/@amara/video/123");
+  });
+
+  it("does not promise a replacement when no week is open", () => {
+    // Withdrawing after the window closed cannot be undone, and telling
+    // somebody to send the right one is the exact advice-you-cannot-follow
+    // bug this whole feature exists to fix.
+    const m = mail({ closesAtLagos: null });
+    expect(m.text).toMatch(/cannot be replaced/i);
+    expect(m.text).not.toMatch(/before Saturday/i);
+  });
+
+  it("carries the not-me path, because a thief can withdraw too", () => {
+    expect(mail().text).toMatch(/somebody else has your personal link/i);
+    expect(mail().text).toContain("/recover");
   });
 });
