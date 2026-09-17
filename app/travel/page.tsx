@@ -60,17 +60,17 @@ export default function TravelPage() {
       <main id="main">
         <section className="section-y bg-ground">
           <div className="container-page">
-            <p className="eyebrow text-white/60">Plan your trip</p>
+            <p className="eyebrow text-ink-3">Plan your trip</p>
             <h1 className="text-display-sm mt-3 max-w-3xl font-bold text-white">
               Getting to Lagos
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
               {EVENT.date.displayDate} at {EVENT.location.venue}.
             </p>
           </div>
         </section>
 
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <Card icon={MapPin} title="The venue">
@@ -152,13 +152,13 @@ export default function TravelPage() {
           </div>
         </section>
 
-        <section className="section-y bg-ground border-t border-white/20">
+        <section className="section-y bg-ground border-t border-line-2">
           <div className="container-page">
             <div className="max-w-2xl">
               <h2 className="text-display-sm font-bold text-white">
                 Still deciding?
               </h2>
-              <p className="mt-4 text-base leading-relaxed text-white/60">
+              <p className="mt-4 text-base leading-relaxed text-ink-3">
                 Tickets are transferable, so a pass bought now is not wasted if
                 your plans change.
               </p>
@@ -177,7 +177,7 @@ export default function TravelPage() {
                   flex item so the address wraps as prose instead of being
                   squeezed into its own column. items-start because a wrapped
                   line should not push the icon to the vertical middle. */}
-              <p className="mt-6 flex items-start gap-2 text-sm text-white/60">
+              <p className="mt-6 flex items-start gap-2 text-sm text-ink-3">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 <span>
                   Anything not answered here:{" "}
@@ -207,12 +207,12 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10">
+    <div className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3">
       <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       <h2 className="text-lg font-bold text-white lg:text-2xl">{title}</h2>
-      <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-white/60 lg:text-base">
+      <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-ink-3 lg:text-base">
         {children}
       </div>
     </div>

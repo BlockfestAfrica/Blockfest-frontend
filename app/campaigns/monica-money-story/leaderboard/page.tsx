@@ -1,0 +1,129 @@
+import { TrackView } from "@/components/campaigns/track-view";
+import { CAMPAIGN_EVENTS } from "@/lib/sabilytics";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { leaderboard } from "@/lib/leaderboard";
+import {
+  campaignBySlug,
+  MONICA_FIRST_LEADERBOARD,
+  monicaRoutes,
+  MONICA_SLUG,
+} from "@/lib/campaigns";
+import { SITE_URL } from "@/lib/seo-event";
+import { LeaderboardTable } from "@/components/campaigns/leaderboard-table";
+
+const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
+
+export const metadata: Metadata = {
+  title: "Leaderboard",
+  description: `Who is leading ${CAMPAIGN.name}.`,
+  alternates: { canonical: `${SITE_URL}${monicaRoutes.leaderboard}` },
+};
+
+/**
+ * Rebuilt at most once a minute.
+ *
+ * Which means this board is live, and the copy on it now says so. It used to
+ * say standings were published weekly while refreshing every sixty seconds, so
+ * a creator approved on Tuesday appeared on a board the site had told them
+ * would not exist until Saturday. Saturday is when weekly WINNERS are
+ * announced; the board itself moves with every approval.
+ *
+ * A minute is short enough that somebody just approved sees themselves, and
+ * long enough that the ranking query does not run once per visitor on a page
+ * built to be shared.
+ */
+export const revalidate = 60;
+
+export default async function MonicaLeaderboardPage() {
+  const rows = await leaderboard(100);
+
+  return (
+    <main id="main" className="bg-ground">
+  <TrackView event={CAMPAIGN_EVENTS.leaderboardViewed} />
+      <section className="section-y">
+        <div className="container-page max-w-3xl">
+          <Link
+            href={monicaRoutes.landing}
+            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            {CAMPAIGN.name}
+          </Link>
+
+          <p className="mt-6 eyebrow text-brand-gold">{CAMPAIGN.name}</p>
+          <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
+            Leaderboard
+          </h1>
+
+          {rows.length === 0 ? (
+            <div className="mt-8 max-w-prose">
+              <p className="text-base leading-relaxed text-ink-3">
+                Nothing to show yet. Points land when an entry is approved and
+                this board moves within a minute of each one. Weekly winners
+                are announced from {MONICA_FIRST_LEADERBOARD}, and how points
+                are earned is in the{" "}
+                <Link
+                  href={monicaRoutes.rules}
+                  className="text-link underline underline-offset-2 hover:text-white"
+                >
+                  campaign rules
+                </Link>
+                .
+              </p>
+              <Link
+                href={monicaRoutes.register}
+                className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover"
+              >
+                Join the campaign
+              </Link>
+              {/* Most people reading a leaderboard are ON it. Offering
+                  them only "Join" is offering the one thing they have
+                  already done. */}
+              <p className="mt-4 text-sm text-ink-3">
+                Already in?{" "}
+                <Link
+                  href={monicaRoutes.me}
+                  className="font-semibold text-link underline underline-offset-4 hover:text-white"
+                >
+                  Open your page
+                </Link>
+                .
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-4">
+                Total points first. Level creators are separated by who reached
+                that total first, then by approved entries.
+              </p>
+
+              <LeaderboardTable rows={rows} />
+
+              <p className="mt-6 text-sm leading-relaxed text-ink-4">
+                This board moves as entries are approved. Weekly winners are
+                announced {MONICA_FIRST_LEADERBOARD} and every Sunday after
+                that. How points are earned is in the{" "}
+                <Link
+                  href={monicaRoutes.rules}
+                  className="text-link underline underline-offset-2 hover:text-white"
+                >
+                  campaign rules
+                </Link>
+                .
+              </p>
+            </>
+          )}
+
+          <Link
+            href={monicaRoutes.winners}
+            className="mt-10 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
+          >
+            See the weekly winners
+          </Link>
+        </div>
+      </section>
+    </main>
+  );
+}

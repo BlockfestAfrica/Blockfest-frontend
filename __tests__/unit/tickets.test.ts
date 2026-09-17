@@ -10,9 +10,6 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  EARLY_BIRD_COUNT,
-  EARLY_BIRD_ENDS,
-  earlyBirdTiers,
   formatNaira,
   lowestTicketPrice,
   TICKET_PLATFORM_URL,
@@ -88,34 +85,75 @@ describe("formatNaira", () => {
   });
 });
 
-describe("early bird derivation", () => {
-  it("counts exactly the tiers that carry a discount label", () => {
-    expect(EARLY_BIRD_COUNT).toBe(earlyBirdTiers.length);
-    expect(earlyBirdTiers).toEqual(ticketTiers.filter((t) => t.discountLabel));
-    expect(EARLY_BIRD_COUNT).toBeGreaterThan(0);
-    expect(EARLY_BIRD_COUNT).toBeLessThan(ticketTiers.length);
+/**
+ * Prices are the one thing on this site a visitor acts on with their money, and
+ * the only copy that can be wrong in a way they discover at the card form.
+ *
+ * They were wrong: the early bird rate closed on 30 August 2026 and the tier
+ * data kept its discounted prices, so for twelve days the site advertised
+ * ₦7,500 for a pass the checkout charged ₦10,000 — a quarter under, across six
+ * passes. Nothing caught it, because nothing here knew what the checkout
+ * charges.
+ *
+ * These are those figures, read off the live Meetumo listing on 11 September
+ * 2026. They are a fixture rather than a fetch — a unit test should not depend
+ * on the network — so they go stale the moment prices move, which is the point:
+ * this fails when the two disagree, and whichever side changed, someone has to
+ * look.
+ */
+const CHECKOUT_PRICES: Record<string, number> = {
+  "BUIDL PASS": 10_000,
+  "BUIDL PLUS": 15_000,
+  "BRIDGE PASS": 20_000,
+  "BECOME PASS": 35_000,
+  "BECOME PLUS": 40_000,
+  "FOUNDER CIRCLE": 45_000,
+  "CORPORATE CIRCLE": 150_000,
+  "PRIME PASS": 150_000,
+  "EXEC PASS": 160_000,
+  "ALL ACCESS PASS": 185_000,
+};
+
+describe("pricing against the live checkout", () => {
+  it("charges on the site what the checkout charges", () => {
+    for (const tier of ticketTiers) {
+      expect(
+        CHECKOUT_PRICES[tier.name],
+        `${tier.name} is not in the recorded checkout prices`,
+      ).toBeDefined();
+      expect(tier.price, `${tier.name} disagrees with checkout`).toBe(
+        CHECKOUT_PRICES[tier.name],
+      );
+    }
   });
 
-  it("only calls a tier early bird when it actually has a deadline price", () => {
-    for (const tier of earlyBirdTiers) {
-      expect(tier.standardPrice).toBeDefined();
+  it("covers every pass, so a new tier cannot slip past unpriced", () => {
+    expect(Object.keys(CHECKOUT_PRICES).sort()).toEqual(
+      ticketTiers.map((t) => t.name).sort(),
+    );
+  });
+});
+
+describe("the remaining discount", () => {
+  it("strikes through a price only where one is genuinely discounted", () => {
+    for (const tier of ticketTiers.filter((t) => t.standardPrice)) {
       expect(tier.price).toBeLessThan(tier.standardPrice as number);
     }
   });
 
-  it("does not treat the standing team discount as an early bird", () => {
-    // CORPORATE CIRCLE is cheaper than its standard price but its price does
-    // not move on the deadline, so it must not appear in the early-bird set.
-    const corporate = ticketTiers.find((t) => t.id === "corporate-circle");
-    expect(corporate?.standardPrice).toBeDefined();
-    expect(corporate?.discountLabel).toBeUndefined();
-    expect(earlyBirdTiers).not.toContain(corporate);
+  it("leaves CORPORATE CIRCLE as the only discounted pass", () => {
+    // Its team rate is standing rather than dated, which is why it survived the
+    // early bird closing. If a second pass gains a struck-through price, it is
+    // either a new standing offer or a dated one that will need retiring — and
+    // the copy around it says "team discount", so someone should check which.
+    const discounted = ticketTiers.filter((t) => t.standardPrice);
+    expect(discounted.map((t) => t.id)).toEqual(["corporate-circle"]);
   });
 
-  it("has a deadline in the future relative to the event", () => {
-    const deadline = new Date(EARLY_BIRD_ENDS.iso);
-    expect(Number.isNaN(deadline.getTime())).toBe(false);
-    expect(EARLY_BIRD_ENDS.display).toBeTruthy();
+  it("no longer advertises an early bird anywhere in the tier data", () => {
+    const json = JSON.stringify(ticketTiers).toLowerCase();
+    expect(json).not.toContain("early bird");
+    expect(json).not.toContain("25% off");
   });
 });
 

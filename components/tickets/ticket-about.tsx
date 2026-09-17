@@ -4,7 +4,7 @@ export function TicketAbout() {
   return (
     <section
       id="about-2026"
-      className="section-y bg-ground border-t border-white/20"
+      className="section-y bg-ground border-t border-line-2"
     >
       <div className="container-page">
         <div className="mb-10 lg:mb-14">
@@ -12,7 +12,7 @@ export function TicketAbout() {
             The Super Bowl of African Innovation
           </h2>
 
-          <div className="mt-6 flex flex-col gap-4 text-base leading-relaxed text-white/60">
+          <div className="mt-6 flex flex-col gap-4 text-base leading-relaxed text-ink-3">
             <p>
               Join over{" "}
               <span className="font-semibold text-white">5,000 founders</span>,
@@ -29,15 +29,15 @@ export function TicketAbout() {
           </div>
         </div>
 
-        <p className="eyebrow text-white/60">Built for people who want to</p>
+        <p className="eyebrow text-ink-3">Built for people who want to</p>
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {ticketPillars.map((pillar) => (
             <div
               key={pillar.word}
-              className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10"
+              className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3"
             >
               <p className="text-lg font-bold text-white">{pillar.word}</p>
-              <p className="mt-2 text-sm leading-relaxed text-white/60">
+              <p className="mt-2 text-sm leading-relaxed text-ink-3">
                 {pillar.description}
               </p>
             </div>

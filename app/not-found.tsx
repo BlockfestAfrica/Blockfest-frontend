@@ -32,7 +32,7 @@ export default function NotFound() {
           </div>
 
           {/* Main Content */}
-          <div className="bg-white/10 rounded-xl border border-white/20 shadow-2xl p-8 md:p-12">
+          <div className="bg-card-3 rounded-xl border border-line-2 shadow-2xl p-8 md:p-12">
             <div className="mb-8">
               {/* 404 Number with gradient */}
               <div className="relative mb-6">
@@ -66,14 +66,14 @@ export default function NotFound() {
             </div>
 
             {/* Help Section */}
-            <div className="pt-6 border-t border-white/20">
+            <div className="pt-6 border-t border-line-2">
               <p className="text-gray-400 mb-4">
                 Need help finding something specific?
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center text-sm">
                 <a
                   href="mailto:partnership@blockfestafrica.com"
-                  className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors duration-300"
+                  className="inline-flex items-center gap-2 text-ink-3 hover:text-white transition-colors duration-300"
                 >
                   <svg
                     className="w-4 h-4"
@@ -85,10 +85,10 @@ export default function NotFound() {
                   </svg>
                   Contact Support
                 </a>
-                <span className="hidden sm:block text-white/60">•</span>
+                <span className="hidden sm:block text-ink-3">•</span>
                 <Link
                   href="/#contact"
-                  className="text-white/60 hover:text-white transition-colors duration-300"
+                  className="text-ink-3 hover:text-white transition-colors duration-300"
                 >
                   Get in Touch
                 </Link>

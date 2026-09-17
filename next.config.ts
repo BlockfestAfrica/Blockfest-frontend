@@ -56,9 +56,160 @@ const nextConfig: NextConfig = {
             value: "max-age=31536000; includeSubDomains",
           },
           {
+            /*
+             * 'unsafe-eval' is gone, and so is the vendor host from
+             * script-src: the analytics tag is served from this origin as a
+             * pinned snapshot (public/vendor/script.js), so NO external host
+             * may execute script anywhere on the site. The vendor stays in
+             * connect-src only, which is receiving beacons, not running code.
+             *
+             * What this cannot fix is the shape of the problem. Netlify
+             * Identity sets nf_jwt and nf_refresh through document.cookie with
+             * path=/ and no httpOnly, and gotrue-js keeps the refresh token in
+             * localStorage, so an admin's credentials are readable by any
+             * script running anywhere on this origin. The console and the
+             * public site share an origin, and the public site loads a vendor
+             * tag. Script execution on the homepage is therefore script
+             * execution with an admin's session in reach, and the hour long
+             * JWT can be refreshed from the stolen refresh token indefinitely.
+             *
+             * The real fix is to stop sharing the origin: move the console to
+             * its own hostname, or exchange the Identity token server side once
+             * and carry an httpOnly SameSite=Strict cookie. Both are larger
+             * than a night before launch. Removing eval and keeping the tag off
+             * every path that can carry a credential narrows it; it does not
+             * close it. Tracked in #138.
+             */
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.sabilytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.sabilytics.com; frame-src 'self' https://blockfest.substack.com; frame-ancestors 'none';",
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.sabilytics.com; frame-src 'self' https://blockfest.substack.com; frame-ancestors 'none';",
+          },
+        ],
+      },
+      {
+        /*
+         * A second, tighter policy for the admin surface.
+         *
+         * A browser enforces the INTERSECTION of every Content-Security-Policy
+         * header it receives, so this genuinely narrows the one above rather
+         * than replacing it. On these paths the vendor analytics host is not an
+         * allowed script source or connect target, and 'unsafe-eval' is gone.
+         *
+         * This is the second layer. components/shared/analytics.tsx already
+         * refuses to render the tag here, and this is what holds if somebody
+         * moves it back into the layout while tidying up. A third-party script
+         * on an authenticated admin page does not need to steal anything: a
+         * same-origin fetch to /api/admin/review carries the session cookie and
+         * a browser-set Origin, so every server-side check passes and the
+         * approvals are recorded against the real reviewer.
+         *
+         * 'unsafe-inline' stays, and that is not an oversight. Next emits its
+         * own inline hydration scripts, so removing it needs a nonce threaded
+         * through middleware, which is a day of work and a separate change. The
+         * vendor host and eval are the two that matter for this attack.
+         */
+        source: "/admin/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
+          },
+          {
+            // Nothing on the admin surface should ever be stored by a shared
+            // cache or an intermediary.
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+        ],
+      },
+      {
+        /*
+         * The same tightening, for the pages that can carry a creator's token.
+         *
+         * /enter receives it in the query by definition, and the platform
+         * re-appends that query to the redirect, so /enter/confirm and /me can
+         * both be loaded with the token in the address bar. Any third party
+         * script running there reads it from location.search and has a ninety
+         * day session for that creator.
+         *
+         * components/shared/analytics.tsx already refuses to render the tag on
+         * these paths. This is the layer that holds if somebody removes that
+         * check, because the browser will not fetch the script at all.
+         */
+        source: "/campaigns/monica-money-story/enter/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+          {
+            // Belt for the Referer, so the token cannot ride out on an
+            // outbound click either.
+            key: "Referrer-Policy",
+            value: "no-referrer",
+          },
+        ],
+      },
+      {
+        source: "/campaigns/monica-money-story/me",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "no-referrer",
+          },
+        ],
+      },
+      {
+        /*
+         * The same tightening again, for the same reason: /recover/open
+         * carries the recovery token in its query the way /enter carries
+         * the entry token, and /recover/confirm can be loaded with it still
+         * in the address bar once the platform re-appends the query on
+         * redirect.
+         */
+        source: "/campaigns/monica-money-story/recover/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "no-referrer",
+          },
+        ],
+      },
+      {
+        source: "/api/admin/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none';",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
           },
         ],
       },
@@ -117,9 +268,18 @@ const nextConfig: NextConfig = {
       },
 
       {
+        /*
+         * /register is the obvious word, so somebody will link a creator to it
+         * on launch day. It used to bounce them to the homepage, and as a 308
+         * that answer is cached by the browser indefinitely: the breakage
+         * survived the fix for everybody who hit it once.
+         *
+         * Now it lands where they were trying to go, and 307 so a later change
+         * of mind is not permanent for anybody who followed it.
+         */
         source: "/register",
-        destination: "/",
-        permanent: true,
+        destination: "/campaigns/monica-money-story/register",
+        permanent: false,
       },
     ];
   },

@@ -1,0 +1,227 @@
+/**
+ * Campaign rules for Monica: The Money Story.
+ *
+ * Interim wording. The final text is with the campaign team, and this page
+ * exists before it because several of these terms are unenforceable unless they
+ * were published before somebody entered. You cannot tell a creator in week
+ * three that bought engagement was disqualifying, or ask a winner for identity
+ * documents you never mentioned, or repost their work under a licence they were
+ * never offered. Publishing a clear v1 now and amending it is the only version
+ * of this that works.
+ *
+ * The version string is captured against each registration, so it is always
+ * answerable which text a given creator agreed to.
+ *
+ * Points still open with the campaign team are marked in the copy rather than
+ * guessed at. An invented eligibility age is worse than an honest gap.
+ */
+
+export const MONICA_RULES_VERSION = "1.4";
+
+/** ISO date. Rendered in the event's own timezone. */
+export const MONICA_RULES_UPDATED = "2026-09-15";
+
+export interface RuleSection {
+  /** Anchor, so a clause can be linked to directly in a dispute. */
+  id: string;
+  title: string;
+  paragraphs: string[];
+  /** An optional table rendered after the first paragraph. */
+  table?: { head: [string, string]; rows: [string, string][] };
+}
+
+export const monicaRules: RuleSection[] = [
+  {
+    id: "entering",
+    title: "Entering",
+    paragraphs: [
+      "The campaign runs from 16 September to 17 October 2026, in four stages, and the final results are announced on 18 October. It is organised by Blockfest Africa, with Monica as headline sponsor. Blockfest Africa is operated by Tevah Synergy, which is the entity responsible for this competition and for paying prizes.",
+      "Entry is free and open to creators aged 18 or over with an account on X, Instagram or TikTok. You register once, with the handles you will be publishing from.",
+      "You do not have to live in Nigeria to enter. Prizes are paid in Nigerian naira or equivalent.",
+    ],
+  },
+  {
+    id: "entries",
+    title: "Entries",
+    paragraphs: [
+      "Each challenge accepts one entry per creator. You may publish that entry on up to three platforms, and it remains one entry.",
+      "Publish on your own account, then submit the public link. We do not host your content and we do not need a copy of the file.",
+      "Entries are reviewed before they score. We may reject an entry that does not answer the challenge, breaches these rules, or cannot be viewed at the link given.",
+      "Where an entry is published on more than one platform, each platform is reviewed separately. One platform being rejected does not reject the others.",
+    ],
+  },
+  {
+    id: "stages",
+    title: "Stages and deadlines",
+    /* These windows mirror monicaStages in lib/campaigns.ts, which carries
+       the team's restructure brief of 15 September. The engine closes
+       submissions at these instants, so a deadline enforced there but never
+       published here would be a term nobody agreed to. All times Lagos. */
+    table: {
+      head: ["Stage", "Submissions close"],
+      rows: [
+        [
+          "Stage 1, The Discovery, 16 to 24 September",
+          "Thursday 24 September, 11:59 PM",
+        ],
+        ["Stage 2, 28 September to 3 October", "Saturday 3 October, 12:00 noon"],
+        ["Stage 3, 5 to 10 October", "Saturday 10 October, 12:00 noon"],
+        ["Stage 4, 12 to 17 October", "Saturday 17 October, 12:00 noon"],
+      ],
+    },
+    paragraphs: [
+      "The campaign runs in four stages. A new challenge drops with every stage. From Stage 2 onward, new challenges drop every Monday.",
+      "Stage 1 closes on Thursday 24 September at 11:59 PM Lagos time. Stages 2 to 4 close on Saturdays at 12:00 noon Lagos time. An entry submitted after a stage's deadline does not count for that stage.",
+      "Results for each stage are announced on the Sunday after it closes. The final results are announced on 18 October.",
+    ],
+  },
+  {
+    id: "points",
+    title: "Points",
+    /* The same numbers the paragraphs state, scannable. The rows mirror the
+       point rules the database actually pays; changing a value there without
+       changing it here is what the paragraphs below call an adjustment. */
+    table: {
+      head: ["What", "Points"],
+      rows: [
+        ["Approved entry, one platform", "100"],
+        ["The same entry on two platforms", "150"],
+        ["The same entry on all three platforms", "200"],
+        ["Creator referral, on their first approved entry", "10"],
+        ["High quality or original work", "50 to 200"],
+        ["Engagement milestone, tiers below", "20 to 200"],
+        ["Featured by Blockfest", "50"],
+        ["Featured by Monica", "100"],
+        ["Completing a wildcard challenge", "100"],
+        ["Collaborations with other creators", "Case by case, up to 300"],
+      ],
+    },
+    paragraphs: [
+      "An approved entry earns 100 points for the first approved platform and 50 for each platform after it, to a maximum of 200 for all three.",
+      "Additional points may be awarded for work judged exceptional, for reaching a notable audience milestone with an entry, for entries featured by Blockfest Africa or by Monica, and for completing a wildcard challenge.",
+        "Bonuses are awarded at our discretion. Every one is recorded against your account with the reason, and you can see it on your own page. Bonuses are capped at 2,000 points per creator across the campaign, and a single discretionary adjustment never moves more than 300 points.",
+      "Point values may be adjusted during the campaign. Changing a value does not recalculate points already awarded, so a change to the rate never restates what you have already earned.",
+        "Points can be taken back in two cases, and only these two: an entry that stops meeting the rules after approval, covered below, and a correction of a mistake we made. A correction is recorded against your account with the reason, the same way an award is.",
+      "The leaderboard counts approved entries. Publishing one entry on three platforms earns more points but remains a single entry for that count.",
+    ],
+  },
+  {
+    id: "engagement-milestones",
+    title: "Engagement milestones",
+    /* The team's published ladder, verbatim. Awarded by hand against
+       verified numbers, never automatically: a view count is a platform's
+       claim, and a person checks it before it becomes points. */
+    table: {
+      head: ["Views reached", "Bonus points"],
+      rows: [
+        ["5,000 and above", "20"],
+        ["10,000 and above", "40"],
+        ["20,000 and above", "60"],
+        ["30,000 and above", "80"],
+        ["50,000 and above", "100"],
+        ["75,000 and above", "150"],
+        ["100,000 and above", "200"],
+      ],
+    },
+    paragraphs: [
+      "An entry that reaches a notable audience earns a bonus on the ladder below. These are awarded manually by the Blockfest team against verified view counts, recorded against your account with the reason like every other bonus.",
+      "One engagement bonus per entry, at the highest tier it has verifiably reached when the bonus is awarded.",
+    ],
+  },
+  {
+    id: "referrals",
+    title: "Referrals",
+    paragraphs: [
+      "You receive a link that brings other creators into the campaign. Each creator you bring in is worth 10 points, credited once, when they have their first approved entry rather than when they register.",
+      "You may not refer yourself, or register more than one account. Accounts that appear to exist only to generate referrals will be removed along with any points they produced.",
+      "This is separate from Monica's own customer referral bonus, which is a Monica product offer. It has no connection to campaign points, the leaderboard or the prize pool, and taking part in one has no effect on the other.",
+    ],
+  },
+  {
+    id: "accuracy",
+    title: "What you may and may not say",
+    paragraphs: [
+      "Monica is a financial product, so accuracy matters more than usual. The Creator Pack lists what may be said about it and what may not.",
+      "Do not promise or guarantee returns, profit, savings or any financial outcome. Do not present Monica as investment advice. Do not state fees, rates or timings that are not in the Creator Pack or on Monica's own site and resources.",
+      "Entries making claims we cannot stand behind will be rejected, and repeated breaches may end your participation.",
+    ],
+  },
+  {
+    id: "integrity",
+    title: "Integrity",
+    paragraphs: [
+      "Purchased engagement is disqualifying. That includes bought likes, views, followers or comments, and engagement pods or any arrangement to inflate numbers artificially.",
+      "We may ask for evidence about an entry, including account analytics, and may reject entries or remove creators where we are not satisfied.",
+    ],
+  },
+  {
+    id: "keeping-content-up",
+    title: "Keeping your entries up",
+    paragraphs: [
+      "Approved entries must remain public and unedited until 31 October 2026.",
+      "Deleting an entry, making it private, or materially editing it after approval forfeits the points it earned. Fixing a typo is not a material edit. Changing what the entry says about Monica is.",
+    ],
+  },
+  {
+    id: "your-content",
+    title: "Your content",
+    paragraphs: [
+      "You own everything you make. Entering does not transfer ownership.",
+      "By entering you grant Blockfest Africa and Monica a non-exclusive, worldwide, royalty-free licence to reshare, repost and feature your entries in campaign and event material, with credit to you, for two years from the end of the campaign.",
+      "This covers resharing your work as published. It does not permit either of us to edit your entry into something you did not say.",
+    ],
+  },
+  {
+    id: "winners",
+    title: "Winners",
+    paragraphs: [
+      "Weekly winners are announced every Sunday. Creator of the Week is awarded once per stage, four awards in all, and the same creator cannot win it more than once, so the award reaches more creators across the campaign.",
+      "Community Favourite is shortlisted by Blockfest Africa and decided by public vote. The creator with the highest number of valid votes wins. Votes we believe to have been manipulated are set aside.",
+      "Voting takes place on this site, and is one vote per email address per round. A vote counts once the address it was cast from is verified. Where entries finish level on valid votes, the tie is broken by that week's recorded standings, with the higher points total winning. If a round ends with no valid votes, the winner is selected by Blockfest Africa.",
+      "The final leaderboard is settled on total points. Where creators are level, the order is decided by who reached that total first, then by the number of approved entries, and then at our discretion.",
+      "Winning a weekly award does not remove you from the final leaderboard.",
+    ],
+  },
+  {
+    id: "payment",
+    title: "Getting paid",
+    paragraphs: [
+      "Prizes are paid to the Monica tag you gave when you registered, in Nigerian naira or the equivalent in other currencies. Check that tag is right: it is the only detail we use to find you, and we cannot pay a winner we cannot locate. If it is wrong, write to partnership@blockfestafrica.com before the campaign ends.",
+      "Before a prize is paid we will ask you to verify your identity: government-issued identification matching the name you registered with, and proof that you control the account you published from. We do not pay third-party accounts.",
+      "Results are published with a 48-hour window for creators to raise a dispute before funds move.",
+      "Prizes are paid gross, with nothing deducted. Any tax due on what you receive is yours to declare and pay, wherever you are resident.",
+    ],
+  },
+  {
+    id: "your-details",
+    title: "Your details",
+    paragraphs: [
+      "Registering means giving us a name, an email address, a phone number and the handles you will publish from. We need those to judge entries, rank a leaderboard and pay a prize, and we ask for as little else as we can.",
+      "We also record the IP address and browser you registered from, to stop automated signups, and which version of these rules you accepted.",
+      "Monica is the headline sponsor and does not receive your personal details. Monica sees published entries, which are already public, and aggregate results.",
+      "What we collect, how long it is kept and what you can ask for are set out in full in the campaign privacy notice, which is linked from the registration form and from the campaign page.",
+    ],
+  },
+  {
+    id: "decisions",
+    title: "Decisions and changes",
+    paragraphs: [
+      "We may reject entries, withhold points and remove creators where these rules have been broken. Our decisions are final.",
+      "These rules may be amended during the campaign, for example as the final wording is settled. The rules you agreed to are recorded when you register. Material changes will be announced on the campaign page.",
+    ],
+  },
+];
+
+/**
+ * Things the campaign team still has to decide.
+ *
+ * Rendered on the page when there are any, rather than guessed at. A minimum
+ * age invented by a developer is not a term anybody can rely on, and a creator
+ * who finds out in week three that they were never eligible has a fair
+ * complaint.
+ *
+ * Empty now: eligibility is 18 and over with no residency requirement, and
+ * prizes are paid gross in naira. Both are written into the clauses above. Add
+ * to this list rather than leaving a clause vague if something else comes up.
+ */
+export const monicaRulesOpenPoints: string[] = [];

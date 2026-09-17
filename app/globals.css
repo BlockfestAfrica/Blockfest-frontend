@@ -66,28 +66,88 @@
   --color-ground: #0A1628; /* every dark section */
   --color-paper: #FFFFFF; /* every light section */
   --color-paper-muted: #F6F7F9; /* light cards and inset panels */
+
+  /* -------------------------------------------------- the ink tiers
+     Text on the ground, exactly four, per the interface-design pass.
+     The census that forced this found TEN ad-hoc white/NN opacities in
+     use as text colours. Ten tiers is no tiers: nothing can be demoted
+     when everything is its own shade. These four are the whole scale,
+     and the names continue the ground/paper world the site already
+     speaks.
+
+       ink    titles, values, anything that leads
+       ink-2  body and supporting prose
+       ink-3  metadata, hints, labels at rest
+       ink-4  faint: timestamps, disabled, the whisper tier
+  */
+  --color-ink: #FFFFFF;
+  --color-ink-2: rgba(255, 255, 255, 0.78);
+  --color-ink-3: rgba(255, 255, 255, 0.60);
+  --color-ink-4: rgba(255, 255, 255, 0.48); /* 4.87:1 on ground; the faint tier still does label work at 12px, so it stays AA */
+
+  /* -------------------------------------------------- the line tiers
+     Borders should disappear until looked for. Seven opacities were in
+     use; three are the progression. line-2 replaces the old default of
+     white/20, deliberately a step softer: harsh borders were the most
+     repeated smell in the audit, and dropping the standard edge from 20
+     to 16 percent quiets every card on the site at once.
+
+       line    hairline dividers and card edges
+       line-2  controls and emphasised containment
+       line-3  strong: the rare edge that must be found instantly
+  */
+  --color-line-faint: rgba(255, 255, 255, 0.06);
+  --color-line: rgba(255, 255, 255, 0.10);
+  --color-line-2: rgba(255, 255, 255, 0.16);
+  --color-line-3: rgba(255, 255, 255, 0.28);
+
+  /* -------------------------------------------------- surface steps
+     Whisper-quiet elevation over the ground. One hue, lightness only.
+       card    a contained section
+       card-2  a raised row inside one, and hover fills
+       card-3  the pressed or active fill
+  */
+  --color-card: rgba(255, 255, 255, 0.02);
+  --color-card-2: rgba(255, 255, 255, 0.05);
+  --color-card-3: rgba(255, 255, 255, 0.09);
+
+  /* Inputs are inset, not raised: they receive content, so they sit a
+     step DARKER than their surroundings, which says "type here" without
+     a heavy border. This is the one surface that goes below the ground
+     rather than above it. */
+  --color-control: #071021;
+
+  /* Motion: one curve, felt not watched. */
+  --ease-swift: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /*
+   * The base surface IS the ground. These carried shadcn's light theme
+   * (pure white) while every page painted #0A1628 on top, so macOS
+   * overscroll rubber-band and any slow paint flashed white behind the
+   * dark site, and the ui/ primitives resolved light-theme values. The
+   * interface audit caught it; nothing anywhere renders the light theme.
+   */
+  --background: var(--color-ground);
+  --foreground: var(--color-ink);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover: #0d1f3c;
+  --popover-foreground: var(--color-ink);
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: var(--color-ink-3);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
+  --border: var(--color-line);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: var(--color-brand-blue-light);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -179,6 +239,18 @@
   h3 {
     text-wrap: balance;
   }
+
+  /* Body copy avoids orphans; macOS renders unsmoothed type heavy on the
+     dark ground. Both are root-level polish the interface pass added. */
+  p,
+  li {
+    text-wrap: pretty;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
 /* Respect the OS setting. Every keyframe and transition on the site is
@@ -259,6 +331,17 @@ html {
 }
 
 /* Letterspaced uppercase label used above section headings. */
+/* The one dropdown arrow. Selects remove the native appearance, because
+   iOS and Android paint their own chrome under the dark border: bevels, a
+   misplaced arrow, off-centre text. With appearance gone this supplies the
+   affordance on every platform. */
+.select-chevron {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 1rem;
+}
+
 .eyebrow {
   font-size: 0.75rem;
   font-weight: 600;
@@ -287,63 +370,4 @@ html {
 html,
 body {
   overflow-x: hidden;
-}
-/* Enhanced Insights Dashboard Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes pulse-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-  }
-
-  50% {
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
-  }
-}
-
-/* Enhanced hover states for insight cards */
-.insight-card {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.insight-card:hover {
-  transform: translateY(-4px);
-}
-
-/* Smooth number transitions */
-.tabular-nums {
-  font-feature-settings: "tnum";
-  font-variant-numeric: tabular-nums;
-}
-
-/* Better text rendering */
-.tracking-tight {
-  letter-spacing: -0.025em;
-}
-
-.leading-relaxed {
-  line-height: 1.625;
 }

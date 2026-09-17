@@ -75,14 +75,14 @@ export default function Schedule() {
         <section className="section-y bg-ground">
           <div className="container-page">
             <div className="max-w-2xl">
-              <p className="eyebrow text-white/60">Lagos &apos;26</p>
+              <p className="eyebrow text-ink-3">Lagos &apos;26</p>
               <h1
                 id="schedule-heading"
                 className="text-display-sm mt-3 font-bold text-white"
               >
                 Schedule of <span className="text-white">Activities</span>
               </h1>
-              <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+              <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
                 Times for October 22 to 24 land in the coming weeks.
                 Last year&apos;s programme is a good guide to the shape of the
                 days.

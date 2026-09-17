@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import {
-  EARLY_BIRD_ENDS,
-  EARLY_BIRD_COUNT,
+  formatNaira,
+  lowestTicketPrice,
   PHOTOGRAPHY_NOTICE,
   TRANSFER_DEADLINE,
 } from "@/lib/tickets";
@@ -11,14 +11,14 @@ import { TicketCTA } from "./ticket-cta";
 
 export function TicketPolicy() {
   return (
-    <section className="section-y bg-ground border-t border-white/20">
+    <section className="section-y bg-ground border-t border-line-2">
       <div className="container-page">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10">
+          <div className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3">
             <h2 className="text-lg font-bold text-white lg:text-2xl">
               Ticket Policy
             </h2>
-            <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-white/60 lg:text-base">
+            <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-ink-3 lg:text-base">
               <p>
                 <span className="font-semibold text-white">
                   BLOCKF3ST AFRICA™
@@ -33,23 +33,19 @@ export function TicketPolicy() {
               </p>
               <p>Refunds are not provided for no-shows.</p>
               <p>
-                Early bird takes 25% off {EARLY_BIRD_COUNT} passes until{" "}
-                <span className="font-semibold text-white">
-                  {EARLY_BIRD_ENDS.display}
-                </span>
-                , after which they revert to standard pricing. The CORPORATE
-                CIRCLE team discount and the VIP passes are priced separately
-                and do not change on that date. A small processing fee is added
-                at checkout.
+                The early bird rate closed on 30 August and every pass is now at
+                standard pricing. The CORPORATE CIRCLE team rate is a standing
+                discount rather than a dated offer, so it is unchanged. A small
+                processing fee is added at checkout.
               </p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10">
+          <div className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3">
             <h2 className="text-lg font-bold text-white lg:text-2xl">
               Photography &amp; Media Notice
             </h2>
-            <p className="mt-4 text-sm leading-relaxed text-white/60 lg:text-base">
+            <p className="mt-4 text-sm leading-relaxed text-ink-3 lg:text-base">
               {PHOTOGRAPHY_NOTICE} Concerns? Contact{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
@@ -66,8 +62,8 @@ export function TicketPolicy() {
           <h2 className="text-display-sm font-bold text-white">
             Lagos, October 2026.
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
-            Early bird runs until {EARLY_BIRD_ENDS.display}.
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
+            Ten passes, from {formatNaira(lowestTicketPrice)}.
           </p>
           <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
             <TicketCTA source="Tickets Page - Footer CTA" className="px-8">

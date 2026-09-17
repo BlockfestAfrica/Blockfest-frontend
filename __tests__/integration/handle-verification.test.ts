@@ -1,0 +1,282 @@
+/**
+ * Handle verification, after the team removed its enforcement.
+ *
+ * The verification step existed because a handle typed at registration is a
+ * claim, not a fact, and on every platform the automatic checks stop short of
+ * proving the registered handle belongs to the REGISTRANT. The BF- code was
+ * proof of control, and review() refusing to approve through an unverified
+ * handle (P0211, 0022) was its teeth.
+ *
+ * The campaign team ruled it out: asking creators to publish a code before
+ * their work can score was a hurdle at the moment the campaign wants people
+ * posting. 0034 removed the refusal. The machinery below it stays, because it
+ * costs nothing and restoring enforcement is one migration if week one proves
+ * the team wrong.
+ *
+ * So this suite now asserts three things: the DECISION (approval proceeds with
+ * nobody having checked anything), the surviving machinery (verify and void
+ * still behave), and the trade (the impersonation path the check existed for
+ * is open, recorded here as documentation rather than left to be rediscovered
+ * as a surprise).
+ */
+
+import { PGlite } from "@electric-sql/pglite";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { applyMigrations } from "../helpers/migrations";
+
+const SLUG = "monica-money-story";
+
+let db: PGlite;
+let seq = 0;
+let campaignId: string;
+let adminId: string;
+
+const one = async <T = Record<string, unknown>>(sql: string): Promise<T> =>
+  (await db.query<T>(sql)).rows[0];
+
+const count = async (sql: string) =>
+  Number((await db.query<{ n: number }>(sql)).rows[0].n);
+
+/** A creator claiming a handle, exactly as registration leaves them. */
+async function claim(handle: string, platform = "x") {
+  const tag = `${++seq}`;
+  const creator = await one<{ id: string }>(`
+    INSERT INTO creators (full_name, email, email_canonical, phone, phone_e164, content_niche)
+    VALUES ('C${tag}', 'c${tag}@e.com', 'c${tag}@e.com', '0${tag}', '+234${tag.padStart(10, "0")}', 'finance')
+    RETURNING id`);
+  const row = await one<{ id: string }>(`
+    INSERT INTO creator_social_handles (creator_id, platform, handle, handle_normalized)
+    VALUES ('${creator.id}', '${platform}', '${handle}', lower('${handle}'))
+    RETURNING id`);
+  const enrolment = await one<{ id: string }>(`
+    INSERT INTO campaign_creators (campaign_id, creator_id, referral_code)
+    VALUES ('${campaignId}', '${creator.id}', 'CODE${tag}') RETURNING id`);
+  return { creatorId: creator.id, handleId: row.id, enrolmentId: enrolment.id };
+}
+
+const verify = (handleId: string, admin: string | null = adminId) =>
+  db.query(`SELECT * FROM verify_social_handle($1::uuid, $2::uuid)`, [
+    handleId,
+    admin,
+  ]);
+
+/** A pending submission on x for a creator, ready to be reviewed. */
+async function submissionFor(enrolmentId: string, url: string) {
+  const week1 = await one<{ id: string }>(
+    `SELECT id FROM challenges WHERE campaign_id = '${campaignId}' AND week_no = 1`,
+  );
+  const entry = await one<{ id: string }>(`
+    INSERT INTO challenge_entries (campaign_creator_id, challenge_id,
+      base_points_snapshot, bonus_2_snapshot, bonus_3_snapshot)
+    VALUES ('${enrolmentId}', '${week1.id}', 100, 100, 200) RETURNING id`);
+  return (
+    await one<{ id: string }>(`
+      INSERT INTO submissions (entry_id, platform, url)
+      VALUES ('${entry.id}', 'x', '${url}') RETURNING id`)
+  ).id;
+}
+
+const decide = (submissionId: string, status: string) =>
+  db.query(
+    `SELECT review($1::uuid, $2::submission_status, $3::uuid, 'note')`,
+    [submissionId, status, adminId],
+  );
+
+beforeAll(async () => {
+  db = new PGlite();
+  await applyMigrations(db);
+}, 60_000);
+
+afterAll(async () => {
+  await db?.close();
+});
+
+beforeEach(async () => {
+  campaignId = (
+    await one<{ id: string }>(`SELECT id FROM campaigns WHERE slug = '${SLUG}'`)
+  ).id;
+  adminId = (
+    await one<{ id: string }>(
+      `SELECT id FROM admin_users WHERE role = 'owner' ORDER BY email_canonical LIMIT 1`,
+    )
+  ).id;
+  await db.query(`SELECT purge_campaign_data($1, $1)`, [SLUG]);
+});
+
+describe("claiming, before anybody has checked", () => {
+  it("gives every handle a code to publish", async () => {
+    const { handleId } = await claim("ada");
+    const row = await one<{ verification_code: string }>(
+      `SELECT verification_code FROM creator_social_handles WHERE id = '${handleId}'`,
+    );
+    expect(row.verification_code).toMatch(/^BF-[0-9A-F]{6}$/);
+  });
+
+  it("never marks a claim verified on its own", async () => {
+    // Registration cannot check anything, so it must not be able to write the
+    // column that says somebody did.
+    const { handleId } = await claim("ada");
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM creator_social_handles
+          WHERE id = '${handleId}' AND verified_at IS NULL`,
+      ),
+    ).toBe(1);
+  });
+
+  /** The acceptance criterion from the issue, and the reason for the design. */
+  it("lets two creators claim the same handle, and only one ever verify it", async () => {
+    const first = await claim("contested");
+    const second = await claim("contested");
+
+    await expect(verify(first.handleId)).resolves.toBeTruthy();
+    await expect(verify(second.handleId)).rejects.toThrow(
+      /handle_already_verified_elsewhere/,
+    );
+  });
+});
+
+describe("verifying", () => {
+  it("is attributed and logged", async () => {
+    const { handleId } = await claim("ada");
+    await verify(handleId);
+
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM audit_log
+          WHERE action = 'handle.verified' AND actor_admin_id = '${adminId}'`,
+      ),
+    ).toBe(1);
+  });
+
+  it("refuses without an admin, so it can never happen by itself", async () => {
+    const { handleId } = await claim("ada");
+    await expect(verify(handleId, null)).rejects.toThrow(/admin_required/);
+  });
+
+  it("does not log a second act of checking when run twice", async () => {
+    // Idempotent, but not pretending somebody looked twice.
+    const { handleId } = await claim("ada");
+    await verify(handleId);
+    await verify(handleId);
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM audit_log WHERE action = 'handle.verified'`,
+      ),
+    ).toBe(1);
+  });
+
+  it("refuses a handle that does not exist", async () => {
+    await expect(
+      verify("00000000-0000-0000-0000-000000000000"),
+    ).rejects.toThrow(/handle_not_found/);
+  });
+});
+
+describe("approving through a handle nobody has checked", () => {
+  /**
+   * The decision, asserted so it reads as a choice rather than a bug. Until
+   * 0034 this exact call raised handle_not_verified.
+   */
+  it("is allowed, by the team's decision in 0034", async () => {
+    const mine = await claim("amara");
+    const sub = await submissionFor(mine.enrolmentId, "https://x.com/amara/status/1");
+    await expect(decide(sub, "approved")).resolves.toBeTruthy();
+  });
+
+  it("pays the points", async () => {
+    const mine = await claim("amara");
+    const sub = await submissionFor(mine.enrolmentId, "https://x.com/amara/status/2");
+    await decide(sub, "approved");
+    const total = await one<{ points_total: number }>(
+      `SELECT points_total FROM campaign_creators WHERE id = '${mine.enrolmentId}'`,
+    );
+    expect(Number(total.points_total)).toBeGreaterThan(0);
+  });
+
+  /**
+   * The trade, spelled out. Registration with somebody else's handle passes,
+   * and a submission of that person's real post passes wrong_account because
+   * the URL author matches the REGISTERED handle. Nothing automatic is left
+   * between this and points: the reviewer seeing the handle beside the link is
+   * the whole defence now. This is not a bug to fix silently; it is the
+   * insurance the team chose not to pay for, and if it is ever "fixed" the
+   * team decision in 0034 is being reversed and should be reversed knowingly.
+   */
+  it("documents what is no longer stopped: the registrant was never proved to own the handle", async () => {
+    const thief = await claim("someoneelse");
+    const sub = await submissionFor(
+      thief.enrolmentId,
+      "https://x.com/someoneelse/status/99",
+    );
+    await expect(decide(sub, "approved")).resolves.toBeTruthy();
+  });
+
+  it("still allows a rejection, which pays nobody", async () => {
+    const mine = await claim("amara");
+    const sub = await submissionFor(mine.enrolmentId, "https://x.com/amara/status/3");
+    await expect(decide(sub, "rejected")).resolves.toBeTruthy();
+  });
+});
+
+describe("taking a claim back", () => {
+  it("releases the handle for the person who actually owns it", async () => {
+    const squatter = await claim("realcreator");
+    await verify(squatter.handleId);
+
+    // The real owner registers later and cannot verify, which is the state the
+    // partial index leaves them in.
+    const owner = await claim("realcreator");
+    await expect(verify(owner.handleId)).rejects.toThrow(
+      /handle_already_verified_elsewhere/,
+    );
+
+    await db.query(`SELECT void_enrolment($1::uuid, $2::uuid, $3::text)`, [
+      squatter.enrolmentId,
+      adminId,
+      "Claimed a handle they do not control",
+    ]);
+
+    await expect(verify(owner.handleId)).resolves.toBeTruthy();
+  });
+
+  it("takes the voided creator off the board", async () => {
+    const { enrolmentId } = await claim("ada");
+    await db.query(`SELECT void_enrolment($1::uuid, $2::uuid, $3::text)`, [
+      enrolmentId,
+      adminId,
+      "Duplicate account",
+    ]);
+    const row = await one<{ status: string }>(
+      `SELECT status FROM campaign_creators WHERE id = '${enrolmentId}'`,
+    );
+    expect(row.status).toBe("disqualified");
+  });
+
+  it("needs a reason, like every other action that takes something away", async () => {
+    const { enrolmentId } = await claim("ada");
+    await expect(
+      db.query(`SELECT void_enrolment($1::uuid, $2::uuid, $3::text)`, [
+        enrolmentId,
+        adminId,
+        "  ",
+      ]),
+    ).rejects.toThrow(/reason_required/);
+  });
+
+  it("is logged with the reason", async () => {
+    const { enrolmentId } = await claim("ada");
+    await db.query(`SELECT void_enrolment($1::uuid, $2::uuid, $3::text)`, [
+      enrolmentId,
+      adminId,
+      "Claimed a handle they do not control",
+    ]);
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM audit_log
+          WHERE action = 'enrolment.voided'
+            AND note = 'Claimed a handle they do not control'`,
+      ),
+    ).toBe(1);
+  });
+});

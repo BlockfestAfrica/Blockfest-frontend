@@ -17,9 +17,40 @@ declare global {
   }
 }
 
-export const SABILYTICS_SRC = "https://www.sabilytics.com/script.js";
+/*
+ * Served from our own origin, deliberately.
+ *
+ * The issue-closure verification of #138 left one residual standing: the
+ * vendor tag was loaded live from www.sabilytics.com, un-pinned, so whoever
+ * controls that host, or its CDN, could change what executes on every public
+ * page of the origin that also hosts the console. Self-hosting the snapshot in
+ * public/vendor/script.js removes the last third-party script execution on
+ * this origin: the vendor can now receive beacons but can no longer run new
+ * code here.
+ *
+ * The cost is that upstream updates stop arriving. To refresh deliberately:
+ * curl -o public/vendor/script.js https://www.sabilytics.com/script.js
+ * and read the diff before committing it.
+ *
+ * SABILYTICS_API must be pinned alongside: the script derives its endpoint
+ * from its own src when data-api is absent, which self-hosted would point at
+ * this origin's nonexistent /api/e and silently drop every pageview.
+ */
+export const SABILYTICS_SRC = "/vendor/script.js";
+export const SABILYTICS_API = "https://www.sabilytics.com/api/e";
 export const SABILYTICS_SITE_ID = "1csn36flwfzz";
 export const SABILYTICS_DOMAIN = "blockfestafrica.com";
+
+/**
+ * The shared dashboard, for the admin overview to link to.
+ *
+ * Impressions are a campaign KPI and are not in the campaign database. Rather
+ * than inventing a figure, the overview says so and points here. Empty when
+ * unset, and the link is then simply absent: a dead link to analytics is worse
+ * than no link, because somebody follows it during a report.
+ */
+export const SABILYTICS_SHARE_URL =
+  process.env.NEXT_PUBLIC_SABILYTICS_SHARE_URL?.trim() || "";
 
 /**
  * Conversion event names.
@@ -34,6 +65,51 @@ export const EVENTS = {
   /** Journey step: someone left for the ticket platform. */
   ticketCheckoutStarted: "ticket_checkout_started",
 } as const;
+
+/**
+ * The Monica campaign funnel.
+ *
+ * Every name is prefixed, because /campaigns shares this property with the
+ * ticket funnel. Without the prefix the two blend and neither is readable: a
+ * spike in "register_started" would be unattributable to either.
+ *
+ * Named here rather than written at each call site for the same reason the
+ * ticket events are: these must match the goal configuration in Sabilytics
+ * exactly, and a typo in a string literal is a goal that silently records
+ * nothing. Three campaign events already existed as loose strings and are
+ * folded in here.
+ *
+ * Worth naming before launch rather than after, because funnel data for the
+ * first two weeks cannot be reconstructed afterwards. A page that was not
+ * instrumented on the day simply has no history.
+ */
+export const CAMPAIGN_EVENTS = {
+  /** Landing page reached. The top of the funnel. */
+  viewed: "campaign_monica_viewed",
+  /** Someone arrived through a creator's referral link. */
+  referralLinkUsed: "campaign_monica_referral_link_used",
+  /** The registration form was opened and is accepting input. */
+  registerStarted: "campaign_monica_register_started",
+  /** Registration succeeded. The conversion that matters. */
+  registerCompleted: "campaign_monica_register_completed",
+  /** A creator began pasting a link into the submission form. */
+  submissionStarted: "campaign_monica_submission_started",
+  /** An entry was accepted by the endpoint. */
+  submissionCompleted: "campaign_monica_submission_completed",
+  /** A creator copied their own referral link, meaning they intend to share. */
+  referralCopied: "campaign_monica_referral_copied",
+  leaderboardViewed: "campaign_monica_leaderboard_viewed",
+  rulesViewed: "campaign_monica_rules_viewed",
+} as const;
+
+/**
+ * Every campaign event name, for the dashboard and for a test.
+ *
+ * A goal that exists in Sabilytics and nowhere in the code records nothing, and
+ * an event fired from the code with no goal behind it is invisible. Exporting
+ * the list is what lets one be checked against the other.
+ */
+export const CAMPAIGN_EVENT_NAMES = Object.values(CAMPAIGN_EVENTS);
 
 /** Fire a custom event. Safe to call before the script loads. */
 export function track(event: string, data?: Record<string, unknown>): void {

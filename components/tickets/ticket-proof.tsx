@@ -18,9 +18,9 @@ const STATS = [
 
 export function TicketProof() {
   return (
-    <section className="section-y bg-ground border-t border-white/20">
+    <section className="section-y bg-ground border-t border-line-2">
       <div className="container-page">
-        <p className="eyebrow text-white/60">
+        <p className="eyebrow text-ink-3">
           Lagos {blockfest2025Lagos.year}
         </p>
         <h2 className="text-display-sm mt-3 max-w-2xl font-bold text-white">
@@ -35,7 +35,7 @@ export function TicketProof() {
                 <span className="block text-3xl font-bold tabular-nums text-brand-gold lg:text-4xl">
                   {stat.value}
                 </span>
-                <span className="mt-1 block text-sm text-white/60">
+                <span className="mt-1 block text-sm text-ink-3">
                   {stat.label}
                 </span>
               </dd>

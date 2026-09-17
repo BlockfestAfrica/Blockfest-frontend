@@ -1,0 +1,22 @@
+# Netlify build configuration.
+#
+# This file exists to put the tests in front of the deploy.
+#
+# The build command was set in the Netlify UI as `npm run build`, which is
+# `next build`, so vitest never ran on any deploy. Every claim of the form "a
+# test asserts this" was true only on the machine that last ran it by hand, and
+# nothing stopped a merge that broke one. For a campaign whose database
+# functions decide how a 5,000,000 naira pool is split, a test suite nothing
+# runs is documentation.
+#
+# Settings here override the UI on conflict, so declaring the command is enough
+# and the publish directory is deliberately left alone: it is set in the UI and
+# the Next.js runtime plugin depends on it, so redeclaring it here would be a
+# second place to get it wrong.
+#
+# Migrations in netlify/database/migrations are applied by Netlify before a
+# deploy is published, and a failure there already blocks publication. This puts
+# the application tests in the same position.
+
+[build]
+  command = "npm run test:run && npm run build"

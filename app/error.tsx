@@ -1,5 +1,6 @@
 "use client";
 
+import { CONTACT_EMAIL } from "@/lib/constants";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { track, sanitizeStack } from "@/lib/sabilytics";
@@ -73,8 +74,8 @@ export default function Error({
           <p className="mt-2">
             Need help?{" "}
             <a
-              href="mailto:support@blockfestafrica.com"
-              className="text-white/60 hover:text-white hover:underline"
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="text-ink-3 hover:text-white hover:underline"
             >
               Contact Support
             </a>

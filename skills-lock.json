@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "interface-design": {
+      "source": "dammyjay93/interface-design",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/interface-design/SKILL.md",
+      "computedHash": "340cc79a1558f09371aa3eb689952a8b777c1d7362c24226e99693606a80828e"
+    },
+    "vibe-security": {
+      "source": "raroque/vibe-security-skill",
+      "sourceType": "github",
+      "skillPath": "vibe-security/SKILL.md",
+      "computedHash": "b9599a66355f44cff8082d89e1ea3891a2d2fa43dfdc890f435ea786fd66bcdf"
+    }
+  }
+}

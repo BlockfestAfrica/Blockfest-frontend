@@ -23,19 +23,19 @@ export function Lagos2026Section() {
   return (
     <section
       id="lagos-2026"
-      className="section-y bg-ground border-t border-white/20"
+      className="section-y bg-ground border-t border-line-2"
     >
       <div className="container-page">
         {/* Theme banner */}
         <div className="mb-10 lg:mb-14">
-          <p className="eyebrow text-white/60">LAGOS · OCTOBER 22–24, 2026</p>
+          <p className="eyebrow text-ink-3">LAGOS · OCTOBER 22–24, 2026</p>
           <h2 className="text-display-sm mt-3 font-bold text-white">
             New Trade Routes:{" "}
             <span className="text-brand-blue-light">
               Bringing Africa Onchain
             </span>
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
             Six tracks across African tech, Web3 and AI.
           </p>
         </div>
@@ -47,7 +47,7 @@ export function Lagos2026Section() {
             return (
               <div
                 key={track.title}
-                className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10"
+                className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3"
               >
                 <div className="flex items-center gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-blue/15 text-brand-blue-light">
@@ -57,7 +57,7 @@ export function Lagos2026Section() {
                     {track.title}
                   </h3>
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-white/60">
+                <p className="mt-3 text-sm leading-relaxed text-ink-3">
                   {track.description}
                 </p>
               </div>
@@ -70,10 +70,10 @@ export function Lagos2026Section() {
           <h3 className="text-3xl font-bold text-white">
             A Festival, Not Just an Event
           </h3>
-          {/* <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+          {/* <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
             Three weeks of programming. One unforgettable week in Lagos.
           </p> */}
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
             One weekend in Lagos.
           </p>
         </div>
@@ -82,18 +82,18 @@ export function Lagos2026Section() {
           {lagos2026Festival.map((phase) => (
             <div
               key={phase.title}
-              className="rounded-xl border border-white/20 bg-white/5 p-6 transition-colors duration-300 hover:bg-white/10"
+              className="rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3"
             >
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="text-sm font-semibold text-white/90">
+                <span className="text-sm font-semibold text-ink">
                   {phase.dates}
                 </span>
-                <span className="eyebrow text-white/60">{phase.location}</span>
+                <span className="eyebrow text-ink-3">{phase.location}</span>
               </div>
               <h4 className="mt-4 text-base font-bold leading-snug text-white">
                 {phase.title}
               </h4>
-              <p className="mt-2 text-sm leading-relaxed text-white/60">
+              <p className="mt-2 text-sm leading-relaxed text-ink-3">
                 {phase.description}
               </p>
             </div>

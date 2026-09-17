@@ -3,6 +3,7 @@
  * Provides system health status for monitoring and load balancers
  */
 
+import { databaseFingerprint } from "@/lib/db/client";
 import { NextResponse } from "next/server";
 
 interface HealthStatus {
@@ -10,6 +11,19 @@ interface HealthStatus {
   timestamp: string;
   version: string;
   uptime: number;
+  /** production, deploy-preview, branch-deploy, or dev. Set by Netlify. */
+  context: string;
+  /**
+   * A short hash of the database host, never the host and never the
+   * credential.
+   *
+   * Netlify DB gives every deploy preview its own branch, so a preview cannot
+   * write to live campaign data. That is the platform's behaviour rather than
+   * anything this repository arranges, and the only honest way to know it is
+   * still true is to compare this value on a preview against production. Same
+   * value, same database.
+   */
+  database: string | null;
   checks: {
     name: string;
     status: "pass" | "fail" | "warn";
@@ -26,13 +40,10 @@ export async function GET() {
   const startTime = Date.now();
   const checks: HealthStatus["checks"] = [];
 
-  // Check environment variables
-  const envCheck = checkEnvironmentVariables();
-  checks.push(envCheck);
-
-  // Check external data source (Google Sheets)
-  const dataSourceCheck = await checkDataSource();
-  checks.push(dataSourceCheck);
+  // Both previous checks — required env vars and reachability of the guest
+  // spreadsheet — existed for the /insights dashboard and went with it. The
+  // campaign platform will reintroduce an environment check naming its own
+  // required variables; until then this endpoint reports liveness only.
 
   // Determine overall status
   const hasFailure = checks.some((c) => c.status === "fail");
@@ -43,6 +54,8 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || "1.0.0",
     uptime: process.uptime(),
+    context: process.env.CONTEXT ?? "unknown",
+    database: databaseFingerprint(),
     checks,
   };
 
@@ -55,89 +68,4 @@ export async function GET() {
       "X-Response-Time": `${Date.now() - startTime}ms`,
     },
   });
-}
-
-/**
- * Check required environment variables
- */
-function checkEnvironmentVariables(): HealthStatus["checks"][0] {
-  const required = ["GOOGLE_SHEETS_CSV_URL"];
-  const optional = ["INSIGHTS_PASSWORD"];
-
-  const missingRequired = required.filter((key) => !process.env[key]);
-  const missingOptional = optional.filter((key) => !process.env[key]);
-
-  if (missingRequired.length > 0) {
-    return {
-      name: "environment",
-      status: "fail",
-      message: `Missing required env vars: ${missingRequired.join(", ")}`,
-    };
-  }
-
-  if (missingOptional.length > 0) {
-    return {
-      name: "environment",
-      status: "warn",
-      message: `Missing optional env vars: ${missingOptional.join(", ")}`,
-    };
-  }
-
-  return {
-    name: "environment",
-    status: "pass",
-    message: "All environment variables configured",
-  };
-}
-
-/**
- * Check data source connectivity
- */
-async function checkDataSource(): Promise<HealthStatus["checks"][0]> {
-  const startTime = Date.now();
-
-  if (!process.env.GOOGLE_SHEETS_CSV_URL) {
-    return {
-      name: "data_source",
-      status: "warn",
-      message: "Data source URL not configured",
-    };
-  }
-
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    const response = await fetch(process.env.GOOGLE_SHEETS_CSV_URL, {
-      method: "HEAD",
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
-    const responseTime = Date.now() - startTime;
-
-    if (response.ok) {
-      return {
-        name: "data_source",
-        status: "pass",
-        message: "Data source accessible",
-        responseTime,
-      };
-    }
-
-    return {
-      name: "data_source",
-      status: "warn",
-      message: `Data source returned ${response.status}`,
-      responseTime,
-    };
-  } catch (error) {
-    return {
-      name: "data_source",
-      status: "fail",
-      message:
-        error instanceof Error ? error.message : "Failed to reach data source",
-      responseTime: Date.now() - startTime,
-    };
-  }
 }
