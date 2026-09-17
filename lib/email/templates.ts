@@ -1459,6 +1459,68 @@ export function handleAddedEmail(params: {
   };
 }
 
+/**
+ * Campaign activity, to the team.
+ *
+ * The owner asked to be told when somebody registers or submits. Sent per
+ * event, as asked, with two engineering guards that do not change what it
+ * reports.
+ *
+ * It carries no creator email address and no phone number. The team can
+ * open the console and see those; an internal alert that bounces into a
+ * stranger's inbox should not be a leak, and the deliverability of this
+ * domain is not yet what it should be.
+ */
+export function adminActivityEmail(params: {
+  to: string;
+  kind: "registration" | "submission";
+  /** Who did it, as the console would name them. */
+  who: string;
+  /** For a submission: which platform. Empty for a registration. */
+  platformLabel?: string;
+  /** How many of this kind are now waiting on the team, if it creates work. */
+  waiting?: number;
+  consoleUrl: string;
+  /** Events suppressed since the last send, so a burst is not silent. */
+  alsoSince?: number;
+}): Email {
+  const isSubmission = params.kind === "submission";
+  const headline = isSubmission
+    ? `${params.who} submitted on ${params.platformLabel ?? "a platform"}`
+    : `${params.who} joined the campaign`;
+
+  const queue =
+    isSubmission && typeof params.waiting === "number"
+      ? `${params.waiting} ${params.waiting === 1 ? "entry is" : "entries are"} waiting for review.`
+      : "";
+
+  const burst =
+    params.alsoSince && params.alsoSince > 0
+      ? `${params.alsoSince} more happened in the last few minutes and were not sent separately.`
+      : "";
+
+  return {
+    to: params.to,
+    toName: "Blockfest campaign team",
+    replyTo: CONTACT_EMAIL,
+    subject: isSubmission
+      ? `New entry: ${params.who} on ${params.platformLabel ?? "a platform"}`
+      : `New creator: ${params.who}`,
+    text: [headline, ``, queue, burst, ``, `Console: ${params.consoleUrl}`]
+      .filter((line, i, all) => line !== "" || all[i - 1] !== "")
+      .join("\n"),
+    html: layout({
+      preheader: queue || headline,
+      heading: escape(headline),
+      body: [
+        queue ? p(escape(queue)) : "",
+        burst ? quiet(escape(burst)) : "",
+      ].join(""),
+      action: { label: "Open the console", href: params.consoleUrl },
+    }),
+  };
+}
+
 export function withdrawnEmail(params: {
   to: string;
   fullName: string;
