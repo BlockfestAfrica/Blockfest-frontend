@@ -1,8 +1,9 @@
 import { sendEmailQuietly } from "@/lib/email/client";
+import { notifyAdminsOfActivity } from "@/lib/notify/admin-activity";
 import { personalLink, registrationEmail } from "@/lib/email/templates";
 import { randomBytes } from "node:crypto";
 import { and, eq, gt, sql } from "drizzle-orm";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, after } from "next/server";
 import { campaigns, getDb, registrationAttempts } from "@/lib/db/client";
 import {
   canonicalise,
@@ -423,6 +424,22 @@ export async function POST(request: NextRequest) {
         "registration",
       );
     }
+
+    /*
+     * And tell the team, after the response.
+     *
+     * Not awaited like the creator's own mail above: that one is the
+     * personal link, which is the whole login, and losing it would strand
+     * somebody. This one is information the console already holds, so it
+     * must never sit in front of a creator's confirmation, and it swallows
+     * its own failures.
+     */
+    after(() =>
+      notifyAdminsOfActivity({
+        kind: "registration",
+        who: row.full_name ?? input.fullName,
+      }),
+    );
 
     return NextResponse.json({
       ok: true,
