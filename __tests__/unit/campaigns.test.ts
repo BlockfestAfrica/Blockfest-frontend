@@ -159,6 +159,18 @@ describe("the stages and skills", () => {
       timeZone: "Africa/Lagos",
     });
 
+  /*
+   * The Lagos calendar date, not the runner's.
+   *
+   * The campaign is written, published and enforced in Lagos time, so a
+   * test about which DAY something falls on has to ask in Lagos. Comparing
+   * Date.toDateString() asks in the machine's own zone, which passed in
+   * Lagos and on Netlify's UTC builders and failed on a laptop at UTC+3,
+   * where the campaign's 23:59:59 close reads as the next morning.
+   */
+  const lagosDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-GB", { timeZone: "Africa/Lagos" });
+
   it("opens stage 1 with the campaign, on Wednesday 16 September", () => {
     const campaign = campaignBySlug("monica-money-story")!;
     expect(monicaStages[0].startsAt).toBe(campaign.startsAt);
@@ -183,9 +195,18 @@ describe("the stages and skills", () => {
 
   it("ends the last stage on the campaign's published end date", () => {
     const campaign = campaignBySlug("monica-money-story")!;
-    expect(
-      new Date(monicaStages.at(-1)!.endsAt).toDateString(),
-    ).toBe(new Date(campaign.endsAt!).toDateString());
+    expect(lagosDate(monicaStages.at(-1)!.endsAt)).toBe(
+      lagosDate(campaign.endsAt!),
+    );
+  });
+
+  it("says the same last day whatever zone the test runs in", () => {
+    // The guard for the assertion above. Both instants are 17 October in
+    // Lagos; only a local-time comparison could disagree, and it did.
+    const campaign = campaignBySlug("monica-money-story")!;
+    for (const iso of [monicaStages.at(-1)!.endsAt, campaign.endsAt!]) {
+      expect(lagosDate(iso), iso).toBe("17/10/2026");
+    }
   });
 
   it("only names skills that exist", () => {

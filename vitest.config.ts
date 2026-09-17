@@ -24,6 +24,23 @@ export default defineConfig({
      */
     env: {
       NEXT_PUBLIC_CAMPAIGN_GATE_OPEN: "",
+      /*
+       * The clock, pinned for the same reason the variables above are.
+       *
+       * The campaign is written and enforced in Lagos time, and a date test
+       * that asks the RUNNER what day an instant falls on gets a different
+       * answer on every laptop. The campaign's 2026-10-17T23:59:59+01:00
+       * close reads as the 17th in Lagos and on Netlify's UTC builders, and
+       * as the 18th anywhere east of UTC+2, so the suite passed in CI and
+       * failed on a machine that had moved timezone.
+       *
+       * UTC because that is what the builders run, so a green suite locally
+       * means a green suite on deploy. Tests that care about the Lagos
+       * calendar ask for it explicitly with timeZone: "Africa/Lagos", which
+       * is the correct question anyway and is now the only way that question
+       * gets asked.
+       */
+      TZ: "UTC",
     },
     include: ["__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     coverage: {
