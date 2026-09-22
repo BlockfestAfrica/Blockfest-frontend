@@ -106,7 +106,7 @@ const SpeakersPage = () => {
         <div className="border-t border-gray-200 bg-paper">
           <div className="container-page section-y flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-base text-gray-600">
-              Curious who&apos;s spoken before? Browse three editions of past
+              Curious who&apos;s spoken before? Browse previous editions of past
               speakers.
             </p>
             <Link

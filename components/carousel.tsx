@@ -204,7 +204,7 @@ const Speakers: React.FC<PropType> = (props) => {
         role="group"
         aria-label="Speaker slides"
       >
-        <div className="flex touch-pan-y touch-pinch-zoom">
+        <div className="flex touch-pan-y touch-pinch-zoom justify-center items-center">
           {speakers.map((speaker, index) => (
             <div
               // Phones get one card, near full width. At 50% the card content
@@ -229,7 +229,7 @@ const Speakers: React.FC<PropType> = (props) => {
                     <div className="flex w-full min-w-0 flex-1 basis-full flex-col items-center text-white md:w-auto md:basis-0 md:items-start">
                       {/* 3xl moved from md to lg: at 768px the widest names were
                           wider than their own column. */}
-                      <h2 className="text-xl min-[360px]:text-2xl lg:text-3xl xl:text-5xl font-bold uppercase tracking-tight leading-tight break-words">
+                      <h2 className="text-xl min-[360px]:text-2xl lg:text-3xl xl:text-5xl font-bold uppercase tracking-tight leading-tight wrap-break-word">
                         {speaker.name}
                       </h2>
                       <p className="mt-3 text-sm md:text-lg xl:text-2xl leading-relaxed text-ink-3 md:mt-4">
@@ -242,7 +242,7 @@ const Speakers: React.FC<PropType> = (props) => {
                         comes from aspect-square, so the frame is always square:
                         the previous fixed w/h pairs fought basis-[40%] and left
                         it 147x238 at md and 315x333 at xl. */}
-                    <div className="basis-auto w-full max-w-[240px] md:basis-[46%] md:w-auto md:max-w-[300px] xl:max-w-[340px] aspect-square shrink-0 overflow-hidden rounded-xl border border-line-2 mx-auto md:mx-0">
+                    <div className="basis-auto w-full max-w-60 md:basis-[46%] md:w-auto md:max-w-75 xl:max-w-85 aspect-square shrink-0 overflow-hidden rounded-xl border border-line-2 mx-auto md:mx-0">
                       <Image
                         src={speaker.image}
                         alt={`Portrait of ${speaker.name}, ${speaker.title}`}

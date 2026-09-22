@@ -47,49 +47,53 @@ export function SpeakersSection() {
         <div className="scale-in">
           <Speakers speakers={carouselSpeakers} options={OPTIONS} />
         </div>
-        <div className="mt-10 divide-y divide-line-2 rounded-xl border border-line-2 bg-card-2">
-          {/* Past speakers — only makes sense once there's a "before" to point
+        <div className="mt-10 overflow-hidden rounded-xl border border-line-2 bg-card-2">
+          <div className="divide-y divide-line-2">
+            {/* Past speakers — only makes sense once there's a "before" to point
       back to, i.e. once 2026 names exist. Its own row, not its own card. */}
-          {hasAnnouncedSpeakers && (
-            <div className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between lg:p-8">
-              <div>
-                <p className="text-lg font-semibold text-white">
-                  Curious who&apos;s spoken before?
-                </p>
-                <p className="mt-1 text-sm text-ink-3">
-                  Browse every speaker across three editions of Blockfest Africa.
-                </p>
+            {hasAnnouncedSpeakers && (
+              <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between lg:p-8">
+                <div className="min-w-0">
+                  <p className="text-lg font-semibold text-white">
+                    Curious who&apos;s spoken before?
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-ink-3">
+                    Browse every speaker across previous editions of Blockfest Africa.
+                  </p>
+                </div>
+                <div className="w-full md:w-55">
+                  <Button
+                    asChild
+                    variant="gold"
+                    className="w-full rounded-full px-4 text-base font-semibold"
+                  >
+                    <Link href="/past-speakers">See Past Speakers</Link>
+                  </Button>
+                </div>
               </div>
-              <Button
-                asChild
-                variant="gold"
-                className="rounded-full px-7 text-base font-semibold"
-              >
-                <Link href="/past-speakers">See Past Speakers</Link>
-              </Button>
-            </div>
-          )}
+            )}
 
-          <div className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between lg:p-8">
-            <p className="text-lg text-ink">
-              Want to speak at  Blockf3st Africa 2026?
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button
-                asChild
-                variant="gold"
-                className="rounded-full px-7 text-base font-semibold"
-              >
-                <Link href="/call-for-speakers">Apply to Speak</Link>
-              </Button>
-              {/* volunteering has ended */}
-              {/* <Button
+            <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between lg:p-8">
+              <p className="text-lg text-ink">
+                Want to speak at Blockfest Africa 2026?
+              </p>
+              <div className="w-full md:w-55">
+                <Button
+                  asChild
+                  variant="gold"
+                  className="w-full rounded-full px-4 text-base font-semibold"
+                >
+                  <Link href="/call-for-speakers">Apply to Speak</Link>
+                </Button>
+                {/* volunteering has ended */}
+                {/* <Button
         asChild
         variant="outline"
-        className="rounded-full px-7 text-base font-semibold"
+        className="w-full rounded-full px-4 text-base font-semibold"
       >
         <Link href="/volunteer">Apply to Volunteer</Link>
       </Button> */}
+              </div>
             </div>
           </div>
         </div>
