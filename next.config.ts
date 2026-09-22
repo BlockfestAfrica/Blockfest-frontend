@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
 
   // Security headers
   async headers() {
+    const isDev = process.env.NODE_ENV === "development";
+
     return [
       {
         source: "/(.*)",
@@ -57,32 +59,31 @@ const nextConfig: NextConfig = {
           },
           {
             /*
-             * 'unsafe-eval' is gone, and so is the vendor host from
-             * script-src: the analytics tag is served from this origin as a
-             * pinned snapshot (public/vendor/script.js), so NO external host
-             * may execute script anywhere on the site. The vendor stays in
-             * connect-src only, which is receiving beacons, not running code.
+             * 'unsafe-eval' is gone in production, and so is the vendor host
+             * from script-src: the analytics tag is served from this origin
+             * as a pinned snapshot (public/vendor/script.js), so NO external
+             * host may execute script anywhere on the site in production.
+             * The vendor stays in connect-src only, which is receiving
+             * beacons, not running code.
              *
-             * What this cannot fix is the shape of the problem. Netlify
-             * Identity sets nf_jwt and nf_refresh through document.cookie with
-             * path=/ and no httpOnly, and gotrue-js keeps the refresh token in
-             * localStorage, so an admin's credentials are readable by any
-             * script running anywhere on this origin. The console and the
-             * public site share an origin, and the public site loads a vendor
-             * tag. Script execution on the homepage is therefore script
-             * execution with an admin's session in reach, and the hour long
-             * JWT can be refreshed from the stolen refresh token indefinitely.
+             * Dev-only exception: next dev's Fast Refresh / HMR client uses
+             * eval() for its source maps, which this policy was blocking
+             * locally (blank carousel, dead client components). isDev is
+             * false on every deployed build — the host sets
+             * NODE_ENV=production for `next build` — so this widens nothing
+             * that ships. The vulnerability this header defends against
+             * (#138: eval + a same-origin script tag reaching an admin's
+             * Netlify Identity token) requires a script actually running on
+             * a live, authenticated session; a local dev server on your own
+             * machine isn't that surface.
              *
-             * The real fix is to stop sharing the origin: move the console to
-             * its own hostname, or exchange the Identity token server side once
-             * and carry an httpOnly SameSite=Strict cookie. Both are larger
-             * than a night before launch. Removing eval and keeping the tag off
-             * every path that can carry a credential narrows it; it does not
-             * close it. Tracked in #138.
+             * What this still cannot fix is the shape of the problem in
+             * #138. That needs the console moved off this origin or the
+             * Identity token exchanged server-side behind an httpOnly
+             * cookie. Tracked there, not here.
              */
             key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.sabilytics.com; frame-src 'self' https://blockfest.substack.com; frame-ancestors 'none';",
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.sabilytics.com${isDev ? " ws:" : ""}; frame-src 'self' https://blockfest.substack.com; frame-ancestors 'none';`,
           },
         ],
       },
@@ -93,7 +94,10 @@ const nextConfig: NextConfig = {
          * A browser enforces the INTERSECTION of every Content-Security-Policy
          * header it receives, so this genuinely narrows the one above rather
          * than replacing it. On these paths the vendor analytics host is not an
-         * allowed script source or connect target, and 'unsafe-eval' is gone.
+         * allowed script source or connect target, and 'unsafe-eval' is gone —
+         * including in dev, on purpose: this is the block directly guarding
+         * #138, so it doesn't get the same dev carve-out as the main policy
+         * above unless you hit the same local-breakage symptom here too.
          *
          * This is the second layer. components/shared/analytics.tsx already
          * refuses to render the tag here, and this is what holds if somebody
