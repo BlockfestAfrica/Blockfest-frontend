@@ -6,6 +6,7 @@ export interface PartnerLogo {
 export interface PartnerData {
   headline: PartnerLogo[]; 
   silver: PartnerLogo[];
+  mobility?: PartnerLogo[];
   community?: PartnerLogo[];
   media?: PartnerLogo[];
   ecosystem?: PartnerLogo[];
@@ -17,6 +18,9 @@ export const partners: PartnerData = {
   ],
   silver: [
     { logo: "/2026/sponsors/cw.svg", twitter: "https://x.com/cakewallet?s=11" },
+  ], 
+  mobility: [
+    { logo: "/2026/sponsors/rovv.png", twitter: "https://x.com/rovvafrica?s=11" },
   ], 
   // community: [
   //

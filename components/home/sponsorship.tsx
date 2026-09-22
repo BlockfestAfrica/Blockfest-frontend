@@ -52,7 +52,7 @@ export function SponsorshipSection() {
               }
               className="inline-flex min-h-12 max-w-full items-center justify-center gap-2 rounded-full bg-brand-gold px-4 py-2 text-sm font-semibold text-black transition-colors duration-300 hover:bg-brand-gold-hover sm:px-7 sm:text-base"
             >
-              <Mail className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+              <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span className="break-all text-center">{contactEmail}</span>
             </Link>
             <span className="self-center text-sm text-ink-3">or</span>
@@ -65,7 +65,7 @@ export function SponsorshipSection() {
               }
               className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-line-2 bg-card-3 px-7 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/20 sm:text-base"
             >
-              <FaTelegram className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+              <FaTelegram className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>Message on Telegram</span>
             </Link>
           </div>
