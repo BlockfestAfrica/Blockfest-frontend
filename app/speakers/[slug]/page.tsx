@@ -13,7 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { FaXTwitter, FaLinkedin, FaYoutube } from "react-icons/fa6";
-import  { SpeakersList,type Speaker } from "@/lib/speakers";
+import { SpeakersList, type Speaker } from "@/lib/speakers";
 import { Button } from "@/components/ui/button";
 import { gotham } from "@/lib/fonts";
 import { generateSEO } from "@/lib/seo";
@@ -123,6 +123,13 @@ export default async function SpeakerPage({
     notFound();
   }
 
+  // Which archive this speaker belongs to decides where "back" and
+  // "view all" send you — a 2026 speaker's audience wants the lineup
+  // they came from, not three years of alumni, and vice versa.
+  const backHref = speaker.cohort === "2026" ? "/speakers" : "/past-speakers";
+  const backLabel =
+    speaker.cohort === "2026" ? "Back to Speakers" : "Back to Past Speakers";
+
   const socialLinks: {
     platform: string;
     url?: string;
@@ -153,97 +160,96 @@ export default async function SpeakerPage({
   return (
     <>
       <main id="main">
-      {/* Hero Section */}
-      <section
-        className="section-y bg-paper"
-        aria-label={`${speaker.name} speaker profile`}
-      >
-        <div className="container-page">
-          {/* Back Button */}
-          <Link
-            href="/speakers"
-            className="group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-brand-blue transition-colors duration-200 hover:text-brand-blue-dark touch-manipulation"
-          >
-            <ArrowLeft
-              className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1"
-              aria-hidden="true"
-            />
-            <span className="text-sm">Back to Speakers</span>
-          </Link>
+        {/* Hero Section */}
+        <section
+          className="section-y bg-paper"
+          aria-label={`${speaker.name} speaker profile`}
+        >
+          <div className="container-page">
+            {/* Back Button */}
+            <Link
+              href={backHref}
+              className="group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-brand-blue transition-colors duration-200 hover:text-brand-blue-dark touch-manipulation"
+            >
+              <ArrowLeft
+                className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1"
+                aria-hidden="true"
+              />
+              <span className="text-sm">{backLabel}</span>
+            </Link>
 
-          <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:flex-row lg:items-start lg:gap-12">
-            {/* Speaker Image */}
-            <div className="shrink-0">
-              <div className="relative h-48 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white sm:h-60 sm:w-60 md:h-72 md:w-72 lg:h-80 lg:w-80">
-                <Image
-                  src={speaker.image}
-                  alt={`${speaker.name} - ${speaker.title}`}
-                  fill
-                  className={`object-cover ${
-                    speaker.imagePosition || "object-top"
-                  }`}
-                  priority
-                  sizes="(min-width: 1024px) 320px, (min-width: 768px) 288px, (min-width: 640px) 240px, 192px"
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                />
-              </div>
-            </div>
-
-            {/* Speaker Info */}
-            <div className="w-full max-w-2xl lg:max-w-none">
-              <h1
-                className={`${gotham.className} text-display-sm font-bold text-gray-900`}
-              >
-                {speaker.name}
-              </h1>
-
-              <p
-                className={`${gotham.className} mt-4 text-lg font-semibold text-gray-600`}
-              >
-                {speaker.title}
-              </p>
-
-              {speaker.company && (
-                <p className="mt-3 flex flex-wrap items-center gap-2 text-base font-semibold text-brand-blue">
-                  <Building2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  {speaker.company}
-                </p>
-              )}
-
-              {/* Event Info Card */}
-              <div className="mt-8 rounded-xl border border-gray-200 bg-paper-muted p-6">
-                <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-600">
-                  <Calendar className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  Speaking at Blockfest Africa 2025
-                </p>
-                <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                  <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  Lagos, Nigeria • October 11th, 2025
-                </p>
-              </div>
-
-              {/* Social Links */}
-              {socialLinks.length > 0 && (
-                <div className="mt-6 flex flex-wrap items-center gap-3">
-                  {socialLinks.map(({ platform, url, icon: Icon }) => (
-                    <a
-                      key={platform}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 touch-manipulation"
-                      aria-label={`Follow ${speaker.name} on ${platform}`}
-                    >
-                      <Icon className="h-5 w-5" aria-hidden="true" />
-                    </a>
-                  ))}
+            <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:flex-row lg:items-start lg:gap-12">
+              {/* Speaker Image */}
+              <div className="shrink-0">
+                <div className="relative h-48 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white sm:h-60 sm:w-60 md:h-72 md:w-72 lg:h-80 lg:w-80">
+                  <Image
+                    src={speaker.image}
+                    alt={`${speaker.name} - ${speaker.title}`}
+                    fill
+                    className={`object-cover ${speaker.imagePosition || "object-top"
+                      }`}
+                    priority
+                    sizes="(min-width: 1024px) 320px, (min-width: 768px) 288px, (min-width: 640px) 240px, 192px"
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                  />
                 </div>
-              )}
+              </div>
+
+              {/* Speaker Info */}
+              <div className="w-full max-w-2xl lg:max-w-none">
+                <h1
+                  className={`${gotham.className} text-display-sm font-bold text-gray-900`}
+                >
+                  {speaker.name}
+                </h1>
+
+                <p
+                  className={`${gotham.className} mt-4 text-lg font-semibold text-gray-600`}
+                >
+                  {speaker.title}
+                </p>
+
+                {speaker.company && (
+                  <p className="mt-3 flex flex-wrap items-center gap-2 text-base font-semibold text-brand-blue">
+                    <Building2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {speaker.company}
+                  </p>
+                )}
+
+                {/* Event Info Card */}
+                <div className="mt-8 rounded-xl border border-gray-200 bg-paper-muted p-6">
+                  <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-600">
+                    <Calendar className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    Speaking at Blockfest Africa 2025
+                  </p>
+                  <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    Lagos, Nigeria • October 11th, 2025
+                  </p>
+                </div>
+
+                {/* Social Links */}
+                {socialLinks.length > 0 && (
+                  <div className="mt-6 flex flex-wrap items-center gap-3">
+                    {socialLinks.map(({ platform, url, icon: Icon }) => (
+                      <a
+                        key={platform}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 touch-manipulation"
+                        aria-label={`Follow ${speaker.name} on ${platform}`}
+                      >
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* Biography Section */}
       <section className="section-y bg-paper border-t border-gray-200">
@@ -312,7 +318,7 @@ export default async function SpeakerPage({
                 asChild
                 className="rounded-full border border-line-2 bg-card-3 px-7 text-base font-semibold text-white hover:bg-white/20"
               >
-                <Link href="/speakers">View All Speakers</Link>
+                <Link href={backHref}>View All Speakers</Link>
               </Button>
             </div>
           </div>
@@ -345,7 +351,7 @@ export default async function SpeakerPage({
           { name: speaker.name, url: `/speakers/${slug}` },
         ]}
       />
-      </main>
+    </main >
     </>
   );
 }

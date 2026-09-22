@@ -8,6 +8,7 @@ import { SpeakersList } from "@/lib/speakers";
 import { EventHighlights } from "@/components/shared/event-highlights";
 import { EventCta } from "@/components/shared/event-cta";
 import { FaInstagram, FaTiktok, FaXTwitter, FaYoutube } from "react-icons/fa6";
+import { SpeakersSection } from "@/components/home/speakers";
 
 export const metadata: Metadata = {
   title: "Blockfest Africa 2025 - Event Recap",
@@ -102,6 +103,8 @@ export default function Blockfest2025Page() {
           </div>
         </div>
       </section>
+              <SpeakersSection />
+      
 
       {/* Stats Section */}
       <section className="section-y bg-ground border-t border-line-2">
