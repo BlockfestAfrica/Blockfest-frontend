@@ -69,7 +69,7 @@ export default function Blockfest2025Page() {
         />
         {/* Scrim: keeps the type legible without flattening the photograph. */}
         <div
-          className="absolute inset-0 bg-ground/80 md:bg-gradient-to-r md:from-ground md:via-ground/85 md:to-ground/25"
+          className="absolute inset-0 bg-ground/80 md:bg-linear-to-r md:from-ground md:via-ground/85 md:to-ground/25"
           aria-hidden="true"
         />
 
@@ -306,7 +306,7 @@ export default function Blockfest2025Page() {
             ].map((img, index) => (
               <div
                 key={img}
-                className="relative aspect-[4/3] overflow-hidden rounded-xl border border-gray-200 bg-paper-muted"
+                className="relative aspect-4/3 overflow-hidden rounded-xl border border-gray-200 bg-paper-muted"
               >
                 <Image
                   src={img}

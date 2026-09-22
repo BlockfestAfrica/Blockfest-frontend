@@ -10,6 +10,7 @@ export interface Speaker {
   expertise?: string[]; // Areas of expertise
   company?: string; // Company name for easier filtering
   bio?: string; // Speaker biography with markdown support
+  cohort?: "2026" | "past";
 }
 
 export const SpeakersList: Speaker[] = [
@@ -29,6 +30,7 @@ export const SpeakersList: Speaker[] = [
     expertise: ["Government & Policy", "Education"],
     company: "Security and Exchange Commission, Nigeria",
     bio: "",
+
   },
   {
     name: "Hon. Mobolaji Ogunlende Abubakre",
@@ -313,8 +315,21 @@ export const SpeakersList: Speaker[] = [
     image: "/images/speakers/noteezy.jpg",
     expertise: ["Education"],
   },
+
+  {
+    name: "Dr. Tunji Alausa",
+    title: "Honourable Minister of Education, Federal Republic of Nigeria",
+    image: "/2026/speakers/alausa.jpeg", 
+    expertise: ["Government & Policy", "Education"],
+    company: "Federal Ministry of Education, Nigeria",
+    twitter: "https://x.com/drtunjialausa?s=21",
+    bio: "Dr. Maruf Tunji Alausa, CON, is Nigeria's Honourable Minister of Education, appointed in October 2024 under President Bola Tinubu's administration. He previously served as Minister of State for Health and Social Welfare from 2023 to 2024.\n\nA board-certified nephrologist by training, with a background from the University of Lagos, Dr. Alausa brings a clinical and systems-thinking approach to public service, one that now shapes how Nigeria is reforming its education sector.\n\nSince taking office, he has driven a wide-ranging reform agenda spanning tertiary education policy, teacher recruitment and welfare, diaspora engagement in human capital development, and institutional innovation across the sector, work that has earned him recognition as one of the administration's most active cabinet ministers.\n\nAt Blockfest Africa 2026, Dr. Alausa joins founders, regulators and builders shaping Africa's next chapter, bringing the perspective of a policymaker working to align Nigeria's education system with a rapidly changing, increasingly onchain world.",
+    cohort: "2026",
+  },
 ];
 
+export const isPastSpeaker = (speaker: Speaker) => speaker.cohort !== "2026";
+export const is2026Speaker = (speaker: Speaker) => speaker.cohort === "2026";
 // Export unique expertise categories for filtering
 export const expertiseCategories = [
   "Web3 & Blockchain",
