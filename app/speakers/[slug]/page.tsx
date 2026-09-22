@@ -218,14 +218,19 @@ export default async function SpeakerPage({
                 )}
 
                 {/* Event Info Card */}
+                {/* Event Info Card */}
                 <div className="mt-8 rounded-xl border border-gray-200 bg-paper-muted p-6">
                   <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-600">
                     <Calendar className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    Speaking at Blockfest Africa 2025
+                    {speaker.cohort === "2026"
+                      ? "Speaking at Blockfest Africa 2026"
+                      : "Spoke at Blockfest Africa"}
                   </p>
                   <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
                     <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    Lagos, Nigeria • October 11th, 2025
+                    {speaker.cohort === "2026"
+                      ? "Lagos, Nigeria • October 22–24, 2026"
+                      : "Lagos, Nigeria"}
                   </p>
                 </div>
 
@@ -251,107 +256,107 @@ export default async function SpeakerPage({
           </div>
         </section>
 
-      {/* Biography Section */}
-      <section className="section-y bg-paper border-t border-gray-200">
-        <div className="container-page">
-          {speaker.bio ? (
-            <>
-              <div className="mb-10 lg:mb-14">
-                <h2
-                  className={`${gotham.className} text-display-sm font-bold text-gray-900`}
-                >
-                  About {speaker.name.split(" ")[0]}
-                </h2>
-              </div>
-
-              <article className="max-w-3xl">
-                <div className="space-y-6 text-base leading-relaxed text-gray-600">
-                  {formatBio(speaker.bio)}
+        {/* Biography Section */}
+        <section className="section-y bg-paper border-t border-gray-200">
+          <div className="container-page">
+            {speaker.bio ? (
+              <>
+                <div className="mb-10 lg:mb-14">
+                  <h2
+                    className={`${gotham.className} text-display-sm font-bold text-gray-900`}
+                  >
+                    About {speaker.name.split(" ")[0]}
+                  </h2>
                 </div>
-              </article>
-            </>
-          ) : (
-            <div className="max-w-2xl">
-              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
-                <Users className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <h2
-                className={`${gotham.className} mt-4 text-2xl font-bold text-gray-900`}
-              >
-                Biography Coming Soon
-              </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
-                We&apos;re currently crafting a comprehensive biography for{" "}
-                {speaker.name.split(" ")[0]}. Check back soon for their
-                inspiring story and professional journey.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="section-y bg-ground">
-        <div className="container-page">
-          <div className="max-w-2xl">
-            <h2
-              className={`${gotham.className} text-display-sm font-bold text-white`}
-            >
-              Don&apos;t Miss Out
-            </h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
-              Join {speaker.name.split(" ")[0]} and other industry leaders in Lagos,
-              October 22&ndash;24, 2026.
-            </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-              <Button
-                asChild
-                variant="gold"
-                className="rounded-full px-7 text-base font-semibold"
+                <article className="max-w-3xl">
+                  <div className="space-y-6 text-base leading-relaxed text-gray-600">
+                    {formatBio(speaker.bio)}
+                  </div>
+                </article>
+              </>
+            ) : (
+              <div className="max-w-2xl">
+                <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
+                  <Users className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <h2
+                  className={`${gotham.className} mt-4 text-2xl font-bold text-gray-900`}
+                >
+                  Biography Coming Soon
+                </h2>
+                <p className="mt-3 text-base leading-relaxed text-gray-600">
+                  We&apos;re currently crafting a comprehensive biography for{" "}
+                  {speaker.name.split(" ")[0]}. Check back soon for their
+                  inspiring story and professional journey.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="section-y bg-ground">
+          <div className="container-page">
+            <div className="max-w-2xl">
+              <h2
+                className={`${gotham.className} text-display-sm font-bold text-white`}
               >
-                <Link href="/tickets">
-                  Get Tickets
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                className="rounded-full border border-line-2 bg-card-3 px-7 text-base font-semibold text-white hover:bg-white/20"
-              >
-                <Link href={backHref}>View All Speakers</Link>
-              </Button>
+                Don&apos;t Miss Out
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
+                Join {speaker.name.split(" ")[0]} and other industry leaders in Lagos,
+                October 22&ndash;24, 2026.
+              </p>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <Button
+                  asChild
+                  variant="gold"
+                  className="rounded-full px-7 text-base font-semibold"
+                >
+                  <Link href="/tickets">
+                    Get Tickets
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  className="rounded-full border border-line-2 bg-card-3 px-7 text-base font-semibold text-white hover:bg-white/20"
+                >
+                  <Link href={backHref}>View All Speakers</Link>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Structured Data */}
-      <SpeakerSchema
-        speaker={{
-          name: speaker.name,
-          jobTitle: speaker.title,
-          description:
-            speaker.bio ||
-            `${speaker.title} at ${speaker.company || "Blockfest Africa 2025"}`,
-          image: speaker.image,
-          url: `/speakers/${slug}`,
-          sameAs: [
-            speaker.twitter,
-            speaker.linkedin,
-            speaker.website,
-            speaker.youtube,
-          ].filter(Boolean) as string[],
-        }}
-      />
+        {/* Structured Data */}
+        <SpeakerSchema
+          speaker={{
+            name: speaker.name,
+            jobTitle: speaker.title,
+            description:
+              speaker.bio ||
+              `${speaker.title} at ${speaker.company || "Blockfest Africa 2025"}`,
+            image: speaker.image,
+            url: `/speakers/${slug}`,
+            sameAs: [
+              speaker.twitter,
+              speaker.linkedin,
+              speaker.website,
+              speaker.youtube,
+            ].filter(Boolean) as string[],
+          }}
+        />
 
-      <BreadcrumbSchema
-        items={[
-          { name: "Home", url: "/" },
-          { name: "Speakers", url: "/speakers" },
-          { name: speaker.name, url: `/speakers/${slug}` },
-        ]}
-      />
-    </main >
+        <BreadcrumbSchema
+          items={[
+            { name: "Home", url: "/" },
+            { name: "Speakers", url: "/speakers" },
+            { name: speaker.name, url: `/speakers/${slug}` },
+          ]}
+        />
+      </main >
     </>
   );
 }
