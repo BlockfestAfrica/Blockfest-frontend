@@ -156,6 +156,32 @@ export async function POST(request: NextRequest) {
     `);
 
     const closes = closingAt(String(week.ends_at));
+
+    /*
+     * The ledger is claimed BEFORE the first send, not after the last one.
+     *
+     * It used to be written after the loop, which made it a report rather
+     * than a lock. This handler carries maxDuration = 300 and mails every
+     * active creator one at a time; a batch that outruns that, or a deploy
+     * mid-send, left no row at all. The repeat guard above then passed, and
+     * pressing Announce again re-mailed everybody already reached - up to
+     * several hundred duplicates, out of the same quota that carries the
+     * personal links people log in with.
+     *
+     * Claiming first inverts the failure: a crash mid-batch now leaves a
+     * row that REFUSES the retry, which is the safe direction. Somebody has
+     * to read the counts to see how far it got, and the counts are filled
+     * in below.
+     */
+    await db.execute(sql`
+      INSERT INTO audit_log (campaign_id, actor_admin_id, action, entity_type, entity_id, after)
+      VALUES (
+        ${week.campaign_id}::uuid, ${admin.admin.adminId}::uuid,
+        'challenge.announced', 'challenge', ${week.id}::uuid,
+        ${JSON.stringify({ week_no: week.week_no, sent: 0, failed: 0, status: "started" })}::jsonb
+      )
+    `);
+
     let sent = 0;
     let failed = 0;
 
@@ -181,17 +207,17 @@ export async function POST(request: NextRequest) {
     }
 
     /*
-     * Written after the batch, carrying the counts, because "we announced
-     * stage 2 and 3 of 140 bounced" is the question this row exists to
-     * answer. It is also the lock the repeat check above reads.
+     * The counts, filled into the row claimed before the batch, because
+     * "we announced stage 2 and 3 of 140 bounced" is the question this row
+     * exists to answer. If this update never runs the row still stands and
+     * still refuses a retry, carrying status 'started' to say the batch did
+     * not finish cleanly.
      */
     await db.execute(sql`
-      INSERT INTO audit_log (campaign_id, actor_admin_id, action, entity_type, entity_id, after)
-      VALUES (
-        ${week.campaign_id}::uuid, ${admin.admin.adminId}::uuid,
-        'challenge.announced', 'challenge', ${week.id}::uuid,
-        ${JSON.stringify({ week_no: week.week_no, sent, failed })}::jsonb
-      )
+      UPDATE audit_log
+         SET after = ${JSON.stringify({ week_no: week.week_no, sent, failed, status: "finished" })}::jsonb
+       WHERE action = 'challenge.announced'
+         AND entity_id = ${week.id}::uuid
     `);
 
     return NextResponse.json({ ok: true, sent, failed });

@@ -1,5 +1,5 @@
 import { and, asc, eq, gt, lte, sql } from "drizzle-orm";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, after } from "next/server";
 import { campaigns, challenges, getDb } from "@/lib/db/client";
 import { currentCreator, handlesForEnrolment } from "@/lib/creator-session";
 import { sameOrigin } from "@/lib/admin/request";
@@ -19,6 +19,7 @@ import {
   type CampaignPlatform,
 } from "@/lib/campaigns";
 import { sendEmailQuietly } from "@/lib/email/client";
+import { notifyAdminsOfActivity } from "@/lib/notify/admin-activity";
 import { personalPage, submissionReceivedEmail } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
@@ -229,6 +230,17 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       logError("campaign/submit receipt mail", error);
     }
+
+    /* The team hears about it too, after the response and never in front of
+       it: the entry is already recorded and nothing the creator sees
+       depends on this going. */
+    after(() =>
+      notifyAdminsOfActivity({
+        kind: "submission",
+        who: creator.name,
+        platformLabel: platformLabels[parsed.data.platform as CampaignPlatform],
+      }),
+    );
 
     return NextResponse.json({
       ok: true,
