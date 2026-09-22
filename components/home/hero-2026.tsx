@@ -62,7 +62,7 @@ export function HeroSection2026() {
       />
       {/* Scrim: keeps the type legible without flattening the photograph. */}
       <div
-        className="absolute inset-0 bg-ground/80 md:bg-gradient-to-r md:from-ground/95 md:via-ground/60 md:to-transparent"
+        className="absolute inset-0 bg-ground/80 md:bg-linear-to-r md:from-ground/95 md:via-ground/60 md:to-transparent"
         aria-hidden="true"
       />
 
