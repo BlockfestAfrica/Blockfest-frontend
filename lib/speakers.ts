@@ -314,16 +314,28 @@ export const SpeakersList: Speaker[] = [
     title: "Digital Creator & KOL",
     image: "/images/speakers/noteezy.jpg",
     expertise: ["Education"],
+    
   },
 
   {
     name: "Dr. Tunji Alausa",
     title: "Honourable Minister of Education, Federal Republic of Nigeria",
-    image: "/2026/speakers/alausa.jpeg", 
+    image: "/2026/speakers/alausa.jpeg",
     expertise: ["Government & Policy", "Education"],
     company: "Federal Ministry of Education, Nigeria",
     twitter: "https://x.com/drtunjialausa?s=21",
     bio: "Dr. Maruf Tunji Alausa, CON, is Nigeria's Honourable Minister of Education, appointed in October 2024 under President Bola Tinubu's administration. He previously served as Minister of State for Health and Social Welfare from 2023 to 2024.\n\nA board-certified nephrologist by training, with a background from the University of Lagos, Dr. Alausa brings a clinical and systems-thinking approach to public service, one that now shapes how Nigeria is reforming its education sector.\n\nSince taking office, he has driven a wide-ranging reform agenda spanning tertiary education policy, teacher recruitment and welfare, diaspora engagement in human capital development, and institutional innovation across the sector, work that has earned him recognition as one of the administration's most active cabinet ministers.\n\nAt Blockfest Africa 2026, Dr. Alausa joins founders, regulators and builders shaping Africa's next chapter, bringing the perspective of a policymaker working to align Nigeria's education system with a rapidly changing, increasingly onchain world.",
+    cohort: "2026",
+  },
+
+  {
+    name: "Teddi Speaks",
+    title: "Founder & Convener, Unchain Summer",
+    image: "/2026/speakers/teddi.png",
+    expertise: ["Web3 & Blockchain", "Community Building", "Education"],
+    company: "Unchain Summer",
+    twitter: "https://x.com/teddi_speaks",
+    bio: "Teddi Speaks, also known as King Sol, is the founder and convener of Unchain Summer, a Web3 community builder, educator and blockchain advocate focused on growing Africa's onchain ecosystem.\n\nHis work sits at the intersection of community, education and ecosystem growth, creating spaces for more Africans to participate in the digital economy.\n\nAt Blockfest Africa 2026, Teddi joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
 ];
