@@ -1,6 +1,6 @@
 "use client";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { EmblaOptionsType, EmblaCarouselType } from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
@@ -22,6 +22,13 @@ type PropType = {
   autoplayDelay?: number;
 };
 
+// Below this many slides, Embla's loop mode doesn't have enough real slides
+// to generate convincing clones — the wraparound math breaks and it can get
+// stuck showing one slide regardless of Next/Prev. A bounded (non-looping)
+// carousel below this threshold is the correct, working behavior anyway:
+// with 2 items there's nothing meaningful to "loop" through.
+const MIN_SLIDES_TO_LOOP = 4;
+
 const Speakers: React.FC<PropType> = (props) => {
   const {
     speakers,
@@ -32,6 +39,12 @@ const Speakers: React.FC<PropType> = (props) => {
   } = props;
 
   const rootRef = useRef<HTMLElement>(null);
+
+  const canLoop = speakers.length >= MIN_SLIDES_TO_LOOP;
+  const emblaOptions = useMemo<EmblaOptionsType>(
+    () => ({ ...options, loop: canLoop ? (options?.loop ?? false) : false }),
+    [options, canLoop]
+  );
 
   /**
    * Respect prefers-reduced-motion. Read once on mount rather than in render so
@@ -46,7 +59,7 @@ const Speakers: React.FC<PropType> = (props) => {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(options, [
+  const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions, [
     Autoplay({
       delay: autoplayDelay,
       stopOnInteraction: false,
@@ -204,12 +217,12 @@ const Speakers: React.FC<PropType> = (props) => {
         role="group"
         aria-label="Speaker slides"
       >
-        <div className="flex touch-pan-y touch-pinch-zoom justify-center items-center">
+        <div className="flex touch-pan-y touch-pinch-zoom">
           {speakers.map((speaker, index) => (
             <div
               // Phones get one card, near full width. At 50% the card content
               // box was 91px and everything inside it overflowed.
-              className="flex-[0_0_88%] md:flex-[0_0_75%] lg:flex-[0_0_90%] xl:flex-[0_0_100%] min-w-0 flex items-stretch justify-center px-1.5 md:px-8"
+              className="flex-[0_0_90%] md:flex-[0_0_100%] min-w-0 flex items-stretch justify-center px-1.5 md:px-8"
               key={`${speaker.name}-${index}`}
               // biome-ignore lint/a11y/useSemanticElements: <explanation>
               role="group"
