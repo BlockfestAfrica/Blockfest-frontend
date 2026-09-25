@@ -57,9 +57,30 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     status: "",
   });
 
+  /*
+   * What the open challenge looked like when editing began.
+   *
+   * One `form` object is shared by every week, so opening a second week
+   * overwrote the first in place. Combined with a Cancel that called
+   * setOpen(null) directly, two thousand characters of a stage brief lived
+   * only in React state and could be wiped by the same button that said
+   * "Edit" a moment earlier. This is the screen whose text is emailed to
+   * every creator in the campaign.
+   */
+  const [baseline, setBaseline] = useState<typeof form | null>(null);
+  /** Where the reviewer was heading when a dirty form stopped them. */
+  const [discarding, setDiscarding] = useState<
+    { to: EditableChallenge | null } | null
+  >(null);
+
+  const dirty =
+    baseline !== null &&
+    (Object.keys(baseline) as (keyof typeof baseline)[]).some(
+      (k) => form[k] !== baseline[k],
+    );
+
   function startEditing(challenge: EditableChallenge) {
-    setOpen(challenge.id);
-    setForm({
+    const next = {
       title: challenge.title,
       description: challenge.description,
       question: challenge.question ?? "",
@@ -67,7 +88,29 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
       skills: (challenge.skills ?? []).join(", "),
       basePoints: String(challenge.basePoints),
       status: challenge.status,
-    });
+    };
+    setOpen(challenge.id);
+    setForm(next);
+    setBaseline(next);
+    setDiscarding(null);
+  }
+
+  /** Close, or move to another week, throwing away what was typed. */
+  function leaveEditor(to: EditableChallenge | null) {
+    setDiscarding(null);
+    setBaseline(null);
+    if (to) startEditing(to);
+    else setOpen(null);
+  }
+
+  /*
+   * Every way out of an open editor goes through here, so the guard cannot
+   * be bypassed by taking the other one: Cancel on this week, and Edit on
+   * a different week, both discard the same unsaved text.
+   */
+  function askToLeave(to: EditableChallenge | null) {
+    if (dirty) setDiscarding({ to });
+    else leaveEditor(to);
   }
 
   /**
@@ -140,6 +183,10 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
       }
 
       toast.success(`Week ${challenge.weekNo} saved.`);
+      // Saved text is no longer unsaved text, so closing here must not trip
+      // the discard guard on the way out.
+      setBaseline(null);
+      setDiscarding(null);
       setOpen(null);
       router.refresh();
     } catch {
@@ -187,7 +234,11 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                 <button
                   type="button"
                   onClick={() =>
-                    open === challenge.id ? setOpen(null) : startEditing(challenge)
+                    open === challenge.id
+                      ? askToLeave(null)
+                      : open
+                        ? askToLeave(challenge)
+                        : startEditing(challenge)
                   }
                   aria-expanded={open === challenge.id}
                   className="ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-ink-3 transition-colors hover:text-white"
@@ -196,6 +247,40 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                 </button>
               )}
             </div>
+
+            {open === challenge.id && discarding && (
+              <div className="mt-4 rounded-lg border-l-2 border-brand-gold bg-brand-gold/[0.08] p-4">
+                <p className="text-sm font-semibold text-white">
+                  Discard what you have written?
+                </p>
+                <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
+                  This brief has not been saved. It is the text emailed to
+                  every creator when the stage is announced, and nothing here
+                  keeps a copy.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {/* Keep editing first and focused, matching Confirm: the
+                      default action is the one that changes nothing. */}
+                  <button
+                    type="button"
+                    autoFocus
+                    onClick={() => setDiscarding(null)}
+                    className={buttonClass("secondary")}
+                  >
+                    Keep editing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => leaveEditor(discarding.to)}
+                    className={buttonClass("danger")}
+                  >
+                    {discarding.to
+                      ? `Discard and open week ${discarding.to.weekNo}`
+                      : "Discard it"}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {open === challenge.id && !challenge.readonly_ && (
               <div className="mt-4 flex flex-col gap-4">

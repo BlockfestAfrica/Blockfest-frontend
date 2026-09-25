@@ -219,6 +219,9 @@ export function ParticipantsTable({
    * worst possible state for the one control that moves points.
    */
   const selected = shown.find((r) => r.enrolmentId === awarding) ?? null;
+  /* The same lookup for the void panel, which now renders once after the
+     list rather than inside each md:hidden card. */
+  const voidingRow = shown.find((r) => r.enrolmentId === voiding) ?? null;
   const awardRef = useRef<HTMLDivElement>(null);
 
   /*
@@ -341,60 +344,7 @@ export function ParticipantsTable({
                   </ul>
                 )}
 
-                {voiding === row.enrolmentId && (
-                  <div className="mt-3 rounded-lg border border-red-400/40 bg-red-400/5 p-4">
-                    <p className="max-w-prose text-sm leading-relaxed text-ink-2">
-                      Their entries stop being accepted, the points those
-                      entries earned are reversed, and referral payouts they
-                      triggered are clawed back. This is recorded against your
-                      name.
-                    </p>
-                    <label
-                      htmlFor={`void-why-${row.enrolmentId}`}
-                      className="mt-3 block text-sm font-semibold text-white"
-                    >
-                      Why
-                    </label>
-                    <input
-                      id={`void-why-${row.enrolmentId}`}
-                      value={voidReason}
-                      onChange={(event) => setVoidReason(event.target.value)}
-                      maxLength={300}
-                      placeholder="Bought engagement on two entries, evidence in the thread"
-                      className={`${control} mt-1`}
-                    />
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => voidEnrolment(row.enrolmentId, row.name)}
-                        className={buttonClass("dangerFill")}
-                      >
-                        {busy ? "Working…" : `Disqualify ${row.name}`}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVoiding(null);
-                          setVoidReason("");
-                        }}
-                        className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink-3 hover:text-white"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
 
-                {fixing?.enrolmentId === row.enrolmentId && (
-                  <CorrectHandle
-                    key={`${fixing.enrolmentId}-${fixing.platform}`}
-                    enrolmentId={fixing.enrolmentId}
-                    platform={fixing.platform}
-                    current={fixing.current}
-                    onDone={() => setFixing(null)}
-                  />
-                )}
 
                 <p className="mt-2 text-sm text-ink-3">
                   {row.submitted} sent · {row.approved} approved · joined{" "}
@@ -528,6 +478,34 @@ export function ParticipantsTable({
                             <span key={h} className="block font-mono text-xs">
                               <span className="text-ink-3">{platform}</span>{" "}
                               @{handle}
+                              {/* The same control the card list has had all
+                                  along. Correcting a handle existed only
+                                  below 768px, so on a laptop the capability
+                                  did not exist and nothing said so. */}
+                              {canCorrectHandles && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setFixing(
+                                      fixing?.enrolmentId === row.enrolmentId &&
+                                        fixing.platform === platform
+                                        ? null
+                                        : {
+                                            enrolmentId: row.enrolmentId,
+                                            platform,
+                                            current: handle,
+                                          },
+                                    )
+                                  }
+                                  aria-expanded={
+                                    fixing?.enrolmentId === row.enrolmentId &&
+                                    fixing.platform === platform
+                                  }
+                                  className="ml-1 inline-flex min-h-11 cursor-pointer items-center rounded-full px-2 font-sans text-xs font-semibold text-ink-4 transition-colors hover:text-white"
+                                >
+                                  fix
+                                </button>
+                              )}
                             </span>
                           );
                         })
@@ -566,6 +544,30 @@ export function ParticipantsTable({
                         <Coins className="h-4 w-4" aria-hidden="true" />
                         {awarding === row.enrolmentId ? "Close" : "Points"}
                       </button>
+                      {/* Disqualifying was reachable only in the card list,
+                          so above 768px /api/admin/void had no caller at
+                          all: an owner on a laptop would have had to narrow
+                          the window to find it, which nobody would guess.
+                          Quiet, and far from Points, because it is the
+                          destructive one. */}
+                      {canCorrectHandles && row.active && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setVoiding(
+                              voiding === row.enrolmentId
+                                ? null
+                                : row.enrolmentId,
+                            )
+                          }
+                          aria-expanded={voiding === row.enrolmentId}
+                          className="ml-2 inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-red-300/80 transition-colors hover:text-red-300"
+                        >
+                          {voiding === row.enrolmentId
+                            ? "Close"
+                            : "Disqualify"}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -598,6 +600,70 @@ export function ParticipantsTable({
        * be reached on the device an admin is most likely holding. One instance,
        * below the list, for whichever creator is selected.
        */}
+      {/*
+        * Rendered once, after the list, rather than inside each card.
+        *
+        * They used to live in the per-row card markup, which is md:hidden,
+        * so the controls existed only below 768px. Adding the buttons to
+        * the desktop table would have set the state and shown nothing.
+        * This is the shape the award panel already uses, and one panel
+        * serves both layouts.
+        */}
+                {voidingRow && (
+                  <div className="mt-3 rounded-lg border border-red-400/40 bg-red-400/5 p-4">
+                    <p className="max-w-prose text-sm leading-relaxed text-ink-2">
+                      Their entries stop being accepted, the points those
+                      entries earned are reversed, and referral payouts they
+                      triggered are clawed back. This is recorded against your
+                      name.
+                    </p>
+                    <label
+                      htmlFor={`void-why-${voidingRow.enrolmentId}`}
+                      className="mt-3 block text-sm font-semibold text-white"
+                    >
+                      Why
+                    </label>
+                    <input
+                      id={`void-why-${voidingRow.enrolmentId}`}
+                      value={voidReason}
+                      onChange={(event) => setVoidReason(event.target.value)}
+                      maxLength={300}
+                      placeholder="Bought engagement on two entries, evidence in the thread"
+                      className={`${control} mt-1`}
+                    />
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => voidEnrolment(voidingRow.enrolmentId, voidingRow.name)}
+                        className={buttonClass("dangerFill")}
+                      >
+                        {busy ? "Working…" : `Disqualify ${voidingRow.name}`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVoiding(null);
+                          setVoidReason("");
+                        }}
+                        className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink-3 hover:text-white"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {fixing && (
+                  <CorrectHandle
+                    key={`${fixing.enrolmentId}-${fixing.platform}`}
+                    enrolmentId={fixing.enrolmentId}
+                    platform={fixing.platform}
+                    current={fixing.current}
+                    onDone={() => setFixing(null)}
+                  />
+                )}
+
       <div ref={awardRef} id="award-panel">
         {selected && (
           <div className="mt-8 border-t border-line-2 pt-6">
