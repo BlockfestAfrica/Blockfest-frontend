@@ -1521,6 +1521,63 @@ export function adminActivityEmail(params: {
   };
 }
 
+/**
+ * The community vote is open, to everybody in the campaign.
+ *
+ * The nominees already get shortlistEmail. Everybody else got nothing, and
+ * "everybody else" is most of the campaign: opening a round mailed three to
+ * five people and left the rest to find a page nobody had pointed them at.
+ * For the one prize decided purely by turnout, that quietly made it a
+ * contest between whoever already had the largest audience.
+ *
+ * Names the nominees, because "a vote is open" is a notification and "Ada,
+ * Bola and Chidi are on the ballot" is a reason to open it. Anyone in the
+ * campaign can vote and share, nominee or not.
+ */
+export function voteLiveEmail(params: {
+  to: string;
+  fullName: string;
+  weekNo: number;
+  /** Display names, in ballot order. */
+  nominees: string[];
+  closesAtLagos: string;
+  votingUrl: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const list =
+    params.nominees.length > 1
+      ? `${params.nominees.slice(0, -1).join(", ")} and ${params.nominees.at(-1)}`
+      : (params.nominees[0] ?? "the shortlist");
+  const line = `${list} are on the week ${params.weekNo} ballot. Voting closes ${params.closesAtLagos}, Lagos time.`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `The week ${params.weekNo} vote is open`,
+    text: [
+      `${name}, the community vote for week ${params.weekNo} is open.`,
+      ``,
+      line,
+      ``,
+      `One vote per email address, confirmed by a six digit code. You can vote whether or not you are on the ballot, and sharing the link with your audience is the whole point of it.`,
+      ``,
+      params.votingUrl,
+    ].join("\n"),
+    html: layout({
+      preheader: line,
+      heading: `The week ${params.weekNo} vote is open`,
+      body: [
+        p(escape(line)),
+        p(
+          "One vote per email address, confirmed by a six digit code. You can vote whether or not you are on the ballot, and sharing the link with your audience is the whole point of it.",
+        ),
+      ].join(""),
+      action: { label: "See the shortlist and vote", href: params.votingUrl },
+    }),
+  };
+}
+
 export function withdrawnEmail(params: {
   to: string;
   fullName: string;
