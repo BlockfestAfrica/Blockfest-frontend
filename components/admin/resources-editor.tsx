@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buttonClass, control, Field, JobCard, Pill } from "@/components/shared/panel";
+import { Confirm } from "@/components/shared/confirm";
 
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
@@ -131,14 +132,21 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
                 >
                   Edit
                 </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => remove(row.id)}
-                  className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-red-300/80 transition-colors hover:text-red-300"
-                >
-                  Delete
-                </button>
+                {/* Through Confirm, like every other destructive action in
+                    the console. It sat beside Edit in the same cluster, two
+                    pills a few pixels apart, and a mis-tap permanently
+                    removed something live on the public campaign page.
+                    Disqualifying has a two-step panel and announcing has
+                    this component; deleting a resource skipped both. */}
+                <Confirm
+                  label="Delete"
+                  intent="danger"
+                  question={`Delete “${row.title}”?`}
+                  consequence="It disappears from the public Resources list within a minute. There is no undo."
+                  confirmLabel="Yes, delete it"
+                  pending={busy}
+                  onConfirm={() => remove(row.id)}
+                />
               </span>
             </div>
             {row.url && <p className="mt-1 break-all font-mono text-sm text-ink-3">{row.url}</p>}
