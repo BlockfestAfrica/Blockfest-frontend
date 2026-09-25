@@ -11,58 +11,18 @@ import {
   X,
 } from "lucide-react";
 import { Pill } from "@/components/shared/panel";
+import { openableHref } from "@/lib/admin/openable-href";
 import { toast } from "sonner";
 
 /** Rows shown before the reviewer asks for more. */
 const PAGE = 10;
 
 /*
- * A link, but only to a place we can prove it goes.
- *
- * This block used to say the link is never an anchor, because the
- * destination is chosen by whoever submitted it and the reader is somebody
- * who can mint points against a five million naira pool. That reasoning was
- * right when it was written and is only partly right now: submission
- * enforces hostMatchesPlatform, so a stored URL is on x.com, twitter.com,
- * instagram.com, tiktok.com or a subdomain of one of them. The reviewer
- * cannot be sent to an attacker's own server.
- *
- * Partly, because that check lives in the zod schema rather than in the
- * database, and this codebase's whole habit is that a guard which is not in
- * the engine is a guard somebody can route around. So the allowlist is
- * applied AGAIN here, against the rendered row: a URL that is not https and
- * on one of those hosts renders as text, exactly as every URL did before.
- * Nothing becomes clickable that cannot be shown to point at a platform.
- *
- * What is left is an open redirect on one of those platforms, which a
- * reviewer reaches identically by copying the same string into the same
- * browser. rel="noopener noreferrer" closes the tab-nabbing and referrer
- * paths that clicking adds over pasting.
- *
- * The trade this buys: every review previously began with a copy, a new
- * tab and a paste, on the one screen the team uses most.
+ * The link opens only where openableHref can prove it points at a platform.
+ * The allowlist and its reasoning live in lib/admin/openable-href.ts, shared
+ * with the Decided page. The trade it buys here: every review previously began
+ * with a copy, a new tab and a paste, on the one screen the team uses most.
  */
-const LINKABLE_HOSTS = [
-  "x.com",
-  "twitter.com",
-  "instagram.com",
-  "instagr.am",
-  "tiktok.com",
-];
-
-function openableHref(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "https:") return null;
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
-    const known = LINKABLE_HOSTS.some(
-      (h) => host === h || host.endsWith(`.${h}`),
-    );
-    return known ? url : null;
-  } catch {
-    return null;
-  }
-}
 
 export interface QueueItem {
   id: string;
@@ -98,7 +58,7 @@ export interface QueueItem {
  * Two things here are load-bearing and should not be tidied away.
  *
  * The link opens, but only after openableHref proves where it goes. See the
- * note on that function: it is the same allowlist submission enforces,
+ * note in lib/admin/openable-href.ts: it is the same allowlist submission enforces,
  * applied a second time at the point of rendering, because a guard that
  * lives only in a zod schema is a guard somebody can route around. A URL
  * that cannot be proved to point at a platform still renders as text.

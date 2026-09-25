@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import {
   adminUsers,
   campaignCreators,
@@ -12,6 +12,7 @@ import {
   submissions,
 } from "@/lib/db/client";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { likeContaining } from "@/lib/db/like";
 import { logError } from "@/lib/log";
 import { PG, isPgError } from "@/lib/db/errors";
 import type { AdminIdentity } from "@/lib/admin/session";
@@ -316,18 +317,60 @@ export async function pendingAttribution(admin: AdminIdentity) {
     .limit(2000);
 }
 
+export type DecidedStatus = "all" | "approved" | "rejected";
+
+export interface DecidedQuery {
+  status?: DecidedStatus;
+  /** One stage's week, or every week when absent. */
+  weekNo?: number;
+  /** A creator's name, a registered handle, or any part of the link. */
+  search?: string;
+  limit?: number;
+}
+
 /**
- * What has already been decided.
+ * What has already been decided, with the link that was decided on.
  *
  * Approving is irreversible in the sense that matters: review() has no pending
  * guard, so the opposite decision can be sent, but there is no way back to
  * waiting and the creator has already been emailed. This list is the only
  * durable record of a mis-tap, and it costs a query because the schema already
  * carries who decided, when, and what they wrote.
+ *
+ * It is also where an approved post is found again later, to check it is still
+ * up or still says what it said. That is why it filters in SQL before the
+ * limit: the newest fifty alone meant an approval from week one fell off the
+ * page by week two, which is exactly when somebody asks about it.
  */
-export async function decidedSubmissions(admin: AdminIdentity, limit = 50) {
+export async function decidedSubmissions(
+  admin: AdminIdentity,
+  query: DecidedQuery = {},
+) {
   void admin;
   const db = getDb();
+  const search = query.search?.trim();
+  const limit = Math.min(Math.max(query.limit ?? 50, 1), 200);
+
+  const filters = [
+    query.status && query.status !== "all"
+      ? eq(submissions.status, query.status)
+      : ne(submissions.status, "pending"),
+    eq(campaigns.slug, MONICA_SLUG),
+  ];
+  if (query.weekNo) filters.push(eq(challenges.weekNo, query.weekNo));
+  if (search) {
+    const like = likeContaining(search);
+    const match = or(
+      ilike(creators.fullName, like),
+      ilike(submissions.url, like),
+      sql`EXISTS (
+        SELECT 1 FROM ${creatorSocialHandles} h
+         WHERE h.creator_id = ${creators.id}
+           AND h.handle ILIKE ${like}
+      )`,
+    );
+    if (match) filters.push(match);
+  }
 
   return db
     .select({
@@ -355,9 +398,38 @@ export async function decidedSubmissions(admin: AdminIdentity, limit = 50) {
     // ON DELETE SET NULL, so the column is nullable and an inner join would
     // silently drop a decision rather than show it unattributed.
     .leftJoin(adminUsers, eq(adminUsers.id, submissions.reviewedByAdminId))
-    .where(
-      and(ne(submissions.status, "pending"), eq(campaigns.slug, MONICA_SLUG)),
-    )
+    .where(and(...filters))
     .orderBy(desc(submissions.reviewedAt))
-    .limit(Math.min(Math.max(limit, 1), 200));
+    .limit(limit);
+}
+
+/**
+ * How many decisions exist, counted in the database with no limit.
+ *
+ * The header used to print the length of the page, which is capped, and a page
+ * size read as a population is the mistake the People screen already made and
+ * fixed once. These are the real totals, so a filtered page can say how much
+ * of the whole it is showing.
+ */
+export async function decidedCounts(
+  admin: AdminIdentity,
+): Promise<{ approved: number; rejected: number }> {
+  void admin;
+  const db = getDb();
+
+  const result = await db
+    .select({
+      approved: sql<number>`count(*) FILTER (WHERE ${submissions.status} = 'approved')::int`,
+      rejected: sql<number>`count(*) FILTER (WHERE ${submissions.status} = 'rejected')::int`,
+    })
+    .from(submissions)
+    .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))
+    .innerJoin(challenges, eq(challenges.id, challengeEntries.challengeId))
+    .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
+    .where(eq(campaigns.slug, MONICA_SLUG));
+
+  return {
+    approved: Number(result[0]?.approved ?? 0),
+    rejected: Number(result[0]?.rejected ?? 0),
+  };
 }
