@@ -17,8 +17,17 @@ import { useRef, type ReactNode } from "react";
  * sheet from the bottom on a phone, where it sits under the thumb, and a
  * centred panel from the small breakpoint up. Radix supplies the parts that
  * are easy to get wrong by hand: focus moves into the dialog and is held
- * there, Escape and the backdrop close it, the page behind is inert to
- * assistive technology, and focus returns to the button that opened it.
+ * there, and the page behind is inert to assistive technology.
+ *
+ * Escape, the close button and the form's own Cancel close it. A tap on the
+ * backdrop does not: on a phone that tap is how people put the keyboard away,
+ * and it would throw away a typed reason or a long resource body without a
+ * word.
+ *
+ * Focus goes back to the button that opened it. Radix only does that for its
+ * own Trigger, and these are opened from state by buttons in a list, so the
+ * opener is remembered here; without it, closing dropped focus to the top of
+ * the page and a keyboard user had to tab back down forty rows.
  *
  * It opens on the first field marked `data-autofocus`, so the admin can type
  * the reason straight away, rather than on the close button, which is the
@@ -49,6 +58,8 @@ export function ActionDialog({
   children: ReactNode;
 }) {
   const content = useRef<HTMLDivElement>(null);
+  /** The button that opened this, so focus can go back to it on close. */
+  const opener = useRef<HTMLElement | null>(null);
   const hold = (event: Event) => {
     if (busy) event.preventDefault();
   };
@@ -67,6 +78,10 @@ export function ActionDialog({
           {...(description ? {} : { "aria-describedby": undefined })}
           ref={content}
           onOpenAutoFocus={(event) => {
+            opener.current =
+              document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
             const field =
               content.current?.querySelector<HTMLElement>("[data-autofocus]");
             if (field) {
@@ -74,16 +89,32 @@ export function ActionDialog({
               field.focus();
             }
           }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            const back = opener.current;
+            opener.current = null;
+            const active = document.activeElement;
+            // Only when nothing else has taken focus on the way out: the
+            // week editor's discard path moves the cursor into the next
+            // week's title, and that should stand.
+            if (
+              (!active || active === document.body) &&
+              back?.isConnected &&
+              !(back instanceof HTMLButtonElement && back.disabled)
+            ) {
+              back.focus();
+            }
+          }}
           onEscapeKeyDown={hold}
-          onPointerDownOutside={hold}
+          onPointerDownOutside={(event) => event.preventDefault()}
           onInteractOutside={hold}
-          className={`fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl border border-line-2 bg-card p-5 shadow-2xl data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom-4 motion-reduce:animate-none sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6 sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=open]:zoom-in-95 ${
+          className={`fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl border border-line-2 bg-ground p-5 shadow-2xl data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom-4 motion-reduce:animate-none sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6 sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=open]:zoom-in-95 ${
             tone === "danger" ? "border-t-2 border-t-red-400/70" : ""
           }`}
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <Dialog.Title className="text-lg font-semibold text-white text-balance">
+              <Dialog.Title className="text-lg font-semibold text-white text-balance [overflow-wrap:anywhere]">
                 {title}
               </Dialog.Title>
               {description && (

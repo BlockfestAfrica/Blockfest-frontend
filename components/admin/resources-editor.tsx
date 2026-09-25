@@ -175,7 +175,10 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
         )
       )}
 
-      <button type="button" onClick={() => { setForm(EMPTY); setOpen(true); }}
+      {/* A draft of a new resource survives a dismissed dialog, and comes
+          back here. Only Cancel or a save clears it; starting from an edit
+          starts clean. */}
+      <button type="button" onClick={() => { if (form.id) setForm(EMPTY); setOpen(true); }}
         aria-haspopup="dialog" className={buttonClass("secondary", "mt-4 w-fit")}>
         Add a resource
       </button>
@@ -192,10 +195,7 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
       <ActionDialog
         open={open}
         onOpenChange={(next) => {
-          if (!next) {
-            setOpen(false);
-            setForm(EMPTY);
-          }
+          if (!next) setOpen(false);
         }}
         title={form.id ? "Edit resource" : "Add a resource"}
         busy={busy}

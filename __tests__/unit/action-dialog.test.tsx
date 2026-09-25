@@ -12,7 +12,8 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ActionDialog } from "@/components/shared/action-dialog";
 
@@ -37,6 +38,29 @@ function Harness({
       <input id="why" data-autofocus />
       <button type="button">Disqualify Ada Obi</button>
     </ActionDialog>
+  );
+}
+
+/** A real opener, the way the People table opens its dialogs: from state. */
+function WithOpener({ onOpenChange = () => {} }: { onOpenChange?: (open: boolean) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        Disqualify row 40
+      </button>
+      <ActionDialog
+        open={open}
+        onOpenChange={(next) => {
+          onOpenChange(next);
+          setOpen(next);
+        }}
+        title="Disqualify Ada Obi"
+      >
+        <label htmlFor="why">Why</label>
+        <input id="why" data-autofocus />
+      </ActionDialog>
+    </>
   );
 }
 
@@ -76,6 +100,41 @@ describe("the action dialog", () => {
     expect((close as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(close);
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("gives focus back to the button that opened it, not the top of the page", async () => {
+    render(<WithOpener />);
+    const opener = screen.getByRole("button", { name: "Disqualify row 40" });
+    opener.focus();
+    fireEvent.click(opener);
+    expect(document.activeElement).toBe(screen.getByLabelText("Why"));
+
+    fireEvent.keyDown(screen.getByLabelText("Why"), { key: "Escape" });
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it("stays open when the backdrop is tapped, which on a phone is how the keyboard is put away", async () => {
+    const onOpenChange = vi.fn();
+    render(<WithOpener onOpenChange={onOpenChange} />);
+    fireEvent.click(screen.getByRole("button", { name: "Disqualify row 40" }));
+    onOpenChange.mockClear();
+    // Radix starts listening for outside presses a tick after opening; a
+    // tap fired before then would pass whatever the dialog did.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+
+    const overlay = document.querySelector(
+      '[data-state="open"]:not([role="dialog"])',
+    ) as HTMLElement;
+    expect(overlay, "found the backdrop").toBeTruthy();
+    fireEvent.pointerDown(overlay, { pointerType: "touch", button: 0 });
+    fireEvent.pointerUp(overlay, { pointerType: "touch", button: 0 });
+    fireEvent.click(overlay);
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
   it("renders nothing while closed", () => {
@@ -189,5 +248,36 @@ describe("reveal", () => {
   it("does nothing, rather than throwing, when the target is gone", async () => {
     const { reveal } = await import("@/components/shared/reveal");
     expect(() => reveal(null)).not.toThrow();
+  });
+});
+
+describe("the dialog's surface", () => {
+  const dialog = codeOnly(
+    readFileSync(join(process.cwd(), "components/shared/action-dialog.tsx"), "utf8"),
+  );
+
+  it("is opaque, because bg-card is a 2% tint meant for cards on the page ground", () => {
+    // The Content element's own class list, not the close button inside it,
+    // whose hover:bg-card-2 is a hover wash over an already opaque panel.
+    const classes = (dialog.match(/className=\{`(fixed inset-x-0[^`]*)`/) ?? [])[1] ?? "";
+    const tokens = classes.split(/\s+/);
+    expect(tokens, "found the panel's classes").toContain("bg-ground");
+    expect(tokens).not.toContain("bg-card");
+  });
+
+  it("wraps a long title, such as a voter's email, instead of running under the close button", () => {
+    expect(dialog).toMatch(/<Dialog\.Title className="[^"]*\[overflow-wrap:anywhere\]/);
+  });
+});
+
+describe("a resource draft", () => {
+  const src = codeOnly(
+    readFileSync(join(process.cwd(), "components/admin/resources-editor.tsx"), "utf8"),
+  );
+
+  it("survives a dismissed dialog, and only Cancel or a save clears it", () => {
+    const onOpenChange = src.slice(src.indexOf("onOpenChange="), src.indexOf("title="));
+    expect(onOpenChange).not.toContain("setForm(EMPTY)");
+    expect(src).toMatch(/if \(form\.id\) setForm\(EMPTY\); setOpen\(true\)/);
   });
 });
