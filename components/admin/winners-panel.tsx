@@ -321,21 +321,47 @@ export function WinnersPanel({
             >
               Save as draft
             </button>
-            <Confirm
-              label={`Announce ${CATEGORY_LABEL[category]}`}
-              question={`Announce ${chosenName ?? "this creator"} as ${CATEGORY_LABEL[category]} for week ${weekNo}, with ${ready ? naira(amount) : "no prize set"}?`}
-              consequence="This publishes the name and the amount on the public winners page straight away. There is no undo here."
-              confirmLabel={`Yes, announce ${ready ? naira(amount) : "it"}`}
-              pending={busy}
-              onConfirm={() => save(true)}
-            />
-            {!ready && (
+            {/*
+              * Offered only when it can actually be done.
+              *
+              * Save as draft was gated on `ready` and this was gated on
+              * nothing, so the first thing on an untouched screen was a
+              * live gold button for the one irreversible action in the
+              * console, beside a disabled one for the safe action. The
+              * shape of the screen argued for the wrong thing.
+              *
+              * Its question argued for it too. With nothing picked it read
+              * "Announce this creator as Creator of the Week for week 2,
+              * with no prize set?", and the button under it said "Yes,
+              * announce it". A confirmation describing something that
+              * cannot happen teaches people to click through
+              * confirmations.
+              *
+              * frozen as well as ready, because publish_weekly_winner
+              * refuses an unfrozen week with P0804 whatever this form
+              * holds. Save as draft keeps its own gate: the engine allows
+              * a draft before the freeze, and that is a real workflow on a
+              * Saturday.
+              */}
+            {ready && frozen ? (
+              <Confirm
+                label={`Announce ${CATEGORY_LABEL[category]}`}
+                question={`Announce ${chosenName ?? "this creator"} as ${CATEGORY_LABEL[category]} for week ${weekNo}, with ${naira(amount)}?`}
+                consequence="This publishes the name and the amount on the public winners page straight away. There is no undo here."
+                confirmLabel={`Yes, announce ${naira(amount)}`}
+                pending={busy}
+                onConfirm={() => save(true)}
+              />
+            ) : null}
+            {!ready || !frozen ? (
               <p className="text-sm text-ink-2">
-                {votePending
+                {!ready && votePending
                   ? "Settle the vote below to unlock this announcement."
-                  : "Pick a creator and enter the prize to continue."}
+                  : !ready
+                    ? "Pick a creator and enter the prize to continue."
+                    : "Record the standings for this week before announcing."}
               </p>
-            )}
+            ) : null}
           </>
         }
       >
