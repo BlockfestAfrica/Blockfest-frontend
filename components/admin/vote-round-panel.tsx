@@ -200,7 +200,7 @@ export function VoteRoundPanel({
       {round && !reviewed && round.status !== "open" && (
         <Pill>{round.status === "closed" ? "Closed" : "Draft"}</Pill>
       )}
-      {heldCount > 0 && !reviewed && (
+      {heldCount > 0 && round?.status !== "published" && (
         <Pill tone="warn">{heldCount} held</Pill>
       )}
     </>
@@ -600,6 +600,45 @@ export function VoteRoundPanel({
    * A read, so it does not go through act(): nothing refreshes, nothing is
    * recorded, and a miss is an answer rather than an error.
    */
+  /*
+   * Tell the campaign the vote is open.
+   *
+   * Opening the round already mails the three to five nominees. Everybody
+   * else heard nothing, which on the one prize decided purely by turnout
+   * quietly made it a contest between whoever already had the largest
+   * audience. A separate press, because a round is often staged the day
+   * before it runs and a send riding along with the open would announce a
+   * page that refuses every ballot.
+   */
+  const [announced, setAnnounced] = useState(false);
+
+  async function announceVote() {
+    if (!round) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/announce-vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roundId: round.roundId }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        toast.error(result.message ?? "That did not work.");
+        return;
+      }
+      setAnnounced(true);
+      toast.success(
+        `Told ${result.sent} ${result.sent === 1 ? "creator" : "creators"}.` +
+          (result.failed ? ` ${result.failed} did not go through.` : ""),
+      );
+      await router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function lookup() {
     const email = lookupEmail.trim().toLowerCase();
     if (!email || !round) return;
@@ -678,14 +717,30 @@ export function VoteRoundPanel({
             onConfirm={() => act({ action: "review", roundId: round.roundId }, "Review marked complete. Announcing is unlocked.")}
           />
         ) : (
-          <Confirm
-            label="Close the vote"
+          <>
+            {/* Offered only while the round is actually taking ballots, and
+                only once: the route refuses a second press and the audit
+                row is what remembers. */}
+            {!announced &&
+              new Date(round.opensAt).getTime() <= Date.now() && (
+                <Confirm
+                  label="Tell the creators"
+                  question={`Email every active creator that the week ${weekNo} vote is open?`}
+                  consequence="One email each, naming the shortlist and the closing time. It can only be sent once for this round."
+                  confirmLabel="Yes, tell them"
+                  pending={busy}
+                  onConfirm={announceVote}
+                />
+              )}
+            <Confirm
+              label="Close the vote"
             question={`Close the week ${weekNo} vote now?`}
             consequence="Casting stops for everybody the moment you confirm. Codes already sent still verify for fifteen minutes, then the tally moves only by your sweep."
             confirmLabel="Yes, close it"
             pending={busy}
-            onConfirm={() => act({ action: "close", roundId: round.roundId }, "The vote is closed.")}
-          />
+              onConfirm={() => act({ action: "close", roundId: round.roundId }, "The vote is closed.")}
+            />
+          </>
         )
       }
     >
@@ -839,7 +894,28 @@ export function VoteRoundPanel({
             </p>
           )}
           {tallyBlock}
-          {!reviewed && signalsBlock}
+          {/*
+            * The sweep survives the review, and stops at publication.
+            *
+            * It was gated on `reviewed`, so marking the review complete
+            * deleted the held list, the clusters and the lookup from the
+            * page. That is the exact window it is most needed in: the
+            * minutes between certifying and announcing, when a nominee can
+            * still write in about a farmed cluster.
+            *
+            * And the engine disagreed with the screen. remove_vote checks
+            * the admin, the mode, the reason and that the vote exists, and
+            * nothing about whether the round is reviewed; vote_tally is a
+            * live view over countable_votes, so a removal moves the tally
+            * at once. Since publish_weekly_winner refuses anybody but the
+            * tally leader (P0806), removing a fraudulent vote after the
+            * review genuinely changes who may be announced. The console
+            * was hiding a control that still worked and still mattered.
+            *
+            * Published is the real end of it: the winner is public and
+            * immutable, so there is nothing left for a removal to change.
+            */}
+          {round.status !== "published" && signalsBlock}
         </div>
       )}
     </JobCard>

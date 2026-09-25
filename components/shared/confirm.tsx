@@ -44,14 +44,26 @@ export function Confirm({
   }, [asking]);
 
   if (!asking) {
+    /*
+     * The busy state belongs here, on the collapsed trigger.
+     *
+     * Confirming closes the dialog in the same tick it calls onConfirm, so
+     * this component is back to a plain button before the caller's
+     * setBusy(true) has landed: the "Working…" on the confirm button below
+     * could never render, and every caller passing `pending` was passing it
+     * to something unreachable. What an owner actually saw, for the several
+     * seconds an announce takes, was a slightly dimmer button and nothing
+     * else, on the one action in the console that must not be pressed twice.
+     */
     return (
       <button
         type="button"
         disabled={pending}
+        aria-busy={pending}
         onClick={() => setAsking(true)}
         className={buttonClass(intent)}
       >
-        {label}
+        {pending ? "Working…" : label}
       </button>
     );
   }
@@ -86,6 +98,9 @@ export function Confirm({
           }}
           className={buttonClass(intent)}
         >
+          {/* Kept for the case where a caller sets pending before the
+              dialog closes; the collapsed trigger above is what actually
+              carries the state for every caller in this codebase. */}
           {pending ? "Working…" : confirmLabel}
         </button>
       </div>
