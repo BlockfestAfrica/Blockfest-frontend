@@ -12,6 +12,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { applyMigrations } from "../helpers/migrations";
+import { holdChallengeOpen } from "../helpers/challenge-window";
 
 let db: PGlite;
 let seq = 0;
@@ -79,6 +80,9 @@ beforeEach(async () => {
       `SELECT id FROM admin_users WHERE email_canonical = 'partnership@blockfestafrica.com'`,
     )
   ).id;
+
+  // The seed carries the campaign's real window, which is now in the past.
+  await holdChallengeOpen(db);
 });
 
 describe("disqualification", () => {

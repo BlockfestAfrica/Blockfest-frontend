@@ -176,12 +176,33 @@ describe("the review queue specifically", () => {
   const QUEUE = "components/admin/review-queue.tsx";
 
   it("shows the whole submitted URL rather than truncating it", () => {
-    // The author segment is what the decision turns on, and a long handle can
-    // push it past a truncation.
+    /*
+     * The author segment is what the decision turns on, and a long handle
+     * can push it past a truncation.
+     *
+     * Asserted over BOTH render paths rather than by slicing backwards from
+     * the first "{item.url}". The URL now renders as a link when its host
+     * can be proved to be a platform and as plain text when it cannot, so
+     * there are two elements to defend; and the old slice began at
+     * href={item.url}, which is not the one that displays the text.
+     */
     const src = readFileSync(join(process.cwd(), QUEUE), "utf8");
-    const urlBlock = src.slice(src.indexOf("{item.url}") - 400, src.indexOf("{item.url}"));
-    expect(urlBlock).toContain("break-all");
-    expect(urlBlock).not.toContain("truncate");
+    const branch = src.slice(
+      src.indexOf("openableHref(item.url) ?"),
+      src.indexOf("</code>"),
+    );
+    expect(branch, "found the render branch").not.toBe("");
+
+    const classNames = [...branch.matchAll(/className="([^"]+)"/g)]
+      .map((m) => m[1])
+      // The screen-reader "(opens in a new tab)" span carries no layout and
+      // is not the element displaying the URL.
+      .filter((cls) => cls !== "sr-only");
+    expect(classNames.length, "both the link and the text fallback").toBeGreaterThanOrEqual(2);
+    for (const cls of classNames) {
+      expect(cls, cls).toContain("break-all");
+      expect(cls, cls).not.toContain("truncate");
+    }
   });
 
   it("renders a different message for a checked and an unchecked link", () => {
