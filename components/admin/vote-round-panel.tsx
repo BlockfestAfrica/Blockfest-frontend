@@ -200,7 +200,7 @@ export function VoteRoundPanel({
       {round && !reviewed && round.status !== "open" && (
         <Pill>{round.status === "closed" ? "Closed" : "Draft"}</Pill>
       )}
-      {heldCount > 0 && !reviewed && (
+      {heldCount > 0 && round?.status !== "published" && (
         <Pill tone="warn">{heldCount} held</Pill>
       )}
     </>
@@ -839,7 +839,28 @@ export function VoteRoundPanel({
             </p>
           )}
           {tallyBlock}
-          {!reviewed && signalsBlock}
+          {/*
+            * The sweep survives the review, and stops at publication.
+            *
+            * It was gated on `reviewed`, so marking the review complete
+            * deleted the held list, the clusters and the lookup from the
+            * page. That is the exact window it is most needed in: the
+            * minutes between certifying and announcing, when a nominee can
+            * still write in about a farmed cluster.
+            *
+            * And the engine disagreed with the screen. remove_vote checks
+            * the admin, the mode, the reason and that the vote exists, and
+            * nothing about whether the round is reviewed; vote_tally is a
+            * live view over countable_votes, so a removal moves the tally
+            * at once. Since publish_weekly_winner refuses anybody but the
+            * tally leader (P0806), removing a fraudulent vote after the
+            * review genuinely changes who may be announced. The console
+            * was hiding a control that still worked and still mattered.
+            *
+            * Published is the real end of it: the winner is public and
+            * immutable, so there is nothing left for a removal to change.
+            */}
+          {round.status !== "published" && signalsBlock}
         </div>
       )}
     </JobCard>
