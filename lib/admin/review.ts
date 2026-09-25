@@ -348,7 +348,9 @@ export async function decidedSubmissions(
 ) {
   void admin;
   const db = getDb();
-  const search = query.search?.trim();
+  // Handles are stored without the @ people type in front of them, so a
+  // search for "@adawrites" would otherwise find nothing.
+  const search = query.search?.trim().replace(/^@+/, "");
   const limit = Math.min(Math.max(query.limit ?? 50, 1), 200);
 
   const filters = [

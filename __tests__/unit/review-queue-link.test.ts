@@ -95,6 +95,11 @@ describe("the Decided page's link", () => {
     "utf8",
   );
 
+  it("is the guard the queue uses too", () => {
+    expect(source).toContain('from "@/lib/admin/openable-href"');
+    expect(source).toMatch(/openableHref\(item\.url\)\s*\?/);
+  });
+
   it("goes through the same guard as the queue, not a copy of it", () => {
     expect(decided).toContain('from "@/lib/admin/openable-href"');
     expect(decided).toMatch(/openableHref\(item\.url\)/);

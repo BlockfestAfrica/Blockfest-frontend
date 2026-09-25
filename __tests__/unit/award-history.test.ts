@@ -51,13 +51,30 @@ describe("the award panel", () => {
     expect(disabled).not.toContain("sameKind");
   });
 
-  it("marks an entry that already has its one engagement bonus", () => {
-    expect(awardRow).toMatch(/has \+\$\{has\} already/);
+  it("marks an entry whose one engagement bonus is used, even after a take-back", () => {
+    // Used means a positive row exists. The net says nothing about that: +40
+    // then -40 nets to zero and the entry still cannot take another bonus.
+    expect(awardRow).toMatch(/engagementUsed = \(id: string\) =>[\s\S]{0,200}a\.points > 0/);
+    expect(awardRow).toContain("bonus used, taken back");
+  });
+
+  it("never advises taking a bonus back to make room for another", () => {
+    expect(awardRow).not.toMatch(/take (that|the old) one back first/i);
+    const route = readFileSync(join(process.cwd(), "app/api/admin/award/route.ts"), "utf8");
+    expect(route).not.toMatch(/Take the old one back first/);
+  });
+
+  it("stays quiet while a take-back is being typed", () => {
+    expect(awardRow).toMatch(/const takingBack = value < 0/);
+    expect(awardRow).toMatch(/!takingBack && \(warnEngagement \|\| warnOther\)/);
   });
 });
 
 describe("the People list", () => {
-  it("says how much of a total is extra, in both layouts", () => {
+  it("says how much of a total is extra, in both layouts, and not inside the phone's points column", () => {
+    const card = table.slice(table.indexOf('md:hidden">'), table.indexOf("hidden overflow-x-auto"));
+    const pointsColumn = card.slice(card.indexOf("shrink-0 text-2xl"), card.indexOf("</p>", card.indexOf("shrink-0 text-2xl")));
+    expect(pointsColumn).not.toContain("ExtraNote");
     expect((table.match(/<ExtraNote awards=\{row\.awards\} \/>/g) ?? []).length).toBe(2);
   });
 

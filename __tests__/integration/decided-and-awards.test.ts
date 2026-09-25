@@ -176,6 +176,36 @@ describe("the Decided page's query", () => {
     expect(await decidedSubmissions(ADMIN, { search: "ada_rites" })).toEqual([]);
   });
 
+  it("matches % and _ literally when they really are in the value", async () => {
+    // The negative cases alone would pass for a search that matched nothing.
+    const ada = await makeCreator("Ada Obi", "ada_writes");
+    const ben = await makeCreator("Ben Eze", "benmoney");
+    await decide(ada, 1, "https://x.com/ada_writes/status/1", "approved");
+    await decide(ben, 1, "https://x.com/benmoney/status/2", "approved");
+
+    // Unescaped, "_" matches any one character and so every row.
+    expect((await decidedSubmissions(ADMIN, { search: "_" })).map((r) => r.creatorName)).toEqual(["Ada Obi"]);
+  });
+
+  it("finds a handle typed with its @, which is how people write them", async () => {
+    const ada = await makeCreator("Ada Obi", "adawrites");
+    await decide(ada, 1, "https://instagram.com/p/ABC123/", "approved");
+
+    expect((await decidedSubmissions(ADMIN, { search: "@adawrites" })).map((r) => r.creatorName)).toEqual(["Ada Obi"]);
+  });
+
+  it("filters before the limit, so an older match is not lost behind newer rows", async () => {
+    const ada = await makeCreator("Ada Obi", "adawrites");
+    const ben = await makeCreator("Ben Eze", "benmoney");
+    await decide(ada, 1, "https://x.com/adawrites/status/1", "approved");
+    await decide(ben, 2, "https://x.com/benmoney/status/2", "approved");
+
+    // Newest first, the only row within a limit of one is week 2. Filtering
+    // after the limit would therefore return nothing for week 1.
+    const rows = await decidedSubmissions(ADMIN, { weekNo: 1, limit: 1 });
+    expect(rows.map((r) => r.creatorName)).toEqual(["Ada Obi"]);
+  });
+
   it("never returns what is still waiting", async () => {
     const ada = await makeCreator("Ada Obi", "adawrites");
     const challenge = await one<{ id: string }>(
@@ -202,6 +232,26 @@ describe("the Decided page's query", () => {
     expect(await decidedCounts(ADMIN)).toEqual({ approved: 2, rejected: 1 });
     // A page of one still counts the whole.
     expect(await decidedSubmissions(ADMIN, { limit: 1 })).toHaveLength(1);
+  });
+});
+
+describe("the People search", () => {
+  it("treats % and _ as the characters typed", async () => {
+    await makeCreator("Ada Obi", "ada_writes");
+    await makeCreator("Ben Eze", "benmoney");
+
+    expect(await participants(ADMIN, { slug: "monica-money-story", search: "%" })).toEqual([]);
+    expect(
+      (await participants(ADMIN, { slug: "monica-money-story", search: "_" })).map((r) => r.name),
+    ).toEqual(["Ada Obi"]);
+  });
+
+  it("finds a handle typed with its @", async () => {
+    await makeCreator("Ada Obi", "adawrites");
+
+    expect(
+      (await participants(ADMIN, { slug: "monica-money-story", search: "@adawrites" })).map((r) => r.name),
+    ).toEqual(["Ada Obi"]);
   });
 });
 
@@ -246,6 +296,24 @@ describe("what the award panel knows was already given", () => {
       entryId,
       weekNo: 1,
     });
+  });
+
+  it("keeps the used engagement bonus visible after a take-back, because it stays used", async () => {
+    const ada = await makeCreator("Ada Obi", "adawrites");
+    const { entryId } = await decide(ada, 1, "https://x.com/adawrites/status/1", "approved");
+    await award(ada, "engagement_milestone", 40, "Crossed 10K views", entryId);
+    await award(ada, "engagement_milestone", -40, "Wrong tier", entryId);
+
+    // The database's own rule, which the panel has to describe truthfully:
+    // the original positive row still holds the entry's one bonus.
+    await expect(
+      award(ada, "engagement_milestone", 60, "Crossed 20K views", entryId),
+    ).rejects.toThrow();
+
+    const [row] = await participants(ADMIN, { slug: "monica-money-story" });
+    const onEntry = row.awards.filter((a) => a.entryId === entryId);
+    expect(onEntry.some((a) => a.points > 0), "the used row is still there to see").toBe(true);
+    expect(onEntry.reduce((t, a) => t + a.points, 0)).toBe(0);
   });
 
   it("leaves out what the engine awards, which nobody gave by hand", async () => {

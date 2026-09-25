@@ -37,7 +37,14 @@ export interface DecidedRow {
  * prove it points at a platform, the same guard the review queue applies, and
  * otherwise shows as text.
  */
-export function DecidedList({ items }: { items: DecidedRow[] }) {
+export function DecidedList({
+  items,
+  capped = false,
+}: {
+  items: DecidedRow[];
+  /** The server stopped at its page size, so "all" would be false. */
+  capped?: boolean;
+}) {
   const [visible, setVisible] = useState(PAGE);
   const shown = items.slice(0, visible);
 
@@ -134,7 +141,9 @@ export function DecidedList({ items }: { items: DecidedRow[] }) {
         </button>
       ) : (
         <p className="mt-3 text-sm text-ink-4">
-          Showing all {items.length}, newest first.
+          {capped
+            ? `Showing the newest ${items.length}. Search or pick a week above to reach older ones.`
+            : `Showing all ${items.length}, newest first.`}
         </p>
       )}
     </>

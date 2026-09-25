@@ -81,6 +81,16 @@ export default async function DecidedPage({
     decidedCounts(admin.admin),
   ]);
   const total = counts.approved + counts.rejected;
+  /*
+   * Whether the list stops short of everything that matches.
+   *
+   * The unfiltered view fetches the newest PAGE_SIZE, and the page used to
+   * say every decision was here while the footer said "showing all". Past two
+   * hundred decisions that was false about exactly the old approvals somebody
+   * comes back to check, so the page says where it stops and how to go further.
+   */
+  const capped =
+    decided.length === PAGE_SIZE && (filtered || total > PAGE_SIZE);
 
   return (
     <>
@@ -91,7 +101,7 @@ export default async function DecidedPage({
       <PageHeader
         context="Review"
         title="Decided"
-        hint={`Newest first. ${counts.approved} approved and ${counts.rejected} rejected so far. Every decision is here with its link, so an approved post can be opened again later.`}
+        hint={`Newest first. ${counts.approved} approved and ${counts.rejected} rejected so far. Any decision can be found here with its link, so an approved post can be opened again later.`}
       />
 
       {total === 0 ? (
@@ -108,12 +118,21 @@ export default async function DecidedPage({
               id="find"
               title="Find a decision"
               state="todo"
+              hint={
+                capped && !filtered
+                  ? `The newest ${PAGE_SIZE} are listed. Search or pick a week to reach older ones.`
+                  : undefined
+              }
               status={
-                filtered ? (
+                capped ? (
                   <Pill>
-                    {decided.length === PAGE_SIZE
-                      ? `First ${PAGE_SIZE} matches`
-                      : `${decided.length} ${decided.length === 1 ? "match" : "matches"}`}
+                    {filtered
+                      ? `Newest ${PAGE_SIZE} matches`
+                      : `Newest ${PAGE_SIZE} of ${total}`}
+                  </Pill>
+                ) : filtered ? (
+                  <Pill>
+                    {`${decided.length} ${decided.length === 1 ? "match" : "matches"}`}
                   </Pill>
                 ) : undefined
               }
@@ -191,6 +210,7 @@ export default async function DecidedPage({
             </p>
           ) : (
             <DecidedList
+              capped={capped}
               items={decided.map((item) => ({
                 id: item.id,
                 status: item.status,

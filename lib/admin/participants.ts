@@ -83,7 +83,9 @@ export async function participants(
   void admin; // The type is the proof the guard ran.
 
   const db = getDb();
-  const search = query.search?.trim();
+  // Handles are stored without the @ people type in front of them, and the
+  // search box's own example is "@adawrites", which otherwise found nobody.
+  const search = query.search?.trim().replace(/^@+/, "");
   const limit = Math.min(Math.max(query.limit ?? 200, 1), 500);
 
   /*

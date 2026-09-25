@@ -329,12 +329,9 @@ export function ParticipantsTable({
                       {row.email}
                     </p>
                   </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-2xl font-bold tabular-nums text-white">
-                      {row.points}
-                    </p>
-                    <ExtraNote awards={row.awards} />
-                  </div>
+                  <p className="shrink-0 text-2xl font-bold tabular-nums text-white">
+                    {row.points}
+                  </p>
                 </div>
 
                 {row.handles.length > 0 && (
@@ -377,6 +374,10 @@ export function ParticipantsTable({
                 )}
 
 
+
+                {/* Its own line on a phone. Beside the total it widened a
+                    column that does not shrink, and squeezed the name. */}
+                <ExtraNote awards={row.awards} />
 
                 <p className="mt-2 text-sm text-ink-3">
                   {row.submitted} sent · {row.approved} approved · joined{" "}
@@ -840,6 +841,33 @@ function AwardRow({
         (a) => a.source === "engagement_milestone" && a.entryId === id,
       ),
     );
+  /*
+   * Whether an entry's one engagement bonus has been used, which is not the
+   * same as whether points are standing on it.
+   *
+   * The database allows one positive engagement row per entry, ever: the
+   * index in 0051 counts positive rows, and a take-back is a new negative row
+   * that leaves the original in place. So an entry given +40 and then -40 nets
+   * to nothing and still cannot take +60. Judging "used" by the net made
+   * exactly that entry look free, and the advice that followed, take it back
+   * first, cost the creator their points and then failed.
+   */
+  const engagementUsed = (id: string) =>
+    awards.some(
+      (a) =>
+        a.source === "engagement_milestone" && a.entryId === id && a.points > 0,
+    );
+  /*
+   * A take-back is not a repeat. Typing a negative number is the correction
+   * this warning would otherwise send somebody to, so it says nothing then.
+   * NaN (an empty field, or a lone minus) is not below zero, so the warning
+   * still shows as soon as a kind is picked, before any number is typed.
+   */
+  const takingBack = value < 0;
+  const warnEngagement =
+    source === "engagement_milestone" && !!entryId && engagementUsed(entryId);
+  const warnOther =
+    source !== "engagement_milestone" && sameKind.length > 0 && standing > 0;
 
   return (
     <div className="flex flex-col gap-3">
@@ -893,13 +921,13 @@ function AwardRow({
           the total, so this is the last point it can be caught. It warns
           rather than blocks: two bonuses of one kind for two pieces of work
           are legitimate, and only the person awarding knows which this is. */}
-      {sameKind.length > 0 && standing > 0 && (
+      {!takingBack && (warnEngagement || warnOther) && (
         <p
           role="status"
           className="rounded-lg border border-brand-gold/40 bg-brand-gold/5 p-3 text-sm leading-relaxed text-ink-2"
         >
           {source === "engagement_milestone"
-            ? `This entry already has an engagement bonus of +${standing}. One bonus per entry: take that one back first if the tier changed.`
+            ? `This entry has already had its one engagement bonus${standing > 0 ? ` (+${standing} standing)` : ", since taken back"}. A take-back does not free it for another. For a higher tier, give the difference as a Correction.`
             : `${name} already has +${standing} from ${sourceLabel(source)}. Check this is for different work before giving it again.`}
         </p>
       )}
@@ -979,10 +1007,15 @@ function AwardRow({
             <option value="">Which entry reached it...</option>
             {entries.map((entry) => {
               const has = entryNet(entry.id);
+              const used = engagementUsed(entry.id);
               return (
                 <option key={entry.id} value={entry.id}>
                   Week {entry.weekNo} entry
-                  {has > 0 ? ` (has +${has} already)` : ""}
+                  {used
+                    ? has > 0
+                      ? ` (bonus used, +${has})`
+                      : " (bonus used, taken back)"
+                    : ""}
                 </option>
               );
             })}
