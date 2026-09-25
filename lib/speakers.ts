@@ -338,6 +338,16 @@ export const SpeakersList: Speaker[] = [
     bio: "Teddi Speaks, also known as King Sol, is the founder and convener of Unchain Summer, a Web3 community builder, educator and blockchain advocate focused on growing Africa's onchain ecosystem.\n\nHis work sits at the intersection of community, education and ecosystem growth, creating spaces for more Africans to participate in the digital economy.\n\nAt Blockfest Africa 2026, Teddi joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Opeyemi Stephen",
+    title: "QA & Releases Manager, Solana Developer Platform",
+    image: "/2026/speakers/opeyemi.jpeg", 
+    expertise: ["Web3 & Blockchain", "Development"],
+    company: "Solana Foundation",
+    twitter: "https://x.com/devvgbg",
+    bio: "Opeyemi Stephen is QA & Releases Manager for the Solana Developer Platform at the Solana Foundation, where he oversees quality for the tools developers use to build and ship on Solana.\n\nHe is also Co-Founder of Solana Students Africa, co-author of the Solana x402 payments standard, and Co-Founder & CTO of Nigerian fintech Daneizo Trade Africa.\n\nHis experience spans ConsenSys, the Ethereum Foundation's Devcon, Ethereum, Fuel and Solana.\n\nAt Blockfest Africa 2026, Opeyemi joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
 ];
 
 export const isPastSpeaker = (speaker: Speaker) => speaker.cohort !== "2026";
