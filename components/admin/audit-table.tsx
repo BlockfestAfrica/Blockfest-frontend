@@ -38,6 +38,7 @@ const ACTION_LABELS: Record<string, string> = {
   "handle_request.approved": "Handle request approved",
   "handle_request.rejected": "Handle request rejected",
   "creator.link_reissued": "Personal link reissued",
+  "vote.announced": "Vote announced to creators",
   "handle.added": "Platform added by the creator",
   "referral.credited": "Referral points credited",
   "submission.withdrawn": "Entry taken back by the creator",

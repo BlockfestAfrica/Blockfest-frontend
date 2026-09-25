@@ -600,6 +600,45 @@ export function VoteRoundPanel({
    * A read, so it does not go through act(): nothing refreshes, nothing is
    * recorded, and a miss is an answer rather than an error.
    */
+  /*
+   * Tell the campaign the vote is open.
+   *
+   * Opening the round already mails the three to five nominees. Everybody
+   * else heard nothing, which on the one prize decided purely by turnout
+   * quietly made it a contest between whoever already had the largest
+   * audience. A separate press, because a round is often staged the day
+   * before it runs and a send riding along with the open would announce a
+   * page that refuses every ballot.
+   */
+  const [announced, setAnnounced] = useState(false);
+
+  async function announceVote() {
+    if (!round) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/announce-vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roundId: round.roundId }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        toast.error(result.message ?? "That did not work.");
+        return;
+      }
+      setAnnounced(true);
+      toast.success(
+        `Told ${result.sent} ${result.sent === 1 ? "creator" : "creators"}.` +
+          (result.failed ? ` ${result.failed} did not go through.` : ""),
+      );
+      await router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function lookup() {
     const email = lookupEmail.trim().toLowerCase();
     if (!email || !round) return;
@@ -678,14 +717,30 @@ export function VoteRoundPanel({
             onConfirm={() => act({ action: "review", roundId: round.roundId }, "Review marked complete. Announcing is unlocked.")}
           />
         ) : (
-          <Confirm
-            label="Close the vote"
+          <>
+            {/* Offered only while the round is actually taking ballots, and
+                only once: the route refuses a second press and the audit
+                row is what remembers. */}
+            {!announced &&
+              new Date(round.opensAt).getTime() <= Date.now() && (
+                <Confirm
+                  label="Tell the creators"
+                  question={`Email every active creator that the week ${weekNo} vote is open?`}
+                  consequence="One email each, naming the shortlist and the closing time. It can only be sent once for this round."
+                  confirmLabel="Yes, tell them"
+                  pending={busy}
+                  onConfirm={announceVote}
+                />
+              )}
+            <Confirm
+              label="Close the vote"
             question={`Close the week ${weekNo} vote now?`}
             consequence="Casting stops for everybody the moment you confirm. Codes already sent still verify for fifteen minutes, then the tally moves only by your sweep."
             confirmLabel="Yes, close it"
             pending={busy}
-            onConfirm={() => act({ action: "close", roundId: round.roundId }, "The vote is closed.")}
-          />
+              onConfirm={() => act({ action: "close", roundId: round.roundId }, "The vote is closed.")}
+            />
+          </>
         )
       }
     >
