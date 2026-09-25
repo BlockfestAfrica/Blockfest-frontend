@@ -9,6 +9,7 @@ import {
   getDb,
   submissions,
 } from "@/lib/db/client";
+import { likeContaining } from "@/lib/db/like";
 import type { AdminIdentity } from "@/lib/admin/session";
 
 /**
@@ -32,10 +33,30 @@ import type { AdminIdentity } from "@/lib/admin/session";
 
 export type ParticipantFilter = "all" | "submitted" | "silent" | "approved";
 
+/**
+ * One manual ledger row: a bonus given, or a bonus taken back.
+ *
+ * Only the sources a person writes. challenge_entry and referral belong to the
+ * engine and are not what somebody means by "did I already give them extra".
+ */
+export interface ManualAward {
+  source: string;
+  points: number;
+  note: string | null;
+  at: Date;
+  /** The admin who gave it. Null if that admin row has since gone. */
+  by: string | null;
+  /** Set for engagement bonuses, which attach to one entry. */
+  entryId: string | null;
+  weekNo: number | null;
+}
+
 export interface Participant {
   enrolmentId: string;
   /** Approved entries, for the engagement bonus picker. */
   entries: { id: string; weekNo: number }[];
+  /** Every manual award and take-back, newest first. */
+  awards: ManualAward[];
   name: string;
   email: string;
   joinedAt: Date;
@@ -62,7 +83,9 @@ export async function participants(
   void admin; // The type is the proof the guard ran.
 
   const db = getDb();
-  const search = query.search?.trim();
+  // Handles are stored without the @ people type in front of them, and the
+  // search box's own example is "@adawrites", which otherwise found nobody.
+  const search = query.search?.trim().replace(/^@+/, "");
   const limit = Math.min(Math.max(query.limit ?? 200, 1), 500);
 
   /*
@@ -100,6 +123,47 @@ export async function participants(
        AND ce.approved_platform_count >= 1
   )`;
 
+  /*
+   * Every bonus a person has given this creator, and every take-back.
+   *
+   * The award form showed nothing about what had already been given, so the
+   * only way to know whether somebody already had their quality bonus was to
+   * remember. Their points total moved, but a total does not say what it is
+   * made of, and giving the same bonus twice for the same work looks exactly
+   * like giving two bonuses for two pieces of work.
+   *
+   * Loaded with the row, as entries are, rather than fetched when the panel
+   * opens: it is a handful of rows per creator, and a second endpoint would be
+   * one more admin route to guard for a list the page can already carry.
+   */
+  const awardList = sql<
+    {
+      source: string;
+      points: number;
+      note: string | null;
+      at: string;
+      by: string | null;
+      entryId: string | null;
+      weekNo: number | null;
+    }[]
+  >`(
+    SELECT COALESCE(json_agg(json_build_object(
+             'source', pl.source::text,
+             'points', pl.points,
+             'note', pl.note,
+             'at', pl.created_at,
+             'by', a.email,
+             'entryId', pl.entry_id,
+             'weekNo', ch.week_no
+           ) ORDER BY pl.created_at DESC, pl.id DESC), '[]'::json)
+      FROM point_ledger pl
+      LEFT JOIN admin_users a        ON a.id = pl.awarded_by_admin_id
+      LEFT JOIN challenge_entries ce ON ce.id = pl.entry_id
+      LEFT JOIN challenges ch        ON ch.id = ce.challenge_id
+     WHERE pl.campaign_creator_id = ${campaignCreators.id}
+       AND pl.source NOT IN ('challenge_entry', 'referral')
+  )`;
+
   const handleList = sql<string[]>`(
     SELECT COALESCE(array_agg(h.platform || ':' || h.handle ORDER BY h.platform), '{}')
       FROM ${creatorSocialHandles} h
@@ -109,7 +173,7 @@ export async function participants(
   const filters = [eq(campaigns.slug, query.slug)];
 
   if (search) {
-    const like = `%${search}%`;
+    const like = likeContaining(search);
     /*
      * Handles are matched here, not in the browser.
      *
@@ -143,6 +207,7 @@ export async function participants(
       joinedAt: campaignCreators.joinedAt,
       handles: handleList,
       entries: entryList,
+      awards: awardList,
       submitted: submittedCount,
       approved: approvedCount,
       points: campaignCreators.pointsTotal,
@@ -162,6 +227,20 @@ export async function participants(
     joinedAt: row.joinedAt,
     handles: Array.isArray(row.handles) ? row.handles : [],
     entries: Array.isArray(row.entries) ? row.entries : [],
+    awards: Array.isArray(row.awards)
+      ? row.awards.map((a) => ({
+          source: String(a.source),
+          points: Number(a.points ?? 0),
+          note: a.note ?? null,
+          at: new Date(a.at),
+          by: a.by ?? null,
+          entryId: a.entryId ?? null,
+          weekNo:
+            a.weekNo === null || a.weekNo === undefined
+              ? null
+              : Number(a.weekNo),
+        }))
+      : [],
     submitted: Number(row.submitted ?? 0),
     approved: Number(row.approved ?? 0),
     points: Number(row.points ?? 0),

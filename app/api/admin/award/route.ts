@@ -99,7 +99,7 @@ const MESSAGES: Record<string, string> = {
   P0514: "Engagement bonuses attach to the entry that earned the views.",
   P0515: "That entry does not belong to this creator.",
   P0516:
-    "This entry already has its engagement bonus. Take the old one back first if the tier changed.",
+    "This entry has already had its one engagement bonus. Taking it back does not free it for another, so for a higher tier give the difference as a Correction.",
 };
 
 export async function POST(request: NextRequest) {

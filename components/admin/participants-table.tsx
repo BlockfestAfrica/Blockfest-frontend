@@ -24,8 +24,32 @@ const AWARD_SOURCES = [
   { key: "manual_adjustment", label: "Correction" },
 ] as const;
 
+/** The label a person reads, for a source key the database stores. */
+function sourceLabel(key: string): string {
+  return AWARD_SOURCES.find((s) => s.key === key)?.label ?? key;
+}
+
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
+
+/** One manual ledger row: a bonus given, or one taken back. */
+export interface AwardRecord {
+  source: string;
+  points: number;
+  note: string | null;
+  /** Pre-formatted Lagos time, so this component never touches timezones. */
+  atLabel: string;
+  /** Who gave it. Null if that admin row has since gone. */
+  by: string | null;
+  /** Set for engagement bonuses, which attach to one entry. */
+  entryId: string | null;
+  weekNo: number | null;
+}
+
+/** Net extra points: bonuses given minus bonuses taken back. */
+function extraPoints(awards: AwardRecord[]): number {
+  return awards.reduce((total, a) => total + a.points, 0);
+}
 
 export interface ParticipantRow {
   enrolmentId: string;
@@ -35,6 +59,8 @@ export interface ParticipantRow {
   handles: string[];
   /** Approved entries, for the engagement bonus picker. */
   entries: { id: string; weekNo: number }[];
+  /** Every manual award and take-back, newest first. */
+  awards: AwardRecord[];
   submitted: number;
   approved: number;
   points: number;
@@ -42,7 +68,7 @@ export interface ParticipantRow {
 }
 
 type SortKey = "name" | "joinedAt" | "submitted" | "approved" | "points";
-type Filter = "all" | "submitted" | "silent" | "approved";
+type Filter = "all" | "submitted" | "silent" | "approved" | "extra";
 
 /**
  * Everyone who joined, whether or not they have submitted anything.
@@ -94,6 +120,7 @@ export function ParticipantsTable({
       if (filter === "submitted" && row.submitted === 0) return false;
       if (filter === "silent" && row.submitted > 0) return false;
       if (filter === "approved" && row.approved === 0) return false;
+      if (filter === "extra" && row.awards.length === 0) return false;
       return true;
     });
 
@@ -245,6 +272,7 @@ export function ParticipantsTable({
     submitted: rows.filter((r) => r.submitted > 0).length,
     silent: rows.filter((r) => r.submitted === 0).length,
     approved: rows.filter((r) => r.approved > 0).length,
+    extra: rows.filter((r) => r.awards.length > 0).length,
   };
 
   return (
@@ -263,6 +291,7 @@ export function ParticipantsTable({
           { value: "submitted", label: `Submitted (${counts.submitted})` },
           { value: "silent", label: `Never submitted (${counts.silent})` },
           { value: "approved", label: `Has an approval (${counts.approved})` },
+          { value: "extra", label: `Given extra points (${counts.extra})` },
         ]}
       />
 
@@ -345,6 +374,10 @@ export function ParticipantsTable({
                 )}
 
 
+
+                {/* Its own line on a phone. Beside the total it widened a
+                    column that does not shrink, and squeezed the name. */}
+                <ExtraNote awards={row.awards} />
 
                 <p className="mt-2 text-sm text-ink-3">
                   {row.submitted} sent · {row.approved} approved · joined{" "}
@@ -526,6 +559,7 @@ export function ParticipantsTable({
                     </td>
                     <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-white">
                       {row.points}
+                      <ExtraNote awards={row.awards} />
                     </td>
                     <td className="px-4 py-3 text-right align-top">
                       <button
@@ -678,6 +712,7 @@ export function ParticipantsTable({
               key={selected.enrolmentId}
               name={selected.name}
               entries={selected.entries}
+              awards={selected.awards}
               busy={busy}
               onSubmit={(source, points, note, entryId) =>
                 submitAward(selected.enrolmentId, source, points, note, entryId)
@@ -687,6 +722,25 @@ export function ParticipantsTable({
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * How much of a total is extra points, under the total itself.
+ *
+ * The total moved when a bonus was given, but it never said what it was made
+ * of, so "have I already given them something" had no answer on the screen.
+ * Net of take-backs, because that is what the total actually contains.
+ */
+function ExtraNote({ awards }: { awards: AwardRecord[] }) {
+  if (awards.length === 0) return null;
+  const net = extraPoints(awards);
+  return (
+    <span className="block text-xs font-normal text-brand-gold">
+      {net === 0
+        ? "extra given and taken back"
+        : `incl. ${net > 0 ? "+" : "−"}${Math.abs(net)} extra`}
+    </span>
   );
 }
 
@@ -745,11 +799,13 @@ function Th({
 function AwardRow({
   name,
   entries,
+  awards,
   busy,
   onSubmit,
 }: {
   name: string;
   entries: { id: string; weekNo: number }[];
+  awards: AwardRecord[];
   busy: boolean;
   onSubmit: (
     source: string,
@@ -765,6 +821,54 @@ function AwardRow({
 
   const value = Number.parseInt(points, 10);
 
+  /*
+   * What this creator already has from the kind of award being chosen.
+   *
+   * Engagement is counted per entry, because that is the rule: one bonus per
+   * entry, and a second entry earning its own is not a repeat. Everything else
+   * is counted per kind. Net of take-backs, so a bonus given and then taken
+   * back does not read as one still standing.
+   */
+  const sameKind = awards.filter(
+    (a) =>
+      a.source === source &&
+      (source !== "engagement_milestone" || a.entryId === entryId),
+  );
+  const standing = extraPoints(sameKind);
+  const entryNet = (id: string) =>
+    extraPoints(
+      awards.filter(
+        (a) => a.source === "engagement_milestone" && a.entryId === id,
+      ),
+    );
+  /*
+   * Whether an entry's one engagement bonus has been used, which is not the
+   * same as whether points are standing on it.
+   *
+   * The database allows one positive engagement row per entry, ever: the
+   * index in 0051 counts positive rows, and a take-back is a new negative row
+   * that leaves the original in place. So an entry given +40 and then -40 nets
+   * to nothing and still cannot take +60. Judging "used" by the net made
+   * exactly that entry look free, and the advice that followed, take it back
+   * first, cost the creator their points and then failed.
+   */
+  const engagementUsed = (id: string) =>
+    awards.some(
+      (a) =>
+        a.source === "engagement_milestone" && a.entryId === id && a.points > 0,
+    );
+  /*
+   * A take-back is not a repeat. Typing a negative number is the correction
+   * this warning would otherwise send somebody to, so it says nothing then.
+   * NaN (an empty field, or a lone minus) is not below zero, so the warning
+   * still shows as soon as a kind is picked, before any number is typed.
+   */
+  const takingBack = value < 0;
+  const warnEngagement =
+    source === "engagement_milestone" && !!entryId && engagementUsed(entryId);
+  const warnOther =
+    source !== "engagement_milestone" && sameKind.length > 0 && standing > 0;
+
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-ink-3">
@@ -772,6 +876,61 @@ function AwardRow({
         negative number takes points back, and leaves the original award in the
         ledger.
       </p>
+
+      {/* Everything already given, before the form rather than after it, so
+          it is read before a number is typed. The question this answers is
+          "have I already given them this", which used to have no answer on
+          the screen at all. */}
+      {awards.length === 0 ? (
+        <p className="text-sm text-ink-4">No extra points given yet.</p>
+      ) : (
+        <div>
+          <p className="text-sm font-semibold text-white">
+            Already given ({extraPoints(awards) >= 0 ? "+" : "−"}
+            {Math.abs(extraPoints(awards))} net)
+          </p>
+          <ul className="mt-2 divide-y divide-line rounded-lg border border-line">
+            {awards.map((a, i) => (
+              <li key={`${a.atLabel}-${i}`} className="px-3 py-2 text-sm">
+                <span
+                  className={`font-semibold tabular-nums ${
+                    a.points > 0 ? "text-green-300" : "text-red-300"
+                  }`}
+                >
+                  {a.points > 0 ? "+" : "−"}
+                  {Math.abs(a.points)}
+                </span>{" "}
+                <span className="text-white">{sourceLabel(a.source)}</span>
+                {a.weekNo !== null && (
+                  <span className="text-ink-3"> · week {a.weekNo} entry</span>
+                )}
+                <span className="block text-ink-3">
+                  {a.atLabel} · {a.by ?? "admin no longer listed"}
+                </span>
+                {a.note && (
+                  <span className="block break-words text-ink-2">{a.note}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Said before Apply, not after. A second quality bonus for the same
+          post looks exactly like a quality bonus for a new one once it is in
+          the total, so this is the last point it can be caught. It warns
+          rather than blocks: two bonuses of one kind for two pieces of work
+          are legitimate, and only the person awarding knows which this is. */}
+      {!takingBack && (warnEngagement || warnOther) && (
+        <p
+          role="status"
+          className="rounded-lg border border-brand-gold/40 bg-brand-gold/5 p-3 text-sm leading-relaxed text-ink-2"
+        >
+          {source === "engagement_milestone"
+            ? `This entry has already had its one engagement bonus${standing > 0 ? ` (+${standing} standing)` : ", since taken back"}. A take-back does not free it for another. For a higher tier, give the difference as a Correction.`
+            : `${name} already has +${standing} from ${sourceLabel(source)}. Check this is for different work before giving it again.`}
+        </p>
+      )}
 
       <div className="flex flex-col gap-3 lg:flex-row">
         <label htmlFor="award-source" className="sr-only">
@@ -846,11 +1005,20 @@ function AwardRow({
             className={`${selectControl} mt-2 lg:max-w-56`}
           >
             <option value="">Which entry reached it...</option>
-            {entries.map((entry) => (
-              <option key={entry.id} value={entry.id}>
-                Week {entry.weekNo} entry
-              </option>
-            ))}
+            {entries.map((entry) => {
+              const has = entryNet(entry.id);
+              const used = engagementUsed(entry.id);
+              return (
+                <option key={entry.id} value={entry.id}>
+                  Week {entry.weekNo} entry
+                  {used
+                    ? has > 0
+                      ? ` (bonus used, +${has})`
+                      : " (bonus used, taken back)"
+                    : ""}
+                </option>
+              );
+            })}
           </select>
           <p className="mt-2 text-sm leading-relaxed text-ink-3">
             The published ladder: 5K views 20 · 10K 40 · 20K 60 · 30K 80 ·
