@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { reveal } from "@/components/shared/reveal";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -170,6 +171,19 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
    * The link is clickable now, so copying is the secondary path rather
    * than the way in, and it no longer has to be bundled into expanding.
    */
+  /*
+   * Bring an opened row's decision into view.
+   *
+   * The row expands in place, which is right for a queue worked one after
+   * another; but on a phone the panel is 300 to 400 pixels, and from a row
+   * near the bottom of the screen the reason field and Approve and Reject
+   * landed below the fold. Scrolled only, not focused: the reviewer's place
+   * stays on the row they opened.
+   */
+  useEffect(() => {
+    if (open) reveal(document.getElementById(`review-${open}`));
+  }, [open]);
+
   function toggle(item: QueueItem) {
     setOpen((current) => (current === item.id ? null : item.id));
   }
@@ -249,7 +263,10 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
               </button>
 
               {isOpen && (
-                <div className="border-t border-line bg-card p-4">
+                <div
+                  id={`review-${item.id}`}
+                  className="scroll-mb-6 border-t border-line bg-card p-4"
+                >
                   {item.autoChecked ? (
                     <p className="flex items-center gap-2 text-sm text-green-300">
                       <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />

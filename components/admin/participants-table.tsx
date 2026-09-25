@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Coins } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -9,9 +9,9 @@ import {
   control,
   Pill,
   selectControl,
-  SectionHeading,
   Segmented,
 } from "@/components/shared/panel";
+import { ActionDialog } from "@/components/shared/action-dialog";
 
 /** The sources a person may write. The engine owns challenge_entry and referral. */
 const AWARD_SOURCES = [
@@ -97,9 +97,12 @@ export function ParticipantsTable({
   const [voidReason, setVoidReason] = useState("");
   const [fixing, setFixing] = useState<{
     enrolmentId: string;
+    name: string;
     platform: string;
     current: string;
   } | null>(null);
+  /** The handle correction's request, so its dialog cannot close mid-save. */
+  const [fixBusy, setFixBusy] = useState(false);
   /** Which row has the award panel open. One at a time, on purpose. */
   const [awarding, setAwarding] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -249,23 +252,16 @@ export function ParticipantsTable({
   /* The same lookup for the void panel, which now renders once after the
      list rather than inside each md:hidden card. */
   const voidingRow = shown.find((r) => r.enrolmentId === voiding) ?? null;
-  const awardRef = useRef<HTMLDivElement>(null);
-
   /*
-   * Bring the panel to the person who opened it.
+   * Each of these opens a dialog rather than a panel after the list.
    *
-   * It renders after the entire list, so tapping Points on the fortieth row of
-   * five hundred opened a form several thousand pixels below the fold with no
-   * scroll, no focus move and no visible acknowledgement. On a phone the button
-   * appeared to do nothing at all.
+   * They used to render once, below everything, for whichever row was chosen.
+   * On a long list that put the form thousands of pixels below the button with
+   * nothing to say it had appeared: pressing Disqualify or fix looked like it
+   * did nothing, and the reason field the action was waiting for was somewhere
+   * nobody would look. Points had grown a scroll-into-view to cope; the other
+   * two never had. A dialog opens in front of the person on every screen size.
    */
-  useEffect(() => {
-    if (!selected) return;
-    awardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    awardRef.current
-      ?.querySelector<HTMLElement>("select, input, button")
-      ?.focus();
-  }, [selected]);
 
   const counts = {
     all: rows.length,
@@ -347,21 +343,14 @@ export function ParticipantsTable({
                             <button
                               type="button"
                               onClick={() =>
-                                setFixing(
-                                  fixing?.enrolmentId === row.enrolmentId &&
-                                    fixing.platform === platform
-                                    ? null
-                                    : {
-                                        enrolmentId: row.enrolmentId,
-                                        platform,
-                                        current: handle,
-                                      },
-                                )
+                                setFixing({
+                                  enrolmentId: row.enrolmentId,
+                                  name: row.name,
+                                  platform,
+                                  current: handle,
+                                })
                               }
-                              aria-expanded={
-                                fixing?.enrolmentId === row.enrolmentId &&
-                                fixing.platform === platform
-                              }
+                              aria-haspopup="dialog"
                               className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-2 text-xs font-semibold text-ink-4 transition-colors hover:text-white"
                             >
                               fix
@@ -391,17 +380,12 @@ export function ParticipantsTable({
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
-                    onClick={() =>
-                      setAwarding(
-                        awarding === row.enrolmentId ? null : row.enrolmentId,
-                      )
-                    }
-                    aria-expanded={awarding === row.enrolmentId}
-                    aria-controls="award-panel"
+                    onClick={() => setAwarding(row.enrolmentId)}
+                    aria-haspopup="dialog"
                     className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-2"
                   >
                     <Coins className="h-4 w-4" aria-hidden="true" />
-                    {awarding === row.enrolmentId ? "Close" : "Points"}
+                    Points
                   </button>
                   {/* Disqualification, which void_enrolment has enforced
                       since 0027 while being reachable by nobody: no route,
@@ -411,12 +395,11 @@ export function ParticipantsTable({
                   {canCorrectHandles && (
                     <button
                       type="button"
-                      onClick={() =>
-                        setVoiding(
-                          voiding === row.enrolmentId ? null : row.enrolmentId,
-                        )
-                      }
-                      aria-expanded={voiding === row.enrolmentId}
+                      onClick={() => {
+                        setVoidReason("");
+                        setVoiding(row.enrolmentId);
+                      }}
+                      aria-haspopup="dialog"
                       className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-line-2 px-4 text-sm font-semibold text-ink-3 transition-colors hover:border-red-400/50 hover:text-red-200"
                     >
                       Disqualify
@@ -519,21 +502,14 @@ export function ParticipantsTable({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    setFixing(
-                                      fixing?.enrolmentId === row.enrolmentId &&
-                                        fixing.platform === platform
-                                        ? null
-                                        : {
-                                            enrolmentId: row.enrolmentId,
-                                            platform,
-                                            current: handle,
-                                          },
-                                    )
+                                    setFixing({
+                                      enrolmentId: row.enrolmentId,
+                                      name: row.name,
+                                      platform,
+                                      current: handle,
+                                    })
                                   }
-                                  aria-expanded={
-                                    fixing?.enrolmentId === row.enrolmentId &&
-                                    fixing.platform === platform
-                                  }
+                                  aria-haspopup="dialog"
                                   className="ml-1 inline-flex min-h-11 cursor-pointer items-center rounded-full px-2 font-sans text-xs font-semibold text-ink-4 transition-colors hover:text-white"
                                 >
                                   fix
@@ -564,19 +540,12 @@ export function ParticipantsTable({
                     <td className="px-4 py-3 text-right align-top">
                       <button
                         type="button"
-                        onClick={() =>
-                          setAwarding(
-                            awarding === row.enrolmentId
-                              ? null
-                              : row.enrolmentId,
-                          )
-                        }
-                        aria-expanded={awarding === row.enrolmentId}
-                        aria-controls="award-panel"
+                        onClick={() => setAwarding(row.enrolmentId)}
+                        aria-haspopup="dialog"
                         className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-2"
                       >
                         <Coins className="h-4 w-4" aria-hidden="true" />
-                        {awarding === row.enrolmentId ? "Close" : "Points"}
+                        Points
                       </button>
                       {/* Disqualifying was reachable only in the card list,
                           so above 768px /api/admin/void had no caller at
@@ -587,19 +556,14 @@ export function ParticipantsTable({
                       {canCorrectHandles && row.active && (
                         <button
                           type="button"
-                          onClick={() =>
-                            setVoiding(
-                              voiding === row.enrolmentId
-                                ? null
-                                : row.enrolmentId,
-                            )
-                          }
-                          aria-expanded={voiding === row.enrolmentId}
+                          onClick={() => {
+                            setVoidReason("");
+                            setVoiding(row.enrolmentId);
+                          }}
+                          aria-haspopup="dialog"
                           className="ml-2 inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-red-300/80 transition-colors hover:text-red-300"
                         >
-                          {voiding === row.enrolmentId
-                            ? "Close"
-                            : "Disqualify"}
+                          Disqualify
                         </button>
                       )}
                     </td>
@@ -626,101 +590,126 @@ export function ParticipantsTable({
       )}
 
       {/*
-       * The award form, out of the table entirely.
+       * Rendered once, outside the responsive split, and as dialogs.
        *
-       * It lived in a colSpan cell inside the horizontal scroll container, so
-       * the form was at least 736px wide and its Apply button was off screen to
-       * the right on every phone: the one control that moves points could not
-       * be reached on the device an admin is most likely holding. One instance,
-       * below the list, for whichever creator is selected.
+       * These lived in the per-row card markup, which is md:hidden, so the
+       * controls existed only below 768px; then once after the whole list, so
+       * they existed everywhere but appeared thousands of pixels from the
+       * button. A dialog is both: one instance serves the cards and the table,
+       * and it opens in front of whoever pressed the button.
        */}
-      {/*
-        * Rendered once, after the list, rather than inside each card.
-        *
-        * They used to live in the per-row card markup, which is md:hidden,
-        * so the controls existed only below 768px. Adding the buttons to
-        * the desktop table would have set the state and shown nothing.
-        * This is the shape the award panel already uses, and one panel
-        * serves both layouts.
-        */}
-                {voidingRow && (
-                  <div className="mt-3 rounded-lg border border-red-400/40 bg-red-400/5 p-4">
-                    <p className="max-w-prose text-sm leading-relaxed text-ink-2">
-                      Their entries stop being accepted, the points those
-                      entries earned are reversed, and referral payouts they
-                      triggered are clawed back. This is recorded against your
-                      name.
-                    </p>
-                    <label
-                      htmlFor={`void-why-${voidingRow.enrolmentId}`}
-                      className="mt-3 block text-sm font-semibold text-white"
-                    >
-                      Why
-                    </label>
-                    <input
-                      id={`void-why-${voidingRow.enrolmentId}`}
-                      value={voidReason}
-                      onChange={(event) => setVoidReason(event.target.value)}
-                      maxLength={300}
-                      placeholder="Bought engagement on two entries, evidence in the thread"
-                      className={`${control} mt-1`}
-                    />
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => voidEnrolment(voidingRow.enrolmentId, voidingRow.name)}
-                        className={buttonClass("dangerFill")}
-                      >
-                        {busy ? "Working…" : `Disqualify ${voidingRow.name}`}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVoiding(null);
-                          setVoidReason("");
-                        }}
-                        className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink-3 hover:text-white"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {fixing && (
-                  <CorrectHandle
-                    key={`${fixing.enrolmentId}-${fixing.platform}`}
-                    enrolmentId={fixing.enrolmentId}
-                    platform={fixing.platform}
-                    current={fixing.current}
-                    onDone={() => setFixing(null)}
-                  />
-                )}
-
-      <div ref={awardRef} id="award-panel">
-        {selected && (
-          <div className="mt-8 border-t border-line-2 pt-6">
-            <SectionHeading label="Points" title={selected.name} />
-            <AwardRow
-              /*
-               * Keyed on the creator, so the points and the note do not carry
-               * over when the panel is reopened for somebody else. Without it a
-               * reviewer who closes one and opens another is looking at the
-               * previous person's figures in a form that will award them.
-               */
-              key={selected.enrolmentId}
-              name={selected.name}
-              entries={selected.entries}
-              awards={selected.awards}
-              busy={busy}
-              onSubmit={(source, points, note, entryId) =>
-                submitAward(selected.enrolmentId, source, points, note, entryId)
-              }
+      <ActionDialog
+        open={voidingRow !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setVoiding(null);
+            setVoidReason("");
+          }
+        }}
+        title={voidingRow ? `Disqualify ${voidingRow.name}` : "Disqualify"}
+        tone="danger"
+        busy={busy}
+      >
+        {voidingRow && (
+          <>
+            <p className="max-w-prose text-sm leading-relaxed text-ink-2">
+              Their entries stop being accepted, the points those entries earned
+              are reversed, and referral payouts they triggered are clawed back.
+              This is recorded against your name.
+            </p>
+            <label
+              htmlFor={`void-why-${voidingRow.enrolmentId}`}
+              className="mt-4 block text-sm font-semibold text-white"
+            >
+              Why
+            </label>
+            <input
+              id={`void-why-${voidingRow.enrolmentId}`}
+              data-autofocus
+              value={voidReason}
+              onChange={(event) => setVoidReason(event.target.value)}
+              maxLength={300}
+              placeholder="Bought engagement on two entries, evidence in the thread"
+              className={`${control} mt-1`}
             />
-          </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={busy || !voidReason.trim()}
+                onClick={() =>
+                  voidEnrolment(voidingRow.enrolmentId, voidingRow.name)
+                }
+                className={buttonClass("dangerFill")}
+              >
+                {busy ? "Working…" : `Disqualify ${voidingRow.name}`}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setVoiding(null);
+                  setVoidReason("");
+                }}
+                className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink-3 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </>
         )}
-      </div>
+      </ActionDialog>
+
+      <ActionDialog
+        open={fixing !== null}
+        onOpenChange={(open) => {
+          if (!open) setFixing(null);
+        }}
+        title={
+          fixing
+            ? `Correct ${fixing.name}'s ${fixing.platform} handle`
+            : "Correct a handle"
+        }
+        busy={fixBusy}
+      >
+        {fixing && (
+          <CorrectHandle
+            key={`${fixing.enrolmentId}-${fixing.platform}`}
+            enrolmentId={fixing.enrolmentId}
+            platform={fixing.platform}
+            current={fixing.current}
+            onBusyChange={setFixBusy}
+            onDone={() => setFixing(null)}
+          />
+        )}
+      </ActionDialog>
+
+      <ActionDialog
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open) setAwarding(null);
+        }}
+        title={selected ? `Points for ${selected.name}` : "Points"}
+        busy={busy}
+      >
+        {selected && (
+          <AwardRow
+            /*
+             * Keyed on the creator, so the points and the note do not carry
+             * over when the dialog is reopened for somebody else. Without it a
+             * reviewer who closes one and opens another is looking at the
+             * previous person's figures in a form that will award them.
+             */
+            key={selected.enrolmentId}
+            name={selected.name}
+            entries={selected.entries}
+            awards={selected.awards}
+            busy={busy}
+            onSubmit={(source, points, note, entryId) =>
+              submitAward(selected.enrolmentId, source, points, note, entryId)
+            }
+          />
+        )}
+      </ActionDialog>
     </div>
   );
 }
@@ -932,15 +921,19 @@ function AwardRow({
         </p>
       )}
 
-      <div className="flex flex-col gap-3 lg:flex-row">
+      {/* Stacked, not a row: the form lives in a dialog now, which is narrower
+          than the page it used to span, and four controls side by side left
+          the note field too short to read what was being typed. */}
+      <div className="flex flex-col gap-3">
         <label htmlFor="award-source" className="sr-only">
           What kind of award
         </label>
         <select
           id="award-source"
+          data-autofocus
           value={source}
           onChange={(e) => setSource(e.target.value)}
-          className={`${selectControl} lg:max-w-56`}
+          className={selectControl}
         >
           {AWARD_SOURCES.map((s) => (
             <option key={s.key} value={s.key}>
@@ -948,6 +941,46 @@ function AwardRow({
             </option>
           ))}
         </select>
+
+        {/* The published ladder, where the person choosing the number needs
+            it. Awards outside these figures are refused by the rule bounds
+            anyway; showing the ladder saves the round trip. */}
+        {source === "engagement_milestone" && (
+          <>
+            <label htmlFor="award-entry" className="sr-only">
+              Which entry reached the milestone
+            </label>
+            {/* The bonus attaches to the entry that earned the views; the
+                database refuses one without it, and one per entry. */}
+            <select
+              id="award-entry"
+              value={entryId}
+              onChange={(e) => setEntryId(e.target.value)}
+              className={selectControl}
+            >
+              <option value="">Which entry reached it...</option>
+              {entries.map((entry) => {
+                const has = entryNet(entry.id);
+                const used = engagementUsed(entry.id);
+                return (
+                  <option key={entry.id} value={entry.id}>
+                    Week {entry.weekNo} entry
+                    {used
+                      ? has > 0
+                        ? ` (bonus used, +${has})`
+                        : " (bonus used, taken back)"
+                      : ""}
+                  </option>
+                );
+              })}
+            </select>
+            <p className="text-sm leading-relaxed text-ink-3">
+              The published ladder: 5K views 20 · 10K 40 · 20K 60 · 30K 80 ·
+              50K 100 · 75K 150 · 100K 200. One bonus per entry, highest tier
+              verifiably reached.
+            </p>
+          </>
+        )}
 
         <label htmlFor="award-points" className="sr-only">
           How many points
@@ -958,7 +991,7 @@ function AwardRow({
           onChange={(e) => setPoints(e.target.value.replace(/[^0-9-]/g, ""))}
           inputMode="numeric"
           placeholder="Points, or -points"
-          className="min-h-12 rounded-lg border border-line bg-control px-4 text-base text-white placeholder:text-ink-3 lg:w-44"
+          className="min-h-12 rounded-lg border border-line bg-control px-4 text-base text-white placeholder:text-ink-3"
         />
 
         <label htmlFor="award-note" className="sr-only">
@@ -988,45 +1021,6 @@ function AwardRow({
           {busy ? "Working..." : "Apply"}
         </button>
       </div>
-      {/* The published ladder, where the person choosing the number needs
-          it. Awards outside these figures are refused by the rule bounds
-          anyway; showing the ladder saves the round trip. */}
-      {source === "engagement_milestone" && (
-        <>
-          <label htmlFor="award-entry" className="sr-only">
-            Which entry reached the milestone
-          </label>
-          {/* The bonus attaches to the entry that earned the views; the
-              database refuses one without it, and one per entry. */}
-          <select
-            id="award-entry"
-            value={entryId}
-            onChange={(e) => setEntryId(e.target.value)}
-            className={`${selectControl} mt-2 lg:max-w-56`}
-          >
-            <option value="">Which entry reached it...</option>
-            {entries.map((entry) => {
-              const has = entryNet(entry.id);
-              const used = engagementUsed(entry.id);
-              return (
-                <option key={entry.id} value={entry.id}>
-                  Week {entry.weekNo} entry
-                  {used
-                    ? has > 0
-                      ? ` (bonus used, +${has})`
-                      : " (bonus used, taken back)"
-                    : ""}
-                </option>
-              );
-            })}
-          </select>
-          <p className="mt-2 text-sm leading-relaxed text-ink-3">
-            The published ladder: 5K views 20 · 10K 40 · 20K 60 · 30K 80 ·
-            50K 100 · 75K 150 · 100K 200. One bonus per entry, highest tier
-            verifiably reached.
-          </p>
-        </>
-      )}
     </div>
   );
 }
@@ -1047,17 +1041,24 @@ function CorrectHandle({
   enrolmentId,
   platform,
   current,
+  onBusyChange,
   onDone,
 }: {
   enrolmentId: string;
   platform: string;
   current: string;
+  /** Lets the dialog refuse to close while the save is in flight. */
+  onBusyChange?: (busy: boolean) => void;
   onDone: () => void;
 }) {
   const router = useRouter();
   const [handle, setHandle] = useState(current);
   const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusyState] = useState(false);
+  const setBusy = (next: boolean) => {
+    setBusyState(next);
+    onBusyChange?.(next);
+  };
 
   async function save() {
     if (!handle.trim() || handle.trim().replace(/^@+/, "") === current) {
@@ -1098,11 +1099,8 @@ function CorrectHandle({
   }
 
   return (
-    <div className="mt-3 rounded-lg border border-line-2 bg-card p-4">
-      <p className="text-sm font-semibold text-white">
-        Correct the {platform} handle
-      </p>
-      <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
+    <div>
+      <p className="max-w-prose text-sm leading-relaxed text-ink-2">
         Currently @{current}. Their next submission is checked against whatever
         you save here, so make sure it is the account they actually publish
         from.
@@ -1113,6 +1111,7 @@ function CorrectHandle({
         </label>
         <input
           id={`fix-${enrolmentId}-${platform}`}
+          data-autofocus
           value={handle}
           onChange={(event) => setHandle(event.target.value)}
           autoComplete="off"
@@ -1143,8 +1142,9 @@ function CorrectHandle({
           </button>
           <button
             type="button"
+            disabled={busy}
             onClick={onDone}
-            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-semibold text-ink-2 transition-colors hover:text-white"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-semibold text-ink-2 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
           </button>

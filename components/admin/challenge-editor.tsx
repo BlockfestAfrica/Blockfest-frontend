@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Confirm } from "@/components/shared/confirm";
@@ -12,6 +12,8 @@ import {
   Pill,
   selectControl,
 } from "@/components/shared/panel";
+import { ActionDialog } from "@/components/shared/action-dialog";
+import { reveal } from "@/components/shared/reveal";
 import { dateTime } from "@/lib/format";
 
 export interface EditableChallenge {
@@ -78,6 +80,23 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     (Object.keys(baseline) as (keyof typeof baseline)[]).some(
       (k) => form[k] !== baseline[k],
     );
+
+  /*
+   * Bring an editor that just opened into view, with the cursor in Title.
+   *
+   * It expands in place under its week, and at about 900px its Save button
+   * always lands below the fold; opening a lower week also collapses the one
+   * above, which moves the pressed row up the page. Without this the admin was
+   * left looking at wherever the page happened to settle.
+   */
+  useEffect(() => {
+    if (!open) return;
+    reveal(
+      document.getElementById(`week-${open}`),
+      document.getElementById(`title-${open}`),
+      "start",
+    );
+  }, [open]);
 
   function startEditing(challenge: EditableChallenge) {
     const next = {
@@ -214,9 +233,58 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
       }
       hint="Write next week's challenge as a draft, read it over, flip it active on the Monday. Closing stops new entries and leaves what arrived reviewable."
     >
+      {/*
+       * The unsaved-changes question, in front of the admin.
+       *
+       * It used to render inside the week that was open, at the top of that
+       * week's editor. Pressing Edit on another week while this one had
+       * unsaved text therefore put the question a whole editor's height away
+       * from the button, often above the screen. A dialog asks it where the
+       * button was pressed, and still defaults to the answer that changes
+       * nothing.
+       */}
+      <ActionDialog
+        open={discarding !== null}
+        onOpenChange={(next) => {
+          if (!next) setDiscarding(null);
+        }}
+        title="Discard what you have written?"
+        tone="danger"
+      >
+        <p className="max-w-prose text-sm leading-relaxed text-ink-2">
+          This brief has not been saved. It is the text emailed to every
+          creator when the stage is announced, and nothing here keeps a copy.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {/* Keep editing first and focused, matching Confirm: the default
+              action is the one that changes nothing. */}
+          <button
+            type="button"
+            data-autofocus
+            onClick={() => setDiscarding(null)}
+            className={buttonClass("secondary")}
+          >
+            Keep editing
+          </button>
+          <button
+            type="button"
+            onClick={() => discarding && leaveEditor(discarding.to)}
+            className={buttonClass("danger")}
+          >
+            {discarding?.to
+              ? `Discard and open week ${discarding.to.weekNo}`
+              : "Discard it"}
+          </button>
+        </div>
+      </ActionDialog>
+
       <ul className="flex flex-col gap-3">
         {challenges.map((challenge) => (
-          <li key={challenge.id} className="rounded-lg border border-line p-4">
+          <li
+            key={challenge.id}
+            id={`week-${challenge.id}`}
+            className="scroll-mt-24 rounded-lg border border-line p-4"
+          >
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-semibold text-white">
                 Week {challenge.weekNo}: {challenge.title}
@@ -247,40 +315,6 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                 </button>
               )}
             </div>
-
-            {open === challenge.id && discarding && (
-              <div className="mt-4 rounded-lg border-l-2 border-brand-gold bg-brand-gold/[0.08] p-4">
-                <p className="text-sm font-semibold text-white">
-                  Discard what you have written?
-                </p>
-                <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
-                  This brief has not been saved. It is the text emailed to
-                  every creator when the stage is announced, and nothing here
-                  keeps a copy.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {/* Keep editing first and focused, matching Confirm: the
-                      default action is the one that changes nothing. */}
-                  <button
-                    type="button"
-                    autoFocus
-                    onClick={() => setDiscarding(null)}
-                    className={buttonClass("secondary")}
-                  >
-                    Keep editing
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => leaveEditor(discarding.to)}
-                    className={buttonClass("danger")}
-                  >
-                    {discarding.to
-                      ? `Discard and open week ${discarding.to.weekNo}`
-                      : "Discard it"}
-                  </button>
-                </div>
-              </div>
-            )}
 
             {open === challenge.id && !challenge.readonly_ && (
               <div className="mt-4 flex flex-col gap-4">

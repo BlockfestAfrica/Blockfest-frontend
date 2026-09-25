@@ -13,6 +13,7 @@ import {
   Segmented,
   SPACING,
 } from "@/components/shared/panel";
+import { ActionDialog } from "@/components/shared/action-dialog";
 import { Confirm } from "@/components/shared/confirm";
 import { count, dateTime } from "@/lib/format";
 
@@ -93,7 +94,8 @@ export function VoteRoundPanel({
   const [opensTime, setOpensTime] = useState("08:00");
   const [closesTime, setClosesTime] = useState("18:00");
   const [fewReason, setFewReason] = useState("");
-  const [removing, setRemoving] = useState<string | null>(null);
+  /** The vote whose removal is being confirmed, and whose email it names. */
+  const [removing, setRemoving] = useState<{ voteId: string; email: string } | null>(null);
   const [openCluster, setOpenCluster] = useState<string | null>(null);
   const [lookupEmail, setLookupEmail] = useState("");
   const [lookupResult, setLookupResult] = useState<ClusterVote[] | null>(null);
@@ -257,23 +259,23 @@ export function VoteRoundPanel({
               type="button"
               disabled={busy}
               onClick={() => {
-                setRemoving(m.voteId);
+                setRemoving({ voteId: m.voteId, email: m.email });
                 setRemoveReason("");
                 setRemoveMode("fraud");
               }}
+              aria-haspopup="dialog"
               className={buttonClass("danger")}
             >
               Remove…
             </button>
           </div>
-          {removing === m.voteId && renderRemoveForm(m.voteId, m.email)}
         </div>
       ))}
     </div>
   );
 
   const renderRemoveForm = (voteId: string, email: string) => (
-    <div className={`mt-4 ${SPACING.related}`}>
+    <div className={SPACING.related}>
                 <Field
                   id={`remove-reason-${voteId}`}
                   label="Why it goes"
@@ -281,6 +283,7 @@ export function VoteRoundPanel({
                 >
                   <input
                     id={`remove-reason-${voteId}`}
+                    data-autofocus
                     name="remove-reason"
                     autoComplete="off"
                     value={removeReason}
@@ -342,6 +345,7 @@ export function VoteRoundPanel({
                   )}
                   <button
                     type="button"
+                    disabled={busy}
                     onClick={() => setRemoving(null)}
                     className={buttonClass("quiet")}
                   >
@@ -547,10 +551,11 @@ export function VoteRoundPanel({
                       type="button"
                       disabled={busy}
                       onClick={() => {
-                        setRemoving(h.voteId);
+                        setRemoving({ voteId: h.voteId, email: h.email });
                         setRemoveReason("");
                         setRemoveMode("fraud");
                       }}
+                      aria-haspopup="dialog"
                       className={buttonClass("danger")}
                     >
                       Remove…
@@ -558,8 +563,6 @@ export function VoteRoundPanel({
                   </div>
                 </div>
 
-                {removing === h.voteId &&
-                  renderRemoveForm(h.voteId, h.email)}
               </div>
             ))}
           </div>
@@ -918,6 +921,27 @@ export function VoteRoundPanel({
           {round.status !== "published" && signalsBlock}
         </div>
       )}
+
+      {/*
+       * Removing a vote, in front of the admin.
+       *
+       * The reason form expanded under the vote that was pressed, inside an
+       * expanded cluster or the held list. From a row near the bottom of the
+       * screen the reason field and the confirm landed below the fold, and
+       * the Remove button appeared to do nothing. One dialog serves every
+       * list the button appears in.
+       */}
+      <ActionDialog
+        open={removing !== null}
+        onOpenChange={(next) => {
+          if (!next) setRemoving(null);
+        }}
+        title={removing ? `Remove the vote from ${removing.email}` : "Remove a vote"}
+        tone="danger"
+        busy={busy}
+      >
+        {removing && renderRemoveForm(removing.voteId, removing.email)}
+      </ActionDialog>
     </JobCard>
   );
 }

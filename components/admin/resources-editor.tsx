@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buttonClass, control, Field, JobCard, Pill } from "@/components/shared/panel";
 import { Confirm } from "@/components/shared/confirm";
+import { ActionDialog } from "@/components/shared/action-dialog";
 
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
@@ -128,6 +129,7 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
                 <button
                   type="button"
                   onClick={() => startEditing(row)}
+                  aria-haspopup="dialog"
                   className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-ink-3 transition-colors hover:text-white"
                 >
                   Edit
@@ -173,11 +175,35 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
         )
       )}
 
-      {open ? (
-        <div className="mt-4 flex flex-col gap-4 rounded-lg border border-line p-4">
+      <button type="button" onClick={() => { setForm(EMPTY); setOpen(true); }}
+        aria-haspopup="dialog" className={buttonClass("secondary", "mt-4 w-fit")}>
+        Add a resource
+      </button>
+
+      {/*
+       * One dialog for adding and editing, opened in front of the admin.
+       *
+       * The form used to render once, after the whole list, where the Add
+       * button sits. Edit on an upper row therefore changed nothing visible
+       * on a long list, and pressing Edit on a second row while one was open
+       * silently swapped the form underneath. The dialog opens where they are
+       * looking and holds the page still until it is saved or dismissed.
+       */}
+      <ActionDialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) {
+            setOpen(false);
+            setForm(EMPTY);
+          }
+        }}
+        title={form.id ? "Edit resource" : "Add a resource"}
+        busy={busy}
+      >
+        <div className="flex flex-col gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="res-title" label="Title">
-              <input id="res-title" value={form.title} maxLength={160}
+              <input id="res-title" data-autofocus value={form.title} maxLength={160}
                 onChange={(e) => setForm({ ...form, title: e.target.value })} className={control} />
             </Field>
             <Field id="res-section" label="Section" hint="A short slug: pack, faq, announcements.">
@@ -220,17 +246,13 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
             <button type="button" disabled={busy} onClick={save} className={buttonClass("primary")}>
               {busy ? "Saving…" : form.id ? "Save changes" : "Add resource"}
             </button>
-            <button type="button" onClick={() => { setOpen(false); setForm(EMPTY); }}
+            <button type="button" disabled={busy} onClick={() => { setOpen(false); setForm(EMPTY); }}
               className={buttonClass("quiet")}>
               Cancel
             </button>
           </div>
         </div>
-      ) : (
-        <button type="button" onClick={() => setOpen(true)} className={buttonClass("secondary", "mt-4 w-fit")}>
-          Add a resource
-        </button>
-      )}
+      </ActionDialog>
     </JobCard>
   );
 }
