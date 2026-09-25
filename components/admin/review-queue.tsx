@@ -110,7 +110,18 @@ export interface QueueItem {
  */
 export function ReviewQueue({ items }: { items: QueueItem[] }) {
   const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
+  /*
+   * Which row is deciding, and which way.
+   *
+   * It held only the row id, so both buttons read busy === item.id and only
+   * Approve had a label for it. Adding one to Reject that way would have
+   * made Reject say "Rejecting…" while an APPROVE was in flight, which is
+   * worse than saying nothing. The decision travels with the id.
+   */
+  const [busy, setBusy] = useState<{
+    id: string;
+    decision: "approved" | "rejected";
+  } | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [open, setOpen] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -131,7 +142,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
       return;
     }
 
-    setBusy(id);
+    setBusy({ id, decision });
     try {
       const response = await fetch("/api/admin/review", {
         method: "POST",
@@ -146,6 +157,20 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
 
       if (!response.ok || !result.ok) {
         toast.error(result.message ?? "That did not work.");
+        /*
+         * Refreshed on the way out, not only on success.
+         *
+         * A refused decision is the interesting case: the post was already
+         * credited to somebody else, the creator was disqualified, a newer
+         * submission superseded this one, or they took it back. Every one
+         * of those means the row on screen is describing a state that no
+         * longer exists, and returning here left it sitting there with its
+         * buttons live. The reviewer reads it again, presses again, gets
+         * the same refusal. The server's own 404 copy had to end with
+         * "reload the queue to see what is left", which is an application
+         * asking a person to do its job.
+         */
+        await router.refresh();
         return;
       }
 
@@ -345,21 +370,35 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                     <div className="flex shrink-0 gap-2">
                       <button
                         type="button"
-                        disabled={busy === item.id}
+                        disabled={busy?.id === item.id}
+                        aria-busy={
+                          busy?.id === item.id && busy.decision === "approved"
+                        }
                         onClick={() => decide(item.id, "approved")}
                         className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-[background-color,transform] duration-150 hover:bg-green-400/25 active:scale-[0.98] disabled:opacity-60 sm:flex-none"
                       >
                         <Check className="h-4 w-4" aria-hidden="true" />
-                        {busy === item.id ? "Approving…" : "Approve"}
+                        {busy?.id === item.id && busy.decision === "approved"
+                          ? "Approving…"
+                          : "Approve"}
                       </button>
                       <button
                         type="button"
-                        disabled={busy === item.id}
+                        disabled={busy?.id === item.id}
+                        aria-busy={
+                          busy?.id === item.id && busy.decision === "rejected"
+                        }
                         onClick={() => decide(item.id, "rejected")}
                         className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-[background-color,transform] duration-150 hover:bg-red-400/15 active:scale-[0.98] disabled:opacity-60"
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
-                        Reject
+                        {/* The reject POST awaits the decision, the creator's
+                            mail and a refresh, so it is seconds on a phone.
+                            It said only "Reject" throughout, dimmed, which
+                            reads the same as a dead tap. */}
+                        {busy?.id === item.id && busy.decision === "rejected"
+                          ? "Rejecting…"
+                          : "Reject"}
                       </button>
                     </div>
                   </div>
