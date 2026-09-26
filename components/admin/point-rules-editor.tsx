@@ -5,6 +5,7 @@ import { reveal } from "@/components/shared/reveal";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buttonClass, control, JobCard } from "@/components/shared/panel";
+import { Confirm } from "@/components/shared/confirm";
 
 export interface RuleRow {
   id: string;
@@ -38,6 +39,61 @@ const LABELS: Record<string, { name: string; note?: string }> = {
  * creation; and repricing an existing entry is a separate, deliberate act on
  * the Tools screen, never a side effect of editing a number here.
  */
+/*
+ * Rules whose value is also written into public copy: the tier totals on the
+ * rules page and the referral figure on the prizes and personal pages.
+ */
+const STATED_PUBLICLY = new Set(["multi_platform_bonus_2", "multi_platform_bonus_3", "referral"]);
+
+/**
+ * What undoing a wrong value takes, which differs by rule.
+ *
+ * Only the two platform bonuses are snapshotted on entries, where reprice can
+ * reach them. A referral is paid once, at the value of the day, and the award
+ * rules are bounds checked when an award is made, so nothing already paid
+ * moves in either case.
+ */
+function afterEffect(key: string): string {
+  if (key === "multi_platform_bonus_2" || key === "multi_platform_bonus_3") {
+    return "Entries made from now on use it. Entries made before it is changed back keep it, and have to be repriced one by one on the Tools screen.";
+  }
+  if (key === "referral") {
+    return "Referrals paid from now on use it. One paid at a wrong value has to be corrected with a manual adjustment.";
+  }
+  return "Awards from now on are checked against it. Nothing already awarded changes.";
+}
+
+/**
+ * What a save would change, said back as "points 40 to 400, ceiling none to
+ * 500", or null when nothing would move.
+ *
+ * Worked out the way update_point_rule applies it: a blank or unreadable
+ * field is sent as null, and the rule keeps its current value for a null. So
+ * a cleared field is no change, and the question never promises one.
+ */
+function ruleChanges(
+  rule: RuleRow,
+  form: { def: string; min: string; max: string },
+): string | null {
+  const shown = (value: number | null) => (value === null ? "none" : String(value));
+  const kept = (typed: string, before: number | null) => {
+    const text = typed.trim();
+    if (text === "") return before;
+    const value = Number(text);
+    return Number.isInteger(value) ? value : before;
+  };
+  const parts = (
+    [
+      ["points", rule.defaultPoints, kept(form.def, rule.defaultPoints)],
+      ["floor", rule.minPoints, kept(form.min, rule.minPoints)],
+      ["ceiling", rule.maxPoints, kept(form.max, rule.maxPoints)],
+    ] as const
+  )
+    .filter(([, before, after]) => before !== after)
+    .map(([what, before, after]) => `${what} ${shown(before)} to ${shown(after)}`);
+  return parts.length ? parts.join(", ") : null;
+}
+
 export function PointRulesEditor({
   rules,
   weekBase,
@@ -168,8 +224,10 @@ export function PointRulesEditor({
                   {(
                     [
                       ["def", "Points"],
-                      ["min", "Floor (blank for none)"],
-                      ["max", "Ceiling (blank for none)"],
+                      // A blank field is sent as nothing, and the rule keeps
+                      // its current value (update_point_rule's COALESCE).
+                      ["min", "Floor (blank keeps it)"],
+                      ["max", "Ceiling (blank keeps it)"],
                     ] as const
                   ).map(([field, label]) => (
                     <div key={field} className="flex flex-col gap-1">
@@ -187,14 +245,30 @@ export function PointRulesEditor({
                       />
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => save(rule)}
-                    className={buttonClass("primary", "w-fit sm:col-span-3")}
-                  >
-                    {busy ? "Saving…" : "Save"}
-                  </button>
+                  {/* A typo here (400 for 40) mints wrong points on every
+                      entry or award made until someone notices, and each one
+                      then needs a reprice that emails its creator. So a
+                      changed value is said back first. */}
+                  <div className="sm:col-span-3">
+                    <Confirm
+                      label="Save"
+                      when={!legacy && ruleChanges(rule, form) !== null}
+                      question={`Change ${meta.name}: ${ruleChanges(rule, form) ?? ""}?`}
+                      consequence={[
+                        afterEffect(rule.key),
+                        STATED_PUBLICLY.has(rule.key)
+                          ? "The public campaign pages state this figure, so their copy has to change too."
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      confirmLabel="Yes, change it"
+                      pending={busy}
+                      onConfirm={() => save(rule)}
+                      triggerClassName={buttonClass("primary", "w-fit")}
+                      triggerContent={busy ? "Saving…" : "Save"}
+                    />
+                  </div>
                 </div>
               )}
             </li>

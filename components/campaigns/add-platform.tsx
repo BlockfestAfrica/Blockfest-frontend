@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buttonClass, control } from "@/components/shared/panel";
+import { ConfirmPanel } from "@/components/shared/confirm";
+import { canonicalHandle } from "@/lib/campaign-registration";
 
 /**
  * Add a platform you did not register with.
@@ -33,6 +35,14 @@ export function AddPlatform({
   const [open, setOpen] = useState<string | null>(null);
   const [handle, setHandle] = useState("");
   const [busy, setBusy] = useState(false);
+  /*
+   * Adding asks once, showing the username exactly as it will be stored, a
+   * pasted profile link already reduced to the name. Once added, a username
+   * can only be changed by a request the team approves, and until then every
+   * post from the real account is refused: a typo costs a day in a campaign
+   * with weekly deadlines.
+   */
+  const [confirming, setConfirming] = useState(false);
 
   if (missing.length === 0) return null;
 
@@ -93,6 +103,7 @@ export function AddPlatform({
                   onClick={() => {
                     setOpen(platform);
                     setHandle("");
+                    setConfirming(false);
                   }}
                   className={buttonClass("secondary")}
                 >
@@ -115,28 +126,54 @@ export function AddPlatform({
                     name={`add-${platform}`}
                     autoComplete="off"
                     value={handle}
+                    readOnly={confirming}
                     onChange={(event) => setHandle(event.target.value)}
                     placeholder="yourname"
-                    maxLength={41}
+                    // Room for a pasted profile link, which the route
+                    // reduces to the name; 41 cut such links off mid-name.
+                    maxLength={200}
                     className={`${control} mt-2`}
                   />
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => add(platform)}
-                      className={buttonClass("primary")}
-                    >
-                      {busy ? "Adding…" : `Add ${label}`}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setOpen(null)}
-                      className={buttonClass("quiet")}
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                  {confirming ? (
+                    <ConfirmPanel
+                      className="mt-3"
+                      label={`Add ${label}`}
+                      question={`Add @${canonicalHandle(handle)} as your ${label} account?`}
+                      consequence={`Every ${label} post you send has to come from @${canonicalHandle(handle)}. Once it is added, only the campaign team can change it, and that takes a request.`}
+                      confirmLabel="Yes, add it"
+                      cancelLabel="Go back"
+                      onCancel={() => {
+                        setConfirming(false);
+                        document.getElementById(`add-${platform}`)?.focus();
+                      }}
+                      onConfirm={() => {
+                        setConfirming(false);
+                        add(platform);
+                      }}
+                    />
+                  ) : (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => {
+                          // Nothing to ask about an empty box; add() says so.
+                          if (canonicalHandle(handle)) setConfirming(true);
+                          else add(platform);
+                        }}
+                        className={buttonClass("primary")}
+                      >
+                        {busy ? "Adding…" : `Add ${label}`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOpen(null)}
+                        className={buttonClass("quiet")}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

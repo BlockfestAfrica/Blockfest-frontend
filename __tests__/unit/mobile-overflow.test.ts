@@ -159,7 +159,14 @@ describe("touch targets", () => {
          * stop.
          */
         const viaHelper = /\bbuttonClass\(/.test(tag);
-        if (!hasMin && !hasPadding && !viaHelper) {
+        /*
+         * A button with the hidden attribute is never drawn, so it is not a
+         * target at all. The creator sign-out keeps one to submit its form on
+         * phones without requestSubmit. Matched as an attribute, not the
+         * `hidden` class, which a responsive button can carry and still show.
+         */
+        const neverShown = /\shidden(\s|\/|>)/.test(tag) && /tabIndex=\{-1\}/.test(tag);
+        if (!hasMin && !hasPadding && !viaHelper && !neverShown) {
           offenders.push(`${file}: ${tag.replace(/\s+/g, " ").slice(0, 90)}`);
         }
       }

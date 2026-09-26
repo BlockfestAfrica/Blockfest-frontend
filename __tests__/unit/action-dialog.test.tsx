@@ -275,9 +275,12 @@ describe("a resource draft", () => {
     readFileSync(join(process.cwd(), "components/admin/resources-editor.tsx"), "utf8"),
   );
 
-  it("survives a dismissed dialog, and only Cancel or a save clears it", () => {
+  it("survives a dismissed dialog, and only a save or an agreed discard clears it", () => {
     const onOpenChange = src.slice(src.indexOf("onOpenChange="), src.indexOf("title="));
     expect(onOpenChange).not.toContain("setForm(EMPTY)");
-    expect(src).toMatch(/if \(form\.id\) setForm\(EMPTY\); setOpen\(true\)/);
+    // Add resumes a new draft, and leaving an edit for a fresh add asks.
+    expect(src).toMatch(/form\.id \? requestLeave\("new"\) : setOpen\(true\)/);
+    // Cancel asks when there is anything to lose.
+    expect(src).toMatch(/onClick=\{\(\) => requestLeave\("close"\)\}/);
   });
 });

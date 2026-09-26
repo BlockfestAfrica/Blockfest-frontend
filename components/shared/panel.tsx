@@ -430,7 +430,7 @@ export const control =
 // "type or choose here" and the dropdown no longer jumps to a second surface.
 export const selectControl = `${control} select-chevron cursor-pointer appearance-none truncate pr-11 [&>option]:bg-control [&>option]:text-white`;
 
-type Intent =
+export type Intent =
   | "primary"
   | "secondary"
   | "quiet"

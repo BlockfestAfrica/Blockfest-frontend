@@ -57,7 +57,9 @@ describe("the paste point names the account rule", () => {
   it("the form can print the registered handle for the chosen platform", () => {
     const sub = read("components/campaigns/submission-form.tsx");
     expect(sub).toMatch(/It has to be a post from @/);
-    expect(sub).toContain("handles?.[platform]");
+    // The platform the form will send, not the raw select state, which can
+    // still name a platform that has left the list.
+    expect(sub).toContain("handles?.[selected]");
   });
 
   it("the page hands it the handles it already loaded", () => {

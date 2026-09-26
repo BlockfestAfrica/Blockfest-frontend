@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { Pill } from "@/components/shared/panel";
+import { ConfirmPanel } from "@/components/shared/confirm";
 import { openableHref } from "@/lib/admin/openable-href";
 import { toast } from "sonner";
 
@@ -36,6 +37,8 @@ export interface QueueItem {
   registeredHandle: string | null;
   /** Another live submission claims this same post. Only one can be paid. */
   contested: boolean;
+  /** That other claim is already approved, so approving this one is refused. */
+  creditedElsewhere?: boolean;
   /** Null until an admin has confirmed the account belongs to this creator. */
   /** What the creator must publish from the account, as the proof. */
 }
@@ -79,6 +82,17 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [open, setOpen] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  /*
+   * Approve asks first in two cases only, because it is the busiest press in
+   * the console and a question on every one would train a double tap.
+   *
+   * A typed note: rejecting needs a reason, so text in the box usually means
+   * the reviewer was on the way to Reject. Approve with it pays the creator,
+   * and the rejection wording lands on their page as a note from the reviewer.
+   * A contested post: approving decides which of two creators is paid, and
+   * refuses the other.
+   */
+  const [asking, setAsking] = useState<string | null>(null);
   /*
    * Ten rows at a time, revealed rather than paged. The server loads up to
    * fifty, and fifty coloured edges on a phone are a wall again. Reveal
@@ -178,6 +192,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
   }, [open]);
 
   function toggle(item: QueueItem) {
+    setAsking(null);
     setOpen((current) => (current === item.id ? null : item.id));
   }
 
@@ -345,12 +360,19 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                         irreversibly. */}
                     <div className="flex shrink-0 gap-2">
                       <button
+                        id={`approve-${item.id}`}
                         type="button"
                         disabled={busy?.id === item.id}
                         aria-busy={
                           busy?.id === item.id && busy.decision === "approved"
                         }
-                        onClick={() => decide(item.id, "approved")}
+                        onClick={() => {
+                          if (item.contested || (notes[item.id] ?? "").trim()) {
+                            setAsking(item.id);
+                          } else {
+                            decide(item.id, "approved");
+                          }
+                        }}
                         className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-[background-color,transform] duration-150 hover:bg-green-400/25 active:scale-[0.98] disabled:opacity-60 sm:flex-none"
                       >
                         <Check className="h-4 w-4" aria-hidden="true" />
@@ -364,7 +386,10 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                         aria-busy={
                           busy?.id === item.id && busy.decision === "rejected"
                         }
-                        onClick={() => decide(item.id, "rejected")}
+                        onClick={() => {
+                          setAsking(null);
+                          decide(item.id, "rejected");
+                        }}
                         className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-[background-color,transform] duration-150 hover:bg-red-400/15 active:scale-[0.98] disabled:opacity-60"
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
@@ -378,6 +403,40 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                       </button>
                     </div>
                   </div>
+                  {asking === item.id && (
+                    <ConfirmPanel
+                      className="mt-3"
+                      label="Approve"
+                      intent="success"
+                      question={
+                        item.contested
+                          ? `Approve ${item.creatorName} for this contested post?`
+                          : `Approve ${item.creatorName}'s week ${item.weekNo} ${item.platformLabel} entry with your note?`
+                      }
+                      consequence={[
+                        item.creditedElsewhere
+                          ? "Another submission of this post is already approved, and a post is paid once, so this approval will be refused and nothing is paid."
+                          : item.contested
+                            ? `Another submission of the same post is waiting too, and only one can be paid. Approving credits it to ${item.creatorName} and emails them; the other can then only be rejected.`
+                            : `They get the points and an approval email.`,
+                        (notes[item.id] ?? "").trim()
+                          ? `Your note shows on their page as a note from the reviewer: “${(notes[item.id] ?? "").trim()}”.`
+                          : "",
+                        "An approval cannot be put back to waiting.",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      confirmLabel="Yes, approve"
+                      onCancel={() => {
+                        setAsking(null);
+                        document.getElementById(`approve-${item.id}`)?.focus();
+                      }}
+                      onConfirm={() => {
+                        setAsking(null);
+                        decide(item.id, "approved");
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </li>

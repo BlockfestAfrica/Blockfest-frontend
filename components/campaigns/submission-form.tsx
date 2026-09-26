@@ -158,10 +158,14 @@ export function SubmissionForm({
             would send it to a friend" frames the opposite of it: a friend
             would accept anybody's post. Changes with the select, because
             the creator may hold three different accounts. */}
-        {handles?.[platform] && (
+        {/* Keyed on `selected`, the platform the form will actually send,
+            not the raw state: after a platform is submitted it leaves the
+            list, and the state can still name it, which put the wrong
+            account in this sentence. */}
+        {handles?.[selected] && (
           <p className="text-sm font-semibold text-brand-gold">
-            It has to be a post from @{handles[platform]}, the{" "}
-            {platformLabels[platform as CampaignPlatform]} account you
+            It has to be a post from @{handles[selected]}, the{" "}
+            {platformLabels[selected as CampaignPlatform]} account you
             registered.
           </p>
         )}

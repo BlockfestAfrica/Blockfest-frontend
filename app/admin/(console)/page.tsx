@@ -85,6 +85,7 @@ export default async function AdminQueuePage() {
             creatorName: item.creatorName,
             registeredHandle: item.registeredHandle,
             contested: Boolean(item.contested),
+            creditedElsewhere: Boolean(item.creditedElsewhere),
           }))}
         />
       )}
