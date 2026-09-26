@@ -413,17 +413,24 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                           ? `Approve ${item.creatorName} for this contested post?`
                           : `Approve ${item.creatorName}'s week ${item.weekNo} ${item.platformLabel} entry with your note?`
                       }
-                      consequence={[
-                        item.creditedElsewhere
-                          ? "Another submission of this post is already approved, and a post is paid once, so this approval will be refused and nothing is paid."
-                          : item.contested
-                            ? `Another submission of the same post is waiting too, and only one can be paid. Approving credits it to ${item.creatorName} and emails them; the other can then only be rejected.`
-                            : `They get the points and an approval email.`,
-                        (notes[item.id] ?? "").trim()
-                          ? `Your note shows on their page as a note from the reviewer: “${(notes[item.id] ?? "").trim()}”.`
-                          : "",
-                        "An approval cannot be put back to waiting.",
-                      ]
+                      /* When the other claim is already paid, the server
+                         refuses before it writes anything: no status, no
+                         note, no email. So that case says only that, and
+                         none of what an approval that goes through does. */
+                      consequence={(item.creditedElsewhere
+                        ? [
+                            "Another submission of this post is already approved, and a post is paid once, so this approval will be refused. Nothing is paid, and nothing is saved or sent to the creator.",
+                          ]
+                        : [
+                            item.contested
+                              ? `Another submission of the same post is waiting too, and only one can be paid. Approving credits it to ${item.creatorName} and emails them; the other can then only be rejected.`
+                              : `They get the points and an approval email.`,
+                            (notes[item.id] ?? "").trim()
+                              ? `Your note shows on their page as a note from the reviewer: “${(notes[item.id] ?? "").trim()}”.`
+                              : "",
+                            "An approval cannot be put back to waiting.",
+                          ]
+                      )
                         .filter(Boolean)
                         .join(" ")}
                       confirmLabel="Yes, approve"

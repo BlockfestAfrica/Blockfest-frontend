@@ -180,10 +180,18 @@ describe("review queue Approve", () => {
   it("says an approval will be refused when the other claim is already paid", () => {
     render(<ReviewQueue items={[{ ...ITEM, contested: true, creditedElsewhere: true }]} />);
     openRow();
+    // A typed note too: the refusal happens before the note would be saved.
+    fireEvent.change(screen.getByPlaceholderText(/Reason, required to reject/), {
+      target: { value: "Wrong account" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Approve" }));
-    expect(question()?.textContent).toContain("already approved");
-    expect(question()?.textContent).toContain("will be refused and nothing is paid");
-    expect(question()?.textContent).not.toContain("Approving credits it");
+    const text = question()?.textContent ?? "";
+    expect(text).toContain("already approved");
+    expect(text).toContain("this approval will be refused");
+    expect(text).toContain("nothing is saved or sent to the creator");
+    expect(text).not.toContain("Approving credits it");
+    expect(text).not.toContain("shows on their page");
+    expect(text).not.toContain("cannot be put back");
   });
 
   it("asks on a contested post", () => {
