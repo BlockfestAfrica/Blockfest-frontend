@@ -177,6 +177,15 @@ describe("review queue Approve", () => {
     expect(sent()).toMatchObject({ decision: "approved", note: "Not your account" });
   });
 
+  it("says an approval will be refused when the other claim is already paid", () => {
+    render(<ReviewQueue items={[{ ...ITEM, contested: true, creditedElsewhere: true }]} />);
+    openRow();
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    expect(question()?.textContent).toContain("already approved");
+    expect(question()?.textContent).toContain("will be refused and nothing is paid");
+    expect(question()?.textContent).not.toContain("Approving credits it");
+  });
+
   it("asks on a contested post", () => {
     render(<ReviewQueue items={[{ ...ITEM, contested: true }]} />);
     openRow();
@@ -280,6 +289,54 @@ describe("point rules", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("does not claim to clear a bound the server keeps", async () => {
+    // update_point_rule keeps the current value for a blank field.
+    render(
+      <PointRulesEditor
+        rules={[{ id: "p2", key: "manual_adjustment", defaultPoints: 10, minPoints: -50, maxPoints: 50 }]}
+        weekBase={100}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByLabelText(/^Ceiling/), { target: { value: "" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    });
+    expect(question()).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks about a floor-only change, with the recovery that rule actually has", () => {
+    render(
+      <PointRulesEditor
+        rules={[{ id: "p2", key: "manual_adjustment", defaultPoints: 10, minPoints: -50, maxPoints: 50 }]}
+        weekBase={100}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByLabelText(/^Floor/), { target: { value: "-40" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(question()?.textContent).toContain("floor -50 to -40");
+    expect(question()?.textContent).toContain("Nothing already awarded changes");
+    expect(question()?.textContent).not.toContain("repriced");
+  });
+
+  it("does not ask about the legacy entry base, which nothing reads", async () => {
+    render(
+      <PointRulesEditor
+        rules={[{ id: "p3", key: "entry_base", defaultPoints: 100, minPoints: null, maxPoints: null }]}
+        weekBase={100}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByLabelText("Points"), { target: { value: "150" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    });
+    expect(question()).toBeNull();
+  });
+
   it("says old and new back, and that the public pages state this one", () => {
     render(<PointRulesEditor rules={[RULE]} weekBase={100} />);
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
@@ -301,6 +358,39 @@ describe("pack resources", () => {
     fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
     expect(question()).toBeNull();
     expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Brand kit");
+  });
+
+  it("Escape on the question goes back to the form, not out of the dialog", () => {
+    render(<ResourcesEditor rows={[]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add a resource" }));
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Brand kit" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.keyDown(screen.getByRole("button", { name: "Keep editing" }), { key: "Escape" });
+    expect(question()).toBeNull();
+    expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Brand kit");
+  });
+
+  it("asks before Edit on another row replaces an unsaved draft, then loads that row", () => {
+    const row = (id: string, title: string) => ({
+      id,
+      section: "pack",
+      title,
+      body: null,
+      url: "https://example.test/" + id,
+      displayOrder: 0,
+      isPublished: true,
+    });
+    render(<ResourcesEditor rows={[row("a", "Brand kit"), row("b", "Caption guide")]} />);
+    const edits = screen.getAllByRole("button", { name: /^Edit/ });
+    fireEvent.click(edits[0]);
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Brand kit v2" } });
+    fireEvent.keyDown(screen.getByLabelText("Title"), { key: "Escape" });
+    expect(screen.queryByLabelText("Title")).toBeNull();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /^Edit/ })[1]);
+    expect(question()?.textContent).toContain("Discard what you have written?");
+    fireEvent.click(screen.getByRole("button", { name: "Discard it" }));
+    expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Caption guide");
   });
 
   it("closes straight away when nothing was typed", () => {
@@ -326,6 +416,22 @@ describe("a creator adding a platform", () => {
     expect(question()).toBeNull();
     expect(document.activeElement).toBe(screen.getByLabelText("Your X username"));
   });
+
+  it("adds exactly that account on Yes, with room for a whole pasted link", async () => {
+    render(<AddPlatform missing={["tiktok"]} platformLabels={{ tiktok: "TikTok" }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add TikTok" }));
+    const field = screen.getByLabelText("Your TikTok username") as HTMLInputElement;
+    const paste = "https://www.tiktok.com/@adaeze.creates.daily?_t=ZM-8abc&_r=1";
+    expect(field.maxLength).toBeGreaterThanOrEqual(paste.length);
+    fireEvent.change(field, { target: { value: paste } });
+    fireEvent.click(screen.getByRole("button", { name: "Add TikTok" }));
+    expect(question()?.textContent).toContain("Add @adaeze.creates.daily as your TikTok account?");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Yes, add it" }));
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(sent()).toMatchObject({ platform: "tiktok" });
+  });
 });
 
 describe("a creator signing out", () => {
@@ -339,6 +445,23 @@ describe("a creator signing out", () => {
       fireEvent.click(screen.getByRole("button", { name: "Yes, sign me out" }));
     });
     expect(action).toHaveBeenCalledTimes(1);
+  });
+
+  it("still signs out on a browser without requestSubmit (iOS 15 and older)", async () => {
+    const original = HTMLFormElement.prototype.requestSubmit;
+    // @ts-expect-error removed to stand in for WebKit before 16
+    delete HTMLFormElement.prototype.requestSubmit;
+    try {
+      const action = vi.fn(async () => {});
+      render(<SignOutForm action={action} />);
+      fireEvent.click(screen.getByRole("button", { name: "Sign out on this device" }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Yes, sign me out" }));
+      });
+      expect(action).toHaveBeenCalledTimes(1);
+    } finally {
+      HTMLFormElement.prototype.requestSubmit = original;
+    }
   });
 });
 
@@ -355,15 +478,24 @@ describe("the screens pinned by source", () => {
   it("opening the vote goes through Confirm, restating names and window", () => {
     const src = read("components/admin/vote-round-panel.tsx");
     expect(src).not.toMatch(/onClick=\{openRound\}/);
-    expect(src).toMatch(/<Confirm\s+label="Open the vote"[\s\S]*?onConfirm=\{openRound\}/);
+    expect(src).toMatch(/<Confirm\s+key="open-vote"\s+label="Open the vote"[\s\S]*?onConfirm=\{openRound\}/);
     expect(src).toMatch(/longDay\(voteDay\)\} \$\{opensTime\} to \$\{closesTime\} Lagos time/);
+  });
+
+  it("keys every step's Confirm, so an open question never carries into the next step", () => {
+    const src = read("components/admin/vote-round-panel.tsx");
+    for (const key of ["open-vote", "review-vote", "tell-vote", "close-vote"]) {
+      expect(src).toContain(`key="${key}"`);
+    }
   });
 
   it("saving a week asks only when status or base points change", () => {
     const src = read("components/admin/challenge-editor.tsx");
-    expect(src).toMatch(/when=\{riskyChange\(challenge\.weekNo\) !== null\}/);
+    expect(src).toMatch(/when=\{riskyChange\(challenge\) !== null\}/);
     expect(src).toMatch(/form\.status !== baseline\.status/);
     expect(src).toMatch(/form\.basePoints !== baseline\.basePoints/);
+    // A week made live before its window says when it will appear.
+    expect(src).toMatch(/new Date\(challenge\.startsAt\)\.getTime\(\) > Date\.now\(\)/);
   });
 
   it("the submission hint names the account for the platform the form will send", () => {

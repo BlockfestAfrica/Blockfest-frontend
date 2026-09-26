@@ -239,6 +239,19 @@ export async function pendingSubmissions(admin: AdminIdentity, limit = 50) {
            AND other.id <> submissions.id
            AND other.status <> 'rejected'
       )`.as("contested"),
+      /*
+       * Whether that other claim has already been paid.
+       *
+       * Then approving this one is refused (post_already_credited) rather
+       * than deciding the tie, and the question before Approve has to say so
+       * instead of promising to credit this creator.
+       */
+      creditedElsewhere: sql<boolean>`EXISTS (
+        SELECT 1 FROM submissions other
+         WHERE other.post_identity = submissions.post_identity
+           AND other.id <> submissions.id
+           AND other.status = 'approved'
+      )`.as("credited_elsewhere"),
     })
     .from(submissions)
     .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))

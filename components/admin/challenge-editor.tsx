@@ -121,8 +121,11 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
    * straight away: a status opens, stops or hides the week, and a base is what
    * every entry made afterwards pays.
    */
-  function riskyChange(weekNo: number): { question: string; consequence: string } | null {
+  function riskyChange(
+    challenge: EditableChallenge,
+  ): { question: string; consequence: string } | null {
     if (!baseline) return null;
+    const weekNo = challenge.weekNo;
     const statusTo = form.status !== baseline.status ? form.status : null;
     // An empty or zero base is refused by save() with its own message, so
     // there is nothing to ask about.
@@ -139,8 +142,12 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
         : statusTo === "active"
           ? {
               question: `Save week ${weekNo} and make it live?`,
+              // The public list and the creator page both wait for the
+              // window to open, so a week made active early is not public yet.
               consequence:
-                "The brief shows on the public stage list and creators can submit inside its window.",
+                new Date(challenge.startsAt).getTime() > Date.now()
+                  ? `It appears on the public stage list and takes entries from ${dateTime(challenge.startsAt)} Lagos time.`
+                  : "The brief shows on the public stage list and creators can submit inside its window.",
             }
           : statusTo === "draft"
             ? {
@@ -483,9 +490,9 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                       closing a live week could ride along with a typo fix. */}
                   <Confirm
                     label={`Save week ${challenge.weekNo}`}
-                    when={riskyChange(challenge.weekNo) !== null}
-                    question={riskyChange(challenge.weekNo)?.question ?? ""}
-                    consequence={riskyChange(challenge.weekNo)?.consequence ?? ""}
+                    when={riskyChange(challenge) !== null}
+                    question={riskyChange(challenge)?.question ?? ""}
+                    consequence={riskyChange(challenge)?.consequence ?? ""}
                     confirmLabel="Yes, save it"
                     pending={busy}
                     onConfirm={() => save(challenge)}

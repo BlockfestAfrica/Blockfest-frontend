@@ -708,11 +708,16 @@ export function VoteRoundPanel({
                 </p>
               </Panel>
             )}
-            {/* The day and times sit further down the card than the button,
+            {/* Keyed, like every step's Confirm on this card: the foot swaps
+                one step's buttons for the next when a refresh brings a round
+                in, and an unkeyed Confirm in the same slot would carry an
+                open "Open the vote?" across as an open "Close the vote?".
+                The day and times sit further down the card than the button,
                 with defaults nobody has to touch, so the question says them
                 back along with the names. Nothing about a round changes once
                 it is open, and the nominees are emailed straight away. */}
             <Confirm
+              key="open-vote"
               label="Open the vote"
               question={`Open the week ${weekNo} vote with ${listOf(
                 selected.map(
@@ -735,6 +740,7 @@ export function VoteRoundPanel({
           </>
         ) : reviewed ? undefined : round.status === "closed" ? (
           <Confirm
+            key="review-vote"
             label="Mark review complete"
             question={
               heldCount > 0
@@ -754,6 +760,7 @@ export function VoteRoundPanel({
             {!announced &&
               new Date(round.opensAt).getTime() <= Date.now() && (
                 <Confirm
+                  key="tell-vote"
                   label="Tell the creators"
                   question={`Email every active creator that the week ${weekNo} vote is open?`}
                   consequence="One email each, naming the shortlist and the closing time. It can only be sent once for this round."
@@ -763,6 +770,7 @@ export function VoteRoundPanel({
                 />
               )}
             <Confirm
+              key="close-vote"
               label="Close the vote"
             question={`Close the week ${weekNo} vote now?`}
             consequence="Casting stops for everybody the moment you confirm. Codes already sent still verify for fifteen minutes, then the tally moves only by your sweep."

@@ -173,6 +173,8 @@ export function ConfirmPanel({
       role="alertdialog"
       aria-label={label}
       onKeyDown={(event) => {
+        // Inside an ActionDialog, the dialog holds its own Escape when it
+        // comes from here, so only the question closes.
         if (event.key === "Escape") {
           event.stopPropagation();
           onCancel();
@@ -187,9 +189,8 @@ export function ConfirmPanel({
       <div className="mt-4 flex flex-wrap gap-2">
         {/* Cancel first and focused, so the default action of pressing enter
             is the one that changes nothing. */}
-        {/* data-autofocus as well as the effect: a dialog that opens with
-            this question already showing focuses [data-autofocus] after
-            its children's effects have run. */}
+        {/* data-autofocus as well as the effect, so a dialog that picks its
+            open focus by [data-autofocus] lands here too. */}
         <button
           ref={cancelRef}
           data-autofocus

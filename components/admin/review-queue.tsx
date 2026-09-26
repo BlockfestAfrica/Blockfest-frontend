@@ -37,6 +37,8 @@ export interface QueueItem {
   registeredHandle: string | null;
   /** Another live submission claims this same post. Only one can be paid. */
   contested: boolean;
+  /** That other claim is already approved, so approving this one is refused. */
+  creditedElsewhere?: boolean;
   /** Null until an admin has confirmed the account belongs to this creator. */
   /** What the creator must publish from the account, as the proof. */
 }
@@ -412,9 +414,11 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                           : `Approve ${item.creatorName}'s week ${item.weekNo} ${item.platformLabel} entry with your note?`
                       }
                       consequence={[
-                        item.contested
-                          ? `Another creator has submitted the same post and only one can be paid. Approving credits it to ${item.creatorName} and emails them; the other claim will be refused.`
-                          : `They get the points and an approval email.`,
+                        item.creditedElsewhere
+                          ? "Another submission of this post is already approved, and a post is paid once, so this approval will be refused and nothing is paid."
+                          : item.contested
+                            ? `Another submission of the same post is waiting too, and only one can be paid. Approving credits it to ${item.creatorName} and emails them; the other can then only be rejected.`
+                            : `They get the points and an approval email.`,
                         (notes[item.id] ?? "").trim()
                           ? `Your note shows on their page as a note from the reviewer: “${(notes[item.id] ?? "").trim()}”.`
                           : "",

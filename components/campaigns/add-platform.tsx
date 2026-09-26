@@ -129,7 +129,9 @@ export function AddPlatform({
                     readOnly={confirming}
                     onChange={(event) => setHandle(event.target.value)}
                     placeholder="yourname"
-                    maxLength={41}
+                    // Room for a pasted profile link, which the route
+                    // reduces to the name; 41 cut such links off mid-name.
+                    maxLength={200}
                     className={`${control} mt-2`}
                   />
                   {confirming ? (

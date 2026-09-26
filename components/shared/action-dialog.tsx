@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 
 /**
  * The follow-up to an action in a list, opened where the person is looking.
@@ -64,6 +64,21 @@ export function ActionDialog({
     if (busy) event.preventDefault();
   };
 
+  /*
+   * Recorded as the dialog opens, before any child's effect can move focus.
+   *
+   * onOpenAutoFocus alone missed a dialog that opens with a question already
+   * showing (the resource editor asking about an unsaved draft): the question
+   * focuses its own Cancel first, Radix then finds focus already inside and
+   * skips its open focus, and closing had nowhere to send focus back to.
+   */
+  useLayoutEffect(() => {
+    if (open && !opener.current) {
+      opener.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
+  }, [open]);
+
   return (
     <Dialog.Root
       open={open}
@@ -78,7 +93,7 @@ export function ActionDialog({
           {...(description ? {} : { "aria-describedby": undefined })}
           ref={content}
           onOpenAutoFocus={(event) => {
-            opener.current =
+            opener.current ??=
               document.activeElement instanceof HTMLElement
                 ? document.activeElement
                 : null;
@@ -105,7 +120,18 @@ export function ActionDialog({
               back.focus();
             }
           }}
-          onEscapeKeyDown={hold}
+          onEscapeKeyDown={(event) => {
+            hold(event);
+            // Escape on a question inside the dialog answers the question
+            // ("Keep editing"), not the dialog. Radix hears Escape on the
+            // document before the question does, so it is held here.
+            if (
+              event.target instanceof Element &&
+              event.target.closest('[role="alertdialog"]')
+            ) {
+              event.preventDefault();
+            }
+          }}
           onPointerDownOutside={(event) => event.preventDefault()}
           onInteractOutside={hold}
           className={`fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl border border-line-2 bg-ground p-5 shadow-2xl data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom-4 motion-reduce:animate-none sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6 sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=open]:zoom-in-95 ${

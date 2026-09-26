@@ -15,12 +15,17 @@ import { Confirm } from "@/components/shared/confirm";
  * The trigger stays a submit button, so before the page has hydrated a press
  * still signs out rather than doing nothing. After hydration the press opens
  * the question, and only "Yes" submits the form to the server action.
+ *
+ * "Yes" clicks a hidden submit button rather than calling requestSubmit(),
+ * which iOS only gained in 16. On an older iPhone, or the in-app browser
+ * inside Instagram or WhatsApp on one, requestSubmit throws and the press
+ * would silently do nothing, on the phones most likely to be borrowed.
  */
 export function SignOutForm({ action }: { action: () => Promise<void> }) {
-  const formRef = useRef<HTMLFormElement>(null);
+  const submitRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <form ref={formRef} action={action} className="mt-6">
+    <form action={action} className="mt-6">
       <Confirm
         label="Sign out on this device"
         question="Sign out on this device?"
@@ -28,8 +33,9 @@ export function SignOutForm({ action }: { action: () => Promise<void> }) {
         confirmLabel="Yes, sign me out"
         triggerType="submit"
         triggerClassName="inline-flex min-h-11 cursor-pointer items-center text-sm text-ink-3 underline underline-offset-4 transition-colors hover:text-white"
-        onConfirm={() => formRef.current?.requestSubmit()}
+        onConfirm={() => submitRef.current?.click()}
       />
+      <button ref={submitRef} type="submit" hidden tabIndex={-1} aria-hidden="true" />
       <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-4">
         The link in your email signs you back in. Use this if you are on
         somebody else&apos;s phone.

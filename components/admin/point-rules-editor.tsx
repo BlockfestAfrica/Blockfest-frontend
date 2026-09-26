@@ -46,21 +46,51 @@ const LABELS: Record<string, { name: string; note?: string }> = {
 const STATED_PUBLICLY = new Set(["multi_platform_bonus_2", "multi_platform_bonus_3", "referral"]);
 
 /**
- * What a save would change, said back as "points 40 to 400, ceiling none to
- * 500", or null when nothing numeric moved.
+ * What undoing a wrong value takes, which differs by rule.
+ *
+ * Only the two platform bonuses are snapshotted on entries, where reprice can
+ * reach them. A referral is paid once, at the value of the day, and the award
+ * rules are bounds checked when an award is made, so nothing already paid
+ * moves in either case.
  */
-function ruleChanges(rule: RuleRow, form: { def: string; min: string; max: string }): string | null {
+function afterEffect(key: string): string {
+  if (key === "multi_platform_bonus_2" || key === "multi_platform_bonus_3") {
+    return "Entries made from now on use it. Entries made before it is changed back keep it, and have to be repriced one by one on the Tools screen.";
+  }
+  if (key === "referral") {
+    return "Referrals paid from now on use it. One paid at a wrong value has to be corrected with a manual adjustment.";
+  }
+  return "Awards from now on are checked against it. Nothing already awarded changes.";
+}
+
+/**
+ * What a save would change, said back as "points 40 to 400, ceiling none to
+ * 500", or null when nothing would move.
+ *
+ * Worked out the way update_point_rule applies it: a blank or unreadable
+ * field is sent as null, and the rule keeps its current value for a null. So
+ * a cleared field is no change, and the question never promises one.
+ */
+function ruleChanges(
+  rule: RuleRow,
+  form: { def: string; min: string; max: string },
+): string | null {
   const shown = (value: number | null) => (value === null ? "none" : String(value));
-  const typed = (value: string) => (value.trim() === "" ? "none" : value.trim());
+  const kept = (typed: string, before: number | null) => {
+    const text = typed.trim();
+    if (text === "") return before;
+    const value = Number(text);
+    return Number.isInteger(value) ? value : before;
+  };
   const parts = (
     [
-      ["points", shown(rule.defaultPoints), typed(form.def)],
-      ["floor", shown(rule.minPoints), typed(form.min)],
-      ["ceiling", shown(rule.maxPoints), typed(form.max)],
+      ["points", rule.defaultPoints, kept(form.def, rule.defaultPoints)],
+      ["floor", rule.minPoints, kept(form.min, rule.minPoints)],
+      ["ceiling", rule.maxPoints, kept(form.max, rule.maxPoints)],
     ] as const
   )
     .filter(([, before, after]) => before !== after)
-    .map(([what, before, after]) => `${what} ${before} to ${after}`);
+    .map(([what, before, after]) => `${what} ${shown(before)} to ${shown(after)}`);
   return parts.length ? parts.join(", ") : null;
 }
 
@@ -194,8 +224,10 @@ export function PointRulesEditor({
                   {(
                     [
                       ["def", "Points"],
-                      ["min", "Floor (blank for none)"],
-                      ["max", "Ceiling (blank for none)"],
+                      // A blank field is sent as nothing, and the rule keeps
+                      // its current value (update_point_rule's COALESCE).
+                      ["min", "Floor (blank keeps it)"],
+                      ["max", "Ceiling (blank keeps it)"],
                     ] as const
                   ).map(([field, label]) => (
                     <div key={field} className="flex flex-col gap-1">
@@ -220,10 +252,10 @@ export function PointRulesEditor({
                   <div className="sm:col-span-3">
                     <Confirm
                       label="Save"
-                      when={ruleChanges(rule, form) !== null}
+                      when={!legacy && ruleChanges(rule, form) !== null}
                       question={`Change ${meta.name}: ${ruleChanges(rule, form) ?? ""}?`}
                       consequence={[
-                        "Entries and awards made from now on use the new value. Those made before it is changed back keep it, and have to be repriced one by one.",
+                        afterEffect(rule.key),
                         STATED_PUBLICLY.has(rule.key)
                           ? "The public campaign pages state this figure, so their copy has to change too."
                           : "",
