@@ -3,7 +3,7 @@ import { CAMPAIGN_EVENTS } from "@/lib/sabilytics";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { leaderboard } from "@/lib/leaderboard";
+import { leaderboardView } from "@/lib/leaderboard";
 import {
   campaignBySlug,
   MONICA_FIRST_LEADERBOARD,
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function MonicaLeaderboardPage() {
-  const rows = await leaderboard(100);
+  const { rows, movementSince, stageCount } = await leaderboardView(100);
 
   return (
     <main id="main" className="bg-ground">
@@ -96,10 +96,19 @@ export default async function MonicaLeaderboardPage() {
             <>
               <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-4">
                 Total points first. Level creators are separated by who reached
-                that total first, then by approved entries.
+                that total first, then by approved entries, one per stage.
+                {/* Said only once there is something to measure against:
+                    during Stage 1, or before the last stage's standings are
+                    recorded, the table shows no arrows at all. */}
+                {movementSince !== null &&
+                  ` Arrows show places gained or lost since the Stage ${movementSince} standings were recorded.`}
               </p>
 
-              <LeaderboardTable rows={rows} />
+              <LeaderboardTable
+                rows={rows}
+                movementSince={movementSince}
+                stageCount={stageCount}
+              />
 
               <p className="mt-6 text-sm leading-relaxed text-ink-4">
                 This board moves as entries are approved. Weekly winners are

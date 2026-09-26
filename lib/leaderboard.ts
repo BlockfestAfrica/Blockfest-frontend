@@ -1,82 +1,61 @@
 import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { MONICA_SLUG } from "@/lib/campaigns";
+import { currentWeekNo, MONICA_SLUG, monicaStages } from "@/lib/campaigns";
+import {
+  NEVER_PUBLISH,
+  toPublicRow,
+  type LeaderboardRow,
+} from "@/lib/leaderboard-row";
+
+export { NEVER_PUBLISH, type LeaderboardRow };
 
 /**
  * The public leaderboard.
  *
- * This is the one query in the campaign whose output is published to anybody
- * who visits, so it is the one place where a stray column is a data breach
- * rather than a bug. The creators table holds an email address, a phone number,
- * a location, an IP address and a user agent, and a leaderboard is exactly the
- * shape of thing somebody later extends with "just one more field".
- *
- * So the row type is a whitelist, built by hand from the four things a
- * leaderboard needs. It is not derived from the database row and it is not a
- * spread: both of those widen silently when a column is added upstream, which
- * is how this kind of leak actually happens.
- *
- * A name is published because these creators are competing in public under
- * their own names and the rules say winners are announced. Nothing else about
- * them is.
+ * What a row may contain, and why each field is already public, is written
+ * down once in lib/leaderboard-row.ts, next to the serialiser that enforces
+ * it. This file only fetches.
  */
 
-export interface LeaderboardRow {
-  rank: number;
-  /** The creator's name, as they registered it. Public by design. */
-  name: string;
-  points: number;
-  approvedEntries: number;
+export interface LeaderboardView {
+  rows: LeaderboardRow[];
+  /**
+   * The stage whose recorded standings the movement is measured from, or null
+   * when there is nothing to compare with yet: during stage 1, or when that
+   * stage's standings were never recorded.
+   */
+  movementSince: number | null;
+  /** How many stages the campaign has, for "2 of 4". */
+  stageCount: number;
 }
 
 /**
- * Deliberately not `Omit<Creator, ...>` or a spread of the query result.
+ * The board, with what the table shows beside each name.
  *
- * Naming the four fields means adding a column upstream cannot reach this
- * output by accident. It has to be added here, on purpose, by somebody who has
- * read this comment.
- */
-function toPublicRow(row: Record<string, unknown>): LeaderboardRow {
-  return {
-    rank: Number(row.rank ?? 0),
-    name: String(row.display_name ?? "").trim(),
-    points: Number(row.points_total ?? 0),
-    approvedEntries: Number(row.approved_entries ?? 0),
-  };
-}
-
-/**
- * Fields that must never appear in a published leaderboard row.
+ * One statement. Every join that needs an enrolment id happens inside it, and
+ * the outer SELECT names each column it returns, so no id leaves the database
+ * even before toPublicRow drops anything.
  *
- * Exported so a test can assert it against the real output rather than against
- * a copy of this list that drifts from it.
+ * - previous: the rank each creator held in the last recorded standings of
+ *   the stage before the current one. A stage's standings can be recorded
+ *   more than once; the latest recording is the one read, as every other
+ *   reader of snapshots does, and once the next stage starts the snapshot
+ *   route refuses to record that week again, so the baseline stays put.
+ *   Stage 1 has no stage before it, and week 0 matches nothing, so the board
+ *   shows no movement until stage 2.
+ * - badges: announced winners only. A winner chosen on Saturday stays a
+ *   draft until the Sunday announcement, and must not show here first.
+ * - approved: platforms and stages from approved posts only. A rejection
+ *   takes a platform away, as it takes the points.
  */
-export const NEVER_PUBLISH = [
-  "email",
-  "emailCanonical",
-  "email_canonical",
-  "phone",
-  "phoneE164",
-  "phone_e164",
-  "location",
-  "registrationIp",
-  "registration_ip",
-  "registrationUserAgent",
-  "registration_user_agent",
-  "accessTokenHash",
-  "access_token_hash",
-  "referralCode",
-  "referral_code",
-  "marketingOptIn",
-  "marketing_opt_in",
-  "campaignCreatorId",
-  "campaign_creator_id",
-  "creatorId",
-  "creator_id",
-] as const;
+export async function leaderboardView(
+  limit = 100,
+  now: Date = new Date(),
+): Promise<LeaderboardView> {
+  const stageCount = monicaStages.length;
+  const baselineWeek = currentWeekNo(now) - 1;
 
-export async function leaderboard(limit = 100): Promise<LeaderboardRow[]> {
   /*
    * Returns an empty board rather than throwing.
    *
@@ -98,20 +77,78 @@ export async function leaderboard(limit = 100): Promise<LeaderboardRow[]> {
   try {
     const db = getDb();
 
-    const result = await db.execute(
-      sql`SELECT * FROM campaign_leaderboard(${MONICA_SLUG}, ${limit})`,
-    );
+    const result = await db.execute(sql`
+      WITH board AS (
+        SELECT * FROM campaign_leaderboard(${MONICA_SLUG}, ${limit})
+      ),
+      previous AS (
+        SELECT s.campaign_creator_id, s.rank AS previous_rank
+          FROM leaderboard_snapshots s
+          JOIN campaigns cm ON cm.id = s.campaign_id
+         WHERE cm.slug = ${MONICA_SLUG}
+           AND s.week_no = ${baselineWeek}::smallint
+           AND s.version = (
+                 SELECT max(s2.version) FROM leaderboard_snapshots s2
+                  WHERE s2.campaign_id = s.campaign_id
+                    AND s2.week_no = s.week_no)
+      ),
+      badges AS (
+        SELECT w.campaign_creator_id,
+               json_agg(json_build_object('weekNo', w.week_no, 'category', w.category)
+                        ORDER BY w.week_no, w.category) AS badges
+          FROM weekly_winners w
+          JOIN campaigns cm ON cm.id = w.campaign_id
+         WHERE cm.slug = ${MONICA_SLUG}
+           AND w.published_at IS NOT NULL
+         GROUP BY w.campaign_creator_id
+      ),
+      approved AS (
+        SELECT ce.campaign_creator_id,
+               to_json(array_agg(DISTINCT s.platform ORDER BY s.platform)) AS platforms,
+               count(DISTINCT ch.week_no)
+                 FILTER (WHERE ch.type = 'regular'
+                           AND ch.week_no BETWEEN 1 AND ${stageCount}) AS stages
+          FROM challenge_entries ce
+          JOIN challenges ch ON ch.id = ce.challenge_id
+          JOIN submissions s ON s.entry_id = ce.id AND s.status = 'approved'
+         WHERE ce.campaign_creator_id IN (SELECT campaign_creator_id FROM board)
+         GROUP BY ce.campaign_creator_id
+      )
+      SELECT b.rank,
+             b.display_name,
+             b.points_total,
+             COALESCE(a.stages, 0) AS stages,
+             p.previous_rank,
+             COALESCE(bd.badges, '[]'::json) AS badges,
+             COALESCE(a.platforms, '[]'::json) AS platforms,
+             EXISTS (SELECT 1 FROM previous) AS has_baseline
+        FROM board b
+        LEFT JOIN previous p ON p.campaign_creator_id = b.campaign_creator_id
+        LEFT JOIN badges bd ON bd.campaign_creator_id = b.campaign_creator_id
+        LEFT JOIN approved a ON a.campaign_creator_id = b.campaign_creator_id
+       ORDER BY b.rank
+    `);
 
-    return (result.rows ?? []).map((row) =>
-      toPublicRow(row as Record<string, unknown>),
-    );
+    const raw = (result.rows ?? []) as Record<string, unknown>[];
+    const hasBaseline = raw.some((row) => row.has_baseline === true);
+
+    return {
+      rows: raw.map((row) => toPublicRow(row, stageCount)),
+      movementSince: hasBaseline ? baselineWeek : null,
+      stageCount,
+    };
   } catch (error) {
     console.warn(
       "[leaderboard] could not be read, showing an empty board:",
       error instanceof Error ? error.message : String(error),
     );
-    return [];
+    return { rows: [], movementSince: null, stageCount };
   }
+}
+
+/** The rows alone, for callers that only need the standings. */
+export async function leaderboard(limit = 100): Promise<LeaderboardRow[]> {
+  return (await leaderboardView(limit)).rows;
 }
 
 /**

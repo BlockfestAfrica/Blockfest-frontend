@@ -248,6 +248,17 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // One creator's own rank and name, read from their cookie. The route
+        // sets this itself on every response; this is the second layer.
+        source: "/api/campaigns/monica/standing",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, private",
+          },
+        ],
+      },
+      {
         source: "/api/admin/:path*",
         headers: [
           {

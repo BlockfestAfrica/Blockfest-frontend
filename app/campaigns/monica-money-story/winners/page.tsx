@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { WINNER_CATEGORY_LABEL } from "@/lib/winner-categories";
 import { closingAt } from "@/lib/format";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink, Trophy } from "lucide-react";
@@ -30,10 +31,7 @@ export const metadata: Metadata = {
  */
 export const revalidate = 60;
 
-const CATEGORY_LABEL: Record<string, string> = {
-  creator_of_week: "Creator of the Week",
-  community_favourite: "Community Favourite",
-};
+const CATEGORY_LABEL: Record<string, string> = WINNER_CATEGORY_LABEL;
 
 const naira = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
 
