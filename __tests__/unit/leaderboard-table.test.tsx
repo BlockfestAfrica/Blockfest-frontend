@@ -38,7 +38,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const signedInAs = (me: { rank: number; name: string } | null) =>
+const signedInAs = (me: { rank: number; name: string; points: number } | null) =>
   fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true, me }) });
 
 async function renderBoard(rows = ROWS, movementSince: number | null = 1) {
@@ -113,8 +113,8 @@ describe("the signed-in creator", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/campaigns/monica/standing", { cache: "no-store" });
   });
 
-  it("marks their row when rank and name both agree", async () => {
-    signedInAs({ rank: 2, name: "Ben Eze" });
+  it("marks their row when rank, name and points all agree", async () => {
+    signedInAs({ rank: 2, name: "Ben Eze", points: 300 });
     await renderBoard();
     expect(rowOf("Ben Eze").getAttribute("aria-current")).toBe("true");
     expect(within(rowOf("Ben Eze")).getByText("You")).toBeTruthy();
@@ -122,10 +122,24 @@ describe("the signed-in creator", () => {
   });
 
   it("marks nobody when the name does not match the rank, as on a stale board", async () => {
-    signedInAs({ rank: 2, name: "Somebody Else" });
+    signedInAs({ rank: 2, name: "Somebody Else", points: 300 });
     await renderBoard();
     expect(screen.queryByText("You")).toBeNull();
     expect(document.querySelector('[aria-current="true"]')).toBeNull();
+  });
+
+  it("never marks a stranger who shares their name and held their rank on an older board", async () => {
+    // Names are not unique. On a board minutes old, another "Same Name" can
+    // sit at the rank the live answer gives; their points give them away.
+    const rows = [
+      row({ rank: 1, name: "Same Name", points: 880 }),
+      row({ rank: 2, name: "Other", points: 500 }),
+      row({ rank: 3, name: "Same Name", points: 120 }),
+    ];
+    signedInAs({ rank: 1, name: "Same Name", points: 130 });
+    await renderBoard(rows, null);
+    expect(document.querySelector('[aria-current="true"]')).toBeNull();
+    expect(screen.getByText(/You are at/).textContent).toMatch(/reload the page to see yourself/);
   });
 
   it("marks nobody when signed out", async () => {
@@ -135,7 +149,7 @@ describe("the signed-in creator", () => {
 
   it("keeps their own row in view when it is below the ten on show", async () => {
     const many = Array.from({ length: 30 }, (_, i) => row({ rank: i + 1, name: `Creator ${i + 1}`, points: 1000 - i }));
-    signedInAs({ rank: 25, name: "Creator 25" });
+    signedInAs({ rank: 25, name: "Creator 25", points: 976 });
     await renderBoard(many, null);
     expect(screen.getByText("Your place")).toBeTruthy();
     expect(rowOf("Creator 25").getAttribute("aria-current")).toBe("true");
@@ -145,13 +159,18 @@ describe("the signed-in creator", () => {
 
   it("says where they are when their row is not on this board", async () => {
     const hundred = Array.from({ length: 100 }, (_, i) => row({ rank: i + 1, name: `Creator ${i + 1}` }));
-    signedInAs({ rank: 143, name: "Far Down" });
+    signedInAs({ rank: 143, name: "Far Down", points: 20 });
     await renderBoard(hundred, null);
-    expect(screen.getByText(/You are at/).textContent).toMatch(/#143\. This board shows the top 100\./);
+    const note = screen.getByText(/You are at/).textContent;
+    expect(note).toMatch(/#143\. This board shows the top 100\./);
+    expect(note).not.toMatch(/reload/);
   });
 
   it("ignores an answer that is not the shape it expects", async () => {
-    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true, me: { rank: "2", name: 7 } }) });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, me: { rank: "2", name: 7, points: 300 } }),
+    });
     await renderBoard();
     expect(screen.queryByText("You")).toBeNull();
     fetchMock.mockRejectedValue(new Error("offline"));
@@ -169,7 +188,52 @@ describe("on a phone", () => {
     expect(table.className).toMatch(/sm:min-w-\[30rem\]/);
     const stagesHeader = screen.getByRole("button", { name: /Stages/ }).closest("th")!;
     expect(stagesHeader.className).toMatch(/hidden sm:table-cell/);
+    // Header and body agree, so the columns never shift.
+    for (const tr of screen.getAllByRole("row").slice(1)) {
+      const cell = tr.querySelector("td:nth-child(3)")!;
+      expect(cell.className).toMatch(/(^|\s)hidden(\s|$)/);
+      expect(cell.className).toMatch(/sm:table-cell/);
+    }
     expect(rowOf("Ada Obi").textContent).toContain("2 of 4 stages");
+    // Under the name on a phone only: a wide screen shows it once, in its column.
+    const underName = within(rowOf("Ada Obi")).getByText("2 of 4 stages");
+    expect(underName.className).toMatch(/sm:hidden/);
+    expect(underName.parentElement!.className).not.toMatch(/sm:hidden/);
+    const plain = within(rowOf("Dee Uba")).getByText("1 of 4 stages").parentElement!;
+    expect(plain.className, "a row with nothing else under the name adds no gap on a wide screen").toMatch(/sm:hidden/);
+  });
+
+  it("goes back to rank when the screen narrows past the Stages column", async () => {
+    let wide = true;
+    const listeners: Array<() => void> = [];
+    vi.stubGlobal("matchMedia", () => ({
+      get matches() {
+        return wide;
+      },
+      addEventListener: (_: string, fn: () => void) => listeners.push(fn),
+      removeEventListener: () => {},
+    }));
+    await renderBoard();
+    fireEvent.click(screen.getByRole("button", { name: /Stages/ }));
+    expect(screen.getByRole("button", { name: /Stages/ }).closest("th")!.getAttribute("aria-sort")).toBe(
+      "descending",
+    );
+    wide = false;
+    await act(async () => listeners.forEach((fn) => fn()));
+    expect(screen.getByRole("button", { name: /#/ }).closest("th")!.getAttribute("aria-sort")).toBe("ascending");
+  });
+
+  it("still lists platforms on a browser without Intl.ListFormat", async () => {
+    // Removed to stand in for Safari before 14.1.
+    const intl = Intl as { ListFormat?: unknown };
+    const original = intl.ListFormat;
+    delete intl.ListFormat;
+    try {
+      await renderBoard();
+      expect(within(rowOf("Ada Obi")).getByText("Approved on X, Instagram and TikTok")).toBeTruthy();
+    } finally {
+      intl.ListFormat = original;
+    }
   });
 });
 

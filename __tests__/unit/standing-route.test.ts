@@ -60,7 +60,7 @@ describe("GET /api/campaigns/monica/standing", () => {
     await expectPrivate(response);
   });
 
-  it("returns exactly rank and name for a signed-in creator, and nothing else the session holds", async () => {
+  it("returns exactly rank, name and points for a signed-in creator, and nothing else the session holds", async () => {
     session.creator = {
       enrolmentId: "0f0e0d0c-0b0a-4000-8000-000000000001",
       name: "  Ada Obi ",
@@ -72,8 +72,8 @@ describe("GET /api/campaigns/monica/standing", () => {
     session.rank = 4;
     const response = await GET(get());
     const body = await response.json();
-    expect(body).toEqual({ ok: true, me: { rank: 4, name: "Ada Obi" } });
-    expect(JSON.stringify(body)).not.toMatch(/0f0e0d0c|ADA123|350/);
+    expect(body).toEqual({ ok: true, me: { rank: 4, name: "Ada Obi", points: 350 } });
+    expect(JSON.stringify(body)).not.toMatch(/0f0e0d0c|ADA123|joinedAt|approvedEntries/);
     await expectPrivate(response);
   });
 

@@ -19,15 +19,17 @@ const PRIVATE = { "Cache-Control": "no-store, no-cache, must-revalidate, private
  *
  * The leaderboard is one cached page for everybody, and it stays that way: it
  * reads no cookie, so the ranking query does not run once per visitor. The
- * table asks this after it loads, and marks the row whose rank AND name match.
- * Rank alone would mark whoever held it a minute ago on a board a minute old;
- * name alone would mark a stranger with the same name. Where they disagree,
- * nothing is marked.
+ * table asks this after it loads, and marks the row whose rank, name AND
+ * points all match. The board can be minutes old and this answer is live:
+ * rank alone would mark whoever held it then, and rank with name would still
+ * mark a stranger who shares the name and held that rank on the older copy.
+ * Their own points close that. Where anything disagrees, nothing is marked.
  *
- * The answer is those two fields and nothing else, built by hand. The session
- * carries the enrolment id and the referral code, and neither is needed to
- * find a row, so neither is sent. Signed out, or holding only the old cookie,
- * is not an error here: it is simply nobody to mark.
+ * The answer is those three fields and nothing else, built by hand, all of
+ * them already printed on the creator's own public row. The session carries
+ * the enrolment id and the referral code, and neither is needed to find a
+ * row, so neither is sent. Signed out, or holding only the old cookie, is not
+ * an error here: it is simply nobody to mark.
  */
 export async function GET(request: NextRequest) {
   if (!notCrossSite(request)) {
@@ -48,7 +50,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         ok: true,
-        me: rank === null ? null : { rank, name: creator.name.trim() },
+        me:
+          rank === null
+            ? null
+            : { rank, name: creator.name.trim(), points: creator.pointsTotal },
       },
       { headers: PRIVATE },
     );

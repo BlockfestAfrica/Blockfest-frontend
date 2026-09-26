@@ -55,7 +55,9 @@ export function LeaderboardTable({
    * the question changed.
    */
   const [visible, setVisible] = useState(PAGE);
-  const [me, setMe] = useState<{ rank: number; name: string } | null>(null);
+  const [me, setMe] = useState<{ rank: number; name: string; points: number } | null>(
+    null,
+  );
 
   /*
    * The page is one cached copy for everybody and never reads a cookie, so
@@ -71,9 +73,13 @@ export function LeaderboardTable({
         if (cancelled || !body || typeof body !== "object") return;
         const found = (body as { me?: unknown }).me;
         if (!found || typeof found !== "object") return;
-        const { rank, name } = found as { rank?: unknown; name?: unknown };
-        if (Number.isInteger(rank) && typeof name === "string") {
-          setMe({ rank: rank as number, name: name.trim() });
+        const { rank, name, points } = found as {
+          rank?: unknown;
+          name?: unknown;
+          points?: unknown;
+        };
+        if (Number.isInteger(rank) && Number.isInteger(points) && typeof name === "string") {
+          setMe({ rank: rank as number, name: name.trim(), points: points as number });
         }
       })
       .catch(() => {});
@@ -92,15 +98,37 @@ export function LeaderboardTable({
   const shown = sorted.slice(0, visible);
 
   /*
-   * Rank AND name. Ranks are unique on a board, names are not; the board is
-   * up to a minute old and the answer above is live. Only a row that agrees
-   * on both is theirs.
+   * Rank, name AND points. Ranks are unique on a board but the board can be
+   * minutes old while the answer above is live, and names are not unique, so
+   * a stranger with the same name could hold that rank on the older copy.
+   * Only a row that agrees on all three is theirs.
    */
   const mine =
     me === null
       ? null
-      : (rows.find((row) => row.rank === me.rank && row.name === me.name) ?? null);
+      : (rows.find(
+          (row) => row.rank === me.rank && row.name === me.name && row.points === me.points,
+        ) ?? null);
   const mineOutOfView = mine !== null && !shown.includes(mine);
+
+  /*
+   * A phone has no Stages column to sort by or to show the sort on, so a
+   * stages sort chosen on a wider screen goes back to rank when the screen
+   * narrows past the point where the column hides (sm, 40rem).
+   */
+  useEffect(() => {
+    if (sort !== "stages" || typeof window.matchMedia !== "function") return;
+    const wide = window.matchMedia("(min-width: 40rem)");
+    const drop = () => {
+      if (wide.matches) return;
+      setSort("rank");
+      setAscending(true);
+      setVisible(PAGE);
+    };
+    drop();
+    wide.addEventListener?.("change", drop);
+    return () => wide.removeEventListener?.("change", drop);
+  }, [sort]);
 
   function sortBy(key: SortKey) {
     setVisible(PAGE);
@@ -125,8 +153,8 @@ export function LeaderboardTable({
       <div className="mt-10 overflow-x-auto rounded-xl border border-line">
         <table className="w-full border-collapse text-left sm:min-w-[30rem]">
           <caption className="sr-only">
-            Campaign standings, sortable by rank, name, points or stages with an
-            approved entry
+            Campaign standings, sortable by rank, name or points, and on wider
+            screens by stages with an approved entry
           </caption>
           <thead>
             <tr className="border-b border-line">
@@ -196,13 +224,16 @@ export function LeaderboardTable({
       </div>
 
       {/* Signed in, with no row that is theirs on this copy of the board:
-          either below the hundred shown, or ranked in the last minute. */}
+          either below the hundred shown, or their standing moved since this
+          copy was made. The copy can be a few minutes old (the page is
+          rebuilt each minute, and a browser keeps a copy it has already
+          loaded for a while), so this does not promise a minute. */}
       {me !== null && mine === null && (
         <p className="mt-3 text-sm text-ink-3">
           You are at <span className="font-semibold text-white">#{me.rank}</span>
           {me.rank > rows.length && rows.length >= 100
             ? `. This board shows the top ${rows.length}.`
-            : ". This board catches up within a minute."}
+            : ". This board can be a few minutes behind; reload the page to see yourself on it."}
         </p>
       )}
     </>
@@ -321,8 +352,17 @@ const PLATFORM_ICON: Record<CampaignPlatform, typeof FaXTwitter> = {
   tiktok: FaTiktok,
 };
 
+/*
+ * "X, Instagram and TikTok". Intl.ListFormat is missing from browsers Next
+ * still supports (Safari before 14.1), where calling it would throw during
+ * render and take the whole table down, so there is a plain fallback.
+ */
 const listOf = (names: string[]) =>
-  new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" }).format(names);
+  typeof Intl.ListFormat === "function"
+    ? new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" }).format(names)
+    : names.length <= 1
+      ? names.join("")
+      : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 
 /** Where their approved posts are. Icons, with the words for a screen reader. */
 function Platforms({ platforms }: { platforms: CampaignPlatform[] }) {

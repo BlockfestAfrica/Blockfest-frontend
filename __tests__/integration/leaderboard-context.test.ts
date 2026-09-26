@@ -40,12 +40,23 @@ const one = async <T = Record<string, unknown>>(text: string): Promise<T> =>
 const DURING_STAGE_2 = new Date("2026-09-29T12:00:00+01:00");
 /** Stage 1: nothing before it to measure from. */
 const DURING_STAGE_1 = new Date("2026-09-20T12:00:00+01:00");
+/** Stage 3: measured from the stage 2 standings, recorded once. */
+const DURING_STAGE_3 = new Date("2026-10-06T12:00:00+01:00");
+/** Stage 4: the stage 3 standings were never recorded. */
+const DURING_STAGE_4 = new Date("2026-10-13T12:00:00+01:00");
 
-async function challengeId(weekNo: number) {
+async function challengeId(weekNo: number, type: "regular" | "wildcard" = "regular") {
+  const found = await one<{ id: string } | undefined>(
+    `SELECT id FROM challenges WHERE campaign_id = '${campaignId}' AND week_no = ${weekNo} AND type = '${type}'`,
+  );
+  if (found) return found.id;
+  // Neither exists in the campaign; the schema allows both.
   return (
-    await one<{ id: string }>(
-      `SELECT id FROM challenges WHERE campaign_id = '${campaignId}' AND week_no = ${weekNo}`,
-    )
+    await one<{ id: string }>(`
+      INSERT INTO challenges (campaign_id, title, description, week_no, type, starts_at, ends_at)
+      VALUES ('${campaignId}', 'Extra', 'Extra', ${weekNo}, '${type}',
+              '2026-10-01T00:00:00Z', '2026-10-30T00:00:00Z')
+      RETURNING id`)
   ).id;
 }
 
@@ -76,11 +87,12 @@ async function post(
   weekNo: number,
   platform: "x" | "instagram" | "tiktok",
   status: "approved" | "rejected" | "pending",
+  type: "regular" | "wildcard" = "regular",
 ) {
   const entry = await one<{ id: string }>(`
     INSERT INTO challenge_entries (campaign_creator_id, challenge_id,
       base_points_snapshot, bonus_2_snapshot, bonus_3_snapshot)
-    VALUES ('${enrolment}', '${await challengeId(weekNo)}', 100, 50, 100)
+    VALUES ('${enrolment}', '${await challengeId(weekNo, type)}', 100, 50, 100)
     ON CONFLICT (campaign_creator_id, challenge_id) DO UPDATE SET updated_at = now()
     RETURNING id`);
   const n = ++seq;
@@ -97,13 +109,13 @@ async function post(
   );
 }
 
-async function snapshot(version: number, ranks: Array<[string, number]>) {
+async function snapshot(weekNo: number, version: number, ranks: Array<[string, number]>) {
   for (const [enrolment, rank] of ranks) {
     await db.query(
       `INSERT INTO leaderboard_snapshots
          (campaign_id, week_no, version, rank, campaign_creator_id, display_name, points_total, approved_entries)
-       VALUES ($1, 1, $2, $3, $4, 'copied name', 100, 1)`,
-      [campaignId, version, rank, enrolment],
+       VALUES ($1, $2, $3, $4, $5, 'copied name', 100, 1)`,
+      [campaignId, weekNo, version, rank, enrolment],
     );
   }
 }
@@ -151,18 +163,27 @@ beforeAll(async () => {
   await post(ben, 1, "tiktok", "pending");
   await post(cy, 1, "instagram", "approved");
   await post(dee, 1, "x", "approved");
+  // Approved, but not stages: a wildcard, and a week past the four.
+  await post(dee, 3, "tiktok", "approved", "wildcard");
+  await post(dee, 5, "instagram", "approved");
 
   // Stage 1 recorded twice; the later recording is the baseline. Cy was not
   // on either.
-  await snapshot(1, [
+  await snapshot(1, 1, [
     [ada, 2],
     [ben, 1],
     [dee, 3],
   ]);
-  await snapshot(2, [
+  await snapshot(1, 2, [
     [ben, 1],
     [dee, 2],
     [ada, 3],
+  ]);
+  // Stage 2 recorded once. Its latest version (1) is lower than stage 1's
+  // (2), so a version lookup that ignored the week would find nothing here.
+  await snapshot(2, 1, [
+    [cy, 1],
+    [ada, 2],
   ]);
 
   await winner(ben, "creator_of_week", true);
@@ -195,6 +216,20 @@ describe("movement", () => {
     expect(row("Cy").previousRank).toBeNull();
   });
 
+  it("measures each stage from its own previous stage's recording", async () => {
+    const { view, row } = await byName(DURING_STAGE_3);
+    expect(view.movementSince).toBe(2);
+    expect(row("Cy").previousRank).toBe(1);
+    expect(row("Ada").previousRank).toBe(2);
+    expect(row("Ben").previousRank).toBeNull();
+  });
+
+  it("shows no movement when the previous stage's standings were never recorded", async () => {
+    const { view } = await byName(DURING_STAGE_4);
+    expect(view.movementSince).toBeNull();
+    expect(view.rows.every((r) => r.previousRank === null)).toBe(true);
+  });
+
   it("shows no movement during stage 1, when there is nothing before it", async () => {
     const { view } = await byName(DURING_STAGE_1);
     expect(view.movementSince).toBeNull();
@@ -210,6 +245,13 @@ describe("stages and platforms", () => {
     expect(row("Ben").stages).toBe(1);
     expect(row("Ben").platforms).toEqual(["x"]);
     expect(row("Cy").platforms).toEqual(["instagram"]);
+  });
+
+  it("counts only the regular stages, however many approved posts there are", async () => {
+    const { row } = await byName(DURING_STAGE_2);
+    expect(row("Dee").stages).toBe(1);
+    // The posts still show where they were approved.
+    expect(row("Dee").platforms).toEqual(["x", "instagram", "tiktok"]);
   });
 
   it("knows how many stages there are", async () => {
