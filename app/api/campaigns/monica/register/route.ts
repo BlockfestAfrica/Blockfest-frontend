@@ -72,37 +72,6 @@ function fail(message: string, status = 400, field?: string) {
  * act on.
  */
 export async function POST(request: NextRequest) {
-  /*
-   * Throttled before anything is read.
-   *
-   * Registration answers "that email is taken" and "that phone is taken" in
-   * different words, which is an unauthenticated membership oracle. The
-   * messages stay distinct, because a creator who typed their phone number
-   * wrong needs to be told which field to fix, and merging them would trade a
-   * real usability cost for an attacker who can still test one field at a time.
-   *
-   * What makes the oracle cheap is being able to ask endlessly. Nigerian mobile
-   * numbers are a small enough space to walk, so the limit is on the asking.
-   *
-   * Three hundred an hour, not twenty. The audience is Nigerian creators on
-   * phones, and MTN, Airtel and Glo put hundreds of subscribers behind one
-   * carrier-grade NAT address, so on launch morning one IP is a crowd, not a
-   * person. Twenty an hour would have had the campaign refusing its own
-   * registrants within minutes of the announcement post. Three hundred still
-   * caps an enumerator at seven thousand probes a day against a space of
-   * hundreds of millions, which is the property the limit exists for.
-   */
-  if (!(await allow(request, "register", 300, 3600))) {
-    return NextResponse.json(
-      {
-        ok: false,
-        message:
-          "That is a lot of attempts from one place. Wait a few minutes and try again.",
-      },
-      { status: 429 },
-    );
-  }
-
   /**
    * A registration is well under a kilobyte. Anything larger is not a form.
    *
@@ -135,6 +104,48 @@ export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return fail("Not allowed.", 403);
   if (!(request.headers.get("content-type") ?? "").includes("application/json")) {
     return fail("We could not read that. Please try again.", 415);
+  }
+
+  /*
+   * Throttled before the body is read, and after the checks above.
+   *
+   * Registration answers "that email is taken" and "that phone is taken" in
+   * different words, which is an unauthenticated membership oracle. The
+   * messages stay distinct, because a creator who typed their phone number
+   * wrong needs to be told which field to fix, and merging them would trade a
+   * real usability cost for an attacker who can still test one field at a time.
+   *
+   * What makes the oracle cheap is being able to ask endlessly. Nigerian mobile
+   * numbers are a small enough space to walk, so the limit is on the asking.
+   *
+   * Three hundred an hour, not twenty. The audience is Nigerian creators on
+   * phones, and MTN, Airtel and Glo put hundreds of subscribers behind one
+   * carrier-grade NAT address, so on launch morning one IP is a crowd, not a
+   * person. Twenty an hour would have had the campaign refusing its own
+   * registrants within minutes of the announcement post. Three hundred still
+   * caps an enumerator at seven thousand probes a day against a space of
+   * hundreds of millions, which is the property the limit exists for.
+   *
+   * After the size, origin and content-type checks, not before them, because
+   * the budget belongs to an address and an address is a crowd. With the
+   * throttle first, every request those checks were going to refuse spent a
+   * token on the way in, so a page on any site could have each visitor's
+   * browser fire unpreflighted text/plain posts here: each one answered 403,
+   * each one counted, and three hundred of them had everybody behind that
+   * carrier address told "a lot of attempts from one place" until the hour
+   * turned. Those checks read headers and nothing else, and no request reaches
+   * a "that is taken" answer without passing them, so running them first
+   * gives the oracle nothing.
+   */
+  if (!(await allow(request, "register", 300, 3600))) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "That is a lot of attempts from one place. Wait a few minutes and try again.",
+      },
+      { status: 429 },
+    );
   }
 
   let body: unknown;
@@ -355,8 +366,12 @@ export async function POST(request: NextRequest) {
    * full reasoning, and the tests that hold the order.
    *
    * Either way it is passed straight through to the database function, which
-   * resolves it, ignores one that belongs to nobody, and ignores one that
-   * belongs to the person registering.
+   * resolves it, ignores one that belongs to nobody, and records no referral
+   * when the code's owner holds any account, on the same platform, that the
+   * person registering lists. That shared account is the only sign of one
+   * person at both ends the database can see: email and phone are unique but
+   * unproven, since the access token comes back in this response and no inbox
+   * is ever needed to use a second enrolment.
    */
   const ref = resolveReferralCode({
     typed: parsed.data.ref,

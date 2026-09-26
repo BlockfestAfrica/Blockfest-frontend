@@ -9,7 +9,9 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import NewsletterPage from "@/app/newsletter/page";
 import { getNewsletterPosts } from "@/lib/newsletter";
 
 const FIXTURE = readFileSync(
@@ -164,5 +166,54 @@ describe("getNewsletterPosts", () => {
     const call = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(call[1]).toMatchObject({ next: { revalidate: expect.any(Number) } });
     expect(call[1].next.revalidate).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The page, not only the parser.
+ *
+ * Every title reaches the page twice: as card text, which React escapes, and
+ * inside the JSON-LD script, which dangerouslySetInnerHTML writes out
+ * verbatim. The HTML parser ends a script at the first "</script" it meets,
+ * inside a JSON string or not, so a title carrying one closed the element and
+ * the rest of the title was parsed as markup, on a page whose policy allows
+ * inline script. Whatever Substack sends, the element has to stay shut.
+ */
+describe("the newsletter page's structured data", () => {
+  // No quotes: JSON escapes them, so an attribute written with quotes could
+  // never appear verbatim and the breakout check would pass for nothing.
+  const MARKER = "Issue </script><b data-jsonld-breakout>x</b>";
+  const OPEN = '<script type="application/ld+json">';
+
+  // The newest issue, retitled. The first <title> in the file is the
+  // channel's, which the reader never looks at, so editing it proves nothing.
+  function retitled(title: string): string {
+    const feed = FIXTURE.replace(
+      /(<item><title><!\[CDATA\[)[\s\S]*?(\]\]><\/title>)/,
+      (_m, open: string, close: string) => open + title + close
+    );
+    expect(feed).not.toBe(FIXTURE);
+    return feed;
+  }
+
+  async function render(feed: string) {
+    mockFeed(feed);
+    const html = renderToStaticMarkup(await NewsletterPage());
+    const start = html.indexOf(OPEN) + OPEN.length;
+    return { html, payload: html.slice(start, html.indexOf("</script>", start)) };
+  }
+
+  it.each([
+    ["typed into the title", MARKER],
+    [
+      "entity-encoded by the feed",
+      "Issue &lt;/script&gt;&lt;b data-jsonld-breakout&gt;x&lt;/b&gt;",
+    ],
+  ])("keeps a closing script tag %s inside the element", async (_how, title) => {
+    const { html, payload } = await render(retitled(title));
+    // A boolean, so a failure names the breakout instead of printing the page.
+    expect(html.includes("<b data-jsonld-breakout>")).toBe(false);
+    // Escaped, not stripped: a crawler still reads the title as published.
+    expect(JSON.parse(payload).hasPart[0].headline).toBe(MARKER);
   });
 });

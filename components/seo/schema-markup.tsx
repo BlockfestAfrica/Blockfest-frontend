@@ -1,4 +1,5 @@
 import React from "react";
+import { jsonLd } from "@/lib/json-ld";
 
 interface BaseSchemaProps {
   type:
@@ -21,7 +22,7 @@ export function BaseSchema({ type, data }: BaseSchemaProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(baseContext) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(baseContext) }}
     />
   );
 }
@@ -54,7 +55,7 @@ export function BreadcrumbSchema({ items }: BreadcrumbSchemaProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbData) }}
     />
   );
 }
