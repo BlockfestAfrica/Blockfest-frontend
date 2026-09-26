@@ -114,6 +114,52 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     setDiscarding(null);
   }
 
+  /**
+   * The question to ask before saving, or null when the save only touches text.
+   *
+   * Status and base points are the two fields whose change reaches creators
+   * straight away: a status opens, stops or hides the week, and a base is what
+   * every entry made afterwards pays.
+   */
+  function riskyChange(weekNo: number): { question: string; consequence: string } | null {
+    if (!baseline) return null;
+    const statusTo = form.status !== baseline.status ? form.status : null;
+    // An empty or zero base is refused by save() with its own message, so
+    // there is nothing to ask about.
+    const baseChanged =
+      form.basePoints !== baseline.basePoints && Number(form.basePoints) > 0;
+    if (!statusTo && !baseChanged) return null;
+
+    const status =
+      statusTo === "closed"
+        ? {
+            question: `Save week ${weekNo} and close it to new entries?`,
+            consequence: `Nobody can submit to week ${weekNo} until it is set active again. What already arrived stays reviewable.`,
+          }
+        : statusTo === "active"
+          ? {
+              question: `Save week ${weekNo} and make it live?`,
+              consequence:
+                "The brief shows on the public stage list and creators can submit inside its window.",
+            }
+          : statusTo === "draft"
+            ? {
+                question: `Save week ${weekNo} and take it off the public page?`,
+                consequence: "It disappears from the stage list and stops taking entries.",
+              }
+            : null;
+    const base = baseChanged
+      ? `Entries created from now on pay ${form.basePoints} base points instead of ${baseline.basePoints}; existing ones keep theirs.`
+      : "";
+
+    return {
+      question:
+        status?.question ??
+        `Save week ${weekNo} with base points changed from ${baseline.basePoints} to ${form.basePoints}?`,
+      consequence: [status?.consequence ?? "", base].filter(Boolean).join(" "),
+    };
+  }
+
   /** Close, or move to another week, throwing away what was typed. */
   function leaveEditor(to: EditableChallenge | null) {
     setDiscarding(null);
@@ -430,14 +476,22 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => save(challenge)}
-                    className={buttonClass("primary", "w-fit")}
-                  >
-                    {busy ? "Saving…" : `Save week ${challenge.weekNo}`}
-                  </button>
+                  {/* Text-only saves stay one press: the brief is saved over
+                      and over while it is written. A status or base-points
+                      change asks, because the status is one select in the
+                      middle of a long form and Save does not mention it, so
+                      closing a live week could ride along with a typo fix. */}
+                  <Confirm
+                    label={`Save week ${challenge.weekNo}`}
+                    when={riskyChange(challenge.weekNo) !== null}
+                    question={riskyChange(challenge.weekNo)?.question ?? ""}
+                    consequence={riskyChange(challenge.weekNo)?.consequence ?? ""}
+                    confirmLabel="Yes, save it"
+                    pending={busy}
+                    onConfirm={() => save(challenge)}
+                    triggerClassName={buttonClass("primary", "w-fit")}
+                    triggerContent={busy ? "Saving…" : `Save week ${challenge.weekNo}`}
+                  />
 
                   {/* Only for a week that is actually live, because the
                       mail tells creators to go and submit. Separate from

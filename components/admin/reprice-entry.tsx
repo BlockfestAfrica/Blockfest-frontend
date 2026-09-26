@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buttonClass, control, Field, JobCard } from "@/components/shared/panel";
+import { Confirm } from "@/components/shared/confirm";
 
 /**
  * Bring one entry to current rates, on purpose (#68).
@@ -19,6 +20,10 @@ export function RepriceEntry() {
   const [entryId, setEntryId] = useState("");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const id = entryId.trim();
+  // Asked only once the id and reason would pass, so a malformed paste gets
+  // its own message straight away instead of a question about nothing.
+  const ready = /^[0-9a-f-]{36}$/i.test(id) && reason.trim().length > 0;
 
   async function reprice() {
     if (!/^[0-9a-f-]{36}$/i.test(entryId.trim())) {
@@ -82,9 +87,19 @@ export function RepriceEntry() {
             className={control}
           />
         </Field>
-        <button type="button" disabled={busy} onClick={reprice} className={buttonClass("secondary", "w-fit")}>
-          {busy ? "Working…" : "Reprice this entry"}
-        </button>
+        {/* Nothing on screen says whose entry this is until the toast
+            afterwards, and the only undo is a manual award that mails the
+            creator again, so the id is said back before it runs. */}
+        <Confirm
+          label="Reprice this entry"
+          when={ready}
+          question={`Reprice entry ${id.slice(0, 8)}…${id.slice(-4)} to today's rates?`}
+          consequence="The creator's total moves straight away and they are emailed if it changes. There is no undo; a mistake is corrected with a manual award."
+          confirmLabel="Yes, reprice it"
+          pending={busy}
+          onConfirm={reprice}
+          triggerClassName={buttonClass("secondary", "w-fit")}
+        />
       </div>
     </JobCard>
   );

@@ -5,6 +5,7 @@ import { reveal } from "@/components/shared/reveal";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buttonClass, control, JobCard } from "@/components/shared/panel";
+import { Confirm } from "@/components/shared/confirm";
 
 export interface RuleRow {
   id: string;
@@ -38,6 +39,31 @@ const LABELS: Record<string, { name: string; note?: string }> = {
  * creation; and repricing an existing entry is a separate, deliberate act on
  * the Tools screen, never a side effect of editing a number here.
  */
+/*
+ * Rules whose value is also written into public copy: the tier totals on the
+ * rules page and the referral figure on the prizes and personal pages.
+ */
+const STATED_PUBLICLY = new Set(["multi_platform_bonus_2", "multi_platform_bonus_3", "referral"]);
+
+/**
+ * What a save would change, said back as "points 40 to 400, ceiling none to
+ * 500", or null when nothing numeric moved.
+ */
+function ruleChanges(rule: RuleRow, form: { def: string; min: string; max: string }): string | null {
+  const shown = (value: number | null) => (value === null ? "none" : String(value));
+  const typed = (value: string) => (value.trim() === "" ? "none" : value.trim());
+  const parts = (
+    [
+      ["points", shown(rule.defaultPoints), typed(form.def)],
+      ["floor", shown(rule.minPoints), typed(form.min)],
+      ["ceiling", shown(rule.maxPoints), typed(form.max)],
+    ] as const
+  )
+    .filter(([, before, after]) => before !== after)
+    .map(([what, before, after]) => `${what} ${before} to ${after}`);
+  return parts.length ? parts.join(", ") : null;
+}
+
 export function PointRulesEditor({
   rules,
   weekBase,
@@ -187,14 +213,30 @@ export function PointRulesEditor({
                       />
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => save(rule)}
-                    className={buttonClass("primary", "w-fit sm:col-span-3")}
-                  >
-                    {busy ? "Saving…" : "Save"}
-                  </button>
+                  {/* A typo here (400 for 40) mints wrong points on every
+                      entry or award made until someone notices, and each one
+                      then needs a reprice that emails its creator. So a
+                      changed value is said back first. */}
+                  <div className="sm:col-span-3">
+                    <Confirm
+                      label="Save"
+                      when={ruleChanges(rule, form) !== null}
+                      question={`Change ${meta.name}: ${ruleChanges(rule, form) ?? ""}?`}
+                      consequence={[
+                        "Entries and awards made from now on use the new value. Those made before it is changed back keep it, and have to be repriced one by one.",
+                        STATED_PUBLICLY.has(rule.key)
+                          ? "The public campaign pages state this figure, so their copy has to change too."
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      confirmLabel="Yes, change it"
+                      pending={busy}
+                      onConfirm={() => save(rule)}
+                      triggerClassName={buttonClass("primary", "w-fit")}
+                      triggerContent={busy ? "Saving…" : "Save"}
+                    />
+                  </div>
                 </div>
               )}
             </li>

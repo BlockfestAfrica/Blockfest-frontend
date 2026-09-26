@@ -65,6 +65,22 @@ function defaultVoteDay(): string {
   return lagos.toISOString().slice(0, 10);
 }
 
+/** "Sunday 27 September", read from the YYYY-MM-DD the date field holds. */
+function longDay(day: string): string {
+  const d = new Date(`${day}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return day;
+  return d.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  });
+}
+
+function listOf(names: string[]): string {
+  return new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" }).format(names);
+}
+
 /**
  * The Sunday vote, as one job with four states: nominate, run, review, done.
  *
@@ -692,14 +708,25 @@ export function VoteRoundPanel({
                 </p>
               </Panel>
             )}
-            <button
-              type="button"
-              disabled={busy || !openReady}
-              onClick={openRound}
-              className={buttonClass("primary")}
-            >
-              {busy ? "Working…" : "Open the vote"}
-            </button>
+            {/* The day and times sit further down the card than the button,
+                with defaults nobody has to touch, so the question says them
+                back along with the names. Nothing about a round changes once
+                it is open, and the nominees are emailed straight away. */}
+            <Confirm
+              label="Open the vote"
+              question={`Open the week ${weekNo} vote with ${listOf(
+                selected.map(
+                  (id) => candidates.find((c) => c.entryId === id)?.name ?? "an entry",
+                ),
+              )}, ${longDay(voteDay)} ${opensTime} to ${closesTime} Lagos time?${
+                needsOverride ? " Fewer than three nominees, with your reason recorded." : ""
+              }`}
+              consequence="Each nominee is emailed now and the shortlist goes on the public voting page. A week gets one round, and its nominees and times cannot be changed once it is open."
+              confirmLabel="Yes, open the vote"
+              pending={busy}
+              disabled={!openReady}
+              onConfirm={openRound}
+            />
             {selected.length > 0 && (
               <p className="text-sm text-ink-2">
                 {selected.length} of 5 picked.
