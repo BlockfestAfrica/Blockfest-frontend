@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest, after } from "next/server";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { currentCreator } from "@/lib/creator-session";
+import { currentCreator, legacySessionClaim } from "@/lib/creator-session";
 import { sameOrigin } from "@/lib/admin/request";
 import { allowKey } from "@/lib/throttle";
 import { isPgError } from "@/lib/db/errors";
@@ -64,8 +64,14 @@ export async function POST(request: NextRequest) {
 
   const creator = await currentCreator();
   if (!creator) {
+    // A page rendered before the cookie moved to __Host- still holds the old
+    // one; a reload sends it through the one-time confirm on /me. Telling it
+    // to find its link instead sends people to recovery, which replaces a
+    // link that still works.
     return fail(
-      "We do not know who you are. Open your personal link and try again.",
+      legacySessionClaim(request.headers.get("cookie"))
+        ? "We need to check it is you, once. Reload this page to carry on."
+        : "We do not know who you are. Open your personal link and try again.",
       401,
     );
   }

@@ -254,6 +254,22 @@ describe("spellings whose stored form opens a different post", () => {
     }
   });
 
+  it("accepts trailing noise that opens the same post", () => {
+    // A trailing encoded space from a hand-built hyperlink, or a doubled
+    // slash, changed again on a second pass and was refused as tampering.
+    for (const [platform, url, stored] of [
+      ["x", "https://x.com/ada/status/1239%20", "https://x.com/ada/status/1239"],
+      ["x", "https://x.com/ada/status/1239%C2%A0", "https://x.com/ada/status/1239"],
+      ["x", "https://x.com/ada/status/1239/%20/", "https://x.com/ada/status/1239"],
+      ["tiktok", "https://www.tiktok.com/@ada.b/video/7211//", "https://tiktok.com/@ada.b/video/7211"],
+      ["instagram", "https://www.instagram.com/reel/Cabcdef//", "https://instagram.com/reel/Cabcdef"],
+    ]) {
+      expect(ok(platform, url), url).toBe(true);
+      expect(canonicalUrl(url), url).toBe(stored);
+      expect(canonicalUrl(stored), url).toBe(stored);
+    }
+  });
+
   it("stores only a form that reads back as itself", () => {
     // What the reviewer opens is what the identity was computed from.
     for (const [platform, url] of [

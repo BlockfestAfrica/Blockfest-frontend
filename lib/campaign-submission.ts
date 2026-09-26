@@ -97,7 +97,11 @@ export function canonicalUrl(raw: string): string {
     url.hostname = bareHost(url.hostname);
     // Composed by hand: assigning a decoded pathname back onto URL would
     // re-encode it, which is the spelling this exists to remove.
-    const path = decodedPath(url.pathname).replace(/\/$/, "");
+    // Trailing slashes, spaces and byte-order marks all go, however many:
+    // stripping only one left "…/123//" or "…/123%20" changing again on a
+    // second pass, and the settled-link check below then refused a link
+    // that opens exactly the post it names.
+    const path = decodedPath(url.pathname).replace(/[\s\uFEFF/]+$/u, "");
     return `${url.protocol}//${url.hostname}${path}`;
   } catch {
     return raw.trim();
