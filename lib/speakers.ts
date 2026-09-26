@@ -371,7 +371,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Eniola Osiyoku",
-    title: "Senior Product Manager - Payments, PawaPay",
+    title: "Senior Product Manager, PawaPay",
     image: "/2026/speakers/eniola.jpg", 
     expertise: ["Fintech", "Business & Finance"],
     company: "PawaPay",
