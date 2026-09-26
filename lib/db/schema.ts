@@ -703,10 +703,16 @@ export const pointLedger = pgTable(
  *    layer, so no code path can forget the check.
  *
  * What these constraints CANNOT stop is one human making a second account to
- * refer themselves. That is stopped upstream, by the canonical email, E.164
- * phone and social-handle uniqueness on `creators` — and by paying the bonus
- * on first APPROVED entry rather than on registration (see `awardedLedgerId`
- * staying NULL until then).
+ * refer themselves. Canonical email and E.164 phone uniqueness make that cost
+ * a fresh address and number, but nothing proves either belongs to whoever
+ * typed it, and a handle is exclusive only once verified, which nothing does
+ * any more. So register_creator records no referral when the newcomer lists a
+ * (platform, handle) the referrer already holds: submissions are attributed
+ * by account, and two enrolments on one account are one person's work. A
+ * second enrolment on a genuinely separate account is left to the reviewer,
+ * and the bonus is paid on first APPROVED entry rather than on registration
+ * (see `awardedLedgerId` staying NULL until then), so nothing is paid before
+ * a person has looked at the newcomer's work.
  */
 export const referrals = pgTable(
   "referrals",

@@ -16,6 +16,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const VALID = "dAyeo84EfDrV3h3E7NVYQx5MlMNqrA_5nrMofYmz3o8";
 const OTHER = "Zk3Qm9WcJt7Lx2Nv5Rb8Ys1Pd4Hg6Ue0Ai3Oq7Kw2Mz";
 
+/** The session cookie, and the name it had before the __Host- prefix. */
+const SESSION = "__Host-monica_creator";
+const LEGACY = "monica_creator";
+
 const resolve = vi.fn();
 
 vi.mock("@/lib/creator-session", async () => {
@@ -121,7 +125,7 @@ describe("a link that belongs to nobody", () => {
     const response = await enter(VALID);
 
     expect(
-      setCookies(response).monica_creator,
+      setCookies(response)[SESSION],
       "a well formed but unknown token used to be enough to sign in",
     ).toBeUndefined();
   });
@@ -140,7 +144,7 @@ describe("a link that belongs to nobody", () => {
   it("refuses a malformed token", async () => {
     resolve.mockResolvedValue(null);
     const response = await enter("short");
-    expect(setCookies(response).monica_creator).toBeUndefined();
+    expect(setCookies(response)[SESSION]).toBeUndefined();
     expect(setCookies(response).monica_pending).toBeUndefined();
   });
 });
@@ -155,7 +159,7 @@ describe("a link that does belong to somebody", () => {
     const response = await enter(VALID);
 
     const cookies = setCookies(response);
-    expect(cookies.monica_creator, "no session from a GET").toBeUndefined();
+    expect(cookies[SESSION], "no session from a GET").toBeUndefined();
     expect(cookies.monica_pending, "the claim is parked instead").toBe(VALID);
   });
 
@@ -175,10 +179,10 @@ describe("a link that does belong to somebody", () => {
    */
   it("does not swap an existing session for a different one", async () => {
     resolve.mockResolvedValue({ enrolmentId: "attacker", name: "Chidi O." });
-    const response = await enter(OTHER, { monica_creator: VALID });
+    const response = await enter(OTHER, { [SESSION]: VALID });
 
     expect(
-      setCookies(response).monica_creator,
+      setCookies(response)[SESSION],
       "the victim's own session must survive a tap on somebody else's link",
     ).toBeUndefined();
   });
@@ -192,14 +196,31 @@ describe("the creator who clicks their own link again", () => {
    */
   it("goes straight through", async () => {
     resolve.mockResolvedValue({ enrolmentId: "e1", name: "Ada N." });
-    const response = await enter(VALID, { monica_creator: VALID });
+    const response = await enter(VALID, { [SESSION]: VALID });
 
     // The explicit query keeps Netlify from re-appending ?t= to the one URL
     // a signed-in creator lands on with their token still in hand.
     expect(response.headers.get("location")).toBe(
       "/campaigns/monica-money-story/me?s=go",
     );
-    expect(setCookies(response).monica_creator).toBe(VALID);
+    expect(setCookies(response)[SESSION]).toBe(VALID);
+  });
+
+  /**
+   * Not for the name a sibling host can plant. A planted token sent out with
+   * its own matching link would otherwise skip the one page that names the
+   * account, and the old cookie cannot be told from a planted one. A creator
+   * still on it is asked once, the same as any link.
+   */
+  it("is asked once if all they hold is the pre-prefix cookie", async () => {
+    resolve.mockResolvedValue({ enrolmentId: "e1", name: "Ada N." });
+    const response = await enter(VALID, { [LEGACY]: VALID });
+
+    expect(response.headers.get("location")).toBe(
+      "/campaigns/monica-money-story/enter/confirm?s=go",
+    );
+    expect(setCookies(response)[SESSION]).toBeUndefined();
+    expect(setCookies(response).monica_pending).toBe(VALID);
   });
 });
 
@@ -219,7 +240,7 @@ describe("when the database cannot be reached", () => {
 
   it("still sets no session", async () => {
     resolve.mockRejectedValue(new Error("connection reset"));
-    expect(setCookies(await enter(VALID)).monica_creator).toBeUndefined();
+    expect(setCookies(await enter(VALID))[SESSION]).toBeUndefined();
   });
 });
 

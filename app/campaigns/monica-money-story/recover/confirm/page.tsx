@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { CREATOR_RECOVERY_PENDING_COOKIE, CREATOR_SESSION_COOKIE } from "@/lib/creator-access";
 import { recoveryHolderByToken } from "@/lib/creator-recovery";
-import { creatorByToken, handlesForEnrolment } from "@/lib/creator-session";
+import {
+  creatorByToken,
+  handlesForEnrolment,
+  legacySessionClaim,
+  soleCookie,
+} from "@/lib/creator-session";
 import { monicaRoutes } from "@/lib/campaigns";
 import { buttonClass } from "@/components/shared/panel";
 import { confirmRecovery, discardRecoveryPending } from "./actions";
@@ -32,9 +37,11 @@ export default async function ConfirmRecoveryPage({
   searchParams: Promise<{ s?: string }>;
 }) {
   const { s } = await searchParams;
-  const jar = await cookies();
+  const cookieHeader = (await headers()).get("cookie");
 
-  const pending = jar.get(CREATOR_RECOVERY_PENDING_COOKIE)?.value?.trim() ?? "";
+  // From the raw header, so a value planted beside the one the mailed link
+  // parked voids the claim instead of shadowing it: see soleCookie.
+  const pending = soleCookie(cookieHeader, CREATOR_RECOVERY_PENDING_COOKIE) ?? "";
 
   let holder: Awaited<ReturnType<typeof recoveryHolderByToken>> = null;
   let unavailable = false;
@@ -46,7 +53,12 @@ export default async function ConfirmRecoveryPage({
     }
   }
 
-  const current = jar.get(CREATOR_SESSION_COOKIE)?.value?.trim() ?? "";
+  // The __Host- session, or the pre-prefix cookie of a creator not yet asked
+  // about it, since confirming signs either one out.
+  const current =
+    soleCookie(cookieHeader, CREATOR_SESSION_COOKIE) ??
+    legacySessionClaim(cookieHeader) ??
+    "";
   let signedInAs: string | null = null;
   if (current) {
     try {

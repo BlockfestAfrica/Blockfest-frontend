@@ -4,12 +4,14 @@ import { after } from "next/server";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
+  CREATOR_LEGACY_SESSION_COOKIE,
   CREATOR_RECOVERY_PENDING_COOKIE,
   CREATOR_SESSION_COOKIE,
 } from "@/lib/creator-access";
 import {
   recoveryPendingCookieOptions,
   sessionCookieOptions,
+  soleCookie,
 } from "@/lib/creator-session";
 import {
   confirmAccessRecovery,
@@ -43,7 +45,11 @@ export async function confirmRecovery(form: FormData) {
   }
 
   const jar = await cookies();
-  const token = jar.get(CREATOR_RECOVERY_PENDING_COOKIE)?.value?.trim() ?? "";
+  // The same raw-header read the page made, so the two cannot disagree about
+  // which of two planted values they are looking at: see soleCookie.
+  const token =
+    soleCookie((await headers()).get("cookie"), CREATOR_RECOVERY_PENDING_COOKIE) ??
+    "";
 
   /*
    * Re-checked at the point of use rather than trusted from the render, the
@@ -89,6 +95,9 @@ export async function confirmRecovery(form: FormData) {
   }
 
   jar.set(CREATOR_SESSION_COOKIE, confirmed.accessToken, sessionCookieOptions());
+  // Whoever the pre-prefix cookie named is signed out by this swap, as the
+  // page said, and if it was this account it names a token just rotated.
+  jar.delete({ name: CREATOR_LEGACY_SESSION_COOKIE, path: "/" });
   jar.delete({
     name: CREATOR_RECOVERY_PENDING_COOKIE,
     path: recoveryPendingCookieOptions().path,

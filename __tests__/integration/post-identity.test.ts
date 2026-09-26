@@ -476,8 +476,8 @@ describe("two creators contesting one post", () => {
   });
 
   /**
-   * X and TikTok were never exposed to the burn, because the author is in the
-   * path. Asserted so that stays true rather than being assumed.
+   * A rival's X link pasted as it is, their handle and all, is refused. That
+   * much of the author check holds; the test after this is what it misses.
    */
   it("still refuses somebody else's X post outright", async () => {
     const thief = await enrol("x");
@@ -485,4 +485,40 @@ describe("two creators contesting one post", () => {
       enterVia(thief.enrolmentId, "x", "https://x.com/someoneelse/status/4242"),
     ).rejects.toThrow(/wrong_account/);
   });
+
+  /**
+   * What wrong_account does not catch, pinned so nothing leans on it again.
+   *
+   * The handle in an X or TikTok link is whatever the submitter typed, and
+   * post_identity_of keys the post on the number alone. A thief who puts
+   * their own handle in front of somebody else's number passes the check and
+   * files that person's post. Once it is approved the real author is refused
+   * at submit, so no second claim ever exists and the queue's Contested flag
+   * never shows. Only a reviewer looking at the author the platform shows can
+   * catch it, which is why the queue no longer calls a matching handle a
+   * check. Refusing a second claim at submit would not help: it hands the
+   * post to whoever files first, which is the burn 0025 removed.
+   */
+  it.each<[string, (handle: string) => string, string]>([
+    ["x", (h) => `https://x.com/${h}/status/4242`, "x:4242"],
+    ["tiktok", (h) => `https://tiktok.com/@${h}/video/7211`, "tiktok:7211"],
+  ])(
+    "files somebody else's %s post under the submitter's own handle",
+    async (platform, link, identity) => {
+      const thief = await enrol(platform);
+      const author = await enrol(platform);
+
+      const claim = await enterVia(thief.enrolmentId, platform, link(thief.handle));
+      const stored = await one<{ post_identity: string }>(
+        `SELECT post_identity FROM submissions WHERE id = '${claim}'`,
+      );
+      expect(stored.post_identity, "filed as the real post").toBe(identity);
+
+      await decide(claim, "approved");
+      await expect(
+        enterVia(author.enrolmentId, platform, link(author.handle)),
+        "the author's own link, refused before it can be contested",
+      ).rejects.toThrow(/url_already_submitted/);
+    },
+  );
 });

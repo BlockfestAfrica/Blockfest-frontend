@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import {
   adminUsers,
   campaignCreators,
@@ -199,18 +199,7 @@ export async function reviewSubmission(
  * Oldest first because a review queue worked newest-first leaves the earliest
  * entrants waiting longest, and they are the ones who entered on day one.
  */
-export async function pendingSubmissions(
-  admin: AdminIdentity,
-  limit = 50,
-  /**
-   * Restrict to these submissions, keeping the oldest-first order.
-   *
-   * Used to show one lane of the queue. The lane is worked out in JavaScript
-   * from pendingAttribution, because the rule that decides it cannot be put
-   * into SQL without drifting from the function that actually decides it.
-   */
-  ids?: string[],
-) {
+export async function pendingSubmissions(admin: AdminIdentity, limit = 50) {
   void admin; // Reading the queue is admin-only; the type is the proof.
   const db = getDb();
 
@@ -270,51 +259,38 @@ export async function pendingSubmissions(
       ),
     )
     .where(
-      and(
-        eq(submissions.status, "pending"),
-        eq(campaigns.slug, MONICA_SLUG),
-        // An empty lane must return nothing rather than everything, which
-        // is what an omitted condition would do.
-        ...(ids ? [inArray(submissions.id, ids.length ? ids : [""])] : []),
-      ),
+      and(eq(submissions.status, "pending"), eq(campaigns.slug, MONICA_SLUG)),
     )
     .orderBy(submissions.submittedAt)
     .limit(Math.min(Math.max(limit, 1), 200));
 }
 
 /**
- * Just enough of every pending submission to count and to sort into lanes.
+ * How many submissions are waiting, all of them.
  *
  * The queue header printed `queue.length`, which is the page size, so once 51
  * submissions were waiting the page said "50 waiting" and kept saying it. This
  * exists so the number is the real one.
  *
- * Three short columns and no joins out to the creator, so a few thousand rows
- * is cheap. The attribution check is then run over it in JavaScript, because
- * authorFromUrl special-cases reserved x.com segments, TikTok @-segments and
- * vm./vt. share links, and returns null for every Instagram URL. A LIKE clause
- * approximating that would drift from it and produce lane counts that are wrong
- * in a way that looks entirely plausible.
+ * It used to fetch every pending link so the page could sort the queue into
+ * lanes by the handle each link carried. The lanes are gone, because that
+ * handle is typed by whoever submits and proves nothing about who published
+ * the post, and a count is all that is left to ask for.
  */
-export async function pendingAttribution(admin: AdminIdentity) {
+export async function pendingCount(admin: AdminIdentity): Promise<number> {
   void admin; // Admin-only; the type is the proof.
   const db = getDb();
 
-  return db
-    .select({
-      id: submissions.id,
-      platform: submissions.platform,
-      url: submissions.url,
-    })
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
     .from(submissions)
     .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))
     .innerJoin(challenges, eq(challenges.id, challengeEntries.challengeId))
     .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
     .where(
       and(eq(submissions.status, "pending"), eq(campaigns.slug, MONICA_SLUG)),
-    )
-    .orderBy(submissions.submittedAt)
-    .limit(2000);
+    );
+  return row?.n ?? 0;
 }
 
 export type DecidedStatus = "all" | "approved" | "rejected";

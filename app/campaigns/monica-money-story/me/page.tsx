@@ -5,11 +5,13 @@ import { PointsHistory } from "@/components/campaigns/points-history";
 import { EntryHistory } from "@/components/campaigns/entry-history";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft, Lock } from "lucide-react";
 import {
   creatorPageData,
   handleRequestsForEnrolment,
   currentCreator,
+  legacySessionHolder,
   platformsUsedThisWeek,
   type CreatorSubmission,
 } from "@/lib/creator-session";
@@ -116,8 +118,16 @@ export default async function MonicaCreatorPage() {
    */
   let creator: Awaited<ReturnType<typeof currentCreator>> = null;
   let sessionUnavailable = false;
+  let signedInBefore = false;
   try {
     creator = await currentCreator();
+    /*
+     * A creator signed in before the session cookie took its __Host- name
+     * holds only the old one, which is never a session on its own. They are
+     * sent to be asked once, by name, rather than told we do not know who
+     * they are with a working link in their inbox.
+     */
+    if (!creator) signedInBefore = (await legacySessionHolder()) !== null;
   } catch (error) {
     sessionUnavailable = true;
     logWarning(
@@ -125,6 +135,10 @@ export default async function MonicaCreatorPage() {
       `session could not be read: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+
+  // Outside the try: redirect() works by throwing, and the catch above would
+  // take it for a database failure.
+  if (signedInBefore) redirect(`${monicaRoutes.enterConfirm}?s=go`);
 
   if (sessionUnavailable) {
     return (

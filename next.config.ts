@@ -18,11 +18,55 @@ const nextConfig: NextConfig = {
     inlineCss: true,
   },
 
-  // Image optimization for mobile devices
+  /*
+   * Image optimization for mobile devices, bounded to what the pages ask for.
+   *
+   * /_next/image is public and reads url, w and q from the query string, and
+   * every combination it has not seen is a cache miss that decodes the whole
+   * source and encodes it again. Much of public/ is committed at full
+   * resolution, speaker photos up to 31 megapixels and one partner logo on
+   * the home page at 107, so with nothing listed an anonymous visitor could
+   * ask for thousands of full transforms of one file: any q from 1 to 100,
+   * any path on the site, and any query string on the end of it, each one a
+   * new cache key for the same bytes.
+   *
+   * The keys below close that on Next's own optimizer, which is what answers
+   * under next start and next dev, and Next 16 requires qualities anyway.
+   * Where the Netlify runtime hands /_next/image to the platform's image
+   * service instead, that service applies its own rules, and the bound there
+   * is the size of the files themselves: an image is resized before it is
+   * committed, as scripts/optimize-sa-photos.mjs does for one gallery, rather
+   * than left to this block.
+   *
+   * __tests__/unit/image-optimizer-bounds.test.ts runs every quality and image
+   * path the pages render through Next's validation, so a component that
+   * needs a new one fails the suite, and the deploy, until it is listed here.
+   */
   images: {
-    formats: ["image/webp", "image/avif"],
+    /*
+     * WebP only. With AVIF listed, any request whose Accept header names
+     * image/avif, which every current browser's does, got the AVIF encoder,
+     * the slowest one sharp has, on every miss.
+     */
+    formats: ["image/webp"],
     deviceSizes: [320, 420, 640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    /*
+     * 60 on the home hero, 85 on the speaker grids, and 75, which is what
+     * next/image sends for every component that sets no quality. Any other q
+     * is now a 400 rather than a fresh transform.
+     */
+    qualities: [60, 75, 85],
+    /*
+     * Everything rendered through next/image lives under these two
+     * directories. search: "" refuses a query string outright, which is what
+     * turned the variant count from large into unbounded. Next adds
+     * /_next/static/media/** by itself for statically imported images.
+     */
+    localPatterns: [
+      { pathname: "/images/**", search: "" },
+      { pathname: "/2026/**", search: "" },
+    ],
     minimumCacheTTL: 31536000, // 1 year cache
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",

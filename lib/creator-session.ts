@@ -1,6 +1,6 @@
 import "server-only";
 import { and, asc, desc, eq, gt, lte, sql } from "drizzle-orm";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import {
   campaignCreators,
   campaigns,
@@ -14,6 +14,8 @@ import {
 } from "@/lib/db/client";
 import { CAMPAIGN_GATE_FORCED_OPEN, MONICA_SLUG } from "@/lib/campaigns";
 import {
+  CREATOR_LEGACY_SESSION_COOKIE,
+  CREATOR_PENDING_COOKIE,
   CREATOR_PENDING_MAX_AGE,
   CREATOR_PENDING_PATH,
   CREATOR_RECOVERY_PENDING_MAX_AGE,
@@ -41,9 +43,101 @@ const cookieBase = () => ({
 
 export const sessionCookieOptions = () => ({
   ...cookieBase(),
+  /*
+   * Unconditional, as the admin cookie's is, because a browser refuses a
+   * __Host- cookie without it. http://localhost counts as a secure context,
+   * so Chrome and Firefox still store it under next dev.
+   */
+  secure: true,
   path: "/",
   maxAge: CREATOR_SESSION_MAX_AGE,
 });
+
+/**
+ * Clearing the session. A browser holds the Set-Cookie that deletes a __Host-
+ * cookie to the same rules as the one that set it, so a clear without Secure
+ * and Path=/ is refused and the session outlives the sign-out that asked to
+ * end it. Passed to set() with an empty value rather than to delete(), which
+ * would keep the ninety day maxAge and write an empty cookie that lasts that
+ * long instead of expiring this one.
+ */
+export const sessionClearOptions = () => ({
+  ...sessionCookieOptions(),
+  maxAge: 0,
+});
+
+/**
+ * Every value a Cookie header carries under one name.
+ *
+ * Read from the raw header rather than through cookies().get, because Next
+ * parses the header into a Map and two cookies of the same name collapse into
+ * whichever came last. Which comes last is decided by Path length and age,
+ * both chosen by whoever set the cookie, so a host that planted one gets to
+ * pick the winner. Empty values are skipped: they are what a clearing
+ * Set-Cookie leaves behind, not a credential.
+ */
+function cookieValues(header: string | null | undefined, name: string): string[] {
+  if (!header) return [];
+  const values: string[] = [];
+  for (const pair of header.split(";")) {
+    const at = pair.indexOf("=");
+    if (at === -1 || pair.slice(0, at).trim() !== name) continue;
+    const value = pair.slice(at + 1).trim();
+    if (value) values.push(value);
+  }
+  return values;
+}
+
+/**
+ * The one value a request carries under a cookie name, or nothing.
+ *
+ * Two different values under one name mean one of them was not set by this
+ * site, and nothing in the header says which, so neither is used. The same
+ * value twice is one credential and stands.
+ */
+export function soleCookie(
+  header: string | null | undefined,
+  name: string,
+): string | null {
+  const distinct = new Set(cookieValues(header, name));
+  return distinct.size === 1 ? [...distinct][0] : null;
+}
+
+/**
+ * The token the pre-prefix session cookie claims, when it is the only
+ * credential the request holds.
+ *
+ * Any __Host- cookie at all, valid or not, means this browser has already been
+ * through the new sign-in, so the old name beside it is left over or planted
+ * and is not offered. See CREATOR_LEGACY_SESSION_COOKIE for why it is a claim
+ * and not a session.
+ */
+export function legacySessionClaim(
+  header: string | null | undefined,
+): string | null {
+  if (cookieValues(header, CREATOR_SESSION_COOKIE).length > 0) return null;
+  return soleCookie(header, CREATOR_LEGACY_SESSION_COOKIE);
+}
+
+/**
+ * What the entry confirm page is asking about, and where it came from.
+ *
+ * One function, so the page that names an account and the action that acts on
+ * the answer cannot read different cookies. A token parked by an entry link
+ * comes first, because that is what the person just clicked; a parked claim
+ * that is two different values is void, not a cue to ask about something else.
+ * The legacy session is only asked about when there is no parked claim at all.
+ */
+export function entryClaim(
+  header: string | null | undefined,
+): { token: string; resuming: boolean } | null {
+  if (cookieValues(header, CREATOR_PENDING_COOKIE).length > 0) {
+    const parked = soleCookie(header, CREATOR_PENDING_COOKIE);
+    return parked ? { token: parked, resuming: false } : null;
+  }
+  const legacy = legacySessionClaim(header);
+  return legacy ? { token: legacy, resuming: true } : null;
+}
 
 export const pendingCookieOptions = () => ({
   ...cookieBase(),
@@ -112,8 +206,13 @@ export interface CreatorSession {
 }
 
 export async function currentCreator(): Promise<CreatorSession | null> {
-  const jar = await cookies();
-  const token = jar.get(CREATOR_SESSION_COOKIE)?.value?.trim();
+  /*
+   * The __Host- cookie and nothing else, and only when it is the one value
+   * the request carries under that name: see soleCookie. The pre-prefix name
+   * is never a session here, however well it resolves; its holder is sent to
+   * the confirm page instead, by legacySessionHolder.
+   */
+  const token = soleCookie((await headers()).get("cookie"), CREATOR_SESSION_COOKIE);
 
   // Shape checked before the database is touched. A malformed cookie is a
   // malformed cookie, not a query.
@@ -142,6 +241,20 @@ export async function currentCreator(): Promise<CreatorSession | null> {
     .limit(1);
 
   return rows[0] ?? null;
+}
+
+/**
+ * Who the pre-prefix session cookie names, when it is all a request holds.
+ *
+ * For /me, which sends its holder to be asked once instead of telling a
+ * creator with a working link that we do not know who they are. Resolved here
+ * rather than left to the confirm page so a stale cookie falls through to
+ * that screen and not to "expired", whose first button is recovery, and
+ * recovery rotates a link that still works.
+ */
+export async function legacySessionHolder(): Promise<TokenHolder | null> {
+  const token = legacySessionClaim((await headers()).get("cookie"));
+  return token ? creatorByToken(token) : null;
 }
 
 /**

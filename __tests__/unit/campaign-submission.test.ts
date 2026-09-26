@@ -210,3 +210,62 @@ describe("percent-encoded spellings of one post", () => {
     ).toBe("https://x.com/ada/status/1239");
   });
 });
+
+/*
+ * Spellings that decode into a path no parser saw.
+ *
+ * Decoding runs after the URL parser has resolved the path, so
+ * 888%2F..%2F..%2Fstatus/555 used to store as /888/../../status/555. The
+ * reviewer's browser and the ownership check read that as post 555, and
+ * post_identity_of, which takes the first id in the stored text, read 888.
+ * Uniqueness and the already-credited checks were keyed on a post nobody
+ * opened: the creator's own approved post could be paid again under a fresh
+ * identity, or a rival's id held so their own filing was refused. Every row
+ * here was accepted, and each is a different way to make the stored text and
+ * the opened page disagree.
+ */
+describe("spellings whose stored form opens a different post", () => {
+  it.each([
+    ["x", "https://x.com/me/status/888%2F..%2F..%2Fstatus/555", "an encoded slash that builds ../"],
+    ["x", "https://x.com/me/status/888/%252e%252e/%252e%252e/status/555", "double-encoded dots"],
+    ["x", "https://x.com/me/status/888%5C..%5C..%5Cstatus%5C555", "encoded backslashes"],
+    ["x", "https://x.com/me/%23/status/888", "an encoded # that hides the id from the browser"],
+    ["x", "https://x.com/me/%3Fstatus/888", "an encoded ? that hides the id from the browser"],
+    ["x", "https://x.com/me/status/8%0988", "an encoded tab the parser drops"],
+    ["x", "https://x.com/me%2Fstatus%2F555", "an encoded slash that adds segments"],
+    ["x", "https://x.com/me/status/888%2F..%2F..%2Fstatus/555%ZZ", "a malformed escape that stops decoding"],
+    ["instagram", "https://instagram.com/p/RIVAL%2F..%2F..%2Fp%2FOWN", "the same trick on Instagram"],
+    ["tiktok", "https://tiktok.com/@me/video/888%2F..%2F..%2Fvideo/555", "the same trick on TikTok"],
+  ])("refuses %s: %s (%s)", (platform, url) => {
+    const issue = errorFor(platform, url);
+    expect(issue?.message).toMatch(/copy the link again/i);
+    expect(issue?.path[0]).toBe("url");
+  });
+
+  it("still accepts every spelling it collapsed before", () => {
+    for (const url of [
+      "https://x.com/ada/status/12%339",
+      "https://x.com/%61da/status/1239",
+      "https://x.com/ada/status/123%2539",
+      "https://x.com/ada/status/1239/?utm_source=share#top",
+      "https://x.com//ada/status/1239",
+    ]) {
+      expect(ok("x", url), url).toBe(true);
+    }
+  });
+
+  it("stores only a form that reads back as itself", () => {
+    // What the reviewer opens is what the identity was computed from.
+    for (const [platform, url] of [
+      ["x", "https://twitter.com/Ada/status/1234567890?s=20"],
+      ["x", "https://x.com/ada/status/12%339/"],
+      ["instagram", "https://www.instagram.com/reel/Cabcdef/?igsh=MzRlODBiNWFlZA=="],
+      ["tiktok", "https://www.tiktok.com/@ada.b/video/7211?is_from_webapp=1"],
+    ]) {
+      expect(ok(platform, url), url).toBe(true);
+      const stored = canonicalUrl(url);
+      expect(canonicalUrl(stored), url).toBe(stored);
+      expect(new URL(stored).pathname, url).toBe(stored.replace(/^https:\/\/[^/]+/, ""));
+    }
+  });
+});

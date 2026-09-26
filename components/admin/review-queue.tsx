@@ -8,7 +8,6 @@ import {
   ChevronDown,
   Copy,
   ShieldAlert,
-  ShieldCheck,
   X,
 } from "lucide-react";
 import { Pill } from "@/components/shared/panel";
@@ -37,8 +36,6 @@ export interface QueueItem {
   registeredHandle: string | null;
   /** Another live submission claims this same post. Only one can be paid. */
   contested: boolean;
-  /** True when the server could compare the link's author to that handle. */
-  autoChecked: boolean;
   /** Null until an admin has confirmed the account belongs to this creator. */
   /** What the creator must publish from the account, as the proof. */
 }
@@ -48,13 +45,9 @@ export interface QueueItem {
  *
  * Rebuilt around one decision repeated many times. Every row used to be a
  * 300 to 420 pixel block containing a link, a note field and two buttons, all
- * expanded at once, so twenty pending submissions were an unreadable wall and
- * the one signal that changes how long a row takes, whether the link could be
- * checked against the registered handle, was a line of text buried in the
- * middle of it.
+ * expanded at once, so twenty pending submissions were an unreadable wall.
  *
- * Now a row is collapsed to a line, and the attribution state is a coloured
- * left edge that can be scanned straight down the column.
+ * Now a row is collapsed to a line and opens to the decision.
  *
  * Two things here are load-bearing and should not be tidied away.
  *
@@ -207,16 +200,19 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
             <li
               key={item.id}
               /*
-               * The attribution state as a left edge.
+               * Amber on every row, because every row is the same job: a
+               * person has to look at who published the post.
                *
-               * Green means the server could match the link's author to the
-               * registered handle. Amber means it could not and a human has to.
-               * As an edge it can be scanned down the column at a glance, which
-               * a sentence in the middle of a row cannot be.
+               * It was green where an X or TikTok link carried the registered
+               * handle. That handle is typed by whoever submits the link and
+               * nothing ties it to the post: post_identity_of keys the post on
+               * the number at the end alone, so a link reading
+               * x.com/<own handle>/status/<somebody else's post> is filed as
+               * that somebody's post, and it arrived green. Nothing the server
+               * holds can say who published a post, so no row can honestly be
+               * painted as checked.
                */
-              className={`border-l-2 ${
-                item.autoChecked ? "border-l-green-400/70" : "border-l-amber-400"
-              }`}
+              className="border-l-2 border-l-amber-400"
             >
               <button
                 type="button"
@@ -267,24 +263,27 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                   id={`review-${item.id}`}
                   className="scroll-mb-6 border-t border-line bg-card p-4"
                 >
-                  {item.autoChecked ? (
-                    <p className="flex items-center gap-2 text-sm text-green-300">
-                      <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      The link names this account. Still open it and check it
-                      answers the challenge.
-                    </p>
-                  ) : (
-                    <p className="flex items-start gap-2 text-sm text-amber-300">
-                      <ShieldAlert
-                        className="mt-0.5 h-4 w-4 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span>
-                        This link does not name its author. Open it and confirm it
-                        is the account above.
-                      </span>
-                    </p>
-                  )}
+                  {/* One instruction on every platform. X and TikTok rows
+                      used to read "The link names this account", which a
+                      creator could make true of anybody's post by typing
+                      their own name into the link. The comparison that
+                      counts is the registered handle against the author the
+                      platform shows once the post is open. */}
+                  <p className="flex items-start gap-2 text-sm text-amber-300">
+                    <ShieldAlert
+                      className="mt-0.5 h-4 w-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      Open the post. Check the author the platform shows is{" "}
+                      {item.registeredHandle
+                        ? `@${item.registeredHandle}`
+                        : "an account this creator registered"}
+                      , and that the post answers the challenge below. The name
+                      inside an X or TikTok link proves nothing: whoever
+                      submits it types it.
+                    </span>
+                  </p>
 
                   <p className="mt-1 text-sm text-ink-3">{item.challengeTitle}</p>
 
