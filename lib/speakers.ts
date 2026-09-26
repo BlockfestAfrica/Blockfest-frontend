@@ -369,6 +369,15 @@ export const SpeakersList: Speaker[] = [
     bio: "Ashley Rene Olika is Co-Founder & CEO of Owego, a digital neobank for digital nomads focused on stablecoin-native infrastructure and alternative payment rails across emerging markets.\n\nWith a background spanning product strategy, research, business development, engineering and Web3, she brings a multidisciplinary approach to building technology and financial products.\n\nBefore Owego, Ashley served as Lead Engineer at NIGCOMSAT and Head of Product at Superteam Nigeria, where she led product research and strategy across more than 200 initiatives.\n\nHer experience sits at the intersection of technology, product and emerging-market financial infrastructure. At Blockfest Africa 2026, she joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Eniola Osiyoku",
+    title: "Senior Product Manager - Payments, PawaPay",
+    image: "/2026/speakers/eniola.jpg", 
+    expertise: ["Fintech", "Business & Finance"],
+    company: "PawaPay",
+    bio: "Eniola Osiyoku has built her career around digital payments, mobile money, remittances and banking infrastructure, with a focus on creating products that serve African markets.\n\nAt PawaPay, she leads product initiatives within the payments space, helping shape financial products designed for scale across the continent.\n\nHer background gives her a close view of the infrastructure, product decisions and market realities behind how money moves across Africa.\n\nAt Blockfest Africa 2026, she joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
 ];
 
 export const isPastSpeaker = (speaker: Speaker) => speaker.cohort !== "2026";
