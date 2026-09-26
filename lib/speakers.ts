@@ -348,6 +348,27 @@ export const SpeakersList: Speaker[] = [
     bio: "Opeyemi Stephen is QA & Releases Manager for the Solana Developer Platform at the Solana Foundation, where he oversees quality for the tools developers use to build and ship on Solana.\n\nHe is also Co-Founder of Solana Students Africa, co-author of the Solana x402 payments standard, and Co-Founder & CTO of Nigerian fintech Daneizo Trade Africa.\n\nHis experience spans ConsenSys, the Ethereum Foundation's Devcon, Ethereum, Fuel and Solana.\n\nAt Blockfest Africa 2026, Opeyemi joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Olamilekan Majekodunmi",
+    title: "AI, Web3 & Content Strategist",
+    image: "/2026/speakers/greatola.jpg",
+    expertise: ["Marketing & Media", "Web3 & Blockchain"],
+    company: "TheGreatOla",
+    twitter: "https://x.com/thegreatola",
+    website: "https://linktr.ee/thegreatola",
+    bio: "Olamilekan Majekodunmi, known as TheGreatOla, works at the intersection of AI, Web3, marketing and content creation, exploring how technology, products, markets and communities connect.\n\nHis work spans marketing, community growth, AI agents and workflow automation, while documenting his journey of building in an ever-evolving digital landscape.\n\nThrough his work and content, Ola continues to explore how emerging technologies are changing the way we build, market and work.\n\nAt Blockfest Africa 2026, he joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
+  {
+    name: "Ashley Rene Olika",
+    title: "Co-Founder & CEO, Owego",
+    image: "/2026/speakers/ashley.jpg",
+    expertise: ["Fintech", "Business & Finance", "Web3 & Blockchain"],
+    company: "Owego",
+    twitter: "https://x.com/wysrenee",
+    bio: "Ashley Rene Olika is Co-Founder & CEO of Owego, a digital neobank for digital nomads focused on stablecoin-native infrastructure and alternative payment rails across emerging markets.\n\nWith a background spanning product strategy, research, business development, engineering and Web3, she brings a multidisciplinary approach to building technology and financial products.\n\nBefore Owego, Ashley served as Lead Engineer at NIGCOMSAT and Head of Product at Superteam Nigeria, where she led product research and strategy across more than 200 initiatives.\n\nHer experience sits at the intersection of technology, product and emerging-market financial infrastructure. At Blockfest Africa 2026, she joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
 ];
 
 export const isPastSpeaker = (speaker: Speaker) => speaker.cohort !== "2026";
