@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { reveal } from "@/components/shared/reveal";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { control } from "@/components/shared/panel";
@@ -29,6 +30,19 @@ export function HandleFix({
   const [handle, setHandle] = useState("");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+
+  /*
+   * The form opens under the handle, and for the last of up to three it can
+   * land below the fold on a phone. Bring it into view with the cursor in the
+   * username field, so pressing the button visibly does something.
+   */
+  useEffect(() => {
+    if (!open) return;
+    reveal(
+      document.getElementById(`handle-fix-${open}`),
+      document.getElementById(`fix-${open}`),
+    );
+  }, [open]);
 
   const requestFor = (platform: string) =>
     requests.find((r) => r.platform === platform);
@@ -115,7 +129,10 @@ export function HandleFix({
             )}
 
             {isOpen && !pending && (
-              <div className="mt-3 flex flex-col gap-2">
+              <div
+                id={`handle-fix-${h.platform}`}
+                className="mt-3 flex scroll-mb-6 flex-col gap-2"
+              >
                 <p className="max-w-prose text-sm leading-relaxed text-ink-2">
                   Nothing changes until the campaign team reads this and
                   approves it. Entries you submit keep being checked against{" "}

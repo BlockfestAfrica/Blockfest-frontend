@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { reveal } from "@/components/shared/reveal";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buttonClass, control, JobCard } from "@/components/shared/panel";
@@ -52,6 +53,17 @@ export function PointRulesEditor({
 
   const bonus2 = rules.find((r) => r.key === "multi_platform_bonus_2")?.defaultPoints ?? 0;
   const bonus3 = rules.find((r) => r.key === "multi_platform_bonus_3")?.defaultPoints ?? 0;
+
+  /*
+   * The inputs stack on a phone, so Save for a lower rule could land below
+   * the fold with nothing to show the Edit press did anything. Bring the
+   * opened fields into view and start in the first one.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const fields = document.getElementById(`rule-edit-${open}`);
+    reveal(fields, fields?.querySelector<HTMLElement>("input"));
+  }, [open]);
 
   function startEditing(rule: RuleRow) {
     setOpen(rule.id);
@@ -149,7 +161,10 @@ export function PointRulesEditor({
               )}
 
               {open === rule.id && (
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <div
+                  id={`rule-edit-${rule.id}`}
+                  className="mt-3 grid scroll-mb-6 gap-3 sm:grid-cols-3"
+                >
                   {(
                     [
                       ["def", "Points"],
