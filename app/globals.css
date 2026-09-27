@@ -255,6 +255,17 @@
 
 /* Respect the OS setting. Every keyframe and transition on the site is
    decorative, so there is nothing to preserve when motion is turned down. */
+/* The integrity notice above the vote count: two copies of the line side by
+   side, moved left by one copy's width, so the loop never shows a seam. */
+@keyframes vote-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
