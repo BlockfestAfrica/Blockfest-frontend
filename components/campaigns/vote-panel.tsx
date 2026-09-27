@@ -150,8 +150,8 @@ export function VotePanel({
               placeholder="you@example.com"
             />
             <p className="text-sm text-ink-3">
-              One vote per email address. We send a six digit code to confirm
-              it, and a confirmed vote cannot be changed.
+              One vote per email address each round. We send a six digit code
+              to confirm it, and a confirmed vote cannot be changed.
             </p>
           </div>
           {error && (

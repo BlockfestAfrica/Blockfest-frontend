@@ -15,10 +15,12 @@ import { applyMigrations } from "../helpers/migrations";
  * voted sat waiting for a mail and then typed codes that could only fail.
  *
  * The fix is words, not a new branch: the one answer everybody gets now
- * says plainly that an address that already voted gets no new code. These
- * pin both halves. The words are there, and the answer is still byte for
- * byte the same for a new voter, a confirmed voter, a held vote and a
- * barred address, with no mail for any of the last three.
+ * says plainly that an address that already confirmed a vote gets no new
+ * code. These pin both halves. The words are there, and the answer is still
+ * byte for byte the same, body and headers, for a new voter, a confirmed
+ * voter, a held vote and a barred address, with no mail for any of the last
+ * three. And the words must not strand the person they are not for: a voter
+ * whose code expired is told to start again, and doing so mails a code.
  */
 
 const state = vi.hoisted(() => ({
@@ -71,19 +73,40 @@ function request(path: string, body: unknown, ip: string) {
 
 const ip = () => `198.51.100.${++seq % 250}`;
 
+/** Status, raw body and headers: "the same answer" means the same bytes. */
+async function read(response: Response) {
+  const raw = await response.text();
+  return {
+    status: response.status,
+    raw,
+    headers: [...response.headers.entries()].sort(),
+    body: JSON.parse(raw) as { ok: boolean; message: string },
+  };
+}
+
 async function castAs(email: string, nominee = nominees[0]) {
-  const response = await cast(
-    request("/api/campaigns/monica/vote", { roundId, nomineeId: nominee, email }, ip()),
+  return read(
+    await cast(request("/api/campaigns/monica/vote", { roundId, nomineeId: nominee, email }, ip())),
   );
-  return { status: response.status, body: await response.json() };
 }
 
 async function verifyAs(email: string, code: string) {
-  const response = await verify(
-    request("/api/campaigns/monica/vote/verify", { roundId, email, code }, ip()),
+  return read(
+    await verify(request("/api/campaigns/monica/vote/verify", { roundId, email, code }, ip())),
   );
-  return { status: response.status, body: await response.json() };
 }
+
+/** The code in the latest mail; the template puts it in the subject. */
+const lastCode = () => {
+  const mail = state.mails[state.mails.length - 1];
+  return /\b(\d{6})\b/.exec(mail.subject + " " + mail.text)![1];
+};
+
+const sameAnswer = (a: Awaited<ReturnType<typeof read>>, b: Awaited<ReturnType<typeof read>>) => {
+  expect(a.status).toBe(b.status);
+  expect(a.raw).toBe(b.raw);
+  expect(a.headers).toEqual(b.headers);
+};
 
 async function flush() {
   for (const fn of state.afters.splice(0)) await fn();
@@ -153,22 +176,24 @@ beforeEach(async () => {
 });
 
 describe("the answer to a cast", () => {
-  it("tells everybody that an address which already voted gets no new code", async () => {
+  it("tells everybody that an address which already confirmed a vote gets no new code", async () => {
     const first = await castAs("new.voter@gmail.com");
     expect(first.status).toBe(200);
-    expect(first.body.message).toMatch(/a six digit code is on its way/);
     expect(first.body.message).toMatch(
-      /If it has already voted, no new code will come and there is nothing more to do/,
+      /^If this address has not confirmed a vote in this round yet, a six digit code is on its way/,
     );
-    expect(first.body.message).toMatch(/a confirmed vote cannot be changed/);
+    expect(first.body.message).toMatch(
+      /If it has, no new code will come and there is nothing more to do: a confirmed vote cannot be changed\.$/,
+    );
+    // "Voted" would catch the person who pressed Vote but never confirmed.
+    expect(first.body.message).not.toMatch(/\bvoted\b/);
   });
 
   it("is the same answer, with no mail, once the address has confirmed a vote", async () => {
     const fresh = await castAs("ada.obi@gmail.com");
     await flush();
     expect(state.mails).toHaveLength(1);
-    const code = /\b(\d{6})\b/.exec(state.mails[0].subject + " " + state.mails[0].text)![1];
-    expect((await verifyAs("ada.obi@gmail.com", code)).body.ok).toBe(true);
+    expect((await verifyAs("ada.obi@gmail.com", lastCode())).body.ok).toBe(true);
     state.mails = [];
     await flush();
 
@@ -178,12 +203,17 @@ describe("the answer to a cast", () => {
       ["ada.obi@gmail.com", nominees[1]],
       ["AdaObi+again@gmail.com", nominees[1]],
     ] as const) {
-      const again = await castAs(email, nominee);
-      expect(again.status).toBe(fresh.status);
-      expect(again.body).toEqual(fresh.body);
+      sameAnswer(await castAs(email, nominee), fresh);
     }
     expect(state.afters).toHaveLength(0);
     expect(state.mails).toHaveLength(0);
+
+    // What the page now promises: the confirmed vote did not change.
+    const stored = await db.query(
+      `SELECT nominee_id, verified_at IS NOT NULL AS verified, status::text AS status
+         FROM votes WHERE voter_email_canonical = 'adaobi@gmail.com'`,
+    );
+    expect(stored.rows).toEqual([{ nominee_id: nominees[0], verified: true, status: "counted" }]);
   });
 
   it("is the same answer for a held vote and a barred address, so neither is told which it is", async () => {
@@ -203,9 +233,7 @@ describe("the answer to a cast", () => {
     );
 
     for (const email of ["held@corp.test", "barred@corp.test"]) {
-      const again = await castAs(email, nominees[1]);
-      expect(again.status).toBe(fresh.status);
-      expect(again.body).toEqual(fresh.body);
+      sameAnswer(await castAs(email, nominees[1]), fresh);
     }
     expect(state.afters).toHaveLength(0);
     expect(state.mails).toHaveLength(0);
@@ -216,8 +244,10 @@ describe("a code typed after that", () => {
   it("fails with words that tell a person who already voted to stop, and the same words for a wrong code", async () => {
     await castAs("ben.eze@gmail.com");
     await flush();
-    const code = /\b(\d{6})\b/.exec(state.mails[0].subject + " " + state.mails[0].text)![1];
-    await verifyAs("ben.eze@gmail.com", code);
+    const code = lastCode();
+    // The precondition: without it every answer below is a plain wrong code
+    // and this would pass having proved nothing.
+    expect((await verifyAs("ben.eze@gmail.com", code)).body.ok).toBe(true);
 
     // Already voted: the old code, then any code.
     const reused = await verifyAs("ben.eze@gmail.com", code);
@@ -229,11 +259,28 @@ describe("a code typed after that", () => {
 
     for (const answer of [reused, guessed, typo, stranger]) {
       expect(answer.status).toBe(400);
-      expect(answer.body).toEqual(reused.body);
+      sameAnswer(answer, reused);
     }
-    expect(reused.body.message).toMatch(/did not match or has expired/);
-    expect(reused.body.message).toMatch(
-      /If this address has already voted in this round, no new code will come and there is nothing more to do\./,
+    expect(reused.body.message).toBe(
+      "That code did not match or has expired. If this address has already confirmed a vote in this round, no new code will come and there is nothing more to do. Otherwise, choose Start again for a fresh code.",
     );
+  });
+
+  it("does not strand a voter whose code expired: starting again mails a fresh one", async () => {
+    await castAs("dayo.ade@gmail.com");
+    await flush();
+    const stale = lastCode();
+    await db.exec(
+      `UPDATE votes SET code_expires_at = now() - interval '1 minute' WHERE voter_email_canonical = 'dayoade@gmail.com'`,
+    );
+    const expired = await verifyAs("dayo.ade@gmail.com", stale);
+    expect(expired.status).toBe(400);
+    expect(expired.body.message).toMatch(/Otherwise, choose Start again for a fresh code\.$/);
+
+    state.mails = [];
+    await castAs("dayo.ade@gmail.com");
+    await flush();
+    expect(state.mails).toHaveLength(1);
+    expect((await verifyAs("dayo.ade@gmail.com", lastCode())).body.ok).toBe(true);
   });
 });

@@ -45,9 +45,17 @@ const schema = z.object({
  * do" rather than "your vote stands", because the same answer reaches a
  * held vote and a barred address, and a promise that the vote stands would
  * be untrue for both.
+ *
+ * "Confirmed", not "voted". The panel's first button already says Vote, so
+ * a person who pressed it, let the code expire and pressed Start again has
+ * "voted" in the page's own words; told that an address which voted gets no
+ * new code, they could leave before the fresh one lands, and the vote they
+ * came to cast would never count. Confirmed is the word on the button that
+ * finishes a vote, and it is true of every address the silent branch
+ * answers: verified, held after verifying, or barred after verifying.
  */
 const CAST_MESSAGE =
-  "If this address has not voted in this round yet, a six digit code is on its way to its inbox. If it has already voted, no new code will come and there is nothing more to do: it is one vote per email address, and a confirmed vote cannot be changed.";
+  "If this address has not confirmed a vote in this round yet, a six digit code is on its way to its inbox. If it has, no new code will come and there is nothing more to do: a confirmed vote cannot be changed.";
 
 /**
  * A floor under how fast a cast can answer, so the merged branches cost the
