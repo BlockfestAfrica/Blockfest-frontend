@@ -9,11 +9,27 @@ import { isSpeakerFormOpen } from "@/lib/speaking";
 import { gotham } from "@/lib/fonts";
 import { FeaturedSpeakersGrid } from "@/components/speakers/2026-speakers-grid";
 
+/*
+ * What search results and link previews say, which has to follow the page.
+ * It said "announced in the coming weeks" and "Coming Soon" after the first
+ * names were already on it, so every shared link undersold the lineup it
+ * opened onto. Read from the same data the page renders.
+ */
+const announced = SpeakersList.some(is2026Speaker);
+const shareTitle = announced
+  ? "Blockfest Africa Speakers - The 2026 Lineup"
+  : "Blockfest Africa Speakers - 2026 Lineup Coming Soon";
+const shareDescription = announced
+  ? "The founders, builders, regulators and voices taking the Blockfest Africa stage in Lagos this October."
+  : "The Lagos '26 lineup lands soon. Meet the speakers who have shaped the conversation at Blockfest Africa.";
+
 export const metadata: Metadata = {
   title: "Speakers",
-  description: isSpeakerFormOpen
-    ? "The Lagos '26 speaker lineup is announced in the coming weeks, and the call for speakers is open until then. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa."
-    : "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa.",
+  description: announced
+    ? `The Lagos '26 lineup: founders, builders, regulators and voices taking the Blockfest Africa stage this October.${isSpeakerFormOpen ? " The call for speakers is still open." : ""}`
+    : isSpeakerFormOpen
+      ? "The Lagos '26 speaker lineup is announced in the coming weeks, and the call for speakers is open until then. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa."
+      : "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa.",
   keywords: [
     "blockfest africa speakers",
     "blockchain experts africa",
@@ -33,9 +49,8 @@ export const metadata: Metadata = {
     "artificial intelligence leaders",
   ],
   openGraph: {
-    title: "Blockfest Africa Speakers - 2026 Lineup Coming Soon",
-    description:
-      "The Lagos '26 lineup lands soon. Meet the speakers who have shaped the conversation at Blockfest Africa.",
+    title: shareTitle,
+    description: shareDescription,
     images: [
       {
         url: "/images/og-speakers.jpg",
@@ -46,9 +61,8 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    title: "Blockfest Africa Speakers - 2026 Lineup Coming Soon",
-    description:
-      "The Lagos '26 lineup lands soon. Meet the speakers who have shaped the conversation at Blockfest Africa.",
+    title: shareTitle,
+    description: shareDescription,
     images: ["/images/twitter-speakers.jpg"],
   },
   alternates: {
@@ -107,8 +121,8 @@ const SpeakersPage = () => {
         <div className="border-t border-gray-200 bg-paper">
           <div className="container-page section-y flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-base text-gray-600">
-              Curious who&apos;s spoken before? Browse previous editions of past
-              speakers.
+              Curious who&apos;s spoken before? Browse every speaker from
+              previous editions.
             </p>
             <Link
               href="/past-speakers"

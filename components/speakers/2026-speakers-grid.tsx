@@ -11,6 +11,23 @@ function generateSpeakerSlug(name: string) {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
 
+/**
+ * The title without its company when the company line right under it already
+ * says it: "Co-Founder & CEO, Owego" over "Owego" read the name twice.
+ */
+function titleWithoutCompany(title: string, company?: string) {
+  if (!company) return title;
+  const suffix = `, ${company}`;
+  return title.toLowerCase().endsWith(suffix.toLowerCase())
+    ? title.slice(0, -suffix.length)
+    : title;
+}
+
+/** A chip reached by Tab is scrolled fully into the phone's chip row. */
+function revealChip(event: React.FocusEvent<HTMLButtonElement>) {
+  event.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
 export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
   const [selectedExpertise, setSelectedExpertise] = useState<string | null>(
     null
@@ -41,16 +58,27 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
         </div>
 
         {expertiseOptions.length > 1 && (
+          /* One row that scrolls sideways on a phone, where wrapping put
+             five rows of chips above the first speaker; wraps from sm up.
+             - Runs to the screen edge and fades out there, so the row reads
+               as continuing at every width. A chip cut by the edge only
+               happened at some widths; at 320px the edge fell between two.
+             - A little room above and below, so a focus ring is not clipped
+               by the scroller.
+             - Scrollbar hidden on touch screens only: a mouse in a narrow
+               window has nothing else to drag.
+             - scroll-px keeps a chip scrolled into view clear of the edges. */
           <div
-            className="mb-10 flex flex-wrap gap-2 lg:mb-12"
+            className="-mx-4 -mt-1 mb-10 flex scroll-px-4 gap-2 overflow-x-auto py-1 pl-4 pr-12 [mask-image:linear-gradient(to_right,black_85%,transparent)] pointer-coarse:[scrollbar-width:none] sm:mx-0 sm:mt-0 sm:flex-wrap sm:overflow-visible sm:p-0 sm:[mask-image:none] lg:mb-12 pointer-coarse:[&::-webkit-scrollbar]:hidden"
             role="group"
             aria-label="Filter speakers by expertise"
           >
             <button
               type="button"
               onClick={() => setSelectedExpertise(null)}
+              onFocus={revealChip}
               aria-pressed={selectedExpertise === null}
-              className={`min-h-11 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${selectedExpertise === null
+              className={`min-h-11 shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${selectedExpertise === null
                 ? "border-brand-blue bg-brand-blue text-white"
                 : "border-gray-200 bg-white text-gray-600 hover:border-brand-blue hover:text-gray-900"
                 }`}
@@ -62,8 +90,9 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                 type="button"
                 key={expertise}
                 onClick={() => setSelectedExpertise(expertise)}
+                onFocus={revealChip}
                 aria-pressed={selectedExpertise === expertise}
-                className={`min-h-11 whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${selectedExpertise === expertise
+                className={`min-h-11 shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${selectedExpertise === expertise
                   ? "border-brand-blue bg-brand-blue text-white"
                   : "border-gray-200 bg-white text-gray-600 hover:border-brand-blue hover:text-gray-900"
                   }`}
@@ -81,9 +110,12 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
             const bioTeaser = speaker.bio?.split("\n\n")[0];
 
             return (
+              /* The ring is on the card: the profile link covering it is
+                 clipped by the card's rounded overflow, so its own outline
+                 never showed. */
               <div
                 key={speaker.name}
-                className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow duration-300 hover:shadow-lg"
+                className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow duration-300 hover:shadow-lg has-[>a:focus-visible]:ring-2 has-[>a:focus-visible]:ring-brand-blue has-[>a:focus-visible]:ring-offset-2"
               >
                 <Link
                   href={`/speakers/${slug}`}
@@ -91,13 +123,20 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                   aria-label={`View ${speaker.name}'s profile`}
                 />
 
-                <div className="relative aspect-4/4 w-full overflow-hidden bg-gray-100">
+                {/* A little shorter than square on a phone, where six
+                    full-width squares made a very long page. */}
+                <div className="relative aspect-4/3 w-full overflow-hidden bg-gray-100 sm:aspect-square">
                   <Image
                     src={speaker.image}
                     alt={`${speaker.name} - ${speaker.title}`}
                     fill
-                    className={`object-cover transition-transform duration-500 group-hover:scale-105 ${speaker.imagePosition || "object-top"}`}
+                    // The phone frame is 4:3, shorter than the square above it,
+                    // so it is framed a fifth of the way down rather than at the
+                    // very top: object-top cut a tall portrait off at the mouth.
+                    className={`object-cover transition-transform duration-500 group-hover:scale-105 ${speaker.imagePosition || "object-[50%_20%] sm:object-top"}`}
                     sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
+                    // The first portrait is the page's largest paint.
+                    priority={speaker === speakers[0]}
                   />
                   {speaker.expertise?.[0] && (
                     <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-900 backdrop-blur-sm">
@@ -110,7 +149,9 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                   <h2 className="text-lg font-bold text-gray-900">
                     {speaker.name}
                   </h2>
-                  <p className="mt-1 text-sm text-gray-600">{speaker.title}</p>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {titleWithoutCompany(speaker.title, speaker.company)}
+                  </p>
 
                   {speaker.company && (
                     <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-brand-blue">
@@ -134,7 +175,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                           href={speaker.twitter}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
                           aria-label={`Follow ${speaker.name} on Twitter`}
                         >
                           <FaXTwitter className="h-4 w-4" aria-hidden="true" />
@@ -146,7 +187,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                           href={speaker.linkedin}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
                           aria-label={`Connect with ${speaker.name} on LinkedIn`}
                         >
                           <FaLinkedin className="h-4 w-4" aria-hidden="true" />
@@ -158,7 +199,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                           href={speaker.youtube}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
                           aria-label={`Watch ${speaker.name} on YouTube`}
                         >
                           <FaYoutube className="h-4 w-4" aria-hidden="true" />
@@ -170,7 +211,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                           href={speaker.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
                           aria-label={`Visit ${speaker.name}'s website`}
                         >
                           <Globe className="h-4 w-4" aria-hidden="true" />
