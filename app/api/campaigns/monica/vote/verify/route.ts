@@ -17,6 +17,7 @@ import { sendEmailQuietly } from "@/lib/email/client";
 import { sameOrigin } from "@/lib/admin/request";
 import { voteReceiptEmail } from "@/lib/email/templates";
 import { closingAt } from "@/lib/format";
+import { voteDomainKey } from "@/lib/vote-domain";
 
 /** postgres over HTTP needs Node; see lib/db/client. */
 export const runtime = "nodejs";
@@ -105,6 +106,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    /*
+     * The last argument is the key the domain cap judges this vote under:
+     * the registrable domain, so a.oemails.com and b.oemails.com share
+     * oemails.com's allowance instead of each getting a fresh ten. The
+     * public suffix list lives here in Node, not in SQL, which is why the
+     * route computes it; the engine checks it is this host or a parent of
+     * it and falls back to the host otherwise (0069).
+     */
     await getDb().execute(sql`
       SELECT * FROM verify_vote(
         ${MONICA_SLUG},
@@ -112,7 +121,8 @@ export async function POST(request: NextRequest) {
         ${emailCanonical},
         ${hashCode(emailCanonical, input.code)},
         ${DOMAIN_CAP}::integer,
-        ${isAllowlisted(emailCanonical)}::boolean
+        ${isAllowlisted(emailCanonical)}::boolean,
+        ${voteDomainKey(emailCanonical)}::text
       )
     `);
   } catch (error) {

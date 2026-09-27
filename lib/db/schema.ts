@@ -932,6 +932,12 @@ export const votes = pgTable(
      * tally, which only ever reads the countable_votes view.
      */
     heldAt: timestamp("held_at", { withTimezone: true }),
+    /**
+     * Why it was held: 'cap', 'blocked' or 'forwarder' (0069). Kept after a
+     * release as the history of why the vote once waited, the way
+     * removedReason is kept.
+     */
+    heldReason: text("held_reason"),
 
     /** How a removal was meant: fraud bars the email for the round. */
     removedMode: text("removed_mode"),
@@ -955,6 +961,10 @@ export const votes = pgTable(
     check(
       "vote_removal_explained",
       sql`${t.status} = 'counted' OR ${t.removedReason} IS NOT NULL`,
+    ),
+    check(
+      "vote_held_reason_known",
+      sql`${t.heldReason} IN ('cap', 'blocked', 'forwarder')`,
     ),
   ],
 );

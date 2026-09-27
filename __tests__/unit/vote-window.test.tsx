@@ -235,6 +235,42 @@ describe("removing a farm", () => {
     });
   });
 
+  it("names the hosts when a farm spread itself over subdomains", () => {
+    // The cap and Remove all key on the registrable domain (0069), so the
+    // row is one domain; the reviewer still sees where the votes came from.
+    const spread = {
+      ...tally,
+      domains: [
+        {
+          domain: "oemails.com",
+          votes: 11,
+          members,
+          hosts: [
+            { host: "oemails.com", votes: 6 },
+            { host: "a.oemails.com", votes: 5 },
+          ],
+        },
+      ],
+    };
+    const { unmount } = render(
+      <VoteRoundPanel weekNo={1} round={round} candidates={CANDIDATES} tally={spread} frozen />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /oemails\.com/ }));
+    expect(document.body.textContent).toContain(
+      "Subdomains count as one domain: oemails.com 6 · a.oemails.com 5",
+    );
+    unmount();
+
+    // One host, the domain itself: nothing to explain.
+    const plain = {
+      ...tally,
+      domains: [{ domain: "oemails.com", votes: 11, members, hosts: [{ host: "oemails.com", votes: 11 }] }],
+    };
+    render(<VoteRoundPanel weekNo={1} round={round} candidates={CANDIDATES} tally={plain} frozen />);
+    fireEvent.click(screen.getByRole("button", { name: /oemails\.com/ }));
+    expect(document.body.textContent).not.toContain("Subdomains count as one domain");
+  });
+
   it("asks for the reason before it offers to remove anything", () => {
     render(<VoteRoundPanel weekNo={1} round={round} candidates={CANDIDATES} tally={tally} frozen />);
     fireEvent.click(screen.getByRole("button", { name: /oemails\.com/ }));

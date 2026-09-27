@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { CAMPAIGN_PLATFORMS, MONICA_SLUG, type CampaignPlatform } from "@/lib/campaigns";
 import { ALLOWLISTED_DOMAINS } from "@/lib/campaign-vote";
+import { voteDomainKey } from "@/lib/vote-domain";
 import type { AdminIdentity } from "@/lib/admin/session";
 
 /**
@@ -108,10 +109,23 @@ export interface ClusterMember {
   held: boolean;
 }
 
+/** One host inside a domain cluster, and how many of its votes are there. */
+export interface DomainHost {
+  host: string;
+  votes: number;
+}
+
 export interface DomainCluster {
+  /** The registrable domain the cap judges these votes under. */
   domain: string;
   votes: number;
   members: ClusterMember[];
+  /**
+   * The hosts the votes came from, most votes first. One entry, equal to the
+   * domain, for an ordinary cluster; several when a farm spread itself over
+   * subdomains, which is exactly what the reviewer needs to see.
+   */
+  hosts: DomainHost[];
 }
 
 export interface IpCluster {
@@ -301,6 +315,52 @@ export function withoutAllowlistedDomains<T extends { domain: string }>(
 }
 
 /**
+ * Per-host clusters folded into one cluster per registrable domain.
+ *
+ * The query groups by the full host because SQL has no public suffix list.
+ * Left like that, a farm spread over a.oemails.com, b.oemails.com and
+ * c.oemails.com showed as three small clusters (paged under "Show more" once
+ * there were enough of them), while the cap judged them as one domain with
+ * one allowance (0069). Folding them here keys the console on the same
+ * domain as the cap and "Remove all", so the number on the row is the number
+ * the removal takes. Pure, and exported, so it can be tested without a
+ * database.
+ */
+export function groupByVoteDomain(
+  clusters: { domain: string; votes: number; members: ClusterMember[] }[],
+): DomainCluster[] {
+  const grouped = new Map<string, DomainCluster>();
+  for (const cluster of clusters) {
+    const key = voteDomainKey(cluster.domain);
+    const into = grouped.get(key) ?? {
+      domain: key,
+      votes: 0,
+      members: [],
+      hosts: [],
+    };
+    into.votes += cluster.votes;
+    into.members.push(...cluster.members);
+    const host = into.hosts.find((h) => h.host === cluster.domain);
+    if (host) host.votes += cluster.votes;
+    else into.hosts.push({ host: cluster.domain, votes: cluster.votes });
+    grouped.set(key, into);
+  }
+
+  const byName = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+  return [...grouped.values()]
+    .map((cluster) => ({
+      ...cluster,
+      members: [...cluster.members].sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+      ),
+      hosts: [...cluster.hosts].sort(
+        (a, b) => b.votes - a.votes || byName(a.host, b.host),
+      ),
+    }))
+    .sort((a, b) => b.votes - a.votes || byName(a.domain, b.domain));
+}
+
+/**
  * The round as the reviewer needs to see it: the tally, and the signals the
  * sweep is made of.
  *
@@ -425,14 +485,16 @@ export async function roundTally(
       };
     }),
     domains: withoutAllowlistedDomains(
-      (domains.rows ?? []).map((row) => {
-        const r = row as Record<string, unknown>;
-        return {
-          domain: String(r.domain ?? ""),
-          votes: Number(r.votes ?? 0),
-          members: readMembers(r.members),
-        };
-      }),
+      groupByVoteDomain(
+        (domains.rows ?? []).map((row) => {
+          const r = row as Record<string, unknown>;
+          return {
+            domain: String(r.domain ?? ""),
+            votes: Number(r.votes ?? 0),
+            members: readMembers(r.members),
+          };
+        }),
+      ),
       ALLOWLISTED_DOMAINS,
     ),
     ips: (ips.rows ?? []).map((row) => {

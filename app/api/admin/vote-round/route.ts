@@ -12,6 +12,7 @@ import { sendEmailQuietly } from "@/lib/email/client";
 import { shortlistEmail, votingPage } from "@/lib/email/templates";
 import { findVotesByEmail } from "@/lib/admin/vote-round";
 import { isAllowlisted } from "@/lib/campaign-vote";
+import { registrableDomain } from "@/lib/vote-domain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -84,6 +85,11 @@ const removeSchema = z.object({
  * judgement. Each vote still goes through remove_vote, so each is barred
  * and audited exactly as a single removal is, and verify_vote keeps the
  * domain capped afterwards (0068).
+ *
+ * The domain is the registrable one, and its subdomains go with it: the
+ * console clusters a.oemails.com and b.oemails.com under oemails.com, the
+ * cap judges them together (0069), and a sweep that left the subdomains
+ * behind would leave the farm counting.
  */
 const removeDomainSchema = z.object({
   action: z.literal("remove_domain"),
@@ -299,15 +305,31 @@ export async function POST(request: NextRequest) {
 
     if (action.action === "remove_domain") {
       /*
+       * Never a public suffix. The removal takes the domain and everything
+       * under it, so edu.ng would be every Nigerian university at once and
+       * com.ng every company. tldts answers null for those, and for an IP
+       * address, and each is refused here rather than guessed at.
+       */
+      const domain = registrableDomain(action.domain);
+      if (!domain) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: `${action.domain} is a suffix many domains share, not one domain. Remove its votes one at a time.`,
+          },
+          { status: 400 },
+        );
+      }
+      /*
        * Never a consumer provider. The console leaves them out of the
        * domain signals because thousands of real voters share them, and a
        * bulk removal of gmail.com would take every one of those votes.
        */
-      if (isAllowlisted(`x@${action.domain}`)) {
+      if (isAllowlisted(`x@${domain}`)) {
         return NextResponse.json(
           {
             ok: false,
-            message: `${action.domain} is a big consumer provider shared by real voters. Remove its votes one at a time.`,
+            message: `${domain} is a big consumer provider shared by real voters. Remove its votes one at a time.`,
           },
           { status: 400 },
         );
@@ -326,7 +348,9 @@ export async function POST(request: NextRequest) {
              AND r.status <> 'published'
              AND v.status = 'counted'
              AND v.verified_at IS NOT NULL
-             AND split_part(v.voter_email_canonical, '@', 2) = ${action.domain}
+             AND vote_domain_matches(
+                   split_part(v.voter_email_canonical, '@', 2), ${domain}::text
+                 )
         ),
         gone AS MATERIALIZED (
           SELECT remove_vote(${adminId}::uuid, t.id, ${action.reason}::text, 'fraud')

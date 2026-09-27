@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/pglite";
 import { NextRequest } from "next/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as schema from "@/lib/db/schema";
+import { voteDomainKey } from "@/lib/vote-domain";
 import { applyMigrations } from "../helpers/migrations";
 
 /*
@@ -61,6 +62,18 @@ async function vote(email: string, allowlisted = false) {
   );
 }
 
+/** The same, judged under the registrable domain as the verify route does (0069). */
+async function keyedVote(email: string) {
+  await db.query(
+    `SELECT * FROM cast_vote('monica-money-story', $1::uuid, $2::uuid, $3, 'code', 'ip', 'ua')`,
+    [roundId, nomineeId, email],
+  );
+  return one<{ held: boolean }>(
+    `SELECT held FROM verify_vote('monica-money-story', $1::uuid, $2, 'code', 10, false, $3::text)`,
+    [roundId, email, voteDomainKey(email)],
+  );
+}
+
 const farm = (n: number, domain = "farm.test") =>
   Array.from({ length: n }, (_, i) => `v${++seq}x${i}@${domain}`);
 
@@ -84,6 +97,19 @@ const counted = async (domain: string) =>
     (
       await one<{ n: number }>(
         `SELECT count(*)::int AS n FROM countable_votes WHERE round_id = $1 AND split_part(voter_email_canonical, '@', 2) = $2`,
+        [roundId, domain],
+      )
+    ).n,
+  );
+
+/** Counted votes from a domain and everything under it. */
+const countedUnder = async (domain: string) =>
+  Number(
+    (
+      await one<{ n: number }>(
+        `SELECT count(*)::int AS n FROM countable_votes
+          WHERE round_id = $1
+            AND vote_domain_matches(split_part(voter_email_canonical, '@', 2), $2)`,
         [roundId, domain],
       )
     ).n,
@@ -236,6 +262,60 @@ describe("removing a whole domain as fraud", () => {
   it("needs a reason and a real domain", async () => {
     expect((await removeDomain("farm.test", "   ")).status).toBe(400);
     expect((await removeDomain("not a domain")).status).toBe(400);
+  });
+
+  it("takes the subdomains with it, and nothing that only ends in the same letters", async () => {
+    // The console clusters these under farm.test and the cap judges them
+    // as one (0069), so the sweep has to take all of them.
+    for (const email of farm(3)) await vote(email);
+    for (const email of farm(2, "a.farm.test")) await vote(email);
+    for (const email of farm(1, "b.c.farm.test")) await vote(email);
+    for (const email of farm(2, "xfarm.test")) await vote(email);
+    for (const email of farm(2, "other.test")) await vote(email);
+
+    expect(await removeDomain("farm.test")).toEqual({ status: 200, body: { ok: true, removed: 6 } });
+    expect(await countedUnder("farm.test")).toBe(0);
+    expect(await counted("xfarm.test")).toBe(2);
+    expect(await counted("other.test")).toBe(2);
+  });
+
+  it("reads a subdomain as the domain it belongs to", async () => {
+    for (const email of farm(2)) await vote(email);
+    for (const email of farm(2, "a.farm.test")) await vote(email);
+    expect((await removeDomain("a.farm.test")).body.removed).toBe(4);
+    expect(await countedUnder("farm.test")).toBe(0);
+  });
+
+  it("keeps every subdomain capped after the domain is swept", async () => {
+    for (const email of [...farm(6), ...farm(5, "a.farm.test")]) await keyedVote(email);
+    expect((await removeDomain("farm.test")).body.removed).toBe(11);
+    // A new subdomain is no longer a new allowance.
+    for (const email of farm(2, "fresh.farm.test")) {
+      expect((await keyedVote(email)).held).toBe(true);
+    }
+    expect(await countedUnder("farm.test")).toBe(0);
+  });
+
+  it("refuses a public suffix, which would be every domain under it", async () => {
+    for (const email of farm(2, "unilag.edu.ng")) await vote(email);
+    for (const email of farm(2, "acme.com.ng")) await vote(email);
+    for (const suffix of ["edu.ng", "com.ng"]) {
+      const answer = await removeDomain(suffix);
+      expect(answer.status).toBe(400);
+      expect(answer.body.message).toBe(
+        `${suffix} is a suffix many domains share, not one domain. Remove its votes one at a time.`,
+      );
+    }
+    expect(await counted("unilag.edu.ng")).toBe(2);
+    expect(await counted("acme.com.ng")).toBe(2);
+  });
+
+  it("refuses a consumer provider named by one of its subdomains", async () => {
+    for (const email of farm(2, "gmail.com")) await vote(email, true);
+    const answer = await removeDomain("mail.gmail.com");
+    expect(answer.status).toBe(400);
+    expect(answer.body.message).toMatch(/^gmail\.com is a big consumer provider/);
+    expect(await counted("gmail.com")).toBe(2);
   });
 
   it("leaves a published round alone", async () => {

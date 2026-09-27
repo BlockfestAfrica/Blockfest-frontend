@@ -11,8 +11,10 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  groupByVoteDomain,
   readMembers,
   withoutAllowlistedDomains,
+  type ClusterMember,
 } from "@/lib/admin/vote-round";
 
 const CLUSTERS = [
@@ -101,5 +103,96 @@ describe("a cluster carries the votes behind it", () => {
     // None of these were held, which is precisely why the old panel could
     // not reach them.
     expect(members.every((m) => !m.held)).toBe(true);
+  });
+});
+
+describe("domain clusters group by registrable domain", () => {
+  /*
+   * A farm spread over a.oemails.com, b.oemails.com and oemails.com used to
+   * show as three small clusters, while the cap (0069) and "Remove all"
+   * judge them as one domain. The row's number has to be the number the
+   * removal takes, and the reviewer has to see which hosts made it.
+   */
+  const member = (email: string, at: string): ClusterMember => ({
+    voteId: `id-${email}`,
+    email,
+    createdAt: new Date(at),
+    held: false,
+  });
+  const cluster = (domain: string, ...members: ClusterMember[]) => ({
+    domain,
+    votes: members.length,
+    members,
+  });
+
+  it("folds subdomains into one cluster, with every vote and every host", () => {
+    const grouped = groupByVoteDomain([
+      cluster(
+        "a.oemails.com",
+        member("p@a.oemails.com", "2026-09-27T19:05:00Z"),
+        member("q@a.oemails.com", "2026-09-27T19:01:00Z"),
+      ),
+      cluster("acme.ng", member("ada@acme.ng", "2026-09-27T10:00:00Z")),
+      cluster(
+        "oemails.com",
+        member("r@oemails.com", "2026-09-27T19:03:00Z"),
+        member("s@oemails.com", "2026-09-27T19:04:00Z"),
+        member("t@oemails.com", "2026-09-27T19:00:00Z"),
+      ),
+      cluster("b.oemails.com", member("u@b.oemails.com", "2026-09-27T19:02:00Z")),
+    ]);
+
+    expect(grouped.map((c) => [c.domain, c.votes])).toEqual([
+      ["oemails.com", 6],
+      ["acme.ng", 1],
+    ]);
+    const [farm] = grouped;
+    expect(farm.hosts).toEqual([
+      { host: "oemails.com", votes: 3 },
+      { host: "a.oemails.com", votes: 2 },
+      { host: "b.oemails.com", votes: 1 },
+    ]);
+    // Every vote id is still reachable, in the order they arrived.
+    expect(farm.members.map((m) => m.email)).toEqual([
+      "t@oemails.com",
+      "q@a.oemails.com",
+      "u@b.oemails.com",
+      "r@oemails.com",
+      "s@oemails.com",
+      "p@a.oemails.com",
+    ]);
+  });
+
+  it("keys a campus on the campus and leaves an ordinary domain as it was", () => {
+    const grouped = groupByVoteDomain([
+      cluster("live.unilag.edu.ng", member("a@live.unilag.edu.ng", "2026-09-27T10:00:00Z")),
+      cluster("unilag.edu.ng", member("b@unilag.edu.ng", "2026-09-27T11:00:00Z")),
+      cluster("cu.edu.ng", member("c@cu.edu.ng", "2026-09-27T12:00:00Z")),
+    ]);
+    expect(grouped.map((c) => c.domain)).toEqual(["unilag.edu.ng", "cu.edu.ng"]);
+    expect(grouped[1].hosts).toEqual([{ host: "cu.edu.ng", votes: 1 }]);
+  });
+
+  it("sorts by size, then by name, like the query it replaces", () => {
+    const grouped = groupByVoteDomain([
+      cluster("zeta.ng", member("a@zeta.ng", "2026-09-27T10:00:00Z")),
+      cluster("alpha.ng", member("b@alpha.ng", "2026-09-27T10:00:00Z")),
+      cluster(
+        "mid.ng",
+        member("c@mid.ng", "2026-09-27T10:00:00Z"),
+        member("d@mid.ng", "2026-09-27T10:00:00Z"),
+      ),
+    ]);
+    expect(grouped.map((c) => c.domain)).toEqual(["mid.ng", "alpha.ng", "zeta.ng"]);
+  });
+
+  it("still lets the allowlist drop a consumer provider after grouping", () => {
+    const grouped = groupByVoteDomain([
+      cluster("gmail.com", member("a@gmail.com", "2026-09-27T10:00:00Z")),
+      cluster("farm.test", member("b@farm.test", "2026-09-27T10:00:00Z")),
+    ]);
+    expect(withoutAllowlistedDomains(grouped, ["gmail.com"]).map((c) => c.domain)).toEqual([
+      "farm.test",
+    ]);
   });
 });

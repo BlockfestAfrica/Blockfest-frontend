@@ -57,7 +57,17 @@ export interface ClusterVote {
 
 export interface TallyView {
   nominees: { nomineeId: string; name: string; votes: number }[];
-  domains: { domain: string; votes: number; members: ClusterVote[] }[];
+  /**
+   * One row per registrable domain, the key the cap and "Remove all" use.
+   * hosts lists where the votes actually came from, so a farm spread over
+   * subdomains is visible as one.
+   */
+  domains: {
+    domain: string;
+    votes: number;
+    members: ClusterVote[];
+    hosts?: { host: string; votes: number }[];
+  }[];
   ips: { ipHash: string; votes: number; members: ClusterVote[] }[];
   held: { voteId: string; email: string; domain: string; createdAt: string }[];
   unverified: number;
@@ -645,6 +655,18 @@ export function VoteRoundPanel({
                     <>
                       {/* One judgement for a farm, not one per vote. */}
                       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line bg-card-2/40 px-3 py-3">
+                        {/* Subdomains share the domain's allowance of ten
+                            and go with it on "Remove all", so the row says
+                            which hosts it is made of. */}
+                        {d.hosts &&
+                          (d.hosts.length > 1 || d.hosts[0]?.host !== d.domain) && (
+                            <p className="basis-full text-sm text-ink-4 [overflow-wrap:anywhere]">
+                              Subdomains count as one domain:{" "}
+                              {d.hosts
+                                .map((h) => `${h.host} ${count(h.votes)}`)
+                                .join(" · ")}
+                            </p>
+                          )}
                         <p className="max-w-prose text-sm text-ink-2 [overflow-wrap:anywhere]">
                           All from {d.domain} look like one person?
                         </p>

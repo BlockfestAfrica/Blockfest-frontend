@@ -242,6 +242,7 @@ export default async function WinnersPage({
                   domain: d.domain,
                   votes: d.votes,
                   members: d.members.map(serialiseMember),
+                  hosts: d.hosts,
                 })),
                 ips: tally.ips.map((ip) => ({
                   ipHash: ip.ipHash,
