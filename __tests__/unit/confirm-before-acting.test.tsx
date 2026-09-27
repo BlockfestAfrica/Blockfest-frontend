@@ -488,9 +488,8 @@ describe("the screens pinned by source", () => {
     expect(src).not.toMatch(/onClick=\{openRound\}/);
     expect(src).toMatch(/<Confirm\s+key="open-vote"\s+label="Open the vote"[\s\S]*?onConfirm=\{openRound\}/);
     // Both ends, each with its own day: a vote can run past midnight.
-    expect(src).toMatch(
-      /from \$\{longDay\(opensDay\)\} \$\{opensTime\} to \$\{longDay\(closesDay\)\} \$\{closesTime\} Lagos time/,
-    );
+    expect(src).toMatch(/\$\{longDay\(opensDay\)\} \$\{opensTime\}/);
+    expect(src).toMatch(/to \$\{longDay\(closesDay\)\} \$\{closesTime\} Lagos time/);
   });
 
   it("keys every step's Confirm, so an open question never carries into the next step", () => {

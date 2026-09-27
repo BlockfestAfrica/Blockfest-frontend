@@ -19,11 +19,18 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ ok: true }) }));
+/** Saturday 26 September, 11:00 Lagos: the Sunday vote is still ahead. */
+const SATURDAY = new Date("2026-09-26T10:00:00Z");
 beforeEach(() => {
   fetchMock.mockClear();
   vi.stubGlobal("fetch", fetchMock);
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(SATURDAY);
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
 
 const CANDIDATES = [
   { entryId: "e1", name: "Ada Obi", points: 300, approvedPlatforms: 2 },
@@ -31,8 +38,8 @@ const CANDIDATES = [
   { entryId: "e3", name: "Cy Ade", points: 200, approvedPlatforms: 1 },
 ];
 
-function renderForm() {
-  render(<VoteRoundPanel weekNo={1} round={null} candidates={CANDIDATES} tally={null} frozen />);
+function renderForm(frozen = true) {
+  render(<VoteRoundPanel weekNo={1} round={null} candidates={CANDIDATES} tally={null} frozen={frozen} />);
   // Each label carries the points too, so match the name within it.
   for (const c of CANDIDATES) fireEvent.click(screen.getByLabelText(new RegExp(c.name)));
 }
@@ -98,6 +105,91 @@ describe("the vote window", () => {
       opensAt: "2026-09-27T08:00:00+01:00",
       closesAt: "2026-09-29T08:00:00+01:00",
     });
+  });
+});
+
+describe("safeguards", () => {
+  it("will not open a vote that runs into the next stage until the week is recorded", () => {
+    renderForm(false);
+    set("opens-day", "2026-09-27");
+    set("closes-day", "2026-09-29");
+    expect(screen.getByText(/Record the week 1 standings first\. This vote closes after stage 2 starts/)).toBeTruthy();
+    expect(openButton()).toHaveProperty("disabled", true);
+    // Inside the week, the freeze is not needed to open.
+    set("closes-day", "2026-09-27");
+    set("closes-time", "20:00");
+    expect(openButton()).toHaveProperty("disabled", false);
+  });
+
+  it("counts the length from now when the open time has already passed", () => {
+    vi.setSystemTime(new Date("2026-09-27T18:00:00Z")); // Sunday 19:00 Lagos
+    renderForm();
+    set("opens-day", "2026-09-27");
+    set("opens-time", "08:00");
+    set("closes-day", "2026-09-29");
+    set("closes-time", "08:00");
+    expect(
+      screen.getByText(
+        "The open time has passed, so it opens as soon as you confirm and runs about 37 hours, to Tuesday 29 September 08:00.",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(openButton());
+    expect(screen.getByRole("alertdialog").textContent).toContain(
+      "from now to Tuesday 29 September 08:00 Lagos time (about 37 hours)?",
+    );
+  });
+
+  it("refuses a close that has already passed, and says one minute properly", () => {
+    renderForm();
+    set("opens-day", "2026-09-25");
+    set("closes-day", "2026-09-25");
+    expect(screen.getByText("The close time has already passed.")).toBeTruthy();
+    set("opens-day", "2026-09-27");
+    set("opens-time", "08:00");
+    set("closes-day", "2026-09-27");
+    set("closes-time", "08:01");
+    expect(screen.getByText(/^Runs 1 minute,/)).toBeTruthy();
+  });
+
+  it("offers no vote to open for a week that is over", () => {
+    render(<VoteRoundPanel weekNo={1} round={null} candidates={CANDIDATES} tally={null} frozen isPast />);
+    expect(screen.queryByRole("button", { name: "Open the vote" })).toBeNull();
+    expect(screen.getByText(/Week 1.s vote was never opened, and the week is over/)).toBeTruthy();
+  });
+
+  it("stops offering to tell the creators once voting has closed", () => {
+    const round = (closesAt: string) => ({
+      roundId: "r1",
+      status: "open" as const,
+      opensAt: "2026-09-26T07:00:00Z",
+      closesAt,
+      reviewedAt: null,
+    });
+    const { unmount } = render(
+      <VoteRoundPanel weekNo={1} round={round("2026-09-26T09:00:00Z")} candidates={CANDIDATES} tally={null} frozen />,
+    );
+    expect(screen.queryByRole("button", { name: "Tell the creators" })).toBeNull();
+    unmount();
+    render(<VoteRoundPanel weekNo={1} round={round("2026-09-29T07:00:00Z")} candidates={CANDIDATES} tally={null} frozen />);
+    expect(screen.getByRole("button", { name: "Tell the creators" })).toBeTruthy();
+    // The route refuses it too, for a page left open past the close.
+    const route = readFileSync(join(process.cwd(), "app/api/admin/announce-vote/route.ts"), "utf8");
+    expect(route).toMatch(/closes_at\)\.getTime\(\) <= Date\.now\(\)/);
+  });
+});
+
+describe("the voter's receipt", () => {
+  it("names the round's close instead of a day", async () => {
+    const { voteReceiptEmail } = await import("@/lib/email/templates");
+    const mail = voteReceiptEmail({
+      to: "v@example.test",
+      nomineeName: "Ada Obi",
+      weekNo: 1,
+      closesAtLagos: "Tuesday, 29 September, 8:00 am",
+    });
+    expect(mail.text).toContain("Voting closes Tuesday, 29 September, 8:00 am, Lagos time");
+    expect(mail.text).not.toMatch(/Sunday evening/);
+    expect(mail.html).not.toMatch(/Sunday evening/);
   });
 });
 

@@ -851,8 +851,14 @@ export function voteReceiptEmail(params: {
   to: string;
   nomineeName: string;
   weekNo: number;
+  /** When the round closes, Lagos time, as closingAt formats it. */
+  closesAtLagos?: string;
 }): Email {
   const line = `Your Community Favourite vote for ${params.nomineeName} is in for week ${params.weekNo}.`;
+  // The round's own close, not a day: a vote can now run past Sunday.
+  const result = params.closesAtLagos
+    ? `Voting closes ${params.closesAtLagos}, Lagos time, and the result goes up on the winners page after that`
+    : `The result goes up on the winners page once voting closes`;
 
   return {
     to: params.to,
@@ -861,7 +867,7 @@ export function voteReceiptEmail(params: {
     text: [
       line,
       ``,
-      `The result is announced on Sunday evening, Lagos time, on the winners page:`,
+      `${result}:`,
       votingPage(),
       ``,
       `Thank you for taking a minute to vote.`,
@@ -871,9 +877,7 @@ export function voteReceiptEmail(params: {
       heading: "Your vote is in",
       body: [
         p(escape(line)),
-        p(
-          "The result is announced on Sunday evening, Lagos time, on the winners page.",
-        ),
+        p(escape(`${result}.`)),
         quiet("Thank you for taking a minute to vote."),
       ].join(""),
       action: { label: "See the shortlist", href: votingPage() },

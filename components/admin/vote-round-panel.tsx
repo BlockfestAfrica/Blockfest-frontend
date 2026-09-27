@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -17,7 +17,7 @@ import { ActionDialog } from "@/components/shared/action-dialog";
 import { Confirm } from "@/components/shared/confirm";
 import { count, dateTime } from "@/lib/format";
 import { openableHref } from "@/lib/admin/openable-href";
-import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
+import { monicaStages, platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
@@ -93,8 +93,9 @@ function lengthOf(from: Date, to: Date): string {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
   const h = hours === 1 ? "1 hour" : `${hours} hours`;
-  if (hours === 0) return `${rest} minutes`;
-  return rest ? `${h} ${rest} minutes` : h;
+  const m = rest === 1 ? "1 minute" : `${rest} minutes`;
+  if (hours === 0) return m;
+  return rest ? `${h} ${m}` : h;
 }
 
 /** "Sunday 27 September", read from the YYYY-MM-DD the date field holds. */
@@ -127,6 +128,7 @@ export function VoteRoundPanel({
   candidates,
   tally,
   frozen,
+  isPast = false,
 }: {
   weekNo: number;
   round: RoundView | null;
@@ -134,6 +136,8 @@ export function VoteRoundPanel({
   tally: TallyView | null;
   /** Whether this week's standings have been recorded yet. */
   frozen: boolean;
+  /** The week is over: the next stage has started. */
+  isPast?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -147,6 +151,17 @@ export function VoteRoundPanel({
   const [opensTime, setOpensTime] = useState("08:00");
   const [closesDay, setClosesDay] = useState(() => addDays(defaultVoteDay(), 2));
   const [closesTime, setClosesTime] = useState("08:00");
+  /*
+   * The clock, read after mount (so the server and the first client render
+   * agree) and every minute after. An open time already past means the vote
+   * opens the moment it is confirmed, so its length runs from now.
+   */
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const tick = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(tick);
+  }, []);
   const [fewReason, setFewReason] = useState("");
   /** The vote whose removal is being confirmed, and whose email it names. */
   const [removing, setRemoving] = useState<{ voteId: string; email: string } | null>(null);
@@ -176,13 +191,34 @@ export function VoteRoundPanel({
   const opensAt = lagosInstant(opensDay, opensTime);
   const closesAt = lagosInstant(closesDay, closesTime);
   // The engine refuses a close at or before the open (window_inverted); said
-  // here, under the fields, before the round trip.
-  const windowOk = opensAt !== null && closesAt !== null && closesAt > opensAt;
+  // here, under the fields, before the round trip. A close already past would
+  // open a vote nobody can cast in.
+  const opensInPast = opensAt !== null && now !== null && opensAt.getTime() < now;
+  const closesInPast = closesAt !== null && now !== null && closesAt.getTime() <= now;
+  const windowOk =
+    opensAt !== null && closesAt !== null && closesAt > opensAt && !closesInPast;
+  const length =
+    windowOk && opensAt && closesAt
+      ? lengthOf(opensInPast && now !== null ? new Date(now) : opensAt, closesAt)
+      : "";
+  /*
+   * A vote that runs past the start of the next stage needs this week's
+   * standings recorded before it opens. Closing a round requires them
+   * (P0804), and the snapshot route only records the current stage, so an
+   * unrecorded week's vote opened on Sunday could never be closed on Tuesday.
+   */
+  const nextStage = monicaStages.find((stage) => stage.number === weekNo + 1);
+  const crossesStage =
+    closesAt !== null &&
+    nextStage !== undefined &&
+    closesAt.getTime() > new Date(nextStage.startsAt).getTime();
+  const needsFreeze = crossesStage && !frozen;
   const openReady =
     selected.length > 0 &&
     selected.length <= 5 &&
     (!needsOverride || fewReason.trim().length > 0) &&
-    windowOk;
+    windowOk &&
+    !needsFreeze;
 
   async function act(body: Record<string, unknown>, success: string) {
     setBusy(true);
@@ -222,7 +258,9 @@ export function VoteRoundPanel({
   async function openRound() {
     if (!openReady) {
       toast.error(
-        !windowOk && selected.length > 0
+        needsFreeze && selected.length > 0
+          ? `Record the week ${weekNo} standings before opening a vote that runs into the next stage.`
+          : !windowOk && selected.length > 0
           ? "The vote has to close after it opens."
           : needsOverride
             ? "Fewer than three nominees needs the reason recorded."
@@ -740,7 +778,7 @@ export function VoteRoundPanel({
       status={status}
       hint={hint}
       foot={
-        !round ? (
+        !round && isPast ? undefined : !round ? (
           <>
             {!frozen && (
               <Panel tone="warn" className="w-full">
@@ -748,9 +786,10 @@ export function VoteRoundPanel({
                   Record the standings first
                 </p>
                 <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
-                  The vote can open without the freeze, but announcing the
-                  winner cannot happen against an unrecorded week. Recording
-                  now saves a locked Sunday evening.
+                  Announcing the winner needs this week&apos;s standings, and a
+                  vote that runs past the start of the next stage cannot even
+                  be closed without them. Record them now, while the week is
+                  current.
                 </p>
               </Panel>
             )}
@@ -769,8 +808,8 @@ export function VoteRoundPanel({
                 selected.map(
                   (id) => candidates.find((c) => c.entryId === id)?.name ?? "an entry",
                 ),
-              )}, from ${longDay(opensDay)} ${opensTime} to ${longDay(closesDay)} ${closesTime} Lagos time${
-                opensAt && closesAt && windowOk ? ` (${lengthOf(opensAt, closesAt)})` : ""
+              )}, from ${opensInPast ? "now" : `${longDay(opensDay)} ${opensTime}`} to ${longDay(closesDay)} ${closesTime} Lagos time${
+                length ? ` (${opensInPast ? "about " : ""}${length})` : ""
               }?${
                 needsOverride ? " Fewer than three nominees, with your reason recorded." : ""
               }`}
@@ -806,7 +845,8 @@ export function VoteRoundPanel({
                 only once: the route refuses a second press and the audit
                 row is what remembers. */}
             {!announced &&
-              new Date(round.opensAt).getTime() <= Date.now() && (
+              new Date(round.opensAt).getTime() <= Date.now() &&
+              new Date(round.closesAt).getTime() > Date.now() && (
                 <Confirm
                   key="tell-vote"
                   label="Tell the creators"
@@ -843,7 +883,12 @@ export function VoteRoundPanel({
           Open the public voting page
         </a>
       </p>
-      {!round ? (
+      {!round && isPast ? (
+        <p className="max-w-prose text-sm leading-relaxed text-ink-2">
+          Week {weekNo}&apos;s vote was never opened, and the week is over. A
+          vote is opened while its week is current.
+        </p>
+      ) : !round ? (
         <div className={SPACING.section}>
           {candidates.length === 0 ? (
             <p className="max-w-prose text-sm leading-relaxed text-ink-2">
@@ -1014,12 +1059,18 @@ export function VoteRoundPanel({
               the wrong day shows up as "24 hours" or an error, not as a
               surprise when the vote shuts. */}
           <p
-            className={`text-sm ${windowOk ? "text-ink-3" : "text-red-300"}`}
+            className={`text-sm ${windowOk && !needsFreeze ? "text-ink-3" : "text-red-300"}`}
             aria-live="polite"
           >
-            {windowOk && opensAt && closesAt
-              ? `Runs ${lengthOf(opensAt, closesAt)}, ${longDay(opensDay)} ${opensTime} to ${longDay(closesDay)} ${closesTime}.`
-              : "The vote has to close after it opens."}
+            {!windowOk
+              ? closesInPast
+                ? "The close time has already passed."
+                : "The vote has to close after it opens."
+              : needsFreeze
+                ? `Record the week ${weekNo} standings first. This vote closes after stage ${weekNo + 1} starts, and closing it needs week ${weekNo}'s standings, which can only be recorded until then.`
+                : opensInPast
+                  ? `The open time has passed, so it opens as soon as you confirm and runs about ${length}, to ${longDay(closesDay)} ${closesTime}.`
+                  : `Runs ${length}, ${longDay(opensDay)} ${opensTime} to ${longDay(closesDay)} ${closesTime}.`}
           </p>
         </div>
       ) : (

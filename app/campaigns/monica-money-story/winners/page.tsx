@@ -90,7 +90,7 @@ export default async function WinnersPage() {
             <SectionHeading
               label="Every Sunday"
               title="Weekly winners"
-              hint="Creator of the Week, chosen by Blockfest Africa, and Community Favourite, decided by the public vote below. Both land here each Sunday."
+              hint="Creator of the Week, chosen by Blockfest Africa, lands here each Sunday. Community Favourite, decided by the public vote below, lands here once that vote closes."
             />
           {weeks.length === 0 ? (
             <p className="mt-6 max-w-prose text-base leading-relaxed text-ink-3">
@@ -191,8 +191,8 @@ export default async function WinnersPage() {
           {shortlist.length === 0 ? (
             <p className="mt-6 max-w-prose text-base leading-relaxed text-ink-3">
               No vote is open right now. Each week&apos;s shortlist appears
-              here on Sunday morning and voting runs until Sunday evening,
-              Lagos time. Follow{" "}
+              here on Sunday, and voting stays open until the time shown with
+              it, Lagos time. Follow{" "}
               <a
                 href="https://x.com/blockfestafrica"
                 target="_blank"

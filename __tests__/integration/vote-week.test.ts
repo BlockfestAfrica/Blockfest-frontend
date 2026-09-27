@@ -22,6 +22,7 @@ vi.mock("@/lib/db/client", async () => {
 });
 
 const { unfinishedVoteWeek, candidateEntries } = await import("@/lib/admin/vote-round");
+const { currentShortlist } = await import("@/lib/winners");
 
 const ADMIN = { id: "a", email: "a@example.test", role: "owner" } as unknown as AdminIdentity;
 let db: PGlite;
@@ -124,5 +125,50 @@ describe("candidateEntries", () => {
       { platform: "x", handle: "AdaObi", url: "https://x.com/AdaObi/status/901" },
       { platform: "instagram", handle: null, url: "https://instagram.com/p/ADA1" },
     ]);
+  });
+});
+
+describe("the public ballot", () => {
+  it("shows only the most recently opened round when two are open", async () => {
+    await db.exec(`DELETE FROM vote_rounds`);
+    const one = async <T,>(q: string, params: unknown[] = []) => (await db.query<T>(q, params)).rows[0];
+    const entryFor = async (name: string, weekNo: number) => {
+      const person = await one<{ id: string }>(
+        `INSERT INTO creators (full_name, email, email_canonical, phone, phone_e164, content_niche)
+         VALUES ($1, $2, $2, $3, $4, 'finance') RETURNING id`,
+        [name, `${name.toLowerCase()}@e.com`, `09${weekNo}`, `+23481000000${weekNo}9`],
+      );
+      const enrolment = await one<{ id: string }>(
+        `INSERT INTO campaign_creators (campaign_id, creator_id, referral_code) VALUES ($1, $2, $3) RETURNING id`,
+        [campaignId, person.id, `R${name}`],
+      );
+      const challenge = await one<{ id: string }>(
+        `SELECT id FROM challenges WHERE campaign_id = $1 AND week_no = $2`,
+        [campaignId, weekNo],
+      );
+      return (
+        await one<{ id: string }>(
+          `INSERT INTO challenge_entries (campaign_creator_id, challenge_id, base_points_snapshot, bonus_2_snapshot, bonus_3_snapshot)
+           VALUES ($1, $2, 100, 50, 100) RETURNING id`,
+          [enrolment.id, challenge.id],
+        )
+      ).id;
+    };
+    const openRound = async (weekNo: number, opensAt: string, entry: string) => {
+      const r = await one<{ id: string }>(
+        `INSERT INTO vote_rounds (campaign_id, week_no, status, opens_at, closes_at)
+         VALUES ($1, $2, 'open', $3::timestamptz, '2026-10-30T08:00:00+01:00') RETURNING id`,
+        [campaignId, weekNo, opensAt],
+      );
+      await db.query(
+        `INSERT INTO vote_round_nominees (round_id, entry_id, display_order) VALUES ($1, $2, 1)`,
+        [r.id, entry],
+      );
+    };
+    await openRound(1, "2026-09-27T08:00:00+01:00", await entryFor("Older", 1));
+    await openRound(2, "2026-10-04T08:00:00+01:00", await entryFor("Newer", 2));
+
+    const names = (await currentShortlist()).map((n) => n.name);
+    expect(names).toEqual(["Newer"]);
   });
 });

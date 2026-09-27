@@ -164,6 +164,15 @@ export async function currentShortlist(): Promise<ShortlistEntry[]> {
       JOIN creators c            ON c.id = cc.creator_id
       WHERE cm.slug = ${MONICA_SLUG}
         AND r.status = 'open'
+        -- One round only: the most recently opened. A vote now runs past
+        -- the start of the next stage, and if last week's round was still
+        -- open when this week's opened, both ballots were merged into one
+        -- list whose first row decided the page's state for all of them.
+        AND r.id = (
+              SELECT r2.id FROM vote_rounds r2
+               WHERE r2.campaign_id = r.campaign_id AND r2.status = 'open'
+               ORDER BY r2.opens_at DESC
+               LIMIT 1)
       ORDER BY n.display_order, c.full_name
     `);
 

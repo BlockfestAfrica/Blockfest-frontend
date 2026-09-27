@@ -508,7 +508,7 @@ export const monicaFaqs: CampaignFaq[] = [
   {
     question: "How do I vote for Community Favourite?",
     answer:
-      "Open the winners page on Sunday, pick your favourite from the shortlist and enter your email address. A six digit code arrives in your inbox; type it in and your vote is cast. Votes close on Sunday evening.",
+      "Open the winners page when voting opens on Sunday, pick your favourite from the shortlist and enter your email address. A six digit code arrives in your inbox; type it in and your vote is cast. Voting closes at the time shown with the shortlist.",
   },
   {
     question: "How is Creator of the Week chosen?",

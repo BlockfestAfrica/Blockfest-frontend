@@ -204,6 +204,7 @@ export default async function WinnersPage({
       <VoteRoundPanel
         weekNo={weekNo}
         frozen={frozen}
+        isPast={weekNo < current}
         round={
           round
             ? {

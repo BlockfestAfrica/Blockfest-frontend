@@ -16,6 +16,7 @@ import { logError } from "@/lib/log";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { sameOrigin } from "@/lib/admin/request";
 import { voteReceiptEmail } from "@/lib/email/templates";
+import { closingAt } from "@/lib/format";
 
 /** postgres over HTTP needs Node; see lib/db/client. */
 export const runtime = "nodejs";
@@ -148,8 +149,9 @@ export async function POST(request: NextRequest) {
    */
   try {
     const meta = await getDb().execute(sql`
-      SELECT c.full_name AS display_name, ch.week_no
+      SELECT c.full_name AS display_name, ch.week_no, r.closes_at
         FROM votes v
+        JOIN vote_rounds r         ON r.id = v.round_id
         JOIN vote_round_nominees n ON n.id = v.nominee_id
         JOIN challenge_entries ce  ON ce.id = n.entry_id
         JOIN challenges ch         ON ch.id = ce.challenge_id
@@ -170,6 +172,7 @@ export async function POST(request: NextRequest) {
     const row = (meta.rows?.[0] ?? null) as {
       display_name?: string;
       week_no?: number;
+      closes_at?: string | Date;
     } | null;
     if (row?.display_name) {
       await sendEmailQuietly(
@@ -177,6 +180,7 @@ export async function POST(request: NextRequest) {
           to: input.email,
           nomineeName: row.display_name,
           weekNo: Number(row.week_no ?? 0),
+          closesAtLagos: row.closes_at ? closingAt(row.closes_at) : undefined,
         }),
         "vote receipt",
       );
