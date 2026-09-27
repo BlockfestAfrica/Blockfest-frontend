@@ -3,7 +3,6 @@ import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { EmblaOptionsType, EmblaCarouselType } from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
 import Image from "next/image";
 import Link from "next/link";
 import { NextButton, PrevButton, usePrevNextButtons } from "./carouselbuttons";
@@ -19,7 +18,6 @@ type PropType = {
   options?: EmblaOptionsType;
   className?: string;
   showDots?: boolean;
-  autoplayDelay?: number;
 };
 
 // Below this many slides, Embla's loop mode doesn't have enough real slides
@@ -35,7 +33,6 @@ const Speakers: React.FC<PropType> = (props) => {
     options,
     className = "",
     showDots = true,
-    autoplayDelay = 4000,
   } = props;
 
   const rootRef = useRef<HTMLElement>(null);
@@ -46,92 +43,26 @@ const Speakers: React.FC<PropType> = (props) => {
     [options, canLoop]
   );
 
-  /**
-   * Respect prefers-reduced-motion. Read once on mount rather than in render so
-   * server and first client paint agree; autoplay is a client-only concern.
+  /*
+   * Moves only when someone moves it: arrows, dots, swipe or the arrow keys.
+   *
+   * It used to advance itself every four seconds, which obliged a Pause button
+   * under it (auto-moving content needs a way to stop it, WCAG 2.2.2). The
+   * button sat alone below the dots and read as clutter, and a slideshow that
+   * turns while someone is reading a name is the thing being paused anyway.
+   * With no autoplay there is nothing to pause, so neither is needed.
    */
-  const [reducedMotion, setReducedMotion] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions, [
-    Autoplay({
-      delay: autoplayDelay,
-      stopOnInteraction: false,
-      // Stop advancing while someone is reading or tabbing through a card.
-      stopOnMouseEnter: true,
-      stopOnFocusIn: true,
-    }),
-  ]);
+  const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
-  const [isPlaying, setIsPlaying] = useState(true);
-
-  /**
-   * Auto-advancing content needs a way to stop it (WCAG 2.2.2).
-   *
-   * Intent is tracked separately from the plugin's own state. The plugin also
-   * stops itself on hover and focus, so a toggle that read `isPlaying()` would
-   * invert: pressing Pause while focus sat on a nav button found autoplay
-   * already stopped and started it instead.
-   */
-  const userPausedRef = useRef(false);
-
-  useEffect(() => {
-    const autoplay = emblaApi?.plugins()?.autoplay;
-    if (!autoplay || !reducedMotion) return;
-    userPausedRef.current = true;
-    autoplay.stop();
-    setIsPlaying(false);
-  }, [emblaApi, reducedMotion]);
-
-  // Hover-out and focus-out ask the plugin to resume. Honour the user's pause.
-  useEffect(() => {
-    const autoplay = emblaApi?.plugins()?.autoplay;
-    if (!emblaApi || !autoplay) return;
-    const enforce = () => {
-      if (userPausedRef.current) autoplay.stop();
-    };
-    emblaApi.on("autoplay:play", enforce);
-    return () => {
-      emblaApi.off("autoplay:play", enforce);
-    };
-  }, [emblaApi]);
-
-  const toggleAutoplay = useCallback(() => {
-    const autoplay = emblaApi?.plugins()?.autoplay;
-    if (!autoplay) return;
-    const pausing = !userPausedRef.current;
-    userPausedRef.current = pausing;
-    setIsPlaying(!pausing);
-    if (pausing) autoplay.stop();
-    else autoplay.play();
-  }, [emblaApi]);
-
-  const onNavButtonClick = useCallback((emblaApi: EmblaCarouselType) => {
-    const autoplay = emblaApi?.plugins()?.autoplay;
-    if (!autoplay) return;
-
-    const resetOrStop =
-      autoplay.options.stopOnInteraction === false
-        ? autoplay.reset
-        : autoplay.stop;
-
-    resetOrStop();
-  }, []);
 
   const {
     prevBtnDisabled,
     nextBtnDisabled,
     onPrevButtonClick,
     onNextButtonClick,
-  } = usePrevNextButtons(emblaApi, onNavButtonClick);
+  } = usePrevNextButtons(emblaApi);
 
   const scrollTo = useCallback(
     (index: number) => emblaApi?.scrollTo(index),
@@ -310,11 +241,12 @@ const Speakers: React.FC<PropType> = (props) => {
         </div>
       )}
 
-      {/* Below-card controls. Dots don't fit on a phone with 12 slides, so
-          phones get a counter instead and are otherwise left with no sense of
+      {/* Below-card controls, below lg only: wider screens have the arrows
+          beside the card. Dots don't fit on a phone with 12 slides, so phones
+          get a counter instead and are otherwise left with no sense of
           position at all. */}
-      <div className="mt-4 flex w-full items-center justify-center gap-4">
-        <div className="flex items-center gap-4 lg:hidden">
+      <div className="mt-4 flex w-full items-center justify-center lg:hidden">
+        <div className="flex items-center gap-4">
           <PrevButton
             onClick={onPrevButtonClick}
             disabled={prevBtnDisabled}
@@ -332,18 +264,6 @@ const Speakers: React.FC<PropType> = (props) => {
             className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-line-2 bg-card-3 text-white transition-colors duration-300 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
-
-        {!reducedMotion && (
-          <button
-            type="button"
-            onClick={toggleAutoplay}
-            aria-pressed={!isPlaying}
-            className="flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-line-2 px-4 text-xs font-semibold text-ink-3 transition-colors duration-300 hover:bg-card-3 hover:text-white"
-          >
-            {isPlaying ? "Pause" : "Play"}
-            <span className="sr-only"> automatic slideshow</span>
-          </button>
-        )}
       </div>
     </section>
   );
