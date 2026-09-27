@@ -119,9 +119,17 @@ export async function POST(request: NextRequest) {
     // One name for a wrong code, an expired code, and an email with nothing
     // pending. The engine merges them on purpose and this route keeps the
     // merge: separating them would say which addresses have votes waiting.
+    // The stop case comes before the retry, for the person who already
+    // confirmed, tried again and is typing codes that cannot work: an
+    // instruction to cast again followed by a line cancelling it read as a
+    // contradiction, and sent them round the loop this was written to end.
+    // Everybody sees both sentences, so neither says which case this is.
+    // "Start again" is the panel's button for a fresh code; it also meets a
+    // closed round honestly, where "cast your vote again" promised a vote
+    // the engine would refuse during the fifteen minutes codes outlive it.
     if (isPgError(error, "P0817", "code_invalid")) {
       return fail(
-        "That code did not match or has expired. Cast your vote again for a fresh one.",
+        "That code did not match or has expired. If this address has already confirmed a vote in this round, no new code will come and there is nothing more to do. Otherwise, choose Start again for a fresh code.",
         400,
       );
     }
