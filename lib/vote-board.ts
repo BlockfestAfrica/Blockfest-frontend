@@ -38,6 +38,8 @@ export interface VoteBoard {
   closed: boolean;
   /** The Community Favourite has been published; the count is final. */
   final: boolean;
+  /** Votes in this round have been removed as fraud. */
+  flagged: boolean;
   /** When the database was actually read, not when the page asked. */
   asOf: string;
   nominees: VoteBoardRow[];
@@ -148,6 +150,7 @@ export function readBoard(value: unknown): VoteBoard | null {
     closesAt: board.closesAt,
     closed: board.closed === true,
     final: board.final === true,
+    flagged: board.flagged === true,
     asOf: board.asOf,
     nominees,
   };

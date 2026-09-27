@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CircleCheck, Lock } from "lucide-react";
 import { monicaRoutes } from "@/lib/campaigns";
+import { IntegrityTicker } from "@/components/campaigns/integrity-ticker";
 import { clockTime, count } from "@/lib/format";
 import {
   boardState,
@@ -124,9 +125,13 @@ export function LiveVoteCount() {
   const { rows, total, levelAtTop } = rankBoard(board.nominees);
 
   return (
+    <>
+    {/* On top of the count, once votes in this round were removed as fraud:
+        where the numbers dropped is where the reason belongs. */}
+    {board.flagged && <IntegrityTicker />}
     <section
       aria-label="Community Favourite vote count"
-      className="mt-8 rounded-xl border border-line bg-card p-5 sm:p-6"
+      className={`${board.flagged ? "mt-3" : "mt-8"} rounded-xl border border-line bg-card p-5 sm:p-6`}
     >
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <h3 className="flex items-center gap-2.5 text-base font-semibold text-white">
@@ -232,5 +237,6 @@ export function LiveVoteCount() {
         </p>
       </div>
     </section>
+    </>
   );
 }

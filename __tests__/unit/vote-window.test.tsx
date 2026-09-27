@@ -184,6 +184,66 @@ describe("safeguards", () => {
   });
 });
 
+describe("removing a farm", () => {
+  /*
+   * A catch-all domain arrived as eleven random addresses in fourteen
+   * minutes. Removing it was eleven dialogs; now one judgement removes the
+   * whole domain, with one reason, through the same confirm step.
+   */
+  const members = Array.from({ length: 11 }, (_, i) => ({
+    voteId: `v${i}`,
+    email: `abc${i}@oemails.com`,
+    createdAt: "2026-09-27T19:13:00Z",
+    held: i === 10,
+  }));
+  const tally = {
+    nominees: [{ nomineeId: "n1", name: "Ada Obi", votes: 10 }],
+    domains: [{ domain: "oemails.com", votes: 11, members }],
+    ips: [],
+    held: [],
+    unverified: 0,
+  };
+  const round = {
+    roundId: "r1",
+    status: "open" as const,
+    opensAt: "2026-09-26T07:00:00Z",
+    closesAt: "2026-09-29T07:00:00Z",
+    reviewedAt: null,
+  };
+
+  it("removes every vote from the domain as fraud, with one reason, after a confirm", async () => {
+    fetchMock.mockImplementationOnce(async () => ({ ok: true, json: async () => ({ ok: true, removed: 11 }) }));
+    render(<VoteRoundPanel weekNo={1} round={round} candidates={CANDIDATES} tally={tally} frozen />);
+    fireEvent.click(screen.getByRole("button", { name: /oemails\.com/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove all 11 as fraud…" }));
+    fireEvent.change(screen.getByLabelText("Why they go"), {
+      target: { value: "Catch-all domain, random addresses" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Remove all 11" }));
+    expect(document.body.textContent).toContain("Remove all 11 votes from oemails.com as fraud?");
+    // Eleven removed still fill the allowance of ten, so nothing more counts.
+    expect(document.body.textContent).toContain("so at most 0 more from it can count before later ones are held");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Yes, remove them all" }));
+    });
+    const [, init] = fetchMock.mock.calls.at(-1) as unknown as [string, { body: string }];
+    expect(JSON.parse(init.body)).toEqual({
+      action: "remove_domain",
+      roundId: "r1",
+      domain: "oemails.com",
+      reason: "Catch-all domain, random addresses",
+    });
+  });
+
+  it("asks for the reason before it offers to remove anything", () => {
+    render(<VoteRoundPanel weekNo={1} round={round} candidates={CANDIDATES} tally={tally} frozen />);
+    fireEvent.click(screen.getByRole("button", { name: /oemails\.com/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove all 11 as fraud…" }));
+    expect(screen.queryByRole("button", { name: "Remove all 11" })).toBeNull();
+    expect(screen.getByText("Give the reason first.")).toBeTruthy();
+  });
+});
+
 describe("telling the creators", () => {
   /*
    * Owner report: the email went out, and after a reload the button was

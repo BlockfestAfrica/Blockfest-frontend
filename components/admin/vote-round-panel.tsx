@@ -310,6 +310,8 @@ export function VoteRoundPanel({
   const [fewReason, setFewReason] = useState("");
   /** The vote whose removal is being confirmed, and whose email it names. */
   const [removing, setRemoving] = useState<{ voteId: string; email: string } | null>(null);
+  /** A whole domain whose removal as fraud is being confirmed. */
+  const [removingDomain, setRemovingDomain] = useState<{ domain: string; votes: number } | null>(null);
   const [openCluster, setOpenCluster] = useState<string | null>(null);
   const [lookupEmail, setLookupEmail] = useState("");
   const [lookupResult, setLookupResult] = useState<ClusterVote[] | null>(null);
@@ -380,6 +382,7 @@ export function VoteRoundPanel({
       }
       toast.success(success);
       setRemoving(null);
+      setRemovingDomain(null);
       setRemoveReason("");
       setRemoveMode("fraud");
       await router.refresh();
@@ -638,7 +641,29 @@ export function VoteRoundPanel({
                       {count(d.votes)}
                     </dd>
                   </button>
-                  {open && renderMembers(d.members)}
+                  {open && (
+                    <>
+                      {/* One judgement for a farm, not one per vote. */}
+                      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line bg-card-2/40 px-3 py-3">
+                        <p className="max-w-prose text-sm text-ink-2 [overflow-wrap:anywhere]">
+                          All from {d.domain} look like one person?
+                        </p>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => {
+                            setRemovingDomain({ domain: d.domain, votes: d.votes });
+                            setRemoveReason("");
+                          }}
+                          aria-haspopup="dialog"
+                          className={buttonClass("danger")}
+                        >
+                          Remove all {count(d.votes)} as fraud…
+                        </button>
+                      </div>
+                      {renderMembers(d.members)}
+                    </>
+                  )}
                 </div>
               );
             })}
@@ -1291,6 +1316,76 @@ export function VoteRoundPanel({
         busy={busy}
       >
         {removing && renderRemoveForm(removing.voteId, removing.email)}
+      </ActionDialog>
+      <ActionDialog
+        open={removingDomain !== null}
+        onOpenChange={(next) => {
+          if (!next) setRemovingDomain(null);
+        }}
+        title={
+          removingDomain
+            ? `Remove every verified vote from ${removingDomain.domain}`
+            : "Remove a domain's votes"
+        }
+        tone="danger"
+        busy={busy}
+      >
+        {removingDomain && round && (
+          <div className={SPACING.related}>
+            <Field
+              id="remove-domain-reason"
+              label="Why they go"
+              hint="Recorded in the audit log beside your name, once for each vote."
+            >
+              <input
+                id="remove-domain-reason"
+                data-autofocus
+                name="remove-domain-reason"
+                autoComplete="off"
+                value={removeReason}
+                onChange={(event) => setRemoveReason(event.target.value)}
+                maxLength={300}
+                placeholder="Catch-all domain, random addresses, all within minutes…"
+                className={control}
+              />
+            </Field>
+            <div className="flex flex-wrap items-center gap-3">
+              {removeReason.trim() ? (
+                <Confirm
+                  label={`Remove all ${count(removingDomain.votes)}`}
+                  intent="danger"
+                  question={`Remove all ${count(removingDomain.votes)} ${
+                    removingDomain.votes === 1 ? "vote" : "votes"
+                  } from ${removingDomain.domain} as fraud?`}
+                  consequence={`They stop counting and each email is barred from this round. The removed votes still use up ${removingDomain.domain}'s allowance of ten this round, so at most ${Math.max(0, 10 - removingDomain.votes)} more from it can count before later ones are held. Voters are not told; the public answer never changes.`}
+                  confirmLabel="Yes, remove them all"
+                  pending={busy}
+                  onConfirm={() =>
+                    act(
+                      {
+                        action: "remove_domain",
+                        roundId: round.roundId,
+                        domain: removingDomain.domain,
+                        reason: removeReason.trim(),
+                      },
+                      "Removed as fraud.",
+                    )
+                  }
+                />
+              ) : (
+                <p className="text-sm text-ink-2">Give the reason first.</p>
+              )}
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setRemovingDomain(null)}
+                className={buttonClass("quiet")}
+              >
+                Never mind
+              </button>
+            </div>
+          </div>
+        )}
       </ActionDialog>
     </JobCard>
   );

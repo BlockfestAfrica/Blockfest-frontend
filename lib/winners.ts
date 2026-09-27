@@ -243,7 +243,13 @@ export async function currentShortlist(): Promise<ShortlistEntry[]> {
 export async function voteBoard(): Promise<VoteBoard | null> {
   const result = await getDb().execute(sql`
     SELECT r.week_no, r.status::text AS status, r.opens_at, r.closes_at,
-           t.nominee_id, t.votes, c.full_name AS display_name
+           t.nominee_id, t.votes, c.full_name AS display_name,
+           EXISTS (
+             SELECT 1 FROM votes fv
+              WHERE fv.round_id = r.id
+                AND fv.status = 'removed'
+                AND fv.removed_mode = 'fraud'
+           ) AS flagged
       FROM vote_rounds r
       JOIN campaigns cm          ON cm.id = r.campaign_id
       JOIN vote_tally t          ON t.round_id = r.id
@@ -274,6 +280,9 @@ export async function voteBoard(): Promise<VoteBoard | null> {
     closesAt: iso(first.closes_at),
     closed: first.status !== "open",
     final: first.status === "published",
+    // An owner has removed votes from this round as fraud. Only that it
+    // happened, never how many or whose: the page says so, to be seen to act.
+    flagged: first.flagged === true,
     asOf: new Date().toISOString(),
     nominees: rows.map((r) => ({
       nomineeId: String(r.nominee_id ?? ""),

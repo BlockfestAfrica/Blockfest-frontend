@@ -201,6 +201,16 @@ describe("voteBoard", () => {
     expect((await voteBoard())!.opensAt).toBe(new Date(tomorrow).toISOString());
   });
 
+  it("is flagged once a vote in the round is removed as fraud, and not for an unsweep", async () => {
+    const { roundId, nominees } = await round(1, "open", "2026-09-27T08:00:00+01:00", ["Ada"]);
+    await vote(roundId, nominees[0], "counted");
+    expect((await voteBoard())!.flagged).toBe(false);
+    await vote(roundId, nominees[0], "unswept");
+    expect((await voteBoard())!.flagged).toBe(false);
+    await vote(roundId, nominees[0], "fraud");
+    expect((await voteBoard())!.flagged).toBe(true);
+  });
+
   it("never shows a draft round", async () => {
     await round(1, "draft", "2026-09-27T08:00:00+01:00", ["Draft"]);
     expect(await voteBoard()).toBeNull();
@@ -223,7 +233,7 @@ describe("voteBoard", () => {
     };
     walk(board);
     expect([...keys].sort()).toEqual(
-      ["asOf", "closed", "closesAt", "final", "name", "nomineeId", "nominees", "opensAt", "votes", "weekNo"].sort(),
+      ["asOf", "closed", "closesAt", "final", "flagged", "name", "nomineeId", "nominees", "opensAt", "votes", "weekNo"].sort(),
     );
     const text = JSON.stringify(board);
     for (const field of WINNER_NEVER_PUBLISH) expect(keys.has(field)).toBe(false);

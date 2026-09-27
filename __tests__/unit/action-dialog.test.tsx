@@ -214,8 +214,12 @@ describe("the other places an action opened out of sight", () => {
 
   it("confirms a vote removal in one dialog, whichever list the button is in", () => {
     const src = read("components/admin/vote-round-panel.tsx");
-    expect((src.match(/<ActionDialog\b/g) ?? []).length).toBe(1);
-    expect(src).toMatch(/open=\{removing !== null\}/);
+    // One dialog for a single vote whichever list its button is in, and one
+    // for removing a whole domain (a farm) as fraud: two jobs, two dialogs,
+    // never one per row.
+    expect((src.match(/<ActionDialog\b/g) ?? []).length).toBe(2);
+    expect((src.match(/open=\{removing !== null\}/g) ?? []).length).toBe(1);
+    expect((src.match(/open=\{removingDomain !== null\}/g) ?? []).length).toBe(1);
     expect(src).not.toMatch(/removing === (m|h)\.voteId &&/);
     expect(src).toMatch(/id=\{`remove-reason-\$\{voteId\}`\}\s*data-autofocus/);
   });

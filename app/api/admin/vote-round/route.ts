@@ -11,6 +11,7 @@ import { closingAt } from "@/lib/format";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { shortlistEmail, votingPage } from "@/lib/email/templates";
 import { findVotesByEmail } from "@/lib/admin/vote-round";
+import { isAllowlisted } from "@/lib/campaign-vote";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,6 +77,29 @@ const removeSchema = z.object({
   mode: z.enum(["fraud", "unsweep"]),
 });
 
+/*
+ * Every verified vote from one domain in a round, removed as fraud in one
+ * act. A catch-all farm arrives as a cluster of ten or more, and removing
+ * it one Remove at a time was eleven dialogs and eleven reasons for one
+ * judgement. Each vote still goes through remove_vote, so each is barred
+ * and audited exactly as a single removal is, and verify_vote keeps the
+ * domain capped afterwards (0068).
+ */
+const removeDomainSchema = z.object({
+  action: z.literal("remove_domain"),
+  roundId: z.string().uuid("That is not a round."),
+  domain: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/, "That is not a domain."),
+  reason: z
+    .string()
+    .trim()
+    .min(1, "A removal needs a reason.")
+    .max(300, "Keep the reason under three hundred characters."),
+});
+
 const releaseSchema = z.object({
   action: z.literal("release"),
   voteId: z.string().uuid("That is not a vote."),
@@ -103,6 +127,7 @@ const schema = z.discriminatedUnion("action", [
   closeSchema,
   reviewSchema,
   removeSchema,
+  removeDomainSchema,
   releaseSchema,
   lookupSchema,
 ]);
@@ -270,6 +295,49 @@ export async function POST(request: NextRequest) {
           held: v.held,
         })),
       });
+    }
+
+    if (action.action === "remove_domain") {
+      /*
+       * Never a consumer provider. The console leaves them out of the
+       * domain signals because thousands of real voters share them, and a
+       * bulk removal of gmail.com would take every one of those votes.
+       */
+      if (isAllowlisted(`x@${action.domain}`)) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: `${action.domain} is a big consumer provider shared by real voters. Remove its votes one at a time.`,
+          },
+          { status: 400 },
+        );
+      }
+      /*
+       * One statement, so it is all or nothing. Materialised, so every
+       * remove_vote runs even though only the count is read. A published
+       * round is left alone: its winner was announced on this tally.
+       */
+      const result = await getDb().execute(sql`
+        WITH targets AS MATERIALIZED (
+          SELECT v.id
+            FROM votes v
+            JOIN vote_rounds r ON r.id = v.round_id
+           WHERE v.round_id = ${action.roundId}::uuid
+             AND r.status <> 'published'
+             AND v.status = 'counted'
+             AND v.verified_at IS NOT NULL
+             AND split_part(v.voter_email_canonical, '@', 2) = ${action.domain}
+        ),
+        gone AS MATERIALIZED (
+          SELECT remove_vote(${adminId}::uuid, t.id, ${action.reason}::text, 'fraud')
+            FROM targets t
+        )
+        SELECT count(*)::int AS removed FROM gone
+      `);
+      const removed = Number(
+        (result.rows?.[0] as { removed?: number } | undefined)?.removed ?? 0,
+      );
+      return NextResponse.json({ ok: true, removed });
     }
 
     if (action.action === "remove") {

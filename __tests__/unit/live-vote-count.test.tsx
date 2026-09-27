@@ -1,6 +1,7 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LiveVoteCount } from "@/components/campaigns/live-vote-count";
+import { INTEGRITY_NOTICE } from "@/components/campaigns/integrity-ticker";
 import {
   boardState,
   rankBoard,
@@ -27,6 +28,7 @@ const board = (over: Partial<VoteBoard> = {}): VoteBoard => ({
   closesAt: "2026-09-29T07:00:00.000Z",
   closed: false,
   final: false,
+  flagged: false,
   asOf: "2026-09-27T14:58:00.000Z",
   nominees: [
     { nomineeId: "a", name: "Ada Obi", votes: 12 },
@@ -305,3 +307,55 @@ describe("LiveVoteCount", () => {
     expect(document.body.textContent).not.toContain("in the lead");
   });
 });
+
+describe("the integrity notice", () => {
+  /*
+   * Owner ask: a moving line on top of the count once fraud is acted on, so
+   * voters see it is tracked, without detail. It shows only when votes in
+   * the round were removed as fraud, reads once to a screen reader, and can
+   * be paused (WCAG 2.2.2).
+   */
+  let answer: unknown;
+  const fetchMock = vi.fn(async () => ({ json: async () => answer }));
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    vi.useFakeTimers();
+    vi.setSystemTime(SUNDAY);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+  const settle = () => act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+  it("stays away while nothing has been removed as fraud", async () => {
+    answer = { ok: true, board: board() };
+    render(<LiveVoteCount />);
+    await settle();
+    expect(document.body.textContent).not.toContain("suspicious votes");
+    expect(screen.queryByRole("button", { name: "Pause the notice" })).toBeNull();
+  });
+
+  it("appears above the count once votes were removed as fraud, and can be paused", async () => {
+    answer = { ok: true, board: board({ flagged: true }) };
+    render(<LiveVoteCount />);
+    await settle();
+    expect(document.body.textContent).toContain(
+      "We spotted suspicious votes and removed them · Only verified, genuine votes count",
+    );
+    const pause = screen.getByRole("button", { name: "Pause the notice" });
+    expect(pause.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(pause);
+    const play = screen.getByRole("button", { name: "Play the notice" });
+    expect(play.getAttribute("aria-pressed")).toBe("true");
+    // Above the count, not inside it.
+    const notice = play.closest("div.rounded-full")!;
+    const count = screen.getByRole("region", { name: "Community Favourite vote count" });
+    expect(notice.compareDocumentPosition(count) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("says nothing about how many or whose", () => {
+    expect(INTEGRITY_NOTICE.join(" ")).not.toMatch(/\d|@/);
+  });
+});
+
