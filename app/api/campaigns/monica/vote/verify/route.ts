@@ -119,9 +119,12 @@ export async function POST(request: NextRequest) {
     // One name for a wrong code, an expired code, and an email with nothing
     // pending. The engine merges them on purpose and this route keeps the
     // merge: separating them would say which addresses have votes waiting.
+    // The last sentence is for the person who already voted, tried again
+    // and is typing codes that cannot work; everybody sees it, so it says
+    // nothing about which case this is.
     if (isPgError(error, "P0817", "code_invalid")) {
       return fail(
-        "That code did not match or has expired. Cast your vote again for a fresh one.",
+        "That code did not match or has expired. Cast your vote again for a fresh one. If this address has already voted in this round, no new code will come and there is nothing more to do.",
         400,
       );
     }

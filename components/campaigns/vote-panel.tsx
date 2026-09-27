@@ -151,7 +151,7 @@ export function VotePanel({
             />
             <p className="text-sm text-ink-3">
               One vote per email address. We send a six digit code to confirm
-              it.
+              it, and a confirmed vote cannot be changed.
             </p>
           </div>
           {error && (
