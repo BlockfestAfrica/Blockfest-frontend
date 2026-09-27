@@ -3,20 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { CircleCheck } from "lucide-react";
 import { buttonClass, control } from "@/components/shared/panel";
-import { PLATFORM_ICON } from "@/components/shared/platform-icon";
-import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
+import {
+  byPlatform,
+  MARK_SLOT,
+  MarkLink,
+  platformLabel,
+} from "@/components/shared/platform-marks";
 
 type Step = "idle" | "email" | "code";
-
-/* From sm up each platform keeps its own cell on one line, so X lines up
-   under X down the ballot even when a nominee has no Instagram. The row is
-   pinned as well as the column: with only a column, a link arriving out of
-   order would be placed on a second line. */
-const SLOT: Record<string, string> = {
-  x: "sm:col-start-1 sm:row-start-1",
-  instagram: "sm:col-start-2 sm:row-start-1",
-  tiktok: "sm:col-start-3 sm:row-start-1",
-};
 
 /**
  * One nominee on the ballot, and their vote.
@@ -199,37 +193,20 @@ export function BallotRow({
             <ul
               aria-label={`${name}'s entry`}
               // Phones: the marks sit left under the name, packed. From sm up
-              // they take the fixed platform cells above.
+              // they take the fixed platform cells (MARK_SLOT).
               className="-mb-1 -ml-1 mt-2 flex sm:m-0 sm:grid sm:grid-cols-[repeat(3,2.75rem)]"
             >
-              {links.map((link) => {
-                const platform = link.platform as CampaignPlatform;
-                const Icon = PLATFORM_ICON[platform];
-                const label = platformLabels[platform] ?? link.platform;
-                return (
-                  <li key={link.url} className={SLOT[platform] ?? ""}>
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer nofollow"
-                      aria-label={`${name} on ${label} (opens in a new tab)`}
-                      title={`Open on ${label}`}
-                      // A 44px target around a 36px chip: the chip is the
-                      // HandleChip language (rounded-full, line-2, icon), the
-                      // extra ring of space is the tap target.
-                      className="group inline-flex h-11 w-11 items-center justify-center rounded-full text-ink-2 hover:text-white"
-                    >
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line-2 transition-colors duration-150 group-hover:border-line-3 group-hover:bg-card-3">
-                        {Icon ? (
-                          <Icon className="h-4 w-4" aria-hidden="true" />
-                        ) : (
-                          <span className="text-xs font-semibold">{label}</span>
-                        )}
-                      </span>
-                    </a>
-                  </li>
-                );
-              })}
+              {/* Sorted X, Instagram, TikTok, so phones, which have no
+                  cells, list them in the order the winners do. */}
+              {byPlatform(links, (link) => link.platform).map((link) => (
+                <li key={link.url} className={MARK_SLOT[link.platform] ?? ""}>
+                  <MarkLink
+                    platform={link.platform}
+                    url={link.url}
+                    label={`${name} on ${platformLabel(link.platform)}`}
+                  />
+                </li>
+              ))}
             </ul>
           )}
         </div>

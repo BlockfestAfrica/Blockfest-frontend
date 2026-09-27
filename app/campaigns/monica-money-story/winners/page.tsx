@@ -1,19 +1,12 @@
 import type { Metadata } from "next";
-import { WINNER_CATEGORY_LABEL } from "@/lib/winner-categories";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Trophy } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { currentShortlist, publishedWinners, voteWindowState } from "@/lib/winners";
-import { Panel, Pill, SectionHeading } from "@/components/shared/panel";
+import { SectionHeading } from "@/components/shared/panel";
 import { Ballot } from "@/components/campaigns/ballot";
 import { LiveVoteCount } from "@/components/campaigns/live-vote-count";
-import {
-  campaignBySlug,
-  monicaRoutes,
-  MONICA_FIRST_LEADERBOARD,
-  MONICA_SLUG,
-  platformLabels,
-  type CampaignPlatform,
-} from "@/lib/campaigns";
+import { WeeklyWinners } from "@/components/campaigns/weekly-winners";
+import { campaignBySlug, monicaRoutes, MONICA_SLUG } from "@/lib/campaigns";
 
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
 
@@ -31,17 +24,11 @@ export const metadata: Metadata = {
  */
 export const revalidate = 60;
 
-const CATEGORY_LABEL: Record<string, string> = WINNER_CATEGORY_LABEL;
-
-const naira = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
-
 export default async function WinnersPage() {
   const [winners, shortlist] = await Promise.all([
     publishedWinners(),
     currentShortlist(),
   ]);
-
-  const weeks = [...new Set(winners.map((w) => w.weekNo))].sort((a, b) => b - a);
 
   /*
    * Where the shortlist's round sits in its window. All entries share one
@@ -84,89 +71,17 @@ export default async function WinnersPage() {
               two different things, announced winners and the weekly vote,
               and an unlabelled empty page taught neither: a visitor saw
               "Winners" and two loose paragraphs with no shape of what
-              arrives where. */}
-          <section id="weekly" className="mt-12 scroll-mt-24">
-            <SectionHeading
-              label="Every Sunday"
-              title="Weekly winners"
-              hint="Creator of the Week, chosen by Blockfest Africa, lands here each Sunday. Community Favourite, decided by the public vote below, lands here once that vote closes."
-            />
-          {weeks.length === 0 ? (
-            <p className="mt-6 max-w-prose text-base leading-relaxed text-ink-3">
-              Nothing announced yet. The first winners appear here on{" "}
-              {MONICA_FIRST_LEADERBOARD}.{" "}
-              <Link
-                href={monicaRoutes.leaderboard}
-                className="text-link underline underline-offset-2 hover:text-white"
-              >
-                The leaderboard
-              </Link>{" "}
-              moves as entries are approved.
-            </p>
-          ) : (
-            <div className="mt-8 flex flex-col gap-10">
-              {weeks.map((week) => (
-                <section key={week}>
-                  <h2 className="text-xl font-bold text-white">Week {week}</h2>
-                  <ul className="mt-4 flex flex-col gap-4">
-                    {winners
-                      .filter((w) => w.weekNo === week)
-                      .map((w) => (
-                        <li key={`${w.weekNo}-${w.category}`}>
-                          <Panel tone="quiet">
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                              <Trophy
-                                className="h-5 w-5 shrink-0 text-brand-gold"
-                                aria-hidden="true"
-                              />
-                              <p className="eyebrow text-brand-gold">
-                                {CATEGORY_LABEL[w.category] ?? w.category}
-                              </p>
-                              <Pill tone="gold">{naira(w.prizeNaira)}</Pill>
-                            </div>
-                            <p className="mt-3 text-2xl font-bold text-white">
-                              {w.name}
-                            </p>
-                            {w.note && (
-                              <p className="mt-2 max-w-prose text-base leading-relaxed text-ink-2">
-                                {w.note}
-                              </p>
-                            )}
-                            {w.links.length > 0 && (
-                              <ul className="mt-4 flex flex-wrap gap-2">
-                                {w.links.map((link) => (
-                                  <li key={link.url}>
-                                    <a
-                                      href={link.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer nofollow"
-                                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-3"
-                                    >
-                                      {platformLabels[
-                                        link.platform as CampaignPlatform
-                                      ] ?? link.platform}
-                                      <ExternalLink
-                                        className="h-3.5 w-3.5"
-                                        aria-hidden="true"
-                                      />
-                                    </a>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </Panel>
-                        </li>
-                      ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          )}
-          </section>
+              arrives where. It is told which round the ballot below is
+              showing, so that week can say its Community Favourite is
+              being voted on. */}
+          <WeeklyWinners
+            winners={winners}
+            vote={round ? { weekNo: round.weekNo, state: voteState } : null}
+          />
 
           {/* The shortlist, as one ballot (components/campaigns/ballot.tsx
               says why it is not a card per nominee any more). */}
-          <section id="shortlist" className="mt-16 scroll-mt-24">
+          <section id="shortlist" className="mt-12 scroll-mt-24">
             <SectionHeading
               // The eyebrow must not say "Open now" above a line that says
               // voting has closed, nor above a ballot the engine will
@@ -210,9 +125,9 @@ export default async function WinnersPage() {
           <LiveVoteCount />
           </section>
 
-          <p className="mt-14 max-w-prose text-sm leading-relaxed text-ink-3">
-            Creator of the Week is selected by Blockfest Africa; Community
-            Favourite is decided by public vote. How points are earned is in the{" "}
+          {/* Who decides each award is said once, in the weekly hint. */}
+          <p className="mt-10 max-w-prose text-sm leading-relaxed text-ink-3">
+            How points are earned is in the{" "}
             <Link
               href={monicaRoutes.rules}
               className="text-link underline underline-offset-2 hover:text-white"

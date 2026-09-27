@@ -131,3 +131,43 @@ row's left edge carries its state (gold while voting, green once in).
   console, the rows stay and only the buttons go.
 - One row open at a time where the rows share one underlying action (one
   pending vote per address): opening a row closes any other.
+
+### Signed-in sections use the ballot's anatomy
+
+The owner approved the ballot and called the creator page and the weekly
+winners ugly beside it: a card holding a bordered list holding cards, a
+select and pills inside pills for the week, filled amber boxes, gold on
+rank, labels, trophies and Share, and raw URLs clipping on phones. Both
+are now built the way the ballot is, and new signed-in or public list
+sections start from it rather than from SectionCard.
+
+- A section is one `border-line-2 bg-card` card: a header row that says
+  where it stands, once ("Week 2 · 5 days left", "335 total", "3 posts"),
+  and its content as `divide-line` rows. No card, list box or panel
+  inside it; a sentence is a row too.
+- A row leads with a mark or with the name: a creator's own rows lead
+  with the post's or account's mark, then the @handle with its status
+  under it; the ballot and the winners lead with the name, the marks
+  after it. Then one compact action at the right hand (Submit, Send
+  again, Take back, Add, Vote), `buttonClass` at `min-w-24`; below sm a
+  worded action drops under the text at its indent, so a handle keeps the
+  width after the mark. A form or a question opens in place under its
+  row, the row goes `border-l-brand-gold bg-card-2`, the action becomes
+  Cancel, and focus returns to the action on Cancel and after a success.
+  One row open at a time wherever the rows share an action.
+- State lives on the row's 2px left edge and in the words, never in a
+  fill: green approved, red needs a change or removed, amber a request
+  waiting on the team or a failed load, gold a form open or a vote live.
+  An entry waiting for review is neutral: waiting is its normal course,
+  and only a pending request is amber. A notice is a titled row on its
+  edge, not a warning box.
+- Gold is the clock, the submit button, an open row and a live vote.
+  Rank, week labels, category labels, prizes, Share and the rule line
+  under a field are ink.
+- Posts and accounts are marks from components/shared/platform-marks.tsx
+  (MarkLink with an accessible name saying whose post and where, MarkStill
+  dashed when the slot is empty), always in X, Instagram, TikTok order,
+  in MARK_SLOT cells from sm up. Never a raw URL, never "Instagram ↗".
+- Each fact is said once, at the level it is true of: the close time in
+  the week header, the week on its group row, the total in the points
+  header, who picks each award in the section hint.

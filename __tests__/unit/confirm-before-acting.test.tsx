@@ -21,7 +21,7 @@ import { RepriceEntry } from "@/components/admin/reprice-entry";
 import { HandleRequestQueue } from "@/components/admin/handle-request-queue";
 import { PointRulesEditor } from "@/components/admin/point-rules-editor";
 import { ResourcesEditor } from "@/components/admin/resources-editor";
-import { AddPlatform } from "@/components/campaigns/add-platform";
+import { AccountRows } from "@/components/campaigns/account-rows";
 import { SignOutForm } from "@/components/campaigns/sign-out-form";
 
 vi.mock("next/navigation", () => ({
@@ -412,7 +412,7 @@ describe("pack resources", () => {
 
 describe("a creator adding a platform", () => {
   it("shows the username as it will be stored, a pasted link reduced to the name", () => {
-    render(<AddPlatform missing={["x"]} platformLabels={{ x: "X" }} />);
+    render(<AccountRows handles={[]} requests={[]} missing={["x"]} />);
     fireEvent.click(screen.getByRole("button", { name: "Add X" }));
     fireEvent.change(screen.getByLabelText("Your X username"), {
       target: { value: "https://x.com/AdaObi/status/123" },
@@ -426,7 +426,7 @@ describe("a creator adding a platform", () => {
   });
 
   it("adds exactly that account on Yes, with room for a whole pasted link", async () => {
-    render(<AddPlatform missing={["tiktok"]} platformLabels={{ tiktok: "TikTok" }} />);
+    render(<AccountRows handles={[]} requests={[]} missing={["tiktok"]} />);
     fireEvent.click(screen.getByRole("button", { name: "Add TikTok" }));
     const field = screen.getByLabelText("Your TikTok username") as HTMLInputElement;
     const paste = "https://www.tiktok.com/@adaeze.creates.daily?_t=ZM-8abc&_r=1";
@@ -509,15 +509,23 @@ describe("the screens pinned by source", () => {
   });
 
   it("the submission hint names the account for the platform the form will send", () => {
-    const src = read("components/campaigns/submission-form.tsx");
-    expect(src).toMatch(/handles\?\.\[selected\]/);
-    expect(src).not.toMatch(/handles\?\.\[platform\]/);
+    // The row pressed is the platform: the panel is handed that row's
+    // platform and that row's account, and sends the platform it was handed.
+    const src = read("components/campaigns/week-rows.tsx");
+    expect(src).toMatch(/<SubmitPanel\s+platform=\{row\.platform\}\s+handle=\{row\.handle\}/);
+    expect(src).toMatch(/JSON\.stringify\(\{ platform, url \}\)/);
+    expect(src).toMatch(/It has to be a post from @\{handle\}, the \{label\} account/);
+    expect(src).not.toMatch(/<select\b/);
   });
 
   it("the /me page signs out through the asking form", () => {
-    const src = read("app/campaigns/monica-money-story/me/page.tsx");
-    expect(src).toMatch(/<SignOutForm action=\{signOut\} \/>/);
+    // The signed-in view moved out of me/page.tsx into its own component;
+    // neither half may fall back to a bare form.
+    const src = read("components/campaigns/me-dashboard.tsx");
+    const page = read("app/campaigns/monica-money-story/me/page.tsx");
+    expect(src).toMatch(/<SignOutForm\s+action=\{signOut\}/);
     expect(src).not.toMatch(/<form action=\{signOut\}/);
+    expect(page).not.toMatch(/<form action=\{signOut\}/);
   });
 
   it("the resume mail's comment no longer claims a filter the query lacks", () => {
