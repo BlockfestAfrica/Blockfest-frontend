@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, Trophy } from "lucide-react";
 import { currentShortlist, publishedWinners, voteWindowState } from "@/lib/winners";
 import { Panel, Pill, SectionHeading } from "@/components/shared/panel";
-import { VotePanel } from "@/components/campaigns/vote-panel";
+import { Ballot } from "@/components/campaigns/ballot";
 import { LiveVoteCount } from "@/components/campaigns/live-vote-count";
 import {
   campaignBySlug,
@@ -63,7 +63,6 @@ export default async function WinnersPage() {
    */
   const round = shortlist[0];
   const voteState = voteWindowState(round);
-  const votingOpen = voteState === "open";
 
   return (
     <main id="main" className="bg-ground">
@@ -166,14 +165,8 @@ export default async function WinnersPage() {
           )}
           </section>
 
-          {/*
-           * The shortlist.
-           *
-           * One card per ENTRY, never per submission. A creator who published
-           * the same piece on three platforms has one entry and three links,
-           * and listing them three times would split their own vote against
-           * themselves. Same grouping rule the leaderboard uses.
-           */}
+          {/* The shortlist, as one ballot (components/campaigns/ballot.tsx
+              says why it is not a card per nominee any more). */}
           <section id="shortlist" className="mt-16 scroll-mt-24">
             <SectionHeading
               // The eyebrow must not say "Open now" above a line that says
@@ -187,7 +180,11 @@ export default async function WinnersPage() {
                     : "The public vote"
               }
               title="Community Favourite vote"
-              hint="Vote for your favourite below. One vote per email address, verified by a six digit code. The creator with the most valid votes wins."
+              hint={
+                round && voteState !== "closed"
+                  ? `Pick your favourite week ${round.weekNo} creator: one vote per email address, confirmed by a six digit code.`
+                  : "One vote per email address, confirmed by a six digit code, and the creator with the most valid votes wins."
+              }
             />
           {shortlist.length === 0 ? (
             <p className="mt-6 max-w-prose text-base leading-relaxed text-ink-3">
@@ -205,65 +202,10 @@ export default async function WinnersPage() {
               for the moment it opens.
             </p>
           ) : (
-            <div>
-              {voteState === "before" && (
-                <p className="mt-4 text-sm text-ink-3">
-                  Voting for week {round.weekNo} opens{" "}
-                  {closingAt(round.opensAt)}, Lagos time. The shortlist is
-                  below so you know who is on it.
-                </p>
-              )}
-              {voteState === "closed" && (
-                <p className="mt-4 text-sm text-ink-3">
-                  Voting for week {round.weekNo} has closed.
-                </p>
-              )}
-              <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-                {shortlist.map((entry, index) => (
-                  <li
-                    key={entry.nomineeId || `${entry.name}-${index}`}
-                    className="rounded-xl border border-line bg-card p-5"
-                  >
-                    <p className="text-base font-semibold text-white">
-                      {entry.name}
-                    </p>
-                    <p className="mt-1 text-sm text-ink-3">
-                      Week {entry.weekNo}
-                    </p>
-                    <ul className="mt-3 flex flex-wrap gap-2">
-                      {entry.links.map((link) => (
-                        <li key={link.url}>
-                          <a
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer nofollow"
-                            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
-                          >
-                            {platformLabels[
-                              link.platform as CampaignPlatform
-                            ] ?? link.platform}
-                            <ExternalLink
-                              className="h-3.5 w-3.5"
-                              aria-hidden="true"
-                            />
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                    {votingOpen && (
-                      <VotePanel
-                        roundId={entry.roundId}
-                        nomineeId={entry.nomineeId}
-                        nomineeName={entry.name}
-                      />
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <Ballot entries={shortlist} state={voteState} />
           )}
-          {/* The count, under the ballot rather than on the cards: the
-              cards stay in ballot order so a half-typed vote never moves,
+          {/* The count, under the ballot rather than on its rows: the
+              rows stay in ballot order so a half-typed vote never moves,
               and nobody is nudged by a number sitting on the button. It
               loads in the browser, so this page stays static and cached. */}
           <LiveVoteCount />

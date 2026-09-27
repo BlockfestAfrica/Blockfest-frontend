@@ -18,7 +18,7 @@ import { Confirm } from "@/components/shared/confirm";
 import { count, dateTime } from "@/lib/format";
 import { openableHref } from "@/lib/admin/openable-href";
 import { monicaStages, platformLabels, type CampaignPlatform } from "@/lib/campaigns";
-import { FaInstagram, FaTiktok, FaXTwitter } from "react-icons/fa6";
+import { PLATFORM_ICON } from "@/components/shared/platform-icon";
 
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
@@ -121,12 +121,6 @@ function longDay(day: string): string {
 function listOf(names: string[]): string {
   return new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" }).format(names);
 }
-
-const PLATFORM_ICON: Record<CampaignPlatform, typeof FaXTwitter> = {
-  x: FaXTwitter,
-  instagram: FaInstagram,
-  tiktok: FaTiktok,
-};
 
 /**
  * One approved post, as the account it was filed under. Opens the post.

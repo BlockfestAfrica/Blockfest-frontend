@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Trophy } from "lucide-react";
-import { FaInstagram, FaTiktok, FaXTwitter } from "react-icons/fa6";
+import { PLATFORM_ICON } from "@/components/shared/platform-icon";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 import type { LeaderboardBadge, LeaderboardRow } from "@/lib/leaderboard-row";
 import { WINNER_CATEGORY_LABEL } from "@/lib/winner-categories";
@@ -345,12 +345,6 @@ function Movement({ row, since }: { row: LeaderboardRow; since: number }) {
     </span>
   );
 }
-
-const PLATFORM_ICON: Record<CampaignPlatform, typeof FaXTwitter> = {
-  x: FaXTwitter,
-  instagram: FaInstagram,
-  tiktok: FaTiktok,
-};
 
 /*
  * "X, Instagram and TikTok". Intl.ListFormat is missing from browsers Next
