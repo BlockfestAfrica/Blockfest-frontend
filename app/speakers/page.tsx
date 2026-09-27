@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SpeakersSchema } from "@/components/seo/speakers-schema";
 import { BreadcrumbSchema } from "@/components/seo/schema-markup";
-import { SpeakersList, is2026Speaker, type Speaker } from "@/lib/speakers";
+import { SpeakersList, is2026Speaker, speakerProfiles, type Speaker } from "@/lib/speakers";
 import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
 import { isSpeakerFormOpen } from "@/lib/speaking";
 import { gotham } from "@/lib/fonts";
@@ -57,7 +57,8 @@ export const metadata: Metadata = {
 };
 
 const SpeakersPage = () => {
-  const speakers = SpeakersList.map((speaker: Speaker) => ({
+  // Each person once, so a returning speaker is not two people to a search engine.
+  const speakers = speakerProfiles().map((speaker: Speaker) => ({
     name: speaker.name,
     jobTitle: speaker.title,
     description: speaker.expertise?.join(", ") || speaker.title,
