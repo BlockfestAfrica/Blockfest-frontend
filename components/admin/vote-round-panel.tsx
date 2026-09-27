@@ -18,6 +18,7 @@ import { Confirm } from "@/components/shared/confirm";
 import { count, dateTime } from "@/lib/format";
 import { openableHref } from "@/lib/admin/openable-href";
 import { monicaStages, platformLabels, type CampaignPlatform } from "@/lib/campaigns";
+import { FaInstagram, FaTiktok, FaXTwitter } from "react-icons/fa6";
 
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
@@ -112,6 +113,113 @@ function longDay(day: string): string {
 
 function listOf(names: string[]): string {
   return new Intl.ListFormat("en-GB", { style: "long", type: "conjunction" }).format(names);
+}
+
+const PLATFORM_ICON: Record<CampaignPlatform, typeof FaXTwitter> = {
+  x: FaXTwitter,
+  instagram: FaInstagram,
+  tiktok: FaTiktok,
+};
+
+/**
+ * One approved post, as the account it was filed under. Opens the post.
+ *
+ * A chip with the platform's mark rather than an underlined "X @handle":
+ * three of those per row, on every row, were most of what made the list
+ * look like a wall of links.
+ */
+function HandleChip({
+  post,
+}: {
+  post: { platform: CampaignPlatform; handle: string | null; url: string };
+}) {
+  const Icon = PLATFORM_ICON[post.platform];
+  const label = platformLabels[post.platform];
+  const shown = post.handle ? `@${post.handle.replace(/^@/, "")}` : "post";
+  const inner = (
+    <>
+      <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />
+      <span className="truncate">{shown}</span>
+    </>
+  );
+  const chip =
+    "inline-flex max-w-full items-center gap-1.5 rounded-full border border-line-2 px-2 py-0.5 text-xs text-ink-2";
+  const href = openableHref(post.url);
+  if (!href) {
+    return (
+      <span className={chip} aria-label={`${shown} on ${label}`} role="img">
+        {inner}
+      </span>
+    );
+  }
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      // The name said in full: the handle, then where it is and what the link
+      // does. As split text spans it read "@handleon X" to a screen reader.
+      aria-label={`${shown} on ${label} (opens the approved post in a new tab)`}
+      title={`Open the approved ${label} post`}
+      className={`${chip} transition-colors hover:border-ink-3 hover:text-white`}
+    >
+      {inner}
+    </a>
+  );
+}
+
+/** One end of the voting window: a date and a time, labelled once. */
+function WindowEnd({
+  legend,
+  id,
+  day,
+  time,
+  minDay,
+  onDay,
+  onTime,
+}: {
+  legend: string;
+  id: "opens" | "closes";
+  day: string;
+  time: string;
+  minDay?: string;
+  onDay: (value: string) => void;
+  onTime: (value: string) => void;
+}) {
+  return (
+    <fieldset>
+      <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-3">
+        {legend}
+      </legend>
+      {/* Date and time side by side from sm; on a phone each takes the
+          full width, stacked, rather than a narrow time box alone. */}
+      <div className="flex flex-wrap gap-2">
+        <label htmlFor={`${id}-day`} className="sr-only">
+          {legend} date
+        </label>
+        <input
+          id={`${id}-day`}
+          name={`${id}-day`}
+          type="date"
+          value={day}
+          min={minDay}
+          onChange={(event) => onDay(event.target.value)}
+          className={`${control} min-w-[10.5rem] flex-1`}
+        />
+        <label htmlFor={`${id}-time`} className="sr-only">
+          {legend} time
+        </label>
+        <input
+          id={`${id}-time`}
+          name={`${id}-time`}
+          type="time"
+          value={time}
+          onChange={(event) => onTime(event.target.value)}
+          className={`${control} sm:w-32 sm:flex-none`}
+        />
+      </div>
+    </fieldset>
+  );
 }
 
 /**
@@ -897,78 +1005,66 @@ export function VoteRoundPanel({
             </p>
           ) : (
             <fieldset>
-              <legend className="text-sm font-semibold text-white">
-                Nominees, three to five
-              </legend>
-              <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
-                The approved entries of the week, strongest first.
-              </p>
-              <div className="mt-3 divide-y divide-line border-y border-line">
+              <legend className="sr-only">Nominees, three to five</legend>
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-white">Nominees</p>
+                  <p className="mt-1 text-sm text-ink-3">
+                    Pick three to five of the week&apos;s approved entries,
+                    strongest first.
+                  </p>
+                </div>
+                <Pill tone={selected.length >= 3 ? "gold" : "neutral"}>
+                  {selected.length} of 5 picked
+                </Pill>
+              </div>
+              {/* Cards, two to a row from sm. Each says who the nominee is
+                  three ways: the name, the points, and the account behind
+                  every approved post, as quiet chips that open the post.
+                  The list was a stack of rows where every handle was an
+                  underlined blue link, and read as a wall of links. */}
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
                 {candidates.slice(0, visibleCandidates).map((c) => {
                   const on = selected.includes(c.entryId);
+                  const locked = busy || (!on && selected.length >= 5);
                   return (
-                    <label
-                      key={c.entryId}
-                      className="flex min-h-11 cursor-pointer items-start gap-3 py-2"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={on}
-                        disabled={busy || (!on && selected.length >= 5)}
-                        onChange={() => toggle(c.entryId)}
-                        className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-brand-gold"
-                      />
-                      {/* The name, and under it the account behind each
-                          approved post: a name alone could not tell two
-                          nominees apart, and the handle is what the team
-                          knows them by. Each opens the approved post. */}
-                      <span className="flex w-full min-w-0 flex-1 flex-col gap-1">
-                        <span className="truncate text-sm font-semibold text-white">
-                          {c.name}
-                        </span>
-                        {(c.posts?.length ?? 0) > 0 && (
-                          <span className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-3">
-                            {c.posts!.map((post) => {
-                              const said = `${platformLabels[post.platform]} ${
-                                post.handle ? `@${post.handle.replace(/^@/, "")}` : "post"
-                              }`;
-                              const href = openableHref(post.url);
-                              return href ? (
-                                <a
-                                  key={post.platform}
-                                  href={href}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-link underline underline-offset-2 [overflow-wrap:anywhere] hover:text-white"
-                                >
-                                  {said}
-                                  <span className="sr-only"> (opens the approved post in a new tab)</span>
-                                </a>
-                              ) : (
-                                <span key={post.platform} className="[overflow-wrap:anywhere]">
-                                  {said}
-                                </span>
-                              );
-                            })}
+                    <li key={c.entryId}>
+                      <label
+                        className={`flex h-full items-start gap-3 rounded-lg border px-4 py-3 transition-colors duration-150 ${
+                          on
+                            ? "border-brand-gold/60 bg-brand-gold/[0.07]"
+                            : "border-line hover:border-line-2 hover:bg-card-2"
+                        } ${locked && !on ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          disabled={locked}
+                          onChange={() => toggle(c.entryId)}
+                          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-brand-gold disabled:cursor-not-allowed"
+                        />
+                        <span className="flex min-w-0 flex-1 flex-col gap-2">
+                          <span className="flex items-baseline justify-between gap-3">
+                            <span className="truncate text-sm font-semibold text-white">
+                              {c.name}
+                            </span>
+                            <span className="shrink-0 text-xs tabular-nums text-ink-3">
+                              {count(c.points)} pts
+                            </span>
                           </span>
-                        )}
-                        {/* On a phone the figures sit under the name, which
-                            then keeps the full width for itself and the
-                            handles; beside them they squeezed both. */}
-                        <span className="text-xs tabular-nums text-ink-4 sm:hidden">
-                          {count(c.points)} points · {c.approvedPlatforms}{" "}
-                          {c.approvedPlatforms === 1 ? "platform" : "platforms"}
+                          {(c.posts?.length ?? 0) > 0 && (
+                            <span className="flex flex-wrap gap-1.5">
+                              {c.posts!.map((post) => (
+                                <HandleChip key={post.platform} post={post} />
+                              ))}
+                            </span>
+                          )}
                         </span>
-                      </span>
-                      <span className="hidden shrink-0 text-sm tabular-nums text-ink-3 sm:inline">
-                        {count(c.points)} points ·{" "}
-                        {c.approvedPlatforms}{" "}
-                        {c.approvedPlatforms === 1 ? "platform" : "platforms"}
-                      </span>
-                    </label>
+                      </label>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
               {candidates.length > visibleCandidates ? (
                 <button
                   type="button"
@@ -1005,73 +1101,55 @@ export function VoteRoundPanel({
             </Field>
           )}
 
-          {/* Opens and closes each get a date and a time, side by side. */}
-          <div className="grid gap-4 lg:grid-cols-2">
-            <fieldset className="grid gap-3 sm:grid-cols-2">
-              <legend className="mb-2 text-sm font-semibold text-white">Opens</legend>
-              <Field id="opens-day" label="Date" hint="Lagos time.">
-                <input
-                  id="opens-day"
-                  name="opens-day"
-                  type="date"
-                  value={opensDay}
-                  onChange={(event) => setOpensDay(event.target.value)}
-                  className={control}
-                />
-              </Field>
-              <Field id="opens-time" label="Time">
-                <input
-                  id="opens-time"
-                  name="opens-time"
-                  type="time"
-                  value={opensTime}
-                  onChange={(event) => setOpensTime(event.target.value)}
-                  className={control}
-                />
-              </Field>
-            </fieldset>
-            <fieldset className="grid gap-3 sm:grid-cols-2">
-              <legend className="mb-2 text-sm font-semibold text-white">Closes</legend>
-              <Field id="closes-day" label="Date" hint="Lagos time.">
-                <input
-                  id="closes-day"
-                  name="closes-day"
-                  type="date"
-                  value={closesDay}
-                  min={opensDay}
-                  onChange={(event) => setClosesDay(event.target.value)}
-                  className={control}
-                />
-              </Field>
-              <Field id="closes-time" label="Time">
-                <input
-                  id="closes-time"
-                  name="closes-time"
-                  type="time"
-                  value={closesTime}
-                  onChange={(event) => setClosesTime(event.target.value)}
-                  className={control}
-                />
-              </Field>
-            </fieldset>
-          </div>
-          {/* The length, said back as the dates change, so a close typed on
-              the wrong day shows up as "24 hours" or an error, not as a
-              surprise when the vote shuts. */}
-          <p
-            className={`text-sm ${windowOk && !needsFreeze ? "text-ink-3" : "text-red-300"}`}
-            aria-live="polite"
+          {/* The window as one block: when it opens, when it closes, and how
+              long that is, said back as the fields change so a close typed on
+              the wrong day shows up before the vote does. */}
+          <section
+            aria-labelledby="vote-window-title"
+            className="rounded-lg border border-line p-4 sm:p-5"
           >
-            {!windowOk
-              ? closesInPast
-                ? "The close time has already passed."
-                : "The vote has to close after it opens."
-              : needsFreeze
-                ? `Record the week ${weekNo} standings first. This vote closes after stage ${weekNo + 1} starts, and closing it needs week ${weekNo}'s standings, which can only be recorded until then.`
-                : opensInPast
-                  ? `The open time has passed, so it opens as soon as you confirm and runs about ${length}, to ${longDay(closesDay)} ${closesTime}.`
-                  : `Runs ${length}, ${longDay(opensDay)} ${opensTime} to ${longDay(closesDay)} ${closesTime}.`}
-          </p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p id="vote-window-title" className="text-sm font-semibold text-white">
+                Voting window
+              </p>
+              {windowOk && !needsFreeze && (
+                <Pill tone="gold">{opensInPast ? `About ${length}` : length}</Pill>
+              )}
+            </div>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <WindowEnd
+                legend="Opens"
+                id="opens"
+                day={opensDay}
+                time={opensTime}
+                onDay={setOpensDay}
+                onTime={setOpensTime}
+              />
+              <WindowEnd
+                legend="Closes"
+                id="closes"
+                day={closesDay}
+                time={closesTime}
+                minDay={opensDay}
+                onDay={setClosesDay}
+                onTime={setClosesTime}
+              />
+            </div>
+            <p
+              className={`mt-4 text-sm ${windowOk && !needsFreeze ? "text-ink-3" : "text-red-300"}`}
+              aria-live="polite"
+            >
+              {!windowOk
+                ? closesInPast
+                  ? "The close time has already passed."
+                  : "The vote has to close after it opens."
+                : needsFreeze
+                  ? `Record the week ${weekNo} standings first. This vote closes after stage ${weekNo + 1} starts, and closing it needs week ${weekNo}'s standings, which can only be recorded until then.`
+                  : opensInPast
+                    ? `The open time has passed, so it opens as soon as you confirm and closes ${longDay(closesDay)} ${closesTime}. All times Lagos.`
+                    : `${longDay(opensDay)} ${opensTime} to ${longDay(closesDay)} ${closesTime}. All times Lagos.`}
+            </p>
+          </section>
         </div>
       ) : (
         <div className={SPACING.section}>
