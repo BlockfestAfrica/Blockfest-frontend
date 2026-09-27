@@ -215,6 +215,14 @@ export default async function WinnersPage({
                 reviewedAt: round.reviewedAt
                   ? round.reviewedAt.toISOString()
                   : null,
+                announced: round.announced
+                  ? {
+                      at: round.announced.at.toISOString(),
+                      finished: round.announced.finished,
+                      sent: round.announced.sent,
+                      failed: round.announced.failed,
+                    }
+                  : null,
               }
             : null
         }

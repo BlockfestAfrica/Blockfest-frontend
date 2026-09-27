@@ -29,6 +29,13 @@ export interface RoundView {
   opensAt: string;
   closesAt: string;
   reviewedAt: string | null;
+  /** When the creators were told, from the send's audit row. */
+  announced?: {
+    at: string;
+    finished: boolean;
+    sent: number | null;
+    failed?: number | null;
+  } | null;
 }
 
 export interface EntryCandidateRow {
@@ -165,6 +172,42 @@ function HandleChip({
     >
       {inner}
     </a>
+  );
+}
+
+/**
+ * What happened to "Tell the creators" for this round: a short state word
+ * in a Pill, the detail beside it as text. One sentence-long Pill did not
+ * fit a 320px foot, and the words cut off were the ones that mattered.
+ *
+ * Green only for a send that finished and reached everybody. A send that
+ * reached nobody, or left some behind, is amber, because somebody should
+ * look; the route refuses a retry, so this line is where it gets noticed.
+ */
+function ToldLine({
+  told,
+}: {
+  told: { at: string; finished: boolean; sent: number | null; failed?: number | null };
+}) {
+  const sent = told.sent ?? 0;
+  const failed = told.failed ?? 0;
+  const [tone, word] = !told.finished
+    ? (["warn", "Not finished"] as const)
+    : sent === 0 && failed > 0
+      ? (["warn", "Not sent"] as const)
+      : failed > 0
+        ? (["warn", "Some not sent"] as const)
+        : (["good", "Creators told"] as const);
+  const detail = !told.finished
+    ? `started ${dateTime(told.at)}`
+    : `${dateTime(told.at)} · ${count(sent)} ${sent === 1 ? "email" : "emails"}${
+        failed > 0 ? `, ${count(failed)} failed` : ""
+      }`;
+  return (
+    <p className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-3">
+      <Pill tone={tone}>{word}</Pill>
+      <span>{detail}</span>
+    </p>
   );
 }
 
@@ -821,7 +864,26 @@ export function VoteRoundPanel({
    * before it runs and a send riding along with the open would announce a
    * page that refuses every ballot.
    */
-  const [announced, setAnnounced] = useState(false);
+  /* The send as this page knows it: the audit row the server read, or the
+     answer to a press made on this page before the refresh brings that row
+     in. Local state alone forgot the send on every reload and put the
+     button back on a vote whose email had already gone out.
+
+     The local answer names its round. The week links change only the
+     query string, which keeps this panel mounted, and an answer that was
+     not tied to a round followed the owner to the next week's vote, hiding
+     its button behind a claim nobody had been told about it. */
+  const [toldHere, setToldHere] = useState<{
+    roundId: string;
+    at: string;
+    sent: number;
+    failed: number;
+  } | null>(null);
+  const told = round?.announced
+    ? round.announced
+    : toldHere && round && toldHere.roundId === round.roundId
+      ? { at: toldHere.at, finished: true, sent: toldHere.sent, failed: toldHere.failed }
+      : null;
 
   async function announceVote() {
     if (!round) return;
@@ -835,16 +897,29 @@ export function VoteRoundPanel({
       const result = await response.json();
       if (!response.ok || !result.ok) {
         toast.error(result.message ?? "That did not work.");
+        // A refusal usually means this page is behind: another owner sent
+        // it, or this press outlived the gateway while the server kept
+        // sending. The refresh reads the audit row and swaps the button for
+        // what actually happened.
+        await router.refresh();
         return;
       }
-      setAnnounced(true);
+      setToldHere({
+        roundId: round.roundId,
+        // The claim's time, the same one the refresh will read back.
+        at: typeof result.startedAt === "string" ? result.startedAt : new Date().toISOString(),
+        sent: Number(result.sent ?? 0),
+        failed: Number(result.failed ?? 0),
+      });
       toast.success(
         `Told ${result.sent} ${result.sent === 1 ? "creator" : "creators"}.` +
           (result.failed ? ` ${result.failed} did not go through.` : ""),
       );
       await router.refresh();
     } catch {
-      toast.error("We could not reach the server.");
+      // The answer was lost, not necessarily the send.
+      toast.error("We lost the answer. Checking whether the email went out.");
+      await router.refresh();
     } finally {
       setBusy(false);
     }
@@ -950,9 +1025,13 @@ export function VoteRoundPanel({
         ) : (
           <>
             {/* Offered only while the round is actually taking ballots, and
-                only once: the route refuses a second press and the audit
-                row is what remembers. */}
-            {!announced &&
+                only once per round: the audit row is what remembers, and
+                once it exists the button gives way to when it was sent.
+                Next week's round is a new round with no row, so the button
+                is back for it. The route refuses a second press as well. */}
+            {told ? (
+              <ToldLine told={told} />
+            ) : (
               new Date(round.opensAt).getTime() <= Date.now() &&
               new Date(round.closesAt).getTime() > Date.now() && (
                 <Confirm
@@ -964,7 +1043,8 @@ export function VoteRoundPanel({
                   pending={busy}
                   onConfirm={announceVote}
                 />
-              )}
+              )
+            )}
             <Confirm
               key="close-vote"
               label="Close the vote"
