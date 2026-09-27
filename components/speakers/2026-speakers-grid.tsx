@@ -23,6 +23,11 @@ function titleWithoutCompany(title: string, company?: string) {
     : title;
 }
 
+/** A chip reached by Tab is scrolled fully into the phone's chip row. */
+function revealChip(event: React.FocusEvent<HTMLButtonElement>) {
+  event.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
 export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
   const [selectedExpertise, setSelectedExpertise] = useState<string | null>(
     null
@@ -55,16 +60,23 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
         {expertiseOptions.length > 1 && (
           /* One row that scrolls sideways on a phone, where wrapping put
              five rows of chips above the first speaker; wraps from sm up.
-             The negative margin lets the row run to the screen edge so the
-             cut-off chip shows there is more. */
+             - Runs to the screen edge and fades out there, so the row reads
+               as continuing at every width. A chip cut by the edge only
+               happened at some widths; at 320px the edge fell between two.
+             - A little room above and below, so a focus ring is not clipped
+               by the scroller.
+             - Scrollbar hidden on touch screens only: a mouse in a narrow
+               window has nothing else to drag.
+             - scroll-px keeps a chip scrolled into view clear of the edges. */
           <div
-            className="-mx-4 mb-10 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 lg:mb-12 [&::-webkit-scrollbar]:hidden"
+            className="-mx-4 -mt-1 mb-10 flex scroll-px-4 gap-2 overflow-x-auto py-1 pl-4 pr-12 [mask-image:linear-gradient(to_right,black_85%,transparent)] pointer-coarse:[scrollbar-width:none] sm:mx-0 sm:mt-0 sm:flex-wrap sm:overflow-visible sm:p-0 sm:[mask-image:none] lg:mb-12 pointer-coarse:[&::-webkit-scrollbar]:hidden"
             role="group"
             aria-label="Filter speakers by expertise"
           >
             <button
               type="button"
               onClick={() => setSelectedExpertise(null)}
+              onFocus={revealChip}
               aria-pressed={selectedExpertise === null}
               className={`min-h-11 shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${selectedExpertise === null
                 ? "border-brand-blue bg-brand-blue text-white"
@@ -78,6 +90,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                 type="button"
                 key={expertise}
                 onClick={() => setSelectedExpertise(expertise)}
+                onFocus={revealChip}
                 aria-pressed={selectedExpertise === expertise}
                 className={`min-h-11 shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${selectedExpertise === expertise
                   ? "border-brand-blue bg-brand-blue text-white"
@@ -97,9 +110,12 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
             const bioTeaser = speaker.bio?.split("\n\n")[0];
 
             return (
+              /* The ring is on the card: the profile link covering it is
+                 clipped by the card's rounded overflow, so its own outline
+                 never showed. */
               <div
                 key={speaker.name}
-                className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow duration-300 hover:shadow-lg"
+                className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow duration-300 hover:shadow-lg has-[>a:focus-visible]:ring-2 has-[>a:focus-visible]:ring-brand-blue has-[>a:focus-visible]:ring-offset-2"
               >
                 <Link
                   href={`/speakers/${slug}`}
@@ -114,8 +130,13 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                     src={speaker.image}
                     alt={`${speaker.name} - ${speaker.title}`}
                     fill
-                    className={`object-cover transition-transform duration-500 group-hover:scale-105 ${speaker.imagePosition || "object-top"}`}
+                    // The phone frame is 4:3, shorter than the square above it,
+                    // so it is framed a fifth of the way down rather than at the
+                    // very top: object-top cut a tall portrait off at the mouth.
+                    className={`object-cover transition-transform duration-500 group-hover:scale-105 ${speaker.imagePosition || "object-[50%_20%] sm:object-top"}`}
                     sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
+                    // The first portrait is the page's largest paint.
+                    priority={speaker === speakers[0]}
                   />
                   {speaker.expertise?.[0] && (
                     <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-900 backdrop-blur-sm">

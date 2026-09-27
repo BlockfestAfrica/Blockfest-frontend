@@ -12,43 +12,51 @@ import { XBadge } from "../icons/xbadge";
 
 /*
  * Each tier is drawn a clear step smaller than the one above it: the plate,
- * the logo inside it, and the width it may take. Headline, silver and
- * mobility used to sit in near-identical white boxes stacked down the middle,
- * so the one sponsor paying for the headline read the same as the rest.
+ * the logo inside it, and the share of the column it takes. Headline, silver
+ * and mobility used to sit in near-identical white boxes stacked down the
+ * middle, so the one sponsor paying for the headline read the same as the
+ * rest.
  *
- * Widths are per item, in a centred wrapping row, so one sponsor in a tier
- * sits centred at its tier's size and more of them sit side by side.
+ * Widths are fractions of one shared column, not fixed sizes, so a tier with
+ * several sponsors fills an even row (two gold, three silver, four bronze,
+ * five official to a row on a laptop) and every tier spans the same column.
+ * Fixed widths wrapped differently per tier: three gold stacked into a narrow
+ * column on a tablet while silver below spread wider, which reads as
+ * scattered. A lone sponsor keeps its tier's share, centred, so one gold is
+ * still wider than one silver.
+ *
+ * Gap is 1rem, so n to a row is calc(100%/n - (n-1)rem/n).
  */
 const TIER = {
   headline: {
-    item: "w-full max-w-3xl",
+    item: "w-full max-w-3xl md:[&:not(:only-child)]:w-[calc(50%-0.5rem)]",
     plate: "h-28 sm:h-40 lg:h-44 rounded-2xl ring-1 ring-brand-gold/50 shadow-[0_0_56px_-16px_rgba(242,203,69,0.45)]",
     logo: "h-14 sm:h-20 lg:h-24",
-    sizes: "(min-width: 768px) 480px, 80vw",
+    sizes: "(min-width: 1024px) 720px, (min-width: 640px) calc(100vw - 80px), 80vw",
   },
   gold: {
-    item: "w-[90%] sm:w-[24rem]",
+    item: "w-[85%] sm:w-[calc(50%-0.5rem)] lg:[&:not(:only-child)]:w-[calc(33.333%-0.667rem)]",
     plate: "h-24 sm:h-32 rounded-2xl ring-1 ring-[#D7A64B]/40",
     logo: "h-12 sm:h-16",
-    sizes: "(min-width: 640px) 320px, 70vw",
+    sizes: "(min-width: 640px) 440px, 85vw",
   },
   silver: {
-    item: "w-[78%] sm:w-[20rem]",
+    item: "w-[calc(50%-0.5rem)] only:w-[70%] sm:w-[calc(33.333%-0.667rem)] sm:only:w-[calc(33.333%-0.667rem)]",
     plate: "h-20 sm:h-28 rounded-2xl",
     logo: "h-10 sm:h-14",
-    sizes: "(min-width: 640px) 260px, 60vw",
+    sizes: "(min-width: 640px) 300px, 70vw",
   },
   bronze: {
-    item: "w-[calc(50%-0.5rem)] sm:w-[15rem]",
+    item: "w-[calc(50%-0.5rem)] sm:w-[calc(25%-0.75rem)]",
     plate: "h-16 sm:h-24 rounded-xl",
     logo: "h-8 sm:h-11",
-    sizes: "(min-width: 640px) 200px, 40vw",
+    sizes: "(min-width: 640px) 220px, 45vw",
   },
   official: {
-    item: "w-[calc(50%-0.5rem)] sm:w-[14rem]",
-    plate: "h-16 sm:h-20 rounded-xl",
-    logo: "h-8 sm:h-10",
-    sizes: "(min-width: 640px) 180px, 40vw",
+    item: "w-[calc(50%-0.5rem)] sm:w-[calc(25%-0.75rem)] lg:w-[calc(20%-0.8rem)]",
+    plate: "h-14 sm:h-20 rounded-xl",
+    logo: "h-7 sm:h-10",
+    sizes: "(min-width: 640px) 180px, 45vw",
   },
 } as const;
 
@@ -91,7 +99,9 @@ function SponsorPlate({ sponsor, tier }: { sponsor: PartnerLogo; tier: TierName 
       href={sponsor.twitter}
       target="_blank"
       rel="noopener noreferrer"
-      className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-ground"
+      // w-full so a linked plate fills its slot exactly as an unlinked one
+      // does; without it the link shrank to the logo inside a column flex.
+      className="block w-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-ground"
     >
       {plate}
       <span className="sr-only"> on X (opens in a new tab)</span>
@@ -146,7 +156,7 @@ function OfficialTier({ partners: official = [] }: { partners?: OfficialPartner[
           <li key={partner.logo} className={`${TIER.official.item} flex flex-col items-center gap-2`}>
             <SponsorPlate sponsor={partner} tier="official" />
             {!single && (
-              <p className="text-xs font-semibold uppercase tracking-wider text-ink-3">
+              <p className="text-center text-xs font-semibold uppercase tracking-wider text-ink-3">
                 {partner.role}
               </p>
             )}
@@ -157,15 +167,25 @@ function OfficialTier({ partners: official = [] }: { partners?: OfficialPartner[
   );
 }
 
+/**
+ * Community, media and ecosystem partners: the smallest tier, as dark tiles.
+ *
+ * A step below the official sponsors at every width, in the same centred
+ * column and under the same kind of label. They used to be a left-aligned,
+ * full-width grid with its own large heading and a count, bigger logos than
+ * the bronze and official sponsors above them, which outranked the paying
+ * tiers the moment the lists were filled in.
+ */
 function PartnerCard({ name, logo, twitter }: PartnerLogo) {
   const card = (
-    <div className="group relative flex h-20 items-center justify-center overflow-hidden rounded-xl border border-line-2 bg-card-2 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D7A64B]/50 hover:bg-card-3 hover:shadow-[0_0_24px_-6px_rgba(215,166,75,0.35)] lg:h-24">
+    <div className="group relative flex h-12 w-full items-center justify-center overflow-hidden rounded-xl border border-line-2 bg-card-2 px-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D7A64B]/50 hover:bg-card-3 hover:shadow-[0_0_24px_-6px_rgba(215,166,75,0.35)] sm:h-16">
       <Image
         src={logo}
         alt={name}
         width={160}
         height={64}
-        className="h-10 w-auto object-contain grayscale-15 transition-all duration-300 group-hover:grayscale-0 lg:h-14"
+        sizes="(min-width: 640px) 140px, 30vw"
+        className="h-6 w-auto max-w-full object-contain grayscale-15 transition-all duration-300 group-hover:grayscale-0 sm:h-8"
       />
       {twitter && <XBadge />}
     </div>
@@ -177,7 +197,7 @@ function PartnerCard({ name, logo, twitter }: PartnerLogo) {
         href={twitter}
         target="_blank"
         rel="noopener noreferrer"
-        className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7A64B]/60"
+        className="block w-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7A64B]/60"
       >
         {card}
         <span className="sr-only"> on X (opens in a new tab)</span>
@@ -192,25 +212,25 @@ function PartnerGroup({ label, items = [] }: { label: string; items?: PartnerLog
   if (items.length === 0) return null;
 
   return (
-    <div className="mb-12 lg:mb-16">
-      <div className="mb-5 flex items-baseline justify-between lg:mb-6">
-        <h3 className="text-xl font-bold text-white lg:text-2xl">{label}</h3>
-        <span className="text-sm font-medium text-ink-4">{items.length}</span>
-      </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6 lg:gap-4">
+    <div className="flex w-full flex-col items-center gap-6 sm:gap-8">
+      <TierLabel className="text-ink-3">{label}</TierLabel>
+      {/* Gap 0.75rem: three to a row on a phone, five from sm, six from lg. */}
+      <ul className="flex w-full flex-wrap justify-center gap-3">
         {items.map((item) => (
-          <PartnerCard key={item.logo} {...item} />
+          <li
+            key={item.logo}
+            className="w-[calc(33.333%-0.5rem)] sm:w-[calc(20%-0.6rem)] lg:w-[calc(16.666%-0.625rem)]"
+          >
+            <PartnerCard {...item} />
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
 
 export function PartnersSection2026() {
   useSubtleAnimations();
-
-  const groups = [partners.community, partners.media, partners.ecosystem];
-  const hasGroups = groups.some((g) => (g?.length ?? 0) > 0);
 
   return (
     <section className="section-y border-t border-line-2 bg-ground">
@@ -232,15 +252,10 @@ export function PartnersSection2026() {
           <Tier tier="silver" label="Silver" labelClassName="text-ink-2" sponsors={partners.silver} />
           <Tier tier="bronze" label="Bronze" labelClassName="text-ink-3" sponsors={partners.bronze} />
           <OfficialTier partners={partners.official} />
+          <PartnerGroup label="Community Partners" items={partners.community} />
+          <PartnerGroup label="Media Partners" items={partners.media} />
+          <PartnerGroup label="Ecosystem Partners" items={partners.ecosystem} />
         </div>
-
-        {hasGroups && (
-          <div className="scale-in mt-16 w-full lg:mt-20">
-            <PartnerGroup label="Community Partners" items={partners.community} />
-            <PartnerGroup label="Media Partners" items={partners.media} />
-            <PartnerGroup label="Ecosystem Partners" items={partners.ecosystem} />
-          </div>
-        )}
       </div>
     </section>
   );

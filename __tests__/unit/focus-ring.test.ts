@@ -51,8 +51,16 @@ function classAttributes(file: string): string[] {
   ];
 }
 
-/** Removal is fine when the same element declares a ring in its place. */
-const replaced = (cls: string) => /focus-visible:ring-|focus:ring-/.test(cls);
+/**
+ * Removal is fine when the same element declares a ring in its place, or when
+ * the element is a `group` and the file draws the ring on a child with
+ * group-focus-visible. The home carousel does that: its slide link's own ring
+ * was clipped by the carousel's overflow into two loose lines, so the ring is
+ * drawn on the card inside the link instead.
+ */
+const replaced = (cls: string, src = "") =>
+  /focus-visible:ring-|focus:ring-/.test(cls) ||
+  (/(^|\s)group(\s|$)/.test(cls) && /group-focus-visible:ring-/.test(src));
 
 describe("the focus ring", () => {
   it("is declared once, site-wide", () => {
@@ -77,9 +85,10 @@ describe("the focus ring", () => {
     const offenders: string[] = [];
 
     for (const file of filesUnder(["app", "components"])) {
+      const src = code(file);
       for (const cls of classAttributes(file)) {
         if (!/\boutline-none\b/.test(cls)) continue;
-        if (replaced(cls)) continue;
+        if (replaced(cls, src)) continue;
         offenders.push(`${file}: ${cls.slice(0, 90)}`);
       }
     }
@@ -93,5 +102,9 @@ describe("the focus ring", () => {
   it("knows the difference, so it cannot pass by seeing nothing", () => {
     expect(replaced("focus-visible:outline-none focus-visible:ring-2")).toBe(true);
     expect(replaced("focus:outline-none focus:border-brand-gold")).toBe(false);
+    // A group passes only when a child actually draws the ring.
+    expect(replaced("group focus-visible:outline-none", "group-focus-visible:ring-2")).toBe(true);
+    expect(replaced("group focus-visible:outline-none", "group-hover:bg-card-3")).toBe(false);
+    expect(replaced("focus-visible:outline-none", "group-focus-visible:ring-2")).toBe(false);
   });
 });

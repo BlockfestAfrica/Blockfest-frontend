@@ -30,7 +30,9 @@ export function SpeakersSection() {
   return (
     <section className="section-y bg-ground border-t border-line-2">
       <div className="container-page">
-        <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between lg:mb-14">
+        {/* baseline-last puts the link on the description's last line; items-end
+            lined up the bottom of its 44px tap area instead, a line too high. */}
+        <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-baseline-last sm:justify-between lg:mb-14">
           <div>
             <p className="eyebrow text-ink-3">
               {hasAnnouncedSpeakers ? "2026 SPEAKERS" : "OUR SPEAKERS"}

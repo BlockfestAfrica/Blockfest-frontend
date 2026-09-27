@@ -99,12 +99,20 @@ const Speakers: React.FC<PropType> = (props) => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
         return;
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        emblaApi.scrollPrev();
-      } else if (event.key === "ArrowRight") {
-        event.preventDefault();
-        emblaApi.scrollNext();
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      // Focus on a slide goes with the slide shown. Left where it was, it
+      // sat on a card now scrolled out of view, with no ring anywhere.
+      const fromSlide =
+        event.target instanceof HTMLElement &&
+        event.target.closest('[aria-roledescription="slide"]') !== null;
+      if (event.key === "ArrowLeft") emblaApi.scrollPrev();
+      else emblaApi.scrollNext();
+      if (fromSlide) {
+        emblaApi
+          .slideNodes()
+          [emblaApi.selectedScrollSnap()]?.querySelector<HTMLElement>("a")
+          ?.focus({ preventScroll: true });
       }
     };
 
@@ -160,12 +168,15 @@ const Speakers: React.FC<PropType> = (props) => {
               aria-roledescription="slide"
               aria-label={`${index + 1} of ${speakers.length}`}
             >
+              {/* The focus ring is drawn on the card. On the link it was clipped
+                  by the carousel's overflow into two loose vertical lines
+                  outside the card. */}
               <Link
                 href="/speakers"
-                className="block group cursor-pointer w-full"
+                className="block group cursor-pointer w-full focus-visible:outline-none"
                 aria-label={`View all speakers including ${speaker.name}`}
               >
-                <div className="mx-auto flex h-full w-full max-w-4xl flex-col justify-center rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3 md:p-8">
+                <div className="mx-auto flex h-full w-full max-w-4xl flex-col justify-center rounded-xl border border-line-2 bg-card-2 p-6 transition-colors duration-300 hover:bg-card-3 group-focus-visible:ring-2 group-focus-visible:ring-inset group-focus-visible:ring-brand-blue-light md:p-8">
                   <div className="flex items-center justify-center md:justify-between gap-6 flex-col-reverse md:flex-row text-center md:text-left">
                     {/* basis-0 + flex-1 so the text takes whatever the portrait
                         leaves. The old md:basis-[60%] against the portrait's
@@ -173,9 +184,10 @@ const Speakers: React.FC<PropType> = (props) => {
                     <div className="flex w-full min-w-0 flex-1 basis-full flex-col items-center text-white md:w-auto md:basis-0 md:items-start">
                       {/* 3xl moved from md to lg: at 768px the widest names were
                           wider than their own column. */}
-                      <h2 className="text-xl min-[360px]:text-2xl lg:text-3xl xl:text-5xl font-bold uppercase tracking-tight leading-tight wrap-break-word">
+                      {/* h3: the section's own title is the h2. */}
+                      <h3 className="text-xl min-[360px]:text-2xl lg:text-3xl xl:text-5xl font-bold uppercase tracking-tight leading-tight wrap-break-word">
                         {speaker.name}
-                      </h2>
+                      </h3>
                       <p className="mt-3 text-sm md:text-lg xl:text-2xl leading-relaxed text-ink-3 md:mt-4">
                         {speaker.title}
                       </p>
