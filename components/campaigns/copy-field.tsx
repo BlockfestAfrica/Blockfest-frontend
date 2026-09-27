@@ -1,27 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { buttonClass } from "@/components/shared/panel";
 
 /**
- * A value to copy, with the button next to it.
+ * A value to copy, as one row of a card: the value itself, whole and
+ * selectable, and Copy (and Share, where the phone has a share sheet) at the
+ * right hand as ordinary secondary buttons.
  *
- * Extracted from the registration success screen, where a creator gets their
- * referral link and can copy it in one tap. Their own page printed a bare
- * referral code with the words "Share it" and nothing to share, while the
- * registration screen had already promised "Your referral link will be on your
- * dashboard shortly".
+ * Their own page once printed a bare referral code with the words "Share
+ * it" and nothing to share, while the registration screen had already
+ * promised "Your referral link will be on your dashboard shortly". The value
+ * wraps rather than truncates, because the clipboard fallback asks people to
+ * select it and copy it by hand. Share was gold, an action wearing the
+ * status colour; it is secondary now.
  *
  * The analytics event is a prop with no default, deliberately. The first
  * version of this reused the referral block's event name, which would have
- * fired a label about sharing every time somebody copied their access link. An
- * access link is a credential and copying one should not be measured at all,
- * so that call site passes nothing.
+ * fired a label about sharing every time somebody copied their access link.
+ * An access link is a credential and copying one should not be measured at
+ * all, so a call site like that passes nothing.
  */
 export function CopyField({
   value,
   label,
+  hint,
   onCopied,
   shareTitle,
   shareText,
@@ -29,6 +34,8 @@ export function CopyField({
   value: string;
   /** For screen readers, since the button itself just says Copy. */
   label: string;
+  /** One quiet line under the value. */
+  hint?: string;
   /** Fired after a successful copy. Omit where measuring would be wrong. */
   onCopied?: () => void;
   /** When given, offers the native share sheet, which is how phones share. */
@@ -36,6 +43,15 @@ export function CopyField({
   shareText?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  /*
+   * Asked after mount, not during render. The server has no navigator, so a
+   * render-time check drew no Share on the server and a Share on a phone's
+   * first client render, and the two disagreed.
+   */
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => {
+    if (typeof navigator.share === "function") setCanShare(true);
+  }, []);
 
   async function copy() {
     try {
@@ -53,35 +69,26 @@ export function CopyField({
 
   async function share() {
     try {
-      await navigator.share({
-        title: shareTitle,
-        text: shareText,
-        url: value,
-      });
+      await navigator.share({ title: shareTitle, text: shareText, url: value });
     } catch {
       // Includes the user simply dismissing the sheet, so this stays silent.
     }
   }
 
-  const canShare =
-    typeof navigator !== "undefined" && typeof navigator.share === "function";
-
   return (
-    <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-      {/* w-full matters as much as min-w-0 here. Once this row stacks at narrow
-          widths the flex main axis is vertical, so min-w-0 no longer constrains
-          the width, and a nowrap URL contributes its full length as the
-          container's cross size. The card then grows past the viewport and
-          html/body clip it, cutting the whole page rather than the URL. */}
-      <code className="w-full min-w-0 flex-1 truncate rounded-lg border border-line-2 bg-ground px-4 py-3 text-sm text-white">
-        {value}
-      </code>
-      <div className="flex gap-2">
+    <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
+      {/* w-full as well as min-w-0: once this row stacks, the main axis is
+          vertical and min-w-0 no longer constrains the width. */}
+      <div className="w-full min-w-0 sm:flex-1">
+        <p className="text-sm text-ink-2 [overflow-wrap:anywhere]">{value}</p>
+        {hint && <p className="mt-1 text-sm text-ink-3">{hint}</p>}
+      </div>
+      <div className="flex shrink-0 gap-2">
         <button
           type="button"
           onClick={copy}
           aria-label={label}
-          className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-card-3 px-5 text-sm font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-card-3 active:scale-[0.98] sm:flex-none"
+          className={buttonClass("secondary", "min-w-24 flex-1 sm:flex-none")}
         >
           {copied ? (
             <Check className="h-4 w-4" aria-hidden="true" />
@@ -94,7 +101,7 @@ export function CopyField({
           <button
             type="button"
             onClick={share}
-            className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-gold px-5 text-sm font-semibold text-black transition-[background-color,transform] duration-150 hover:bg-brand-gold-hover active:scale-[0.98]"
+            className={buttonClass("secondary", "min-w-24 flex-1 sm:flex-none")}
           >
             <Share2 className="h-4 w-4" aria-hidden="true" />
             Share

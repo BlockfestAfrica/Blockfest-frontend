@@ -71,12 +71,17 @@ export default async function WinnersPage() {
               two different things, announced winners and the weekly vote,
               and an unlabelled empty page taught neither: a visitor saw
               "Winners" and two loose paragraphs with no shape of what
-              arrives where. */}
-          <WeeklyWinners winners={winners} />
+              arrives where. It is told which round the ballot below is
+              showing, so that week can say its Community Favourite is
+              being voted on. */}
+          <WeeklyWinners
+            winners={winners}
+            vote={round ? { weekNo: round.weekNo, state: voteState } : null}
+          />
 
           {/* The shortlist, as one ballot (components/campaigns/ballot.tsx
               says why it is not a card per nominee any more). */}
-          <section id="shortlist" className="mt-16 scroll-mt-24">
+          <section id="shortlist" className="mt-12 scroll-mt-24">
             <SectionHeading
               // The eyebrow must not say "Open now" above a line that says
               // voting has closed, nor above a ballot the engine will
@@ -120,9 +125,9 @@ export default async function WinnersPage() {
           <LiveVoteCount />
           </section>
 
-          <p className="mt-14 max-w-prose text-sm leading-relaxed text-ink-3">
-            Creator of the Week is selected by Blockfest Africa; Community
-            Favourite is decided by public vote. How points are earned is in the{" "}
+          {/* Who decides each award is said once, in the weekly hint. */}
+          <p className="mt-10 max-w-prose text-sm leading-relaxed text-ink-3">
+            How points are earned is in the{" "}
             <Link
               href={monicaRoutes.rules}
               className="text-link underline underline-offset-2 hover:text-white"

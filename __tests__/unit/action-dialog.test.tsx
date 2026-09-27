@@ -223,7 +223,7 @@ describe("the other places an action opened out of sight", () => {
   it("scrolls an expanded review row, rule editor and handle form into view", () => {
     expect(read("components/admin/review-queue.tsx")).toMatch(/reveal\(document\.getElementById\(`review-\$\{open\}`\)\)/);
     expect(read("components/admin/point-rules-editor.tsx")).toMatch(/reveal\(fields,/);
-    expect(read("components/campaigns/handle-fix.tsx")).toMatch(/reveal\(\s*document\.getElementById\(`handle-fix-\$\{open\}`\)/);
+    expect(read("components/campaigns/account-rows.tsx")).toMatch(/reveal\(\s*document\.getElementById\(`handle-fix-\$\{open\.platform\}`\)/);
   });
 });
 

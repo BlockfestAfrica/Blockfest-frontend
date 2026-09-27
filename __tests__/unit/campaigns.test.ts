@@ -19,6 +19,7 @@ import { join } from "node:path";
 import {
   MONICA_CAMPAIGN_DAYS,
   MONICA_FIRST_LEADERBOARD,
+  MONICA_FIRST_LEADERBOARD_ENDS,
   campaignBySlug,
   campaignRun,
   campaigns,
@@ -329,6 +330,24 @@ describe("what we publish about the leaderboard", () => {
     // Naming a Saturday here while promising Sunday announcements is the same
     // contradiction wearing a date.
     expect(MONICA_FIRST_LEADERBOARD).toMatch(/^Sunday /);
+  });
+
+  it("ends the first standings' day at the Lagos midnight after the day it names", () => {
+    // The label and the instant move together: copy stops naming the day at
+    // this instant, so it has to be the end of that same day.
+    const ends = new Date(MONICA_FIRST_LEADERBOARD_ENDS);
+    const lastSecond = new Date(ends.getTime() - 1000);
+    expect(
+      lastSecond.toLocaleDateString("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        timeZone: "Africa/Lagos",
+      }),
+    ).toBe(MONICA_FIRST_LEADERBOARD);
+    expect(
+      ends.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" }),
+    ).toBe("00:00");
   });
 
   it("keeps the leaderboard page genuinely live", () => {

@@ -87,6 +87,34 @@ describe("BallotRow", () => {
     expect(screen.queryByText("X")).toBeNull();
   });
 
+  it("lists the marks X, Instagram, TikTok, whatever order the links arrive in", () => {
+    // Phones have no platform cells, so the order is the only thing that
+    // lines the ballot up with the weekly winners above it.
+    render(
+      <BallotRows
+        entries={[
+          {
+            ...ENTRY("Ada Obi", "a"),
+            links: [
+              { platform: "tiktok", url: "https://tiktok.com/@a/video/2" },
+              { platform: "instagram", url: "https://instagram.com/p/a/" },
+              { platform: "x", url: "https://x.com/a/status/1" },
+            ],
+          },
+        ]}
+        votingOpen
+      />,
+    );
+    const entry = screen.getByRole("list", { name: "Ada Obi's entry" });
+    expect(
+      Array.from(entry.querySelectorAll("a")).map((a) => a.getAttribute("aria-label")),
+    ).toEqual([
+      "Ada Obi on X (opens in a new tab)",
+      "Ada Obi on Instagram (opens in a new tab)",
+      "Ada Obi on TikTok (opens in a new tab)",
+    ]);
+  });
+
   it("lists the nominees without a button before the open and after the close", () => {
     ballot(false);
     expect(screen.getByText("Ada Obi")).toBeTruthy();

@@ -55,16 +55,18 @@ describe("the success screen tells the truth", () => {
 
 describe("the paste point names the account rule", () => {
   it("the form can print the registered handle for the chosen platform", () => {
-    const sub = read("components/campaigns/submission-form.tsx");
-    expect(sub).toMatch(/It has to be a post from @/);
-    // The platform the form will send, not the raw select state, which can
-    // still name a platform that has left the list.
-    expect(sub).toContain("handles?.[selected]");
+    const rows = read("components/campaigns/week-rows.tsx");
+    expect(rows).toMatch(/It has to be a post from @/);
+    // The platform the form will send: each row's form is handed that
+    // row's platform and that row's account, so they cannot disagree.
+    expect(rows).toContain("handle={row.handle}");
+    expect(rows).toContain("platform={row.platform}");
   });
 
   it("the page hands it the handles it already loaded", () => {
     // The signed-in view moved out of me/page.tsx into its own component.
     const me = read("components/campaigns/me-dashboard.tsx");
-    expect(me).toMatch(/handles=\{Object\.fromEntries/);
+    expect(me).toMatch(/Object\.fromEntries\(\s*handles\.map/);
+    expect(me).toMatch(/handle: handleOf\[platform\]/);
   });
 });
