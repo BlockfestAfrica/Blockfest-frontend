@@ -155,9 +155,17 @@ export async function POST(request: NextRequest) {
    * rule the response line above enforces. Fail-soft, to the address as
    * typed: a lost receipt costs nothing, the vote is already in.
    */
+  /*
+   * Which nominee the code confirmed. The code names an address, not a
+   * nominee, and a second cast moves the pending vote, so the page cannot
+   * know which row it confirmed unless it is told. The person holding the
+   * code already knows their own choice and the receipt names it, so this
+   * says nothing new; it is the same for a counted and a held vote.
+   */
+  let confirmed: string | undefined;
   try {
     const meta = await getDb().execute(sql`
-      SELECT c.full_name AS display_name, ch.week_no, r.closes_at
+      SELECT v.nominee_id, c.full_name AS display_name, ch.week_no, r.closes_at
         FROM votes v
         JOIN vote_rounds r         ON r.id = v.round_id
         JOIN vote_round_nominees n ON n.id = v.nominee_id
@@ -178,10 +186,12 @@ export async function POST(request: NextRequest) {
        and a verified_at, so the filter changes nothing between counted and
        held, which is the uniformity the comment above promises. */
     const row = (meta.rows?.[0] ?? null) as {
+      nominee_id?: string;
       display_name?: string;
       week_no?: number;
       closes_at?: string | Date;
     } | null;
+    if (row?.nominee_id) confirmed = String(row.nominee_id);
     if (row?.display_name) {
       await sendEmailQuietly(
         voteReceiptEmail({
@@ -197,5 +207,5 @@ export async function POST(request: NextRequest) {
     logError("campaign/vote receipt mail", error);
   }
 
-  return NextResponse.json({ ok: true, message: "Your vote is in." });
+  return NextResponse.json({ ok: true, message: "Your vote is in.", nomineeId: confirmed });
 }

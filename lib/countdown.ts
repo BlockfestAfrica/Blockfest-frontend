@@ -46,7 +46,12 @@ export function hasPassed(targetDate: string): boolean {
 export function formatTimeLeft(endsAt: string): string {
   const { days, hours, minutes } = calculateTimeLeft(endsAt);
 
-  if (days === 0 && hours === 0 && minutes === 0) return "Closed";
+  // "Closed" only once it has: the last minute floors to zero minutes while
+  // the window is still open, and a clock reading Closed above a ballot
+  // that still takes votes is two statements disagreeing.
+  if (days === 0 && hours === 0 && minutes === 0) {
+    return hasPassed(endsAt) ? "Closed" : "Under a minute left";
+  }
   if (days >= 2) return `${days} days left`;
   if (days === 1) return `1 day, ${hours}h left`;
   if (hours >= 1) return `${hours}h ${minutes}m left`;

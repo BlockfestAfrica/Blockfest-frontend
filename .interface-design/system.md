@@ -108,3 +108,26 @@ plain `border-line-2 bg-card` card.
   and it had already drifted on three counts by review time. If a file needs
   the control recipe, it imports `control`; a divergence is a proposal to
   change the system, made here, not a private fork.
+
+### A list of like things is one contained list, not a card each
+
+The public Community Favourite ballot was a card per nominee: four mostly
+empty boxes, "Week 1" printed on each, underlined text links with arrow
+icons, and a Vote pill as wide as the card. The owner's verdict: "This is
+ugly." It is now one hairline card (`border-line-2 bg-card`) with the
+round's state in a header row and one row per nominee divided by
+`divide-line`: the name leading, the entry as platform marks, and a
+compact Vote at the row's right hand that opens the form in place. The
+row's left edge carries its state (gold while voting, green once in).
+
+- Platform links are marks, not words: fa6 icons in `rounded-full
+  border-line-2` chips (PLATFORM_ICON in components/shared/platform-icon.ts,
+  shared by the leaderboard, the admin picker and the ballot), each with an
+  accessible name saying whose post and where.
+- A fact that is true of the whole list (the week, the close time, the
+  rule) is said once, above or in the list's header, never on every row.
+- The same list shape holds in every state the list is shown in: before
+  the open, and after the scheduled close until the round is closed in the
+  console, the rows stay and only the buttons go.
+- One row open at a time where the rows share one underlying action (one
+  pending vote per address): opening a row closes any other.
