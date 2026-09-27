@@ -8,7 +8,6 @@ import {
   type OfficialPartner,
   type PartnerLogo,
 } from "@/lib/partners-2026";
-import { XBadge } from "../icons/xbadge";
 
 /*
  * Each tier is drawn a clear step smaller than the one above it: the plate,
@@ -57,6 +56,14 @@ const TIER = {
     plate: "h-14 sm:h-20 rounded-xl",
     logo: "h-7 sm:h-10",
     sizes: "(min-width: 640px) 180px, 45vw",
+  },
+  // Community, media and ecosystem. Gap 0.75rem here: three to a row on a
+  // phone, five from sm, six from lg.
+  community: {
+    item: "w-[calc(33.333%-0.5rem)] sm:w-[calc(20%-0.6rem)] lg:w-[calc(16.666%-0.625rem)]",
+    plate: "h-12 sm:h-16 rounded-xl",
+    logo: "h-6 sm:h-8",
+    sizes: "(min-width: 640px) 140px, 30vw",
   },
 } as const;
 
@@ -115,7 +122,7 @@ function Tier({
   labelClassName,
   sponsors = [],
 }: {
-  tier: Exclude<TierName, "official">;
+  tier: Exclude<TierName, "official" | "community">;
   label: string;
   labelClassName: string;
   sponsors?: PartnerLogo[];
@@ -168,60 +175,24 @@ function OfficialTier({ partners: official = [] }: { partners?: OfficialPartner[
 }
 
 /**
- * Community, media and ecosystem partners: the smallest tier, as dark tiles.
+ * Community, media and ecosystem partners: the smallest tier.
  *
- * A step below the official sponsors at every width, in the same centred
- * column and under the same kind of label. They used to be a left-aligned,
- * full-width grid with its own large heading and a count, bigger logos than
- * the bronze and official sponsors above them, which outranked the paying
- * tiers the moment the lists were filled in.
+ * On the same white plate as every sponsor above, a step below the official
+ * sponsors at every width, in the same centred column under the same kind of
+ * label. They used to be last year's dark tiles, greyed out with an X badge in
+ * the corner, which made the 2026 section two styles at once; and before that
+ * a left-aligned full-width grid whose logos outranked the paying tiers.
  */
-function PartnerCard({ name, logo, twitter }: PartnerLogo) {
-  const card = (
-    <div className="group relative flex h-12 w-full items-center justify-center overflow-hidden rounded-xl border border-line-2 bg-card-2 px-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D7A64B]/50 hover:bg-card-3 hover:shadow-[0_0_24px_-6px_rgba(215,166,75,0.35)] sm:h-16">
-      <Image
-        src={logo}
-        alt={name}
-        width={160}
-        height={64}
-        sizes="(min-width: 640px) 140px, 30vw"
-        className="h-6 w-auto max-w-full object-contain grayscale-15 transition-all duration-300 group-hover:grayscale-0 sm:h-8"
-      />
-      {twitter && <XBadge />}
-    </div>
-  );
-
-  if (twitter) {
-    return (
-      <Link
-        href={twitter}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block w-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7A64B]/60"
-      >
-        {card}
-        <span className="sr-only"> on X (opens in a new tab)</span>
-      </Link>
-    );
-  }
-
-  return card;
-}
-
 function PartnerGroup({ label, items = [] }: { label: string; items?: PartnerLogo[] }) {
   if (items.length === 0) return null;
 
   return (
     <div className="flex w-full flex-col items-center gap-6 sm:gap-8">
       <TierLabel className="text-ink-3">{label}</TierLabel>
-      {/* Gap 0.75rem: three to a row on a phone, five from sm, six from lg. */}
       <ul className="flex w-full flex-wrap justify-center gap-3">
         {items.map((item) => (
-          <li
-            key={item.logo}
-            className="w-[calc(33.333%-0.5rem)] sm:w-[calc(20%-0.6rem)] lg:w-[calc(16.666%-0.625rem)]"
-          >
-            <PartnerCard {...item} />
+          <li key={item.logo} className={TIER.community.item}>
+            <SponsorPlate sponsor={item} tier="community" />
           </li>
         ))}
       </ul>
