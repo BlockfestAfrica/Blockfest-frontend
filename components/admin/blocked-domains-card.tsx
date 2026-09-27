@@ -246,7 +246,7 @@ export function BlockedDomainsCard({ blocks }: { blocks: BlockedDomainView[] }) 
     try {
       const result = await post({ action: "unblock_domain", domain: block.domain, reason });
       if (!result) return;
-      toast.success(unblockToast(block.domain, Number(result.released ?? 0)));
+      toast.success(unblockToast(block.domain, Number(result.released ?? 0), block.held));
       // The row after this one, which the refresh keeps; this one leaves.
       const at = blocks.findIndex((b) => b.domain === block.domain);
       setFocusAfter({ domain: at >= 0 ? (blocks[at + 1]?.domain ?? null) : null });

@@ -694,8 +694,8 @@ describe("remove all as fraud", () => {
 });
 
 describe("the console's answers when an act cannot go through", () => {
-  it("says another owner is acting on the domain when Postgres breaks a deadlock", async () => {
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  it("says another owner is acting on the domain when Postgres breaks a deadlock, and leaves a trace", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     state.failDomainActs = "40P01";
     for (const body of [
       { action: "block_domain", domain: "oemails.com", reason: "x" },
@@ -709,11 +709,12 @@ describe("the console's answers when an act cannot go through", () => {
       },
     ]) {
       expect(await console_(body), body.action).toMatchObject({
-        status: 400,
+        status: 409,
         body: { ok: false, message: "Another owner is acting on this domain right now. Reload and try again." },
       });
     }
-    expect(error).not.toHaveBeenCalled();
+    // A deadlock means a lock-order bug somewhere; it must reach the logs.
+    expect(warn).toHaveBeenCalled();
   });
 
   it("takes a cluster of five hundred in one removal, which the shared four-kilobyte limit refused", async () => {
@@ -727,7 +728,7 @@ describe("the console's answers when an act cannot go through", () => {
     ).toMatchObject({ status: 200, body: { ok: true, domain: "oemails.com", removed: 2 } });
   });
 
-  it("tells an owner with a cluster over five hundred to block instead, not to reload", async () => {
+  it("tells an owner with a cluster over five hundred that it is too many, not to reload", async () => {
     const voteIds = Array.from(
       { length: 501 },
       (_, i) => `11111111-1111-4111-8111-${String(i).padStart(12, "0")}`,
@@ -736,7 +737,7 @@ describe("the console's answers when an act cannot go through", () => {
       await console_({ action: "remove_domain", roundId, domain: "oemails.com", reason: "Farm", voteIds }),
     ).toMatchObject({
       status: 400,
-      body: { ok: false, message: "Too many to remove at once; block the domain instead, which holds them all." },
+      body: { ok: false, message: "That is more than five hundred votes, too many to remove in one go." },
     });
     expect(await count(`SELECT count(*)::int AS n FROM vote_blocked_domains`)).toBe(0);
   });

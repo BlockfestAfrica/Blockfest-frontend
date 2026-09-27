@@ -105,8 +105,11 @@ export function removeAllConsequence(domain: string, isProtected = false): strin
  * counted vote from the domain in one act.
  */
 export const REMOVE_ALL_MAX_VOTES = 500;
+/* Factual, not advice: blocking is no answer on a reviewed round (its votes
+   keep counting) or on a domain already blocked, and a cluster this big is
+   most likely one of those. */
 export const REMOVE_ALL_TOO_MANY =
-  "Too many to remove at once; block the domain instead, which holds them all.";
+  "That is more than five hundred votes, too many to remove in one go.";
 
 export function removeAllToast(removed: number, domain: string): string {
   return `Removed ${removed} as fraud and blocked ${domain}.`;
@@ -143,11 +146,23 @@ export function blockToast(
  * ever counted); the rest stay held as over the ten.
  */
 export function unblockConsequence(domain: string, held: number): string {
+  if (held === 0) {
+    return `New votes from ${domain} are accepted again. The block holds no votes right now. Automatic blocking will not act on ${domain} again.`;
+  }
   return `New votes from ${domain} are accepted again. Of the ${held} ${held === 1 ? "vote" : "votes"} the block holds, those within its allowance of ten a round are released, oldest first; the rest wait as over the domain's ten. Votes removed as fraud stay removed and count toward that ten. Automatic blocking will not act on ${domain} again.`;
 }
 
-export function unblockToast(domain: string, released: number): string {
-  return `Unblocked ${domain}. ${released} held ${released === 1 ? "vote" : "votes"} released.`;
+/**
+ * What an unblock did. held is what the card showed the block holding;
+ * released is the engine's answer, which stops at the domain's ten a round,
+ * so the difference stays held and the toast says so rather than leaving
+ * the owner to find it in the held list.
+ */
+export function unblockToast(domain: string, released: number, held = released): string {
+  const stay = Math.max(0, held - released);
+  return `Unblocked ${domain}. ${released} held ${released === 1 ? "vote" : "votes"} released${
+    stay > 0 ? `; ${stay} stay held as over its ten` : ""
+  }.`;
 }
 
 /**

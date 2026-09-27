@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db/client";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { pgErrorCode } from "@/lib/db/errors";
-import { logError } from "@/lib/log";
+import { logError, logWarning } from "@/lib/log";
 import { MONICA_SLUG } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
 import { sendEmailQuietly } from "@/lib/email/client";
@@ -235,7 +235,6 @@ const MESSAGES: Record<string, string> = {
    * "something went wrong at our end". Nothing was written: the transaction
    * that got it rolled back whole.
    */
-  "40P01": "Another owner is acting on this domain right now. Reload and try again.",
   P0401: "Only a signed-in admin can do this.",
   P0002: "That campaign does not exist.",
   /* The one_round_per_week index, for two owners opening the same Sunday. */
@@ -549,6 +548,29 @@ export async function POST(request: NextRequest) {
             "That round's winner is announced, so its votes stay as they are.",
         },
         { status: 400 },
+      );
+    }
+
+    /*
+     * A deadlock Postgres had to break. The domain acts take their locks in
+     * one order (0069), so this should not happen; when it does, it is the
+     * one event worth a trace, and the owner is told to try again with words
+     * that fit what they pressed.
+     */
+    if (code === "40P01") {
+      logWarning("admin/vote-round deadlock", action.action);
+      const domainAct =
+        action.action === "block_domain" ||
+        action.action === "unblock_domain" ||
+        action.action === "remove_domain";
+      return NextResponse.json(
+        {
+          ok: false,
+          message: domainAct
+            ? "Another owner is acting on this domain right now. Reload and try again."
+            : "Another owner is changing this right now. Reload and try again.",
+        },
+        { status: 409 },
       );
     }
 

@@ -1563,7 +1563,7 @@ export function voteDomainBlockedEmail(params: {
       ? `They were verified between ${params.firstAtLagos} and ${params.lastAtLagos}, Lagos time.`
       : "";
   const effect = `New votes from ${domain} are turned away with a neutral message. Voters are never told it is blocked.`;
-  const undo = `If these are real voters, unblock it on the Blocked domains card: the votes the block held are released, and automatic blocking will not act on ${domain} again.`;
+  const undo = `If these are real voters, unblock it on the Blocked domains card: the votes it held are released up to the domain's allowance of ten a round, and automatic blocking will not act on ${domain} again.`;
 
   return {
     to: params.to,

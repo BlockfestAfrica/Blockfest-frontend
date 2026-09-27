@@ -201,3 +201,33 @@ describe("the console's words about blocks", () => {
     expect(autoEvidenceSentence({ kind: "other" })).toBeNull();
   });
 });
+
+describe("what an unblock says", () => {
+  it("names the votes that stay held past the domain's ten", async () => {
+    const { unblockToast } = await import("@/lib/vote-domain-copy");
+    expect(unblockToast("oemails.com", 10, 15)).toBe(
+      "Unblocked oemails.com. 10 held votes released; 5 stay held as over its ten.",
+    );
+    expect(unblockToast("oemails.com", 2, 2)).toBe("Unblocked oemails.com. 2 held votes released.");
+    expect(unblockToast("oemails.com", 1)).toBe("Unblocked oemails.com. 1 held vote released.");
+  });
+
+  it("does not describe releasing votes when the block holds none", async () => {
+    const { unblockConsequence } = await import("@/lib/vote-domain-copy");
+    expect(unblockConsequence("oemails.com", 0)).toBe(
+      "New votes from oemails.com are accepted again. The block holds no votes right now. Automatic blocking will not act on oemails.com again.",
+    );
+  });
+});
+
+describe("the owner's automatic-block mail", () => {
+  it("does not promise that every held vote comes back", async () => {
+    const templates = await import("@/lib/email/templates");
+    const src = JSON.stringify(Object.keys(templates));
+    expect(src).toContain("voteDomainBlockedEmail");
+    const { readFileSync } = await import("node:fs");
+    const file = readFileSync(`${process.cwd()}/lib/email/templates.ts`, "utf8");
+    expect(file).not.toContain("the votes the block held are released");
+    expect(file).toContain("released up to the domain's allowance of ten a round");
+  });
+});

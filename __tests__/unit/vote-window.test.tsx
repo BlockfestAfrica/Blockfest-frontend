@@ -477,7 +477,7 @@ describe("blocking a domain from its cluster", () => {
     fireEvent.click(screen.getByRole("button", { name: /farm\.test/ }));
     fireEvent.click(screen.getByRole("button", { name: "Remove all 501 as fraud…" }));
     expect(toast.error).toHaveBeenLastCalledWith(
-      "Too many to remove at once; block the domain instead, which holds them all.",
+      "That is more than five hundred votes, too many to remove in one go.",
     );
     expect(screen.queryByLabelText("Why they go")).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();

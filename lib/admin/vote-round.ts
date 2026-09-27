@@ -724,7 +724,8 @@ export interface BlockedDomain {
   createdByEmail: string | null;
   /**
    * Votes the block (or the forwarding rule) holds in rounds nobody has
-   * reviewed: exactly what an unblock would release.
+   * reviewed: what an unblock would release, up to the domain's ten a
+   * round; the rest stay held as over the ten.
    */
   held: number;
 }
