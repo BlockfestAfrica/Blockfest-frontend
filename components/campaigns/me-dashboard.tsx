@@ -246,9 +246,12 @@ export function MeDashboard({
       {/* pt trimmed: the default 40px above a back link is 40px of nothing. */}
       <section className="section-y pt-6 sm:pt-10">
         <div className="container-page">
-          {/* A real column: max-w on .container-page itself loses to its own
-              unlayered max-width, so the cap sits one level in. */}
-          <div className="max-w-3xl">
+          {/* The full page container, the width the winners page and the
+              leaderboard use. A 48rem column sat against the left edge of
+              the 72rem container on a laptop, with a third of the screen
+              empty beside it; the owner asked for the content wider.
+              Paragraphs keep their own max-w-prose, so lines stay readable. */}
+          <div>
             <Link
               href={monicaRoutes.landing}
               className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
