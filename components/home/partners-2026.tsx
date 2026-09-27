@@ -66,15 +66,7 @@ function TierLabel({ children, className }: { children: React.ReactNode; classNa
 }
 
 /** A logo on a white plate, at its tier's size, linking out where there is a link. */
-function SponsorPlate({
-  sponsor,
-  tier,
-  priority = false,
-}: {
-  sponsor: PartnerLogo;
-  tier: TierName;
-  priority?: boolean;
-}) {
+function SponsorPlate({ sponsor, tier }: { sponsor: PartnerLogo; tier: TierName }) {
   const size = TIER[tier];
   const plate = (
     <div
@@ -87,7 +79,8 @@ function SponsorPlate({
         height={240}
         sizes={size.sizes}
         className={`w-auto max-w-full object-contain ${size.logo}`}
-        priority={priority}
+        // Not priority, headline included: this section sits far below the
+        // fold, and a preload here competes with the hero for the first paint.
       />
     </div>
   );
@@ -126,7 +119,7 @@ function Tier({
       <ul className="flex w-full flex-wrap justify-center gap-4">
         {sponsors.map((sponsor) => (
           <li key={sponsor.logo} className={TIER[tier].item}>
-            <SponsorPlate sponsor={sponsor} tier={tier} priority={tier === "headline"} />
+            <SponsorPlate sponsor={sponsor} tier={tier} />
           </li>
         ))}
       </ul>
