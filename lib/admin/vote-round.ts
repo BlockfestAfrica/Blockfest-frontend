@@ -28,6 +28,13 @@ export interface VoteRound {
   opensAt: Date;
   closesAt: Date;
   reviewedAt: Date | null;
+  /**
+   * When "Tell the creators" was pressed for this round, read from its audit
+   * row, which is the send's ledger. The console used to remember a send
+   * only until the page reloaded, so the button came back on a vote whose
+   * email had already gone out.
+   */
+  announced: { at: Date; finished: boolean; sent: number | null } | null;
 }
 
 /** One approved post of a nominee's entry, and the account it was filed under. */
@@ -142,9 +149,20 @@ export async function currentRound(
   void admin;
   const result = await getDb().execute(sql`
     SELECT r.id, r.week_no, r.status::text AS status,
-           r.opens_at, r.closes_at, r.reviewed_at
+           r.opens_at, r.closes_at, r.reviewed_at,
+           told.created_at          AS told_at,
+           told.after->>'status'    AS told_status,
+           told.after->>'sent'      AS told_sent
       FROM vote_rounds r
       JOIN campaigns cm ON cm.id = r.campaign_id
+      LEFT JOIN LATERAL (
+            SELECT a.created_at, a.after
+              FROM audit_log a
+             WHERE a.action = 'vote.announced'
+               AND a.entity_id = r.id
+             ORDER BY a.created_at
+             LIMIT 1
+      ) told ON true
      WHERE cm.slug = ${MONICA_SLUG}
        AND r.week_no = ${weekNo}
   `);
@@ -152,6 +170,7 @@ export async function currentRound(
   const row = result.rows?.[0] as Record<string, unknown> | undefined;
   if (!row) return null;
 
+  const sent = Number(row.told_sent);
   return {
     roundId: String(row.id),
     weekNo: Number(row.week_no ?? 0),
@@ -159,6 +178,13 @@ export async function currentRound(
     opensAt: new Date(String(row.opens_at)),
     closesAt: new Date(String(row.closes_at)),
     reviewedAt: row.reviewed_at ? new Date(String(row.reviewed_at)) : null,
+    announced: row.told_at
+      ? {
+          at: new Date(String(row.told_at)),
+          finished: row.told_status === "finished",
+          sent: row.told_sent == null || Number.isNaN(sent) ? null : sent,
+        }
+      : null,
   };
 }
 

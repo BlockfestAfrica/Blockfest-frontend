@@ -181,15 +181,35 @@ export async function POST(request: NextRequest) {
      * retry mails everybody already reached. Failing toward a refused
      * retry is the safe direction when the alternative is several hundred
      * duplicates out of the quota that carries people's login links.
+     *
+     * And claimed conditionally, in the one statement that writes it. The
+     * check above is the friendly early answer, but it is two queries and
+     * two round trips before this line, and two presses landing together
+     * (two owners, or one double tap past the confirm) both passed it and
+     * both mailed the whole campaign. Only the press whose insert returns
+     * a row sends.
      */
-    await db.execute(sql`
+    const claimed = await db.execute(sql`
       INSERT INTO audit_log (campaign_id, actor_admin_id, action, entity_type, entity_id, after)
-      VALUES (
-        ${round.campaign_id}::uuid, ${admin.admin.adminId}::uuid,
-        'vote.announced', 'vote_round', ${round.id}::uuid,
-        ${JSON.stringify({ week_no: round.week_no, sent: 0, failed: 0, status: "started" })}::jsonb
-      )
+      SELECT ${round.campaign_id}::uuid, ${admin.admin.adminId}::uuid,
+             'vote.announced', 'vote_round', ${round.id}::uuid,
+             ${JSON.stringify({ week_no: round.week_no, sent: 0, failed: 0, status: "started" })}::jsonb
+       WHERE NOT EXISTS (
+             SELECT 1 FROM audit_log
+              WHERE action = 'vote.announced'
+                AND entity_id = ${round.id}::uuid)
+      RETURNING id
     `);
+    if ((claimed.rows?.length ?? 0) === 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "This vote has already been announced. Check the audit log to see when, and by whom.",
+        },
+        { status: 409 },
+      );
+    }
 
     const closes = closingAt(String(round.closes_at));
     const people = (recipients.rows ?? [])

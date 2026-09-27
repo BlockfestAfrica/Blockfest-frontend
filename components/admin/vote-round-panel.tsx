@@ -29,6 +29,8 @@ export interface RoundView {
   opensAt: string;
   closesAt: string;
   reviewedAt: string | null;
+  /** When the creators were told, from the send's audit row. */
+  announced?: { at: string; finished: boolean; sent: number | null } | null;
 }
 
 export interface EntryCandidateRow {
@@ -821,7 +823,16 @@ export function VoteRoundPanel({
    * before it runs and a send riding along with the open would announce a
    * page that refuses every ballot.
    */
-  const [announced, setAnnounced] = useState(false);
+  /* The send as this page knows it: the audit row the server read, or the
+     answer to a press made on this page before the refresh brings that row
+     in. Local state alone forgot the send on every reload and put the
+     button back on a vote whose email had already gone out. */
+  const [toldHere, setToldHere] = useState<{ at: string; sent: number } | null>(null);
+  const told = round?.announced
+    ? round.announced
+    : toldHere
+      ? { at: toldHere.at, finished: true, sent: toldHere.sent }
+      : null;
 
   async function announceVote() {
     if (!round) return;
@@ -837,7 +848,7 @@ export function VoteRoundPanel({
         toast.error(result.message ?? "That did not work.");
         return;
       }
-      setAnnounced(true);
+      setToldHere({ at: new Date().toISOString(), sent: Number(result.sent ?? 0) });
       toast.success(
         `Told ${result.sent} ${result.sent === 1 ? "creator" : "creators"}.` +
           (result.failed ? ` ${result.failed} did not go through.` : ""),
@@ -950,9 +961,21 @@ export function VoteRoundPanel({
         ) : (
           <>
             {/* Offered only while the round is actually taking ballots, and
-                only once: the route refuses a second press and the audit
-                row is what remembers. */}
-            {!announced &&
+                only once per round: the audit row is what remembers, and
+                once it exists the button gives way to when it was sent.
+                Next week's round is a new round with no row, so the button
+                is back for it. The route refuses a second press as well. */}
+            {told ? (
+              <Pill tone={told.finished ? "good" : "warn"}>
+                {told.finished
+                  ? `Creators told ${dateTime(told.at)}${
+                      told.sent != null
+                        ? ` · ${count(told.sent)} ${told.sent === 1 ? "email" : "emails"}`
+                        : ""
+                    }`
+                  : `Creator email started ${dateTime(told.at)}, not finished`}
+              </Pill>
+            ) : (
               new Date(round.opensAt).getTime() <= Date.now() &&
               new Date(round.closesAt).getTime() > Date.now() && (
                 <Confirm
@@ -964,7 +987,8 @@ export function VoteRoundPanel({
                   pending={busy}
                   onConfirm={announceVote}
                 />
-              )}
+              )
+            )}
             <Confirm
               key="close-vote"
               label="Close the vote"

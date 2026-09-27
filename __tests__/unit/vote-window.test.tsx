@@ -183,6 +183,57 @@ describe("safeguards", () => {
   });
 });
 
+describe("telling the creators", () => {
+  /*
+   * Owner report: the email went out, and after a reload the button was
+   * back. The console now reads the send from its audit row, so the button
+   * gives way to when it went, and a new round brings it back.
+   */
+  const round = (announced: { at: string; finished: boolean; sent: number | null } | null) => ({
+    roundId: "r1",
+    status: "open" as const,
+    opensAt: "2026-09-26T07:00:00Z",
+    closesAt: "2026-09-29T07:00:00Z",
+    reviewedAt: null,
+    announced,
+  });
+  const panel = (r: ReturnType<typeof round>) =>
+    render(<VoteRoundPanel weekNo={1} round={r} candidates={CANDIDATES} tally={null} frozen />);
+
+  it("offers the send while nobody has been told", () => {
+    panel(round(null));
+    expect(screen.getByRole("button", { name: "Tell the creators" })).toBeTruthy();
+  });
+
+  it("says when they were told, and how many, instead of offering it again", () => {
+    panel(round({ at: "2026-09-26T09:05:00Z", finished: true, sent: 212 }));
+    expect(screen.queryByRole("button", { name: "Tell the creators" })).toBeNull();
+    expect(screen.getByText(/^Creators told 26 Sept.*10:05 · 212 emails$/)).toBeTruthy();
+    // The rest of the open vote's controls are untouched.
+    expect(screen.getByRole("button", { name: "Close the vote" })).toBeTruthy();
+  });
+
+  it("says a send that never finished did not finish, and still does not offer another", () => {
+    panel(round({ at: "2026-09-26T09:05:00Z", finished: false, sent: 0 }));
+    expect(screen.queryByRole("button", { name: "Tell the creators" })).toBeNull();
+    expect(screen.getByText(/^Creator email started 26 Sept.*10:05, not finished$/)).toBeTruthy();
+  });
+
+  it("remembers a send made on this page before the refresh brings the row", async () => {
+    fetchMock.mockImplementationOnce(async () => ({
+      ok: true,
+      json: async () => ({ ok: true, sent: 3, failed: 0 }),
+    }));
+    panel(round(null));
+    fireEvent.click(screen.getByRole("button", { name: "Tell the creators" }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Yes, tell them" }));
+    });
+    expect(screen.queryByRole("button", { name: "Tell the creators" })).toBeNull();
+    expect(screen.getByText(/^Creators told .* · 3 emails$/)).toBeTruthy();
+  });
+});
+
 describe("the voter's receipt", () => {
   it("names the round's close instead of a day", async () => {
     const { voteReceiptEmail } = await import("@/lib/email/templates");
