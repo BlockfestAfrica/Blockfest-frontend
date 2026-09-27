@@ -117,6 +117,15 @@ describe("2026 partners", () => {
     const official = plateHeights("Rovv");
     expect(community.phone).toBeLessThan(official.phone);
     expect(community.laptop).toBeLessThan(official.laptop);
+    // One plate style for every 2026 logo: white, not last year's dark tile.
+    const plate = screen.getByAltText("Web3Bridge").parentElement!.className;
+    expect(plate).toMatch(/(^|\s)bg-white(\s|$)/);
+    expect(plate).not.toMatch(/bg-card-2/);
+  });
+
+  it("uses none of last year's partner tile styling", () => {
+    const src = codeOnly(read("components/home/partners-2026.tsx"));
+    expect(src).not.toMatch(/XBadge|grayscale|bg-card-2/);
   });
 
   it("shows a sponsor with no link, and sizes a linked plate the same as an unlinked one", () => {
