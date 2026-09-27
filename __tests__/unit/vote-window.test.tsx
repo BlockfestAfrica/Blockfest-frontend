@@ -56,7 +56,10 @@ describe("the vote window", () => {
     }
     expect(field("opens-day").type).toBe("date");
     expect(field("closes-day").type).toBe("date");
-    expect(screen.getByText(/^Runs 48 hours,/)).toBeTruthy();
+    expect(screen.getByText("48 hours")).toBeTruthy();
+    expect(
+      screen.getByText("Sunday 27 September 08:00 to Tuesday 29 September 08:00. All times Lagos."),
+    ).toBeTruthy();
   });
 
   it("says the length back as the dates change", () => {
@@ -65,8 +68,9 @@ describe("the vote window", () => {
     set("opens-time", "08:00");
     set("closes-day", "2026-09-28");
     set("closes-time", "18:00");
+    expect(screen.getByText("34 hours")).toBeTruthy();
     expect(
-      screen.getByText("Runs 34 hours, Sunday 27 September 08:00 to Monday 28 September 18:00."),
+      screen.getByText("Sunday 27 September 08:00 to Monday 28 September 18:00. All times Lagos."),
     ).toBeTruthy();
   });
 
@@ -128,9 +132,10 @@ describe("safeguards", () => {
     set("opens-time", "08:00");
     set("closes-day", "2026-09-29");
     set("closes-time", "08:00");
+    expect(screen.getByText("About 37 hours")).toBeTruthy();
     expect(
       screen.getByText(
-        "The open time has passed, so it opens as soon as you confirm and runs about 37 hours, to Tuesday 29 September 08:00.",
+        "The open time has passed, so it opens as soon as you confirm and closes Tuesday 29 September 08:00. All times Lagos.",
       ),
     ).toBeTruthy();
     fireEvent.click(openButton());
@@ -148,7 +153,7 @@ describe("safeguards", () => {
     set("opens-time", "08:00");
     set("closes-day", "2026-09-27");
     set("closes-time", "08:01");
-    expect(screen.getByText(/^Runs 1 minute,/)).toBeTruthy();
+    expect(screen.getByText("1 minute")).toBeTruthy();
   });
 
   it("offers no vote to open for a week that is over", () => {
@@ -218,16 +223,40 @@ describe("telling nominees apart", () => {
         ]}
       />,
     );
-    const x = screen.getByRole("link", { name: /X @adaobi/ });
+    const x = screen.getByRole("link", { name: /@adaobi on X/ });
     expect(x.getAttribute("href")).toBe("https://x.com/adaobi/status/123");
     expect(x.getAttribute("target")).toBe("_blank");
     // No registered handle on that platform: the post is still named and linked.
-    expect(screen.getByRole("link", { name: /Instagram post/ })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /post on Instagram/ })).toBeTruthy();
     // Two nominees with one name are now told apart by their accounts.
-    expect(screen.getByRole("link", { name: /TikTok @ada\.creates/ })).toBeTruthy();
-    // The name still ticks the box.
+    expect(screen.getByRole("link", { name: /@ada\.creates on TikTok/ })).toBeTruthy();
+    // The name still ticks the box, the card shows it, and the count says so.
+    expect(screen.getByText("0 of 5 picked")).toBeTruthy();
     fireEvent.click(screen.getAllByText("Ada Obi")[0]);
-    expect((screen.getAllByRole("checkbox")[0] as HTMLInputElement).checked).toBe(true);
+    const box = screen.getAllByRole("checkbox")[0] as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    expect(box.closest("label")!.className).toMatch(/border-brand-gold/);
+    expect(screen.getByText("1 of 5 picked")).toBeTruthy();
+  });
+
+  it("keeps handles as quiet chips, not underlined links", () => {
+    render(
+      <VoteRoundPanel
+        weekNo={1}
+        round={null}
+        frozen
+        tally={null}
+        candidates={[
+          { entryId: "e1", name: "Ada Obi", points: 300, approvedPlatforms: 1, posts: [
+            { platform: "x", handle: "adaobi", url: "https://x.com/adaobi/status/1" },
+          ] },
+        ]}
+      />,
+    );
+    const chip = screen.getByRole("link", { name: /@adaobi on X/ });
+    expect(chip.className).toMatch(/rounded-full/);
+    expect(chip.className).not.toMatch(/underline/);
+    expect(chip.getAttribute("title")).toBe("Open the approved X post");
   });
 });
 
