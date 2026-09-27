@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { voteBoard } from "@/lib/winners";
-import { REFRESH_MINUTES } from "@/lib/vote-board";
+import { EDGE_SECONDS } from "@/lib/vote-board";
 
 export const runtime = "nodejs";
 
@@ -10,17 +10,15 @@ export const runtime = "nodejs";
  * Public and unauthenticated on purpose: nominee names are already on the
  * page, and the count is the number the result is decided on.
  *
- * Kept at the edge for five minutes. Every open page asks on the same five
- * minute beat, and all of them share one answer, so the database is read
- * about once every five minutes however many people are watching on the
+ * Kept at the edge for four minutes (EDGE_SECONDS) while each open page asks
+ * every five, so all of them share one answer and the database is read at
+ * most once every four minutes however many people are watching on the
  * night the link goes round. The answer says when it was read (asOf), and
- * the page shows that time, so nobody is told a five minute old count is
- * live.
+ * the page shows that time, so nobody is told an old count is live.
  *
- * max-age=0 keeps browsers from holding their own copy on top of the edge's,
- * which would stretch five minutes into ten.
+ * max-age=0 keeps browsers from holding their own copy on top of the edge's.
  */
-const FRESH = `public, max-age=0, s-maxage=${REFRESH_MINUTES * 60}, stale-while-revalidate=60`;
+const FRESH = `public, max-age=0, s-maxage=${EDGE_SECONDS}`;
 
 export async function GET() {
   try {

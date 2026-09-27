@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CircleCheck, Lock } from "lucide-react";
+import { monicaRoutes } from "@/lib/campaigns";
 import { clockTime, count } from "@/lib/format";
 import {
   boardState,
@@ -14,15 +15,19 @@ import {
 
 const COUNT_URL = "/api/campaigns/monica/vote/count";
 
+/** setTimeout's ceiling; a boundary further out waits for a later tick. */
+const LONGEST_WAIT = 2 ** 31 - 1;
+
 /**
  * The Community Favourite count, under the ballot.
  *
  * Asks once on load and then every five minutes, and only while the tab is
  * showing: a phone left open on this page overnight asks nothing. The route
- * keeps each answer at the edge for the same five minutes, so every open page
- * shares one database read, and the time shown is when that read happened,
- * so a five minute old count never passes for a live one. A refresh button
- * would be a lie on top of that cache: it would fetch the same answer.
+ * keeps each answer at the edge for a little under that, so every open page
+ * shares one database read and each ask finds a fresh one, and the time shown
+ * is when that read happened, so an old count never passes for a live one. A
+ * refresh button would be a lie on top of that cache: it would fetch the
+ * same answer.
  *
  * Renders nothing until it has a count, and nothing before voting opens,
  * when every row would be a zero. Once the vote ends it stays up, marked
@@ -35,7 +40,11 @@ const COUNT_URL = "/api/campaigns/monica/vote/count";
 export function LiveVoteCount() {
   const [board, setBoard] = useState<VoteBoard | null>(null);
   const [now, setNow] = useState(0);
-  const final = useRef(false);
+  /* Whether this visit watched the vote before it went final. The rest of
+     the page was rendered when it loaded, so the winner the final note
+     points at is only on it after a reload. */
+  const [sawLive, setSawLive] = useState(false);
+  const shown = useRef<VoteBoard | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,13 +58,22 @@ export function LiveVoteCount() {
           if (cancelled) return;
           setNow(Date.now());
           const next = readBoard(body);
-          if (!next) return;
-          final.current = next.final;
+          if (!next) {
+            // A good answer with no round in it clears the board; anything
+            // else is a failure, and the last count stays up with its time.
+            if (body?.ok === true && body.board === null) {
+              shown.current = null;
+              setBoard(null);
+            }
+            return;
+          }
           // Never step backwards: an older copy from the edge must not
           // replace a newer count already on screen.
-          setBoard((shown) =>
-            shown && Date.parse(shown.asOf) > Date.parse(next.asOf) ? shown : next,
-          );
+          const current = shown.current;
+          if (current && Date.parse(current.asOf) > Date.parse(next.asOf)) return;
+          shown.current = next;
+          if (!next.final) setSawLive(true);
+          setBoard(next);
         })
         .catch(() => {
           // The last count stays up with its own time.
@@ -65,14 +83,14 @@ export function LiveVoteCount() {
     load();
     const timer = setInterval(() => {
       setNow(Date.now());
-      if (!final.current && document.visibilityState === "visible") load();
+      if (!shown.current?.final && document.visibilityState === "visible") load();
     }, REFRESH_MS);
     // Back to a tab that was hidden past a refresh: ask now rather than
     // showing a stale count until the next tick.
     const onShow = () => {
       if (document.visibilityState !== "visible") return;
       setNow(Date.now());
-      if (!final.current && Date.now() - lastAsked >= REFRESH_MS) load();
+      if (!shown.current?.final && Date.now() - lastAsked >= REFRESH_MS) load();
     };
     document.addEventListener("visibilitychange", onShow);
 
@@ -83,6 +101,22 @@ export function LiveVoteCount() {
     };
   }, []);
 
+  /* The open and the close land on the minute they happen, not on the next
+     five minute tick: a board still pulsing "Live" four minutes after the
+     close is the page contradicting the clock beside it. */
+  useEffect(() => {
+    if (!board) return;
+    const at = Date.now();
+    const next = [board.opensAt, board.closesAt]
+      .map((value) => new Date(value).getTime())
+      .filter((time) => !Number.isNaN(time) && time > at)
+      .sort((a, b) => a - b)[0];
+    if (next === undefined) return;
+    const wait = Math.min(next - at + 1_000, LONGEST_WAIT);
+    const timer = setTimeout(() => setNow(Date.now()), wait);
+    return () => clearTimeout(timer);
+  }, [board, now]);
+
   if (!board || board.nominees.length === 0) return null;
   const state = boardState(board, now);
   if (state === "before") return null;
@@ -91,14 +125,11 @@ export function LiveVoteCount() {
 
   return (
     <section
-      aria-labelledby="vote-count-title"
+      aria-label="Community Favourite vote count"
       className="mt-8 rounded-xl border border-line bg-card p-5 sm:p-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h3
-          id="vote-count-title"
-          className="flex items-center gap-2.5 text-base font-semibold text-white"
-        >
+        <h3 className="flex items-center gap-2.5 text-base font-semibold text-white">
           {state === "open" ? (
             <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
               <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60 motion-safe:animate-ping" />
@@ -112,31 +143,42 @@ export function LiveVoteCount() {
           {state === "open" ? "Live count" : state === "final" ? "Final count" : "Voting closed"}
         </h3>
         <p className="text-sm tabular-nums text-ink-3">
-          {count(total)} {total === 1 ? "vote" : "votes"}
+          Week {board.weekNo} · {count(total)} {total === 1 ? "vote" : "votes"}
         </p>
       </div>
       {state === "closed" && (
         <p className="mt-1 text-sm text-ink-3">
-          Week {board.weekNo}. The votes are reviewed before the Community
-          Favourite is confirmed.
+          The votes are reviewed before the Community Favourite is confirmed.
         </p>
       )}
-      {state === "final" && (
-        <p className="mt-1 text-sm text-ink-3">
-          Week {board.weekNo}. The Community Favourite is listed under Weekly
-          winners above.
-        </p>
-      )}
+      {state === "final" &&
+        (sawLive ? (
+          <p className="mt-1 text-sm text-ink-3">
+            The Community Favourite is confirmed.{" "}
+            <a
+              href={monicaRoutes.winners}
+              className="text-link underline underline-offset-2 hover:text-white"
+            >
+              Reload the page
+            </a>{" "}
+            to see them under Weekly winners.
+          </p>
+        ) : (
+          <p className="mt-1 text-sm text-ink-3">
+            The Community Favourite is listed under Weekly winners above.
+          </p>
+        ))}
 
       <ol className="mt-5 flex flex-col gap-4">
         {rows.map((row) => (
           <li key={row.nomineeId}>
             <div className="flex items-baseline gap-3">
-              <span
-                className="w-5 shrink-0 text-sm font-semibold tabular-nums text-ink-4"
-                aria-hidden="true"
-              >
+              {/* Read out as "Rank 1:", so two nominees level on votes are
+                  both heard as first rather than as list items one and two. */}
+              <span className="w-5 shrink-0 text-sm font-semibold tabular-nums text-ink-4">
+                <span className="sr-only">Rank </span>
                 {row.rank}
+                <span className="sr-only">:</span>
               </span>
               <span className="min-w-0 flex-1 text-sm font-semibold text-white">
                 {row.name}
@@ -179,10 +221,14 @@ export function LiveVoteCount() {
             week&apos;s recorded standings.
           </p>
         )}
+        {/* Both ways, because review moves the count both ways: a vote held
+            at the domain cap joins it when released, and a vote removed as
+            manipulated leaves it. Codes also still confirm for fifteen
+            minutes after the close. */}
         <p className="text-ink-4">
           {state === "final"
             ? "Verified votes, after review."
-            : "Only verified votes count. Votes set aside in review come off before the winner is confirmed."}
+            : "Only verified votes count. Review can still add or set aside votes after voting closes, so the count may move until the winner is confirmed."}
         </p>
       </div>
     </section>

@@ -170,8 +170,8 @@ describe("voteBoard", () => {
   });
 
   it("follows the latest round, stays up once it closes, and is final once published", async () => {
-    await round(1, "published", "2026-09-27T08:00:00+01:00", ["Old"]);
-    const { roundId } = await round(2, "open", "2026-10-04T08:00:00+01:00", ["New"]);
+    await round(1, "published", "2026-09-06T08:00:00+01:00", ["Old"]);
+    const { roundId } = await round(2, "open", "2026-09-13T08:00:00+01:00", ["New"]);
     let board = (await voteBoard())!;
     expect(board.weekNo).toBe(2);
     expect(board.nominees.map((n) => n.name)).toEqual(["New"]);
@@ -184,6 +184,21 @@ describe("voteBoard", () => {
     await db.query(`UPDATE vote_rounds SET status = 'published' WHERE id = $1`, [roundId]);
     board = (await voteBoard())!;
     expect([board.weekNo, board.closed, board.final]).toEqual([2, true, true]);
+  });
+
+  it("keeps last week's count up while next week's round is staged but not yet open", async () => {
+    await round(1, "published", "2026-09-06T08:00:00+01:00", ["Old"]);
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+    await round(2, "open", tomorrow, ["New"]);
+    const board = (await voteBoard())!;
+    expect([board.weekNo, board.final]).toEqual([1, true]);
+    expect(board.nominees.map((n) => n.name)).toEqual(["Old"]);
+  });
+
+  it("returns a staged round when it is the only one, for the page to hold back", async () => {
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+    await round(1, "open", tomorrow, ["Soon"]);
+    expect((await voteBoard())!.opensAt).toBe(new Date(tomorrow).toISOString());
   });
 
   it("never shows a draft round", async () => {
@@ -230,9 +245,14 @@ describe("the count route", () => {
     expect(route).not.toMatch(/FROM\s+votes/i);
   });
 
-  it("is shared at the edge for the same five minutes the page waits", () => {
-    expect(route).toMatch(/s-maxage=\$\{REFRESH_MINUTES \* 60\}/);
+  it("is shared at the edge for less time than the page waits between asks", async () => {
+    const { EDGE_SECONDS, REFRESH_MS } = await import("@/lib/vote-board");
+    expect(route).toMatch(/s-maxage=\$\{EDGE_SECONDS\}/);
     expect(route).toContain("max-age=0");
+    // A stale window on top would hand a page the copy it already has.
+    expect(route).not.toContain("stale-while-revalidate");
+    expect(EDGE_SECONDS * 1000).toBeLessThan(REFRESH_MS);
+    expect(EDGE_SECONDS).toBeGreaterThanOrEqual(180);
   });
 
   it("reads the view the result is decided on", () => {

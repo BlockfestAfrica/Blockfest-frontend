@@ -140,7 +140,7 @@ describe("LiveVoteCount", () => {
     expect(items[0]).toContain("in the lead");
     expect(items[0]).toContain("30 votes,");
     expect(items[0]).toContain("60%");
-    expect(screen.getByText("50 votes")).toBeTruthy();
+    expect(screen.getByText("Week 1 · 50 votes")).toBeTruthy();
     // 14:58 UTC is 15:58 in Lagos.
     expect(screen.getByText("15:58").tagName).toBe("TIME");
     expect(document.body.textContent).toContain("Refreshes every 5 minutes.");
@@ -184,7 +184,7 @@ describe("LiveVoteCount", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(REFRESH_MS);
     });
-    expect(screen.getByText("50 votes")).toBeTruthy();
+    expect(screen.getByText("Week 1 · 50 votes")).toBeTruthy();
   });
 
   it("keeps the last count when a refresh fails", async () => {
@@ -194,7 +194,7 @@ describe("LiveVoteCount", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(REFRESH_MS);
     });
-    expect(screen.getByText("50 votes")).toBeTruthy();
+    expect(screen.getByText("Week 1 · 50 votes")).toBeTruthy();
   });
 
   it("shows nothing before voting opens, or when there is no count", async () => {
@@ -227,6 +227,66 @@ describe("LiveVoteCount", () => {
       await vi.advanceTimersByTimeAsync(REFRESH_MS * 2);
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops saying live at the close itself, not at the next refresh", async () => {
+    answer = { ok: true, board: board({ closesAt: "2026-09-27T15:01:00.000Z" }) };
+    render(<LiveVoteCount />);
+    await settle();
+    expect(screen.getByRole("heading", { name: "Live count" })).toBeTruthy();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(62_000);
+    });
+    expect(screen.getByRole("heading", { name: "Voting closed" })).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears the board when the answer says there is no round", async () => {
+    render(<LiveVoteCount />);
+    await settle();
+    answer = { ok: true, board: null };
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REFRESH_MS);
+    });
+    expect(document.body.textContent).not.toContain("Live count");
+  });
+
+  it("points a visitor who watched it go final at a reload, since the winner above is from page load", async () => {
+    render(<LiveVoteCount />);
+    await settle();
+    answer = {
+      ok: true,
+      board: board({ closed: true, final: true, asOf: "2026-09-27T15:04:00.000Z" }),
+    };
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REFRESH_MS);
+    });
+    expect(screen.getByRole("heading", { name: "Final count" })).toBeTruthy();
+    const reload = screen.getByRole("link", { name: "Reload the page" });
+    expect(reload.getAttribute("href")).toBe("/campaigns/monica-money-story/winners");
+  });
+
+  it("says the count can move both ways during review", async () => {
+    render(<LiveVoteCount />);
+    await settle();
+    expect(document.body.textContent).toContain("Review can still add or set aside votes");
+  });
+
+  it("reads ranks out, so a tie is heard as joint", async () => {
+    answer = {
+      ok: true,
+      board: board({
+        nominees: [
+          { nomineeId: "a", name: "Ada Obi", votes: 9 },
+          { nomineeId: "b", name: "Ben Eze", votes: 9 },
+        ],
+      }),
+    };
+    render(<LiveVoteCount />);
+    await settle();
+    const items = screen.getAllByRole("listitem").map((li) => li.textContent);
+    expect(items[0]).toMatch(/^Rank 1:Ada Obi/);
+    expect(items[1]).toMatch(/^Rank 1:Ben Eze/);
   });
 
   it("says why nobody is marked ahead on a tie", async () => {

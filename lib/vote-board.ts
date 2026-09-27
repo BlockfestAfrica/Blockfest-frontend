@@ -8,9 +8,20 @@
  * number the result is decided on, not a second count that could disagree.
  */
 
-/** How often an open page asks again, and how long the edge keeps one answer. */
+/** How often an open page asks again. */
 export const REFRESH_MINUTES = 5;
 export const REFRESH_MS = REFRESH_MINUTES * 60_000;
+
+/**
+ * How long the edge keeps one answer: a minute under the page's beat, with
+ * no stale-while-revalidate. Held for the full five minutes plus a stale
+ * window, a page asking every five minutes kept landing on the copy it
+ * already had, and a lone viewer saw a new count only every other tick,
+ * up to ten minutes old under "refreshes every 5 minutes". This way every
+ * ask after the first finds a copy that has expired or is younger than the
+ * page's own, and the database is still read at most once in four minutes.
+ */
+export const EDGE_SECONDS = REFRESH_MINUTES * 60 - 60;
 
 export interface VoteBoardRow {
   nomineeId: string;

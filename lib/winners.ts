@@ -228,10 +228,12 @@ export async function currentShortlist(): Promise<ShortlistEntry[]> {
  * Counting the votes table here would be a second definition that an
  * unverified cast or a held vote slips through.
  *
- * The latest round by its open time, whether it is open, closed or
+ * The latest round that has opened, whether it is open, closed or
  * published, so the count stays up after the vote ends instead of vanishing
- * the moment an owner presses Close, and makes way when the next week's
- * round is staged. A draft never shows.
+ * the moment an owner presses Close, and a round staged a day early does not
+ * hide last week's final count before it has itself opened. Only when no
+ * round has opened yet is a staged one returned, and the page shows nothing
+ * for it until it opens. A draft never shows.
  *
  * Names and counts only. No entry, creator or vote ids and nothing about a
  * voter: the per-vote detail stays in the owner's console.
@@ -254,7 +256,7 @@ export async function voteBoard(): Promise<VoteBoard | null> {
              SELECT r2.id FROM vote_rounds r2
               WHERE r2.campaign_id = r.campaign_id
                 AND r2.status IN ('open', 'closed', 'published')
-              ORDER BY r2.opens_at DESC
+              ORDER BY (r2.opens_at <= now()) DESC, r2.opens_at DESC
               LIMIT 1)
      ORDER BY n.display_order, c.full_name
   `);
