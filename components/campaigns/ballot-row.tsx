@@ -6,23 +6,16 @@ import { buttonClass, control } from "@/components/shared/panel";
 import { PLATFORM_ICON } from "@/components/shared/platform-icon";
 import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 
-type Step = "idle" | "email" | "code" | "done";
+type Step = "idle" | "email" | "code";
 
-/* From sm up each platform keeps its own column, so X lines up under X down
-   the ballot even when a nominee has no Instagram. */
+/* From sm up each platform keeps its own cell on one line, so X lines up
+   under X down the ballot even when a nominee has no Instagram. The row is
+   pinned as well as the column: with only a column, a link arriving out of
+   order would be placed on a second line. */
 const SLOT: Record<string, string> = {
-  x: "sm:col-start-1",
-  instagram: "sm:col-start-2",
-  tiktok: "sm:col-start-3",
-};
-
-/* The row's state on its left edge, as everywhere else in the system: gold
-   while a vote is in progress, green once it is in. */
-const EDGE: Record<Step, string> = {
-  idle: "border-l-transparent",
-  email: "border-l-brand-gold bg-card-2",
-  code: "border-l-brand-gold bg-card-2",
-  done: "border-l-green-400/50",
+  x: "sm:col-start-1 sm:row-start-1",
+  instagram: "sm:col-start-2 sm:row-start-1",
+  tiktok: "sm:col-start-3 sm:row-start-1",
 };
 
 /**
@@ -35,10 +28,12 @@ const EDGE: Record<Step, string> = {
  * button at the row's right hand that opens the form underneath it.
  *
  * The flow is the API's flow made visible: Vote, then an email, then the six
- * digit code that email receives, then done. State lives in this row and
- * nowhere else, because a vote is a thirty second errand: a person who
- * closes the tab mid-way casts again and the engine replaces their pending
- * vote with the new one, so there is nothing worth persisting.
+ * digit code that email receives, then done. Which row is open, and which
+ * nominee a confirmed vote went to, belong to the ballot (BallotRows), not
+ * to the row: the engine holds one pending vote per address and the code
+ * does not name a nominee, so two rows mid-vote at once could confirm one
+ * row's code in the other's form. Nothing is persisted, because a vote is a
+ * thirty second errand and a person who closes the tab casts again.
  *
  * The server's answers are shown as they arrive. They are written to be
  * uniform on purpose, never confirming whether an address has already voted,
@@ -50,6 +45,11 @@ export function BallotRow({
   name,
   links,
   votingOpen,
+  active,
+  voted,
+  onOpen,
+  onClose,
+  onVoted,
 }: {
   roundId: string;
   nomineeId: string;
@@ -57,6 +57,14 @@ export function BallotRow({
   links: { platform: string; url: string }[];
   /** Before the open and after the close the ballot lists, without buttons. */
   votingOpen: boolean;
+  /** This row holds the ballot's one open form. */
+  active: boolean;
+  /** The server confirmed a vote for this nominee in this visit. */
+  voted: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  /** The confirmed nominee as the server named it, and its words. */
+  onVoted: (confirmedNomineeId: string, message: string) => void;
 }) {
   const [step, setStep] = useState<Step>("idle");
   const [email, setEmail] = useState("");
@@ -65,19 +73,32 @@ export function BallotRow({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Another row opened: this one's form closes, with nothing sent.
+  useEffect(() => {
+    if (!active && step !== "idle") {
+      setStep("idle");
+      setCode("");
+      setError("");
+    }
+  }, [active, step]);
+
   /* The button that was pressed disappears with the step it belonged to, so
      focus is handed on explicitly: to the field that is now the next thing
-     to do, or back to Vote on cancel. Never on first render. */
+     to do, back to Vote on cancel, and to "Voted" once the vote is in.
+     Never on first render, and never for a row closed by another row. */
   const moved = useRef(false);
   const emailRef = useRef<HTMLInputElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
   const voteRef = useRef<HTMLButtonElement>(null);
+  const votedRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     if (!moved.current) return;
-    if (step === "email") emailRef.current?.focus();
-    if (step === "code") codeRef.current?.focus();
-    if (step === "idle") voteRef.current?.focus();
-  }, [step]);
+    moved.current = false;
+    if (voted) votedRef.current?.focus();
+    else if (step === "email") emailRef.current?.focus();
+    else if (step === "code") codeRef.current?.focus();
+    else voteRef.current?.focus();
+  }, [step, voted]);
   const go = (next: Step) => {
     moved.current = true;
     setError("");
@@ -95,6 +116,7 @@ export function BallotRow({
       result: (await response.json().catch(() => ({}))) as {
         ok?: boolean;
         message?: string;
+        nomineeId?: string;
       },
     };
   }
@@ -143,7 +165,11 @@ export function BallotRow({
         setError(result.message ?? "That did not work. Try again.");
         return;
       }
-      go("done");
+      moved.current = true;
+      setStep("idle");
+      // The server says which nominee the code confirmed; this row is only
+      // the likeliest answer when it could not look that up.
+      onVoted(result.nomineeId || nomineeId, result.message ?? "Your vote is in.");
     } catch {
       setError("We could not reach the server. Try again.");
     } finally {
@@ -151,22 +177,29 @@ export function BallotRow({
     }
   }
 
-  const open = step === "email" || step === "code";
+  const open = active && (step === "email" || step === "code");
+  // The row's state on its left edge, as everywhere else in the system:
+  // gold while a vote is in progress, green once it is in.
+  const edge = voted
+    ? "border-l-green-400/50"
+    : open
+      ? "border-l-brand-gold bg-card-2"
+      : "border-l-transparent";
 
   return (
-    <li
-      className={`border-l-2 px-4 py-4 transition-colors duration-150 sm:px-5 ${EDGE[step]}`}
-    >
+    <li className={`border-l-2 px-4 py-4 transition-colors duration-150 sm:px-5 ${edge}`}>
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1 sm:flex sm:items-center sm:gap-4">
-          <p className="text-lg font-semibold leading-snug text-pretty text-white sm:min-w-0 sm:flex-1">
+          {/* break-words: a registered name can be one long word, and this
+              column is 144px on a 320px phone beside the button. */}
+          <p className="break-words text-lg font-semibold leading-snug text-pretty text-white sm:min-w-0 sm:flex-1">
             {name}
           </p>
           {links.length > 0 && (
             <ul
               aria-label={`${name}'s entry`}
               // Phones: the marks sit left under the name, packed. From sm up
-              // they take the fixed platform columns above.
+              // they take the fixed platform cells above.
               className="-mb-1 -ml-1 mt-2 flex sm:m-0 sm:grid sm:grid-cols-[repeat(3,2.75rem)]"
             >
               {links.map((link) => {
@@ -203,49 +236,52 @@ export function BallotRow({
 
         {votingOpen && (
           <div className="shrink-0">
-            {step === "idle" && (
-              <button
-                ref={voteRef}
-                type="button"
-                onClick={() => go("email")}
-                aria-label={`Vote for ${name}`}
-                className={buttonClass("secondary", "min-w-24")}
+            {voted ? (
+              // Same footprint as the Vote button it replaces, so the name
+              // beside it never reflows; the green edge says the rest.
+              // Focusable so focus has somewhere to land when the form it
+              // was in goes away.
+              <p
+                ref={votedRef}
+                tabIndex={-1}
+                className="inline-flex min-h-12 min-w-24 items-center justify-center gap-2 text-sm font-semibold text-green-300"
               >
-                Vote
-              </button>
-            )}
-            {open && (
+                <CircleCheck className="h-4 w-4" aria-hidden="true" />
+                Voted
+              </p>
+            ) : open ? (
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => {
                   setCode("");
                   go("idle");
+                  onClose();
                 }}
                 aria-label={`Cancel voting for ${name}`}
                 className={buttonClass("quiet", "min-w-24")}
               >
                 Cancel
               </button>
-            )}
-            {step === "done" && (
-              // Same footprint as the Vote button it replaces, so the name
-              // beside it never reflows; the green edge says the rest.
-              <p className="inline-flex min-h-12 min-w-24 items-center justify-center gap-2 text-sm font-semibold text-green-300">
-                <CircleCheck className="h-4 w-4" aria-hidden="true" />
-                Voted
-              </p>
+            ) : (
+              <button
+                ref={voteRef}
+                type="button"
+                onClick={() => {
+                  onOpen();
+                  go("email");
+                }}
+                aria-label={`Vote for ${name}`}
+                className={buttonClass("secondary", "min-w-24")}
+              >
+                Vote
+              </button>
             )}
           </div>
         )}
       </div>
 
-      {/* Always present, so the confirmation is announced when it lands. */}
-      <p aria-live="polite" className="sr-only">
-        {step === "done" ? `Your vote for ${name} is in.` : ""}
-      </p>
-
-      {step === "email" && (
+      {open && step === "email" && (
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -292,7 +328,7 @@ export function BallotRow({
         </form>
       )}
 
-      {step === "code" && (
+      {open && step === "code" && (
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -300,7 +336,12 @@ export function BallotRow({
           }}
           className="mt-4 space-y-2"
         >
-          <p className="text-sm leading-relaxed text-ink-2">{notice}</p>
+          {/* Read as the code field's description: focus lands on the field,
+              past this line, and it is the only place that tells a person
+              who already voted that no new code will come. */}
+          <p id={`vote-code-${nomineeId}-notice`} className="text-sm leading-relaxed text-ink-2">
+            {notice}
+          </p>
           <label
             htmlFor={`vote-code-${nomineeId}`}
             className="block pt-1 text-sm font-semibold text-white"
@@ -319,6 +360,7 @@ export function BallotRow({
               required
               value={code}
               onChange={(event) => setCode(event.target.value)}
+              aria-describedby={`vote-code-${nomineeId}-notice`}
               className={`${control} tracking-[0.3em] sm:flex-1`}
               placeholder="000000"
             />
@@ -339,6 +381,10 @@ export function BallotRow({
             type="button"
             disabled={busy}
             onClick={() => {
+              // Back to the email step, which is also how a fresh code is
+              // asked for: casting again replaces the pending vote and its
+              // code, so this covers a typo, an expired code and a changed
+              // mind.
               setCode("");
               go("email");
             }}

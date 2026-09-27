@@ -1,5 +1,5 @@
 import { Clock } from "lucide-react";
-import { BallotRow } from "@/components/campaigns/ballot-row";
+import { BallotRows } from "@/components/campaigns/ballot-rows";
 import { TimeLeftLabel } from "@/components/campaigns/time-left-label";
 import { formatTimeLeft } from "@/lib/countdown";
 import { closingAt } from "@/lib/format";
@@ -22,7 +22,10 @@ import type { ShortlistEntry, VoteWindowState } from "@/lib/winners";
  * rule the leaderboard uses.
  *
  * Takes the page's state rather than working it out, so this header, the
- * section eyebrow above it and the rows' buttons can never disagree.
+ * section eyebrow above it and the rows' buttons agree at render. The page
+ * is rebuilt at most once a minute, so a tab left open past the close keeps
+ * its buttons until reloaded; the engine refuses a late cast either way, and
+ * the clock above them says Closed.
  */
 export function Ballot({
   entries,
@@ -56,29 +59,34 @@ export function Ballot({
             </p>
           </>
         ) : state === "before" ? (
+          // Both ends of the window: the FAQ and the empty state both send
+          // people to "the time shown with the shortlist" for the close.
           <p className="text-sm text-ink-3">
             Voting opens{" "}
-            <time dateTime={round.opensAt}>{closingAt(round.opensAt)}</time>,
-            Lagos time. Here is who is on it.
+            <time dateTime={round.opensAt}>{closingAt(round.opensAt)}</time>{" "}
+            and closes{" "}
+            <time dateTime={round.closesAt}>{closingAt(round.closesAt)}</time>,
+            Lagos time.
           </p>
-        ) : (
+        ) : state === "closed" ? (
           <p className="text-sm text-ink-3">
             Voting for week {round.weekNo} has closed.
           </p>
+        ) : (
+          // An unreadable close time: say nothing rather than guess. Not
+          // open (no buttons), and not closed either.
+          <p className="text-sm text-ink-3">Week {round.weekNo} shortlist.</p>
         )}
       </div>
-      <ul className="divide-y divide-line">
-        {entries.map((entry, index) => (
-          <BallotRow
-            key={entry.nomineeId || `${entry.name}-${index}`}
-            roundId={entry.roundId}
-            nomineeId={entry.nomineeId}
-            name={entry.name}
-            links={entry.links}
-            votingOpen={state === "open"}
-          />
-        ))}
-      </ul>
+      <BallotRows
+        entries={entries.map(({ name, links, roundId, nomineeId }) => ({
+          name,
+          links,
+          roundId,
+          nomineeId,
+        }))}
+        votingOpen={state === "open"}
+      />
     </div>
   );
 }

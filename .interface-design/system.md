@@ -126,5 +126,8 @@ row's left edge carries its state (gold while voting, green once in).
   accessible name saying whose post and where.
 - A fact that is true of the whole list (the week, the close time, the
   rule) is said once, above or in the list's header, never on every row.
-- The same list shape holds in every state: before the open and after the
-  close the rows stay and only the buttons go.
+- The same list shape holds in every state the list is shown in: before
+  the open, and after the scheduled close until the round is closed in the
+  console, the rows stay and only the buttons go.
+- One row open at a time where the rows share one underlying action (one
+  pending vote per address): opening a row closes any other.

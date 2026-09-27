@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { WINNER_CATEGORY_LABEL } from "@/lib/winner-categories";
-import { closingAt } from "@/lib/format";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink, Trophy } from "lucide-react";
 import { currentShortlist, publishedWinners, voteWindowState } from "@/lib/winners";
@@ -181,7 +180,7 @@ export default async function WinnersPage() {
               }
               title="Community Favourite vote"
               hint={
-                round && voteState !== "closed"
+                round && (voteState === "open" || voteState === "before")
                   ? `Pick your favourite week ${round.weekNo} creator: one vote per email address, confirmed by a six digit code.`
                   : "One vote per email address, confirmed by a six digit code, and the creator with the most valid votes wins."
               }
