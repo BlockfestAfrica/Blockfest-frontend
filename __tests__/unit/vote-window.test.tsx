@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { VoteRoundPanel } from "@/components/admin/vote-round-panel";
 import { WinnersPanel } from "@/components/admin/winners-panel";
 
@@ -188,7 +189,8 @@ describe("removing a farm", () => {
   /*
    * A catch-all domain arrived as eleven random addresses in fourteen
    * minutes. Removing it was eleven dialogs; now one judgement removes the
-   * whole domain, with one reason, through the same confirm step.
+   * votes on screen and blocks the domain, with one reason, through the same
+   * confirm step.
    */
   const members = Array.from({ length: 11 }, (_, i) => ({
     voteId: `v${i}`,
@@ -198,7 +200,7 @@ describe("removing a farm", () => {
   }));
   const tally = {
     nominees: [{ nomineeId: "n1", name: "Ada Obi", votes: 10 }],
-    domains: [{ domain: "oemails.com", votes: 11, members }],
+    domains: [{ domain: "oemails.com", votes: 11, members, blockable: true }],
     ips: [],
     held: [],
     unverified: 0,
@@ -211,8 +213,13 @@ describe("removing a farm", () => {
     reviewedAt: null,
   };
 
-  it("removes every vote from the domain as fraud, with one reason, after a confirm", async () => {
-    fetchMock.mockImplementationOnce(async () => ({ ok: true, json: async () => ({ ok: true, removed: 11 }) }));
+  it("removes the votes on screen as fraud and blocks the domain, with one reason, after a confirm", async () => {
+    fetchMock.mockImplementationOnce(async () => ({
+      ok: true,
+      // Fewer than the eleven shown: another owner got to one first. The
+      // toast says what the server did, not what was asked.
+      json: async () => ({ ok: true, domain: "oemails.com", removed: 9 }),
+    }));
     render(<VoteRoundPanel weekNo={1} round={round} candidates={CANDIDATES} tally={tally} frozen />);
     fireEvent.click(screen.getByRole("button", { name: /oemails\.com/ }));
     fireEvent.click(screen.getByRole("button", { name: "Remove all 11 as fraud…" }));
@@ -221,10 +228,11 @@ describe("removing a farm", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Remove all 11" }));
     expect(document.body.textContent).toContain("Remove all 11 votes from oemails.com as fraud?");
-    // Eleven removed still fill the allowance of ten, so nothing more counts.
-    expect(document.body.textContent).toContain("so at most 0 more from it can count before later ones are held");
+    expect(document.body.textContent).toContain(
+      "They stop counting, each address is barred from this round, and oemails.com is blocked for the rest of the campaign: new votes from it are turned away with a neutral message. Removal cannot be undone; the block can.",
+    );
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Yes, remove them all" }));
+      fireEvent.click(screen.getByRole("button", { name: "Yes, remove and block" }));
     });
     const [, init] = fetchMock.mock.calls.at(-1) as unknown as [string, { body: string }];
     expect(JSON.parse(init.body)).toEqual({
@@ -232,7 +240,9 @@ describe("removing a farm", () => {
       roundId: "r1",
       domain: "oemails.com",
       reason: "Catch-all domain, random addresses",
+      voteIds: members.map((m) => m.voteId),
     });
+    expect(toast.success).toHaveBeenLastCalledWith("Removed 9 as fraud and blocked oemails.com.");
   });
 
   it("names the hosts when a farm spread itself over subdomains", () => {
@@ -277,6 +287,150 @@ describe("removing a farm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Remove all 11 as fraud…" }));
     expect(screen.queryByRole("button", { name: "Remove all 11" })).toBeNull();
     expect(screen.getByText("Give the reason first.")).toBeTruthy();
+  });
+
+  it("warns before removing a school or government domain", () => {
+    const campus = {
+      ...tally,
+      domains: [{ domain: "unilag.edu.ng", votes: 11, members, blockable: true, protectedDomain: true }],
+    };
+    render(<VoteRoundPanel weekNo={1} round={round} candidates={CANDIDATES} tally={campus} frozen />);
+    fireEvent.click(screen.getByRole("button", { name: /unilag\.edu\.ng/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove all 11 as fraud…" }));
+    fireEvent.change(screen.getByLabelText("Why they go"), { target: { value: "Farm" } });
+    fireEvent.click(screen.getByRole("button", { name: "Remove all 11" }));
+    expect(document.body.textContent).toContain(
+      "unilag.edu.ng looks like a school or government domain. Real students and staff will be turned away.",
+    );
+  });
+});
+
+describe("blocking a domain from its cluster", () => {
+  const member = (i: number, held = false) => ({
+    voteId: `b${i}`,
+    email: `v${i}@farm.test`,
+    createdAt: "2026-09-27T19:13:00Z",
+    held,
+  });
+  const round = {
+    roundId: "r1",
+    status: "open" as const,
+    opensAt: "2026-09-26T07:00:00Z",
+    closesAt: "2026-09-29T07:00:00Z",
+    reviewedAt: null,
+  };
+  type Domain = NonNullable<Parameters<typeof VoteRoundPanel>[0]["tally"]>["domains"][number];
+  const panel = (domains: Domain[], held: NonNullable<Parameters<typeof VoteRoundPanel>[0]["tally"]>["held"] = []) => (
+    <VoteRoundPanel
+      weekNo={1}
+      round={round}
+      candidates={CANDIDATES}
+      frozen
+      tally={{ nominees: [], domains, ips: [], held, unverified: 0 }}
+    />
+  );
+
+  it("offers Block on a small cluster and keeps Remove all for three or more", () => {
+    const { unmount } = render(
+      panel([{ domain: "farm.test", votes: 2, members: [member(1), member(2)], blockable: true }]),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /farm\.test/ }));
+    expect(screen.getByRole("button", { name: "Block…" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Remove all/ })).toBeNull();
+    unmount();
+
+    render(
+      panel([
+        { domain: "farm.test", votes: 3, members: [member(1), member(2), member(3)], blockable: true },
+      ]),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /farm\.test/ }));
+    expect(screen.getByRole("button", { name: "Block…" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Remove all 3 as fraud…" })).toBeTruthy();
+  });
+
+  it("offers neither on a provider no block may touch", () => {
+    render(
+      panel([
+        { domain: "ymail.com", votes: 4, members: [member(1), member(2), member(3), member(4)], blockable: false },
+      ]),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /ymail\.com/ }));
+    expect(screen.queryByRole("button", { name: "Block…" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Remove all/ })).toBeNull();
+    expect(document.body.textContent).toContain("ymail.com is shared by real voters, so it cannot be blocked.");
+  });
+
+  it("says on the row who blocked it, and does not offer Block again", () => {
+    render(
+      panel([
+        { domain: "farm.test", votes: 3, members: [member(1), member(2), member(3)], blockable: true, block: "admin" },
+        { domain: "other.test", votes: 3, members: [member(4), member(5), member(6)], blockable: true, block: "auto" },
+      ]),
+    );
+    expect(screen.getByText("Blocked")).toBeTruthy();
+    expect(screen.getByText("Blocked automatically")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /farm\.test/ }));
+    expect(screen.queryByRole("button", { name: "Block…" })).toBeNull();
+  });
+
+  it("says how many of a cluster's addresses look machine-made", () => {
+    render(
+      panel([
+        { domain: "farm.test", votes: 8, members: [member(1)], blockable: true, machineMade: 7 },
+        { domain: "plain.test", votes: 2, members: [member(2)], blockable: true, machineMade: 0 },
+      ]),
+    );
+    expect(screen.getByText(/7 of 8 look\s+machine-made/)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/0 of 2 look/);
+  });
+
+  it("asks with the block's consequence and sends the domain and reason", async () => {
+    fetchMock.mockImplementationOnce(async () => ({
+      ok: true,
+      json: async () => ({ ok: true, domain: "farm.test", held: 2 }),
+    }));
+    render(
+      panel([
+        { domain: "farm.test", votes: 3, members: [member(1), member(2), member(3, true)], blockable: true },
+      ]),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /farm\.test/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Block…" }));
+    expect(screen.getByText("Give the reason first.")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Why it is blocked"), { target: { value: "Catch-all" } });
+    fireEvent.click(screen.getByRole("button", { name: "Block farm.test" }));
+    expect(document.body.textContent).toContain(
+      "New votes from farm.test and its subdomains are turned away with a neutral message, and any waiting for a code are held. The 2 counted this round are held for you to review. Voters are never told it is blocked. You can unblock it at any time.",
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Yes, block it" }));
+    });
+    const [, init] = fetchMock.mock.calls.at(-1) as unknown as [string, { body: string }];
+    expect(JSON.parse(init.body)).toEqual({ action: "block_domain", domain: "farm.test", reason: "Catch-all" });
+    expect(toast.success).toHaveBeenLastCalledWith(
+      "Blocked farm.test. 2 counted votes held for you to review.",
+    );
+  });
+
+  it("says why each held vote is held", () => {
+    render(
+      panel(
+        [],
+        [
+          { voteId: "h1", email: "a@corp.test", domain: "corp.test", createdAt: "2026-09-27T19:13:00Z", reason: "cap" },
+          { voteId: "h2", email: "b@farm.test", domain: "farm.test", createdAt: "2026-09-27T19:13:00Z", reason: "blocked" },
+          { voteId: "h3", email: "c@fwd.test", domain: "fwd.test", createdAt: "2026-09-27T19:13:00Z", reason: "forwarder" },
+          { voteId: "h4", email: "d@old.test", domain: "old.test", createdAt: "2026-09-27T19:13:00Z", reason: null },
+        ],
+      ),
+    );
+    const text = document.body.textContent ?? "";
+    expect(text).toMatch(/corp\.test · Over the domain's ten ·/);
+    expect(text).toMatch(/farm\.test · Domain blocked ·/);
+    expect(text).toMatch(/fwd\.test · Forwarding service ·/);
+    // Held before reasons were recorded: the cap was the only thing that held.
+    expect(text).toMatch(/old\.test · Over the domain's ten ·/);
   });
 });
 

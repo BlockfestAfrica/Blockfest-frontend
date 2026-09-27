@@ -2,8 +2,13 @@ import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { CAMPAIGN_PLATFORMS, MONICA_SLUG, type CampaignPlatform } from "@/lib/campaigns";
-import { ALLOWLISTED_DOMAINS } from "@/lib/campaign-vote";
-import { voteDomainKey } from "@/lib/vote-domain";
+import { ALLOWLISTED_DOMAINS, isNeverBlock } from "@/lib/campaign-vote";
+import { registrableDomain, voteDomainKey } from "@/lib/vote-domain";
+import {
+  autoEvidenceSentence,
+  isProtectedDomain,
+  type HeldReason,
+} from "@/lib/vote-domain-copy";
 import type { AdminIdentity } from "@/lib/admin/session";
 
 /**
@@ -126,6 +131,28 @@ export interface DomainCluster {
    * subdomains, which is exactly what the reviewer needs to see.
    */
   hosts: DomainHost[];
+  /**
+   * How many of those votes have a local part that looks machine-made
+   * (vote_local_looks_generated in 0069): letters only, eight or more, and
+   * under a quarter vowels. A signal for the reviewer, never a verdict.
+   */
+  machineMade: number;
+}
+
+export type BlockSource = "admin" | "auto";
+
+/** A cluster as the console shows it: the votes, and what can be done. */
+export interface DomainClusterView extends DomainCluster {
+  /** An active block on this domain, by an owner or by the automatic rule. */
+  block: BlockSource | null;
+  /**
+   * Whether Block and Remove all may be offered. Not for a never-block
+   * provider, and not for a host with no registrable domain (an IP address
+   * or a bare suffix), which a block would have to guess at.
+   */
+  blockable: boolean;
+  /** A school or government domain, which the dialogs warn about. */
+  protectedDomain: boolean;
 }
 
 export interface IpCluster {
@@ -139,14 +166,22 @@ export interface HeldVote {
   email: string;
   domain: string;
   createdAt: Date;
+  /** Why it waits: the cap, a blocked domain, or a forwarding service. */
+  reason: HeldReason;
 }
 
 export interface RoundTally {
   nominees: NomineeTally[];
-  domains: DomainCluster[];
+  domains: DomainClusterView[];
   ips: IpCluster[];
   held: HeldVote[];
   unverified: number;
+}
+
+function asHeldReason(value: unknown): HeldReason {
+  return value === "cap" || value === "blocked" || value === "forwarder"
+    ? value
+    : null;
 }
 
 function asRoundStatus(value: unknown): RoundStatus {
@@ -327,7 +362,12 @@ export function withoutAllowlistedDomains<T extends { domain: string }>(
  * database.
  */
 export function groupByVoteDomain(
-  clusters: { domain: string; votes: number; members: ClusterMember[] }[],
+  clusters: {
+    domain: string;
+    votes: number;
+    members: ClusterMember[];
+    machineMade?: number;
+  }[],
 ): DomainCluster[] {
   const grouped = new Map<string, DomainCluster>();
   for (const cluster of clusters) {
@@ -337,8 +377,10 @@ export function groupByVoteDomain(
       votes: 0,
       members: [],
       hosts: [],
+      machineMade: 0,
     };
     into.votes += cluster.votes;
+    into.machineMade += cluster.machineMade ?? 0;
     into.members.push(...cluster.members);
     const host = into.hosts.find((h) => h.host === cluster.domain);
     if (host) host.votes += cluster.votes;
@@ -358,6 +400,40 @@ export function groupByVoteDomain(
       ),
     }))
     .sort((a, b) => b.votes - a.votes || byName(a.domain, b.domain));
+}
+
+/**
+ * Each cluster with what the console may offer on it: whether an active block
+ * already covers it, whether it can be blocked at all, and whether it is a
+ * school or government domain the dialogs should warn about.
+ *
+ * A block covers its domain and every subdomain, so a cluster keyed on
+ * oemails.com is covered by a block on oemails.com, and one on a stray
+ * subdomain host by a block on its parent. An owner's block wins over an
+ * automatic one when both cover a cluster, because the pill should say who
+ * decided. Pure, and exported, so it can be tested without a database.
+ */
+export function withDomainState<T extends { domain: string }>(
+  clusters: T[],
+  blocks: { domain: string; source: BlockSource }[],
+): (T & { block: BlockSource | null; blockable: boolean; protectedDomain: boolean })[] {
+  return clusters.map((cluster) => {
+    const domain = cluster.domain.toLowerCase();
+    const covering = blocks.filter(
+      (b) => domain === b.domain || domain.endsWith(`.${b.domain}`),
+    );
+    const block = covering.some((b) => b.source === "admin")
+      ? "admin"
+      : covering.length > 0
+        ? "auto"
+        : null;
+    return {
+      ...cluster,
+      block,
+      blockable: registrableDomain(domain) !== null && !isNeverBlock(domain),
+      protectedDomain: isProtectedDomain(domain),
+    };
+  });
 }
 
 /**
@@ -409,7 +485,7 @@ export async function roundTally(
   void admin;
   const db = getDb();
 
-  const [nominees, domains, ips, held, unverified] = await Promise.all([
+  const [nominees, domains, ips, held, unverified, blocks] = await Promise.all([
     db.execute(sql`
       SELECT t.nominee_id, t.entry_id, t.votes, c.full_name,
              cc.id AS enrolment_id
@@ -424,6 +500,9 @@ export async function roundTally(
     db.execute(sql`
       SELECT split_part(v.voter_email_canonical, '@', 2) AS domain,
              count(*)::int AS votes,
+             count(*) FILTER (
+               WHERE vote_local_looks_generated(split_part(v.voter_email_canonical, '@', 1))
+             )::int AS machine_made,
              json_agg(json_build_object(
                'voteId', v.id,
                'email', v.voter_email_canonical,
@@ -457,7 +536,7 @@ export async function roundTally(
     db.execute(sql`
       SELECT v.id, v.voter_email_canonical,
              split_part(v.voter_email_canonical, '@', 2) AS domain,
-             v.created_at
+             v.created_at, v.held_reason
         FROM votes v
        WHERE v.round_id = ${roundId}
          AND v.status = 'counted'
@@ -470,6 +549,13 @@ export async function roundTally(
        WHERE v.round_id = ${roundId}
          AND v.status = 'counted'
          AND v.verified_at IS NULL
+    `),
+    db.execute(sql`
+      SELECT b.domain, b.source
+        FROM vote_blocked_domains b
+        JOIN vote_rounds r ON r.campaign_id = b.campaign_id
+       WHERE r.id = ${roundId}
+         AND b.lifted_at IS NULL
     `),
   ]);
 
@@ -484,18 +570,28 @@ export async function roundTally(
         votes: Number(r.votes ?? 0),
       };
     }),
-    domains: withoutAllowlistedDomains(
-      groupByVoteDomain(
-        (domains.rows ?? []).map((row) => {
-          const r = row as Record<string, unknown>;
-          return {
-            domain: String(r.domain ?? ""),
-            votes: Number(r.votes ?? 0),
-            members: readMembers(r.members),
-          };
-        }),
+    domains: withDomainState(
+      withoutAllowlistedDomains(
+        groupByVoteDomain(
+          (domains.rows ?? []).map((row) => {
+            const r = row as Record<string, unknown>;
+            return {
+              domain: String(r.domain ?? ""),
+              votes: Number(r.votes ?? 0),
+              members: readMembers(r.members),
+              machineMade: Number(r.machine_made ?? 0),
+            };
+          }),
+        ),
+        ALLOWLISTED_DOMAINS,
       ),
-      ALLOWLISTED_DOMAINS,
+      (blocks.rows ?? []).map((row) => {
+        const r = row as Record<string, unknown>;
+        return {
+          domain: String(r.domain ?? ""),
+          source: r.source === "auto" ? ("auto" as const) : ("admin" as const),
+        };
+      }),
     ),
     ips: (ips.rows ?? []).map((row) => {
       const r = row as Record<string, unknown>;
@@ -512,6 +608,7 @@ export async function roundTally(
         email: String(r.voter_email_canonical ?? ""),
         domain: String(r.domain ?? ""),
         createdAt: new Date(String(r.created_at)),
+        reason: asHeldReason(r.held_reason),
       };
     }),
     unverified: Number(
@@ -557,6 +654,79 @@ export async function findVotesByEmail(
       email: String(r.voter_email_canonical ?? ""),
       createdAt: Number.isNaN(at.getTime()) ? new Date(0) : at,
       held: Boolean(r.held),
+    };
+  });
+}
+
+/** An active block, as the Blocked domains card shows it. */
+export interface BlockedDomain {
+  domain: string;
+  source: BlockSource;
+  reason: string;
+  /** The automatic rule's evidence as one sentence, or null for an owner's block. */
+  evidence: string | null;
+  createdAt: Date;
+  /** Who blocked it, for an owner's block; null for an automatic one. */
+  createdByAdminId: string | null;
+  createdByEmail: string | null;
+  /**
+   * Votes the block (or the forwarding rule) holds in rounds nobody has
+   * reviewed: exactly what an unblock would release.
+   */
+  held: number;
+}
+
+/**
+ * Every active block on the campaign, newest first.
+ *
+ * Lifted blocks are left out: the row stays in the table as the record, and
+ * the audit log says who lifted it and why, but the card is for what is in
+ * force now.
+ */
+export async function blockedDomains(admin: AdminIdentity): Promise<BlockedDomain[]> {
+  void admin;
+  const result = await getDb().execute(sql`
+    SELECT b.domain, b.source, b.reason, b.evidence, b.created_at,
+           b.created_by_admin_id, a.email AS created_by_email,
+           (SELECT count(*)::int
+              FROM votes v
+              JOIN vote_rounds r ON r.id = v.round_id
+             WHERE r.campaign_id = b.campaign_id
+               AND r.reviewed_at IS NULL
+               AND r.status <> 'published'
+               AND v.status = 'counted'
+               AND v.held_at IS NOT NULL
+               AND v.held_reason IN ('blocked', 'forwarder')
+               AND vote_domain_matches(split_part(v.voter_email_canonical, '@', 2), b.domain)
+           ) AS held
+      FROM vote_blocked_domains b
+      JOIN campaigns cm      ON cm.id = b.campaign_id
+      LEFT JOIN admin_users a ON a.id = b.created_by_admin_id
+     WHERE cm.slug = ${MONICA_SLUG}
+       AND b.lifted_at IS NULL
+     ORDER BY b.created_at DESC, b.domain ASC
+  `);
+
+  return (result.rows ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    let evidence: unknown = r.evidence;
+    if (typeof evidence === "string") {
+      try {
+        evidence = JSON.parse(evidence);
+      } catch {
+        evidence = null;
+      }
+    }
+    const source: BlockSource = r.source === "auto" ? "auto" : "admin";
+    return {
+      domain: String(r.domain ?? ""),
+      source,
+      reason: String(r.reason ?? ""),
+      evidence: source === "auto" ? autoEvidenceSentence(evidence) : null,
+      createdAt: new Date(String(r.created_at)),
+      createdByAdminId: r.created_by_admin_id ? String(r.created_by_admin_id) : null,
+      createdByEmail: r.created_by_email ? String(r.created_by_email) : null,
+      held: Number(r.held ?? 0),
     };
   });
 }

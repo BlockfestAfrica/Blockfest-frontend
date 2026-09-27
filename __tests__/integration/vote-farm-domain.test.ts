@@ -13,9 +13,10 @@ import { applyMigrations } from "../helpers/migrations";
  * domain (no website, every address routed to one inbox), random ten-letter
  * addresses, fourteen minutes. The cap held the eleventh. But it counted
  * only votes still counted, so removing the farm as fraud reset the domain
- * to zero and let the same person land another full cap. These pin the two
+ * to zero and let the same person land another full cap. These pin the
  * fixes: fraud removals keep a domain capped (0068), and one console action
- * removes a whole domain as fraud.
+ * removes the votes on screen as fraud and blocks the domain (0069), so the
+ * same farm cannot come straight back with fresh addresses.
  */
 
 const state = vi.hoisted(() => ({ db: null as unknown, adminId: "" }));
@@ -77,7 +78,30 @@ async function keyedVote(email: string) {
 const farm = (n: number, domain = "farm.test") =>
   Array.from({ length: n }, (_, i) => `v${++seq}x${i}@${domain}`);
 
-async function removeDomain(domain: string, reason = "Catch-all farm") {
+/**
+ * The ids the console would have on screen for a domain's cluster: every
+ * verified, counted vote in the round from the domain or a subdomain of it.
+ */
+async function onScreen(domain: string) {
+  const key = voteDomainKey(domain);
+  const rows = await db.query<{ id: string }>(
+    `SELECT id FROM votes
+      WHERE round_id = $1 AND status = 'counted' AND verified_at IS NOT NULL
+        AND vote_domain_matches(split_part(voter_email_canonical, '@', 2), $2)`,
+    [roundId, key],
+  );
+  return rows.rows.map((r) => r.id);
+}
+
+type Answer = { ok: boolean; removed?: number; domain?: string; message?: string };
+
+async function removeDomain(
+  domain: string,
+  reason = "Catch-all farm",
+  voteIds?: string[],
+  round = roundId,
+) {
+  const ids = voteIds ?? (await onScreen(domain));
   const response = await POST(
     new NextRequest("https://blockfestafrica.com/api/admin/vote-round", {
       method: "POST",
@@ -86,11 +110,27 @@ async function removeDomain(domain: string, reason = "Catch-all farm") {
         "x-forwarded-host": "blockfestafrica.com",
         "content-type": "application/json",
       },
-      body: JSON.stringify({ action: "remove_domain", roundId, domain, reason }),
+      body: JSON.stringify({
+        action: "remove_domain",
+        roundId: round,
+        domain,
+        reason,
+        // The schema wants at least one id; a cluster with none is never shown.
+        voteIds: ids.length > 0 ? ids : ["00000000-0000-4000-8000-000000000000"],
+      }),
     }),
   );
-  return { status: response.status, body: (await response.json()) as { ok: boolean; removed?: number; message?: string } };
+  return { status: response.status, body: (await response.json()) as Answer };
 }
+
+/** What the engine stored for one address. */
+const heldReason = async (email: string) =>
+  (
+    await one<{ held_reason: string | null }>(
+      `SELECT held_reason FROM votes WHERE round_id = $1 AND voter_email_canonical = $2`,
+      [roundId, email],
+    )
+  ).held_reason;
 
 const counted = async (domain: string) =>
   Number(
@@ -165,7 +205,8 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await db.exec(`DELETE FROM votes; DELETE FROM audit_log;`);
+  // Blocks are campaign-wide and outlive a round, so each test starts clean.
+  await db.exec(`DELETE FROM votes; DELETE FROM audit_log; DELETE FROM vote_blocked_domains;`);
   await db.query(`UPDATE vote_rounds SET status = 'open' WHERE id = $1`, [roundId]);
 });
 
@@ -179,12 +220,30 @@ describe("the domain cap after a sweep", () => {
   it("keeps a domain capped once its votes are removed as fraud", async () => {
     for (const email of farm(11)) await vote(email);
     const swept = await removeDomain("farm.test");
-    expect(swept).toEqual({ status: 200, body: { ok: true, removed: 11 } });
+    expect(swept).toEqual({ status: 200, body: { ok: true, domain: "farm.test", removed: 11 } });
     expect(await counted("farm.test")).toBe(0);
 
-    // The same person comes back with fresh addresses: every one is held.
-    for (const email of farm(3)) expect((await vote(email)).held).toBe(true);
+    // The same person comes back with fresh addresses: every one is held,
+    // first by the block the sweep left behind.
+    for (const email of farm(3)) {
+      expect((await vote(email)).held).toBe(true);
+      expect(await heldReason(email)).toBe("blocked");
+    }
     expect(await counted("farm.test")).toBe(0);
+
+    // An owner lifts the block. The three it held are released, which is
+    // what the unblock dialog says it does, but a new vote is held by the
+    // cap: the eleven removed as fraud still fill the allowance of ten this
+    // round (0068), which the dialog also says.
+    const { released } = await one<{ released: number }>(
+      `SELECT unblock_vote_domain($1::uuid, $2::uuid, 'farm.test', 'Checked with the nominee') AS released`,
+      [state.adminId, campaignId],
+    );
+    expect(released).toBe(3);
+    const [later] = farm(1);
+    expect((await vote(later)).held).toBe(true);
+    expect(await heldReason(later)).toBe("cap");
+    expect(await counted("farm.test")).toBe(3);
   });
 
   it("does not count unswept removals: those people may vote again", async () => {
@@ -217,6 +276,12 @@ describe("removing a whole domain as fraud", () => {
     );
 
     expect((await removeDomain("farm.test")).body.removed).toBe(11);
+
+    // And blocked, in the same act.
+    const block = await one<{ source: string; reason: string }>(
+      `SELECT source, reason FROM vote_blocked_domains WHERE domain = 'farm.test' AND lifted_at IS NULL`,
+    );
+    expect(block).toEqual({ source: "admin", reason: "Catch-all farm" });
 
     const rows = await db.query<{ status: string; removed_mode: string | null; removed_reason: string | null }>(
       `SELECT status::text AS status, removed_mode, removed_reason FROM votes
@@ -273,7 +338,10 @@ describe("removing a whole domain as fraud", () => {
     for (const email of farm(2, "xfarm.test")) await vote(email);
     for (const email of farm(2, "other.test")) await vote(email);
 
-    expect(await removeDomain("farm.test")).toEqual({ status: 200, body: { ok: true, removed: 6 } });
+    expect(await removeDomain("farm.test")).toEqual({
+      status: 200,
+      body: { ok: true, domain: "farm.test", removed: 6 },
+    });
     expect(await countedUnder("farm.test")).toBe(0);
     expect(await counted("xfarm.test")).toBe(2);
     expect(await counted("other.test")).toBe(2);
@@ -282,16 +350,18 @@ describe("removing a whole domain as fraud", () => {
   it("reads a subdomain as the domain it belongs to", async () => {
     for (const email of farm(2)) await vote(email);
     for (const email of farm(2, "a.farm.test")) await vote(email);
-    expect((await removeDomain("a.farm.test")).body.removed).toBe(4);
+    const answer = await removeDomain("a.farm.test", "Catch-all farm", await onScreen("farm.test"));
+    expect(answer.body).toEqual({ ok: true, domain: "farm.test", removed: 4 });
     expect(await countedUnder("farm.test")).toBe(0);
   });
 
-  it("keeps every subdomain capped after the domain is swept", async () => {
+  it("keeps every subdomain held after the domain is swept", async () => {
     for (const email of [...farm(6), ...farm(5, "a.farm.test")]) await keyedVote(email);
     expect((await removeDomain("farm.test")).body.removed).toBe(11);
-    // A new subdomain is no longer a new allowance.
+    // A new subdomain is no longer a new allowance: the block covers it.
     for (const email of farm(2, "fresh.farm.test")) {
       expect((await keyedVote(email)).held).toBe(true);
+      expect(await heldReason(email)).toBe("blocked");
     }
     expect(await countedUnder("farm.test")).toBe(0);
   });
@@ -318,10 +388,47 @@ describe("removing a whole domain as fraud", () => {
     expect(await counted("gmail.com")).toBe(2);
   });
 
-  it("leaves a published round alone", async () => {
+  it("refuses a published round instead of answering that it removed nothing", async () => {
     for (const email of farm(3)) await vote(email);
+    const ids = await onScreen("farm.test");
     await db.query(`UPDATE vote_rounds SET status = 'published' WHERE id = $1`, [roundId]);
-    expect((await removeDomain("farm.test")).body.removed).toBe(0);
+    const answer = await removeDomain("farm.test", "Catch-all farm", ids);
+    expect(answer.status).toBe(400);
+    expect(answer.body).toEqual({
+      ok: false,
+      message: "That round's winner is announced, so its votes stay as they are.",
+    });
     expect(await counted("farm.test")).toBe(3);
+    // All or nothing: no block either.
+    expect(
+      (await one<{ n: number }>(`SELECT count(*)::int AS n FROM vote_blocked_domains`)).n,
+    ).toBe(0);
+  });
+
+  it("refuses a round that does not exist", async () => {
+    for (const email of farm(3)) await vote(email);
+    const answer = await removeDomain(
+      "farm.test",
+      "Catch-all farm",
+      await onScreen("farm.test"),
+      "00000000-0000-4000-8000-00000000aaaa",
+    );
+    expect(answer).toEqual({ status: 400, body: { ok: false, message: "That round does not exist." } });
+    expect(await counted("farm.test")).toBe(3);
+  });
+
+  it("removes only the votes that were on screen; one that arrived since is held by the block", async () => {
+    for (const email of farm(3)) await vote(email);
+    const seen = await onScreen("farm.test");
+    // A vote that verified after the owner's page loaded.
+    const [late] = farm(1);
+    await vote(late);
+
+    expect((await removeDomain("farm.test", "Catch-all farm", seen)).body.removed).toBe(3);
+    const stored = await one<{ status: string; held: boolean; held_reason: string | null }>(
+      `SELECT status::text AS status, held_at IS NOT NULL AS held, held_reason FROM votes WHERE voter_email_canonical = $1`,
+      [late],
+    );
+    expect(stored).toEqual({ status: "counted", held: true, held_reason: "blocked" });
   });
 });

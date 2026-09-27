@@ -11,8 +11,8 @@ import { closingAt } from "@/lib/format";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { shortlistEmail, votingPage } from "@/lib/email/templates";
 import { findVotesByEmail } from "@/lib/admin/vote-round";
-import { isAllowlisted } from "@/lib/campaign-vote";
-import { registrableDomain } from "@/lib/vote-domain";
+import { isNeverBlock } from "@/lib/campaign-vote";
+import { normaliseBlockDomain } from "@/lib/vote-domain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,15 +25,15 @@ export const maxDuration = 30;
 
 /**
  * Run the Community Favourite round: open it, close it, sweep it, mark the
- * sweep done.
+ * sweep done, and keep a farm's domain blocked once it is swept.
  *
  * Owners only, like announcing a winner, because every action here shapes who
  * that winner is. One endpoint with an action discriminator rather than five
  * routes, so the guards and the error mapping exist once and cannot drift
  * apart between the open call and the removal call.
  *
- * The rules all live in the 0046 SQL functions, which also write their own
- * audit rows. This route validates shape, forwards, and translates SQLSTATEs
+ * The rules all live in the SQL functions (0046, and 0069 for blocked
+ * domains), which also write their own audit rows. This route validates shape, forwards, and translates SQLSTATEs
  * into sentences; it never restates a rule the engine already enforces, and
  * it never logs an action twice.
  */
@@ -78,31 +78,74 @@ const removeSchema = z.object({
   mode: z.enum(["fraud", "unsweep"]),
 });
 
+/** A domain as typed: lowercase dotted labels, which is all the table takes. */
+const domainField = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/, "That is not a domain.");
+
 /*
- * Every verified vote from one domain in a round, removed as fraud in one
- * act. A catch-all farm arrives as a cluster of ten or more, and removing
+ * A cluster's verified votes, removed as fraud in one act, and the domain
+ * blocked. A catch-all farm arrives as a cluster of ten or more, and removing
  * it one Remove at a time was eleven dialogs and eleven reasons for one
- * judgement. Each vote still goes through remove_vote, so each is barred
- * and audited exactly as a single removal is, and verify_vote keeps the
- * domain capped afterwards (0068).
+ * judgement. Each vote still goes through remove_vote, so each is barred and
+ * audited exactly as a single removal is; then the domain is blocked, so the
+ * same farm cannot come straight back with fresh addresses.
  *
  * The domain is the registrable one, and its subdomains go with it: the
  * console clusters a.oemails.com and b.oemails.com under oemails.com, the
  * cap judges them together (0069), and a sweep that left the subdomains
  * behind would leave the farm counting.
+ *
+ * voteIds are the votes that were on the owner's screen. Only those are
+ * removed; anything from the domain that arrived since is held by the block
+ * instead, for a person to judge. Five hundred is far past any cluster the
+ * console has shown and still one statement's worth of parameters.
  */
 const removeDomainSchema = z.object({
   action: z.literal("remove_domain"),
   roundId: z.string().uuid("That is not a round."),
-  domain: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/, "That is not a domain."),
+  domain: domainField,
   reason: z
     .string()
     .trim()
     .min(1, "A removal needs a reason.")
+    .max(300, "Keep the reason under three hundred characters."),
+  voteIds: z
+    .array(z.string().uuid("That is not a vote."))
+    .min(1, "There are no votes to remove.")
+    .max(500, "That is more votes than one removal takes. Reload and try again."),
+});
+
+/*
+ * Block a domain for the rest of the campaign: new casts from it and its
+ * subdomains are turned away, codes already sent verify as held, and what it
+ * has counted in rounds not yet reviewed is held. From a cluster, or typed
+ * into the Blocked domains card before anybody has used it.
+ */
+const blockDomainSchema = z.object({
+  action: z.literal("block_domain"),
+  domain: domainField,
+  reason: z
+    .string()
+    .trim()
+    .min(1, "A block needs a reason.")
+    .max(300, "Keep the reason under three hundred characters."),
+});
+
+/*
+ * Lift a block. The domain is the one the card shows, exactly as stored, so
+ * it is not normalised again: a stored block is always a registrable domain,
+ * and matching it byte for byte is what finds the row.
+ */
+const unblockDomainSchema = z.object({
+  action: z.literal("unblock_domain"),
+  domain: domainField,
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Say why it is safe again.")
     .max(300, "Keep the reason under three hundred characters."),
 });
 
@@ -134,6 +177,8 @@ const schema = z.discriminatedUnion("action", [
   reviewSchema,
   removeSchema,
   removeDomainSchema,
+  blockDomainSchema,
+  unblockDomainSchema,
   releaseSchema,
   lookupSchema,
 ]);
@@ -167,6 +212,9 @@ const MESSAGES: Record<string, string> = {
   // only be recorded while it is the current stage.
   P0804: "This week's standings were never recorded, so its vote cannot be closed. Record the standings while the week is current.",
   P0502: "A removal needs a reason.",
+  P0822:
+    "That domain is a big consumer provider shared by real voters, so it cannot be blocked.",
+  P0823: "That domain is not blocked any more. Reload to see the current list.",
   P0401: "Only a signed-in admin can do this.",
   P0002: "That campaign does not exist.",
   /* The one_round_per_week index, for two owners opening the same Sunday. */
@@ -303,65 +351,103 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (action.action === "remove_domain") {
+    if (
+      action.action === "remove_domain" ||
+      action.action === "block_domain"
+    ) {
       /*
-       * Never a public suffix. The removal takes the domain and everything
-       * under it, so edu.ng would be every Nigerian university at once and
-       * com.ng every company. tldts answers null for those, and for an IP
-       * address, and each is refused here rather than guessed at.
+       * Never a public suffix. Both act on the domain and everything under
+       * it, so edu.ng would be every Nigerian university at once and com.ng
+       * every company. tldts answers null for those, and for an IP address,
+       * and each is refused here rather than guessed at. A subdomain is read
+       * as the domain it belongs to, the key the cap and the console use.
        */
-      const domain = registrableDomain(action.domain);
+      const domain = normaliseBlockDomain(action.domain);
       if (!domain) {
         return NextResponse.json(
           {
             ok: false,
-            message: `${action.domain} is a suffix many domains share, not one domain. Remove its votes one at a time.`,
+            message:
+              action.action === "remove_domain"
+                ? `${action.domain} is a suffix many domains share, not one domain. Remove its votes one at a time.`
+                : "That is not a domain you can block.",
           },
           { status: 400 },
         );
       }
       /*
-       * Never a consumer provider. The console leaves them out of the
-       * domain signals because thousands of real voters share them, and a
-       * bulk removal of gmail.com would take every one of those votes.
+       * Never a consumer provider, by the never-block list rather than the
+       * cap's allowlist: ymail.com and me.com are one inbox per person too,
+       * and a block on either would turn away every real voter on it. The
+       * engine refuses them as well (P0822, and the table's CHECK); this
+       * says so before the round trip, in the owner's terms.
        */
-      if (isAllowlisted(`x@${domain}`)) {
+      if (isNeverBlock(domain)) {
         return NextResponse.json(
           {
             ok: false,
-            message: `${domain} is a big consumer provider shared by real voters. Remove its votes one at a time.`,
+            message:
+              action.action === "remove_domain"
+                ? `${domain} is a big consumer provider shared by real voters. Remove its votes one at a time.`
+                : `${domain} is a big consumer provider shared by real voters, so it cannot be blocked.`,
           },
           { status: 400 },
         );
       }
+
+      if (action.action === "block_domain") {
+        const result = await getDb().execute(sql`
+          SELECT block_vote_domain(
+                   ${adminId}::uuid,
+                   (SELECT id FROM campaigns WHERE slug = ${MONICA_SLUG}),
+                   ${domain}::text,
+                   ${action.reason}::text
+                 ) AS held
+        `);
+        const held = Number(
+          (result.rows?.[0] as { held?: number } | undefined)?.held ?? 0,
+        );
+        return NextResponse.json({ ok: true, domain, held });
+      }
+
       /*
-       * One statement, so it is all or nothing. Materialised, so every
-       * remove_vote runs even though only the count is read. A published
-       * round is left alone: its winner was announced on this tally.
+       * One function, so it is all or nothing and in order: the listed
+       * votes are removed, then the domain is blocked (0069). It locks the
+       * votes it removes in a fixed order, and refuses a published or
+       * unknown round rather than answering that it removed nothing.
        */
+      const idList = sql.join(
+        action.voteIds.map((id) => sql`${id}::uuid`),
+        sql`, `,
+      );
       const result = await getDb().execute(sql`
-        WITH targets AS MATERIALIZED (
-          SELECT v.id
-            FROM votes v
-            JOIN vote_rounds r ON r.id = v.round_id
-           WHERE v.round_id = ${action.roundId}::uuid
-             AND r.status <> 'published'
-             AND v.status = 'counted'
-             AND v.verified_at IS NOT NULL
-             AND vote_domain_matches(
-                   split_part(v.voter_email_canonical, '@', 2), ${domain}::text
-                 )
-        ),
-        gone AS MATERIALIZED (
-          SELECT remove_vote(${adminId}::uuid, t.id, ${action.reason}::text, 'fraud')
-            FROM targets t
-        )
-        SELECT count(*)::int AS removed FROM gone
+        SELECT remove_vote_domain(
+                 ${adminId}::uuid,
+                 ${action.roundId}::uuid,
+                 ${domain}::text,
+                 ${action.reason}::text,
+                 ARRAY[${idList}]::uuid[]
+               ) AS removed
       `);
       const removed = Number(
         (result.rows?.[0] as { removed?: number } | undefined)?.removed ?? 0,
       );
-      return NextResponse.json({ ok: true, removed });
+      return NextResponse.json({ ok: true, domain, removed });
+    }
+
+    if (action.action === "unblock_domain") {
+      const result = await getDb().execute(sql`
+        SELECT unblock_vote_domain(
+                 ${adminId}::uuid,
+                 (SELECT id FROM campaigns WHERE slug = ${MONICA_SLUG}),
+                 ${action.domain}::text,
+                 ${action.reason}::text
+               ) AS released
+      `);
+      const released = Number(
+        (result.rows?.[0] as { released?: number } | undefined)?.released ?? 0,
+      );
+      return NextResponse.json({ ok: true, domain: action.domain, released });
     }
 
     if (action.action === "remove") {
@@ -414,6 +500,23 @@ export async function POST(request: NextRequest) {
         // Fall through to the message without the instant, which is still
         // truthful. A failed read here must not turn a refusal into a 500.
       }
+    }
+
+    /*
+     * "That round is not open" is the right words for a vote cast into a
+     * closed round, and the wrong ones here: a closed round can still be
+     * swept, and the only round remove_vote_domain refuses is a published
+     * one, whose winner was announced on its tally.
+     */
+    if (code === "P0814" && action.action === "remove_domain") {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "That round's winner is announced, so its votes stay as they are.",
+        },
+        { status: 400 },
+      );
     }
 
     if (known) {

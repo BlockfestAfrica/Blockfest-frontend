@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import {
   groupByVoteDomain,
   readMembers,
+  withDomainState,
   withoutAllowlistedDomains,
   type ClusterMember,
 } from "@/lib/admin/vote-round";
@@ -194,5 +195,75 @@ describe("domain clusters group by registrable domain", () => {
     expect(withoutAllowlistedDomains(grouped, ["gmail.com"]).map((c) => c.domain)).toEqual([
       "farm.test",
     ]);
+  });
+});
+
+describe("what a cluster can have done to it", () => {
+  /*
+   * The console offers Block and Remove all from a cluster, and both land on
+   * the whole registrable domain. A wrong answer here is quiet in either
+   * direction: a gmail-shaped provider offered for blocking (the route and
+   * the engine would still refuse), or a farm with no Block to press.
+   */
+  const clusters = [
+    { domain: "oemails.com" },
+    { domain: "a.farm.test" },
+    { domain: "ymail.com" },
+    { domain: "unilag.edu.ng" },
+    { domain: "com.ng" },
+    { domain: "xoemails.com" },
+  ];
+
+  it("marks a cluster covered by an active block, its subdomains included, and says whose", () => {
+    const state = withDomainState(clusters, [
+      { domain: "oemails.com", source: "admin" },
+      { domain: "farm.test", source: "auto" },
+    ]);
+    expect(state.map((c) => [c.domain, c.block])).toEqual([
+      ["oemails.com", "admin"],
+      ["a.farm.test", "auto"],
+      ["ymail.com", null],
+      ["unilag.edu.ng", null],
+      ["com.ng", null],
+      // Only the same letters, not a subdomain.
+      ["xoemails.com", null],
+    ]);
+  });
+
+  it("lets an owner's block win the pill when both cover a cluster", () => {
+    const [state] = withDomainState([{ domain: "oemails.com" }], [
+      { domain: "oemails.com", source: "auto" },
+      { domain: "oemails.com", source: "admin" },
+    ]);
+    expect(state.block).toBe("admin");
+  });
+
+  it("offers a block on a real domain, never on a never-block provider or a bare suffix", () => {
+    const state = withDomainState(clusters, []);
+    expect(Object.fromEntries(state.map((c) => [c.domain, c.blockable]))).toEqual({
+      "oemails.com": true,
+      "a.farm.test": true,
+      "ymail.com": false,
+      "unilag.edu.ng": true,
+      "com.ng": false,
+      "xoemails.com": true,
+    });
+  });
+
+  it("flags a school or government domain for the dialogs' warning", () => {
+    const state = withDomainState(clusters, []);
+    expect(state.filter((c) => c.protectedDomain).map((c) => c.domain)).toEqual(["unilag.edu.ng"]);
+  });
+
+  it("adds up the machine-made count across a domain's hosts", () => {
+    const at = new Date("2026-09-27T19:00:00Z");
+    const m = (email: string): ClusterMember => ({ voteId: email, email, createdAt: at, held: false });
+    const [farm] = groupByVoteDomain([
+      { domain: "oemails.com", votes: 2, members: [m("a@oemails.com"), m("b@oemails.com")], machineMade: 2 },
+      { domain: "a.oemails.com", votes: 1, members: [m("c@a.oemails.com")], machineMade: 1 },
+      { domain: "b.oemails.com", votes: 1, members: [m("d@b.oemails.com")] },
+    ]);
+    expect(farm.machineMade).toBe(3);
+    expect(farm.votes).toBe(4);
   });
 });

@@ -307,6 +307,8 @@ describe("the list stays complete", () => {
     audit_log: "purged per campaign, so admin history survives",
     admin_sessions:
       "the signed-in admins' own sessions, not participant data; rows expire in twelve hours and purging them would sign the owner out mid-purge",
+    vote_blocked_domains:
+      "domain names an owner judged as farms, with no voter's address in them; forgetting them in a purge would let the same farm straight back in, and the card on /admin/winners lists every one for an owner to lift",
   };
 
   /*

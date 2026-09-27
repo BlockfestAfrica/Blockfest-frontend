@@ -15,6 +15,14 @@ import {
 } from "@/components/shared/panel";
 import { ActionDialog } from "@/components/shared/action-dialog";
 import { Confirm } from "@/components/shared/confirm";
+import { BlockDomainDialog } from "@/components/admin/blocked-domains-card";
+import {
+  blockToast,
+  heldReasonLabel,
+  removeAllConsequence,
+  removeAllToast,
+  type HeldReason,
+} from "@/lib/vote-domain-copy";
 import { count, dateTime } from "@/lib/format";
 import { openableHref } from "@/lib/admin/openable-href";
 import { monicaStages, platformLabels, type CampaignPlatform } from "@/lib/campaigns";
@@ -67,11 +75,34 @@ export interface TallyView {
     votes: number;
     members: ClusterVote[];
     hosts?: { host: string; votes: number }[];
+    /** Votes whose address looks machine-made, from vote_local_looks_generated. */
+    machineMade?: number;
+    /** An active block covering the domain, and who made it. */
+    block?: "admin" | "auto" | null;
+    /** Whether Block and Remove all may be offered on it at all. */
+    blockable?: boolean;
+    /** A school or government domain, which the dialogs warn about. */
+    protectedDomain?: boolean;
   }[];
   ips: { ipHash: string; votes: number; members: ClusterVote[] }[];
-  held: { voteId: string; email: string; domain: string; createdAt: string }[];
+  held: {
+    voteId: string;
+    email: string;
+    domain: string;
+    createdAt: string;
+    /** Why it waits; null for a vote held before reasons were recorded. */
+    reason?: HeldReason;
+  }[];
   unverified: number;
 }
+
+/**
+ * The smallest cluster "Remove all" is offered on. One or two votes from a
+ * domain is a person and a friend far more often than a farm, and removal
+ * cannot be undone; below this, each vote is removed on its own, or the
+ * domain blocked, which can be.
+ */
+const REMOVE_ALL_MIN = 3;
 
 type RemoveMode = "fraud" | "unsweep";
 
@@ -320,8 +351,22 @@ export function VoteRoundPanel({
   const [fewReason, setFewReason] = useState("");
   /** The vote whose removal is being confirmed, and whose email it names. */
   const [removing, setRemoving] = useState<{ voteId: string; email: string } | null>(null);
-  /** A whole domain whose removal as fraud is being confirmed. */
-  const [removingDomain, setRemovingDomain] = useState<{ domain: string; votes: number } | null>(null);
+  /**
+   * A whole domain whose removal as fraud is being confirmed, with the ids of
+   * the votes on screen: only those are removed, whatever arrived since.
+   */
+  const [removingDomain, setRemovingDomain] = useState<{
+    domain: string;
+    votes: number;
+    voteIds: string[];
+    protectedDomain: boolean;
+  } | null>(null);
+  /** A domain whose block is being confirmed, and how many of its votes count now. */
+  const [blockingDomain, setBlockingDomain] = useState<{
+    domain: string;
+    counted: number;
+    protectedDomain: boolean;
+  } | null>(null);
   const [openCluster, setOpenCluster] = useState<string | null>(null);
   const [lookupEmail, setLookupEmail] = useState("");
   const [lookupResult, setLookupResult] = useState<ClusterVote[] | null>(null);
@@ -377,7 +422,15 @@ export function VoteRoundPanel({
     windowOk &&
     !needsFreeze;
 
-  async function act(body: Record<string, unknown>, success: string) {
+  /*
+   * success is a sentence, or a function of the server's answer for the
+   * actions whose outcome only the server knows: how many were removed,
+   * how many held. The toast says what happened, not what was asked for.
+   */
+  async function act(
+    body: Record<string, unknown>,
+    success: string | ((result: Record<string, unknown>) => string),
+  ) {
     setBusy(true);
     try {
       const response = await fetch("/api/admin/vote-round", {
@@ -390,9 +443,10 @@ export function VoteRoundPanel({
         toast.error(result.message ?? "That did not work.");
         return;
       }
-      toast.success(success);
+      toast.success(typeof success === "function" ? success(result) : success);
       setRemoving(null);
       setRemovingDomain(null);
+      setBlockingDomain(null);
       setRemoveReason("");
       setRemoveMode("fraud");
       await router.refresh();
@@ -641,11 +695,26 @@ export function VoteRoundPanel({
                     onClick={() => setOpenCluster(open ? null : key)}
                     className="flex min-h-11 w-full cursor-pointer items-baseline justify-between gap-4 py-2 text-left transition-colors hover:bg-card-2"
                   >
-                    <dt className="truncate text-sm text-ink-2">
-                      {d.domain}
-                      <span className="ml-2 text-ink-4">
-                        {open ? "hide" : "show votes"}
+                    <dt className="min-w-0 text-sm text-ink-2">
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="[overflow-wrap:anywhere]">{d.domain}</span>
+                        {/* Who decided, on the row itself: an owner's block
+                            is red, the automatic rule's amber, because an
+                            automatic one still wants a person's look. */}
+                        {d.block === "admin" && <Pill tone="bad">Blocked</Pill>}
+                        {d.block === "auto" && (
+                          <Pill tone="warn">Blocked automatically</Pill>
+                        )}
+                        <span className="text-ink-4">
+                          {open ? "hide" : "show votes"}
+                        </span>
                       </span>
+                      {(d.machineMade ?? 0) > 0 && (
+                        <span className="mt-1 block text-ink-4">
+                          {count(d.machineMade ?? 0)} of {count(d.votes)} look
+                          machine-made
+                        </span>
+                      )}
                     </dt>
                     <dd className="tabular-nums text-sm text-ink-2">
                       {count(d.votes)}
@@ -667,21 +736,60 @@ export function VoteRoundPanel({
                                 .join(" · ")}
                             </p>
                           )}
-                        <p className="max-w-prose text-sm text-ink-2 [overflow-wrap:anywhere]">
-                          All from {d.domain} look like one person?
-                        </p>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => {
-                            setRemovingDomain({ domain: d.domain, votes: d.votes });
-                            setRemoveReason("");
-                          }}
-                          aria-haspopup="dialog"
-                          className={buttonClass("danger")}
-                        >
-                          Remove all {count(d.votes)} as fraud…
-                        </button>
+                        {d.blockable ? (
+                          <>
+                            <p className="max-w-prose text-sm text-ink-2 [overflow-wrap:anywhere]">
+                              All from {d.domain} look like one person?
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {/* Block is the reversible answer, offered on
+                                  every cluster it can land on; Remove all
+                                  cannot be undone, so it waits for a
+                                  cluster big enough to be a farm. */}
+                              {!d.block && (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() =>
+                                    setBlockingDomain({
+                                      domain: d.domain,
+                                      counted: d.members.filter((m) => !m.held).length,
+                                      protectedDomain: Boolean(d.protectedDomain),
+                                    })
+                                  }
+                                  aria-haspopup="dialog"
+                                  className={buttonClass("secondary")}
+                                >
+                                  Block…
+                                </button>
+                              )}
+                              {d.votes >= REMOVE_ALL_MIN && (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => {
+                                    setRemovingDomain({
+                                      domain: d.domain,
+                                      votes: d.votes,
+                                      voteIds: d.members.map((m) => m.voteId),
+                                      protectedDomain: Boolean(d.protectedDomain),
+                                    });
+                                    setRemoveReason("");
+                                  }}
+                                  aria-haspopup="dialog"
+                                  className={buttonClass("danger")}
+                                >
+                                  Remove all {count(d.votes)} as fraud…
+                                </button>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <p className="max-w-prose text-sm text-ink-3 [overflow-wrap:anywhere]">
+                            {d.domain} is shared by real voters, so it cannot
+                            be blocked. Remove its votes one at a time.
+                          </p>
+                        )}
                       </div>
                       {renderMembers(d.members)}
                     </>
@@ -810,8 +918,9 @@ export function VoteRoundPanel({
             Held votes, waiting on you
           </p>
           <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
-            Verified, but past the domain cap. Release the innocent ones into
-            the tally; remove the rest with the reason recorded.
+            Verified, but held: past the domain&apos;s ten, or from a blocked
+            domain. Release the innocent ones into the tally; remove the rest
+            with the reason recorded.
           </p>
           <div className="mt-2 border-b border-line">
             {tally.held.slice(0, visibleHeld).map((h) => (
@@ -822,7 +931,8 @@ export function VoteRoundPanel({
                       {h.email}
                     </p>
                     <p className="text-sm text-ink-4">
-                      {h.domain} · {dateTime(h.createdAt)}
+                      {h.domain} · {heldReasonLabel(h.reason)} ·{" "}
+                      {dateTime(h.createdAt)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -1346,7 +1456,7 @@ export function VoteRoundPanel({
         }}
         title={
           removingDomain
-            ? `Remove every verified vote from ${removingDomain.domain}`
+            ? `Remove ${removingDomain.domain}'s votes and block it`
             : "Remove a domain's votes"
         }
         tone="danger"
@@ -1379,8 +1489,11 @@ export function VoteRoundPanel({
                   question={`Remove all ${count(removingDomain.votes)} ${
                     removingDomain.votes === 1 ? "vote" : "votes"
                   } from ${removingDomain.domain} as fraud?`}
-                  consequence={`They stop counting and each email is barred from this round. The removed votes still use up ${removingDomain.domain}'s allowance of ten this round, so at most ${Math.max(0, 10 - removingDomain.votes)} more from it can count before later ones are held. Voters are not told; the public answer never changes.`}
-                  confirmLabel="Yes, remove them all"
+                  consequence={removeAllConsequence(
+                    removingDomain.domain,
+                    removingDomain.protectedDomain,
+                  )}
+                  confirmLabel="Yes, remove and block"
                   pending={busy}
                   onConfirm={() =>
                     act(
@@ -1389,8 +1502,15 @@ export function VoteRoundPanel({
                         roundId: round.roundId,
                         domain: removingDomain.domain,
                         reason: removeReason.trim(),
+                        voteIds: removingDomain.voteIds,
                       },
-                      "Removed as fraud.",
+                      (result) =>
+                        removeAllToast(
+                          Number(result.removed ?? 0),
+                          typeof result.domain === "string"
+                            ? result.domain
+                            : removingDomain.domain,
+                        ),
                     )
                   }
                 />
@@ -1409,6 +1529,22 @@ export function VoteRoundPanel({
           </div>
         )}
       </ActionDialog>
+      <BlockDomainDialog
+        target={blockingDomain}
+        busy={busy}
+        onClose={() => setBlockingDomain(null)}
+        onConfirm={(reason) =>
+          blockingDomain &&
+          act(
+            { action: "block_domain", domain: blockingDomain.domain, reason },
+            (result) =>
+              blockToast(
+                typeof result.domain === "string" ? result.domain : blockingDomain.domain,
+                Number(result.held ?? 0),
+              ),
+          )
+        }
+      />
     </JobCard>
   );
 }
