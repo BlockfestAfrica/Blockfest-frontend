@@ -401,7 +401,8 @@ export const SpeakersList: Speaker[] = [
 export const isPastSpeaker = (speaker: Speaker) => speaker.cohort !== "2026";
 export const is2026Speaker = (speaker: Speaker) => speaker.cohort === "2026";
 
-const HONORIFIC = /^(hon|dr|prof|mr|mrs|ms|miss|engr|chief|sen|rt|barr|arc|rev|pastor|sir|hrh)\.?$/i;
+const HONORIFIC =
+  /^(hon|dr|prof|mr|mrs|ms|miss|engr|chief|sen|rt|barr|arc|rev|pst|pastor|sir|hrh|amb|gov|col|gen|capt|prince|princess|alhaji|alhaja|otunba|oba|madam|lady|dame|mazi)\.?$/i;
 
 /**
  * How the profile page refers to a speaker in a sentence: "About Teddi".
@@ -414,7 +415,9 @@ const HONORIFIC = /^(hon|dr|prof|mr|mrs|ms|miss|engr|chief|sen|rt|barr|arc|rev|p
 export function speakerShortName(name: string): string {
   const trimmed = name.trim();
   const first = trimmed.split(/\s+/)[0] ?? trimmed;
-  return HONORIFIC.test(first) ? trimmed : first;
+  // A full stop in the first word is a title or an initial ("K.C.", or
+  // "Dr.Tunji" typed without its space), never a first name on its own.
+  return HONORIFIC.test(first) || first.includes(".") ? trimmed : first;
 }
 
 /** The URL segment of a speaker's profile, from their name. */

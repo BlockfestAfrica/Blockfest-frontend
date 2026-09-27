@@ -79,6 +79,25 @@ describe("how a profile refers to its speaker", () => {
     expect(speakerShortName("Dr. Tunji Alausa")).toBe("Dr. Tunji Alausa");
     expect(speakerShortName("Rt. Hon. Somebody")).toBe("Rt. Hon. Somebody");
     expect(speakerShortName("Prof Ada Obi")).toBe("Prof Ada Obi");
+    // Titles still to come on a Lagos stage, and initials or a missing space.
+    for (const name of [
+      "Prince Adewale Smith",
+      "Alhaji Musa Bello",
+      "Amb. Nkoyo Etim",
+      "Gov. Somebody Else",
+      "Otunba Femi Ade",
+      "K.C. Onyekachi",
+      "Dr.Tunji Alausa",
+    ]) {
+      expect(speakerShortName(name)).toBe(name);
+    }
+  });
+
+  it("names every current speaker sensibly", () => {
+    for (const { name } of SpeakersList) {
+      const said = speakerShortName(name);
+      expect(said, name).not.toMatch(/^[A-Za-z]{1,6}\.$/);
+    }
   });
 
   it("uses a first name otherwise", () => {
