@@ -378,10 +378,78 @@ export const SpeakersList: Speaker[] = [
     bio: "Eniola Osiyoku has built her career around digital payments, mobile money, remittances and banking infrastructure, with a focus on creating products that serve African markets.\n\nAt PawaPay, she leads product initiatives within the payments space, helping shape financial products designed for scale across the continent.\n\nHer background gives her a close view of the infrastructure, product decisions and market realities behind how money moves across Africa.\n\nAt Blockfest Africa 2026, she joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+
+  /*
+   * Returning from a previous edition. His entry up the list stays as it is,
+   * so the archive and the 2025 recap keep him where they had him; this one
+   * is his place in the 2026 lineup, in announcement order, reusing the same
+   * portrait. Both share one profile page: speakerBySlug below prefers this
+   * entry, because it is the current one.
+   */
+  {
+    name: "Hon. Mobolaji Ogunlende Abubakre",
+    title: "Commissioner for Youth & Social Development, LASG",
+    image: "/images/speakers/mobolaji.jpg",
+    expertise: ["Government & Policy"],
+    company: "Lagos State Government",
+    twitter: "https://x.com/mo_ogunlende?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
+    bio: "Hon. Mobolaji Ogunlende Abubakre is the Commissioner for Youth & Social Development in the Lagos State Government.\n\nHe has spoken at Blockfest Africa before, and returns for 2026.\n\nAt Blockfest Africa 2026, he joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
 ];
 
 export const isPastSpeaker = (speaker: Speaker) => speaker.cohort !== "2026";
 export const is2026Speaker = (speaker: Speaker) => speaker.cohort === "2026";
+
+const HONORIFIC =
+  /^(hon|dr|prof|mr|mrs|ms|miss|engr|chief|sen|rt|barr|arc|rev|pst|pastor|sir|hrh|amb|gov|col|gen|capt|prince|princess|alhaji|alhaja|otunba|oba|madam|lady|dame|mazi)\.?$/i;
+
+/**
+ * How the profile page refers to a speaker in a sentence: "About Teddi".
+ *
+ * It took the first word of the name, which for "Hon. Mobolaji Ogunlende
+ * Abubakre" and "Dr. Tunji Alausa" printed "About Hon." and "Join Dr. and
+ * other industry leaders". Somebody named with an honorific is named in full;
+ * a first name alone would be too familiar for a minister anyway.
+ */
+export function speakerShortName(name: string): string {
+  const trimmed = name.trim();
+  const first = trimmed.split(/\s+/)[0] ?? trimmed;
+  // A full stop in the first word is a title or an initial ("K.C.", or
+  // "Dr.Tunji" typed without its space), never a first name on its own.
+  return HONORIFIC.test(first) || first.includes(".") ? trimmed : first;
+}
+
+/** The URL segment of a speaker's profile, from their name. */
+export function speakerSlug(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+}
+
+/**
+ * One profile per person.
+ *
+ * A speaker who returns has an entry in each edition they spoke at, with the
+ * same name and so the same slug. The profile shows the 2026 entry, because
+ * it is the current one: it says they are speaking this October and sends
+ * "back" to this year's lineup.
+ */
+export function speakerBySlug(slug: string): Speaker | undefined {
+  const matches = SpeakersList.filter((speaker) => speakerSlug(speaker.name) === slug);
+  return matches.find(is2026Speaker) ?? matches[0];
+}
+
+/** Every person once, as their profile shows them. */
+export function speakerProfiles(): Speaker[] {
+  const seen = new Set<string>();
+  const profiles: Speaker[] = [];
+  for (const speaker of SpeakersList) {
+    const slug = speakerSlug(speaker.name);
+    if (seen.has(slug)) continue;
+    seen.add(slug);
+    profiles.push(speakerBySlug(slug)!);
+  }
+  return profiles;
+}
 // Export unique expertise categories for filtering
 export const expertiseCategories = [
   "Web3 & Blockchain",
