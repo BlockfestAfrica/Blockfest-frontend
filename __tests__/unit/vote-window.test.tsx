@@ -15,7 +15,8 @@ import { WinnersPanel } from "@/components/admin/winners-panel";
  * round trip, and both dates in what is sent and in the question before it.
  */
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+const nav = vi.hoisted(() => ({ refresh: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: nav.refresh }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ ok: true }) }));
@@ -187,50 +188,95 @@ describe("telling the creators", () => {
   /*
    * Owner report: the email went out, and after a reload the button was
    * back. The console now reads the send from its audit row, so the button
-   * gives way to when it went, and a new round brings it back.
+   * gives way to what happened to it, and a new round brings it back.
    */
-  const round = (announced: { at: string; finished: boolean; sent: number | null } | null) => ({
-    roundId: "r1",
+  type Told = { at: string; finished: boolean; sent: number | null; failed?: number | null };
+  const round = (announced: Told | null, roundId = "r1") => ({
+    roundId,
     status: "open" as const,
     opensAt: "2026-09-26T07:00:00Z",
     closesAt: "2026-09-29T07:00:00Z",
     reviewedAt: null,
     announced,
   });
-  const panel = (r: ReturnType<typeof round>) =>
-    render(<VoteRoundPanel weekNo={1} round={r} candidates={CANDIDATES} tally={null} frozen />);
+  const panel = (r: ReturnType<typeof round>, weekNo = 1) => (
+    <VoteRoundPanel weekNo={weekNo} round={r} candidates={CANDIDATES} tally={null} frozen />
+  );
+  const tellButton = () => screen.queryByRole("button", { name: "Tell the creators" });
+  async function press(answer: { ok: boolean; status?: number; body: object }) {
+    fetchMock.mockImplementationOnce(async () => ({
+      ok: answer.ok,
+      status: answer.status ?? 200,
+      json: async () => answer.body,
+    }));
+    fireEvent.click(tellButton()!);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Yes, tell them" }));
+    });
+  }
+  beforeEach(() => nav.refresh.mockClear());
 
   it("offers the send while nobody has been told", () => {
-    panel(round(null));
-    expect(screen.getByRole("button", { name: "Tell the creators" })).toBeTruthy();
+    render(panel(round(null)));
+    expect(tellButton()).toBeTruthy();
   });
 
   it("says when they were told, and how many, instead of offering it again", () => {
-    panel(round({ at: "2026-09-26T09:05:00Z", finished: true, sent: 212 }));
-    expect(screen.queryByRole("button", { name: "Tell the creators" })).toBeNull();
-    expect(screen.getByText(/^Creators told 26 Sept.*10:05 · 212 emails$/)).toBeTruthy();
+    render(panel(round({ at: "2026-09-26T09:05:00Z", finished: true, sent: 212, failed: 0 })));
+    expect(tellButton()).toBeNull();
+    expect(screen.getByText("Creators told")).toBeTruthy();
+    expect(screen.getByText(/^26 Sept.*10:05 · 212 emails$/)).toBeTruthy();
     // The rest of the open vote's controls are untouched.
     expect(screen.getByRole("button", { name: "Close the vote" })).toBeTruthy();
   });
 
-  it("says a send that never finished did not finish, and still does not offer another", () => {
-    panel(round({ at: "2026-09-26T09:05:00Z", finished: false, sent: 0 }));
-    expect(screen.queryByRole("button", { name: "Tell the creators" })).toBeNull();
-    expect(screen.getByText(/^Creator email started 26 Sept.*10:05, not finished$/)).toBeTruthy();
+  it("does not call a send that left people out a success", () => {
+    const { unmount } = render(
+      panel(round({ at: "2026-09-26T09:05:00Z", finished: true, sent: 150, failed: 50 })),
+    );
+    expect(screen.getByText("Some not sent")).toBeTruthy();
+    expect(screen.getByText(/· 150 emails, 50 failed$/)).toBeTruthy();
+    expect(screen.queryByText("Creators told")).toBeNull();
+    unmount();
+    render(panel(round({ at: "2026-09-26T09:05:00Z", finished: true, sent: 0, failed: 400 })));
+    expect(screen.getByText("Not sent")).toBeTruthy();
+    expect(tellButton()).toBeNull();
   });
 
-  it("remembers a send made on this page before the refresh brings the row", async () => {
-    fetchMock.mockImplementationOnce(async () => ({
-      ok: true,
-      json: async () => ({ ok: true, sent: 3, failed: 0 }),
-    }));
-    panel(round(null));
-    fireEvent.click(screen.getByRole("button", { name: "Tell the creators" }));
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Yes, tell them" }));
+  it("says a send that never finished did not finish, and still does not offer another", () => {
+    render(panel(round({ at: "2026-09-26T09:05:00Z", finished: false, sent: 0 })));
+    expect(tellButton()).toBeNull();
+    expect(screen.getByText("Not finished")).toBeTruthy();
+    expect(screen.getByText(/^started 26 Sept.*10:05$/)).toBeTruthy();
+  });
+
+  it("remembers a send made on this page, at the time the server claimed it", async () => {
+    render(panel(round(null)));
+    await press({ ok: true, body: { ok: true, sent: 3, failed: 0, startedAt: "2026-09-26T09:00:00.000Z" } });
+    expect(tellButton()).toBeNull();
+    expect(screen.getByText(/^26 Sept.*10:00 · 3 emails$/)).toBeTruthy();
+    expect(nav.refresh).toHaveBeenCalled();
+  });
+
+  it("does not carry that memory to another week's round on the same page", async () => {
+    // The week links change only the query string, so the panel stays
+    // mounted and is handed the next round.
+    const view = render(panel(round(null, "r1")));
+    await press({ ok: true, body: { ok: true, sent: 3, failed: 0, startedAt: "2026-09-26T09:00:00.000Z" } });
+    expect(tellButton()).toBeNull();
+    view.rerender(panel(round(null, "r2"), 2));
+    expect(tellButton()).toBeTruthy();
+    expect(screen.queryByText("Creators told")).toBeNull();
+  });
+
+  it("refreshes after a refusal, so a page that was behind catches up", async () => {
+    render(panel(round(null)));
+    await press({
+      ok: false,
+      status: 409,
+      body: { ok: false, message: "This vote has already been announced. Check the audit log to see when, and by whom." },
     });
-    expect(screen.queryByRole("button", { name: "Tell the creators" })).toBeNull();
-    expect(screen.getByText(/^Creators told .* · 3 emails$/)).toBeTruthy();
+    expect(nav.refresh).toHaveBeenCalled();
   });
 });
 

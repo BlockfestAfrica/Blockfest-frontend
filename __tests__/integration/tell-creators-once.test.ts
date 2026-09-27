@@ -156,6 +156,44 @@ describe("pressing it", () => {
     expect(state.sends).toHaveLength(3);
   });
 
+  it("claims under a key derived from the round, so the database itself refuses a second claim", async () => {
+    // PGlite runs one statement at a time, so the test below cannot show
+    // two inserts overlapping. What serialises them on real Postgres is the
+    // primary key: a row already holding the round's key makes the claim
+    // do nothing even when the NOT EXISTS lookup cannot see it, which is
+    // the shape of two overlapping inserts.
+    const key = (
+      await one<{ id: string }>(`SELECT md5('vote.announced:' || $1::text)::uuid AS id`, [roundId])
+    ).id;
+    await db.query(
+      `INSERT INTO audit_log (id, action, entity_type, entity_id) VALUES ($1, 'placeholder', 'test', NULL)`,
+      [key],
+    );
+    const answer = await press();
+    expect(answer.status).toBe(409);
+    expect(state.sends).toHaveLength(0);
+  });
+
+  it("keeps refusing a round claimed before this change, under a random id", async () => {
+    await db.query(
+      `INSERT INTO audit_log (campaign_id, actor_admin_id, action, entity_type, entity_id, after)
+       VALUES ($1, $2, 'vote.announced', 'vote_round', $3, '{"status":"finished","sent":3}'::jsonb)`,
+      [campaignId, state.adminId, roundId],
+    );
+    expect((await press()).status).toBe(409);
+    expect(state.sends).toHaveLength(0);
+  });
+
+  it("finishes only its own row and answers with the claim's time", async () => {
+    const answer = await press();
+    const body = (await answer.json()) as { startedAt: string };
+    const row = await one<{ id: string; created_at: Date; after: { status: string; sent: number } }>(
+      `SELECT id, created_at, after FROM audit_log WHERE action = 'vote.announced'`,
+    );
+    expect(row.after).toMatchObject({ status: "finished", sent: 3 });
+    expect(new Date(body.startedAt).getTime()).toBe(new Date(row.created_at).getTime());
+  });
+
   it("mails the campaign once when two presses land together", async () => {
     const answers = await Promise.all([press(), press()]);
     expect(answers.map((a) => a.status).sort()).toEqual([200, 409]);

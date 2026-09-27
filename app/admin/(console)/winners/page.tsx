@@ -220,6 +220,7 @@ export default async function WinnersPage({
                       at: round.announced.at.toISOString(),
                       finished: round.announced.finished,
                       sent: round.announced.sent,
+                      failed: round.announced.failed,
                     }
                   : null,
               }

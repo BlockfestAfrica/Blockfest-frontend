@@ -34,7 +34,7 @@ export interface VoteRound {
    * only until the page reloaded, so the button came back on a vote whose
    * email had already gone out.
    */
-  announced: { at: Date; finished: boolean; sent: number | null } | null;
+  announced: { at: Date; finished: boolean; sent: number | null; failed: number | null } | null;
 }
 
 /** One approved post of a nominee's entry, and the account it was filed under. */
@@ -152,13 +152,15 @@ export async function currentRound(
            r.opens_at, r.closes_at, r.reviewed_at,
            told.created_at          AS told_at,
            told.after->>'status'    AS told_status,
-           told.after->>'sent'      AS told_sent
+           told.after->>'sent'      AS told_sent,
+           told.after->>'failed'    AS told_failed
       FROM vote_rounds r
       JOIN campaigns cm ON cm.id = r.campaign_id
       LEFT JOIN LATERAL (
             SELECT a.created_at, a.after
               FROM audit_log a
              WHERE a.action = 'vote.announced'
+               AND a.entity_type = 'vote_round'
                AND a.entity_id = r.id
              ORDER BY a.created_at
              LIMIT 1
@@ -170,7 +172,11 @@ export async function currentRound(
   const row = result.rows?.[0] as Record<string, unknown> | undefined;
   if (!row) return null;
 
-  const sent = Number(row.told_sent);
+  // after->> hands back text, or NULL for a key the row never had.
+  const whole = (value: unknown) => {
+    const n = Number(value);
+    return value == null || Number.isNaN(n) ? null : n;
+  };
   return {
     roundId: String(row.id),
     weekNo: Number(row.week_no ?? 0),
@@ -182,7 +188,8 @@ export async function currentRound(
       ? {
           at: new Date(String(row.told_at)),
           finished: row.told_status === "finished",
-          sent: row.told_sent == null || Number.isNaN(sent) ? null : sent,
+          sent: whole(row.told_sent),
+          failed: whole(row.told_failed),
         }
       : null,
   };
