@@ -63,7 +63,8 @@ describe("the paste point names the account rule", () => {
   });
 
   it("the page hands it the handles it already loaded", () => {
-    const me = read("app/campaigns/monica-money-story/me/page.tsx");
+    // The signed-in view moved out of me/page.tsx into its own component.
+    const me = read("components/campaigns/me-dashboard.tsx");
     expect(me).toMatch(/handles=\{Object\.fromEntries/);
   });
 });

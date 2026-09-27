@@ -515,9 +515,13 @@ describe("the screens pinned by source", () => {
   });
 
   it("the /me page signs out through the asking form", () => {
-    const src = read("app/campaigns/monica-money-story/me/page.tsx");
+    // The signed-in view moved out of me/page.tsx into its own component;
+    // neither half may fall back to a bare form.
+    const src = read("components/campaigns/me-dashboard.tsx");
+    const page = read("app/campaigns/monica-money-story/me/page.tsx");
     expect(src).toMatch(/<SignOutForm action=\{signOut\} \/>/);
     expect(src).not.toMatch(/<form action=\{signOut\}/);
+    expect(page).not.toMatch(/<form action=\{signOut\}/);
   });
 
   it("the resume mail's comment no longer claims a filter the query lacks", () => {
