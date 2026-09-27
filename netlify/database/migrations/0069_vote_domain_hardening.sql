@@ -73,9 +73,11 @@
  *   round nobody has reviewed yet. Reviewed and published rounds are left
  *   alone: a person certified those tallies.
  * - unblock_vote_domain lifts it and releases what the block (or the
- *   forwarding rule) held in those same rounds, each release audited as one.
- *   Cap holds and fraud removals are untouched: those were judgements about
- *   the allowance of ten, not about the block.
+ *   forwarding rule) held in those same rounds, oldest first and only up to
+ *   the domain's allowance of ten in each round, each release audited as
+ *   one; the rest stay held as over the ten. Cap holds and fraud removals are
+ *   untouched: those were judgements about the allowance of ten, not about
+ *   the block.
  * - remove_vote_domain replaces "Remove all as fraud"'s single statement. It
  *   removes only the votes that were on the owner's screen, then blocks, in
  *   that order. It had to become a function: sibling CTEs in one statement
@@ -85,7 +87,11 @@
  * All three take the (round, domain) locks verify_vote takes, every round in
  * one order (opens_at, id), and before they write anything, so a verify
  * arriving mid-block either finishes first and is held by the block, or waits
- * and sees the block.
+ * and sees the block. Before those locks they hold the rounds' rows FOR
+ * SHARE in the same order, so no round is marked reviewed or published while
+ * they wait and write; and verify_vote reads its round's state again once it
+ * has its lock, so a review that committed during the wait still turns the
+ * vote away.
  *
  * Automatic action, because the incident was over in fourteen minutes and no
  * person was watching:
@@ -428,11 +434,12 @@ BEGIN
 END $$;
 
 /*
- * The body. 0068's exactly, apart from the key, the lock, the held reason,
- * the blocked-domain and forwarder holds, the automatic block and the third
- * output column. auto_blocked is true on the one verify whose vote made the
- * domain blocked automatically, so the route can tell the owners; it never
- * reaches the voter.
+ * The body. 0068's exactly, apart from the key, the lock (and the round's
+ * state read again under it), the held reason, the blocked-domain and
+ * forwarder holds, the automatic block and the third output column.
+ * auto_blocked is true on the one verify whose vote made the domain blocked
+ * automatically, so the route can tell the owners; it never reaches the
+ * voter.
  */
 CREATE OR REPLACE FUNCTION verify_vote(
   p_campaign_slug   text,
@@ -512,6 +519,18 @@ BEGIN
     PERFORM pg_advisory_xact_lock(
       hashtextextended('vote-domain:' || p_round::text || ':' || v_key, 0)
     );
+
+    /*
+     * The round's state again, now that this holds the lock. The check at
+     * the top ran before any wait, and a Block, Unblock or Remove all on
+     * this domain can hold the lock for a while; a review or an announce
+     * that committed meanwhile must still turn this vote away, exactly as
+     * it would have at the top.
+     */
+    SELECT * INTO r FROM vote_rounds WHERE id = p_round;
+    IF r.reviewed_at IS NOT NULL OR r.status = 'published' THEN
+      RAISE EXCEPTION 'round_not_open' USING ERRCODE = 'P0814';
+    END IF;
 
     /*
      * A blocked domain first, and on the host rather than the key: a block
@@ -625,7 +644,8 @@ END $$;
  * already. It changes nothing and holds nothing: every vote verified since
  * the first block was held by verify_vote, so the only counted votes left
  * are ones an owner released on purpose, and a second press must not take
- * that decision back.
+ * that decision back. It returns null then, rather than 0, so the console
+ * can say the domain was already blocked instead of "Blocked".
  *
  * The holds are reversible and each is the same act release_vote undoes. A
  * reviewed or published round is left alone: its tally was certified by a
@@ -661,15 +681,12 @@ BEGIN
   END IF;
 
   /*
-   * The locks before the row, every round's in one order. A verify that got
-   * a round's lock first finishes (and may block the domain automatically
-   * while it holds it), then this sees its vote; one that asks after this
-   * transaction commits sees the block and holds its own vote.
-   *
-   * Row first and locks second would deadlock against the automatic rule:
-   * this transaction holding the new row and waiting for a round's lock,
-   * while the verify holding that lock waits to insert the same (campaign,
-   * domain) row.
+   * The rounds first, held FOR SHARE in one order, so none of them can be
+   * marked reviewed (mark_round_reviewed takes FOR UPDATE) or published
+   * while this waits on the locks below and holds its votes. Without it a
+   * review could commit in that wait, and the holds would land in a tally a
+   * person had already certified. Then the set again, after the row locks:
+   * a round reviewed while this waited for its row is not one to touch.
    */
   v_rounds := ARRAY(
     SELECT r.id
@@ -678,7 +695,29 @@ BEGIN
        AND r.reviewed_at IS NULL
        AND r.status <> 'published'
      ORDER BY r.opens_at, r.id
+       FOR SHARE
   );
+  v_rounds := ARRAY(
+    SELECT r.id
+      FROM vote_rounds r
+     WHERE r.id = ANY (v_rounds)
+       AND r.reviewed_at IS NULL
+       AND r.status <> 'published'
+     ORDER BY r.opens_at, r.id
+  );
+
+  /*
+   * The locks before the row, every round's in one order. A verify that got
+   * a round's lock first finishes (and may block the domain automatically
+   * while it holds it), then this sees its vote; one that asks after this
+   * transaction commits sees the block and holds its own vote.
+   *
+   * Row first and locks second would deadlock against the automatic rule:
+   * this transaction holding the new row and waiting for a round's lock,
+   * while the verify holding that lock waits to insert the same (campaign,
+   * domain) row. unblock_vote_domain takes the same locks in the same order
+   * before it touches the row, for the same reason.
+   */
   FOREACH v_round IN ARRAY v_rounds LOOP
     PERFORM pg_advisory_xact_lock(
       hashtextextended('vote-domain:' || v_round::text || ':' || v_domain, 0)
@@ -691,8 +730,9 @@ BEGIN
   ON CONFLICT (campaign_id, domain) WHERE lifted_at IS NULL DO NOTHING
   RETURNING id INTO v_block;
 
+  -- Already blocked: nothing inserted, nothing held, and null says so.
   IF v_block IS NULL THEN
-    RETURN 0;
+    RETURN NULL;
   END IF;
 
   FOREACH v_round IN ARRAY v_rounds LOOP
@@ -717,7 +757,7 @@ BEGIN
 END $$;
 
 /*
- * Lift a block, and release what it held.
+ * Lift a block, and release what it held, up to the domain's allowance.
  *
  * The row is kept, with who lifted it and why, and from then on it is the
  * owner vouching for the domain: the automatic rule will not act on a
@@ -726,25 +766,50 @@ END $$;
  * Released: votes held for the block ('blocked') or by the forwarding rule
  * ('forwarder') in rounds nobody has reviewed, each through release_vote so
  * each release is audited as one, unless another active block still covers
- * the vote's host. Not released: cap holds, which were a judgement about the
- * allowance of ten and not about the block; fraud removals, which cannot be
- * undone and still use up that allowance; and anything in a reviewed or
- * published round.
+ * the vote's host. Oldest first, and only while the domain is under its
+ * allowance of ten in that round, counted the way verify_vote counts it
+ * (counted and not held, plus removals as fraud). The block and forwarding
+ * holds come before the cap in verify_vote, so a vote held for either never
+ * reached the cap; releasing all of them would let an unblock carry a
+ * domain past its ten. The ones past it stay held and are marked 'cap',
+ * which is what verify_vote would have said about them without the block,
+ * and a person can still release them one at a time.
+ *
+ * Not released: cap holds, which were a judgement about the allowance and
+ * not about the block; fraud removals, which cannot be undone and still use
+ * up that allowance; and anything in a reviewed or published round.
+ *
+ * Returns how many were released.
+ *
+ * Locks as block_vote_domain does, and in the same order: the rounds FOR
+ * SHARE, then every round's (round, domain) lock, and only then the block's
+ * row. The row first, as this was, deadlocked against a Block or a Remove
+ * all on the same domain: this holding the row and waiting for a round's
+ * lock, the other holding that lock and waiting to insert the row. The
+ * candidates are locked FOR UPDATE and read again when their lock is
+ * granted, so a vote another owner released a moment ago is skipped rather
+ * than failing release_vote, and the whole unblock with it.
  */
 CREATE OR REPLACE FUNCTION unblock_vote_domain(
-  p_admin    uuid,
-  p_campaign uuid,
-  p_domain   text,
-  p_reason   text
+  p_admin      uuid,
+  p_campaign   uuid,
+  p_domain     text,
+  p_reason     text,
+  p_domain_cap integer DEFAULT 10
 )
 RETURNS integer
 LANGUAGE plpgsql AS $$
 DECLARE
   v_domain   text := lower(btrim(COALESCE(p_domain, '')));
+  v_cap      integer := COALESCE(p_domain_cap, 10);
   v_block    uuid;
+  v_rounds   uuid[];
   v_round    uuid;
+  v_votes    uuid[];
   v_vote     uuid;
+  v_used     integer;
   v_released integer := 0;
+  v_capped   integer := 0;
 BEGIN
   IF p_admin IS NULL THEN
     RAISE EXCEPTION 'admin_required' USING ERRCODE = 'P0401';
@@ -752,6 +817,33 @@ BEGIN
   IF NULLIF(btrim(COALESCE(p_reason, '')), '') IS NULL THEN
     RAISE EXCEPTION 'reason_required' USING ERRCODE = 'P0502';
   END IF;
+
+  -- The rounds, held so none is reviewed or published under this, and the
+  -- set read again once they are held.
+  v_rounds := ARRAY(
+    SELECT r.id
+      FROM vote_rounds r
+     WHERE r.campaign_id = p_campaign
+       AND r.reviewed_at IS NULL
+       AND r.status <> 'published'
+     ORDER BY r.opens_at, r.id
+       FOR SHARE
+  );
+  v_rounds := ARRAY(
+    SELECT r.id
+      FROM vote_rounds r
+     WHERE r.id = ANY (v_rounds)
+       AND r.reviewed_at IS NULL
+       AND r.status <> 'published'
+     ORDER BY r.opens_at, r.id
+  );
+
+  -- Every round's lock before the row, the key and order block_vote_domain uses.
+  FOREACH v_round IN ARRAY v_rounds LOOP
+    PERFORM pg_advisory_xact_lock(
+      hashtextextended('vote-domain:' || v_round::text || ':' || v_domain, 0)
+    );
+  END LOOP;
 
   UPDATE vote_blocked_domains
      SET lifted_at = now(),
@@ -765,18 +857,13 @@ BEGIN
     RAISE EXCEPTION 'domain_not_blocked' USING ERRCODE = 'P0823';
   END IF;
 
-  FOR v_round IN
-    SELECT r.id
-      FROM vote_rounds r
-     WHERE r.campaign_id = p_campaign
-       AND r.reviewed_at IS NULL
-       AND r.status <> 'published'
-     ORDER BY r.opens_at, r.id
-  LOOP
-    PERFORM pg_advisory_xact_lock(
-      hashtextextended('vote-domain:' || v_round::text || ':' || v_domain, 0)
-    );
-    FOR v_vote IN
+  FOREACH v_round IN ARRAY v_rounds LOOP
+    /*
+     * The candidates, locked. A row another owner released while this
+     * waited is read again when its lock is granted, no longer matches
+     * held_at IS NOT NULL, and drops out here.
+     */
+    v_votes := ARRAY(
       SELECT v.id
         FROM votes v
        WHERE v.round_id = v_round
@@ -792,15 +879,36 @@ BEGIN
                   AND vote_domain_matches(split_part(v.voter_email_canonical, '@', 2), b.domain)
              )
        ORDER BY v.created_at, v.id
-    LOOP
-      PERFORM release_vote(p_admin, v_vote);
-      v_released := v_released + 1;
+         FOR UPDATE OF v
+    );
+
+    -- What the domain has used of its ten this round, as verify_vote counts it.
+    SELECT count(*) INTO v_used
+      FROM votes v2
+     WHERE v2.round_id = v_round
+       AND vote_domain_matches(split_part(v2.voter_email_canonical, '@', 2), v_domain)
+       AND (
+             (v2.status = 'counted'
+              AND v2.verified_at IS NOT NULL
+              AND v2.held_at IS NULL)
+          OR (v2.status = 'removed' AND v2.removed_mode = 'fraud')
+           );
+
+    FOREACH v_vote IN ARRAY v_votes LOOP
+      IF v_used < v_cap THEN
+        PERFORM release_vote(p_admin, v_vote);
+        v_used := v_used + 1;
+        v_released := v_released + 1;
+      ELSE
+        UPDATE votes SET held_reason = 'cap' WHERE id = v_vote;
+        v_capped := v_capped + 1;
+      END IF;
     END LOOP;
   END LOOP;
 
   INSERT INTO audit_log (campaign_id, actor_admin_id, action, entity_type, entity_id, after, note)
   VALUES (p_campaign, p_admin, 'vote_domain.unblocked', 'vote_domain', v_block,
-          jsonb_build_object('domain', v_domain, 'released', v_released),
+          jsonb_build_object('domain', v_domain, 'released', v_released, 'over_cap', v_capped),
           btrim(p_reason));
 
   RETURN v_released;
@@ -825,10 +933,12 @@ END $$;
  * of the tally that picks the winner (the console keeps the control there
  * for that reason).
  *
- * The locks come first, for every round the block will touch as well as this
- * one, in the one order block_vote_domain uses, so two owners acting on one
- * domain at once queue instead of deadlocking. The targets are locked in a
- * fixed order for the same reason.
+ * The rounds are held FOR SHARE and the locks come first, for every round
+ * the block will touch as well as this one, in the one order
+ * block_vote_domain and unblock_vote_domain use, so two owners acting on one
+ * domain at once queue instead of deadlocking, and no round is reviewed or
+ * published under them. The targets are locked in a fixed order for the
+ * same reason.
  */
 CREATE OR REPLACE FUNCTION remove_vote_domain(
   p_admin    uuid,
@@ -842,6 +952,7 @@ LANGUAGE plpgsql AS $$
 DECLARE
   v_domain  text := lower(btrim(COALESCE(p_domain, '')));
   r         vote_rounds%ROWTYPE;
+  v_rounds  uuid[];
   v_lock    uuid;
   v_vote    uuid;
   v_removed integer := 0;
@@ -864,13 +975,33 @@ BEGIN
     RAISE EXCEPTION 'round_not_open' USING ERRCODE = 'P0814';
   END IF;
 
-  FOR v_lock IN
+  /*
+   * The rounds it touches, held FOR SHARE in the one order before any lock
+   * is waited on, so none is published, and none the block will hold in is
+   * reviewed, while this waits. Then read again once held: this round may
+   * have been published, or another reviewed, while this waited for its row.
+   */
+  v_rounds := ARRAY(
     SELECT x.id
       FROM vote_rounds x
      WHERE x.campaign_id = r.campaign_id
        AND (x.id = p_round OR (x.reviewed_at IS NULL AND x.status <> 'published'))
      ORDER BY x.opens_at, x.id
-  LOOP
+       FOR SHARE
+  );
+  SELECT * INTO r FROM vote_rounds WHERE id = p_round;
+  IF r.status = 'published' THEN
+    RAISE EXCEPTION 'round_not_open' USING ERRCODE = 'P0814';
+  END IF;
+  v_rounds := ARRAY(
+    SELECT x.id
+      FROM vote_rounds x
+     WHERE x.id = ANY (v_rounds)
+       AND (x.id = p_round OR (x.reviewed_at IS NULL AND x.status <> 'published'))
+     ORDER BY x.opens_at, x.id
+  );
+
+  FOREACH v_lock IN ARRAY v_rounds LOOP
     PERFORM pg_advisory_xact_lock(
       hashtextextended('vote-domain:' || v_lock::text || ':' || v_domain, 0)
     );

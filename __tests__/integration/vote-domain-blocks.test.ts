@@ -27,6 +27,8 @@ const state = vi.hoisted(() => ({
   db: null as unknown,
   adminId: "",
   failBlockRead: false,
+  /** A SQLSTATE every block, unblock or remove call throws, as Postgres would. */
+  failDomainActs: null as string | null,
   mails: [] as { to: string; subject: string; text: string }[],
   afters: [] as (() => Promise<void>)[],
 }));
@@ -45,6 +47,23 @@ vi.mock("@/lib/db/client", async () => {
      */
     getDb: () => {
       const real = state.db as { execute: (q: SQL) => Promise<unknown> };
+      if (state.failDomainActs) {
+        const code = state.failDomainActs;
+        return new Proxy(real, {
+          get(target, prop) {
+            if (prop === "execute") {
+              return async (q: SQL) => {
+                if (/(block|unblock|remove)_vote_domain\(/.test(dialect.sqlToQuery(q).sql)) {
+                  throw Object.assign(new Error("deadlock detected"), { code });
+                }
+                return target.execute(q);
+              };
+            }
+            const value = Reflect.get(target, prop);
+            return typeof value === "function" ? value.bind(target) : value;
+          },
+        });
+      }
       if (!state.failBlockRead) return real;
       return new Proxy(real, {
         get(target, prop) {
@@ -246,6 +265,7 @@ beforeEach(async () => {
   state.mails = [];
   state.afters = [];
   state.failBlockRead = false;
+  state.failDomainActs = null;
   roundId = (
     await one<{ id: string }>(
       `INSERT INTO vote_rounds (campaign_id, week_no, status, opens_at, closes_at)
@@ -346,7 +366,7 @@ describe("a code mailed before the block", () => {
     await flush();
     const realCode = lastCode();
 
-    expect((await block("oemails.com")).body).toEqual({ ok: true, domain: "oemails.com", held: 0 });
+    expect((await block("oemails.com")).body).toEqual({ ok: true, domain: "oemails.com", held: 0, already: false });
 
     const farmed = await verifyAs("farmed@oemails.com", farmedCode);
     const real = await verifyAs("real.voter@gmail.com", realCode);
@@ -377,7 +397,7 @@ describe("blocking", () => {
     const paid = await stored("f@oemails.com", { round: published.id, nominee: published.nominee });
 
     const answer = await block("oemails.com", "Eleven random addresses in fourteen minutes");
-    expect(answer).toMatchObject({ status: 200, body: { ok: true, domain: "oemails.com", held: 2 } });
+    expect(answer).toMatchObject({ status: 200, body: { ok: true, domain: "oemails.com", held: 2, already: false } });
 
     for (const id of open) expect(await voteState(id)).toEqual({ status: "counted", held: true, held_reason: "blocked" });
     // A cap hold keeps its reason: the block did not decide it.
@@ -398,7 +418,7 @@ describe("blocking", () => {
   });
 
   it("lands on the registrable domain, and refuses a public suffix or a consumer provider", async () => {
-    expect((await block("x.oemails.com")).body).toEqual({ ok: true, domain: "oemails.com", held: 0 });
+    expect((await block("x.oemails.com")).body).toEqual({ ok: true, domain: "oemails.com", held: 0, already: false });
     expect(
       await one(`SELECT domain, source FROM vote_blocked_domains WHERE lifted_at IS NULL`),
     ).toEqual({ domain: "oemails.com", source: "admin" });
@@ -430,13 +450,26 @@ describe("blocking", () => {
     expect(await count(`SELECT count(*)::int AS n FROM vote_blocked_domains`)).toBe(0);
   });
 
-  it("does nothing the second time, and does not take back a release made since", async () => {
+  it("does nothing the second time, says it was already blocked, and does not take back a release made since", async () => {
     await stored("a@oemails.com");
-    expect((await block("oemails.com")).body.held).toBe(1);
+    expect((await block("oemails.com")).body).toMatchObject({ held: 1, already: false });
     const { id } = await one<{ id: string }>(`SELECT id FROM votes WHERE voter_email_canonical = 'a@oemails.com'`);
     await db.query(`SELECT release_vote($1::uuid, $2::uuid)`, [state.adminId, id]);
 
-    expect((await block("oemails.com", "Again")).body.held).toBe(0);
+    // The engine inserted nothing, and says so with null rather than 0, so
+    // the console can say "already blocked" instead of "Blocked".
+    expect((await block("oemails.com", "Again")).body).toEqual({
+      ok: true,
+      domain: "oemails.com",
+      held: 0,
+      already: true,
+    });
+    expect(
+      await one(`SELECT block_vote_domain($1::uuid, $2::uuid, 'oemails.com', 'Third') AS held`, [
+        state.adminId,
+        campaignId,
+      ]),
+    ).toEqual({ held: null });
     expect((await voteState(id)).held).toBe(false);
     expect(await count(`SELECT count(*)::int AS n FROM vote_blocked_domains`)).toBe(1);
     expect(await count(`SELECT count(*)::int AS n FROM audit_log WHERE action = 'vote_domain.blocked'`)).toBe(1);
@@ -522,6 +555,66 @@ describe("unblocking", () => {
     expect(later.body.ok).toBe(true);
   });
 
+  it("releases only up to the domain's allowance of ten, oldest first, and keeps the rest held as over it", async () => {
+    // Fifteen verified while blocked: the block held them before the cap
+    // was ever counted, so none of them is a 'cap' hold.
+    await block("oemails.com");
+    const held: string[] = [];
+    for (let i = 0; i < 15; i++) {
+      held.push(
+        (
+          await one<{ id: string }>(
+            `INSERT INTO votes (round_id, nominee_id, voter_email_canonical, verified_at, held_at, held_reason, created_at)
+             VALUES ($1, $2, $3, now() - interval '1 hour', now(), 'blocked', now() - ($4::int * interval '1 minute'))
+             RETURNING id`,
+            [roundId, nominee, `v${i}@oemails.com`, 15 - i],
+          )
+        ).id,
+      );
+    }
+
+    const answer = await console_({ action: "unblock_domain", domain: "oemails.com", reason: "Real club" });
+    expect(answer).toMatchObject({ status: 200, body: { ok: true, domain: "oemails.com", released: 10 } });
+
+    // The ten oldest count; the five after them wait as over the ten.
+    for (const id of held.slice(0, 10)) {
+      expect(await voteState(id)).toEqual({ status: "counted", held: false, held_reason: "blocked" });
+    }
+    for (const id of held.slice(10)) {
+      expect(await voteState(id)).toEqual({ status: "counted", held: true, held_reason: "cap" });
+    }
+    expect(await count(`SELECT count(*)::int AS n FROM countable_votes WHERE round_id = $1`, [roundId])).toBe(10);
+    expect(await count(`SELECT count(*)::int AS n FROM audit_log WHERE action = 'vote.released'`)).toBe(10);
+    expect(
+      await one(`SELECT after FROM audit_log WHERE action = 'vote_domain.unblocked'`),
+    ).toEqual({ after: { domain: "oemails.com", released: 10, over_cap: 5 } });
+  });
+
+  it("counts what the domain already used in each round, fraud removals included, round by round", async () => {
+    const week2 = await round(2, "open", false);
+    await block("oemails.com");
+    // This round: four still counting and three removed as fraud use seven
+    // of the ten, so three of the five held come back.
+    for (let i = 0; i < 4; i++) await stored(`c${i}@oemails.com`);
+    for (let i = 0; i < 3; i++) {
+      const id = await stored(`f${i}@oemails.com`);
+      await db.query(`SELECT remove_vote($1::uuid, $2::uuid, 'farm', 'fraud')`, [state.adminId, id]);
+    }
+    for (let i = 0; i < 5; i++) await stored(`h${i}@x.oemails.com`, { held: "blocked" });
+    // Another round has its own ten: both of its holds come back.
+    for (let i = 0; i < 2; i++) {
+      await stored(`w${i}@oemails.com`, { round: week2.id, nominee: week2.nominee, held: "forwarder" });
+    }
+
+    const answer = await console_({ action: "unblock_domain", domain: "oemails.com", reason: "Real club" });
+    expect(answer.body.released).toBe(5);
+    expect(await count(`SELECT count(*)::int AS n FROM countable_votes WHERE round_id = $1`, [roundId])).toBe(7);
+    expect(
+      await count(`SELECT count(*)::int AS n FROM votes WHERE round_id = $1 AND held_reason = 'cap' AND held_at IS NOT NULL`, [roundId]),
+    ).toBe(2);
+    expect(await count(`SELECT count(*)::int AS n FROM countable_votes WHERE round_id = $1`, [week2.id])).toBe(2);
+  });
+
   it("says a domain is not blocked any more, instead of pretending to lift it", async () => {
     const answer = await console_({ action: "unblock_domain", domain: "oemails.com", reason: "x" });
     expect(answer).toMatchObject({
@@ -597,5 +690,121 @@ describe("remove all as fraud", () => {
       ),
     ).rejects.toThrow(/vote_blocked_domain_shape/);
     expect((await voteState(id)).status).toBe("counted");
+  });
+});
+
+describe("the console's answers when an act cannot go through", () => {
+  it("says another owner is acting on the domain when Postgres breaks a deadlock", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    state.failDomainActs = "40P01";
+    for (const body of [
+      { action: "block_domain", domain: "oemails.com", reason: "x" },
+      { action: "unblock_domain", domain: "oemails.com", reason: "x" },
+      {
+        action: "remove_domain",
+        roundId,
+        domain: "oemails.com",
+        reason: "x",
+        voteIds: ["11111111-1111-4111-8111-111111111111"],
+      },
+    ]) {
+      expect(await console_(body), body.action).toMatchObject({
+        status: 400,
+        body: { ok: false, message: "Another owner is acting on this domain right now. Reload and try again." },
+      });
+    }
+    expect(error).not.toHaveBeenCalled();
+  });
+
+  it("takes a cluster of five hundred in one removal, which the shared four-kilobyte limit refused", async () => {
+    const listed = [await stored("a@oemails.com"), await stored("b@oemails.com")];
+    const voteIds = [
+      ...listed,
+      ...Array.from({ length: 498 }, (_, i) => `11111111-1111-4111-8111-${String(i).padStart(12, "0")}`),
+    ];
+    expect(
+      await console_({ action: "remove_domain", roundId, domain: "oemails.com", reason: "Farm", voteIds }),
+    ).toMatchObject({ status: 200, body: { ok: true, domain: "oemails.com", removed: 2 } });
+  });
+
+  it("tells an owner with a cluster over five hundred to block instead, not to reload", async () => {
+    const voteIds = Array.from(
+      { length: 501 },
+      (_, i) => `11111111-1111-4111-8111-${String(i).padStart(12, "0")}`,
+    );
+    expect(
+      await console_({ action: "remove_domain", roundId, domain: "oemails.com", reason: "Farm", voteIds }),
+    ).toMatchObject({
+      status: 400,
+      body: { ok: false, message: "Too many to remove at once; block the domain instead, which holds them all." },
+    });
+    expect(await count(`SELECT count(*)::int AS n FROM vote_blocked_domains`)).toBe(0);
+  });
+});
+
+/*
+ * The lock order, read off the SQL.
+ *
+ * PGlite has one connection, so two owners acting at once cannot be staged
+ * here. The races were run on a throwaway local Postgres 15 with every
+ * migration applied: before these orders, Unblock against Block deadlocked
+ * in 46 of 50 simultaneous trials and against Remove all in 25 of 50, a
+ * release racing an Unblock failed it with P0819, a review committing while
+ * a Block or Unblock waited let the certified tally move, and a verify
+ * waiting on its lock across the grace landed in a reviewed round. After
+ * them: 0 of 50 and 0 of 50, the Unblock skipped the released vote, the
+ * review waited for the act, and the verify was refused P0814. What can be
+ * pinned here is the order itself, in the definitions that ship.
+ */
+describe("the locks, in the order that keeps two owners from deadlocking", () => {
+  const body = (name: string) => {
+    const sql = readFileSync(join(MIGRATIONS_DIR, "0069_vote_domain_hardening.sql"), "utf8");
+    const at = sql.lastIndexOf(`CREATE OR REPLACE FUNCTION ${name}(`);
+    return sql.slice(at, sql.indexOf("END $$;", at));
+  };
+
+  it("has Unblock take every round's lock before it touches the block's row, as Block does", () => {
+    const unblock = body("unblock_vote_domain");
+    const lock = unblock.indexOf("pg_advisory_xact_lock");
+    const row = unblock.indexOf("UPDATE vote_blocked_domains");
+    expect(lock).toBeGreaterThan(0);
+    expect(row).toBeGreaterThan(lock);
+    // The same key as Block's, so the two queue on the same locks.
+    const key = "hashtextextended('vote-domain:' || v_round::text || ':' || v_domain, 0)";
+    expect(unblock).toContain(key);
+    expect(body("block_vote_domain")).toContain(key);
+    // And no lock taken per round inside the release loop, after the row.
+    expect(unblock.indexOf("pg_advisory_xact_lock", row)).toBe(-1);
+  });
+
+  it("has Unblock lock its candidates and read them again, rather than fail on one already released", () => {
+    const unblock = body("unblock_vote_domain");
+    const candidates = unblock.slice(unblock.indexOf("v_votes := ARRAY("), unblock.indexOf("PERFORM release_vote"));
+    expect(candidates).toMatch(/held_at IS NOT NULL/);
+    expect(candidates).toMatch(/FOR UPDATE OF v/);
+  });
+
+  it("has Block, Unblock and Remove all hold the rounds FOR SHARE before any lock, and read them again", () => {
+    for (const name of ["block_vote_domain", "unblock_vote_domain", "remove_vote_domain"]) {
+      const fn = body(name);
+      const share = fn.indexOf("FOR SHARE");
+      const lock = fn.indexOf("pg_advisory_xact_lock");
+      expect(share, name).toBeGreaterThan(0);
+      expect(lock, name).toBeGreaterThan(share);
+      // Read again between the two, once the rows are held.
+      const between = fn.slice(share, lock);
+      expect(between, name).toMatch(/reviewed_at IS NULL/);
+      expect(between, name).toMatch(/status <> 'published'/);
+    }
+  });
+
+  it("has verify_vote read its round's state again once it holds the domain's lock", () => {
+    const verify = body("verify_vote");
+    const lock = verify.indexOf("pg_advisory_xact_lock");
+    const recheck = verify.indexOf("SELECT * INTO r FROM vote_rounds", lock);
+    expect(recheck).toBeGreaterThan(lock);
+    const after = verify.slice(recheck, verify.indexOf("END IF;", recheck));
+    expect(after).toMatch(/r\.reviewed_at IS NOT NULL OR r\.status = 'published'/);
+    expect(after).toMatch(/RAISE EXCEPTION 'round_not_open' USING ERRCODE = 'P0814'/);
   });
 });

@@ -227,13 +227,22 @@ const FORWARDER_MX: readonly RegExp[] = [
   /^mx\d*\.addy\.io$/,
 ];
 
-/** The big mailbox providers, where one address is one account somebody made. */
+/**
+ * The big mailbox providers, where one address is one account somebody made.
+ *
+ * Microsoft under the whole of protection.outlook.com: its business tenants
+ * deliver to *.mail.protection.outlook.com, and its consumer domains
+ * (hotmail.fr, outlook.fr, live.ca and the other regional ones, which are
+ * not on the never-block list) to eur.olc. and nam.olc.protection.outlook.com.
+ * Matching only the first left those consumer domains "other", which is
+ * exactly what the machine-made rule acts on.
+ */
 const MAJOR_MX: readonly RegExp[] = [
   /^aspmx\.l\.google\.com$/,
   /^alt\d\.aspmx\.l\.google\.com$/,
   /^aspmx\d\.googlemail\.com$/,
   /^smtp\.google\.com$/,
-  /\.mail\.protection\.outlook\.com$/,
+  /\.protection\.outlook\.com$/,
   /\.yahoodns\.net$/,
   /^mx0\d\.mail\.icloud\.com$/,
   /^mail(sec)?\.protonmail\.ch$/,

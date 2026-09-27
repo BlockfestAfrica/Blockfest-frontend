@@ -225,25 +225,28 @@ describe("the domain cap after a sweep", () => {
 
     // The same person comes back with fresh addresses: every one is held,
     // first by the block the sweep left behind.
-    for (const email of farm(3)) {
+    const returning = farm(3);
+    for (const email of returning) {
       expect((await vote(email)).held).toBe(true);
       expect(await heldReason(email)).toBe("blocked");
     }
     expect(await counted("farm.test")).toBe(0);
 
-    // An owner lifts the block. The three it held are released, which is
-    // what the unblock dialog says it does, but a new vote is held by the
-    // cap: the eleven removed as fraud still fill the allowance of ten this
-    // round (0068), which the dialog also says.
+    // An owner lifts the block. The eleven removed as fraud still fill the
+    // allowance of ten this round (0068), so none of the three it held is
+    // released: each stays held as over the ten, which is what verify_vote
+    // would have said without the block, and the unblock dialog says so. A
+    // new vote is held by the cap as well.
     const { released } = await one<{ released: number }>(
-      `SELECT unblock_vote_domain($1::uuid, $2::uuid, 'farm.test', 'Checked with the nominee') AS released`,
+      `SELECT unblock_vote_domain($1::uuid, $2::uuid, 'farm.test', 'Checked with the nominee', 10) AS released`,
       [state.adminId, campaignId],
     );
-    expect(released).toBe(3);
+    expect(released).toBe(0);
+    for (const email of returning) expect(await heldReason(email)).toBe("cap");
     const [later] = farm(1);
     expect((await vote(later)).held).toBe(true);
     expect(await heldReason(later)).toBe("cap");
-    expect(await counted("farm.test")).toBe(3);
+    expect(await counted("farm.test")).toBe(0);
   });
 
   it("does not count unswept removals: those people may vote again", async () => {

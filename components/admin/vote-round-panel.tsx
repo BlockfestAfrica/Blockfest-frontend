@@ -15,10 +15,12 @@ import {
 } from "@/components/shared/panel";
 import { ActionDialog } from "@/components/shared/action-dialog";
 import { Confirm } from "@/components/shared/confirm";
-import { BlockDomainDialog } from "@/components/admin/blocked-domains-card";
+import { BlockDomainDialog, type BlockTarget } from "@/components/admin/blocked-domains-card";
 import {
   blockToast,
   heldReasonLabel,
+  REMOVE_ALL_MAX_VOTES,
+  REMOVE_ALL_TOO_MANY,
   removeAllConsequence,
   removeAllToast,
   type HeldReason,
@@ -363,12 +365,14 @@ export function VoteRoundPanel({
     voteIds: string[];
     protectedDomain: boolean;
   } | null>(null);
-  /** A domain whose block is being confirmed, and how many of its votes count now. */
-  const [blockingDomain, setBlockingDomain] = useState<{
-    domain: string;
-    counted: number;
-    protectedDomain: boolean;
-  } | null>(null);
+  /**
+   * A domain whose block is being confirmed, how many of its votes count
+   * now, and whether this round is already reviewed (the block then holds
+   * none of them, and the dialog must not say it does).
+   */
+  const [blockingDomain, setBlockingDomain] = useState<
+    (BlockTarget & { counted: number }) | null
+  >(null);
   const [openCluster, setOpenCluster] = useState<string | null>(null);
   const [lookupEmail, setLookupEmail] = useState("");
   const [lookupResult, setLookupResult] = useState<ClusterVote[] | null>(null);
@@ -744,7 +748,16 @@ export function VoteRoundPanel({
                                 .join(" · ")}
                             </p>
                           )}
-                        {d.blockable ? (
+                        {/* The question only where there is an answer
+                            to press: a blocked cluster too small for Remove
+                            all has neither Block nor Remove all, only the
+                            per-vote Remove below. */}
+                        {d.blockable && d.block && d.votes < REMOVE_ALL_MIN ? (
+                          <p className="max-w-prose text-sm text-ink-2 [overflow-wrap:anywhere]">
+                            {d.block === "auto" ? "Blocked automatically" : "Blocked"}. Remove
+                            its votes one at a time below.
+                          </p>
+                        ) : d.blockable ? (
                           <>
                             <p className="max-w-prose text-sm text-ink-2 [overflow-wrap:anywhere]">
                               All from {d.domain} look like one person?
@@ -763,6 +776,7 @@ export function VoteRoundPanel({
                                       domain: d.domain,
                                       counted: d.members.filter((m) => !m.held).length,
                                       protectedDomain: Boolean(d.protectedDomain),
+                                      reviewed,
                                     })
                                   }
                                   aria-haspopup="dialog"
@@ -776,6 +790,12 @@ export function VoteRoundPanel({
                                   type="button"
                                   disabled={busy}
                                   onClick={() => {
+                                    // More than one removal takes: say what
+                                    // does work, before a reason is typed.
+                                    if (d.members.length > REMOVE_ALL_MAX_VOTES) {
+                                      toast.error(REMOVE_ALL_TOO_MANY);
+                                      return;
+                                    }
                                     setRemovingDomain({
                                       domain: d.domain,
                                       votes: d.votes,
@@ -926,9 +946,9 @@ export function VoteRoundPanel({
             Held votes, waiting on you
           </p>
           <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
-            Verified, but held: past the domain&apos;s ten, or from a blocked
-            domain. Release the innocent ones into the tally; remove the rest
-            with the reason recorded.
+            Verified, but held: past the domain&apos;s ten, from a blocked
+            domain, or from a forwarding service. Release the innocent ones
+            into the tally; remove the rest with the reason recorded.
           </p>
           <div className="mt-2 border-b border-line">
             {tally.held.slice(0, visibleHeld).map((h) => (
@@ -1549,6 +1569,7 @@ export function VoteRoundPanel({
               blockToast(
                 typeof result.domain === "string" ? result.domain : blockingDomain.domain,
                 Number(result.held ?? 0),
+                { counted: blockingDomain.counted, already: result.already === true },
               ),
           )
         }

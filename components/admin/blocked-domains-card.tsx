@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buttonClass, control, Field, JobCard, Pill, SPACING } from "@/components/shared/panel";
@@ -31,13 +31,31 @@ export interface BlockedDomainView {
   held: number;
 }
 
+/**
+ * What a Block dialog is asked about.
+ *
+ * domain is the registrable domain the block lands on. counted is how many
+ * of its votes count this round, or null when the console cannot know (a
+ * typed domain). reviewed: the round the cluster came from is already
+ * reviewed, so the block holds none of its votes. typedHost: what the owner
+ * typed, when it was a subdomain of domain.
+ */
+export interface BlockTarget {
+  domain: string;
+  counted: number | null;
+  protectedDomain: boolean;
+  reviewed?: boolean;
+  typedHost?: string;
+}
+
 /** The shape the table's CHECK takes, said before the round trip. */
 const DOMAIN = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 
 /**
- * The domain in what was typed. An owner copying from the vote list pastes a
+ * The host in what was typed. An owner copying from the vote list pastes a
  * whole address as often as a domain, and a trailing dot is still the same
- * domain; the server then folds a subdomain onto its registrable domain.
+ * domain. askToBlock then folds a subdomain onto its registrable domain, as
+ * the server will, so the dialog names what the block actually covers.
  */
 function typedDomain(input: string): string {
   return input.slice(input.lastIndexOf("@") + 1).trim().toLowerCase().replace(/\.$/, "");
@@ -78,7 +96,7 @@ export function BlockDomainDialog({
   onClose,
   onConfirm,
 }: {
-  target: { domain: string; counted: number | null; protectedDomain: boolean } | null;
+  target: BlockTarget | null;
   busy: boolean;
   onClose: () => void;
   onConfirm: (reason: string) => void;
@@ -114,7 +132,7 @@ function BlockDomainForm({
   onClose,
   onConfirm,
 }: {
-  target: { domain: string; counted: number | null; protectedDomain: boolean };
+  target: BlockTarget;
   busy: boolean;
   onClose: () => void;
   onConfirm: (reason: string) => void;
@@ -145,7 +163,13 @@ function BlockDomainForm({
             label={`Block ${target.domain}`}
             intent="danger"
             question={`Block ${target.domain} for the rest of the campaign?`}
-            consequence={blockConsequence(target.domain, target.counted, target.protectedDomain)}
+            consequence={blockConsequence(
+              target.domain,
+              target.counted,
+              target.protectedDomain,
+              Boolean(target.reviewed),
+              target.typedHost,
+            )}
             confirmLabel="Yes, block it"
             pending={busy}
             onConfirm={() => onConfirm(reason.trim())}
@@ -175,6 +199,12 @@ function BlockDomainForm({
  * reviewed), and the meta line says why and when. Unblock asks for a reason
  * and says exactly what it releases. The foot takes a domain before anybody
  * has used it, because a farm that loses one domain tries the next.
+ *
+ * After a block or an unblock lands, focus goes somewhere that will still be
+ * there after the refresh: the next row's Unblock, or the card's heading.
+ * The button that opened the dialog was disabled while the request ran, and
+ * an unblocked row leaves the list, so the dialog's own return of focus had
+ * nowhere to go and dropped it on the page body.
  */
 export function BlockedDomainsCard({ blocks }: { blocks: BlockedDomainView[] }) {
   const router = useRouter();
@@ -183,13 +213,33 @@ export function BlockedDomainsCard({ blocks }: { blocks: BlockedDomainView[] }) 
   const [unblockReason, setUnblockReason] = useState("");
   const [typed, setTyped] = useState("");
   const [typedError, setTypedError] = useState<string | undefined>();
-  const [blocking, setBlocking] = useState<{
-    domain: string;
-    counted: null;
-    protectedDomain: boolean;
-  } | null>(null);
+  const [blocking, setBlocking] = useState<BlockTarget | null>(null);
+  /**
+   * Where focus goes once a block or unblock has landed: the Unblock of the
+   * row named, or the heading when none is (or it is gone).
+   */
+  const [focusAfter, setFocusAfter] = useState<{ domain: string | null } | null>(null);
+  const unblockButtons = useRef(new Map<string, HTMLButtonElement>());
 
   const automatic = blocks.filter((b) => b.source === "auto").length;
+
+  /*
+   * After the request, and after the dialog's own attempt to return focus
+   * (Radix runs it from a timeout when the dialog unmounts), so this one
+   * has the last word.
+   */
+  useEffect(() => {
+    if (!focusAfter || busy) return;
+    const timer = setTimeout(() => {
+      const button = focusAfter.domain
+        ? unblockButtons.current.get(focusAfter.domain)
+        : undefined;
+      if (button?.isConnected && !button.disabled) button.focus();
+      else document.getElementById("blocked-domains-title")?.focus();
+      setFocusAfter(null);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [focusAfter, busy]);
 
   async function unblock(block: BlockedDomainView, reason: string) {
     setBusy(true);
@@ -197,6 +247,9 @@ export function BlockedDomainsCard({ blocks }: { blocks: BlockedDomainView[] }) 
       const result = await post({ action: "unblock_domain", domain: block.domain, reason });
       if (!result) return;
       toast.success(unblockToast(block.domain, Number(result.released ?? 0)));
+      // The row after this one, which the refresh keeps; this one leaves.
+      const at = blocks.findIndex((b) => b.domain === block.domain);
+      setFocusAfter({ domain: at >= 0 ? (blocks[at + 1]?.domain ?? null) : null });
       setUnblocking(null);
       setUnblockReason("");
       await router.refresh();
@@ -214,8 +267,10 @@ export function BlockedDomainsCard({ blocks }: { blocks: BlockedDomainView[] }) 
         blockToast(
           typeof result.domain === "string" ? result.domain : domain,
           Number(result.held ?? 0),
+          { already: result.already === true },
         ),
       );
+      setFocusAfter({ domain: null });
       setBlocking(null);
       setTyped("");
       await router.refresh();
@@ -224,19 +279,52 @@ export function BlockedDomainsCard({ blocks }: { blocks: BlockedDomainView[] }) 
     }
   }
 
-  function askToBlock() {
-    const domain = typedDomain(typed);
-    if (!DOMAIN.test(domain)) {
+  /**
+   * Fold what was typed onto the domain the block will land on, before the
+   * dialog opens, so every sentence in it names that domain. The same rule
+   * the route applies (tldts, private suffixes off), loaded only when asked
+   * so the console does not carry the suffix list on every visit.
+   */
+  async function askToBlock() {
+    const host = typedDomain(typed);
+    if (!DOMAIN.test(host)) {
       setTypedError("That is not a domain. Type it as example.com.");
       return;
     }
+    let domain: string | null;
+    try {
+      const { getDomain } = await import("tldts");
+      domain = getDomain(host, { allowPrivateDomains: false });
+    } catch {
+      setTypedError("We could not check that domain. Try again.");
+      return;
+    }
+    // A public suffix (edu.ng), an IP address or a single label.
+    if (!domain) {
+      setTypedError("That is a suffix many domains share, not one domain.");
+      return;
+    }
+    const folded = domain;
+    const covering = blocks.find(
+      (b) => folded === b.domain || folded.endsWith(`.${b.domain}`),
+    );
+    if (covering) {
+      setTypedError(`${covering.domain} is already blocked.`);
+      return;
+    }
     setTypedError(undefined);
-    setBlocking({ domain, counted: null, protectedDomain: isProtectedDomain(domain) });
+    setBlocking({
+      domain: folded,
+      counted: null,
+      protectedDomain: isProtectedDomain(folded),
+      typedHost: host !== folded ? host : undefined,
+    });
   }
 
   return (
     <JobCard
       id="blocked-domains"
+      focusableHeading
       step="Any time"
       title="Blocked domains"
       state="todo"
@@ -273,7 +361,7 @@ export function BlockedDomainsCard({ blocks }: { blocks: BlockedDomainView[] }) 
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    askToBlock();
+                    void askToBlock();
                   }
                 }}
                 placeholder="example.com"
@@ -284,7 +372,7 @@ export function BlockedDomainsCard({ blocks }: { blocks: BlockedDomainView[] }) 
           <button
             type="button"
             disabled={busy || !typed.trim()}
-            onClick={askToBlock}
+            onClick={() => void askToBlock()}
             aria-haspopup="dialog"
             className={buttonClass("secondary")}
           >
@@ -321,6 +409,10 @@ export function BlockedDomainsCard({ blocks }: { blocks: BlockedDomainView[] }) 
               </div>
               <button
                 type="button"
+                ref={(node) => {
+                  if (node) unblockButtons.current.set(b.domain, node);
+                  else unblockButtons.current.delete(b.domain);
+                }}
                 disabled={busy}
                 onClick={() => {
                   setUnblocking(b);

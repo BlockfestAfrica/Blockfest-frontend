@@ -444,6 +444,142 @@ describe("blocking a domain from its cluster", () => {
     expect(text).toMatch(/fwd\.test · Forwarding service ·/);
     // Held before reasons were recorded: the cap was the only thing that held.
     expect(text).toMatch(/old\.test · Over the domain's ten ·/);
+    // And the intro names all three reasons the rows can give.
+    expect(text).toContain(
+      "Verified, but held: past the domain's ten, from a blocked domain, or from a forwarding service.",
+    );
+  });
+
+  it("says a blocked cluster too small for Remove all is blocked, without asking a question it offers no answer to", () => {
+    render(
+      panel([
+        { domain: "farm.test", votes: 2, members: [member(1), member(2)], blockable: true, block: "admin" },
+        { domain: "fwd.test", votes: 1, members: [member(3)], blockable: true, block: "auto" },
+      ]),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /farm\.test/ }));
+    expect(document.body.textContent).toContain("Blocked. Remove its votes one at a time below.");
+    expect(document.body.textContent).not.toContain("look like one person?");
+    expect(screen.queryByRole("button", { name: "Block…" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Remove all/ })).toBeNull();
+    // Each vote can still be removed on its own.
+    expect(screen.getAllByRole("button", { name: /^Remove/ }).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /fwd\.test/ }));
+    expect(document.body.textContent).toContain(
+      "Blocked automatically. Remove its votes one at a time below.",
+    );
+  });
+
+  it("stops Remove all past five hundred votes with what does work, before a reason is asked for", () => {
+    const many = Array.from({ length: 501 }, (_, i) => member(i));
+    render(panel([{ domain: "farm.test", votes: 501, members: many, blockable: true }]));
+    fireEvent.click(screen.getByRole("button", { name: /farm\.test/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove all 501 as fraud…" }));
+    expect(toast.error).toHaveBeenLastCalledWith(
+      "Too many to remove at once; block the domain instead, which holds them all.",
+    );
+    expect(screen.queryByLabelText("Why they go")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("blocking from a round already reviewed", () => {
+  /*
+   * block_vote_domain holds nothing in a reviewed round: a person certified
+   * its tally. The Block button stays, because the block still guards the
+   * rounds after it, but the dialog and the toast must not say this
+   * round's counted votes are held.
+   */
+  const member = (i: number) => ({
+    voteId: `b${i}`,
+    email: `v${i}@farm.test`,
+    createdAt: "2026-09-27T19:13:00Z",
+    held: false,
+  });
+  const round = (reviewedAt: string | null) => ({
+    roundId: "r1",
+    status: "closed" as const,
+    opensAt: "2026-09-26T07:00:00Z",
+    closesAt: "2026-09-29T07:00:00Z",
+    reviewedAt,
+  });
+  const panel = (reviewedAt: string | null, votes = 5) => (
+    <VoteRoundPanel
+      weekNo={1}
+      round={round(reviewedAt)}
+      candidates={CANDIDATES}
+      frozen
+      tally={{
+        nominees: [],
+        domains: [
+          {
+            domain: "farm.test",
+            votes,
+            members: Array.from({ length: votes }, (_, i) => member(i + 1)),
+            blockable: true,
+          },
+        ],
+        ips: [],
+        held: [],
+        unverified: 0,
+      }}
+    />
+  );
+  const askToBlock = () => {
+    fireEvent.click(screen.getByRole("button", { name: /farm\.test/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Block…" }));
+    fireEvent.change(screen.getByLabelText("Why it is blocked"), { target: { value: "Farm" } });
+    fireEvent.click(screen.getByRole("button", { name: "Block farm.test" }));
+  };
+
+  it("says the round's counted votes keep counting, and what takes them out", async () => {
+    fetchMock.mockImplementationOnce(async () => ({
+      ok: true,
+      json: async () => ({ ok: true, domain: "farm.test", held: 0, already: false }),
+    }));
+    render(panel("2026-09-29T09:00:00Z"));
+    expect(document.body.textContent).toContain("A person has looked at every held vote and cluster");
+    askToBlock();
+    const text = document.body.textContent ?? "";
+    expect(text).toContain(
+      "New votes from farm.test and its subdomains are turned away with a neutral message, and any waiting for a code are held. This round is already reviewed, so its 5 counted votes keep counting. To take them out of the tally, remove them as fraud. Voters are never told it is blocked. You can unblock it at any time.",
+    );
+    expect(text).not.toContain("held for you to review");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Yes, block it" }));
+    });
+    expect(toast.success).toHaveBeenLastCalledWith(
+      "Blocked farm.test. Its 5 counted votes this round keep counting.",
+    );
+  });
+
+  it("says one vote in the singular", () => {
+    render(panel("2026-09-29T09:00:00Z", 1));
+    askToBlock();
+    expect(document.body.textContent).toContain(
+      "This round is already reviewed, so its 1 counted vote keeps counting. To take it out of the tally, remove it as fraud.",
+    );
+  });
+
+  it("still promises the hold in a round nobody has reviewed", () => {
+    render(panel(null));
+    askToBlock();
+    expect(document.body.textContent).toContain("The 5 counted this round are held for you to review.");
+    expect(document.body.textContent).not.toContain("already reviewed");
+  });
+
+  it("says the domain was already blocked when the server found it so", async () => {
+    fetchMock.mockImplementationOnce(async () => ({
+      ok: true,
+      json: async () => ({ ok: true, domain: "farm.test", held: 0, already: true }),
+    }));
+    render(panel(null));
+    askToBlock();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Yes, block it" }));
+    });
+    expect(toast.success).toHaveBeenLastCalledWith("farm.test was already blocked.");
   });
 });
 

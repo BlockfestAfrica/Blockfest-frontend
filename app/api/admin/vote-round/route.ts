@@ -11,8 +11,9 @@ import { closingAt } from "@/lib/format";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { shortlistEmail, votingPage } from "@/lib/email/templates";
 import { findVotesByEmail } from "@/lib/admin/vote-round";
-import { isNeverBlock } from "@/lib/campaign-vote";
+import { DOMAIN_CAP, isNeverBlock } from "@/lib/campaign-vote";
 import { normaliseBlockDomain } from "@/lib/vote-domain";
+import { REMOVE_ALL_MAX_VOTES, REMOVE_ALL_TOO_MANY } from "@/lib/vote-domain-copy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -101,7 +102,10 @@ const domainField = z
  * voteIds are the votes that were on the owner's screen. Only those are
  * removed; anything from the domain that arrived since is held by the block
  * instead, for a person to judge. Five hundred is far past any cluster the
- * console has shown and still one statement's worth of parameters.
+ * console has shown and still one statement's worth of parameters. Past it,
+ * the answer says what does work: reloading sends the same ids again, while
+ * a block holds every counted vote from the domain in one act. The console
+ * says the same before it sends that many (vote-round-panel).
  */
 const removeDomainSchema = z.object({
   action: z.literal("remove_domain"),
@@ -115,7 +119,7 @@ const removeDomainSchema = z.object({
   voteIds: z
     .array(z.string().uuid("That is not a vote."))
     .min(1, "There are no votes to remove.")
-    .max(500, "That is more votes than one removal takes. Reload and try again."),
+    .max(REMOVE_ALL_MAX_VOTES, REMOVE_ALL_TOO_MANY),
 });
 
 /*
@@ -183,6 +187,15 @@ const schema = z.discriminatedUnion("action", [
   lookupSchema,
 ]);
 
+/*
+ * Room for the largest request this route takes: Remove all with its five
+ * hundred vote ids (39 bytes each in JSON), a reason and the rest. The
+ * shared admin limit is sized for one decision, about a hundred ids, and a
+ * cluster past that was refused as "We could not read that." before its ids
+ * were ever counted.
+ */
+const MAX_BODY_BYTES = 24 * 1024;
+
 const FORBIDDEN = NextResponse.json(
   { ok: false, message: "Not allowed." },
   { status: 403 },
@@ -215,6 +228,14 @@ const MESSAGES: Record<string, string> = {
   P0822:
     "That domain is a big consumer provider shared by real voters, so it cannot be blocked.",
   P0823: "That domain is not blocked any more. Reload to see the current list.",
+  /*
+   * Deadlock. Block, Unblock and Remove all take their locks in one order,
+   * so two owners acting on one domain queue rather than deadlock; this is
+   * the answer if Postgres ever has to break a cycle anyway, rather than
+   * "something went wrong at our end". Nothing was written: the transaction
+   * that got it rolled back whole.
+   */
+  "40P01": "Another owner is acting on this domain right now. Reload and try again.",
   P0401: "Only a signed-in admin can do this.",
   P0002: "That campaign does not exist.",
   /* The one_round_per_week index, for two owners opening the same Sunday. */
@@ -228,7 +249,7 @@ export async function POST(request: NextRequest) {
   if (!admin.ok) return FORBIDDEN;
   if (!isOwner(admin.admin)) return FORBIDDEN;
 
-  const read = await readJsonBody(request);
+  const read = await readJsonBody(request, MAX_BODY_BYTES);
   if (!read.ok) {
     return NextResponse.json(
       { ok: false, message: "We could not read that." },
@@ -404,10 +425,16 @@ export async function POST(request: NextRequest) {
                    ${action.reason}::text
                  ) AS held
         `);
-        const held = Number(
-          (result.rows?.[0] as { held?: number } | undefined)?.held ?? 0,
-        );
-        return NextResponse.json({ ok: true, domain, held });
+        /*
+         * Null is the engine saying the domain was blocked already: it
+         * inserted nothing, held nothing and audited nothing, so "Blocked"
+         * would claim an act that did not happen, and a reason that was
+         * never recorded.
+         */
+        const row = result.rows?.[0] as { held?: number | null } | undefined;
+        const already = row !== undefined && row.held === null;
+        const held = Number(row?.held ?? 0);
+        return NextResponse.json({ ok: true, domain, held, already });
       }
 
       /*
@@ -436,12 +463,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (action.action === "unblock_domain") {
+      /*
+       * The cap goes with it: the engine releases the block's holds only up
+       * to the domain's allowance in each round, the same ten verify_vote
+       * applies, and keeps the rest held as over it.
+       */
       const result = await getDb().execute(sql`
         SELECT unblock_vote_domain(
                  ${adminId}::uuid,
                  (SELECT id FROM campaigns WHERE slug = ${MONICA_SLUG}),
                  ${action.domain}::text,
-                 ${action.reason}::text
+                 ${action.reason}::text,
+                 ${DOMAIN_CAP}::integer
                ) AS released
       `);
       const released = Number(

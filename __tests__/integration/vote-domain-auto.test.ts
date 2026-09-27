@@ -732,4 +732,18 @@ describe("the mail-host rules in Node", () => {
     }
     expect(mxKind(null)).toBe("other");
   });
+
+  it("counts Microsoft's consumer mail hosts as major, so no automatic rule acts on hotmail.fr or live.ca", () => {
+    // Regional Hotmail, Outlook and Live domains (hotmail.fr, outlook.fr,
+    // live.fr, hotmail.it, live.ca) are not on the never-block list, and
+    // deliver to Microsoft's consumer hosts rather than a tenant's
+    // *.mail.protection.outlook.com. As "other" they were exactly what the
+    // machine-made rule blocks.
+    for (const host of ["eur.olc.protection.outlook.com", "nam.olc.protection.outlook.com"]) {
+      expect(mxKind(host), host).toBe("major");
+    }
+    for (const host of ["protection.outlook.com.evil.com", "eur.olc.protection.outlook.com.farm.test"]) {
+      expect(mxKind(host), host).toBe("other");
+    }
+  });
 });
