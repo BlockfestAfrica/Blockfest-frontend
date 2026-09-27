@@ -6,6 +6,7 @@ import { ArrowLeft, ExternalLink, Trophy } from "lucide-react";
 import { currentShortlist, publishedWinners, voteWindowState } from "@/lib/winners";
 import { Panel, Pill, SectionHeading } from "@/components/shared/panel";
 import { VotePanel } from "@/components/campaigns/vote-panel";
+import { LiveVoteCount } from "@/components/campaigns/live-vote-count";
 import {
   campaignBySlug,
   monicaRoutes,
@@ -220,7 +221,7 @@ export default async function WinnersPage() {
               <ul className="mt-6 grid gap-4 sm:grid-cols-2">
                 {shortlist.map((entry, index) => (
                   <li
-                    key={`${entry.name}-${index}`}
+                    key={entry.nomineeId || `${entry.name}-${index}`}
                     className="rounded-xl border border-line bg-card p-5"
                   >
                     <p className="text-base font-semibold text-white">
@@ -261,6 +262,11 @@ export default async function WinnersPage() {
               </ul>
             </div>
           )}
+          {/* The count, under the ballot rather than on the cards: the
+              cards stay in ballot order so a half-typed vote never moves,
+              and nobody is nudged by a number sitting on the button. It
+              loads in the browser, so this page stays static and cached. */}
+          <LiveVoteCount />
           </section>
 
           <p className="mt-14 max-w-prose text-sm leading-relaxed text-ink-3">

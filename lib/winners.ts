@@ -2,6 +2,7 @@ import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import type { VoteBoard } from "@/lib/vote-board";
 
 /**
  * Weekly winners and the Community Favourite shortlist, for the public page.
@@ -164,6 +165,10 @@ export async function currentShortlist(): Promise<ShortlistEntry[]> {
       JOIN creators c            ON c.id = cc.creator_id
       WHERE cm.slug = ${MONICA_SLUG}
         AND r.status = 'open'
+        -- A withdrawn nominee is off the ballot: cast_vote refuses them and
+        -- the count leaves them out, so a card for them would be a Vote
+        -- button that can only fail, with no row in the count beside it.
+        AND n.withdrawn_at IS NULL
         -- One round only: the most recently opened. A vote now runs past
         -- the start of the next stage, and if last week's round was still
         -- open when this week's opened, both ballots were merged into one
@@ -212,6 +217,68 @@ export async function currentShortlist(): Promise<ShortlistEntry[]> {
     );
     return [];
   }
+}
+
+/**
+ * The count for the latest round, for the public page.
+ *
+ * Read from vote_tally and nothing else. That view is the one closing,
+ * review and publishing read (verified, not held, not removed, nominee not
+ * withdrawn), so the public number is the number the result is decided on.
+ * Counting the votes table here would be a second definition that an
+ * unverified cast or a held vote slips through.
+ *
+ * The latest round by its open time, whether it is open, closed or
+ * published, so the count stays up after the vote ends instead of vanishing
+ * the moment an owner presses Close, and makes way when the next week's
+ * round is staged. A draft never shows.
+ *
+ * Names and counts only. No entry, creator or vote ids and nothing about a
+ * voter: the per-vote detail stays in the owner's console.
+ *
+ * Throws on failure; the route decides what a failure looks like.
+ */
+export async function voteBoard(): Promise<VoteBoard | null> {
+  const result = await getDb().execute(sql`
+    SELECT r.week_no, r.status::text AS status, r.opens_at, r.closes_at,
+           t.nominee_id, t.votes, c.full_name AS display_name
+      FROM vote_rounds r
+      JOIN campaigns cm          ON cm.id = r.campaign_id
+      JOIN vote_tally t          ON t.round_id = r.id
+      JOIN vote_round_nominees n ON n.id = t.nominee_id
+      JOIN challenge_entries ce  ON ce.id = t.entry_id
+      JOIN campaign_creators cc  ON cc.id = ce.campaign_creator_id
+      JOIN creators c            ON c.id = cc.creator_id
+     WHERE cm.slug = ${MONICA_SLUG}
+       AND r.id = (
+             SELECT r2.id FROM vote_rounds r2
+              WHERE r2.campaign_id = r.campaign_id
+                AND r2.status IN ('open', 'closed', 'published')
+              ORDER BY r2.opens_at DESC
+              LIMIT 1)
+     ORDER BY n.display_order, c.full_name
+  `);
+
+  const rows = (result.rows ?? []) as Record<string, unknown>[];
+  if (rows.length === 0) return null;
+  const first = rows[0];
+  const iso = (value: unknown) => {
+    const at = value instanceof Date ? value : new Date(String(value ?? ""));
+    return Number.isNaN(at.getTime()) ? "" : at.toISOString();
+  };
+  return {
+    weekNo: Number(first.week_no ?? 0),
+    opensAt: iso(first.opens_at),
+    closesAt: iso(first.closes_at),
+    closed: first.status !== "open",
+    final: first.status === "published",
+    asOf: new Date().toISOString(),
+    nominees: rows.map((r) => ({
+      nomineeId: String(r.nominee_id ?? ""),
+      name: String(r.display_name ?? "").trim(),
+      votes: Number(r.votes ?? 0),
+    })),
+  };
 }
 
 /**
