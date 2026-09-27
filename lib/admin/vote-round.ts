@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { CAMPAIGN_PLATFORMS, MONICA_SLUG, type CampaignPlatform } from "@/lib/campaigns";
 import { ALLOWLISTED_DOMAINS, isNeverBlock } from "@/lib/campaign-vote";
-import { registrableDomain, voteDomainKey } from "@/lib/vote-domain";
+import { registrableDomain, voteDomainKey, type MxKind } from "@/lib/vote-domain";
 import {
   autoEvidenceSentence,
   isProtectedDomain,
@@ -153,6 +153,14 @@ export interface DomainClusterView extends DomainCluster {
   blockable: boolean;
   /** A school or government domain, which the dialogs warn about. */
   protectedDomain: boolean;
+  /**
+   * What the domain's mail host was classified as when a code was cast
+   * (vote_domain_mx), or null when it never was: a consumer provider, a
+   * school or government domain, or a domain nobody has cast from since
+   * 0069. The console tags a forwarding service, which is what the incident
+   * farm was.
+   */
+  mxKind: MxKind | null;
 }
 
 export interface IpCluster {
@@ -416,7 +424,18 @@ export function groupByVoteDomain(
 export function withDomainState<T extends { domain: string }>(
   clusters: T[],
   blocks: { domain: string; source: BlockSource }[],
-): (T & { block: BlockSource | null; blockable: boolean; protectedDomain: boolean })[] {
+  mailHosts: { domain: string; kind: MxKind }[] = [],
+): (T & {
+  block: BlockSource | null;
+  blockable: boolean;
+  protectedDomain: boolean;
+  mxKind: MxKind | null;
+})[] {
+  /*
+   * Mail hosts are cached under the registrable domain, the same key a
+   * cluster carries, so this is an exact match.
+   */
+  const kinds = new Map(mailHosts.map((m) => [m.domain.toLowerCase(), m.kind]));
   return clusters.map((cluster) => {
     const domain = cluster.domain.toLowerCase();
     const covering = blocks.filter(
@@ -432,7 +451,37 @@ export function withDomainState<T extends { domain: string }>(
       block,
       blockable: registrableDomain(domain) !== null && !isNeverBlock(domain),
       protectedDomain: isProtectedDomain(domain),
+      mxKind: kinds.get(domain) ?? null,
     };
+  });
+}
+
+function asMxKind(value: unknown): MxKind | null {
+  return value === "forwarder" || value === "major" || value === "other" || value === "unknown"
+    ? value
+    : null;
+}
+
+/**
+ * The cached mail-host kind of each cluster's domain. A second read, after the
+ * clusters are grouped, because the key they are grouped by comes from the
+ * public suffix list in Node; one indexed lookup per domain on the screen.
+ */
+async function mailHostKinds(domains: string[]): Promise<{ domain: string; kind: MxKind }[]> {
+  if (domains.length === 0) return [];
+  const list = sql.join(
+    domains.map((domain) => sql`${domain}`),
+    sql`, `,
+  );
+  const result = await getDb().execute(sql`
+    SELECT domain, kind
+      FROM vote_domain_mx
+     WHERE domain = ANY (ARRAY[${list}]::text[])
+  `);
+  return (result.rows ?? []).flatMap((row) => {
+    const r = row as Record<string, unknown>;
+    const kind = asMxKind(r.kind);
+    return kind ? [{ domain: String(r.domain ?? ""), kind }] : [];
   });
 }
 
@@ -559,6 +608,22 @@ export async function roundTally(
     `),
   ]);
 
+  const clusters = withoutAllowlistedDomains(
+    groupByVoteDomain(
+      (domains.rows ?? []).map((row) => {
+        const r = row as Record<string, unknown>;
+        return {
+          domain: String(r.domain ?? ""),
+          votes: Number(r.votes ?? 0),
+          members: readMembers(r.members),
+          machineMade: Number(r.machine_made ?? 0),
+        };
+      }),
+    ),
+    ALLOWLISTED_DOMAINS,
+  );
+  const mailHosts = await mailHostKinds(clusters.map((c) => c.domain));
+
   return {
     nominees: (nominees.rows ?? []).map((row) => {
       const r = row as Record<string, unknown>;
@@ -571,20 +636,7 @@ export async function roundTally(
       };
     }),
     domains: withDomainState(
-      withoutAllowlistedDomains(
-        groupByVoteDomain(
-          (domains.rows ?? []).map((row) => {
-            const r = row as Record<string, unknown>;
-            return {
-              domain: String(r.domain ?? ""),
-              votes: Number(r.votes ?? 0),
-              members: readMembers(r.members),
-              machineMade: Number(r.machine_made ?? 0),
-            };
-          }),
-        ),
-        ALLOWLISTED_DOMAINS,
-      ),
+      clusters,
       (blocks.rows ?? []).map((row) => {
         const r = row as Record<string, unknown>;
         return {
@@ -592,6 +644,7 @@ export async function roundTally(
           source: r.source === "auto" ? ("auto" as const) : ("admin" as const),
         };
       }),
+      mailHosts,
     ),
     ips: (ips.rows ?? []).map((row) => {
       const r = row as Record<string, unknown>;

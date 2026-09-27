@@ -230,6 +230,27 @@ describe("what a cluster can have done to it", () => {
     ]);
   });
 
+  it("carries each cluster's mail-host kind, matched on the exact domain", () => {
+    const state = withDomainState(
+      clusters,
+      [],
+      [
+        { domain: "oemails.com", kind: "forwarder" },
+        { domain: "unilag.edu.ng", kind: "major" },
+        // A cache row for a parent is not the cluster's own answer.
+        { domain: "farm.test", kind: "forwarder" },
+      ],
+    );
+    expect(Object.fromEntries(state.map((c) => [c.domain, c.mxKind]))).toEqual({
+      "oemails.com": "forwarder",
+      "a.farm.test": null,
+      "ymail.com": null,
+      "unilag.edu.ng": "major",
+      "com.ng": null,
+      "xoemails.com": null,
+    });
+  });
+
   it("lets an owner's block win the pill when both cover a cluster", () => {
     const [state] = withDomainState([{ domain: "oemails.com" }], [
       { domain: "oemails.com", source: "auto" },

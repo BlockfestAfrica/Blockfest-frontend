@@ -19,6 +19,7 @@ import {
   submissionReceivedEmail,
   handleAddedEmail,
   referralCreditEmail,
+  voteDomainBlockedEmail,
   voteReceiptEmail,
   votingPage,
   withdrawnEmail,
@@ -310,5 +311,45 @@ describe("the platform added notice", () => {
 
   it("carries the not-me path, because adding a handle changes attribution", () => {
     expect(mail().text).toMatch(/somebody else has your personal link/i);
+  });
+});
+
+describe("the automatic block notice", () => {
+  const mail = (over = {}) =>
+    voteDomainBlockedEmail({
+      to: "owner@example.test",
+      domain: "oemails.com",
+      evidence: "Forwarding service (route1.mx.cloudflare.net), 3 verified votes this round",
+      held: 3,
+      firstAtLagos: "27 Sept, 20:13",
+      lastAtLagos: "27 Sept, 20:27",
+      consoleUrl: "https://blockfestafrica.com/admin/winners#blocked-domains",
+      ...over,
+    });
+
+  it("names the domain in the subject, so the notification shade carries it", () => {
+    expect(mail().subject).toBe("A voting domain was blocked automatically: oemails.com");
+  });
+
+  it("says why, how many wait, when they came, and where to undo it", () => {
+    const m = mail();
+    expect(m.text).toContain("Forwarding service (route1.mx.cloudflare.net), 3 verified votes this round.");
+    expect(m.text).toContain(
+      "3 votes from it are held for you to review this round. They were verified between 27 Sept, 20:13 and 27 Sept, 20:27, Lagos time.",
+    );
+    expect(m.text).toContain("automatic blocking will not act on oemails.com again");
+    expect(m.text).toContain("https://blockfestafrica.com/admin/winners#blocked-domains");
+    expect(m.html).toContain('href="https://blockfestafrica.com/admin/winners#blocked-domains"');
+  });
+
+  it("counts one vote and none in words that read right", () => {
+    expect(mail({ held: 1 }).text).toContain("1 vote from it is held for you to review this round.");
+    expect(mail({ held: 0 }).text).toContain("No votes from it are held this round.");
+  });
+
+  it("escapes a mail host that carries markup, because it came from somebody else's DNS", () => {
+    const m = mail({ evidence: "Forwarding service (<b>x</b>.mx), 3 verified votes this round" });
+    expect(m.html).toContain("&lt;b&gt;x&lt;/b&gt;.mx");
+    expect(m.html).not.toContain("<b>x</b>");
   });
 });

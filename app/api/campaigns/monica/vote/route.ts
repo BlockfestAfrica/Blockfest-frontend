@@ -17,7 +17,14 @@ import { isPgError } from "@/lib/db/errors";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { voteVerificationEmail } from "@/lib/email/templates";
 import { logError, logWarning } from "@/lib/log";
-import { BLOCKED_DOMAIN_ANSWER, UNUSABLE_EMAIL, isRefusedHost } from "@/lib/vote-domain";
+import {
+  BLOCKED_DOMAIN_ANSWER,
+  UNUSABLE_EMAIL,
+  classifyVoteDomain,
+  isRefusedHost,
+  systemResolveMx,
+  voteDomainKey,
+} from "@/lib/vote-domain";
 
 /** postgres over HTTP needs Node; see lib/db/client. */
 export const runtime = "nodejs";
@@ -308,8 +315,18 @@ export async function POST(request: NextRequest) {
    * stopwatch told the two apart and an operator could enumerate which of
    * their own addresses the sweep had caught. after() keeps the work inside
    * the invocation without the caller waiting on it.
+   *
+   * The domain's mail host is classified first, before the code is mailed:
+   * verify_vote reads that answer to hold a forwarding service's votes and
+   * to block a farm automatically, so it has to exist before any code can
+   * come back. Here rather than in the response, so neither the answer nor
+   * its timing says whether the domain was already known, and a slow
+   * nameserver delays a code by a second and a half at most. It never
+   * throws, and asks nothing for a consumer provider or a school or
+   * government domain.
    */
   after(async () => {
+    await classifyVoteDomain(voteDomainKey(emailCanonical), { resolveMx: systemResolveMx });
     try {
       const meta = await getDb().execute(sql`
         SELECT c.full_name AS display_name, ch.week_no

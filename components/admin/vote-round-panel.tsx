@@ -83,6 +83,8 @@ export interface TallyView {
     blockable?: boolean;
     /** A school or government domain, which the dialogs warn about. */
     protectedDomain?: boolean;
+    /** What its mail host was classified as at cast, if it ever was. */
+    mxKind?: "forwarder" | "major" | "other" | "unknown" | null;
   }[];
   ips: { ipHash: string; votes: number; members: ClusterVote[] }[];
   held: {
@@ -705,6 +707,12 @@ export function VoteRoundPanel({
                         {d.block === "auto" && (
                           <Pill tone="warn">Blocked automatically</Pill>
                         )}
+                        {/* A fact about the domain, not a verdict: its
+                            mail goes to a catch-all forwarding service,
+                            which is how the first farm ran unlimited
+                            inboxes. Neutral, because real people use them
+                            too, and the engine already holds its votes. */}
+                        {d.mxKind === "forwarder" && <Pill>Forwarding service</Pill>}
                         <span className="text-ink-4">
                           {open ? "hide" : "show votes"}
                         </span>

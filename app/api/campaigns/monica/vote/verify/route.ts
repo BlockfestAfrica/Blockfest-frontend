@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, after } from "next/server";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
@@ -18,6 +18,7 @@ import { sameOrigin } from "@/lib/admin/request";
 import { voteReceiptEmail } from "@/lib/email/templates";
 import { closingAt } from "@/lib/format";
 import { voteDomainKey } from "@/lib/vote-domain";
+import { notifyOwnersOfAutoBlock } from "@/lib/notify/domain-auto-block";
 
 /** postgres over HTTP needs Node; see lib/db/client. */
 export const runtime = "nodejs";
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  let autoBlocked = false;
   try {
     /*
      * The last argument is the key the domain cap judges this vote under:
@@ -114,7 +116,7 @@ export async function POST(request: NextRequest) {
      * route computes it; the engine checks it is this host or a parent of
      * it and falls back to the host otherwise (0069).
      */
-    await getDb().execute(sql`
+    const verdict = await getDb().execute(sql`
       SELECT * FROM verify_vote(
         ${MONICA_SLUG},
         ${input.roundId}::uuid,
@@ -125,6 +127,8 @@ export async function POST(request: NextRequest) {
         ${voteDomainKey(emailCanonical)}::text
       )
     `);
+    autoBlocked =
+      (verdict.rows?.[0] as { auto_blocked?: unknown } | undefined)?.auto_blocked === true;
   } catch (error) {
     // One name for a wrong code, an expired code, and an email with nothing
     // pending. The engine merges them on purpose and this route keeps the
@@ -157,6 +161,18 @@ export async function POST(request: NextRequest) {
   // report deliberately stops here. Held is still a verified vote in the
   // voter's eyes and in the engine's audit trail; a human admits or removes
   // it, and the voter is never the one told the cap fired.
+
+  /*
+   * The one thing the verdict does change goes to the owners, not the voter:
+   * this vote made the engine block its domain automatically, and a person
+   * should hear now rather than at the sweep. After the response, so the
+   * answer below is the same bytes, and costs the same wait, whether or not
+   * it fired.
+   */
+  if (autoBlocked) {
+    const host = emailCanonical.slice(emailCanonical.lastIndexOf("@") + 1);
+    after(() => notifyOwnersOfAutoBlock({ roundId: input.roundId, host }));
+  }
 
   /*
    * The receipt, after the verdict and blind to it. The lookup reads the

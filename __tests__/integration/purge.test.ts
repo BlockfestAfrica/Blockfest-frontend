@@ -350,6 +350,28 @@ describe("the list stays complete", () => {
     expect(reported.votes, "not the throttle count wearing the votes name").toBe(0);
   });
 
+  /*
+   * The mail-host cache holds the domains voters used, and a personal domain
+   * names its owner. It is not campaign scoped, so like the throttle it is
+   * cleared wholesale.
+   */
+  it("clears the voting domains' mail-host cache", async () => {
+    await db.query(`
+      INSERT INTO vote_domain_mx (domain, kind, primary_mx) VALUES
+        ('oemails.com', 'forwarder', 'route1.mx.cloudflare.net'),
+        ('ada-obi.ng', 'other', 'mail.ada-obi.ng')`);
+
+    const { rows: reported } = await db.query<{ table_name: string; rows_deleted: number }>(
+      `SELECT * FROM purge_campaign_data($1, $2)`,
+      [SLUG, SLUG],
+    );
+
+    expect(
+      Number(reported.find((r) => r.table_name === "vote_domain_mx")?.rows_deleted),
+    ).toBe(2);
+    expect(await rows("vote_domain_mx")).toBe(0);
+  });
+
   it("classifies every table as purged or kept", async () => {
     const sql = statementsOnly(
       readdirSync(MIGRATIONS)

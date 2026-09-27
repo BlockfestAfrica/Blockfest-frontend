@@ -72,7 +72,7 @@
  * - block_vote_domain blocks, and holds the domain's counted votes in every
  *   round nobody has reviewed yet. Reviewed and published rounds are left
  *   alone: a person certified those tallies.
- * - unblock_vote_domain lifts it and releases what the block (or, later, the
+ * - unblock_vote_domain lifts it and releases what the block (or the
  *   forwarding rule) held in those same rounds, each release audited as one.
  *   Cap holds and fraud removals are untouched: those were judgements about
  *   the allowance of ten, not about the block.
@@ -83,8 +83,37 @@
  *   removals could run first, or not at all.
  *
  * All three take the (round, domain) locks verify_vote takes, every round in
- * one order (opens_at, id), so a verify arriving mid-block either finishes
- * first and is held by the block, or waits and sees the block.
+ * one order (opens_at, id), and before they write anything, so a verify
+ * arriving mid-block either finishes first and is held by the block, or waits
+ * and sees the block.
+ *
+ * Automatic action, because the incident was over in fourteen minutes and no
+ * person was watching:
+ *
+ * - vote_domain_mx caches what each voting domain's mail host is. Node looks
+ *   it up (SQL has no DNS) when a code is cast, inside after() and before the
+ *   code is mailed, so the answer is stored before any code can come back to
+ *   verify, and the cast's answer and timing never depend on it. Four kinds:
+ *   forwarder (a catch-all forwarding service such as Cloudflare Email
+ *   Routing, or temp-mail hosting), major (Google, Microsoft, Yahoo, Apple,
+ *   Proton), other, and unknown (the lookup failed, which acts on nothing).
+ * - verify_vote holds every vote from a forwarder domain from the first one,
+ *   reason 'forwarder', unless the domain is a school or government one or
+ *   the owner has vouched for it by lifting a block. Quietly: the voter hears
+ *   "Your vote is in." and the public count does not move. The farm in the
+ *   incident sat behind route1.mx.cloudflare.net, and moving to another
+ *   Cloudflare-routed or temp-mail domain now gets it nothing counted.
+ * - vote_domain_auto_block, at the end of verify_vote and under the same
+ *   lock, blocks the domain at its third verified vote this round when it is
+ *   a forwarder, or when it is "other" and at least three verified addresses,
+ *   and at least 60% of them, look machine-made. It never acts on a
+ *   never-block provider, a school or government domain, or a domain an
+ *   owner has ever blocked or unblocked: the owner's decision sticks. It
+ *   holds what the domain counted this round and writes an audit row with no
+ *   actor, and the verify route mails the owners. The voter's answer is the
+ *   same bytes whether it fired or not.
+ * - purge_campaign_data clears the mail-host cache as well, since a personal
+ *   domain in it is a trace of who voted.
  */
 
 ALTER TABLE votes
@@ -157,7 +186,7 @@ LANGUAGE sql IMMUTABLE AS $$
 $$;
 
 /*
- * Domains an owner (or, later, the automatic rule) has blocked.
+ * Domains an owner, or the automatic rule, has blocked.
  *
  * domain is the registrable domain, lowercase: the route normalises what the
  * owner typed with the public suffix list, and the CHECK refuses anything
@@ -202,6 +231,178 @@ CREATE UNIQUE INDEX vote_blocked_domains_active
   WHERE lifted_at IS NULL;
 
 /*
+ * What each voting domain's mail host is, looked up by Node and read here.
+ *
+ * One row per registrable domain, the key the cap uses. Written when a code
+ * is cast (lib/vote-domain.ts, classifyVoteDomain), before the code is
+ * mailed, and refreshed after a day, or after five minutes for 'unknown' so
+ * a lookup that timed out is soon tried again. primary_mx is the host with
+ * the lowest MX preference, the one mail actually goes to; null when the
+ * domain has none or the lookup failed.
+ *
+ * Nothing in it is personal: a domain and its public DNS answer, no address
+ * and no vote. The consumer providers, and school and government domains,
+ * are never looked up at all.
+ */
+CREATE TABLE vote_domain_mx (
+  domain     text PRIMARY KEY,
+  kind       text NOT NULL,
+  primary_mx text,
+  checked_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT vote_domain_mx_kind
+    CHECK (kind IN ('forwarder', 'major', 'other', 'unknown'))
+);
+
+/*
+ * Block a domain on the strength of what it did this round, with no person
+ * involved. Called at the end of verify_vote, under the (round, key) lock the
+ * vote was judged under, so two verifies from one domain can never both
+ * decide to block it, and the hold below sees every vote that committed
+ * ahead of this one.
+ *
+ * It fires on either of two things, both counted over this round's verified
+ * votes from the domain and its subdomains, held and fraud-removed ones
+ * included so a sweep never resets the evidence:
+ *
+ * - the domain's mail goes to a forwarding service, and it has three
+ *   verified votes; or
+ * - its mail host is "other" (not a big mailbox provider, and not unknown),
+ *   at least three verified addresses look machine-made, and those are at
+ *   least 60% of its verified votes. The share is what spares a real
+ *   domain: one with a hundred voters and two initials-plus-surname
+ *   addresses that happen to pass the test is nowhere near it.
+ *
+ * It never acts on a never-block provider, a school or government domain, a
+ * key that could not be stored as a block, a domain with no cached mail host
+ * (or one that came back unknown, which fails open), or any domain the owner
+ * has ever blocked, including one since unblocked: an unblock is the owner
+ * saying these are real voters, and a machine does not get to overrule it.
+ *
+ * On firing it blocks the domain for the campaign, source 'auto', with the
+ * evidence as counts and the mail host only (never an address), holds every
+ * vote from the domain still counting this round with reason 'blocked', and
+ * writes an audit row with no actor. It holds this round only: a round
+ * somebody has reviewed was certified by a person, and the rounds after this
+ * one have nothing from the domain yet.
+ *
+ * Returns whether it fired, which verify_vote passes on so the route can mail
+ * the owners. Never raises: a domain it cannot block is a domain it leaves
+ * to the cap.
+ */
+CREATE OR REPLACE FUNCTION vote_domain_auto_block(
+  p_camp  uuid,
+  p_round uuid,
+  p_key   text
+)
+RETURNS boolean
+LANGUAGE plpgsql AS $$
+DECLARE
+  v_key      text := lower(btrim(COALESCE(p_key, '')));
+  m          vote_domain_mx%ROWTYPE;
+  v_verified integer;
+  v_machine  integer;
+  v_first    timestamptz;
+  v_last     timestamptz;
+  v_reason   text;
+  v_evidence jsonb;
+  v_block    uuid;
+  v_held     integer;
+BEGIN
+  /*
+   * The table's own CHECK, asked first, so a key it would refuse leaves the
+   * vote to the cap instead of failing the verify.
+   */
+  IF v_key !~ '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+     OR vote_domain_never_block(v_key)
+     OR vote_domain_protected(v_key) THEN
+    RETURN false;
+  END IF;
+
+  -- Blocked now, or blocked once and lifted: either way a person decided.
+  IF EXISTS (
+    SELECT 1
+      FROM vote_blocked_domains b
+     WHERE b.campaign_id = p_camp
+       AND vote_domain_matches(v_key, b.domain)
+  ) THEN
+    RETURN false;
+  END IF;
+
+  SELECT * INTO m FROM vote_domain_mx WHERE domain = v_key;
+  IF m.domain IS NULL OR m.kind NOT IN ('forwarder', 'other') THEN
+    RETURN false;
+  END IF;
+
+  SELECT count(*)::integer,
+         count(*) FILTER (
+           WHERE vote_local_looks_generated(split_part(v.voter_email_canonical, '@', 1))
+         )::integer,
+         min(v.verified_at),
+         max(v.verified_at)
+    INTO v_verified, v_machine, v_first, v_last
+    FROM votes v
+   WHERE v.round_id = p_round
+     AND v.verified_at IS NOT NULL
+     AND vote_domain_matches(split_part(v.voter_email_canonical, '@', 2), v_key)
+     AND (v.status = 'counted'
+          OR (v.status = 'removed' AND v.removed_mode = 'fraud'));
+
+  IF m.kind = 'forwarder' AND v_verified >= 3 THEN
+    v_reason := format(
+      'Forwarding service (%s), %s verified votes this round',
+      COALESCE(m.primary_mx, 'unknown host'), v_verified
+    );
+  ELSIF m.kind = 'other' AND v_machine >= 3 AND v_machine * 5 >= v_verified * 3 THEN
+    v_reason := format(
+      '%s of %s verified addresses look machine-made', v_machine, v_verified
+    );
+  ELSE
+    RETURN false;
+  END IF;
+
+  v_evidence := jsonb_build_object(
+    'round_id', p_round,
+    'kind', m.kind,
+    'primary_mx', m.primary_mx,
+    'verified', v_verified,
+    'machine_made', v_machine,
+    'first_at', v_first,
+    'last_at', v_last
+  );
+
+  /*
+   * No conflict is possible from an owner's block: block_vote_domain takes
+   * this round's lock before it inserts, and the lock is held here. One can
+   * only come from a verify in another round auto-blocking the same domain
+   * at this moment; that one blocked it, so this one did not.
+   */
+  INSERT INTO vote_blocked_domains (campaign_id, domain, source, reason, evidence)
+  VALUES (p_camp, v_key, 'auto', v_reason, v_evidence)
+  ON CONFLICT (campaign_id, domain) WHERE lifted_at IS NULL DO NOTHING
+  RETURNING id INTO v_block;
+  IF v_block IS NULL THEN
+    RETURN false;
+  END IF;
+
+  UPDATE votes v
+     SET held_at = now(),
+         held_reason = 'blocked'
+   WHERE v.round_id = p_round
+     AND v.status = 'counted'
+     AND v.verified_at IS NOT NULL
+     AND v.held_at IS NULL
+     AND vote_domain_matches(split_part(v.voter_email_canonical, '@', 2), v_key);
+  GET DIAGNOSTICS v_held = ROW_COUNT;
+
+  INSERT INTO audit_log (campaign_id, actor_admin_id, action, entity_type, entity_id, after, note)
+  VALUES (p_camp, NULL, 'vote_domain.auto_blocked', 'vote_domain', v_block,
+          v_evidence || jsonb_build_object('domain', v_key, 'held', v_held),
+          v_reason);
+
+  RETURN true;
+END $$;
+
+/*
  * The old signature, for the old code. It judges the vote under its own
  * host, which is what the old code meant, and gains the lock and the held
  * reason from the body below.
@@ -228,9 +429,10 @@ END $$;
 
 /*
  * The body. 0068's exactly, apart from the key, the lock, the held reason,
- * the blocked-domain hold and the third output column. auto_blocked is
- * always false for now; it is in the signature so the automatic rule can
- * report through it without changing the shape the verify route reads.
+ * the blocked-domain and forwarder holds, the automatic block and the third
+ * output column. auto_blocked is true on the one verify whose vote made the
+ * domain blocked automatically, so the route can tell the owners; it never
+ * reaches the voter.
  */
 CREATE OR REPLACE FUNCTION verify_vote(
   p_campaign_slug   text,
@@ -331,6 +533,33 @@ BEGIN
     ) THEN
       held := true;
       v_reason := 'blocked';
+    /*
+     * Then a forwarding service, from the first vote. Its mail goes to a
+     * catch-all forwarder, which is how one person runs unlimited inboxes on
+     * a domain, so none of its votes counts until a person has looked; the
+     * voter hears the same "Your vote is in." and the public count does not
+     * move. Not for a school or government domain, which no automatic rule
+     * touches, and not once the owner has lifted a block on it: that is the
+     * owner vouching for the domain's voters. The key's cached kind is read,
+     * never looked up here; no row, or unknown, holds nothing.
+     */
+    ELSIF EXISTS (
+            SELECT 1
+              FROM vote_domain_mx m
+             WHERE m.domain = v_key
+               AND m.kind = 'forwarder'
+          )
+          AND NOT vote_domain_protected(v_key)
+          AND NOT vote_domain_never_block(v_key)
+          AND NOT EXISTS (
+            SELECT 1
+              FROM vote_blocked_domains b
+             WHERE b.campaign_id = v_camp
+               AND b.lifted_at IS NOT NULL
+               AND vote_domain_matches(v_host, b.domain)
+          ) THEN
+      held := true;
+      v_reason := 'forwarder';
     ELSE
       -- The cap. Counted votes from this domain and its subdomains in this
       -- round, allowlisted consumer providers exempt. Held is not a
@@ -364,6 +593,19 @@ BEGIN
          code_hash = NULL,
          code_expires_at = NULL
    WHERE id = v.id;
+
+  /*
+   * Last, with this vote already verified so it is part of the evidence, and
+   * still under the lock. If the domain is blocked now, this vote was held
+   * with the rest of the round's, and the verify route tells the owners. The
+   * voter is told nothing different.
+   */
+  IF NOT COALESCE(p_domain_allowlisted, false) THEN
+    auto_blocked := vote_domain_auto_block(v_camp, p_round, v_key);
+    IF auto_blocked THEN
+      held := true;
+    END IF;
+  END IF;
 
   vote_id := v.id;
   RETURN NEXT;
@@ -400,6 +642,7 @@ LANGUAGE plpgsql AS $$
 DECLARE
   v_domain text := lower(btrim(COALESCE(p_domain, '')));
   v_block  uuid;
+  v_rounds uuid[];
   v_round  uuid;
   v_n      integer;
   v_held   integer := 0;
@@ -418,11 +661,30 @@ BEGIN
   END IF;
 
   /*
-   * The row before the holds. A verify that takes a round's lock after this
-   * transaction commits sees the block and holds its own vote; one that got
-   * the lock first finishes, and the UPDATE below, which waits for that
-   * lock, then sees its vote counted and holds it.
+   * The locks before the row, every round's in one order. A verify that got
+   * a round's lock first finishes (and may block the domain automatically
+   * while it holds it), then this sees its vote; one that asks after this
+   * transaction commits sees the block and holds its own vote.
+   *
+   * Row first and locks second would deadlock against the automatic rule:
+   * this transaction holding the new row and waiting for a round's lock,
+   * while the verify holding that lock waits to insert the same (campaign,
+   * domain) row.
    */
+  v_rounds := ARRAY(
+    SELECT r.id
+      FROM vote_rounds r
+     WHERE r.campaign_id = p_campaign
+       AND r.reviewed_at IS NULL
+       AND r.status <> 'published'
+     ORDER BY r.opens_at, r.id
+  );
+  FOREACH v_round IN ARRAY v_rounds LOOP
+    PERFORM pg_advisory_xact_lock(
+      hashtextextended('vote-domain:' || v_round::text || ':' || v_domain, 0)
+    );
+  END LOOP;
+
   INSERT INTO vote_blocked_domains
          (campaign_id, domain, source, reason, created_by_admin_id)
   VALUES (p_campaign, v_domain, 'admin', btrim(p_reason), p_admin)
@@ -433,17 +695,7 @@ BEGIN
     RETURN 0;
   END IF;
 
-  FOR v_round IN
-    SELECT r.id
-      FROM vote_rounds r
-     WHERE r.campaign_id = p_campaign
-       AND r.reviewed_at IS NULL
-       AND r.status <> 'published'
-     ORDER BY r.opens_at, r.id
-  LOOP
-    PERFORM pg_advisory_xact_lock(
-      hashtextextended('vote-domain:' || v_round::text || ':' || v_domain, 0)
-    );
+  FOREACH v_round IN ARRAY v_rounds LOOP
     UPDATE votes v
        SET held_at = now(),
            held_reason = 'blocked'
@@ -643,3 +895,127 @@ BEGIN
 
   RETURN v_removed;
 END $$;
+
+/*
+ * The purge learns the mail-host cache. Regenerated from 0036, its latest
+ * definition, with one DELETE and its own count added: the cache holds the
+ * domains voters used, and some of those are personal domains, so "kept"
+ * was not an option.
+ */
+CREATE OR REPLACE FUNCTION purge_campaign_data(p_slug text, p_confirm text)
+RETURNS TABLE (table_name text, rows_deleted integer)
+LANGUAGE plpgsql AS $$
+DECLARE
+  v_campaign uuid;
+  n          integer;
+BEGIN
+  IF p_confirm IS DISTINCT FROM p_slug THEN
+    RAISE EXCEPTION
+      'confirm by passing the slug twice: SELECT * FROM purge_campaign_data(%L, %L);', p_slug, p_slug
+      USING ERRCODE = 'P0601';
+  END IF;
+
+  SELECT id INTO v_campaign FROM campaigns WHERE slug = p_slug;
+  IF v_campaign IS NULL THEN
+    RAISE EXCEPTION 'no campaign with slug %', p_slug USING ERRCODE = 'P0602';
+  END IF;
+
+  DELETE FROM votes v USING vote_rounds r
+   WHERE v.round_id = r.id AND r.campaign_id = v_campaign;
+
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'votes'; rows_deleted := n; RETURN NEXT;
+
+  /*
+   * The rate limit counters.
+   *
+   * Not campaign scoped, because a bucket is a client address and a limit name,
+   * and neither knows which campaign the request was for. Cleared wholesale
+   * anyway: the bucket is derived from an IP address, an IP address is personal
+   * data, and "purge everything about this campaign" that leaves personal data
+   * behind is not a purge. The cost of clearing it is that everybody's budget
+   * resets, which lasts one window and matters to nobody.
+   *
+   * The table also expires its own rows after a day, so this is the floor
+   * rather than the only cleanup.
+   */
+  DELETE FROM request_throttle;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'request_throttle'; rows_deleted := n; RETURN NEXT;
+
+  /*
+   * The mail-host cache (0069). Not campaign scoped either, and cleared
+   * wholesale for the same reason as the throttle: a row is a domain somebody
+   * voted from, and a personal domain names its owner as well as an address
+   * would, so a purge that kept it would keep a trace of who voted. The cost
+   * is one fresh lookup per domain the next time it votes.
+   */
+  DELETE FROM vote_domain_mx;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'vote_domain_mx'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM vote_round_nominees vn USING vote_rounds r
+   WHERE vn.round_id = r.id AND r.campaign_id = v_campaign;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'vote_round_nominees'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM vote_rounds WHERE campaign_id = v_campaign;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'vote_rounds'; rows_deleted := n; RETURN NEXT;
+
+  -- Before weekly_winners, which it references by entry and by creator.
+  n := purge_snapshots(v_campaign);
+  table_name := 'leaderboard_snapshots'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM weekly_winners WHERE campaign_id = v_campaign;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'weekly_winners'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM referrals WHERE campaign_id = v_campaign;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'referrals'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM point_ledger WHERE campaign_id = v_campaign;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'point_ledger'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM submissions s USING challenge_entries ce, campaign_creators cc
+   WHERE s.entry_id = ce.id AND ce.campaign_creator_id = cc.id
+     AND cc.campaign_id = v_campaign;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'submissions'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM handle_change_requests r USING campaign_creators cc
+   WHERE r.campaign_creator_id = cc.id AND cc.campaign_id = v_campaign;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'handle_change_requests'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM challenge_entries ce USING campaign_creators cc
+   WHERE ce.campaign_creator_id = cc.id AND cc.campaign_id = v_campaign;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'challenge_entries'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM creator_social_handles csh
+   WHERE csh.creator_id IN (
+     SELECT cc.creator_id FROM campaign_creators cc WHERE cc.campaign_id = v_campaign
+   )
+   AND NOT EXISTS (
+     SELECT 1 FROM campaign_creators other
+      WHERE other.creator_id = csh.creator_id AND other.campaign_id <> v_campaign
+   );
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'creator_social_handles'; rows_deleted := n; RETURN NEXT;
+
+  CREATE TEMP TABLE purge_orphans ON COMMIT DROP AS
+    SELECT cc.creator_id FROM campaign_creators cc
+     WHERE cc.campaign_id = v_campaign
+       AND NOT EXISTS (
+         SELECT 1 FROM campaign_creators other
+          WHERE other.creator_id = cc.creator_id AND other.campaign_id <> v_campaign
+       );
+
+  DELETE FROM campaign_creators WHERE campaign_id = v_campaign;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'campaign_creators'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM creators WHERE id IN (SELECT creator_id FROM purge_orphans);
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'creators'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM registration_attempts;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'registration_attempts'; rows_deleted := n; RETURN NEXT;
+
+  DELETE FROM audit_log WHERE campaign_id = v_campaign;
+  GET DIAGNOSTICS n = ROW_COUNT; table_name := 'audit_log'; rows_deleted := n; RETURN NEXT;
+
+  INSERT INTO audit_log (campaign_id, action, entity_type, entity_id, note)
+  VALUES (v_campaign, 'campaign.purged', 'campaign', v_campaign,
+          'Test data cleared from the database console before launch.');
+END $$;
+

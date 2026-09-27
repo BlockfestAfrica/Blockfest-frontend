@@ -18,10 +18,11 @@ import { logWarning } from "@/lib/log";
  * Enforcement stays in SQL. What the engine cannot do for itself lives in
  * Node and is handed to it: the public suffix list that names a vote's
  * registrable domain, the bundled disposable list the cast route refuses
- * from, and (later) the DNS lookups that classify a domain's mail host. Those
- * are data lookups, not rules; every hold and every block is still decided by
- * the engine under its lock (0069), so a Node answer that is wrong or missing
- * can make the engine stricter or leave it as it was, never looser.
+ * from, and the DNS lookup that classifies a domain's mail host (cached in
+ * vote_domain_mx). Those are data lookups, not rules; every hold and every
+ * block, automatic ones included, is still decided by the engine under its
+ * lock (0069). A Node answer that is missing leaves the engine where the cap
+ * already had it.
  */
 
 /**

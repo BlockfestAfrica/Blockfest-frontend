@@ -250,6 +250,7 @@ export default async function WinnersPage({
                   block: d.block,
                   blockable: d.blockable,
                   protectedDomain: d.protectedDomain,
+                  mxKind: d.mxKind,
                 })),
                 ips: tally.ips.map((ip) => ({
                   ipHash: ip.ipHash,

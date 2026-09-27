@@ -374,6 +374,19 @@ describe("blocking a domain from its cluster", () => {
     expect(screen.queryByRole("button", { name: "Block…" })).toBeNull();
   });
 
+  it("tags a domain whose mail goes to a forwarding service, and no other", () => {
+    render(
+      panel([
+        { domain: "oemails.com", votes: 3, members: [member(1)], blockable: true, mxKind: "forwarder" },
+        { domain: "acme.ng", votes: 3, members: [member(2)], blockable: true, mxKind: "major" },
+        { domain: "plain.test", votes: 3, members: [member(3)], blockable: true, mxKind: null },
+      ]),
+    );
+    expect(screen.getAllByText("Forwarding service")).toHaveLength(1);
+    // On the row itself, beside the domain it describes.
+    expect(screen.getByRole("button", { name: /oemails\.com.*Forwarding service/ })).toBeTruthy();
+  });
+
   it("says how many of a cluster's addresses look machine-made", () => {
     render(
       panel([
