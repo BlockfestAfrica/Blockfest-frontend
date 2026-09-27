@@ -125,6 +125,35 @@ export async function currentRound(
 }
 
 /**
+ * The most recent week before `beforeWeek` whose vote is not finished: still
+ * open, or closed but its Community Favourite not yet announced (announcing
+ * marks the round published).
+ *
+ * The winners screen used to follow the calendar alone, so a vote that ran
+ * past the start of the next stage (a 48-hour vote opened on the Sunday
+ * closes on the Tuesday) vanished from it at midnight on the Monday, with the
+ * close, the review and the announce still to do.
+ */
+export async function unfinishedVoteWeek(
+  admin: AdminIdentity,
+  beforeWeek: number,
+): Promise<number | null> {
+  void admin;
+  const result = await getDb().execute(sql`
+    SELECT r.week_no
+      FROM vote_rounds r
+      JOIN campaigns cm ON cm.id = r.campaign_id
+     WHERE cm.slug = ${MONICA_SLUG}
+       AND r.week_no < ${beforeWeek}
+       AND r.status IN ('open', 'closed')
+     ORDER BY r.week_no DESC
+     LIMIT 1
+  `);
+  const row = result.rows?.[0] as { week_no?: unknown } | undefined;
+  return row ? Number(row.week_no) : null;
+}
+
+/**
  * Who may be put on the ballot: approved entries of this week's challenge.
  *
  * The same eligibility open_vote_round enforces, so a pick made from this list

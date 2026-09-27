@@ -13,6 +13,7 @@ import {
   candidateEntries,
   currentRound,
   roundTally,
+  unfinishedVoteWeek,
   type ClusterMember,
 } from "@/lib/admin/vote-round";
 import { leaderboard } from "@/lib/leaderboard";
@@ -53,7 +54,11 @@ function serialiseMember(m: ClusterMember) {
     held: m.held,
   };
 }
-export default async function WinnersPage() {
+export default async function WinnersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ week?: string }>;
+}) {
   const admin = await requireAdmin();
   if (!admin.ok) return null;
 
@@ -67,7 +72,20 @@ export default async function WinnersPage() {
     );
   }
 
-  const weekNo = currentWeekNo();
+  /*
+   * Which week this screen works on.
+   *
+   * The calendar's week, unless an earlier week's vote is still unfinished:
+   * a vote can now run past the start of the next stage, and its close,
+   * review and announce must stay reachable after the calendar moves on.
+   * ?week= picks any week up to the current one.
+   */
+  const current = currentWeekNo();
+  const asked = Number((await searchParams).week);
+  const weekNo =
+    Number.isInteger(asked) && asked >= 1 && asked <= current
+      ? asked
+      : ((await unfinishedVoteWeek(admin.admin, current)) ?? current);
 
   const [creators, favourites, picked, snapshots, frozenPoints, board, round, entries] =
     await Promise.all([
@@ -124,8 +142,35 @@ export default async function WinnersPage() {
       <PageHeader
         context={`Monica · Week ${weekNo}`}
         title="Winners"
-        hint="Record the standings on Saturday, announce on Sunday; announcing is public the moment you confirm."
+        hint="Record the standings on Saturday and announce Creator of the Week on Sunday; announce Community Favourite once its vote has closed. Announcing is public the moment you confirm."
       />
+
+      {current > 1 && (
+        <nav aria-label="Week" className="flex flex-wrap items-center gap-2">
+          {Array.from({ length: current }, (_, i) => i + 1).map((week) => (
+            <Link
+              key={week}
+              href={`/admin/winners?week=${week}`}
+              aria-current={week === weekNo ? "page" : undefined}
+              className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
+                week === weekNo
+                  ? "bg-card-3 text-white"
+                  : "text-ink-3 hover:bg-card-2 hover:text-white"
+              }`}
+            >
+              Week {week}
+              {week === current ? " (current)" : ""}
+            </Link>
+          ))}
+          {weekNo < current && (
+            <p className="basis-full text-sm text-ink-3">
+              {round && (round.status === "open" || round.status === "closed")
+                ? `Showing week ${weekNo}: its vote is not finished yet. Stage ${current} is live; switch to week ${current} once the Community Favourite is announced.`
+                : `Showing week ${weekNo}. Stage ${current} is the current week.`}
+            </p>
+          )}
+        </nav>
+      )}
 
       <WinnersPanel
         weekNo={weekNo}
@@ -152,6 +197,7 @@ export default async function WinnersPage() {
           publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
         }))}
         frozen={frozen}
+        canRecord={weekNo === current}
         vote={voteVerdict}
       />
 

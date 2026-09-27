@@ -65,6 +65,34 @@ function defaultVoteDay(): string {
   return lagos.toISOString().slice(0, 10);
 }
 
+/** YYYY-MM-DD, `days` after another, by the calendar rather than 24-hour steps. */
+function addDays(day: string, days: number): string {
+  const d = new Date(`${day}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return day;
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * A Lagos date and time as an instant. Lagos is UTC+1 all year, so the offset
+ * is fixed; null when either field is empty or unreadable.
+ */
+function lagosInstant(day: string, time: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^\d{2}:\d{2}$/.test(time)) return null;
+  const d = new Date(`${day}T${time}:00+01:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** "48 hours", "36 hours 30 minutes", for the length of a vote. */
+function lengthOf(from: Date, to: Date): string {
+  const minutes = Math.round((to.getTime() - from.getTime()) / 60_000);
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  const h = hours === 1 ? "1 hour" : `${hours} hours`;
+  if (hours === 0) return `${rest} minutes`;
+  return rest ? `${h} ${rest} minutes` : h;
+}
+
 /** "Sunday 27 September", read from the YYYY-MM-DD the date field holds. */
 function longDay(day: string): string {
   const d = new Date(`${day}T12:00:00Z`);
@@ -106,9 +134,15 @@ export function VoteRoundPanel({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
-  const [voteDay, setVoteDay] = useState(defaultVoteDay);
+  /*
+   * A date and a time on each side. It was one "voting day" with an open and
+   * a close time on it, so a vote could never run past midnight, and the plan
+   * is a 48-hour vote. The close defaults to 48 hours after the open.
+   */
+  const [opensDay, setOpensDay] = useState(defaultVoteDay);
   const [opensTime, setOpensTime] = useState("08:00");
-  const [closesTime, setClosesTime] = useState("18:00");
+  const [closesDay, setClosesDay] = useState(() => addDays(defaultVoteDay(), 2));
+  const [closesTime, setClosesTime] = useState("08:00");
   const [fewReason, setFewReason] = useState("");
   /** The vote whose removal is being confirmed, and whose email it names. */
   const [removing, setRemoving] = useState<{ voteId: string; email: string } | null>(null);
@@ -135,10 +169,16 @@ export function VoteRoundPanel({
   const heldCount = tally?.held.length ?? 0;
 
   const needsOverride = selected.length > 0 && selected.length < 3;
+  const opensAt = lagosInstant(opensDay, opensTime);
+  const closesAt = lagosInstant(closesDay, closesTime);
+  // The engine refuses a close at or before the open (window_inverted); said
+  // here, under the fields, before the round trip.
+  const windowOk = opensAt !== null && closesAt !== null && closesAt > opensAt;
   const openReady =
     selected.length > 0 &&
     selected.length <= 5 &&
-    (!needsOverride || fewReason.trim().length > 0);
+    (!needsOverride || fewReason.trim().length > 0) &&
+    windowOk;
 
   async function act(body: Record<string, unknown>, success: string) {
     setBusy(true);
@@ -178,9 +218,11 @@ export function VoteRoundPanel({
   async function openRound() {
     if (!openReady) {
       toast.error(
-        needsOverride
-          ? "Fewer than three nominees needs the reason recorded."
-          : "Pick three to five nominees first.",
+        !windowOk && selected.length > 0
+          ? "The vote has to close after it opens."
+          : needsOverride
+            ? "Fewer than three nominees needs the reason recorded."
+            : "Pick three to five nominees first.",
       );
       return;
     }
@@ -189,8 +231,8 @@ export function VoteRoundPanel({
         action: "open",
         weekNo,
         entryIds: selected,
-        opensAt: `${voteDay}T${opensTime}:00+01:00`,
-        closesAt: `${voteDay}T${closesTime}:00+01:00`,
+        opensAt: `${opensDay}T${opensTime}:00+01:00`,
+        closesAt: `${closesDay}T${closesTime}:00+01:00`,
         ...(needsOverride
           ? { allowFew: true, fewReason: fewReason.trim() }
           : {}),
@@ -723,7 +765,9 @@ export function VoteRoundPanel({
                 selected.map(
                   (id) => candidates.find((c) => c.entryId === id)?.name ?? "an entry",
                 ),
-              )}, ${longDay(voteDay)} ${opensTime} to ${closesTime} Lagos time?${
+              )}, from ${longDay(opensDay)} ${opensTime} to ${longDay(closesDay)} ${closesTime} Lagos time${
+                opensAt && closesAt && windowOk ? ` (${lengthOf(opensAt, closesAt)})` : ""
+              }?${
                 needsOverride ? " Fewer than three nominees, with your reason recorded." : ""
               }`}
               consequence="Each nominee is emailed now and the shortlist goes on the public voting page. A week gets one round, and its nominees and times cannot be changed once it is open."
@@ -873,42 +917,67 @@ export function VoteRoundPanel({
             </Field>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field
-              id="vote-day"
-              label="Voting day"
-              hint="Sundays by rhythm, not by rule."
-            >
-              <input
-                id="vote-day"
-                name="vote-day"
-                type="date"
-                value={voteDay}
-                onChange={(event) => setVoteDay(event.target.value)}
-                className={control}
-              />
-            </Field>
-            <Field id="opens-time" label="Opens" hint="Lagos time.">
-              <input
-                id="opens-time"
-                name="opens-time"
-                type="time"
-                value={opensTime}
-                onChange={(event) => setOpensTime(event.target.value)}
-                className={control}
-              />
-            </Field>
-            <Field id="closes-time" label="Closes" hint="Lagos time.">
-              <input
-                id="closes-time"
-                name="closes-time"
-                type="time"
-                value={closesTime}
-                onChange={(event) => setClosesTime(event.target.value)}
-                className={control}
-              />
-            </Field>
+          {/* Opens and closes each get a date and a time, side by side. */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <fieldset className="grid gap-3 sm:grid-cols-2">
+              <legend className="mb-2 text-sm font-semibold text-white">Opens</legend>
+              <Field id="opens-day" label="Date" hint="Lagos time.">
+                <input
+                  id="opens-day"
+                  name="opens-day"
+                  type="date"
+                  value={opensDay}
+                  onChange={(event) => setOpensDay(event.target.value)}
+                  className={control}
+                />
+              </Field>
+              <Field id="opens-time" label="Time">
+                <input
+                  id="opens-time"
+                  name="opens-time"
+                  type="time"
+                  value={opensTime}
+                  onChange={(event) => setOpensTime(event.target.value)}
+                  className={control}
+                />
+              </Field>
+            </fieldset>
+            <fieldset className="grid gap-3 sm:grid-cols-2">
+              <legend className="mb-2 text-sm font-semibold text-white">Closes</legend>
+              <Field id="closes-day" label="Date" hint="Lagos time.">
+                <input
+                  id="closes-day"
+                  name="closes-day"
+                  type="date"
+                  value={closesDay}
+                  min={opensDay}
+                  onChange={(event) => setClosesDay(event.target.value)}
+                  className={control}
+                />
+              </Field>
+              <Field id="closes-time" label="Time">
+                <input
+                  id="closes-time"
+                  name="closes-time"
+                  type="time"
+                  value={closesTime}
+                  onChange={(event) => setClosesTime(event.target.value)}
+                  className={control}
+                />
+              </Field>
+            </fieldset>
           </div>
+          {/* The length, said back as the dates change, so a close typed on
+              the wrong day shows up as "24 hours" or an error, not as a
+              surprise when the vote shuts. */}
+          <p
+            className={`text-sm ${windowOk ? "text-ink-3" : "text-red-300"}`}
+            aria-live="polite"
+          >
+            {windowOk && opensAt && closesAt
+              ? `Runs ${lengthOf(opensAt, closesAt)}, ${longDay(opensDay)} ${opensTime} to ${longDay(closesDay)} ${closesTime}.`
+              : "The vote has to close after it opens."}
+          </p>
         </div>
       ) : (
         <div className={SPACING.section}>
