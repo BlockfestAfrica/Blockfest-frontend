@@ -92,6 +92,7 @@ export function WinnersPanel({
   excludedCount,
   picked,
   frozen,
+  canRecord = true,
   vote,
 }: {
   weekNo: number;
@@ -101,6 +102,11 @@ export function WinnersPanel({
   picked: PickedRow[];
   /** Whether this week's standings have been recorded yet. */
   frozen: boolean;
+  /**
+   * The standings can only be recorded for the current stage (the snapshot
+   * route refuses any other week), so a past week shows why, not a button.
+   */
+  canRecord?: boolean;
   /** Null when the week has no on-site round (the social-poll fallback). */
   vote: VoteVerdict | null;
 }) {
@@ -287,15 +293,23 @@ export function WinnersPanel({
         }
         hint="Writes down the standings as they are today. Doing it again makes a new version and loses nothing."
         foot={
-          <button
-            type="button"
-            disabled={busy}
-            onClick={snapshot}
-            className={buttonClass(frozen ? "secondary" : "primary")}
-          >
-            <Camera className="h-4 w-4" aria-hidden="true" />
-            {busy ? "Working…" : frozen ? "Record again" : "Record the standings"}
-          </button>
+          canRecord ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={snapshot}
+              className={buttonClass(frozen ? "secondary" : "primary")}
+            >
+              <Camera className="h-4 w-4" aria-hidden="true" />
+              {busy ? "Working…" : frozen ? "Record again" : "Record the standings"}
+            </button>
+          ) : (
+            <p className="text-sm text-ink-3">
+              {frozen
+                ? `Week ${weekNo} is over, so its standings stay as they were recorded.`
+                : `Week ${weekNo} is over, and its standings can no longer be recorded.`}
+            </p>
+          )
         }
       />
 

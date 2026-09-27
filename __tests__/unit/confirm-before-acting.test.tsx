@@ -487,7 +487,9 @@ describe("the screens pinned by source", () => {
     const src = read("components/admin/vote-round-panel.tsx");
     expect(src).not.toMatch(/onClick=\{openRound\}/);
     expect(src).toMatch(/<Confirm\s+key="open-vote"\s+label="Open the vote"[\s\S]*?onConfirm=\{openRound\}/);
-    expect(src).toMatch(/longDay\(voteDay\)\} \$\{opensTime\} to \$\{closesTime\} Lagos time/);
+    // Both ends, each with its own day: a vote can run past midnight.
+    expect(src).toMatch(/\$\{longDay\(opensDay\)\} \$\{opensTime\}/);
+    expect(src).toMatch(/to \$\{longDay\(closesDay\)\} \$\{closesTime\} Lagos time/);
   });
 
   it("keys every step's Confirm, so an open question never carries into the next step", () => {

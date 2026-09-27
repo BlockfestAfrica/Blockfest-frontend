@@ -132,6 +132,9 @@ const MESSAGES: Record<string, string> = {
   P0821:
     "Codes sent before the close can still be redeemed for fifteen minutes past the round's scheduled closing time. Wait for that window to pass, then mark the review complete: certifying now would certify a board that can still move.",
   P0908: "The vote has to close after it opens. Check the window.",
+  // close_vote_round needs the week's standings, and a week's standings can
+  // only be recorded while it is the current stage.
+  P0804: "This week's standings were never recorded, so its vote cannot be closed. Record the standings while the week is current.",
   P0502: "A removal needs a reason.",
   P0401: "Only a signed-in admin can do this.",
   P0002: "That campaign does not exist.",

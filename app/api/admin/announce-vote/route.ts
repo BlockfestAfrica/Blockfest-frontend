@@ -113,6 +113,14 @@ export async function POST(request: NextRequest) {
         { status: 409 },
       );
     }
+    // After the close there is nothing left to vote on, so no mail goes out
+    // telling the campaign that voting is open.
+    if (round.closes_at && new Date(round.closes_at).getTime() <= Date.now()) {
+      return NextResponse.json(
+        { ok: false, message: "Voting for this round has already closed." },
+        { status: 409 },
+      );
+    }
     if (round.opens_at && new Date(round.opens_at).getTime() > Date.now()) {
       return NextResponse.json(
         {
