@@ -21,7 +21,7 @@ vi.mock("@/lib/db/client", async () => {
   return { ...tables, getDb: () => state.db };
 });
 
-const { unfinishedVoteWeek } = await import("@/lib/admin/vote-round");
+const { unfinishedVoteWeek, candidateEntries } = await import("@/lib/admin/vote-round");
 
 const ADMIN = { id: "a", email: "a@example.test", role: "owner" } as unknown as AdminIdentity;
 let db: PGlite;
@@ -78,5 +78,51 @@ describe("unfinishedVoteWeek", () => {
     await round(1, "closed");
     await round(2, "open");
     expect(await unfinishedVoteWeek(ADMIN, 3)).toBe(2);
+  });
+});
+
+describe("candidateEntries", () => {
+  it("carries each approved post with the handle registered on its platform", async () => {
+    const one = async <T,>(q: string, params: unknown[] = []) => (await db.query<T>(q, params)).rows[0];
+    const person = await one<{ id: string }>(
+      `INSERT INTO creators (full_name, email, email_canonical, phone, phone_e164, content_niche)
+       VALUES ('Ada Obi', 'ada@e.com', 'ada@e.com', '0801', '+2348010000001', 'finance') RETURNING id`,
+    );
+    const enrolment = await one<{ id: string }>(
+      `INSERT INTO campaign_creators (campaign_id, creator_id, referral_code)
+       VALUES ($1, $2, 'ADA1') RETURNING id`,
+      [campaignId, person.id],
+    );
+    await db.query(
+      `INSERT INTO creator_social_handles (creator_id, platform, handle, handle_normalized)
+       VALUES ($1, 'x', 'AdaObi', 'adaobi')`,
+      [person.id],
+    );
+    const challenge = await one<{ id: string }>(
+      `SELECT id FROM challenges WHERE campaign_id = $1 AND week_no = 1`,
+      [campaignId],
+    );
+    const entry = await one<{ id: string }>(
+      `INSERT INTO challenge_entries (campaign_creator_id, challenge_id, base_points_snapshot,
+         bonus_2_snapshot, bonus_3_snapshot, approved_platform_count, awarded_points)
+       VALUES ($1, $2, 100, 50, 100, 2, 150) RETURNING id`,
+      [enrolment.id, challenge.id],
+    );
+    const post = (platform: string, url: string, status: string) =>
+      db.query(
+        `INSERT INTO submissions (entry_id, platform, url, status, reviewed_at)
+         VALUES ($1, $2::platform, $3, $4::submission_status, $5::timestamptz)`,
+        [entry.id, platform, url, status, status === "pending" ? null : "2026-09-26T10:00:00Z"],
+      );
+    await post("instagram", "https://instagram.com/p/ADA1", "approved");
+    await post("x", "https://x.com/AdaObi/status/901", "approved");
+    await post("tiktok", "https://tiktok.com/@ada/video/77", "rejected");
+
+    const [nominee] = await candidateEntries(ADMIN, 1);
+    expect(nominee.name).toBe("Ada Obi");
+    expect(nominee.posts).toEqual([
+      { platform: "x", handle: "AdaObi", url: "https://x.com/AdaObi/status/901" },
+      { platform: "instagram", handle: null, url: "https://instagram.com/p/ADA1" },
+    ]);
   });
 });

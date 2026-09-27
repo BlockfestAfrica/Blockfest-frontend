@@ -1,7 +1,7 @@
 import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { MONICA_SLUG } from "@/lib/campaigns";
+import { CAMPAIGN_PLATFORMS, MONICA_SLUG, type CampaignPlatform } from "@/lib/campaigns";
 import { ALLOWLISTED_DOMAINS } from "@/lib/campaign-vote";
 import type { AdminIdentity } from "@/lib/admin/session";
 
@@ -30,11 +30,49 @@ export interface VoteRound {
   reviewedAt: Date | null;
 }
 
+/** One approved post of a nominee's entry, and the account it was filed under. */
+export interface CandidatePost {
+  platform: CampaignPlatform;
+  /** The handle the creator registered for that platform, if any. */
+  handle: string | null;
+  url: string;
+}
+
 export interface CandidateEntry {
   entryId: string;
   name: string;
   points: number;
   approvedPlatforms: number;
+  /** Approved posts, one per platform, in the campaign's platform order. */
+  posts: CandidatePost[];
+}
+
+/** Rebuilt field by field; a json column arrives parsed or as text. */
+function toPosts(value: unknown): CandidatePost[] {
+  let list: unknown = value;
+  if (typeof list === "string") {
+    try {
+      list = JSON.parse(list);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(list)) return [];
+  const posts: CandidatePost[] = [];
+  for (const item of list) {
+    if (!item || typeof item !== "object") continue;
+    const { platform, handle, url } = item as Record<string, unknown>;
+    if (!(CAMPAIGN_PLATFORMS as readonly unknown[]).includes(platform)) continue;
+    if (typeof url !== "string" || url === "") continue;
+    posts.push({
+      platform: platform as CampaignPlatform,
+      handle: typeof handle === "string" && handle.trim() ? handle.trim() : null,
+      url,
+    });
+  }
+  return posts.sort(
+    (a, b) => CAMPAIGN_PLATFORMS.indexOf(a.platform) - CAMPAIGN_PLATFORMS.indexOf(b.platform),
+  );
 }
 
 export interface NomineeTally {
@@ -167,8 +205,23 @@ export async function candidateEntries(
   weekNo: number,
 ): Promise<CandidateEntry[]> {
   void admin;
+  /*
+   * With each approved post and the handle the creator registered on that
+   * platform. Names alone were not enough to tell nominees apart on the
+   * ballot: two creators can share a name, and the handle is what the
+   * reviewers already know them by.
+   */
   const result = await getDb().execute(sql`
-    SELECT e.id, c.full_name, e.awarded_points, e.approved_platform_count
+    SELECT e.id, c.full_name, e.awarded_points, e.approved_platform_count,
+           COALESCE((
+             SELECT json_agg(json_build_object(
+                      'platform', s.platform, 'url', s.url, 'handle', h.handle)
+                    ORDER BY s.platform)
+               FROM submissions s
+               LEFT JOIN creator_social_handles h
+                      ON h.creator_id = c.id AND h.platform = s.platform
+              WHERE s.entry_id = e.id AND s.status = 'approved'
+           ), '[]'::json) AS approved_posts
       FROM challenge_entries e
       JOIN challenges ch         ON ch.id = e.challenge_id
       JOIN campaigns cm          ON cm.id = ch.campaign_id
@@ -188,6 +241,7 @@ export async function candidateEntries(
       name: String(r.full_name ?? "").trim(),
       points: Number(r.awarded_points ?? 0),
       approvedPlatforms: Number(r.approved_platform_count ?? 0),
+      posts: toPosts(r.approved_posts),
     };
   });
 }

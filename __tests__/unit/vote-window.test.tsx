@@ -101,6 +101,44 @@ describe("the vote window", () => {
   });
 });
 
+describe("telling nominees apart", () => {
+  it("shows the handle behind each approved post under the name, linking to the post", () => {
+    render(
+      <VoteRoundPanel
+        weekNo={1}
+        round={null}
+        frozen
+        tally={null}
+        candidates={[
+          {
+            entryId: "e1",
+            name: "Ada Obi",
+            points: 300,
+            approvedPlatforms: 2,
+            posts: [
+              { platform: "x", handle: "adaobi", url: "https://x.com/adaobi/status/123" },
+              { platform: "instagram", handle: null, url: "https://www.instagram.com/p/ABC/" },
+            ],
+          },
+          { entryId: "e2", name: "Ada Obi", points: 250, approvedPlatforms: 1, posts: [
+            { platform: "tiktok", handle: "ada.creates", url: "https://www.tiktok.com/@ada.creates/video/9" },
+          ] },
+        ]}
+      />,
+    );
+    const x = screen.getByRole("link", { name: /X @adaobi/ });
+    expect(x.getAttribute("href")).toBe("https://x.com/adaobi/status/123");
+    expect(x.getAttribute("target")).toBe("_blank");
+    // No registered handle on that platform: the post is still named and linked.
+    expect(screen.getByRole("link", { name: /Instagram post/ })).toBeTruthy();
+    // Two nominees with one name are now told apart by their accounts.
+    expect(screen.getByRole("link", { name: /TikTok @ada\.creates/ })).toBeTruthy();
+    // The name still ticks the box.
+    fireEvent.click(screen.getAllByText("Ada Obi")[0]);
+    expect((screen.getAllByRole("checkbox")[0] as HTMLInputElement).checked).toBe(true);
+  });
+});
+
 describe("a vote that outlives its week", () => {
   it("keeps the winners screen on a week whose vote is not finished", () => {
     const page = readFileSync(join(process.cwd(), "app/admin/(console)/winners/page.tsx"), "utf8");

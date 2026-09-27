@@ -16,6 +16,8 @@ import {
 import { ActionDialog } from "@/components/shared/action-dialog";
 import { Confirm } from "@/components/shared/confirm";
 import { count, dateTime } from "@/lib/format";
+import { openableHref } from "@/lib/admin/openable-href";
+import { platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
@@ -33,6 +35,8 @@ export interface EntryCandidateRow {
   name: string;
   points: number;
   approvedPlatforms: number;
+  /** Approved posts with the handle registered on each platform. */
+  posts?: { platform: CampaignPlatform; handle: string | null; url: string }[];
 }
 
 /** A vote inside a signal cluster, carrying the id Remove needs. */
@@ -860,19 +864,58 @@ export function VoteRoundPanel({
                   return (
                     <label
                       key={c.entryId}
-                      className="flex min-h-11 cursor-pointer items-center gap-3 py-2"
+                      className="flex min-h-11 cursor-pointer items-start gap-3 py-2"
                     >
                       <input
                         type="checkbox"
                         checked={on}
                         disabled={busy || (!on && selected.length >= 5)}
                         onChange={() => toggle(c.entryId)}
-                        className="h-4 w-4 shrink-0 cursor-pointer accent-brand-gold"
+                        className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-brand-gold"
                       />
-                      <span className="w-full min-w-0 flex-1 truncate text-sm font-semibold text-white">
-                        {c.name}
+                      {/* The name, and under it the account behind each
+                          approved post: a name alone could not tell two
+                          nominees apart, and the handle is what the team
+                          knows them by. Each opens the approved post. */}
+                      <span className="flex w-full min-w-0 flex-1 flex-col gap-1">
+                        <span className="truncate text-sm font-semibold text-white">
+                          {c.name}
+                        </span>
+                        {(c.posts?.length ?? 0) > 0 && (
+                          <span className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-3">
+                            {c.posts!.map((post) => {
+                              const said = `${platformLabels[post.platform]} ${
+                                post.handle ? `@${post.handle.replace(/^@/, "")}` : "post"
+                              }`;
+                              const href = openableHref(post.url);
+                              return href ? (
+                                <a
+                                  key={post.platform}
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-link underline underline-offset-2 [overflow-wrap:anywhere] hover:text-white"
+                                >
+                                  {said}
+                                  <span className="sr-only"> (opens the approved post in a new tab)</span>
+                                </a>
+                              ) : (
+                                <span key={post.platform} className="[overflow-wrap:anywhere]">
+                                  {said}
+                                </span>
+                              );
+                            })}
+                          </span>
+                        )}
+                        {/* On a phone the figures sit under the name, which
+                            then keeps the full width for itself and the
+                            handles; beside them they squeezed both. */}
+                        <span className="text-xs tabular-nums text-ink-4 sm:hidden">
+                          {count(c.points)} points · {c.approvedPlatforms}{" "}
+                          {c.approvedPlatforms === 1 ? "platform" : "platforms"}
+                        </span>
                       </span>
-                      <span className="shrink-0 text-sm tabular-nums text-ink-3">
+                      <span className="hidden shrink-0 text-sm tabular-nums text-ink-3 sm:inline">
                         {count(c.points)} points ·{" "}
                         {c.approvedPlatforms}{" "}
                         {c.approvedPlatforms === 1 ? "platform" : "platforms"}
