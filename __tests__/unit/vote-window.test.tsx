@@ -221,7 +221,8 @@ describe("removing a farm", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Remove all 11" }));
     expect(document.body.textContent).toContain("Remove all 11 votes from oemails.com as fraud?");
-    expect(document.body.textContent).toContain("Every later vote from oemails.com is held for review.");
+    // Eleven removed still fill the allowance of ten, so nothing more counts.
+    expect(document.body.textContent).toContain("so at most 0 more from it can count before later ones are held");
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Yes, remove them all" }));
     });

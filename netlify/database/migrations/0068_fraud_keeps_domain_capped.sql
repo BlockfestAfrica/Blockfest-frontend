@@ -9,8 +9,9 @@
  * back to zero, and the same person could land another ten counted votes
  * with fresh addresses, and again after every sweep, until the close.
  *
- * verify_vote now counts fraud removals toward the domain's cap. Once an
- * owner has removed a domain's votes as fraud, every later vote from it is
+ * verify_vote now counts fraud removals toward the domain's cap: a removed
+ * vote keeps its place in the allowance of ten. Once ten or more from a
+ * domain have been counted or removed as fraud, every later vote from it is
  * held for a person to look at, with nothing different in what the voter
  * sees. Unsweep removals do not count: those are people freed to vote
  * again, not a judgement on their domain.

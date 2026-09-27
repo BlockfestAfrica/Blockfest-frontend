@@ -645,7 +645,7 @@ export function VoteRoundPanel({
                     <>
                       {/* One judgement for a farm, not one per vote. */}
                       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line bg-card-2/40 px-3 py-3">
-                        <p className="max-w-prose text-sm text-ink-2">
+                        <p className="max-w-prose text-sm text-ink-2 [overflow-wrap:anywhere]">
                           All from {d.domain} look like one person?
                         </p>
                         <button
@@ -1324,7 +1324,7 @@ export function VoteRoundPanel({
         }}
         title={
           removingDomain
-            ? `Remove every vote from ${removingDomain.domain}`
+            ? `Remove every verified vote from ${removingDomain.domain}`
             : "Remove a domain's votes"
         }
         tone="danger"
@@ -1357,7 +1357,7 @@ export function VoteRoundPanel({
                   question={`Remove all ${count(removingDomain.votes)} ${
                     removingDomain.votes === 1 ? "vote" : "votes"
                   } from ${removingDomain.domain} as fraud?`}
-                  consequence={`They stop counting and each email is barred from this round. Every later vote from ${removingDomain.domain} is held for review. Voters are not told; the public answer never changes.`}
+                  consequence={`They stop counting and each email is barred from this round. The removed votes still use up ${removingDomain.domain}'s allowance of ten this round, so at most ${Math.max(0, 10 - removingDomain.votes)} more from it can count before later ones are held. Voters are not told; the public answer never changes.`}
                   confirmLabel="Yes, remove them all"
                   pending={busy}
                   onConfirm={() =>
@@ -1368,7 +1368,7 @@ export function VoteRoundPanel({
                         domain: removingDomain.domain,
                         reason: removeReason.trim(),
                       },
-                      `Removed as fraud. New votes from ${removingDomain.domain} will be held.`,
+                      "Removed as fraud.",
                     )
                   }
                 />
