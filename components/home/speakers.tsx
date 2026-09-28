@@ -12,13 +12,12 @@ const HOMEPAGE_SPEAKER_COUNT = 12;
 export function SpeakersSection() {
   const OPTIONS: EmblaOptionsType = { loop: true };
 
-  const speakers2026 = SpeakersList.filter(is2026Speaker);
+  const speakers2026 = SpeakersList.filter(is2026Speaker).sort(
+    (a, b) =>
+      Number(b.role === "special-guest") - Number(a.role === "special-guest")
+  );
   const hasAnnouncedSpeakers = speakers2026.length > 0;
 
-  // Before any 2026 names are announced, the carousel falls back to past
-  // speakers so the section isn't empty — same as it's always worked. The
-  // moment the first speaker gets `cohort: "2026"` in the data file, this
-  // switches over on its own.
   const carouselSpeakers = hasAnnouncedSpeakers
     ? speakers2026
     : SpeakersList.filter(isPastSpeaker).slice(0, HOMEPAGE_SPEAKER_COUNT);
@@ -47,10 +46,12 @@ export function SpeakersSection() {
         <div className="scale-in">
           <Speakers speakers={carouselSpeakers} options={OPTIONS} />
         </div>
+
         <div className="mt-10 overflow-hidden rounded-xl border border-line-2 bg-card-2">
           <div className="divide-y divide-line-2">
-            {/* Past speakers — only makes sense once there's a "before" to point
-      back to, i.e. once 2026 names exist. Its own row, not its own card. */}
+            {/* Past speakers — only makes sense once there's a "before" to
+                point back to, i.e. once 2026 names exist. Its own row, not
+                its own card. */}
             {hasAnnouncedSpeakers && (
               <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between lg:p-8">
                 <div className="min-w-0">
@@ -58,7 +59,8 @@ export function SpeakersSection() {
                     Curious who&apos;s spoken before?
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-ink-3">
-                    Browse every speaker across previous editions of Blockfest Africa.
+                    Browse every speaker across previous editions of Blockfest
+                    Africa.
                   </p>
                 </div>
                 <div className="w-full md:w-55">
@@ -87,12 +89,12 @@ export function SpeakersSection() {
                 </Button>
                 {/* volunteering has ended */}
                 {/* <Button
-        asChild
-        variant="outline"
-        className="w-full rounded-full px-4 text-base font-semibold"
-      >
-        <Link href="/volunteer">Apply to Volunteer</Link>
-      </Button> */}
+                  asChild
+                  variant="outline"
+                  className="w-full rounded-full px-4 text-base font-semibold"
+                >
+                  <Link href="/volunteer">Apply to Volunteer</Link>
+                </Button> */}
               </div>
             </div>
           </div>

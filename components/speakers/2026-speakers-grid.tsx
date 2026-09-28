@@ -22,8 +22,14 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
   }, [speakers]);
 
   const filteredSpeakers = useMemo(() => {
-    if (!selectedExpertise) return speakers;
-    return speakers.filter((s) => s.expertise?.includes(selectedExpertise));
+    const list = selectedExpertise
+      ? speakers.filter((s) => s.expertise?.includes(selectedExpertise))
+      : speakers;
+    // Special guests lead; sort is stable, so everyone else keeps data order.
+    return [...list].sort(
+      (a, b) =>
+        Number(b.role === "special-guest") - Number(a.role === "special-guest")
+    );
   }, [speakers, selectedExpertise]);
 
   return (
@@ -51,8 +57,8 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
               onClick={() => setSelectedExpertise(null)}
               aria-pressed={selectedExpertise === null}
               className={`min-h-11 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${selectedExpertise === null
-                ? "border-brand-blue bg-brand-blue text-white"
-                : "border-gray-200 bg-white text-gray-600 hover:border-brand-blue hover:text-gray-900"
+                  ? "border-brand-blue bg-brand-blue text-white"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-brand-blue hover:text-gray-900"
                 }`}
             >
               All Speakers
@@ -64,8 +70,8 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                 onClick={() => setSelectedExpertise(expertise)}
                 aria-pressed={selectedExpertise === expertise}
                 className={`min-h-11 whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-200 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 ${selectedExpertise === expertise
-                  ? "border-brand-blue bg-brand-blue text-white"
-                  : "border-gray-200 bg-white text-gray-600 hover:border-brand-blue hover:text-gray-900"
+                    ? "border-brand-blue bg-brand-blue text-white"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-brand-blue hover:text-gray-900"
                   }`}
               >
                 {expertise}
@@ -79,30 +85,46 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
           {filteredSpeakers.map((speaker) => {
             const slug = generateSpeakerSlug(speaker.name);
             const bioTeaser = speaker.bio?.split("\n\n")[0];
+            const isSpecialGuest = speaker.role === "special-guest";
 
             return (
               <div
                 key={speaker.name}
-                className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow duration-300 hover:shadow-lg"
+                className={`group relative flex flex-col overflow-hidden rounded-xl border bg-white transition-shadow duration-300 hover:shadow-lg ${isSpecialGuest
+                    ? "border-brand-gold"
+                    : "border-gray-200"
+                  }`}
               >
                 <Link
                   href={`/speakers/${slug}`}
                   className="absolute inset-0 z-10"
-                  aria-label={`View ${speaker.name}'s profile`}
+                  aria-label={`View ${speaker.name}'s profile${isSpecialGuest ? " (special guest)" : ""
+                    }`}
                 />
 
-                <div className="relative aspect-4/4 w-full overflow-hidden bg-gray-100">
+                <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
                   <Image
                     src={speaker.image}
                     alt={`${speaker.name} - ${speaker.title}`}
                     fill
-                    className={`object-cover transition-transform duration-500 group-hover:scale-105 ${speaker.imagePosition || "object-top"}`}
+                    className={`object-cover transition-transform duration-500 group-hover:scale-105 ${speaker.imagePosition || "object-top"
+                      }`}
                     sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
                   />
-                  {speaker.expertise?.[0] && (
-                    <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-900 backdrop-blur-sm">
-                      {speaker.expertise[0]}
+
+                  {/* Special guests wear the brand gold, the same one the
+                      site's gold CTAs use. Everyone else keeps their
+                      expertise chip. */}
+                  {isSpecialGuest ? (
+                    <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-brand-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-gray-900">
+                      Special Guest
                     </span>
+                  ) : (
+                    speaker.expertise?.[0] && (
+                      <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-900 backdrop-blur-sm">
+                        {speaker.expertise[0]}
+                      </span>
+                    )
                   )}
                 </div>
 
@@ -114,7 +136,10 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
 
                   {speaker.company && (
                     <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-brand-blue">
-                      <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <Building2
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
                       {speaker.company}
                     </p>
                   )}
@@ -127,7 +152,10 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                     </div>
                   )}
 
-                  {(speaker.twitter || speaker.linkedin || speaker.youtube || speaker.website) && (
+                  {(speaker.twitter ||
+                    speaker.linkedin ||
+                    speaker.youtube ||
+                    speaker.website) && (
                     <div className="pointer-events-auto relative z-20 mt-auto flex items-center gap-2 pt-4">
                       {speaker.twitter && (
                         <a

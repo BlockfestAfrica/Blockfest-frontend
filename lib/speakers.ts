@@ -4,13 +4,14 @@ export interface Speaker {
   image: string;
   twitter?: string;
   website?: string;
-  linkedin?: string; // LinkedIn profile URL
-  youtube?: string; // YouTube channel URL
-  imagePosition?: string; // For custom object positioning
-  expertise?: string[]; // Areas of expertise
-  company?: string; // Company name for easier filtering
-  bio?: string; // Speaker biography with markdown support
+  linkedin?: string; 
+  youtube?: string; 
+  imagePosition?: string; 
+  expertise?: string[]; 
+  company?: string; 
+  bio?: string;
   cohort?: "2026" | "past";
+  role?: "speaker" | "special-guest";
 }
 
 export const SpeakersList: Speaker[] = [
@@ -326,6 +327,19 @@ export const SpeakersList: Speaker[] = [
     twitter: "https://x.com/drtunjialausa?s=21",
     bio: "Dr. Maruf Tunji Alausa, CON, is Nigeria's Honourable Minister of Education, appointed in October 2024 under President Bola Tinubu's administration. He previously served as Minister of State for Health and Social Welfare from 2023 to 2024.\n\nA board-certified nephrologist by training, with a background from the University of Lagos, Dr. Alausa brings a clinical and systems-thinking approach to public service, one that now shapes how Nigeria is reforming its education sector.\n\nSince taking office, he has driven a wide-ranging reform agenda spanning tertiary education policy, teacher recruitment and welfare, diaspora engagement in human capital development, and institutional innovation across the sector, work that has earned him recognition as one of the administration's most active cabinet ministers.\n\nAt Blockfest Africa 2026, Dr. Alausa joins founders, regulators and builders shaping Africa's next chapter, bringing the perspective of a policymaker working to align Nigeria's education system with a rapidly changing, increasingly onchain world.",
     cohort: "2026",
+    role: "special-guest",
+
+  },
+  {
+    name: "Prof. Temitayo Ogundipe",
+    title: "Chairman, Governing Board, National Universities Commission (NUC)",
+    image: "/2026/speakers/prof.JPEG",
+    expertise: ["Government & Policy", "Education", "Research & Analysis"],
+    company: "National Universities Commission (NUC)",
+    twitter: "https://x.com/profogundipe",
+    bio: "Professor Temitayo Ogundipe is the Chairman of the Governing Board of the National Universities Commission (NUC), the regulator of Nigeria's university system. He is the immediate past Vice-Chancellor of the University of Lagos and a Professor of Botany in the Faculty of Science at the University of Lagos, with an extensive academic and research background.\n\nHe is a fellow of several leading scientific academies and learned societies, including the Linnean Society of London.\n\nAt Blockfest Africa 2026, he joins us as a special guest, bringing decades of academic and administrative experience to the conversations shaping what's next in Africa's frontier tech.",
+    cohort: "2026",
+    role: "special-guest",
   },
 
   {
@@ -352,7 +366,7 @@ export const SpeakersList: Speaker[] = [
     name: "Olamilekan Majekodunmi",
     title: "AI, Web3 & Content Strategist",
     image: "/2026/speakers/greatola.jpg",
-    expertise: ["Marketing & Media", "Web3 & Blockchain"],
+    expertise: ["Web3 & AI", "Web3 & Blockchain"],
     company: "TheGreatOla",
     twitter: "https://x.com/thegreatola",
     website: "https://linktr.ee/thegreatola",

@@ -9,13 +9,33 @@ import { isSpeakerFormOpen } from "@/lib/speaking";
 import { gotham } from "@/lib/fonts";
 import { FeaturedSpeakersGrid } from "@/components/speakers/2026-speakers-grid";
 
+const speakers2026 = SpeakersList.filter(is2026Speaker);
+const hasAnnouncedSpeakers = speakers2026.length > 0;
+
+// Metadata follows the same switch as the page body. It used to say "coming
+// soon" unconditionally, so search results and link previews kept announcing
+// a lineup that was already live.
+const pageDescription = hasAnnouncedSpeakers
+  ? `Meet the founders, regulators, builders and special guests taking the Blockfest Africa 2026 stage in Lagos this October.${isSpeakerFormOpen ? " The call for speakers is still open." : ""
+  } Browse the lineup and the voices from previous editions.`
+  : isSpeakerFormOpen
+    ? "The Lagos '26 speaker lineup is announced in the coming weeks, and the call for speakers is open until then. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa."
+    : "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa.";
+
+const socialTitle = hasAnnouncedSpeakers
+  ? "Blockfest Africa 2026 Speakers - Meet the Lineup"
+  : "Blockfest Africa Speakers - 2026 Lineup Coming Soon";
+
+const socialDescription = hasAnnouncedSpeakers
+  ? "The Lagos '26 lineup is live. Meet the founders, regulators and builders taking the Blockfest Africa stage this October."
+  : "The Lagos '26 lineup lands soon. Meet the speakers who have shaped the conversation at Blockfest Africa.";
+
 export const metadata: Metadata = {
   title: "Speakers",
-  description: isSpeakerFormOpen
-    ? "The Lagos '26 speaker lineup is announced in the coming weeks, and the call for speakers is open until then. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa."
-    : "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa.",
+  description: pageDescription,
   keywords: [
     "blockfest africa speakers",
+    "blockfest africa 2026 speakers",
     "blockchain experts africa",
     "web3 leaders",
     "crypto keynote speakers",
@@ -33,9 +53,8 @@ export const metadata: Metadata = {
     "artificial intelligence leaders",
   ],
   openGraph: {
-    title: "Blockfest Africa Speakers - 2026 Lineup Coming Soon",
-    description:
-      "The Lagos '26 lineup lands soon. Meet the speakers who have shaped the conversation at Blockfest Africa.",
+    title: socialTitle,
+    description: socialDescription,
     images: [
       {
         url: "/images/og-speakers.jpg",
@@ -46,9 +65,8 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    title: "Blockfest Africa Speakers - 2026 Lineup Coming Soon",
-    description:
-      "The Lagos '26 lineup lands soon. Meet the speakers who have shaped the conversation at Blockfest Africa.",
+    title: socialTitle,
+    description: socialDescription,
     images: ["/images/twitter-speakers.jpg"],
   },
   alternates: {
@@ -72,9 +90,6 @@ const SpeakersPage = () => {
     { name: "Blockfest Africa", url: "https://blockfestafrica.com" },
     { name: "Speakers", url: "https://blockfestafrica.com/speakers" },
   ];
-
-  const speakers2026 = SpeakersList.filter(is2026Speaker);
-  const hasAnnouncedSpeakers = speakers2026.length > 0;
 
   return (
     <>
@@ -100,9 +115,8 @@ const SpeakersPage = () => {
           />
         )}
 
-        {/* Archive link — the 33 past speakers now live on their own page,
-            so this page opens with what's next instead of "coming soon"
-            followed immediately by three years of history. */}
+        {/* Archive link — past speakers live on their own page, so this page
+            opens with what's next instead of three years of history. */}
         <div className="border-t border-gray-200 bg-paper">
           <div className="container-page section-y flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-base text-gray-600">
