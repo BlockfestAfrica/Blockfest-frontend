@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
+import { RememberOpen } from "@/components/shared/remember-open";
 
 /**
  * The few shapes every campaign and admin screen is built from.
@@ -269,6 +271,7 @@ export function JobCard({
   state = "todo",
   foot,
   focusableHeading = false,
+  collapsible = false,
   children,
 }: {
   /** Anchors the section, so a job can be linked to. */
@@ -288,40 +291,40 @@ export function JobCard({
    * had focus, where the body would otherwise get it.
    */
   focusableHeading?: boolean;
+  /**
+   * The header row opens and closes the card, remembered per card in this
+   * browser. For long console pages where an owner works one job at a time:
+   * the header (title, step, status) stays, so a closed card still says
+   * where that job stands.
+   */
+  collapsible?: boolean;
   children?: ReactNode;
 }) {
-  return (
-    <section
-      id={id}
-      aria-labelledby={`${id}-title`}
-      // scroll-mt clears the sticky console bar when a job is linked to.
-      // A contained card, not an open edge: jobs rendered as bare text on the
-      // ground read as scattered prose, which is the exact complaint the /me
-      // rebuild answered. The status edge keeps its colour on the card's left.
-      className={`scroll-mt-24 overflow-hidden rounded-xl border border-line-2 border-l-2 bg-card ${JOB_EDGE[state]}`}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3 sm:px-5">
-        <div className="min-w-0">
-          {step && (
-            <p
-              className={`eyebrow ${
-                state === "now" ? "text-brand-gold" : "text-ink-4"
-              }`}
-            >
-              {step}
-            </p>
-          )}
-          <h2
-            id={`${id}-title`}
-            tabIndex={focusableHeading ? -1 : undefined}
-            className={`${step ? "mt-1" : ""} text-lg font-bold text-pretty text-white sm:text-xl`}
-          >
-            {title}
-          </h2>
-        </div>
-        {status && <div className="shrink-0">{status}</div>}
-      </div>
-
+  const headerRow =
+    "flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-line px-4 py-3 sm:px-5";
+  const titleBlock = (
+    <div className="min-w-0">
+      {step && (
+        <p
+          className={`eyebrow ${
+            state === "now" ? "text-brand-gold" : "text-ink-4"
+          }`}
+        >
+          {step}
+        </p>
+      )}
+      <h2
+        id={`${id}-title`}
+        tabIndex={focusableHeading ? -1 : undefined}
+        className={`${step ? "mt-1" : ""} text-lg font-bold text-pretty text-white sm:text-xl`}
+      >
+        {title}
+      </h2>
+    </div>
+  );
+  const statusBlock = status && <div className="shrink-0">{status}</div>;
+  const body = (
+    <>
       {(hint || children) && (
         <div className="px-4 py-4 sm:px-5">
           {hint && (
@@ -337,6 +340,52 @@ export function JobCard({
         <div className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-4 sm:px-5">
           {foot}
         </div>
+      )}
+    </>
+  );
+
+  return (
+    <section
+      id={id}
+      aria-labelledby={`${id}-title`}
+      // scroll-mt clears the sticky console bar when a job is linked to.
+      // A contained card, not an open edge: jobs rendered as bare text on the
+      // ground read as scattered prose, which is the exact complaint the /me
+      // rebuild answered. The status edge keeps its colour on the card's left.
+      className={`scroll-mt-24 overflow-hidden rounded-xl border border-line-2 border-l-2 bg-card ${JOB_EDGE[state]}`}
+    >
+      {collapsible ? (
+        // The browser's own disclosure: it opens and closes without script,
+        // with the keyboard, and says so to a screen reader. Open on first
+        // paint; RememberOpen restores what the owner left it as. The rule
+        // under the header only shows while the card is open, so a closed
+        // card is one clean row.
+        <details open className="group/job">
+          <summary
+            className={`${headerRow} cursor-pointer list-none transition-colors duration-150 hover:bg-card-2 group-open/job:border-b [&::-webkit-details-marker]:hidden`}
+          >
+            <div className="flex min-w-0 items-start gap-2">
+              <ChevronDown
+                className="mt-0.5 h-5 w-5 shrink-0 -rotate-90 text-ink-3 transition-transform duration-150 group-open/job:rotate-0"
+                aria-hidden="true"
+              />
+              {titleBlock}
+            </div>
+            {/* When it wraps under a long title on a phone, it lines up
+                with the title rather than the chevron. */}
+            {status && <div className="shrink-0 max-sm:pl-7">{status}</div>}
+          </summary>
+          <RememberOpen storageKey={`job-card:${id}`} anchor={id} />
+          {body}
+        </details>
+      ) : (
+        <>
+          <div className={`${headerRow} border-b`}>
+            {titleBlock}
+            {statusBlock}
+          </div>
+          {body}
+        </>
       )}
     </section>
   );

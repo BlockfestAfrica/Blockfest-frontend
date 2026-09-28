@@ -323,6 +323,7 @@ export function BlockedDomainsCard({ blocks }: { blocks: BlockedDomainView[] }) 
 
   return (
     <JobCard
+      collapsible
       id="blocked-domains"
       focusableHeading
       step="Any time"
