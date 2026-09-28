@@ -508,7 +508,7 @@ export const monicaFaqs: CampaignFaq[] = [
   {
     question: "How do I vote for Community Favourite?",
     answer:
-      "Open the winners page on Sunday, pick your favourite from the shortlist and enter your email address. A six digit code arrives in your inbox; type it in and your vote is cast. Votes close on Sunday evening.",
+      "Open the winners page when voting opens on Sunday, pick your favourite from the shortlist and enter your email address. A six digit code arrives in your inbox; type it in and your vote is cast. Voting closes at the time shown with the shortlist.",
   },
   {
     question: "How is Creator of the Week chosen?",
@@ -563,6 +563,16 @@ export const monicaFaqs: CampaignFaq[] = [
  * Tuesday after an approval.
  */
 export const MONICA_FIRST_LEADERBOARD = "Sunday 27 September";
+
+/**
+ * The same Sunday as an instant: the Lagos midnight that ends it.
+ *
+ * For copy that stops naming the day once it has gone. "The first winners
+ * appear here on Sunday 27 September" is true until then and a broken
+ * promise from the Monday on. Kept beside the label so the two move
+ * together; a test holds them to the same day.
+ */
+export const MONICA_FIRST_LEADERBOARD_ENDS = "2026-09-28T00:00:00+01:00";
 
 /** Where campaign conversation happens, and how entries are found. */
 export const MONICA_HASHTAGS = ["#TheMoneyStory", "#AreYouSkillful"] as const;

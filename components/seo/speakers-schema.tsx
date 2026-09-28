@@ -1,4 +1,5 @@
 import React from "react";
+import { jsonLd } from "@/lib/json-ld";
 
 interface Speaker {
   name: string;
@@ -63,7 +64,7 @@ export function SpeakersSchema({ speakers }: SpeakersSchemaProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(speakersData) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(speakersData) }}
     />
   );
 }
@@ -119,7 +120,7 @@ export function SpeakerSchema({ speaker }: SpeakerSchemaProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(speakerData) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(speakerData) }}
     />
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Confirm } from "@/components/shared/confirm";
@@ -12,6 +12,8 @@ import {
   Pill,
   selectControl,
 } from "@/components/shared/panel";
+import { ActionDialog } from "@/components/shared/action-dialog";
+import { reveal } from "@/components/shared/reveal";
 import { dateTime } from "@/lib/format";
 
 export interface EditableChallenge {
@@ -57,9 +59,47 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     status: "",
   });
 
+  /*
+   * What the open challenge looked like when editing began.
+   *
+   * One `form` object is shared by every week, so opening a second week
+   * overwrote the first in place. Combined with a Cancel that called
+   * setOpen(null) directly, two thousand characters of a stage brief lived
+   * only in React state and could be wiped by the same button that said
+   * "Edit" a moment earlier. This is the screen whose text is emailed to
+   * every creator in the campaign.
+   */
+  const [baseline, setBaseline] = useState<typeof form | null>(null);
+  /** Where the reviewer was heading when a dirty form stopped them. */
+  const [discarding, setDiscarding] = useState<
+    { to: EditableChallenge | null } | null
+  >(null);
+
+  const dirty =
+    baseline !== null &&
+    (Object.keys(baseline) as (keyof typeof baseline)[]).some(
+      (k) => form[k] !== baseline[k],
+    );
+
+  /*
+   * Bring an editor that just opened into view, with the cursor in Title.
+   *
+   * It expands in place under its week, and at about 900px its Save button
+   * always lands below the fold; opening a lower week also collapses the one
+   * above, which moves the pressed row up the page. Without this the admin was
+   * left looking at wherever the page happened to settle.
+   */
+  useEffect(() => {
+    if (!open) return;
+    reveal(
+      document.getElementById(`week-${open}`),
+      document.getElementById(`title-${open}`),
+      "start",
+    );
+  }, [open]);
+
   function startEditing(challenge: EditableChallenge) {
-    setOpen(challenge.id);
-    setForm({
+    const next = {
       title: challenge.title,
       description: challenge.description,
       question: challenge.question ?? "",
@@ -67,7 +107,82 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
       skills: (challenge.skills ?? []).join(", "),
       basePoints: String(challenge.basePoints),
       status: challenge.status,
-    });
+    };
+    setOpen(challenge.id);
+    setForm(next);
+    setBaseline(next);
+    setDiscarding(null);
+  }
+
+  /**
+   * The question to ask before saving, or null when the save only touches text.
+   *
+   * Status and base points are the two fields whose change reaches creators
+   * straight away: a status opens, stops or hides the week, and a base is what
+   * every entry made afterwards pays.
+   */
+  function riskyChange(
+    challenge: EditableChallenge,
+  ): { question: string; consequence: string } | null {
+    if (!baseline) return null;
+    const weekNo = challenge.weekNo;
+    const statusTo = form.status !== baseline.status ? form.status : null;
+    // An empty or zero base is refused by save() with its own message, so
+    // there is nothing to ask about.
+    const baseChanged =
+      form.basePoints !== baseline.basePoints && Number(form.basePoints) > 0;
+    if (!statusTo && !baseChanged) return null;
+
+    const status =
+      statusTo === "closed"
+        ? {
+            question: `Save week ${weekNo} and close it to new entries?`,
+            consequence: `Nobody can submit to week ${weekNo} until it is set active again. What already arrived stays reviewable.`,
+          }
+        : statusTo === "active"
+          ? {
+              question: `Save week ${weekNo} and make it live?`,
+              // The public list and the creator page both wait for the
+              // window to open, so a week made active early is not public yet.
+              consequence:
+                new Date(challenge.startsAt).getTime() > Date.now()
+                  ? `It appears on the public stage list and takes entries from ${dateTime(challenge.startsAt)} Lagos time.`
+                  : "The brief shows on the public stage list and creators can submit inside its window.",
+            }
+          : statusTo === "draft"
+            ? {
+                question: `Save week ${weekNo} and take it off the public page?`,
+                consequence: "It disappears from the stage list and stops taking entries.",
+              }
+            : null;
+    const base = baseChanged
+      ? `Entries created from now on pay ${form.basePoints} base points instead of ${baseline.basePoints}; existing ones keep theirs.`
+      : "";
+
+    return {
+      question:
+        status?.question ??
+        `Save week ${weekNo} with base points changed from ${baseline.basePoints} to ${form.basePoints}?`,
+      consequence: [status?.consequence ?? "", base].filter(Boolean).join(" "),
+    };
+  }
+
+  /** Close, or move to another week, throwing away what was typed. */
+  function leaveEditor(to: EditableChallenge | null) {
+    setDiscarding(null);
+    setBaseline(null);
+    if (to) startEditing(to);
+    else setOpen(null);
+  }
+
+  /*
+   * Every way out of an open editor goes through here, so the guard cannot
+   * be bypassed by taking the other one: Cancel on this week, and Edit on
+   * a different week, both discard the same unsaved text.
+   */
+  function askToLeave(to: EditableChallenge | null) {
+    if (dirty) setDiscarding({ to });
+    else leaveEditor(to);
   }
 
   /**
@@ -140,6 +255,10 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
       }
 
       toast.success(`Week ${challenge.weekNo} saved.`);
+      // Saved text is no longer unsaved text, so closing here must not trip
+      // the discard guard on the way out.
+      setBaseline(null);
+      setDiscarding(null);
       setOpen(null);
       router.refresh();
     } catch {
@@ -167,9 +286,58 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
       }
       hint="Write next week's challenge as a draft, read it over, flip it active on the Monday. Closing stops new entries and leaves what arrived reviewable."
     >
+      {/*
+       * The unsaved-changes question, in front of the admin.
+       *
+       * It used to render inside the week that was open, at the top of that
+       * week's editor. Pressing Edit on another week while this one had
+       * unsaved text therefore put the question a whole editor's height away
+       * from the button, often above the screen. A dialog asks it where the
+       * button was pressed, and still defaults to the answer that changes
+       * nothing.
+       */}
+      <ActionDialog
+        open={discarding !== null}
+        onOpenChange={(next) => {
+          if (!next) setDiscarding(null);
+        }}
+        title="Discard what you have written?"
+        tone="danger"
+      >
+        <p className="max-w-prose text-sm leading-relaxed text-ink-2">
+          This brief has not been saved. It is the text emailed to every
+          creator when the stage is announced, and nothing here keeps a copy.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {/* Keep editing first and focused, matching Confirm: the default
+              action is the one that changes nothing. */}
+          <button
+            type="button"
+            data-autofocus
+            onClick={() => setDiscarding(null)}
+            className={buttonClass("secondary")}
+          >
+            Keep editing
+          </button>
+          <button
+            type="button"
+            onClick={() => discarding && leaveEditor(discarding.to)}
+            className={buttonClass("danger")}
+          >
+            {discarding?.to
+              ? `Discard and open week ${discarding.to.weekNo}`
+              : "Discard it"}
+          </button>
+        </div>
+      </ActionDialog>
+
       <ul className="flex flex-col gap-3">
         {challenges.map((challenge) => (
-          <li key={challenge.id} className="rounded-lg border border-line p-4">
+          <li
+            key={challenge.id}
+            id={`week-${challenge.id}`}
+            className="scroll-mt-24 rounded-lg border border-line p-4"
+          >
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-semibold text-white">
                 Week {challenge.weekNo}: {challenge.title}
@@ -187,7 +355,11 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                 <button
                   type="button"
                   onClick={() =>
-                    open === challenge.id ? setOpen(null) : startEditing(challenge)
+                    open === challenge.id
+                      ? askToLeave(null)
+                      : open
+                        ? askToLeave(challenge)
+                        : startEditing(challenge)
                   }
                   aria-expanded={open === challenge.id}
                   className="ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-ink-3 transition-colors hover:text-white"
@@ -311,14 +483,22 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => save(challenge)}
-                    className={buttonClass("primary", "w-fit")}
-                  >
-                    {busy ? "Saving…" : `Save week ${challenge.weekNo}`}
-                  </button>
+                  {/* Text-only saves stay one press: the brief is saved over
+                      and over while it is written. A status or base-points
+                      change asks, because the status is one select in the
+                      middle of a long form and Save does not mention it, so
+                      closing a live week could ride along with a typo fix. */}
+                  <Confirm
+                    label={`Save week ${challenge.weekNo}`}
+                    when={riskyChange(challenge) !== null}
+                    question={riskyChange(challenge)?.question ?? ""}
+                    consequence={riskyChange(challenge)?.consequence ?? ""}
+                    confirmLabel="Yes, save it"
+                    pending={busy}
+                    onConfirm={() => save(challenge)}
+                    triggerClassName={buttonClass("primary", "w-fit")}
+                    triggerContent={busy ? "Saving…" : `Save week ${challenge.weekNo}`}
+                  />
 
                   {/* Only for a week that is actually live, because the
                       mail tells creators to go and submit. Separate from

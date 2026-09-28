@@ -329,6 +329,126 @@ describe("referrals", () => {
   });
 });
 
+/**
+ * One person on both ends of a referral.
+ *
+ * The guard this replaced compared the referrer with the creators row the same
+ * call had just inserted, which is never the referrer, so it could not fire for
+ * any code a registrant could know. Anyone holding one enrolment could register
+ * a second with a fresh email and phone and the first one's code, and it was
+ * credited as a referral.
+ *
+ * Email and phone cannot be what catches it: a registered one is refused
+ * before any of this runs, and nothing proves either belongs to whoever typed
+ * it. The account a post is attributed to is the identity the campaign scores
+ * by, so two enrolments naming the same account are one person's work.
+ */
+describe("self-referral through a second enrolment", () => {
+  const referrals = () => count(`SELECT count(*)::int AS n FROM referrals`);
+
+  it("credits nobody when the newcomer lists the referrer's own account", async () => {
+    await register({
+      email: "first@example.com",
+      phone: "+2348090000001",
+      x: "samehandle",
+      code: "SELFREF1",
+    });
+    // Still a registration: 0061 keeps registration from refusing over a
+    // handle somebody else typed first, and this is no different.
+    await expect(
+      register({
+        email: "second@example.com",
+        phone: "+2348090000002",
+        x: "samehandle",
+        ref: "selfref1",
+      }),
+    ).resolves.toBeTruthy();
+
+    expect(await referrals()).toBe(0);
+    expect(
+      await count(`SELECT count(*)::int AS n FROM campaign_creators`),
+    ).toBe(2);
+  });
+
+  it("looks at every platform, not only the first one filled in", async () => {
+    await register({
+      email: "first@example.com",
+      phone: "+2348090000003",
+      x: "firstx",
+      instagram: "shared.gram",
+      code: "SELFREF2",
+    });
+    await register({
+      email: "second@example.com",
+      phone: "+2348090000004",
+      x: "secondx",
+      instagram: "shared.gram",
+      ref: "SELFREF2",
+    });
+    expect(await referrals()).toBe(0);
+  });
+
+  it("folds case the way submit_entry's author check does", async () => {
+    await register({
+      email: "first@example.com",
+      phone: "+2348090000005",
+      x: "SameHandle",
+      code: "SELFREF3",
+    });
+    await register({
+      email: "second@example.com",
+      phone: "+2348090000006",
+      x: "samehandle",
+      ref: "SELFREF3",
+    });
+    expect(await referrals()).toBe(0);
+  });
+
+  it("still credits a referral between two different accounts", async () => {
+    await register({
+      email: "first@example.com",
+      phone: "+2348090000007",
+      x: "sender",
+      code: "SELFREF4",
+    });
+    await register({
+      email: "second@example.com",
+      phone: "+2348090000008",
+      x: "newcomer",
+      ref: "SELFREF4",
+    });
+    expect(
+      await count(`
+        SELECT count(*)::int AS n
+          FROM referrals r
+          JOIN campaign_creators referrer ON referrer.id = r.referrer_campaign_creator_id
+          JOIN campaign_creators referred ON referred.id = r.referred_campaign_creator_id
+          JOIN creators c ON c.id = referred.creator_id
+         WHERE referrer.referral_code = 'SELFREF4'
+           AND c.email_canonical = 'second@example.com'`),
+    ).toBe(1);
+  });
+
+  it("does not treat the same name on another platform as the same account", async () => {
+    // Different platforms are different accounts, and submit_entry only ever
+    // matches an author on the platform the link is from. A common name
+    // taken by two people on two platforms is not one person.
+    await register({
+      email: "first@example.com",
+      phone: "+2348090000009",
+      x: "tolu",
+      code: "SELFREF5",
+    });
+    await register({
+      email: "second@example.com",
+      phone: "+2348090000010",
+      instagram: "tolu",
+      ref: "SELFREF5",
+    });
+    expect(await referrals()).toBe(1);
+  });
+});
+
 describe("consent", () => {
   it("records which version of the rules was accepted", async () => {
     // The rules page tells every registrant this is recorded. It was validated

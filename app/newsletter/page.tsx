@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ArrowUpRight, Mail } from "lucide-react";
 import { getNewsletterPosts, SUBSTACK_URL } from "@/lib/newsletter";
+import { jsonLd } from "@/lib/json-ld";
 import { SITE_URL } from "@/lib/seo-event";
 
 export const metadata: Metadata = {
@@ -45,7 +46,7 @@ export default async function NewsletterPage() {
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD requires raw script injection
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLd({
             "@context": "https://schema.org",
             "@type": "CollectionPage",
             name: "Blockf3st Africa Newsletter",

@@ -97,11 +97,53 @@ export function canonicalUrl(raw: string): string {
     url.hostname = bareHost(url.hostname);
     // Composed by hand: assigning a decoded pathname back onto URL would
     // re-encode it, which is the spelling this exists to remove.
-    const path = decodedPath(url.pathname).replace(/\/$/, "");
+    // Trailing slashes, spaces and byte-order marks all go, however many:
+    // stripping only one left "…/123//" or "…/123%20" changing again on a
+    // second pass, and the settled-link check below then refused a link
+    // that opens exactly the post it names.
+    const path = decodedPath(url.pathname).replace(/[\s\uFEFF/]+$/u, "");
     return `${url.protocol}//${url.hostname}${path}`;
   } catch {
     return raw.trim();
   }
+}
+
+/**
+ * Whether the stored form of a link opens the post it will be counted as.
+ *
+ * decodedPath runs after the URL parser has already resolved the path, and the
+ * result is composed by hand, so an escape can decode into structure no parser
+ * saw. x.com/me/status/888%2F..%2F..%2Fstatus/555 stored as
+ * /me/status/888/../../status/555: the reviewer's browser and authorFromUrl
+ * resolve that to post 555, while post_identity_of takes the first id in the
+ * raw text, 888. The ownership check passed on one post and the identity named
+ * another, so a post already credited could be credited again under a fresh
+ * identity, or a rival's id held so that their own filing was refused.
+ * %252e%252e reaches the same place without a slash, a decoded ?, # or
+ * backslash moves the line between path, query and fragment, and a decoded tab
+ * or newline is dropped by the parser outright.
+ *
+ * Refused rather than repaired, because a repair is a guess at which post was
+ * meant and the attacker chooses what the guess sees. The test is the general
+ * one rather than a list of characters: decoding must not add a separator
+ * nobody typed, no escape may survive decoding (a malformed one stops it part
+ * way and leaves %2F for the platform to read however it likes), and the
+ * stored form has to parse back into itself, which it only does when no parser
+ * has anything left to resolve, split or strip. No link a share sheet
+ * produces trips any of them.
+ */
+function canonicalIsSettled(raw: string): boolean {
+  let typed: string;
+  try {
+    typed = new URL(raw.trim()).pathname;
+  } catch {
+    return false;
+  }
+  const segments = (path: string) => path.split(/[/\\]/).length;
+  if (segments(decodedPath(typed)) !== segments(typed)) return false;
+
+  const stored = canonicalUrl(raw);
+  return !stored.includes("%") && canonicalUrl(stored) === stored;
 }
 
 export const submissionSchema = z
@@ -129,11 +171,17 @@ export const submissionSchema = z
         { message: "That does not look like a link. Paste the whole address." },
       ),
   })
-  .refine((v) => hostMatchesPlatform(v.url, v.platform as CampaignPlatform), {
-    // Named against url, because that is the field they will fix.
-    path: ["url"],
-    message: "That link does not match the platform you picked.",
-  })
+  .refine(
+    (v) =>
+      hostMatchesPlatform(v.url, v.platform as CampaignPlatform) &&
+      // Again on the stored form, because that is the one a reviewer opens.
+      hostMatchesPlatform(canonicalUrl(v.url), v.platform as CampaignPlatform),
+    {
+      // Named against url, because that is the field they will fix.
+      path: ["url"],
+      message: "That link does not match the platform you picked.",
+    },
+  )
   /*
    * X and TikTok links must arrive in their authored form.
    *
@@ -155,26 +203,44 @@ export const submissionSchema = z
       message:
         "Paste the full link from your post, the one with your username in it. Short links and x.com/i/ links hide who posted it.",
     },
-  );
+  )
+  /*
+   * Last, so a link that is wrong in a more ordinary way is told that first.
+   * A real share link never fails this; one that does is either mangled by
+   * whatever it was pasted through or built to open a different post from
+   * the one it would be counted as, and the fix is the same either way.
+   */
+  .refine((v) => canonicalIsSettled(v.url), {
+    path: ["url"],
+    message:
+      "That link has encoded characters a post link never has, so we cannot tell which post it opens. Copy the link again from your post and paste it as it is.",
+  });
 
 export type SubmissionInput = z.infer<typeof submissionSchema>;
 
 /**
- * The account a post was published from, read out of its own URL.
+ * The account a link names, read out of its path. Not, on its own, the
+ * account that published the post.
  *
- * X and TikTok both carry the author in the path, so a link can be compared
+ * X and TikTok links carry a handle in the path, so a link can be compared
  * against the handle the creator registered. Instagram does not: a post is
  * /p/<shortcode>/ and a reel is /reel/<shortcode>/, with the author nowhere in
  * the address, so there is nothing to compare and this returns null rather than
  * guessing.
  *
- * This is a comparison, not verification. Nothing in the system has ever proved
- * that a registered handle belongs to the person who registered it: 0002 says
- * an unverified handle must not be used to attribute an entry, and verified_at
- * is still never set. So this stops somebody submitting a rival's post under
- * their own unrelated handle, which is the easy attack. It does not stop
- * somebody who registers the rival's handle in the first place. That needs
- * handle verification, which is a separate piece of work.
+ * This is a comparison, not verification, and it is weaker than it looks. The
+ * handle is whatever the submitter typed, and nothing ties it to the post:
+ * post_identity_of keys the post on the status or video number alone, so
+ * x.com/<own handle>/status/<a rival's number> names the submitter and files
+ * the rival's post. What the comparison catches is a rival's link pasted as it
+ * is, and the honest mistake of pasting a post from the wrong account. Who
+ * published a post is settled by a reviewer looking at the author the platform
+ * shows, which is why the review queue does not treat a match here as a check.
+ *
+ * Nor has anything proved that a registered handle belongs to the person who
+ * registered it: 0002 says an unverified handle must not be used to attribute
+ * an entry, and verified_at is still never set. That needs handle
+ * verification, which is a separate piece of work.
  */
 export function authorFromUrl(
   url: string,

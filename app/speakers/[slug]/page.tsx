@@ -13,21 +13,23 @@ import {
   Users,
 } from "lucide-react";
 import { FaXTwitter, FaLinkedin, FaYoutube } from "react-icons/fa6";
-import { SpeakersList, type Speaker } from "@/lib/speakers";
+import {
+  speakerBySlug,
+  speakerProfiles,
+  speakerShortName,
+  speakerSlug,
+  type Speaker,
+} from "@/lib/speakers";
 import { Button } from "@/components/ui/button";
 import { gotham } from "@/lib/fonts";
 import { generateSEO } from "@/lib/seo";
 import { SpeakerSchema } from "@/components/seo/speakers-schema";
 import { BreadcrumbSchema } from "@/components/seo/schema-markup";
 
-// Generate static params for all speakers
+// One page per person. A returning speaker has an entry in each edition,
+// sharing a slug, and still gets exactly one page.
 export async function generateStaticParams() {
-  return SpeakersList.map((speaker) => ({
-    slug: speaker.name
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, ""),
-  }));
+  return speakerProfiles().map((speaker) => ({ slug: speakerSlug(speaker.name) }));
 }
 
 // Generate metadata for each speaker
@@ -81,13 +83,7 @@ export async function generateMetadata({
 }
 
 function findSpeakerBySlug(slug: string): Speaker | undefined {
-  return SpeakersList.find(
-    (speaker) =>
-      speaker.name
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "") === slug
-  );
+  return speakerBySlug(slug);
 }
 
 function formatBio(bio: string) {
@@ -265,7 +261,7 @@ export default async function SpeakerPage({
                   <h2
                     className={`${gotham.className} text-display-sm font-bold text-gray-900`}
                   >
-                    About {speaker.name.split(" ")[0]}
+                    About {speakerShortName(speaker.name)}
                   </h2>
                 </div>
 
@@ -287,7 +283,7 @@ export default async function SpeakerPage({
                 </h2>
                 <p className="mt-3 text-base leading-relaxed text-gray-600">
                   We&apos;re currently crafting a comprehensive biography for{" "}
-                  {speaker.name.split(" ")[0]}. Check back soon for their
+                  {speakerShortName(speaker.name)}. Check back soon for their
                   inspiring story and professional journey.
                 </p>
               </div>
@@ -305,7 +301,7 @@ export default async function SpeakerPage({
                 Don&apos;t Miss Out
               </h2>
               <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
-                Join {speaker.name.split(" ")[0]} and other industry leaders in Lagos,
+                Join {speakerShortName(speaker.name)} and other industry leaders in Lagos,
                 October 22&ndash;24, 2026.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">

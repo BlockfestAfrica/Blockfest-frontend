@@ -9,6 +9,7 @@ import { TicketTiers } from "@/components/tickets/ticket-tiers";
 import { IdealAudience } from "@/components/tickets/ideal-audience";
 import { TicketPolicy } from "@/components/tickets/ticket-policy";
 import { EVENT_ID, SITE_URL, CURRENT_EDITION } from "@/lib/seo-event";
+import { jsonLd } from "@/lib/json-ld";
 import {
   formatNaira,
   lowestTicketPrice,
@@ -89,7 +90,7 @@ function TicketOffersSchema() {
     <script
       type="application/ld+json"
       // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD requires raw script injection
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }

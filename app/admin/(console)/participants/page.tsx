@@ -17,6 +17,7 @@ import {
   Stat,
 } from "@/components/shared/panel";
 import { campaigns as allCampaigns, MONICA_SLUG } from "@/lib/campaigns";
+import { dateTime } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Participants",
@@ -236,6 +237,15 @@ export default async function AdminParticipantsPage({
                 joinedAt: row.joinedAt.toISOString(),
                 handles: row.handles,
                 entries: row.entries,
+                awards: row.awards.map((a) => ({
+                  source: a.source,
+                  points: a.points,
+                  note: a.note,
+                  atLabel: dateTime(a.at),
+                  by: a.by,
+                  entryId: a.entryId,
+                  weekNo: a.weekNo,
+                })),
                 submitted: row.submitted,
                 approved: row.approved,
                 points: row.points,

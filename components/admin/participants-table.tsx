@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Coins } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -9,9 +9,9 @@ import {
   control,
   Pill,
   selectControl,
-  SectionHeading,
   Segmented,
 } from "@/components/shared/panel";
+import { ActionDialog } from "@/components/shared/action-dialog";
 
 /** The sources a person may write. The engine owns challenge_entry and referral. */
 const AWARD_SOURCES = [
@@ -24,8 +24,32 @@ const AWARD_SOURCES = [
   { key: "manual_adjustment", label: "Correction" },
 ] as const;
 
+/** The label a person reads, for a source key the database stores. */
+function sourceLabel(key: string): string {
+  return AWARD_SOURCES.find((s) => s.key === key)?.label ?? key;
+}
+
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
+
+/** One manual ledger row: a bonus given, or one taken back. */
+export interface AwardRecord {
+  source: string;
+  points: number;
+  note: string | null;
+  /** Pre-formatted Lagos time, so this component never touches timezones. */
+  atLabel: string;
+  /** Who gave it. Null if that admin row has since gone. */
+  by: string | null;
+  /** Set for engagement bonuses, which attach to one entry. */
+  entryId: string | null;
+  weekNo: number | null;
+}
+
+/** Net extra points: bonuses given minus bonuses taken back. */
+function extraPoints(awards: AwardRecord[]): number {
+  return awards.reduce((total, a) => total + a.points, 0);
+}
 
 export interface ParticipantRow {
   enrolmentId: string;
@@ -35,6 +59,8 @@ export interface ParticipantRow {
   handles: string[];
   /** Approved entries, for the engagement bonus picker. */
   entries: { id: string; weekNo: number }[];
+  /** Every manual award and take-back, newest first. */
+  awards: AwardRecord[];
   submitted: number;
   approved: number;
   points: number;
@@ -42,7 +68,7 @@ export interface ParticipantRow {
 }
 
 type SortKey = "name" | "joinedAt" | "submitted" | "approved" | "points";
-type Filter = "all" | "submitted" | "silent" | "approved";
+type Filter = "all" | "submitted" | "silent" | "approved" | "extra";
 
 /**
  * Everyone who joined, whether or not they have submitted anything.
@@ -71,9 +97,12 @@ export function ParticipantsTable({
   const [voidReason, setVoidReason] = useState("");
   const [fixing, setFixing] = useState<{
     enrolmentId: string;
+    name: string;
     platform: string;
     current: string;
   } | null>(null);
+  /** The handle correction's request, so its dialog cannot close mid-save. */
+  const [fixBusy, setFixBusy] = useState(false);
   /** Which row has the award panel open. One at a time, on purpose. */
   const [awarding, setAwarding] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -94,6 +123,7 @@ export function ParticipantsTable({
       if (filter === "submitted" && row.submitted === 0) return false;
       if (filter === "silent" && row.submitted > 0) return false;
       if (filter === "approved" && row.approved === 0) return false;
+      if (filter === "extra" && row.awards.length === 0) return false;
       return true;
     });
 
@@ -219,29 +249,26 @@ export function ParticipantsTable({
    * worst possible state for the one control that moves points.
    */
   const selected = shown.find((r) => r.enrolmentId === awarding) ?? null;
-  const awardRef = useRef<HTMLDivElement>(null);
-
+  /* The same lookup for the void panel, which now renders once after the
+     list rather than inside each md:hidden card. */
+  const voidingRow = shown.find((r) => r.enrolmentId === voiding) ?? null;
   /*
-   * Bring the panel to the person who opened it.
+   * Each of these opens a dialog rather than a panel after the list.
    *
-   * It renders after the entire list, so tapping Points on the fortieth row of
-   * five hundred opened a form several thousand pixels below the fold with no
-   * scroll, no focus move and no visible acknowledgement. On a phone the button
-   * appeared to do nothing at all.
+   * They used to render once, below everything, for whichever row was chosen.
+   * On a long list that put the form thousands of pixels below the button with
+   * nothing to say it had appeared: pressing Disqualify or fix looked like it
+   * did nothing, and the reason field the action was waiting for was somewhere
+   * nobody would look. Points had grown a scroll-into-view to cope; the other
+   * two never had. A dialog opens in front of the person on every screen size.
    */
-  useEffect(() => {
-    if (!selected) return;
-    awardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    awardRef.current
-      ?.querySelector<HTMLElement>("select, input, button")
-      ?.focus();
-  }, [selected]);
 
   const counts = {
     all: rows.length,
     submitted: rows.filter((r) => r.submitted > 0).length,
     silent: rows.filter((r) => r.submitted === 0).length,
     approved: rows.filter((r) => r.approved > 0).length,
+    extra: rows.filter((r) => r.awards.length > 0).length,
   };
 
   return (
@@ -260,6 +287,7 @@ export function ParticipantsTable({
           { value: "submitted", label: `Submitted (${counts.submitted})` },
           { value: "silent", label: `Never submitted (${counts.silent})` },
           { value: "approved", label: `Has an approval (${counts.approved})` },
+          { value: "extra", label: `Given extra points (${counts.extra})` },
         ]}
       />
 
@@ -315,21 +343,14 @@ export function ParticipantsTable({
                             <button
                               type="button"
                               onClick={() =>
-                                setFixing(
-                                  fixing?.enrolmentId === row.enrolmentId &&
-                                    fixing.platform === platform
-                                    ? null
-                                    : {
-                                        enrolmentId: row.enrolmentId,
-                                        platform,
-                                        current: handle,
-                                      },
-                                )
+                                setFixing({
+                                  enrolmentId: row.enrolmentId,
+                                  name: row.name,
+                                  platform,
+                                  current: handle,
+                                })
                               }
-                              aria-expanded={
-                                fixing?.enrolmentId === row.enrolmentId &&
-                                fixing.platform === platform
-                              }
+                              aria-haspopup="dialog"
                               className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-2 text-xs font-semibold text-ink-4 transition-colors hover:text-white"
                             >
                               fix
@@ -341,60 +362,11 @@ export function ParticipantsTable({
                   </ul>
                 )}
 
-                {voiding === row.enrolmentId && (
-                  <div className="mt-3 rounded-lg border border-red-400/40 bg-red-400/5 p-4">
-                    <p className="max-w-prose text-sm leading-relaxed text-ink-2">
-                      Their entries stop being accepted, the points those
-                      entries earned are reversed, and referral payouts they
-                      triggered are clawed back. This is recorded against your
-                      name.
-                    </p>
-                    <label
-                      htmlFor={`void-why-${row.enrolmentId}`}
-                      className="mt-3 block text-sm font-semibold text-white"
-                    >
-                      Why
-                    </label>
-                    <input
-                      id={`void-why-${row.enrolmentId}`}
-                      value={voidReason}
-                      onChange={(event) => setVoidReason(event.target.value)}
-                      maxLength={300}
-                      placeholder="Bought engagement on two entries, evidence in the thread"
-                      className={`${control} mt-1`}
-                    />
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => voidEnrolment(row.enrolmentId, row.name)}
-                        className={buttonClass("dangerFill")}
-                      >
-                        {busy ? "Working…" : `Disqualify ${row.name}`}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVoiding(null);
-                          setVoidReason("");
-                        }}
-                        className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink-3 hover:text-white"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
 
-                {fixing?.enrolmentId === row.enrolmentId && (
-                  <CorrectHandle
-                    key={`${fixing.enrolmentId}-${fixing.platform}`}
-                    enrolmentId={fixing.enrolmentId}
-                    platform={fixing.platform}
-                    current={fixing.current}
-                    onDone={() => setFixing(null)}
-                  />
-                )}
+
+                {/* Its own line on a phone. Beside the total it widened a
+                    column that does not shrink, and squeezed the name. */}
+                <ExtraNote awards={row.awards} />
 
                 <p className="mt-2 text-sm text-ink-3">
                   {row.submitted} sent · {row.approved} approved · joined{" "}
@@ -408,17 +380,12 @@ export function ParticipantsTable({
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
-                    onClick={() =>
-                      setAwarding(
-                        awarding === row.enrolmentId ? null : row.enrolmentId,
-                      )
-                    }
-                    aria-expanded={awarding === row.enrolmentId}
-                    aria-controls="award-panel"
+                    onClick={() => setAwarding(row.enrolmentId)}
+                    aria-haspopup="dialog"
                     className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-2"
                   >
                     <Coins className="h-4 w-4" aria-hidden="true" />
-                    {awarding === row.enrolmentId ? "Close" : "Points"}
+                    Points
                   </button>
                   {/* Disqualification, which void_enrolment has enforced
                       since 0027 while being reachable by nobody: no route,
@@ -428,12 +395,11 @@ export function ParticipantsTable({
                   {canCorrectHandles && (
                     <button
                       type="button"
-                      onClick={() =>
-                        setVoiding(
-                          voiding === row.enrolmentId ? null : row.enrolmentId,
-                        )
-                      }
-                      aria-expanded={voiding === row.enrolmentId}
+                      onClick={() => {
+                        setVoidReason("");
+                        setVoiding(row.enrolmentId);
+                      }}
+                      aria-haspopup="dialog"
                       className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-line-2 px-4 text-sm font-semibold text-ink-3 transition-colors hover:border-red-400/50 hover:text-red-200"
                     >
                       Disqualify
@@ -528,6 +494,27 @@ export function ParticipantsTable({
                             <span key={h} className="block font-mono text-xs">
                               <span className="text-ink-3">{platform}</span>{" "}
                               @{handle}
+                              {/* The same control the card list has had all
+                                  along. Correcting a handle existed only
+                                  below 768px, so on a laptop the capability
+                                  did not exist and nothing said so. */}
+                              {canCorrectHandles && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setFixing({
+                                      enrolmentId: row.enrolmentId,
+                                      name: row.name,
+                                      platform,
+                                      current: handle,
+                                    })
+                                  }
+                                  aria-haspopup="dialog"
+                                  className="ml-1 inline-flex min-h-11 cursor-pointer items-center rounded-full px-2 font-sans text-xs font-semibold text-ink-4 transition-colors hover:text-white"
+                                >
+                                  fix
+                                </button>
+                              )}
                             </span>
                           );
                         })
@@ -548,24 +535,37 @@ export function ParticipantsTable({
                     </td>
                     <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-white">
                       {row.points}
+                      <ExtraNote awards={row.awards} />
                     </td>
                     <td className="px-4 py-3 text-right align-top">
                       <button
                         type="button"
-                        onClick={() =>
-                          setAwarding(
-                            awarding === row.enrolmentId
-                              ? null
-                              : row.enrolmentId,
-                          )
-                        }
-                        aria-expanded={awarding === row.enrolmentId}
-                        aria-controls="award-panel"
+                        onClick={() => setAwarding(row.enrolmentId)}
+                        aria-haspopup="dialog"
                         className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-2"
                       >
                         <Coins className="h-4 w-4" aria-hidden="true" />
-                        {awarding === row.enrolmentId ? "Close" : "Points"}
+                        Points
                       </button>
+                      {/* Disqualifying was reachable only in the card list,
+                          so above 768px /api/admin/void had no caller at
+                          all: an owner on a laptop would have had to narrow
+                          the window to find it, which nobody would guess.
+                          Quiet, and far from Points, because it is the
+                          destructive one. */}
+                      {canCorrectHandles && row.active && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVoidReason("");
+                            setVoiding(row.enrolmentId);
+                          }}
+                          aria-haspopup="dialog"
+                          className="ml-2 inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-red-300/80 transition-colors hover:text-red-300"
+                        >
+                          Disqualify
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -590,37 +590,146 @@ export function ParticipantsTable({
       )}
 
       {/*
-       * The award form, out of the table entirely.
+       * Rendered once, outside the responsive split, and as dialogs.
        *
-       * It lived in a colSpan cell inside the horizontal scroll container, so
-       * the form was at least 736px wide and its Apply button was off screen to
-       * the right on every phone: the one control that moves points could not
-       * be reached on the device an admin is most likely holding. One instance,
-       * below the list, for whichever creator is selected.
+       * These lived in the per-row card markup, which is md:hidden, so the
+       * controls existed only below 768px; then once after the whole list, so
+       * they existed everywhere but appeared thousands of pixels from the
+       * button. A dialog is both: one instance serves the cards and the table,
+       * and it opens in front of whoever pressed the button.
        */}
-      <div ref={awardRef} id="award-panel">
-        {selected && (
-          <div className="mt-8 border-t border-line-2 pt-6">
-            <SectionHeading label="Points" title={selected.name} />
-            <AwardRow
-              /*
-               * Keyed on the creator, so the points and the note do not carry
-               * over when the panel is reopened for somebody else. Without it a
-               * reviewer who closes one and opens another is looking at the
-               * previous person's figures in a form that will award them.
-               */
-              key={selected.enrolmentId}
-              name={selected.name}
-              entries={selected.entries}
-              busy={busy}
-              onSubmit={(source, points, note, entryId) =>
-                submitAward(selected.enrolmentId, source, points, note, entryId)
-              }
+      <ActionDialog
+        open={voidingRow !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setVoiding(null);
+            setVoidReason("");
+          }
+        }}
+        title={voidingRow ? `Disqualify ${voidingRow.name}` : "Disqualify"}
+        tone="danger"
+        busy={busy}
+      >
+        {voidingRow && (
+          <>
+            <p className="max-w-prose text-sm leading-relaxed text-ink-2">
+              Their entries stop being accepted, the points those entries earned
+              are reversed, and referral payouts they triggered are clawed back.
+              This is recorded against your name.
+            </p>
+            <label
+              htmlFor={`void-why-${voidingRow.enrolmentId}`}
+              className="mt-4 block text-sm font-semibold text-white"
+            >
+              Why
+            </label>
+            <input
+              id={`void-why-${voidingRow.enrolmentId}`}
+              data-autofocus
+              value={voidReason}
+              onChange={(event) => setVoidReason(event.target.value)}
+              maxLength={300}
+              placeholder="Bought engagement on two entries, evidence in the thread"
+              className={`${control} mt-1`}
             />
-          </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={busy || !voidReason.trim()}
+                onClick={() =>
+                  voidEnrolment(voidingRow.enrolmentId, voidingRow.name)
+                }
+                className={buttonClass("dangerFill")}
+              >
+                {busy ? "Working…" : `Disqualify ${voidingRow.name}`}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setVoiding(null);
+                  setVoidReason("");
+                }}
+                className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink-3 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </>
         )}
-      </div>
+      </ActionDialog>
+
+      <ActionDialog
+        open={fixing !== null}
+        onOpenChange={(open) => {
+          if (!open) setFixing(null);
+        }}
+        title={
+          fixing
+            ? `Correct ${fixing.name}'s ${fixing.platform} handle`
+            : "Correct a handle"
+        }
+        busy={fixBusy}
+      >
+        {fixing && (
+          <CorrectHandle
+            key={`${fixing.enrolmentId}-${fixing.platform}`}
+            enrolmentId={fixing.enrolmentId}
+            platform={fixing.platform}
+            current={fixing.current}
+            onBusyChange={setFixBusy}
+            onDone={() => setFixing(null)}
+          />
+        )}
+      </ActionDialog>
+
+      <ActionDialog
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open) setAwarding(null);
+        }}
+        title={selected ? `Points for ${selected.name}` : "Points"}
+        busy={busy}
+      >
+        {selected && (
+          <AwardRow
+            /*
+             * Keyed on the creator, so the points and the note do not carry
+             * over when the dialog is reopened for somebody else. Without it a
+             * reviewer who closes one and opens another is looking at the
+             * previous person's figures in a form that will award them.
+             */
+            key={selected.enrolmentId}
+            name={selected.name}
+            entries={selected.entries}
+            awards={selected.awards}
+            busy={busy}
+            onSubmit={(source, points, note, entryId) =>
+              submitAward(selected.enrolmentId, source, points, note, entryId)
+            }
+          />
+        )}
+      </ActionDialog>
     </div>
+  );
+}
+
+/**
+ * How much of a total is extra points, under the total itself.
+ *
+ * The total moved when a bonus was given, but it never said what it was made
+ * of, so "have I already given them something" had no answer on the screen.
+ * Net of take-backs, because that is what the total actually contains.
+ */
+function ExtraNote({ awards }: { awards: AwardRecord[] }) {
+  if (awards.length === 0) return null;
+  const net = extraPoints(awards);
+  return (
+    <span className="block text-xs font-normal text-brand-gold">
+      {net === 0
+        ? "extra given and taken back"
+        : `incl. ${net > 0 ? "+" : "−"}${Math.abs(net)} extra`}
+    </span>
   );
 }
 
@@ -679,11 +788,13 @@ function Th({
 function AwardRow({
   name,
   entries,
+  awards,
   busy,
   onSubmit,
 }: {
   name: string;
   entries: { id: string; weekNo: number }[];
+  awards: AwardRecord[];
   busy: boolean;
   onSubmit: (
     source: string,
@@ -699,6 +810,54 @@ function AwardRow({
 
   const value = Number.parseInt(points, 10);
 
+  /*
+   * What this creator already has from the kind of award being chosen.
+   *
+   * Engagement is counted per entry, because that is the rule: one bonus per
+   * entry, and a second entry earning its own is not a repeat. Everything else
+   * is counted per kind. Net of take-backs, so a bonus given and then taken
+   * back does not read as one still standing.
+   */
+  const sameKind = awards.filter(
+    (a) =>
+      a.source === source &&
+      (source !== "engagement_milestone" || a.entryId === entryId),
+  );
+  const standing = extraPoints(sameKind);
+  const entryNet = (id: string) =>
+    extraPoints(
+      awards.filter(
+        (a) => a.source === "engagement_milestone" && a.entryId === id,
+      ),
+    );
+  /*
+   * Whether an entry's one engagement bonus has been used, which is not the
+   * same as whether points are standing on it.
+   *
+   * The database allows one positive engagement row per entry, ever: the
+   * index in 0051 counts positive rows, and a take-back is a new negative row
+   * that leaves the original in place. So an entry given +40 and then -40 nets
+   * to nothing and still cannot take +60. Judging "used" by the net made
+   * exactly that entry look free, and the advice that followed, take it back
+   * first, cost the creator their points and then failed.
+   */
+  const engagementUsed = (id: string) =>
+    awards.some(
+      (a) =>
+        a.source === "engagement_milestone" && a.entryId === id && a.points > 0,
+    );
+  /*
+   * A take-back is not a repeat. Typing a negative number is the correction
+   * this warning would otherwise send somebody to, so it says nothing then.
+   * NaN (an empty field, or a lone minus) is not below zero, so the warning
+   * still shows as soon as a kind is picked, before any number is typed.
+   */
+  const takingBack = value < 0;
+  const warnEngagement =
+    source === "engagement_milestone" && !!entryId && engagementUsed(entryId);
+  const warnOther =
+    source !== "engagement_milestone" && sameKind.length > 0 && standing > 0;
+
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-ink-3">
@@ -707,15 +866,74 @@ function AwardRow({
         ledger.
       </p>
 
-      <div className="flex flex-col gap-3 lg:flex-row">
+      {/* Everything already given, before the form rather than after it, so
+          it is read before a number is typed. The question this answers is
+          "have I already given them this", which used to have no answer on
+          the screen at all. */}
+      {awards.length === 0 ? (
+        <p className="text-sm text-ink-4">No extra points given yet.</p>
+      ) : (
+        <div>
+          <p className="text-sm font-semibold text-white">
+            Already given ({extraPoints(awards) >= 0 ? "+" : "−"}
+            {Math.abs(extraPoints(awards))} net)
+          </p>
+          <ul className="mt-2 divide-y divide-line rounded-lg border border-line">
+            {awards.map((a, i) => (
+              <li key={`${a.atLabel}-${i}`} className="px-3 py-2 text-sm">
+                <span
+                  className={`font-semibold tabular-nums ${
+                    a.points > 0 ? "text-green-300" : "text-red-300"
+                  }`}
+                >
+                  {a.points > 0 ? "+" : "−"}
+                  {Math.abs(a.points)}
+                </span>{" "}
+                <span className="text-white">{sourceLabel(a.source)}</span>
+                {a.weekNo !== null && (
+                  <span className="text-ink-3"> · week {a.weekNo} entry</span>
+                )}
+                <span className="block text-ink-3">
+                  {a.atLabel} · {a.by ?? "admin no longer listed"}
+                </span>
+                {a.note && (
+                  <span className="block break-words text-ink-2">{a.note}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Said before Apply, not after. A second quality bonus for the same
+          post looks exactly like a quality bonus for a new one once it is in
+          the total, so this is the last point it can be caught. It warns
+          rather than blocks: two bonuses of one kind for two pieces of work
+          are legitimate, and only the person awarding knows which this is. */}
+      {!takingBack && (warnEngagement || warnOther) && (
+        <p
+          role="status"
+          className="rounded-lg border border-brand-gold/40 bg-brand-gold/5 p-3 text-sm leading-relaxed text-ink-2"
+        >
+          {source === "engagement_milestone"
+            ? `This entry has already had its one engagement bonus${standing > 0 ? ` (+${standing} standing)` : ", since taken back"}. A take-back does not free it for another. For a higher tier, give the difference as a Correction.`
+            : `${name} already has +${standing} from ${sourceLabel(source)}. Check this is for different work before giving it again.`}
+        </p>
+      )}
+
+      {/* Stacked, not a row: the form lives in a dialog now, which is narrower
+          than the page it used to span, and four controls side by side left
+          the note field too short to read what was being typed. */}
+      <div className="flex flex-col gap-3">
         <label htmlFor="award-source" className="sr-only">
           What kind of award
         </label>
         <select
           id="award-source"
+          data-autofocus
           value={source}
           onChange={(e) => setSource(e.target.value)}
-          className={`${selectControl} lg:max-w-56`}
+          className={selectControl}
         >
           {AWARD_SOURCES.map((s) => (
             <option key={s.key} value={s.key}>
@@ -723,6 +941,46 @@ function AwardRow({
             </option>
           ))}
         </select>
+
+        {/* The published ladder, where the person choosing the number needs
+            it. Awards outside these figures are refused by the rule bounds
+            anyway; showing the ladder saves the round trip. */}
+        {source === "engagement_milestone" && (
+          <>
+            <label htmlFor="award-entry" className="sr-only">
+              Which entry reached the milestone
+            </label>
+            {/* The bonus attaches to the entry that earned the views; the
+                database refuses one without it, and one per entry. */}
+            <select
+              id="award-entry"
+              value={entryId}
+              onChange={(e) => setEntryId(e.target.value)}
+              className={selectControl}
+            >
+              <option value="">Which entry reached it...</option>
+              {entries.map((entry) => {
+                const has = entryNet(entry.id);
+                const used = engagementUsed(entry.id);
+                return (
+                  <option key={entry.id} value={entry.id}>
+                    Week {entry.weekNo} entry
+                    {used
+                      ? has > 0
+                        ? ` (bonus used, +${has})`
+                        : " (bonus used, taken back)"
+                      : ""}
+                  </option>
+                );
+              })}
+            </select>
+            <p className="text-sm leading-relaxed text-ink-3">
+              The published ladder: 5K views 20 · 10K 40 · 20K 60 · 30K 80 ·
+              50K 100 · 75K 150 · 100K 200. One bonus per entry, highest tier
+              verifiably reached.
+            </p>
+          </>
+        )}
 
         <label htmlFor="award-points" className="sr-only">
           How many points
@@ -733,7 +991,7 @@ function AwardRow({
           onChange={(e) => setPoints(e.target.value.replace(/[^0-9-]/g, ""))}
           inputMode="numeric"
           placeholder="Points, or -points"
-          className="min-h-12 rounded-lg border border-line bg-control px-4 text-base text-white placeholder:text-ink-3 lg:w-44"
+          className="min-h-12 rounded-lg border border-line bg-control px-4 text-base text-white placeholder:text-ink-3"
         />
 
         <label htmlFor="award-note" className="sr-only">
@@ -763,36 +1021,6 @@ function AwardRow({
           {busy ? "Working..." : "Apply"}
         </button>
       </div>
-      {/* The published ladder, where the person choosing the number needs
-          it. Awards outside these figures are refused by the rule bounds
-          anyway; showing the ladder saves the round trip. */}
-      {source === "engagement_milestone" && (
-        <>
-          <label htmlFor="award-entry" className="sr-only">
-            Which entry reached the milestone
-          </label>
-          {/* The bonus attaches to the entry that earned the views; the
-              database refuses one without it, and one per entry. */}
-          <select
-            id="award-entry"
-            value={entryId}
-            onChange={(e) => setEntryId(e.target.value)}
-            className={`${selectControl} mt-2 lg:max-w-56`}
-          >
-            <option value="">Which entry reached it...</option>
-            {entries.map((entry) => (
-              <option key={entry.id} value={entry.id}>
-                Week {entry.weekNo} entry
-              </option>
-            ))}
-          </select>
-          <p className="mt-2 text-sm leading-relaxed text-ink-3">
-            The published ladder: 5K views 20 · 10K 40 · 20K 60 · 30K 80 ·
-            50K 100 · 75K 150 · 100K 200. One bonus per entry, highest tier
-            verifiably reached.
-          </p>
-        </>
-      )}
     </div>
   );
 }
@@ -813,17 +1041,24 @@ function CorrectHandle({
   enrolmentId,
   platform,
   current,
+  onBusyChange,
   onDone,
 }: {
   enrolmentId: string;
   platform: string;
   current: string;
+  /** Lets the dialog refuse to close while the save is in flight. */
+  onBusyChange?: (busy: boolean) => void;
   onDone: () => void;
 }) {
   const router = useRouter();
   const [handle, setHandle] = useState(current);
   const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusyState] = useState(false);
+  const setBusy = (next: boolean) => {
+    setBusyState(next);
+    onBusyChange?.(next);
+  };
 
   async function save() {
     if (!handle.trim() || handle.trim().replace(/^@+/, "") === current) {
@@ -864,11 +1099,8 @@ function CorrectHandle({
   }
 
   return (
-    <div className="mt-3 rounded-lg border border-line-2 bg-card p-4">
-      <p className="text-sm font-semibold text-white">
-        Correct the {platform} handle
-      </p>
-      <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-2">
+    <div>
+      <p className="max-w-prose text-sm leading-relaxed text-ink-2">
         Currently @{current}. Their next submission is checked against whatever
         you save here, so make sure it is the account they actually publish
         from.
@@ -879,6 +1111,7 @@ function CorrectHandle({
         </label>
         <input
           id={`fix-${enrolmentId}-${platform}`}
+          data-autofocus
           value={handle}
           onChange={(event) => setHandle(event.target.value)}
           autoComplete="off"
@@ -909,8 +1142,9 @@ function CorrectHandle({
           </button>
           <button
             type="button"
+            disabled={busy}
             onClick={onDone}
-            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-semibold text-ink-2 transition-colors hover:text-white"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-semibold text-ink-2 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
           </button>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { JobCard, Pill } from "@/components/shared/panel";
+import { ConfirmPanel } from "@/components/shared/confirm";
 
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
@@ -34,6 +35,12 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
+  /*
+   * Approve asks, Reject already does by opening its note. They sit side by
+   * side at the same size, and Approve alone acted on the first press: it
+   * moves the creator's attribution and mails them.
+   */
+  const [approving, setApproving] = useState<string | null>(null);
   const [note, setNote] = useState("");
   /*
    * Ten at a time. Each request carries a quoted reason and two buttons, so
@@ -172,9 +179,10 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
             ) : (
               <div className="mt-3 flex flex-wrap gap-2">
                 <button
+                  id={`approve-handle-${request.id}`}
                   type="button"
                   disabled={busy === request.id}
-                  onClick={() => decide(request.id, true, "", request.requestedHandle)}
+                  onClick={() => setApproving(request.id)}
                   className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-[background-color,transform] duration-150 hover:bg-green-400/25 active:scale-[0.98] disabled:opacity-60"
                 >
                   {busy === request.id ? "Approving…" : "Approve the change"}
@@ -182,11 +190,33 @@ export function HandleRequestQueue({ requests }: { requests: RequestRow[] }) {
                 <button
                   type="button"
                   disabled={busy === request.id}
-                  onClick={() => setRejecting(request.id)}
+                  onClick={() => {
+                    setApproving(null);
+                    setRejecting(request.id);
+                  }}
                   className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3 disabled:opacity-60"
                 >
                   Reject
                 </button>
+                {approving === request.id && (
+                  <ConfirmPanel
+                    className="mt-1"
+                    label="Approve the change"
+                    intent="success"
+                    question={`Change ${request.creatorName}'s ${request.platform} handle from @${request.oldHandle} to @${request.requestedHandle}?`}
+                    consequence={`Their submissions are checked against @${request.requestedHandle} from now on, and they are emailed that it was approved. Changing it back takes a correction with a reason.`}
+                    confirmLabel="Yes, change it"
+                    pending={busy === request.id}
+                    onCancel={() => {
+                      setApproving(null);
+                      document.getElementById(`approve-handle-${request.id}`)?.focus();
+                    }}
+                    onConfirm={() => {
+                      setApproving(null);
+                      decide(request.id, true, "", request.requestedHandle);
+                    }}
+                  />
+                )}
               </div>
             )}
           </li>

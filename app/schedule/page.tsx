@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { BaseSchema } from "@/components/seo/schema-markup";
 import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
 import { EVENT_ID, CURRENT_EDITION } from "@/lib/seo-event";
+import { jsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "Schedule | Blockfest Africa - Event Program & Activities",
@@ -63,7 +64,7 @@ export default function Schedule() {
       <BaseSchema type="WebPage" data={schedulePageData} />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
       />
       <main id="main" className={`${gotham.className} min-h-screen bg-paper`}>
         <ComingSoonNotice

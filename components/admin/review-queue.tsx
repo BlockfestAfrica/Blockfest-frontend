@@ -1,20 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { reveal } from "@/components/shared/reveal";
 import { useRouter } from "next/navigation";
 import {
   Check,
   ChevronDown,
   Copy,
   ShieldAlert,
-  ShieldCheck,
   X,
 } from "lucide-react";
 import { Pill } from "@/components/shared/panel";
+import { ConfirmPanel } from "@/components/shared/confirm";
+import { openableHref } from "@/lib/admin/openable-href";
 import { toast } from "sonner";
 
 /** Rows shown before the reviewer asks for more. */
 const PAGE = 10;
+
+/*
+ * The link opens only where openableHref can prove it points at a platform.
+ * The allowlist and its reasoning live in lib/admin/openable-href.ts, shared
+ * with the Decided page. The trade it buys here: every review previously began
+ * with a copy, a new tab and a paste, on the one screen the team uses most.
+ */
 
 export interface QueueItem {
   id: string;
@@ -28,8 +37,8 @@ export interface QueueItem {
   registeredHandle: string | null;
   /** Another live submission claims this same post. Only one can be paid. */
   contested: boolean;
-  /** True when the server could compare the link's author to that handle. */
-  autoChecked: boolean;
+  /** That other claim is already approved, so approving this one is refused. */
+  creditedElsewhere?: boolean;
   /** Null until an admin has confirmed the account belongs to this creator. */
   /** What the creator must publish from the account, as the proof. */
 }
@@ -39,22 +48,17 @@ export interface QueueItem {
  *
  * Rebuilt around one decision repeated many times. Every row used to be a
  * 300 to 420 pixel block containing a link, a note field and two buttons, all
- * expanded at once, so twenty pending submissions were an unreadable wall and
- * the one signal that changes how long a row takes, whether the link could be
- * checked against the registered handle, was a line of text buried in the
- * middle of it.
+ * expanded at once, so twenty pending submissions were an unreadable wall.
  *
- * Now a row is collapsed to a line, and the attribution state is a coloured
- * left edge that can be scanned straight down the column. Opening a row is what
- * copying the link does, so starting an item is one tap rather than two.
+ * Now a row is collapsed to a line and opens to the decision.
  *
  * Two things here are load-bearing and should not be tidied away.
  *
- * The link is never an anchor. Its destination is chosen entirely by whoever
- * submitted it, registration is open to anybody, and this page is read by the
- * few people who can mint points against a 5,000,000 naira pool. A one-click
- * path from an attacker-controlled string into a reviewer's browser, on the
- * origin holding their session, is the cheapest attack on the whole system.
+ * The link opens, but only after openableHref proves where it goes. See the
+ * note in lib/admin/openable-href.ts: it is the same allowlist submission enforces,
+ * applied a second time at the point of rendering, because a guard that
+ * lives only in a zod schema is a guard somebody can route around. A URL
+ * that cannot be proved to point at a platform still renders as text.
  *
  * And the refresh after a decision is awaited rather than made optimistic.
  * review() has no pending guard, so two reviewers working at once can overwrite
@@ -63,10 +67,32 @@ export interface QueueItem {
  */
 export function ReviewQueue({ items }: { items: QueueItem[] }) {
   const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
+  /*
+   * Which row is deciding, and which way.
+   *
+   * It held only the row id, so both buttons read busy === item.id and only
+   * Approve had a label for it. Adding one to Reject that way would have
+   * made Reject say "Rejecting…" while an APPROVE was in flight, which is
+   * worse than saying nothing. The decision travels with the id.
+   */
+  const [busy, setBusy] = useState<{
+    id: string;
+    decision: "approved" | "rejected";
+  } | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [open, setOpen] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  /*
+   * Approve asks first in two cases only, because it is the busiest press in
+   * the console and a question on every one would train a double tap.
+   *
+   * A typed note: rejecting needs a reason, so text in the box usually means
+   * the reviewer was on the way to Reject. Approve with it pays the creator,
+   * and the rejection wording lands on their page as a note from the reviewer.
+   * A contested post: approving decides which of two creators is paid, and
+   * refuses the other.
+   */
+  const [asking, setAsking] = useState<string | null>(null);
   /*
    * Ten rows at a time, revealed rather than paged. The server loads up to
    * fifty, and fifty coloured edges on a phone are a wall again. Reveal
@@ -84,7 +110,7 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
       return;
     }
 
-    setBusy(id);
+    setBusy({ id, decision });
     try {
       const response = await fetch("/api/admin/review", {
         method: "POST",
@@ -99,6 +125,20 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
 
       if (!response.ok || !result.ok) {
         toast.error(result.message ?? "That did not work.");
+        /*
+         * Refreshed on the way out, not only on success.
+         *
+         * A refused decision is the interesting case: the post was already
+         * credited to somebody else, the creator was disqualified, a newer
+         * submission superseded this one, or they took it back. Every one
+         * of those means the row on screen is describing a state that no
+         * longer exists, and returning here left it sitting there with its
+         * buttons live. The reviewer reads it again, presses again, gets
+         * the same refusal. The server's own 404 copy had to end with
+         * "reload the queue to see what is left", which is an application
+         * asking a person to do its job.
+         */
+        await router.refresh();
         return;
       }
 
@@ -126,12 +166,41 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
     }
   }
 
-  function start(item: QueueItem) {
+  /*
+   * Expanding and copying are now two different actions, because they were
+   * one function wired to two buttons that mean opposite things.
+   *
+   * start() toggled the row AND copied, and the Copy button inside an
+   * expanded row called it: pressing Copy on the row you were reviewing
+   * collapsed it. It also fired a "Link copied" toast every time anybody
+   * merely opened a row to look, which is most of what this screen is for.
+   *
+   * The link is clickable now, so copying is the secondary path rather
+   * than the way in, and it no longer has to be bundled into expanding.
+   */
+  /*
+   * Bring an opened row's decision into view.
+   *
+   * The row expands in place, which is right for a queue worked one after
+   * another; but on a phone the panel is 300 to 400 pixels, and from a row
+   * near the bottom of the screen the reason field and Approve and Reject
+   * landed below the fold. Scrolled only, not focused: the reviewer's place
+   * stays on the row they opened.
+   */
+  useEffect(() => {
+    if (open) reveal(document.getElementById(`review-${open}`));
+  }, [open]);
+
+  function toggle(item: QueueItem) {
+    setAsking(null);
     setOpen((current) => (current === item.id ? null : item.id));
+  }
+
+  function copyLink(item: QueueItem) {
     navigator.clipboard?.writeText(item.url).then(
       () => {
         setCopied(item.id);
-        toast.success("Link copied. Open it in another tab.");
+        toast.success("Link copied.");
       },
       () => toast.error("Could not copy. Select the link and copy it by hand."),
     );
@@ -146,20 +215,23 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
             <li
               key={item.id}
               /*
-               * The attribution state as a left edge.
+               * Amber on every row, because every row is the same job: a
+               * person has to look at who published the post.
                *
-               * Green means the server could match the link's author to the
-               * registered handle. Amber means it could not and a human has to.
-               * As an edge it can be scanned down the column at a glance, which
-               * a sentence in the middle of a row cannot be.
+               * It was green where an X or TikTok link carried the registered
+               * handle. That handle is typed by whoever submits the link and
+               * nothing ties it to the post: post_identity_of keys the post on
+               * the number at the end alone, so a link reading
+               * x.com/<own handle>/status/<somebody else's post> is filed as
+               * that somebody's post, and it arrived green. Nothing the server
+               * holds can say who published a post, so no row can honestly be
+               * painted as checked.
                */
-              className={`border-l-2 ${
-                item.autoChecked ? "border-l-green-400/70" : "border-l-amber-400"
-              }`}
+              className="border-l-2 border-l-amber-400"
             >
               <button
                 type="button"
-                onClick={() => start(item)}
+                onClick={() => toggle(item)}
                 aria-expanded={isOpen}
                 className="flex min-h-16 w-full cursor-pointer items-center gap-3 py-3 pl-4 pr-3 text-left transition-colors hover:bg-card"
               >
@@ -202,35 +274,61 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
               </button>
 
               {isOpen && (
-                <div className="border-t border-line bg-card p-4">
-                  {item.autoChecked ? (
-                    <p className="flex items-center gap-2 text-sm text-green-300">
-                      <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      The link names this account. Still open it and check it
-                      answers the challenge.
-                    </p>
-                  ) : (
-                    <p className="flex items-start gap-2 text-sm text-amber-300">
-                      <ShieldAlert
-                        className="mt-0.5 h-4 w-4 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span>
-                        This link does not name its author. Open it and confirm it
-                        is the account above.
-                      </span>
-                    </p>
-                  )}
+                <div
+                  id={`review-${item.id}`}
+                  className="scroll-mb-6 border-t border-line bg-card p-4"
+                >
+                  {/* One instruction on every platform. X and TikTok rows
+                      used to read "The link names this account", which a
+                      creator could make true of anybody's post by typing
+                      their own name into the link. The comparison that
+                      counts is the registered handle against the author the
+                      platform shows once the post is open. */}
+                  <p className="flex items-start gap-2 text-sm text-amber-300">
+                    <ShieldAlert
+                      className="mt-0.5 h-4 w-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      Open the post. Check the author the platform shows is{" "}
+                      {item.registeredHandle
+                        ? `@${item.registeredHandle}`
+                        : "an account this creator registered"}
+                      , and that the post answers the challenge below. The name
+                      inside an X or TikTok link proves nothing: whoever
+                      submits it types it.
+                    </span>
+                  </p>
 
                   <p className="mt-1 text-sm text-ink-3">{item.challengeTitle}</p>
 
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                    <code className="min-w-0 flex-1 break-all rounded-lg border border-line bg-ground px-4 py-3 text-sm leading-relaxed text-ink-2">
-                      {item.url}
-                    </code>
+                    {/* The link opens. Reviewing an entry means looking at
+                        the post, and this was a block of text with a Copy
+                        button beside it: every review started with a copy,
+                        a new tab and a paste. Copy stays, because a phone
+                        reviewer may want the link elsewhere, but the
+                        default action is now the one the job actually
+                        needs. noreferrer as well as noopener: the console
+                        URL is nobody else's business. */}
+                    {openableHref(item.url) ? (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        className="min-w-0 flex-1 break-all rounded-lg border border-line bg-ground px-4 py-3 font-mono text-sm leading-relaxed text-link underline decoration-line-2 underline-offset-4 transition-colors hover:bg-card-2 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+                      >
+                        {item.url}
+                        <span className="sr-only"> (opens in a new tab)</span>
+                      </a>
+                    ) : (
+                      <code className="min-w-0 flex-1 break-all rounded-lg border border-line bg-ground px-4 py-3 text-sm leading-relaxed text-ink-2">
+                        {item.url}
+                      </code>
+                    )}
                     <button
                       type="button"
-                      onClick={() => start(item)}
+                      onClick={() => copyLink(item)}
                       className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-line-2 px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-card-3"
                     >
                       {copied === item.id ? (
@@ -262,25 +360,90 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                         irreversibly. */}
                     <div className="flex shrink-0 gap-2">
                       <button
+                        id={`approve-${item.id}`}
                         type="button"
-                        disabled={busy === item.id}
-                        onClick={() => decide(item.id, "approved")}
+                        disabled={busy?.id === item.id}
+                        aria-busy={
+                          busy?.id === item.id && busy.decision === "approved"
+                        }
+                        onClick={() => {
+                          if (item.contested || (notes[item.id] ?? "").trim()) {
+                            setAsking(item.id);
+                          } else {
+                            decide(item.id, "approved");
+                          }
+                        }}
                         className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-[background-color,transform] duration-150 hover:bg-green-400/25 active:scale-[0.98] disabled:opacity-60 sm:flex-none"
                       >
                         <Check className="h-4 w-4" aria-hidden="true" />
-                        {busy === item.id ? "Approving…" : "Approve"}
+                        {busy?.id === item.id && busy.decision === "approved"
+                          ? "Approving…"
+                          : "Approve"}
                       </button>
                       <button
                         type="button"
-                        disabled={busy === item.id}
-                        onClick={() => decide(item.id, "rejected")}
+                        disabled={busy?.id === item.id}
+                        aria-busy={
+                          busy?.id === item.id && busy.decision === "rejected"
+                        }
+                        onClick={() => {
+                          setAsking(null);
+                          decide(item.id, "rejected");
+                        }}
                         className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-[background-color,transform] duration-150 hover:bg-red-400/15 active:scale-[0.98] disabled:opacity-60"
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
-                        Reject
+                        {/* The reject POST awaits the decision, the creator's
+                            mail and a refresh, so it is seconds on a phone.
+                            It said only "Reject" throughout, dimmed, which
+                            reads the same as a dead tap. */}
+                        {busy?.id === item.id && busy.decision === "rejected"
+                          ? "Rejecting…"
+                          : "Reject"}
                       </button>
                     </div>
                   </div>
+                  {asking === item.id && (
+                    <ConfirmPanel
+                      className="mt-3"
+                      label="Approve"
+                      intent="success"
+                      question={
+                        item.contested
+                          ? `Approve ${item.creatorName} for this contested post?`
+                          : `Approve ${item.creatorName}'s week ${item.weekNo} ${item.platformLabel} entry with your note?`
+                      }
+                      /* When the other claim is already paid, the server
+                         refuses before it writes anything: no status, no
+                         note, no email. So that case says only that, and
+                         none of what an approval that goes through does. */
+                      consequence={(item.creditedElsewhere
+                        ? [
+                            "Another submission of this post is already approved, and a post is paid once, so this approval will be refused. Nothing is paid, and nothing is saved or sent to the creator.",
+                          ]
+                        : [
+                            item.contested
+                              ? `Another submission of the same post is waiting too, and only one can be paid. Approving credits it to ${item.creatorName} and emails them; the other can then only be rejected.`
+                              : `They get the points and an approval email.`,
+                            (notes[item.id] ?? "").trim()
+                              ? `Your note shows on their page as a note from the reviewer: “${(notes[item.id] ?? "").trim()}”.`
+                              : "",
+                            "An approval cannot be put back to waiting.",
+                          ]
+                      )
+                        .filter(Boolean)
+                        .join(" ")}
+                      confirmLabel="Yes, approve"
+                      onCancel={() => {
+                        setAsking(null);
+                        document.getElementById(`approve-${item.id}`)?.focus();
+                      }}
+                      onConfirm={() => {
+                        setAsking(null);
+                        decide(item.id, "approved");
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </li>

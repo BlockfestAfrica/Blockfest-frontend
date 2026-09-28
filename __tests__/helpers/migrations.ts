@@ -61,3 +61,21 @@ export async function applyMigration(
 ): Promise<void> {
   await db.exec(readFileSync(join(MIGRATIONS_DIR, file), "utf8"));
 }
+
+/**
+ * The last definition of a function across every migration, from its
+ * CREATE to the end of its body. The live one, since the highest-numbered
+ * definition wins; tests that pin how a function is written read this
+ * rather than one file, so a later migration cannot quietly replace it.
+ */
+export function latestDefinition(name: string): string {
+  let latest = "";
+  for (const file of migrationFiles()) {
+    const sql = readFileSync(join(MIGRATIONS_DIR, file), "utf8");
+    for (const match of sql.matchAll(new RegExp(`CREATE OR REPLACE FUNCTION ${name}\\s*\\(`, "g"))) {
+      const from = match.index ?? 0;
+      latest = sql.slice(from, sql.indexOf("END $$;", from));
+    }
+  }
+  return latest;
+}

@@ -7,6 +7,7 @@ import {
   creatorByToken,
   pendingCookieOptions,
   sessionCookieOptions,
+  soleCookie,
 } from "@/lib/creator-session";
 import { monicaRoutes } from "@/lib/campaigns";
 import { allow } from "@/lib/throttle";
@@ -130,8 +131,18 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
-  // Already signed in as this same person. No question worth asking.
-  const existing = request.cookies.get(CREATOR_SESSION_COOKIE)?.value?.trim();
+  /*
+   * Already signed in as this same person. No question worth asking.
+   *
+   * The __Host- cookie only, from the raw header. The pre-prefix name is the
+   * one a sibling host can plant, and a planted token that matched the link
+   * it was sent out with would walk its holder straight past the page below.
+   * A creator still on the old cookie is asked once instead, like any link.
+   */
+  const existing = soleCookie(
+    request.headers.get("cookie"),
+    CREATOR_SESSION_COOKIE,
+  );
   if (existing && existing === token) {
     /* An explicit query, because Netlify re-appends the ORIGINAL query to a
        query-less redirect Location: without this, the two success branches

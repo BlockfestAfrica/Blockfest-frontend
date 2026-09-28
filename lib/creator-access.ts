@@ -18,7 +18,36 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 /** 32 bytes. Enough that guessing is not a threat model, only theft is. */
 const TOKEN_BYTES = 32;
 
-export const CREATOR_SESSION_COOKIE = "monica_creator";
+/**
+ * The session cookie. The __Host- prefix is the control, not decoration.
+ *
+ * A browser stores a __Host- cookie only when it is Secure, Path=/ and has no
+ * Domain, so the one thing able to set it is this exact host over HTTPS. The
+ * plain name it replaces could be set by any host under the registrable domain
+ * with a Domain attribute, and by anybody on the network over plain HTTP on a
+ * first visit, and nothing on the server can tell those from the cookie this
+ * site set: a Cookie header carries names and values and nothing else. A
+ * planted value that was an attacker's own token signed the victim into the
+ * attacker's enrolment without ever reaching the confirm page, and the
+ * victim's Instagram entry was filed as the attacker's work. The admin cookie
+ * carries the same prefix for the same reason (#138).
+ */
+export const CREATOR_SESSION_COOKIE = "__Host-monica_creator";
+
+/**
+ * The name every creator was signed in under before the prefix. Still read,
+ * never as a session.
+ *
+ * It is exactly the cookie a sibling host can plant. Honouring it alone would
+ * keep the hole open for as long as it was honoured, and quietly re-issuing it
+ * under the __Host- name would be worse: a planted value would be handed the
+ * very protection the prefix exists to give. It is read as a claim instead,
+ * the same as a token parked by an entry link. The confirm page names the
+ * account and its handles, and only the POST from that page turns it into a
+ * __Host- session and clears it. Nobody is signed out in the middle of the
+ * campaign; each browser is asked once.
+ */
+export const CREATOR_LEGACY_SESSION_COOKIE = "monica_creator";
 
 /**
  * How long the cookie lasts. Through the campaign and its disputes, since
@@ -37,6 +66,14 @@ export const CREATOR_SESSION_MAX_AGE = 60 * 60 * 24 * 90;
  *
  * Ten minutes, because it exists for the seconds between a redirect and a tap.
  * Scoped to the entry path so it is not attached to any other request.
+ *
+ * Not __Host-, deliberately: that prefix demands Path=/, which would attach a
+ * live token to every request on the site and undo the scoping above. A
+ * planted one buys nothing a link does not, since either way the page names
+ * the account before anything is committed. What one could do is shadow the
+ * claim a creator's own link has just parked, by sorting after it, which is
+ * why it is read with soleCookie and two different values count as none. The
+ * recovery cookie below is read the same way for the same reason.
  */
 export const CREATOR_PENDING_COOKIE = "monica_pending";
 export const CREATOR_PENDING_MAX_AGE = 60 * 10;
