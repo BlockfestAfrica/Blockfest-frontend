@@ -16,6 +16,8 @@ import { FeaturedSpeakersGrid } from "@/components/speakers/2026-speakers-grid";
  * opened onto. Read from the same data the page renders.
  */
 const announced = SpeakersList.some(is2026Speaker);
+const hasAnnouncedSpeakers = announced;
+const speakers2026 = speakerProfiles().filter(is2026Speaker);
 const shareTitle = announced
   ? "Blockfest Africa Speakers - The 2026 Lineup"
   : "Blockfest Africa Speakers - 2026 Lineup Coming Soon";
@@ -32,6 +34,7 @@ export const metadata: Metadata = {
       : "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa.",
   keywords: [
     "blockfest africa speakers",
+    "blockfest africa 2026 speakers",
     "blockchain experts africa",
     "web3 leaders",
     "crypto keynote speakers",
@@ -88,9 +91,6 @@ const SpeakersPage = () => {
     { name: "Speakers", url: "https://blockfestafrica.com/speakers" },
   ];
 
-  const speakers2026 = SpeakersList.filter(is2026Speaker);
-  const hasAnnouncedSpeakers = speakers2026.length > 0;
-
   return (
     <>
       <SpeakersSchema speakers={speakers} />
@@ -115,9 +115,8 @@ const SpeakersPage = () => {
           />
         )}
 
-        {/* Archive link — the 33 past speakers now live on their own page,
-            so this page opens with what's next instead of "coming soon"
-            followed immediately by three years of history. */}
+        {/* Archive link — past speakers live on their own page, so this page
+            opens with what's next instead of three years of history. */}
         <div className="border-t border-gray-200 bg-paper">
           <div className="container-page section-y flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-base text-gray-600">
