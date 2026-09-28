@@ -4,40 +4,40 @@ import Image from "next/image";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import "./subtle-animations.css";
 import { partners, PartnerLogo } from "@/lib/partners-2026";
-import { XBadge } from "../icons/xbadge";
+// import { XBadge } from "../icons/xbadge";
 
 
 
-function PartnerCard({ logo, twitter }: PartnerLogo) {
-  const card = (
-    <div className="group relative flex h-20 items-center justify-center overflow-hidden rounded-xl border border-line-2 bg-card-2 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D7A64B]/50 hover:bg-card-3 hover:shadow-[0_0_24px_-6px_rgba(215,166,75,0.35)] lg:h-24">
-      <Image
-        src={logo}
-        alt="Partner logo"
-        width={160}
-        height={64}
-        className="h-10 w-auto object-contain grayscale-15 transition-all duration-300 group-hover:grayscale-0 lg:h-14"
-      />
-      {twitter && <XBadge />}
-    </div>
-  );
+// function PartnerCard({ logo, twitter }: PartnerLogo) {
+//   const card = (
+//     <div className="group relative flex h-20 items-center justify-center overflow-hidden rounded-xl border border-line-2 bg-card-2 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D7A64B]/50 hover:bg-card-3 hover:shadow-[0_0_24px_-6px_rgba(215,166,75,0.35)] lg:h-24">
+//       <Image
+//         src={logo}
+//         alt="Partner logo"
+//         width={160}
+//         height={64}
+//         className="h-10 w-auto object-contain grayscale-15 transition-all duration-300 group-hover:grayscale-0 lg:h-14"
+//       />
+//       {twitter && <XBadge />}
+//     </div>
+//   );
 
-  if (twitter) {
-    return (
-      <Link
-        href={twitter}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7A64B]/60"
-        aria-label="Partner logo"
-      >
-        {card}
-      </Link>
-    );
-  }
+//   if (twitter) {
+//     return (
+//       <Link
+//         href={twitter}
+//         target="_blank"
+//         rel="noopener noreferrer"
+//         className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7A64B]/60"
+//         aria-label="Partner logo"
+//       >
+//         {card}
+//       </Link>
+//     );
+//   }
 
-  return card;
-}
+//   return card;
+// }
 
 function HeadlineSpotlight({ headline }: { headline: PartnerLogo[] }) {
   if (headline.length === 0) return null;
@@ -175,30 +175,77 @@ function MobilitySpotlight({ mobility }: { mobility: PartnerLogo[] }) {
   );
 }
 
-function PartnerGroup({ label, items = [] }: { label: string; items?: PartnerLogo[] }) {
-  if (items.length === 0) return null;
+// function PartnerGroup({ label, items = [] }: { label: string; items?: PartnerLogo[] }) {
+//   if (items.length === 0) return null;
+
+//   return (
+//     <div className="mb-12 lg:mb-16">
+//       <div className="mb-5 flex items-baseline justify-between lg:mb-6">
+//         <h3 className="text-xl font-bold text-white lg:text-2xl">{label}</h3>
+//         <span className="text-sm font-medium text-ink-4">{items.length}</span>
+//       </div>
+//       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6 lg:gap-4">
+//         {items.map((item) => (
+//           <PartnerCard key={item.logo} {...item} />
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
+
+function MediaPartners({ media }: { media: PartnerLogo[] }) {
+  if (media.length === 0) return null;
 
   return (
-    <div className="mb-12 lg:mb-16">
-      <div className="mb-5 flex items-baseline justify-between lg:mb-6">
-        <h3 className="text-xl font-bold text-white lg:text-2xl">{label}</h3>
-        <span className="text-sm font-medium text-ink-4">{items.length}</span>
-      </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6 lg:gap-4">
-        {items.map((item) => (
-          <PartnerCard key={item.logo} {...item} />
-        ))}
+    <div className="mt-6 flex w-full lg:w-[55%] md:w-[65%] flex-col items-center justify-center">
+      <p className="eyebrow text-center text-white">
+        MEDIA{" "}
+        <span className="text-[#ff2056] px-1">
+          {media.length === 1 ? "PARTNER" : "PARTNERS"}
+        </span>
+      </p>
+      <div className={`mt-4 grid w-full gap-4 px-1 ${media.length > 1 ? "md:grid-cols-3" : "grid-cols-1"}`}>
+        {media.map((sponsor) => {
+          const inner = (
+            <div className="flex h-20 w-full items-center justify-center rounded-2xl border border-line-2 bg-white/95 p-4 transition-colors duration-300 hover:bg-white/90 md:h-28 md:p-5">
+              <Image
+                src={sponsor.logo}
+                alt="Media sponsor logo"
+                width={640}
+                height={180}
+                className="h-full w-auto object-contain"
+              />
+            </div>
+          );
+
+          return sponsor.twitter ? (
+            <Link
+              key={sponsor.logo}
+              href={sponsor.twitter}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+              aria-label="Media sponsor logo"
+            >
+              {inner}
+            </Link>
+          ) : (
+            <div key={sponsor.logo}>{inner}</div>
+          );
+        })}
       </div>
     </div>
   );
 }
+
+
 
 export function PartnersSection2026() {
   useSubtleAnimations();
 
   return (
     <section className="section-y border-t border-line-2 bg-ground">
-      <div className="container-page flex flex-col justify-center md:items-center">
+      <div className="page-container flex flex-col justify-center md:items-center">
         <div className="mb-10 flex w-full flex-col items-center justify-center text-center lg:mb-14">
           <p className="eyebrow text-ink-3">2026 PARTNERS</p>
           <h2 className="text-display-sm mt-3 font-bold text-white fade-in-on-scroll">
@@ -213,11 +260,12 @@ export function PartnersSection2026() {
         <HeadlineSpotlight headline={partners.headline} />
         <SilverSpotlight silver={partners.silver ?? []} />
         <MobilitySpotlight mobility={partners.mobility ?? []} />
-        <div className="scale-in w-full">
+        <MediaPartners media={partners.media ?? []} />
+        {/* <div className="scale-in w-full">
           <PartnerGroup label="Community Partners" items={partners.community} />
           <PartnerGroup label="Media Partners" items={partners.media} />
           <PartnerGroup label="Ecosystem Partners" items={partners.ecosystem} />
-        </div>
+        </div> */}
       </div>
     </section>
   );
