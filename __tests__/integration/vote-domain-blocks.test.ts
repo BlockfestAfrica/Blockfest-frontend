@@ -8,7 +8,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import * as schema from "@/lib/db/schema";
 import { NEVER_BLOCK_DOMAINS } from "@/lib/campaign-vote";
 import { UNUSABLE_EMAIL } from "@/lib/vote-domain";
-import { MIGRATIONS_DIR, applyMigrations } from "../helpers/migrations";
+import { MIGRATIONS_DIR, applyMigrations, latestDefinition } from "../helpers/migrations";
 
 /*
  * Blocked domains, through the real routes (0069).
@@ -758,11 +758,8 @@ describe("the console's answers when an act cannot go through", () => {
  * pinned here is the order itself, in the definitions that ship.
  */
 describe("the locks, in the order that keeps two owners from deadlocking", () => {
-  const body = (name: string) => {
-    const sql = readFileSync(join(MIGRATIONS_DIR, "0069_vote_domain_hardening.sql"), "utf8");
-    const at = sql.lastIndexOf(`CREATE OR REPLACE FUNCTION ${name}(`);
-    return sql.slice(at, sql.indexOf("END $$;", at));
-  };
+  // The live definition, whichever migration holds it.
+  const body = (name: string) => latestDefinition(name);
 
   it("has Unblock take every round's lock before it touches the block's row, as Block does", () => {
     const unblock = body("unblock_vote_domain");

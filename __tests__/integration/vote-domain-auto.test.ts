@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import type { SQL } from "drizzle-orm";
@@ -9,7 +7,7 @@ import * as schema from "@/lib/db/schema";
 import type { AdminIdentity } from "@/lib/admin/session";
 import { UNUSABLE_EMAIL, classifyVoteDomain, mxKind, primaryMx, type MxRecord } from "@/lib/vote-domain";
 import { isProtectedDomain } from "@/lib/vote-domain-copy";
-import { MIGRATIONS_DIR, applyMigrations } from "../helpers/migrations";
+import { applyMigrations, latestDefinition } from "../helpers/migrations";
 
 /*
  * Automatic action on a vote farm's domain, through the real routes (0069).
@@ -642,11 +640,8 @@ describe("the console", () => {
 });
 
 describe("the engine", () => {
-  const body = (name: string) => {
-    const sql = readFileSync(join(MIGRATIONS_DIR, "0069_vote_domain_hardening.sql"), "utf8");
-    const at = sql.lastIndexOf(`CREATE OR REPLACE FUNCTION ${name}(`);
-    return sql.slice(at, sql.indexOf("END $$;", at));
-  };
+  // The live definition, whichever migration holds it.
+  const body = (name: string) => latestDefinition(name);
 
   it("decides the automatic block after this vote is written and under its lock", () => {
     const verify = body("verify_vote");
