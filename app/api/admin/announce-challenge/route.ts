@@ -45,6 +45,13 @@ const schema = z.object({
   challengeId: z.string().uuid("That is not a challenge."),
 });
 
+/** Sends started together, as the vote announcement does. One at a time
+    against a provider at about a second a mail runs out the 300 second
+    budget at roughly three hundred creators, and the ledger claimed before
+    the batch then refuses the retry, so the rest are never told. Four at a
+    time is well inside any sane provider limit. */
+const BATCH = 4;
+
 const FORBIDDEN = NextResponse.json(
   { ok: false, message: "Not allowed." },
   { status: 403 },
@@ -128,6 +135,7 @@ export async function POST(request: NextRequest) {
     const already = await db.execute(sql`
       SELECT 1 FROM audit_log
        WHERE action = 'challenge.announced'
+         AND entity_type = 'challenge'
          AND entity_id = ${week.id}::uuid
        LIMIT 1
     `);
@@ -162,7 +170,7 @@ export async function POST(request: NextRequest) {
      *
      * It used to be written after the loop, which made it a report rather
      * than a lock. This handler carries maxDuration = 300 and mails every
-     * active creator one at a time; a batch that outruns that, or a deploy
+     * active creator in small batches; a batch that outruns that, or a deploy
      * mid-send, left no row at all. The repeat guard above then passed, and
      * pressing Announce again re-mailed everybody already reached - up to
      * several hundred duplicates, out of the same quota that carries the
@@ -173,37 +181,70 @@ export async function POST(request: NextRequest) {
      * to read the counts to see how far it got, and the counts are filled
      * in below.
      */
-    await db.execute(sql`
-      INSERT INTO audit_log (campaign_id, actor_admin_id, action, entity_type, entity_id, after)
-      VALUES (
-        ${week.campaign_id}::uuid, ${admin.admin.adminId}::uuid,
-        'challenge.announced', 'challenge', ${week.id}::uuid,
-        ${JSON.stringify({ week_no: week.week_no, sent: 0, failed: 0, status: "started" })}::jsonb
-      )
+    /*
+     * And claimed by the primary key, so exactly one press can hold it. The
+     * check above is two round trips before this line, and two presses
+     * landing together both passed it; the claim's id is derived from the
+     * challenge, so the second insert waits on the first's key and does
+     * nothing. The NOT EXISTS keeps refusing a stage announced before this
+     * change, whose row carries a random id. Same shape as the vote
+     * announcement's claim.
+     */
+    const claimed = await db.execute(sql`
+      INSERT INTO audit_log (id, campaign_id, actor_admin_id, action, entity_type, entity_id, after)
+      SELECT md5('challenge.announced:' || ${week.id}::text)::uuid,
+             ${week.campaign_id}::uuid, ${admin.admin.adminId}::uuid,
+             'challenge.announced', 'challenge', ${week.id}::uuid,
+             ${JSON.stringify({ week_no: week.week_no, sent: 0, failed: 0, status: "started" })}::jsonb
+       WHERE NOT EXISTS (
+             SELECT 1 FROM audit_log
+              WHERE action = 'challenge.announced'
+                AND entity_type = 'challenge'
+                AND entity_id = ${week.id}::uuid)
+      ON CONFLICT (id) DO NOTHING
+      RETURNING id
     `);
+    const claimId = (claimed.rows?.[0] as { id?: string } | undefined)?.id;
+    if (!claimId) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "This stage has already been announced. Check the audit log to see when, and by whom.",
+        },
+        { status: 409 },
+      );
+    }
 
     let sent = 0;
     let failed = 0;
 
-    for (const row of recipients.rows ?? []) {
-      const person = row as { email?: string; full_name?: string };
-      if (!person.email) continue;
+    const people = (recipients.rows ?? [])
+      .map((row) => row as { email?: string; full_name?: string })
+      .filter((person) => Boolean(person.email));
 
-      const result = await sendEmail(
-        challengeLiveEmail({
-          to: person.email,
-          fullName: person.full_name ?? "",
-          weekNo: Number(week.week_no ?? 0),
-          title: String(week.title ?? ""),
-          question: week.question ?? null,
-          brief: String(week.description ?? ""),
-          basePoints: Number(week.base_points ?? 100),
-          closesAtLagos: closes,
-          pageUrl: personalPage(),
-        }),
+    for (let i = 0; i < people.length; i += BATCH) {
+      const results = await Promise.allSettled(
+        people.slice(i, i + BATCH).map((person) =>
+          sendEmail(
+            challengeLiveEmail({
+              to: person.email as string,
+              fullName: person.full_name ?? "",
+              weekNo: Number(week.week_no ?? 0),
+              title: String(week.title ?? ""),
+              question: week.question ?? null,
+              brief: String(week.description ?? ""),
+              basePoints: Number(week.base_points ?? 100),
+              closesAtLagos: closes,
+              pageUrl: personalPage(),
+            }),
+          ),
+        ),
       );
-      if (result.sent) sent += 1;
-      else failed += 1;
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value.sent) sent += 1;
+        else failed += 1;
+      }
     }
 
     /*
@@ -216,8 +257,7 @@ export async function POST(request: NextRequest) {
     await db.execute(sql`
       UPDATE audit_log
          SET after = ${JSON.stringify({ week_no: week.week_no, sent, failed, status: "finished" })}::jsonb
-       WHERE action = 'challenge.announced'
-         AND entity_id = ${week.id}::uuid
+       WHERE id = ${claimId}::uuid
     `);
 
     return NextResponse.json({ ok: true, sent, failed });
