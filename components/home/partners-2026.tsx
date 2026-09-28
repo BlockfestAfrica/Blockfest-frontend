@@ -60,10 +60,10 @@ const TIER = {
   // Community, media and ecosystem. Gap 0.75rem here: three to a row on a
   // phone, five from sm, six from lg.
   community: {
-    item: "w-[calc(33.333%-0.5rem)] sm:w-[calc(20%-0.6rem)] lg:w-[calc(16.666%-0.625rem)]",
-    plate: "h-12 sm:h-16 rounded-xl",
-    logo: "h-6 sm:h-8",
-    sizes: "(min-width: 640px) 140px, 30vw",
+    item: "w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.5625rem)]",
+    plate: "h-20 sm:h-24 rounded-xl",
+    logo: "h-10 sm:h-[4.5rem]",
+    sizes: "(min-width: 640px) 220px, 45vw",
   },
 } as const;
 
@@ -94,8 +94,8 @@ function SponsorPlate({ sponsor, tier }: { sponsor: PartnerLogo; tier: TierName 
         height={240}
         sizes={size.sizes}
         className={`w-auto max-w-full object-contain ${size.logo}`}
-        // Not priority, headline included: this section sits far below the
-        // fold, and a preload here competes with the hero for the first paint.
+      // Not priority, headline included: this section sits far below the
+      // fold, and a preload here competes with the hero for the first paint.
       />
     </div>
   );
@@ -187,9 +187,9 @@ function PartnerGroup({ label, items = [] }: { label: string; items?: PartnerLog
   if (items.length === 0) return null;
 
   return (
-    <div className="flex w-full flex-col items-center gap-6 sm:gap-8">
+    <div className="flex w-full flex-col items-center gap-6 md:gap-8">
       <TierLabel className="text-ink-3">{label}</TierLabel>
-      <ul className="flex w-full flex-wrap justify-center gap-3">
+      <ul className="flex w-full flex-wrap justify-center gap-8">
         {items.map((item) => (
           <li key={item.logo} className={TIER.community.item}>
             <SponsorPlate sponsor={item} tier="community" />
@@ -228,7 +228,7 @@ export function PartnersSection2026() {
           <PartnerGroup label="Community Partners" items={partners.community} />
           <PartnerGroup label="Media Partners" items={partners.media} />
           <PartnerGroup label="Ecosystem Partners" items={partners.ecosystem} />
-        </div> 
+        </div>
       </div>
     </section>
   );

@@ -48,6 +48,16 @@ export const partners: PartnerData = {
     { name: "Rovv", role: "Mobility", logo: "/2026/sponsors/rovv.png", twitter: "https://x.com/rovvafrica?s=11" },
   ],
   // community: [],
-  // media: [],
+  media: [
+    { name: "AllConfsBot", logo: "/2026/media/allconf.png", twitter: "https://x.com/allconfsbot?s=11" },
+    { name: "Blockchain Marketing Ninja", logo: "/2026/media/BMN.png", twitter: "https://x.com/0xblockchainmkt" },
+    { name: "Blockchain Staffing Ninja", logo: "/2026/media/BSN.png", twitter: "https://x.com/staffing_Ninja" },
+    { name: "CoinGabbar", logo: "/2026/media/coingabbar.png", twitter: "https://x.com/coin_gabbar_" },
+    { name: "CoinNewsSpan", logo: "/2026/media/Coinn.png", twitter: "https://x.com/CoinNewsSpan_" },
+    { name: "CryptoNewsZ", logo: "/2026/media/Crypto.png", twitter: "https://x.com/cryptonewsz_" },
+    { name: "TimesofBlockchain", logo: "/2026/media/timesoblock.png", twitter: "https://x.com/TimesOfBlockC_" },
+
+
+  ],
   // ecosystem: [],
 };
