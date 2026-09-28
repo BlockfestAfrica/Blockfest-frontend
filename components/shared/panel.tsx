@@ -268,6 +268,7 @@ export function JobCard({
   status,
   state = "todo",
   foot,
+  focusableHeading = false,
   children,
 }: {
   /** Anchors the section, so a job can be linked to. */
@@ -281,6 +282,12 @@ export function JobCard({
   state?: JobState;
   /** The controls that perform the job. Separated by a rule. */
   foot?: ReactNode;
+  /**
+   * Lets a script move focus to the title (tabIndex -1, so it never joins
+   * the tab order): the landing place after an act removes the control that
+   * had focus, where the body would otherwise get it.
+   */
+  focusableHeading?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -306,6 +313,7 @@ export function JobCard({
           )}
           <h2
             id={`${id}-title`}
+            tabIndex={focusableHeading ? -1 : undefined}
             className={`${step ? "mt-1" : ""} text-lg font-bold text-pretty text-white sm:text-xl`}
           >
             {title}

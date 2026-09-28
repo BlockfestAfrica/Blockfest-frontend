@@ -10,6 +10,7 @@ import {
   winnersSoFar,
 } from "@/lib/admin/winners";
 import {
+  blockedDomains,
   candidateEntries,
   currentRound,
   roundTally,
@@ -19,6 +20,7 @@ import {
 import { leaderboard } from "@/lib/leaderboard";
 import { WinnersPanel } from "@/components/admin/winners-panel";
 import { VoteRoundPanel } from "@/components/admin/vote-round-panel";
+import { BlockedDomainsCard } from "@/components/admin/blocked-domains-card";
 import { PageHeader, SectionCard, SPACING } from "@/components/shared/panel";
 import { currentWeekNo } from "@/lib/campaigns";
 import { count, dateTime } from "@/lib/format";
@@ -87,7 +89,7 @@ export default async function WinnersPage({
       ? asked
       : ((await unfinishedVoteWeek(admin.admin, current)) ?? current);
 
-  const [creators, favourites, picked, snapshots, frozenPoints, board, round, entries] =
+  const [creators, favourites, picked, snapshots, frozenPoints, board, round, entries, blocks] =
     await Promise.all([
       winnerCandidates(admin.admin, "creator_of_week"),
       winnerCandidates(admin.admin, "community_favourite"),
@@ -97,6 +99,7 @@ export default async function WinnersPage({
       leaderboard(500),
       currentRound(admin.admin, weekNo),
       candidateEntries(admin.admin, weekNo),
+      blockedDomains(admin.admin),
     ]);
 
   /*
@@ -242,6 +245,12 @@ export default async function WinnersPage({
                   domain: d.domain,
                   votes: d.votes,
                   members: d.members.map(serialiseMember),
+                  hosts: d.hosts,
+                  machineMade: d.machineMade,
+                  block: d.block,
+                  blockable: d.blockable,
+                  protectedDomain: d.protectedDomain,
+                  mxKind: d.mxKind,
                 })),
                 ips: tally.ips.map((ip) => ({
                   ipHash: ip.ipHash,
@@ -253,11 +262,30 @@ export default async function WinnersPage({
                   email: h.email,
                   domain: h.domain,
                   createdAt: h.createdAt.toISOString(),
+                  reason: h.reason,
                 })),
                 unverified: tally.unverified,
               }
             : null
         }
+      />
+
+      {/*
+       * Under the vote it guards, on every week: a block is campaign-wide,
+       * so it outlives the round it was made in, and the card is where an
+       * owner lifts one or blocks a domain before anybody has used it.
+       */}
+      <BlockedDomainsCard
+        blocks={blocks.map((b) => ({
+          domain: b.domain,
+          source: b.source,
+          reason: b.reason,
+          evidence: b.evidence,
+          createdAt: b.createdAt.toISOString(),
+          byYou: b.createdByAdminId === admin.admin.adminId,
+          by: b.createdByEmail,
+          held: b.held,
+        }))}
       />
 
       {/*

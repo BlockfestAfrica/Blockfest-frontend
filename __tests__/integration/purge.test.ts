@@ -307,6 +307,8 @@ describe("the list stays complete", () => {
     audit_log: "purged per campaign, so admin history survives",
     admin_sessions:
       "the signed-in admins' own sessions, not participant data; rows expire in twelve hours and purging them would sign the owner out mid-purge",
+    vote_blocked_domains:
+      "domain names an owner judged as farms, with no voter's address in them; forgetting them in a purge would let the same farm straight back in, and the card on /admin/winners lists every one for an owner to lift",
   };
 
   /*
@@ -346,6 +348,28 @@ describe("the list stays complete", () => {
 
     expect(reported.request_throttle, "its own three rows").toBe(3);
     expect(reported.votes, "not the throttle count wearing the votes name").toBe(0);
+  });
+
+  /*
+   * The mail-host cache holds the domains voters used, and a personal domain
+   * names its owner. It is not campaign scoped, so like the throttle it is
+   * cleared wholesale.
+   */
+  it("clears the voting domains' mail-host cache", async () => {
+    await db.query(`
+      INSERT INTO vote_domain_mx (domain, kind, primary_mx) VALUES
+        ('oemails.com', 'forwarder', 'route1.mx.cloudflare.net'),
+        ('ada-obi.ng', 'other', 'mail.ada-obi.ng')`);
+
+    const { rows: reported } = await db.query<{ table_name: string; rows_deleted: number }>(
+      `SELECT * FROM purge_campaign_data($1, $2)`,
+      [SLUG, SLUG],
+    );
+
+    expect(
+      Number(reported.find((r) => r.table_name === "vote_domain_mx")?.rows_deleted),
+    ).toBe(2);
+    expect(await rows("vote_domain_mx")).toBe(0);
   });
 
   it("classifies every table as purged or kept", async () => {

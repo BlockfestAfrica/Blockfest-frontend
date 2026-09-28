@@ -1526,6 +1526,68 @@ export function adminActivityEmail(params: {
 }
 
 /**
+ * A voting domain was blocked automatically. To the owners, once per block.
+ *
+ * The automatic rule acts with nobody watching, which is the point of it: the
+ * first farm was over in fourteen minutes. So a person hears at once rather
+ * than at the sweep before the announce: which domain, why, how many votes
+ * now wait on them, and when those votes came. A wrong block is undone on
+ * the card this links to, and the mail says what undoing it does.
+ *
+ * No voter's address, by construction rather than by care: the template
+ * takes a domain, a sentence built from counts and a mail host, two times and
+ * a number, and nothing else. An alert that lands in the wrong inbox leaks a
+ * domain name, not a voter.
+ */
+export function voteDomainBlockedEmail(params: {
+  to: string;
+  domain: string;
+  /** The rule's evidence as the console words it, without a full stop. */
+  evidence: string;
+  /** Votes from the domain the block and the forwarding rule hold this round. */
+  held: number;
+  /** When its first and last verified votes came, formatted for Lagos. */
+  firstAtLagos?: string;
+  lastAtLagos?: string;
+  consoleUrl: string;
+}): Email {
+  const { domain } = params;
+  const headline = `${domain} was blocked automatically`;
+  const why = `${params.evidence}.`;
+  const held =
+    params.held === 0
+      ? "No votes from it are held this round."
+      : `${params.held} ${params.held === 1 ? "vote from it is" : "votes from it are"} held for you to review this round.`;
+  const when =
+    params.firstAtLagos && params.lastAtLagos
+      ? `They were verified between ${params.firstAtLagos} and ${params.lastAtLagos}, Lagos time.`
+      : "";
+  const effect = `New votes from ${domain} are turned away with a neutral message. Voters are never told it is blocked.`;
+  const undo = `If these are real voters, unblock it on the Blocked domains card: the votes it held are released up to the domain's allowance of ten a round, and automatic blocking will not act on ${domain} again.`;
+
+  return {
+    to: params.to,
+    toName: "Blockfest campaign team",
+    replyTo: CONTACT_EMAIL,
+    subject: `A voting domain was blocked automatically: ${domain}`,
+    text: [headline, ``, why, [held, when].filter(Boolean).join(" "), ``, effect, ``, undo, ``, `Console: ${params.consoleUrl}`].join(
+      "\n",
+    ),
+    html: layout({
+      preheader: why,
+      heading: headline,
+      body: [
+        p(escape(why)),
+        p(escape([held, when].filter(Boolean).join(" "))),
+        p(escape(effect)),
+        quiet(escape(undo)),
+      ].join(""),
+      action: { label: "Open Blocked domains", href: params.consoleUrl },
+    }),
+  };
+}
+
+/**
  * The community vote is open, to everybody in the campaign.
  *
  * The nominees already get shortlistEmail. Everybody else got nothing, and

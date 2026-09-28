@@ -17,6 +17,14 @@ import { isPgError } from "@/lib/db/errors";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { voteVerificationEmail } from "@/lib/email/templates";
 import { logError, logWarning } from "@/lib/log";
+import {
+  BLOCKED_DOMAIN_ANSWER,
+  UNUSABLE_EMAIL,
+  classifyVoteDomain,
+  isRefusedHost,
+  systemResolveMx,
+  voteDomainKey,
+} from "@/lib/vote-domain";
 
 /** postgres over HTTP needs Node; see lib/db/client. */
 export const runtime = "nodejs";
@@ -79,6 +87,38 @@ function fail(message: string, status: number) {
 }
 
 /**
+ * Whether an owner has blocked this host's domain, or a domain it sits
+ * under, for this campaign. One read of a small table, through the partial
+ * index on active blocks.
+ *
+ * Fails open. A read that throws is logged by its error name only (a driver
+ * message can carry the host, and with it a voter's address) and the cast
+ * carries on: verify_vote reads the same table under its lock and holds the
+ * vote, so a missed refusal costs a code mail, never a counted vote.
+ */
+async function blockedAtCast(host: string): Promise<boolean> {
+  try {
+    const result = await getDb().execute(sql`
+      SELECT 1 AS blocked
+        FROM vote_blocked_domains b
+        JOIN campaigns c ON c.id = b.campaign_id
+       WHERE c.slug = ${MONICA_SLUG}
+         AND b.lifted_at IS NULL
+         AND (${host}::text = b.domain
+              OR right(${host}::text, length(b.domain) + 1) = '.' || b.domain)
+       LIMIT 1
+    `);
+    return (result.rows?.length ?? 0) > 0;
+  } catch (error) {
+    logWarning(
+      "campaign/vote",
+      `blocked-domain read failed, casting anyway: ${error instanceof Error ? error.name : "unknown"}`,
+    );
+    return false;
+  }
+}
+
+/**
  * Casting a Community Favourite vote.
  *
  * The engine from migration 0046 owns every rule that matters: one counted
@@ -138,6 +178,29 @@ export async function POST(request: NextRequest) {
   }
   const input = parsed.data;
   const emailCanonical = canonicalEmail(input.email);
+
+  /*
+   * Domains no code is sent to: disposable inbox services and alias relays,
+   * matched on the host and every parent of it, and (while the answer is
+   * "refuse") any domain an owner has blocked.
+   *
+   * Here, after the address is known and before anything else. A refused
+   * address spends no throttle bucket, writes no vote row and sends no mail,
+   * and it is refused even while voting is paused, so the same address gets
+   * the same answer whatever else is going on. The answer is the same bytes
+   * for all three causes and never says which.
+   *
+   * Not in voteEmailSchema. The verify route parses with that schema too, so
+   * a refusal there would turn a code already in an inbox into "that email
+   * does not look right" instead of a vote verify_vote holds for review.
+   */
+  const host = emailCanonical.slice(emailCanonical.lastIndexOf("@") + 1);
+  if (
+    isRefusedHost(host) ||
+    (BLOCKED_DOMAIN_ANSWER === "refuse" && (await blockedAtCast(host)))
+  ) {
+    return fail(UNUSABLE_EMAIL, 400);
+  }
 
   // Netlify sets its own header; x-forwarded-for is the fallback and its
   // first entry is the client. Same reading as the register route, and
@@ -252,8 +315,18 @@ export async function POST(request: NextRequest) {
    * stopwatch told the two apart and an operator could enumerate which of
    * their own addresses the sweep had caught. after() keeps the work inside
    * the invocation without the caller waiting on it.
+   *
+   * The domain's mail host is classified first, before the code is mailed:
+   * verify_vote reads that answer to hold a forwarding service's votes and
+   * to block a farm automatically, so it has to exist before any code can
+   * come back. Here rather than in the response, so neither the answer nor
+   * its timing says whether the domain was already known, and a slow
+   * nameserver delays a code by a second and a half at most. It never
+   * throws, and asks nothing for a consumer provider or a school or
+   * government domain.
    */
   after(async () => {
+    await classifyVoteDomain(voteDomainKey(emailCanonical), { resolveMx: systemResolveMx });
     try {
       const meta = await getDb().execute(sql`
         SELECT c.full_name AS display_name, ch.week_no

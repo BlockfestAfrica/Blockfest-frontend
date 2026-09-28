@@ -14,6 +14,15 @@ import { logWarning } from "@/lib/log";
  * This module holds what the two routes need in common so the cast side and
  * the verify side cannot drift apart: the same hash of the same code, the
  * same allowlist, the same cap.
+ *
+ * Enforcement stays in SQL. What the engine cannot do for itself lives in
+ * Node and is handed to it: the public suffix list that names a vote's
+ * registrable domain, the bundled disposable list the cast route refuses
+ * from, and the DNS lookup that classifies a domain's mail host (cached in
+ * vote_domain_mx). Those are data lookups, not rules; every hold and every
+ * block, automatic ones included, is still decided by the engine under its
+ * lock (0069). A Node answer that is missing leaves the engine where the cap
+ * already had it.
  */
 
 /**
@@ -39,6 +48,49 @@ export const ALLOWLISTED_DOMAINS: readonly string[] = [
 ];
 
 const ALLOWLIST = new Set(ALLOWLISTED_DOMAINS);
+
+/**
+ * Domains no block may ever land on, by an owner or by a machine: the nine
+ * the cap exempts, plus the Yahoo, Microsoft, Apple, AOL and Proton alias
+ * domains the cap does not exempt. Each is one inbox per person shared by
+ * thousands of real voters, so a block would turn away a crowd to stop one
+ * farmer. Their votes are still capped and still removable one at a time.
+ *
+ * Wider than ALLOWLISTED_DOMAINS on purpose, and the cap allowlist is not
+ * widened with it: ten ymail.com votes in a round is unusual enough to hold
+ * for a look, but never enough to refuse the domain. The same list is
+ * vote_domain_never_block() in 0069, which the block table's CHECK uses, and
+ * a test holds the two together.
+ */
+export const NEVER_BLOCK_DOMAINS: readonly string[] = [
+  ...ALLOWLISTED_DOMAINS,
+  "ymail.com",
+  "rocketmail.com",
+  "yahoo.co.uk",
+  "hotmail.co.uk",
+  "live.co.uk",
+  "msn.com",
+  "aol.com",
+  "me.com",
+  "mac.com",
+  "pm.me",
+];
+
+const NEVER_BLOCK = new Set(NEVER_BLOCK_DOMAINS);
+
+/**
+ * Whether a domain, or any domain it sits under, is one no block may touch.
+ * Every parent, because mail.gmail.com normalises to gmail.com for a block
+ * and a check on the host alone would let a subdomain through.
+ */
+export function isNeverBlock(domain: string): boolean {
+  let probe = domain.trim().toLowerCase().replace(/\.$/, "");
+  while (probe.includes(".")) {
+    if (NEVER_BLOCK.has(probe)) return true;
+    probe = probe.slice(probe.indexOf(".") + 1);
+  }
+  return false;
+}
 
 /**
  * Counted votes one non-allowlisted domain may hold in a round before the
