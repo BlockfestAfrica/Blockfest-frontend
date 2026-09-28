@@ -284,6 +284,7 @@ export function WinnersPanel({
   return (
     <>
       <JobCard
+        collapsible
         id="freeze"
         step="Saturday"
         title={`Record the week ${weekNo} standings`}
@@ -314,6 +315,7 @@ export function WinnersPanel({
       />
 
       <JobCard
+        collapsible
         id="announce"
         step="Sunday"
         title={`Announce the week ${weekNo} winners`}

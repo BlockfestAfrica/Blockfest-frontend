@@ -1133,6 +1133,7 @@ export function VoteRoundPanel({
 
   return (
     <JobCard
+      collapsible
       id="vote-round"
       step="Sunday"
       title={`Community Favourite vote, week ${weekNo}`}
