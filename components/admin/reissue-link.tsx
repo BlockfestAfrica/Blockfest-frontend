@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmPanel } from "@/components/shared/confirm";
 
 /**
  * Give a creator a new personal link.
@@ -16,6 +17,12 @@ import { toast } from "sonner";
  * The new link is shown once, here, to be passed on by whoever is handling the
  * request. Issuing it invalidates the old one, which is also how you take a
  * link back if it ended up somewhere it should not have.
+ *
+ * It asks first, restating the address. The creator's name only appears once
+ * the link has already turned over, and the address is matched loosely (dots
+ * and plus tags ignored), so the question is the one place to catch the wrong
+ * person before they are signed out and emailed. Submitting the form, enter
+ * included, only opens the question; the POST happens from "Yes" alone.
  */
 export function ReissueLink() {
   const [email, setEmail] = useState("");
@@ -26,9 +33,15 @@ export function ReissueLink() {
     emailed: boolean;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [asking, setAsking] = useState(false);
+  const submitRef = useRef<HTMLButtonElement>(null);
 
-  async function submit(event: React.FormEvent) {
+  function ask(event: React.FormEvent) {
     event.preventDefault();
+    if (email.trim()) setAsking(true);
+  }
+
+  async function issue() {
     setBusy(true);
     setIssued(null);
 
@@ -62,7 +75,7 @@ export function ReissueLink() {
   return (
     <div className="mt-6 max-w-2xl">
       <form
-        onSubmit={submit}
+        onSubmit={ask}
         noValidate
         className="mt-4 flex flex-col gap-3 sm:flex-row"
       >
@@ -80,6 +93,7 @@ export function ReissueLink() {
           className="w-full flex-1 rounded-lg border border-line-2 bg-control px-4 py-3 text-base text-white placeholder:text-ink-3"
         />
         <button
+          ref={submitRef}
           type="submit"
           disabled={busy || !email.trim()}
           className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line-2 px-6 text-sm font-semibold text-white transition-colors duration-150 hover:bg-card-3 disabled:cursor-not-allowed disabled:opacity-60"
@@ -87,6 +101,25 @@ export function ReissueLink() {
           {busy ? "Working..." : "Issue a new link"}
         </button>
       </form>
+
+      {asking && (
+        <ConfirmPanel
+          className="mt-3"
+          label="Issue a new link"
+          question={`Issue a new link for ${email.trim()}?`}
+          consequence="Their current link stops working at once, which signs them out on every device, and the new one is emailed to them. The old link cannot be brought back."
+          confirmLabel="Yes, issue a new link"
+          disabled={!email.trim()}
+          onCancel={() => {
+            setAsking(false);
+            submitRef.current?.focus();
+          }}
+          onConfirm={() => {
+            setAsking(false);
+            issue();
+          }}
+        />
+      )}
 
       {issued && (
         <div className="mt-4 rounded-lg border border-line-2 bg-card p-4">

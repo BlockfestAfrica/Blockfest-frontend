@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, after } from "next/server";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
@@ -16,6 +16,9 @@ import { logError } from "@/lib/log";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { sameOrigin } from "@/lib/admin/request";
 import { voteReceiptEmail } from "@/lib/email/templates";
+import { closingAt } from "@/lib/format";
+import { voteDomainKey } from "@/lib/vote-domain";
+import { notifyOwnersOfAutoBlock } from "@/lib/notify/domain-auto-block";
 
 /** postgres over HTTP needs Node; see lib/db/client. */
 export const runtime = "nodejs";
@@ -103,24 +106,44 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  let autoBlocked = false;
   try {
-    await getDb().execute(sql`
+    /*
+     * The last argument is the key the domain cap judges this vote under:
+     * the registrable domain, so a.oemails.com and b.oemails.com share
+     * oemails.com's allowance instead of each getting a fresh ten. The
+     * public suffix list lives here in Node, not in SQL, which is why the
+     * route computes it; the engine checks it is this host or a parent of
+     * it and falls back to the host otherwise (0069).
+     */
+    const verdict = await getDb().execute(sql`
       SELECT * FROM verify_vote(
         ${MONICA_SLUG},
         ${input.roundId}::uuid,
         ${emailCanonical},
         ${hashCode(emailCanonical, input.code)},
         ${DOMAIN_CAP}::integer,
-        ${isAllowlisted(emailCanonical)}::boolean
+        ${isAllowlisted(emailCanonical)}::boolean,
+        ${voteDomainKey(emailCanonical)}::text
       )
     `);
+    autoBlocked =
+      (verdict.rows?.[0] as { auto_blocked?: unknown } | undefined)?.auto_blocked === true;
   } catch (error) {
     // One name for a wrong code, an expired code, and an email with nothing
     // pending. The engine merges them on purpose and this route keeps the
     // merge: separating them would say which addresses have votes waiting.
+    // The stop case comes before the retry, for the person who already
+    // confirmed, tried again and is typing codes that cannot work: an
+    // instruction to cast again followed by a line cancelling it read as a
+    // contradiction, and sent them round the loop this was written to end.
+    // Everybody sees both sentences, so neither says which case this is.
+    // "Start again" is the panel's button for a fresh code; it also meets a
+    // closed round honestly, where "cast your vote again" promised a vote
+    // the engine would refuse during the fifteen minutes codes outlive it.
     if (isPgError(error, "P0817", "code_invalid")) {
       return fail(
-        "That code did not match or has expired. Cast your vote again for a fresh one.",
+        "That code did not match or has expired. If this address has already confirmed a vote in this round, no new code will come and there is nothing more to do. Otherwise, choose Start again for a fresh code.",
         400,
       );
     }
@@ -140,16 +163,37 @@ export async function POST(request: NextRequest) {
   // it, and the voter is never the one told the cap fired.
 
   /*
+   * The one thing the verdict does change goes to the owners, not the voter:
+   * this vote made the engine block its domain automatically, and a person
+   * should hear now rather than at the sweep. After the response, so the
+   * answer below is the same bytes, and costs the same wait, whether or not
+   * it fired.
+   */
+  if (autoBlocked) {
+    const host = emailCanonical.slice(emailCanonical.lastIndexOf("@") + 1);
+    after(() => notifyOwnersOfAutoBlock({ roundId: input.roundId, host }));
+  }
+
+  /*
    * The receipt, after the verdict and blind to it. The lookup reads the
    * vote's nominee without touching status or held_at, so a counted vote
    * and a held one produce byte-identical mail, which is the same uniform
    * rule the response line above enforces. Fail-soft, to the address as
    * typed: a lost receipt costs nothing, the vote is already in.
    */
+  /*
+   * Which nominee the code confirmed. The code names an address, not a
+   * nominee, and a second cast moves the pending vote, so the page cannot
+   * know which row it confirmed unless it is told. The person holding the
+   * code already knows their own choice and the receipt names it, so this
+   * says nothing new; it is the same for a counted and a held vote.
+   */
+  let confirmed: string | undefined;
   try {
     const meta = await getDb().execute(sql`
-      SELECT c.full_name AS display_name, ch.week_no
+      SELECT v.nominee_id, c.full_name AS display_name, ch.week_no, r.closes_at
         FROM votes v
+        JOIN vote_rounds r         ON r.id = v.round_id
         JOIN vote_round_nominees n ON n.id = v.nominee_id
         JOIN challenge_entries ce  ON ce.id = n.entry_id
         JOIN challenges ch         ON ch.id = ce.challenge_id
@@ -168,15 +212,19 @@ export async function POST(request: NextRequest) {
        and a verified_at, so the filter changes nothing between counted and
        held, which is the uniformity the comment above promises. */
     const row = (meta.rows?.[0] ?? null) as {
+      nominee_id?: string;
       display_name?: string;
       week_no?: number;
+      closes_at?: string | Date;
     } | null;
+    if (row?.nominee_id) confirmed = String(row.nominee_id);
     if (row?.display_name) {
       await sendEmailQuietly(
         voteReceiptEmail({
           to: input.email,
           nomineeName: row.display_name,
           weekNo: Number(row.week_no ?? 0),
+          closesAtLagos: row.closes_at ? closingAt(row.closes_at) : undefined,
         }),
         "vote receipt",
       );
@@ -185,5 +233,5 @@ export async function POST(request: NextRequest) {
     logError("campaign/vote receipt mail", error);
   }
 
-  return NextResponse.json({ ok: true, message: "Your vote is in." });
+  return NextResponse.json({ ok: true, message: "Your vote is in.", nomineeId: confirmed });
 }

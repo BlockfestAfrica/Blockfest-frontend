@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { openableHref } from "@/lib/admin/openable-href";
 
 /*
  * The reviewer's link, and the guard that decides whether it is one.
@@ -22,27 +23,12 @@ const source = readFileSync(
   "utf8",
 );
 
-/** The shipped guard, lifted out of the component to be exercised. */
-const LINKABLE_HOSTS = [
-  "x.com",
-  "twitter.com",
-  "instagram.com",
-  "instagr.am",
-  "tiktok.com",
-];
-
-function openableHref(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "https:") return null;
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
-    const known = LINKABLE_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
-    return known ? url : null;
-  } catch {
-    return null;
-  }
-}
-
+/*
+ * The shipped guard itself. It used to be copied into this file because it
+ * lived inside a client component; it is its own module now, shared by the
+ * queue and the Decided page, so the test exercises the real one and cannot
+ * drift from it.
+ */
 describe("what becomes a clickable link", () => {
   it("links a real post on each platform", () => {
     for (const url of [
@@ -100,5 +86,47 @@ describe("the rendered control", () => {
     expect(source).not.toMatch(/function start\(/);
     expect(source).toContain("function toggle(");
     expect(source).toContain("function copyLink(");
+  });
+});
+
+describe("the Decided page's link", () => {
+  const decided = readFileSync(
+    join(process.cwd(), "components/admin/decided-list.tsx"),
+    "utf8",
+  );
+
+  it("is the guard the queue uses too", () => {
+    expect(source).toContain('from "@/lib/admin/openable-href"');
+    expect(source).toMatch(/openableHref\(item\.url\)\s*\?/);
+  });
+
+  it("goes through the same guard as the queue, not a copy of it", () => {
+    expect(decided).toContain('from "@/lib/admin/openable-href"');
+    expect(decided).toMatch(/openableHref\(item\.url\)/);
+    // No second allowlist that could drift from the shared one.
+    expect(decided).not.toContain("LINKABLE_HOSTS");
+    expect(source).not.toContain("LINKABLE_HOSTS = [");
+  });
+
+  it("opens in a new tab with the tab-nabbing and referrer paths closed", () => {
+    expect(decided).toContain('target="_blank"');
+    expect(decided).toContain('rel="noopener noreferrer nofollow"');
+  });
+
+  it("falls back to text, and shows the whole URL either way", () => {
+    expect(decided).toContain("<code");
+    const branch = decided.slice(
+      decided.indexOf("{href ? ("),
+      decided.indexOf("</code>"),
+    );
+    expect(branch, "found the render branch").not.toBe("");
+    const classes = [...branch.matchAll(/className="([^"]+)"/g)]
+      .map((m) => m[1])
+      .filter((cls) => cls !== "sr-only");
+    expect(classes.length).toBeGreaterThanOrEqual(2);
+    for (const cls of classes) {
+      expect(cls, cls).toContain("break-all");
+      expect(cls, cls).not.toContain("truncate");
+    }
   });
 });

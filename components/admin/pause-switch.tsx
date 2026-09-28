@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pause, Play } from "lucide-react";
 import { toast } from "sonner";
+import { Confirm } from "@/components/shared/confirm";
 
 /**
  * Stop the campaign, without a deploy.
@@ -18,8 +19,10 @@ import { toast } from "sonner";
  * the saving is every person who would otherwise hit a silent refusal, try
  * again, and write in.
  *
- * Resuming needs no reason and no confirmation. Getting the campaign back is
- * the thing that should be easiest.
+ * Resuming needs no reason, because getting the campaign back is the thing that
+ * should be easiest. It does ask once: resuming emails every active creator,
+ * so a pause made to fix a typo in the reason and lifted a minute later would
+ * otherwise mail the whole campaign from a single tap.
  */
 export function PauseSwitch({ paused }: { paused: boolean }) {
   const router = useRouter();
@@ -71,15 +74,20 @@ export function PauseSwitch({ paused }: { paused: boolean }) {
      */
     return (
       <div className="max-w-2xl">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => flip(false)}
-          className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full bg-brand-gold px-6 text-sm font-semibold text-black transition-colors duration-150 hover:bg-brand-gold-hover disabled:opacity-60"
-        >
-          <Play className="h-4 w-4" aria-hidden="true" />
-          {busy ? "Working..." : "Start the campaign again"}
-        </button>
+        <Confirm
+          label="Start the campaign again"
+          question="Start the campaign again and email every active creator?"
+          consequence="Registration and submissions reopen at once, and every active creator is emailed that the campaign is back, with this week's closing time. The email cannot be taken back."
+          confirmLabel="Yes, start it and tell them"
+          pending={busy}
+          onConfirm={() => flip(false)}
+          triggerContent={
+            <>
+              <Play className="h-4 w-4" aria-hidden="true" />
+              {busy ? "Working…" : "Start the campaign again"}
+            </>
+          }
+        />
         <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
           Registration and submissions resume at once. Nothing anybody has
           already sent is affected.

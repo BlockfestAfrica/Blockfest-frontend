@@ -85,9 +85,10 @@ export async function POST(request: NextRequest) {
      * The pause panel tells creators to come back and paste their link
      * when this clears, which is an instruction to poll a page that gives
      * no signal, and the people most harmed by it are the ones who obeyed
-     * and waited. Only on resume, and only to creators who have not
-     * already submitted on every platform this week, so the mail reaches
-     * the people it is actually about. After the response, fail-soft.
+     * and waited. Only on resume, and to every active creator in the
+     * campaign, because a pause stops everyone and nothing here records who
+     * was waiting. The console asks before resuming for that reason. After
+     * the response, fail-soft.
      */
     if (!paused && Boolean(row.paused) === false) {
       after(async () => {

@@ -85,6 +85,6 @@ describe("Confirm, which every irreversible action goes through", () => {
 
   it("still refuses a second press while pending", () => {
     const collapsed = src.slice(src.indexOf("if (!asking)"), src.indexOf("role=\"alertdialog\""));
-    expect(collapsed).toContain("disabled={pending}");
+    expect(collapsed).toContain("disabled={pending || disabled}");
   });
 });

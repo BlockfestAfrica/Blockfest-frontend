@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import {
   adminUsers,
   campaignCreators,
@@ -12,6 +12,7 @@ import {
   submissions,
 } from "@/lib/db/client";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { likeContaining } from "@/lib/db/like";
 import { logError } from "@/lib/log";
 import { PG, isPgError } from "@/lib/db/errors";
 import type { AdminIdentity } from "@/lib/admin/session";
@@ -198,18 +199,7 @@ export async function reviewSubmission(
  * Oldest first because a review queue worked newest-first leaves the earliest
  * entrants waiting longest, and they are the ones who entered on day one.
  */
-export async function pendingSubmissions(
-  admin: AdminIdentity,
-  limit = 50,
-  /**
-   * Restrict to these submissions, keeping the oldest-first order.
-   *
-   * Used to show one lane of the queue. The lane is worked out in JavaScript
-   * from pendingAttribution, because the rule that decides it cannot be put
-   * into SQL without drifting from the function that actually decides it.
-   */
-  ids?: string[],
-) {
+export async function pendingSubmissions(admin: AdminIdentity, limit = 50) {
   void admin; // Reading the queue is admin-only; the type is the proof.
   const db = getDb();
 
@@ -249,6 +239,19 @@ export async function pendingSubmissions(
            AND other.id <> submissions.id
            AND other.status <> 'rejected'
       )`.as("contested"),
+      /*
+       * Whether that other claim has already been paid.
+       *
+       * Then approving this one is refused (post_already_credited) rather
+       * than deciding the tie, and the question before Approve has to say so
+       * instead of promising to credit this creator.
+       */
+      creditedElsewhere: sql<boolean>`EXISTS (
+        SELECT 1 FROM submissions other
+         WHERE other.post_identity = submissions.post_identity
+           AND other.id <> submissions.id
+           AND other.status = 'approved'
+      )`.as("credited_elsewhere"),
     })
     .from(submissions)
     .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))
@@ -269,65 +272,96 @@ export async function pendingSubmissions(
       ),
     )
     .where(
-      and(
-        eq(submissions.status, "pending"),
-        eq(campaigns.slug, MONICA_SLUG),
-        // An empty lane must return nothing rather than everything, which
-        // is what an omitted condition would do.
-        ...(ids ? [inArray(submissions.id, ids.length ? ids : [""])] : []),
-      ),
+      and(eq(submissions.status, "pending"), eq(campaigns.slug, MONICA_SLUG)),
     )
     .orderBy(submissions.submittedAt)
     .limit(Math.min(Math.max(limit, 1), 200));
 }
 
 /**
- * Just enough of every pending submission to count and to sort into lanes.
+ * How many submissions are waiting, all of them.
  *
  * The queue header printed `queue.length`, which is the page size, so once 51
  * submissions were waiting the page said "50 waiting" and kept saying it. This
  * exists so the number is the real one.
  *
- * Three short columns and no joins out to the creator, so a few thousand rows
- * is cheap. The attribution check is then run over it in JavaScript, because
- * authorFromUrl special-cases reserved x.com segments, TikTok @-segments and
- * vm./vt. share links, and returns null for every Instagram URL. A LIKE clause
- * approximating that would drift from it and produce lane counts that are wrong
- * in a way that looks entirely plausible.
+ * It used to fetch every pending link so the page could sort the queue into
+ * lanes by the handle each link carried. The lanes are gone, because that
+ * handle is typed by whoever submits and proves nothing about who published
+ * the post, and a count is all that is left to ask for.
  */
-export async function pendingAttribution(admin: AdminIdentity) {
+export async function pendingCount(admin: AdminIdentity): Promise<number> {
   void admin; // Admin-only; the type is the proof.
   const db = getDb();
 
-  return db
-    .select({
-      id: submissions.id,
-      platform: submissions.platform,
-      url: submissions.url,
-    })
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
     .from(submissions)
     .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))
     .innerJoin(challenges, eq(challenges.id, challengeEntries.challengeId))
     .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
     .where(
       and(eq(submissions.status, "pending"), eq(campaigns.slug, MONICA_SLUG)),
-    )
-    .orderBy(submissions.submittedAt)
-    .limit(2000);
+    );
+  return row?.n ?? 0;
+}
+
+export type DecidedStatus = "all" | "approved" | "rejected";
+
+export interface DecidedQuery {
+  status?: DecidedStatus;
+  /** One stage's week, or every week when absent. */
+  weekNo?: number;
+  /** A creator's name, a registered handle, or any part of the link. */
+  search?: string;
+  limit?: number;
 }
 
 /**
- * What has already been decided.
+ * What has already been decided, with the link that was decided on.
  *
  * Approving is irreversible in the sense that matters: review() has no pending
  * guard, so the opposite decision can be sent, but there is no way back to
  * waiting and the creator has already been emailed. This list is the only
  * durable record of a mis-tap, and it costs a query because the schema already
  * carries who decided, when, and what they wrote.
+ *
+ * It is also where an approved post is found again later, to check it is still
+ * up or still says what it said. That is why it filters in SQL before the
+ * limit: the newest fifty alone meant an approval from week one fell off the
+ * page by week two, which is exactly when somebody asks about it.
  */
-export async function decidedSubmissions(admin: AdminIdentity, limit = 50) {
+export async function decidedSubmissions(
+  admin: AdminIdentity,
+  query: DecidedQuery = {},
+) {
   void admin;
   const db = getDb();
+  // Handles are stored without the @ people type in front of them, so a
+  // search for "@adawrites" would otherwise find nothing.
+  const search = query.search?.trim().replace(/^@+/, "");
+  const limit = Math.min(Math.max(query.limit ?? 50, 1), 200);
+
+  const filters = [
+    query.status && query.status !== "all"
+      ? eq(submissions.status, query.status)
+      : ne(submissions.status, "pending"),
+    eq(campaigns.slug, MONICA_SLUG),
+  ];
+  if (query.weekNo) filters.push(eq(challenges.weekNo, query.weekNo));
+  if (search) {
+    const like = likeContaining(search);
+    const match = or(
+      ilike(creators.fullName, like),
+      ilike(submissions.url, like),
+      sql`EXISTS (
+        SELECT 1 FROM ${creatorSocialHandles} h
+         WHERE h.creator_id = ${creators.id}
+           AND h.handle ILIKE ${like}
+      )`,
+    );
+    if (match) filters.push(match);
+  }
 
   return db
     .select({
@@ -355,9 +389,38 @@ export async function decidedSubmissions(admin: AdminIdentity, limit = 50) {
     // ON DELETE SET NULL, so the column is nullable and an inner join would
     // silently drop a decision rather than show it unattributed.
     .leftJoin(adminUsers, eq(adminUsers.id, submissions.reviewedByAdminId))
-    .where(
-      and(ne(submissions.status, "pending"), eq(campaigns.slug, MONICA_SLUG)),
-    )
+    .where(and(...filters))
     .orderBy(desc(submissions.reviewedAt))
-    .limit(Math.min(Math.max(limit, 1), 200));
+    .limit(limit);
+}
+
+/**
+ * How many decisions exist, counted in the database with no limit.
+ *
+ * The header used to print the length of the page, which is capped, and a page
+ * size read as a population is the mistake the People screen already made and
+ * fixed once. These are the real totals, so a filtered page can say how much
+ * of the whole it is showing.
+ */
+export async function decidedCounts(
+  admin: AdminIdentity,
+): Promise<{ approved: number; rejected: number }> {
+  void admin;
+  const db = getDb();
+
+  const result = await db
+    .select({
+      approved: sql<number>`count(*) FILTER (WHERE ${submissions.status} = 'approved')::int`,
+      rejected: sql<number>`count(*) FILTER (WHERE ${submissions.status} = 'rejected')::int`,
+    })
+    .from(submissions)
+    .innerJoin(challengeEntries, eq(challengeEntries.id, submissions.entryId))
+    .innerJoin(challenges, eq(challenges.id, challengeEntries.challengeId))
+    .innerJoin(campaigns, eq(campaigns.id, challenges.campaignId))
+    .where(eq(campaigns.slug, MONICA_SLUG));
+
+  return {
+    approved: Number(result[0]?.approved ?? 0),
+    rejected: Number(result[0]?.rejected ?? 0),
+  };
 }

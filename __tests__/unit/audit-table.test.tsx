@@ -89,4 +89,12 @@ describe("the audit table", () => {
     expect(actionLabel("submission.approved")).toBe("Entry approved");
     expect(actionLabel("some.future_action")).toBe("some.future_action");
   });
+
+  it("names the domain blocks in words, the automatic one as automatic", () => {
+    // 0069 writes these; the automatic one arrives with no admin on it, so
+    // the label is the only thing saying a machine did it.
+    expect(actionLabel("vote_domain.blocked")).toBe("Domain blocked");
+    expect(actionLabel("vote_domain.unblocked")).toBe("Domain unblocked");
+    expect(actionLabel("vote_domain.auto_blocked")).toBe("Domain blocked automatically");
+  });
 });

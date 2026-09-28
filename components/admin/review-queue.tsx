@@ -1,68 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { reveal } from "@/components/shared/reveal";
 import { useRouter } from "next/navigation";
 import {
   Check,
   ChevronDown,
   Copy,
   ShieldAlert,
-  ShieldCheck,
   X,
 } from "lucide-react";
 import { Pill } from "@/components/shared/panel";
+import { ConfirmPanel } from "@/components/shared/confirm";
+import { openableHref } from "@/lib/admin/openable-href";
 import { toast } from "sonner";
 
 /** Rows shown before the reviewer asks for more. */
 const PAGE = 10;
 
 /*
- * A link, but only to a place we can prove it goes.
- *
- * This block used to say the link is never an anchor, because the
- * destination is chosen by whoever submitted it and the reader is somebody
- * who can mint points against a five million naira pool. That reasoning was
- * right when it was written and is only partly right now: submission
- * enforces hostMatchesPlatform, so a stored URL is on x.com, twitter.com,
- * instagram.com, tiktok.com or a subdomain of one of them. The reviewer
- * cannot be sent to an attacker's own server.
- *
- * Partly, because that check lives in the zod schema rather than in the
- * database, and this codebase's whole habit is that a guard which is not in
- * the engine is a guard somebody can route around. So the allowlist is
- * applied AGAIN here, against the rendered row: a URL that is not https and
- * on one of those hosts renders as text, exactly as every URL did before.
- * Nothing becomes clickable that cannot be shown to point at a platform.
- *
- * What is left is an open redirect on one of those platforms, which a
- * reviewer reaches identically by copying the same string into the same
- * browser. rel="noopener noreferrer" closes the tab-nabbing and referrer
- * paths that clicking adds over pasting.
- *
- * The trade this buys: every review previously began with a copy, a new
- * tab and a paste, on the one screen the team uses most.
+ * The link opens only where openableHref can prove it points at a platform.
+ * The allowlist and its reasoning live in lib/admin/openable-href.ts, shared
+ * with the Decided page. The trade it buys here: every review previously began
+ * with a copy, a new tab and a paste, on the one screen the team uses most.
  */
-const LINKABLE_HOSTS = [
-  "x.com",
-  "twitter.com",
-  "instagram.com",
-  "instagr.am",
-  "tiktok.com",
-];
-
-function openableHref(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "https:") return null;
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
-    const known = LINKABLE_HOSTS.some(
-      (h) => host === h || host.endsWith(`.${h}`),
-    );
-    return known ? url : null;
-  } catch {
-    return null;
-  }
-}
 
 export interface QueueItem {
   id: string;
@@ -76,8 +37,8 @@ export interface QueueItem {
   registeredHandle: string | null;
   /** Another live submission claims this same post. Only one can be paid. */
   contested: boolean;
-  /** True when the server could compare the link's author to that handle. */
-  autoChecked: boolean;
+  /** That other claim is already approved, so approving this one is refused. */
+  creditedElsewhere?: boolean;
   /** Null until an admin has confirmed the account belongs to this creator. */
   /** What the creator must publish from the account, as the proof. */
 }
@@ -87,18 +48,14 @@ export interface QueueItem {
  *
  * Rebuilt around one decision repeated many times. Every row used to be a
  * 300 to 420 pixel block containing a link, a note field and two buttons, all
- * expanded at once, so twenty pending submissions were an unreadable wall and
- * the one signal that changes how long a row takes, whether the link could be
- * checked against the registered handle, was a line of text buried in the
- * middle of it.
+ * expanded at once, so twenty pending submissions were an unreadable wall.
  *
- * Now a row is collapsed to a line, and the attribution state is a coloured
- * left edge that can be scanned straight down the column.
+ * Now a row is collapsed to a line and opens to the decision.
  *
  * Two things here are load-bearing and should not be tidied away.
  *
  * The link opens, but only after openableHref proves where it goes. See the
- * note on that function: it is the same allowlist submission enforces,
+ * note in lib/admin/openable-href.ts: it is the same allowlist submission enforces,
  * applied a second time at the point of rendering, because a guard that
  * lives only in a zod schema is a guard somebody can route around. A URL
  * that cannot be proved to point at a platform still renders as text.
@@ -125,6 +82,17 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [open, setOpen] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  /*
+   * Approve asks first in two cases only, because it is the busiest press in
+   * the console and a question on every one would train a double tap.
+   *
+   * A typed note: rejecting needs a reason, so text in the box usually means
+   * the reviewer was on the way to Reject. Approve with it pays the creator,
+   * and the rejection wording lands on their page as a note from the reviewer.
+   * A contested post: approving decides which of two creators is paid, and
+   * refuses the other.
+   */
+  const [asking, setAsking] = useState<string | null>(null);
   /*
    * Ten rows at a time, revealed rather than paged. The server loads up to
    * fifty, and fifty coloured edges on a phone are a wall again. Reveal
@@ -210,7 +178,21 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
    * The link is clickable now, so copying is the secondary path rather
    * than the way in, and it no longer has to be bundled into expanding.
    */
+  /*
+   * Bring an opened row's decision into view.
+   *
+   * The row expands in place, which is right for a queue worked one after
+   * another; but on a phone the panel is 300 to 400 pixels, and from a row
+   * near the bottom of the screen the reason field and Approve and Reject
+   * landed below the fold. Scrolled only, not focused: the reviewer's place
+   * stays on the row they opened.
+   */
+  useEffect(() => {
+    if (open) reveal(document.getElementById(`review-${open}`));
+  }, [open]);
+
   function toggle(item: QueueItem) {
+    setAsking(null);
     setOpen((current) => (current === item.id ? null : item.id));
   }
 
@@ -233,16 +215,19 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
             <li
               key={item.id}
               /*
-               * The attribution state as a left edge.
+               * Amber on every row, because every row is the same job: a
+               * person has to look at who published the post.
                *
-               * Green means the server could match the link's author to the
-               * registered handle. Amber means it could not and a human has to.
-               * As an edge it can be scanned down the column at a glance, which
-               * a sentence in the middle of a row cannot be.
+               * It was green where an X or TikTok link carried the registered
+               * handle. That handle is typed by whoever submits the link and
+               * nothing ties it to the post: post_identity_of keys the post on
+               * the number at the end alone, so a link reading
+               * x.com/<own handle>/status/<somebody else's post> is filed as
+               * that somebody's post, and it arrived green. Nothing the server
+               * holds can say who published a post, so no row can honestly be
+               * painted as checked.
                */
-              className={`border-l-2 ${
-                item.autoChecked ? "border-l-green-400/70" : "border-l-amber-400"
-              }`}
+              className="border-l-2 border-l-amber-400"
             >
               <button
                 type="button"
@@ -289,25 +274,31 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
               </button>
 
               {isOpen && (
-                <div className="border-t border-line bg-card p-4">
-                  {item.autoChecked ? (
-                    <p className="flex items-center gap-2 text-sm text-green-300">
-                      <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      The link names this account. Still open it and check it
-                      answers the challenge.
-                    </p>
-                  ) : (
-                    <p className="flex items-start gap-2 text-sm text-amber-300">
-                      <ShieldAlert
-                        className="mt-0.5 h-4 w-4 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span>
-                        This link does not name its author. Open it and confirm it
-                        is the account above.
-                      </span>
-                    </p>
-                  )}
+                <div
+                  id={`review-${item.id}`}
+                  className="scroll-mb-6 border-t border-line bg-card p-4"
+                >
+                  {/* One instruction on every platform. X and TikTok rows
+                      used to read "The link names this account", which a
+                      creator could make true of anybody's post by typing
+                      their own name into the link. The comparison that
+                      counts is the registered handle against the author the
+                      platform shows once the post is open. */}
+                  <p className="flex items-start gap-2 text-sm text-amber-300">
+                    <ShieldAlert
+                      className="mt-0.5 h-4 w-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      Open the post. Check the author the platform shows is{" "}
+                      {item.registeredHandle
+                        ? `@${item.registeredHandle}`
+                        : "an account this creator registered"}
+                      , and that the post answers the challenge below. The name
+                      inside an X or TikTok link proves nothing: whoever
+                      submits it types it.
+                    </span>
+                  </p>
 
                   <p className="mt-1 text-sm text-ink-3">{item.challengeTitle}</p>
 
@@ -369,12 +360,19 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                         irreversibly. */}
                     <div className="flex shrink-0 gap-2">
                       <button
+                        id={`approve-${item.id}`}
                         type="button"
                         disabled={busy?.id === item.id}
                         aria-busy={
                           busy?.id === item.id && busy.decision === "approved"
                         }
-                        onClick={() => decide(item.id, "approved")}
+                        onClick={() => {
+                          if (item.contested || (notes[item.id] ?? "").trim()) {
+                            setAsking(item.id);
+                          } else {
+                            decide(item.id, "approved");
+                          }
+                        }}
                         className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-green-400/15 px-5 text-sm font-semibold text-green-300 transition-[background-color,transform] duration-150 hover:bg-green-400/25 active:scale-[0.98] disabled:opacity-60 sm:flex-none"
                       >
                         <Check className="h-4 w-4" aria-hidden="true" />
@@ -388,7 +386,10 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                         aria-busy={
                           busy?.id === item.id && busy.decision === "rejected"
                         }
-                        onClick={() => decide(item.id, "rejected")}
+                        onClick={() => {
+                          setAsking(null);
+                          decide(item.id, "rejected");
+                        }}
                         className="inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-red-400/40 px-5 text-sm font-semibold text-red-300 transition-[background-color,transform] duration-150 hover:bg-red-400/15 active:scale-[0.98] disabled:opacity-60"
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
@@ -402,6 +403,47 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
                       </button>
                     </div>
                   </div>
+                  {asking === item.id && (
+                    <ConfirmPanel
+                      className="mt-3"
+                      label="Approve"
+                      intent="success"
+                      question={
+                        item.contested
+                          ? `Approve ${item.creatorName} for this contested post?`
+                          : `Approve ${item.creatorName}'s week ${item.weekNo} ${item.platformLabel} entry with your note?`
+                      }
+                      /* When the other claim is already paid, the server
+                         refuses before it writes anything: no status, no
+                         note, no email. So that case says only that, and
+                         none of what an approval that goes through does. */
+                      consequence={(item.creditedElsewhere
+                        ? [
+                            "Another submission of this post is already approved, and a post is paid once, so this approval will be refused. Nothing is paid, and nothing is saved or sent to the creator.",
+                          ]
+                        : [
+                            item.contested
+                              ? `Another submission of the same post is waiting too, and only one can be paid. Approving credits it to ${item.creatorName} and emails them; the other can then only be rejected.`
+                              : `They get the points and an approval email.`,
+                            (notes[item.id] ?? "").trim()
+                              ? `Your note shows on their page as a note from the reviewer: “${(notes[item.id] ?? "").trim()}”.`
+                              : "",
+                            "An approval cannot be put back to waiting.",
+                          ]
+                      )
+                        .filter(Boolean)
+                        .join(" ")}
+                      confirmLabel="Yes, approve"
+                      onCancel={() => {
+                        setAsking(null);
+                        document.getElementById(`approve-${item.id}`)?.focus();
+                      }}
+                      onConfirm={() => {
+                        setAsking(null);
+                        decide(item.id, "approved");
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </li>

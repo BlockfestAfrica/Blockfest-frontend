@@ -159,7 +159,14 @@ describe("touch targets", () => {
          * stop.
          */
         const viaHelper = /\bbuttonClass\(/.test(tag);
-        if (!hasMin && !hasPadding && !viaHelper) {
+        /*
+         * A button with the hidden attribute is never drawn, so it is not a
+         * target at all. The creator sign-out keeps one to submit its form on
+         * phones without requestSubmit. Matched as an attribute, not the
+         * `hidden` class, which a responsive button can carry and still show.
+         */
+        const neverShown = /\shidden(\s|\/|>)/.test(tag) && /tabIndex=\{-1\}/.test(tag);
+        if (!hasMin && !hasPadding && !viaHelper && !neverShown) {
           offenders.push(`${file}: ${tag.replace(/\s+/g, " ").slice(0, 90)}`);
         }
       }
@@ -177,8 +184,8 @@ describe("the review queue specifically", () => {
 
   it("shows the whole submitted URL rather than truncating it", () => {
     /*
-     * The author segment is what the decision turns on, and a long handle
-     * can push it past a truncation.
+     * The post's number is at the end of the link, and a long handle can
+     * push it past a truncation.
      *
      * Asserted over BOTH render paths rather than by slicing backwards from
      * the first "{item.url}". The URL now renders as a link when its host
@@ -203,21 +210,6 @@ describe("the review queue specifically", () => {
       expect(cls, cls).toContain("break-all");
       expect(cls, cls).not.toContain("truncate");
     }
-  });
-
-  it("renders a different message for a checked and an unchecked link", () => {
-    // Asserted as a branch, not as wording. A test that matched the copy would
-    // break every time the copy improved, and would still pass if both
-    // branches were changed to say the same thing, which is the actual risk:
-    // an unchecked link that reads as verified.
-    const src = readFileSync(join(process.cwd(), QUEUE), "utf8");
-    expect(src).toContain("item.autoChecked");
-    expect(src).toMatch(/item\.autoChecked\s*\?/);
-
-    // Two arms, visually distinguished, or the distinction is invisible.
-    const branch = src.slice(src.indexOf("item.autoChecked ?"));
-    expect(branch).toMatch(/text-(green|emerald)-/);
-    expect(branch).toMatch(/text-(amber|red|yellow)-/);
   });
 });
 

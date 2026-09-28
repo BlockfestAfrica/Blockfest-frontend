@@ -17,6 +17,7 @@ import {
   VOLUNTEER_ROLES_DOC_URL,
 } from "@/lib/volunteer";
 import { CURRENT_EDITION, EVENT_ID, SITE_URL } from "@/lib/seo-event";
+import { jsonLd } from "@/lib/json-ld";
 
 const EVENT = CURRENT_EDITION;
 
@@ -55,7 +56,7 @@ export default function VolunteerPage() {
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD requires raw script injection
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLd({
             "@context": "https://schema.org",
             "@type": "WebPage",
             name: "Volunteer",

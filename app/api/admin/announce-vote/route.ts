@@ -113,6 +113,14 @@ export async function POST(request: NextRequest) {
         { status: 409 },
       );
     }
+    // After the close there is nothing left to vote on, so no mail goes out
+    // telling the campaign that voting is open.
+    if (round.closes_at && new Date(round.closes_at).getTime() <= Date.now()) {
+      return NextResponse.json(
+        { ok: false, message: "Voting for this round has already closed." },
+        { status: 409 },
+      );
+    }
     if (round.opens_at && new Date(round.opens_at).getTime() > Date.now()) {
       return NextResponse.json(
         {
@@ -130,6 +138,7 @@ export async function POST(request: NextRequest) {
     const already = await db.execute(sql`
       SELECT 1 FROM audit_log
        WHERE action = 'vote.announced'
+         AND entity_type = 'vote_round'
          AND entity_id = ${round.id}::uuid
        LIMIT 1
     `);
@@ -173,15 +182,49 @@ export async function POST(request: NextRequest) {
      * retry mails everybody already reached. Failing toward a refused
      * retry is the safe direction when the alternative is several hundred
      * duplicates out of the quota that carries people's login links.
+     *
+     * And claimed by the primary key, so exactly one press can hold it.
+     * The check above is the friendly early answer, but it is two queries
+     * and two round trips before this line, and two presses landing
+     * together (two owners, or two tabs) both passed it and both mailed the
+     * whole campaign. A NOT EXISTS in this statement alone does not close
+     * that: under read committed two overlapping inserts each take a
+     * snapshot without the other's row, and a real Postgres let both
+     * through in 467 of 500 simultaneous trials. The claim's id is derived
+     * from the round, so the second insert waits on the first's key, then
+     * does nothing. The NOT EXISTS stays for rounds claimed before this
+     * change, whose rows carry a random id. Only the press whose insert
+     * returns a row sends.
      */
-    await db.execute(sql`
-      INSERT INTO audit_log (campaign_id, actor_admin_id, action, entity_type, entity_id, after)
-      VALUES (
-        ${round.campaign_id}::uuid, ${admin.admin.adminId}::uuid,
-        'vote.announced', 'vote_round', ${round.id}::uuid,
-        ${JSON.stringify({ week_no: round.week_no, sent: 0, failed: 0, status: "started" })}::jsonb
-      )
+    const claimed = await db.execute(sql`
+      INSERT INTO audit_log (id, campaign_id, actor_admin_id, action, entity_type, entity_id, after)
+      SELECT md5('vote.announced:' || ${round.id}::text)::uuid,
+             ${round.campaign_id}::uuid, ${admin.admin.adminId}::uuid,
+             'vote.announced', 'vote_round', ${round.id}::uuid,
+             ${JSON.stringify({ week_no: round.week_no, sent: 0, failed: 0, status: "started" })}::jsonb
+       WHERE NOT EXISTS (
+             SELECT 1 FROM audit_log
+              WHERE action = 'vote.announced'
+                AND entity_type = 'vote_round'
+                AND entity_id = ${round.id}::uuid)
+      ON CONFLICT (id) DO NOTHING
+      RETURNING id, created_at
     `);
+    const claimRow = claimed.rows?.[0] as { id?: string; created_at?: unknown } | undefined;
+    if (!claimRow?.id) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "This vote has already been announced. Check the audit log to see when, and by whom.",
+        },
+        { status: 409 },
+      );
+    }
+    const claim = {
+      id: claimRow.id,
+      startedAt: new Date(String(claimRow.created_at ?? new Date().toISOString())).toISOString(),
+    };
 
     const closes = closingAt(String(round.closes_at));
     const people = (recipients.rows ?? [])
@@ -212,14 +255,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // This press's row, not every row for the round: a row left by the
+    // race this route used to have is a record of its own send.
     await db.execute(sql`
       UPDATE audit_log
          SET after = ${JSON.stringify({ week_no: round.week_no, sent, failed, status: "finished" })}::jsonb
-       WHERE action = 'vote.announced'
-         AND entity_id = ${round.id}::uuid
+       WHERE id = ${claim.id}::uuid
     `);
 
-    return NextResponse.json({ ok: true, sent, failed });
+    // When the claim was made, so the console shows the same time before
+    // and after its refresh reads the row.
+    return NextResponse.json({ ok: true, sent, failed, startedAt: claim.startedAt });
   } catch (error) {
     logError("admin/announce-vote", error);
     return NextResponse.json(

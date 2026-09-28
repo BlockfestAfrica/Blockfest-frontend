@@ -1,5 +1,6 @@
 import React from "react";
 import { type FAQItem } from "@/lib/faq-data";
+import { jsonLd } from "@/lib/json-ld";
 
 interface FAQSchemaProps {
   faqs: FAQItem[];
@@ -22,7 +23,7 @@ export function FAQSchema({ faqs }: FAQSchemaProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schemaData) }}
     />
   );
 }

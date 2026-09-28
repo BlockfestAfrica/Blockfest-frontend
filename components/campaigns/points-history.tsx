@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { buttonClass } from "@/components/shared/panel";
 
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
@@ -16,13 +17,12 @@ export interface PointMovement {
 }
 
 /**
- * The ledger, ten movements at a time.
+ * The ledger, ten movements at a time, as the points card's own rows.
  *
  * Five weeks of approvals, bonuses and corrections make this the fastest
- * growing list a creator owns, and it used to render every fetched row in
- * one block. Reveal keeps their place on a phone; the count line keeps the
- * promise honest, since the page's whole reason for showing the ledger is
- * that the arithmetic visibly adds up.
+ * growing list a creator owns. Reveal keeps their place on a phone. The
+ * line that restated the total is gone: the total sits in this card's
+ * header, directly above the rows it adds up.
  */
 export function PointsHistory({ movements }: { movements: PointMovement[] }) {
   const [visible, setVisible] = useState(PAGE);
@@ -30,49 +30,41 @@ export function PointsHistory({ movements }: { movements: PointMovement[] }) {
 
   return (
     <>
-      <ul className="mt-5 divide-y divide-line overflow-hidden rounded-xl border border-line">
+      <ul className="divide-y divide-line border-t border-line">
         {shown.map((movement) => (
-          <li
-            key={movement.id}
-            className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-4"
-          >
-            <span className="text-sm font-semibold text-white">
-              {movement.label}
-            </span>
-            {/* Signed, because a correction is a negative row and showing it
-                as a bare number would read as an award. */}
-            <span
-              className={`ml-auto shrink-0 text-base font-bold tabular-nums ${
-                movement.points < 0 ? "text-red-300" : "text-white"
-              }`}
-            >
-              {movement.points > 0 ? "+" : ""}
-              {movement.points}
-            </span>
-            <span className="w-full text-sm text-ink-3">
-              {movement.dateLabel}
-            </span>
-            {movement.note && (
-              <p className="w-full text-sm leading-relaxed text-ink-2">
-                {movement.note}
+          <li key={movement.id} className="px-4 py-3 sm:px-5">
+            <div className="flex items-baseline gap-3">
+              <p className="min-w-0 flex-1 text-sm font-semibold text-white">
+                {movement.label}
               </p>
-            )}
+              {/* Signed, because a correction is a negative row and showing
+                  it as a bare number would read as an award. */}
+              <p
+                className={`shrink-0 text-base font-bold tabular-nums ${
+                  movement.points < 0 ? "text-red-300" : "text-white"
+                }`}
+              >
+                {movement.points > 0 ? "+" : ""}
+                {movement.points}
+              </p>
+            </div>
+            <p className="mt-0.5 max-w-prose text-sm leading-relaxed text-ink-3 [overflow-wrap:anywhere]">
+              <span className="text-ink-4">{movement.dateLabel}</span>
+              {movement.note ? ` · ${movement.note}` : ""}
+            </p>
           </li>
         ))}
       </ul>
-      {movements.length > visible ? (
-        <button
-          type="button"
-          onClick={() => setVisible((v) => v + PAGE)}
-          className="mt-3 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg text-sm font-semibold text-link underline underline-offset-4 transition-colors hover:bg-card-2 hover:text-white"
-        >
-          Show more ({movements.length - visible} more)
-        </button>
-      ) : (
-        <p className="mt-3 text-sm text-ink-4">
-          Showing all {movements.length} movements. The total above is their
-          sum.
-        </p>
+      {movements.length > visible && (
+        <div className="border-t border-line p-2">
+          <button
+            type="button"
+            onClick={() => setVisible((v) => v + PAGE)}
+            className={buttonClass("quiet", "w-full")}
+          >
+            Show more ({movements.length - visible} more)
+          </button>
+        </div>
       )}
     </>
   );

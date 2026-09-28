@@ -3,12 +3,15 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
+  CREATOR_LEGACY_SESSION_COOKIE,
   CREATOR_PENDING_COOKIE,
   CREATOR_SESSION_COOKIE,
 } from "@/lib/creator-access";
 import {
   creatorByToken,
+  entryClaim,
   pendingCookieOptions,
+  sessionClearOptions,
   sessionCookieOptions,
 } from "@/lib/creator-session";
 import { monicaRoutes } from "@/lib/campaigns";
@@ -56,7 +59,13 @@ export async function enterAsPending(form: FormData) {
   }
 
   const jar = await cookies();
-  const token = jar.get(CREATOR_PENDING_COOKIE)?.value?.trim() ?? "";
+  /*
+   * The token an entry link parked or, with none, the pre-prefix session
+   * cookie: entryClaim is the same function the page used to choose whose
+   * name to show. From the raw header, so a second value planted under
+   * either name voids the claim instead of quietly replacing it.
+   */
+  const token = entryClaim((await headers()).get("cookie"))?.token ?? "";
 
   /*
    * Resolved again here, not trusted from the render.
@@ -90,6 +99,13 @@ export async function enterAsPending(form: FormData) {
 
   jar.set(CREATOR_SESSION_COOKIE, token, sessionCookieOptions());
   jar.delete({ name: CREATOR_PENDING_COOKIE, path: pendingCookieOptions().path });
+  /*
+   * The pre-prefix cookie goes once its replacement is set, whichever claim
+   * this was. Left behind it would be a second copy of a credential only the
+   * __Host- cookie now carries, or the account the page said this swap signs
+   * out. Path=/ is where it was set, and only a clear with that Path reaches it.
+   */
+  jar.delete({ name: CREATOR_LEGACY_SESSION_COOKIE, path: "/" });
 
   redirect(monicaRoutes.me);
 }
@@ -97,7 +113,17 @@ export async function enterAsPending(form: FormData) {
 /** Drop the claim without acting on it. */
 export async function discardPending() {
   const jar = await cookies();
+  const claim = entryClaim((await headers()).get("cookie"));
   jar.delete({ name: CREATOR_PENDING_COOKIE, path: pendingCookieOptions().path });
+  /*
+   * "This is not me" said about the pre-prefix cookie refuses that cookie, so
+   * it goes too, or /me would ask the same question on the next visit. A
+   * claim parked by a link leaves it alone: the person turned down the link,
+   * not the account they were already in.
+   */
+  if (claim?.resuming) {
+    jar.delete({ name: CREATOR_LEGACY_SESSION_COOKIE, path: "/" });
+  }
   redirect(monicaRoutes.landing);
 }
 
@@ -108,11 +134,14 @@ export async function discardPending() {
  * as the ordinary case, yet once a session existed nothing could end it short
  * of clearing site data by hand, for ninety sliding days. The emailed link
  * signs the owner straight back in, so leaving costs one tap to return; the
- * clearing Set-Cookie carries the session cookie's own path or it would be
- * a no-op, same rule as the pending delete above.
+ * clearing Set-Cookie carries the session cookie's own attributes or it would
+ * be a no-op, the same rule as the pending delete above with Secure added,
+ * which the __Host- prefix demands of a deletion too. The pre-prefix cookie is
+ * cleared beside it, so a creator not yet asked about it is signed out as well.
  */
 export async function signOut() {
   const jar = await cookies();
-  jar.delete({ name: CREATOR_SESSION_COOKIE, path: sessionCookieOptions().path });
+  jar.set(CREATOR_SESSION_COOKIE, "", sessionClearOptions());
+  jar.delete({ name: CREATOR_LEGACY_SESSION_COOKIE, path: "/" });
   redirect(monicaRoutes.landing);
 }

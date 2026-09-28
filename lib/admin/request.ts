@@ -88,16 +88,22 @@ export function throttleKey(request: NextRequest): string {
 /** A review decision is a few hundred bytes. Anything larger is not one. */
 export const MAX_ADMIN_BODY_BYTES = 4 * 1024;
 
+/**
+ * The body, parsed, if it is no larger than maxBytes. A route whose largest
+ * legitimate request is bigger than a review decision (a list of ids) says
+ * so here, rather than every route's limit rising with it.
+ */
 export async function readJsonBody(
   request: NextRequest,
+  maxBytes: number = MAX_ADMIN_BODY_BYTES,
 ): Promise<{ ok: true; body: unknown } | { ok: false }> {
   const declared = Number(request.headers.get("content-length") ?? 0);
-  if (declared > MAX_ADMIN_BODY_BYTES) return { ok: false };
+  if (declared > maxBytes) return { ok: false };
 
   try {
     const raw = await request.text();
     // Re-measured, because content-length is advisory and can simply lie.
-    if (raw.length > MAX_ADMIN_BODY_BYTES) return { ok: false };
+    if (raw.length > maxBytes) return { ok: false };
     return { ok: true, body: JSON.parse(raw) };
   } catch {
     return { ok: false };

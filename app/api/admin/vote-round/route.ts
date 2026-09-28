@@ -5,12 +5,15 @@ import { getDb } from "@/lib/db/client";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { pgErrorCode } from "@/lib/db/errors";
-import { logError } from "@/lib/log";
+import { logError, logWarning } from "@/lib/log";
 import { MONICA_SLUG } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { shortlistEmail, votingPage } from "@/lib/email/templates";
 import { findVotesByEmail } from "@/lib/admin/vote-round";
+import { DOMAIN_CAP, isNeverBlock } from "@/lib/campaign-vote";
+import { normaliseBlockDomain } from "@/lib/vote-domain";
+import { REMOVE_ALL_MAX_VOTES, REMOVE_ALL_TOO_MANY } from "@/lib/vote-domain-copy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,15 +26,15 @@ export const maxDuration = 30;
 
 /**
  * Run the Community Favourite round: open it, close it, sweep it, mark the
- * sweep done.
+ * sweep done, and keep a farm's domain blocked once it is swept.
  *
  * Owners only, like announcing a winner, because every action here shapes who
  * that winner is. One endpoint with an action discriminator rather than five
  * routes, so the guards and the error mapping exist once and cannot drift
  * apart between the open call and the removal call.
  *
- * The rules all live in the 0046 SQL functions, which also write their own
- * audit rows. This route validates shape, forwards, and translates SQLSTATEs
+ * The rules all live in the SQL functions (0046, and 0069 for blocked
+ * domains), which also write their own audit rows. This route validates shape, forwards, and translates SQLSTATEs
  * into sentences; it never restates a rule the engine already enforces, and
  * it never logs an action twice.
  */
@@ -76,6 +79,80 @@ const removeSchema = z.object({
   mode: z.enum(["fraud", "unsweep"]),
 });
 
+/** A domain as typed: lowercase dotted labels, which is all the table takes. */
+const domainField = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/, "That is not a domain.");
+
+/*
+ * A cluster's verified votes, removed as fraud in one act, and the domain
+ * blocked. A catch-all farm arrives as a cluster of ten or more, and removing
+ * it one Remove at a time was eleven dialogs and eleven reasons for one
+ * judgement. Each vote still goes through remove_vote, so each is barred and
+ * audited exactly as a single removal is; then the domain is blocked, so the
+ * same farm cannot come straight back with fresh addresses.
+ *
+ * The domain is the registrable one, and its subdomains go with it: the
+ * console clusters a.oemails.com and b.oemails.com under oemails.com, the
+ * cap judges them together (0069), and a sweep that left the subdomains
+ * behind would leave the farm counting.
+ *
+ * voteIds are the votes that were on the owner's screen. Only those are
+ * removed; anything from the domain that arrived since is held by the block
+ * instead, for a person to judge. Five hundred is far past any cluster the
+ * console has shown and still one statement's worth of parameters. Past it,
+ * the answer says what does work: reloading sends the same ids again, while
+ * a block holds every counted vote from the domain in one act. The console
+ * says the same before it sends that many (vote-round-panel).
+ */
+const removeDomainSchema = z.object({
+  action: z.literal("remove_domain"),
+  roundId: z.string().uuid("That is not a round."),
+  domain: domainField,
+  reason: z
+    .string()
+    .trim()
+    .min(1, "A removal needs a reason.")
+    .max(300, "Keep the reason under three hundred characters."),
+  voteIds: z
+    .array(z.string().uuid("That is not a vote."))
+    .min(1, "There are no votes to remove.")
+    .max(REMOVE_ALL_MAX_VOTES, REMOVE_ALL_TOO_MANY),
+});
+
+/*
+ * Block a domain for the rest of the campaign: new casts from it and its
+ * subdomains are turned away, codes already sent verify as held, and what it
+ * has counted in rounds not yet reviewed is held. From a cluster, or typed
+ * into the Blocked domains card before anybody has used it.
+ */
+const blockDomainSchema = z.object({
+  action: z.literal("block_domain"),
+  domain: domainField,
+  reason: z
+    .string()
+    .trim()
+    .min(1, "A block needs a reason.")
+    .max(300, "Keep the reason under three hundred characters."),
+});
+
+/*
+ * Lift a block. The domain is the one the card shows, exactly as stored, so
+ * it is not normalised again: a stored block is always a registrable domain,
+ * and matching it byte for byte is what finds the row.
+ */
+const unblockDomainSchema = z.object({
+  action: z.literal("unblock_domain"),
+  domain: domainField,
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Say why it is safe again.")
+    .max(300, "Keep the reason under three hundred characters."),
+});
+
 const releaseSchema = z.object({
   action: z.literal("release"),
   voteId: z.string().uuid("That is not a vote."),
@@ -103,9 +180,21 @@ const schema = z.discriminatedUnion("action", [
   closeSchema,
   reviewSchema,
   removeSchema,
+  removeDomainSchema,
+  blockDomainSchema,
+  unblockDomainSchema,
   releaseSchema,
   lookupSchema,
 ]);
+
+/*
+ * Room for the largest request this route takes: Remove all with its five
+ * hundred vote ids (39 bytes each in JSON), a reason and the rest. The
+ * shared admin limit is sized for one decision, about a hundred ids, and a
+ * cluster past that was refused as "We could not read that." before its ids
+ * were ever counted.
+ */
+const MAX_BODY_BYTES = 24 * 1024;
 
 const FORBIDDEN = NextResponse.json(
   { ok: false, message: "Not allowed." },
@@ -132,7 +221,20 @@ const MESSAGES: Record<string, string> = {
   P0821:
     "Codes sent before the close can still be redeemed for fifteen minutes past the round's scheduled closing time. Wait for that window to pass, then mark the review complete: certifying now would certify a board that can still move.",
   P0908: "The vote has to close after it opens. Check the window.",
+  // close_vote_round needs the week's standings, and a week's standings can
+  // only be recorded while it is the current stage.
+  P0804: "This week's standings were never recorded, so its vote cannot be closed. Record the standings while the week is current.",
   P0502: "A removal needs a reason.",
+  P0822:
+    "That domain is a big consumer provider shared by real voters, so it cannot be blocked.",
+  P0823: "That domain is not blocked any more. Reload to see the current list.",
+  /*
+   * Deadlock. Block, Unblock and Remove all take their locks in one order,
+   * so two owners acting on one domain queue rather than deadlock; this is
+   * the answer if Postgres ever has to break a cycle anyway, rather than
+   * "something went wrong at our end". Nothing was written: the transaction
+   * that got it rolled back whole.
+   */
   P0401: "Only a signed-in admin can do this.",
   P0002: "That campaign does not exist.",
   /* The one_round_per_week index, for two owners opening the same Sunday. */
@@ -146,7 +248,7 @@ export async function POST(request: NextRequest) {
   if (!admin.ok) return FORBIDDEN;
   if (!isOwner(admin.admin)) return FORBIDDEN;
 
-  const read = await readJsonBody(request);
+  const read = await readJsonBody(request, MAX_BODY_BYTES);
   if (!read.ok) {
     return NextResponse.json(
       { ok: false, message: "We could not read that." },
@@ -269,6 +371,117 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (
+      action.action === "remove_domain" ||
+      action.action === "block_domain"
+    ) {
+      /*
+       * Never a public suffix. Both act on the domain and everything under
+       * it, so edu.ng would be every Nigerian university at once and com.ng
+       * every company. tldts answers null for those, and for an IP address,
+       * and each is refused here rather than guessed at. A subdomain is read
+       * as the domain it belongs to, the key the cap and the console use.
+       */
+      const domain = normaliseBlockDomain(action.domain);
+      if (!domain) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message:
+              action.action === "remove_domain"
+                ? `${action.domain} is a suffix many domains share, not one domain. Remove its votes one at a time.`
+                : "That is not a domain you can block.",
+          },
+          { status: 400 },
+        );
+      }
+      /*
+       * Never a consumer provider, by the never-block list rather than the
+       * cap's allowlist: ymail.com and me.com are one inbox per person too,
+       * and a block on either would turn away every real voter on it. The
+       * engine refuses them as well (P0822, and the table's CHECK); this
+       * says so before the round trip, in the owner's terms.
+       */
+      if (isNeverBlock(domain)) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message:
+              action.action === "remove_domain"
+                ? `${domain} is a big consumer provider shared by real voters. Remove its votes one at a time.`
+                : `${domain} is a big consumer provider shared by real voters, so it cannot be blocked.`,
+          },
+          { status: 400 },
+        );
+      }
+
+      if (action.action === "block_domain") {
+        const result = await getDb().execute(sql`
+          SELECT block_vote_domain(
+                   ${adminId}::uuid,
+                   (SELECT id FROM campaigns WHERE slug = ${MONICA_SLUG}),
+                   ${domain}::text,
+                   ${action.reason}::text
+                 ) AS held
+        `);
+        /*
+         * Null is the engine saying the domain was blocked already: it
+         * inserted nothing, held nothing and audited nothing, so "Blocked"
+         * would claim an act that did not happen, and a reason that was
+         * never recorded.
+         */
+        const row = result.rows?.[0] as { held?: number | null } | undefined;
+        const already = row !== undefined && row.held === null;
+        const held = Number(row?.held ?? 0);
+        return NextResponse.json({ ok: true, domain, held, already });
+      }
+
+      /*
+       * One function, so it is all or nothing and in order: the listed
+       * votes are removed, then the domain is blocked (0069). It locks the
+       * votes it removes in a fixed order, and refuses a published or
+       * unknown round rather than answering that it removed nothing.
+       */
+      const idList = sql.join(
+        action.voteIds.map((id) => sql`${id}::uuid`),
+        sql`, `,
+      );
+      const result = await getDb().execute(sql`
+        SELECT remove_vote_domain(
+                 ${adminId}::uuid,
+                 ${action.roundId}::uuid,
+                 ${domain}::text,
+                 ${action.reason}::text,
+                 ARRAY[${idList}]::uuid[]
+               ) AS removed
+      `);
+      const removed = Number(
+        (result.rows?.[0] as { removed?: number } | undefined)?.removed ?? 0,
+      );
+      return NextResponse.json({ ok: true, domain, removed });
+    }
+
+    if (action.action === "unblock_domain") {
+      /*
+       * The cap goes with it: the engine releases the block's holds only up
+       * to the domain's allowance in each round, the same ten verify_vote
+       * applies, and keeps the rest held as over it.
+       */
+      const result = await getDb().execute(sql`
+        SELECT unblock_vote_domain(
+                 ${adminId}::uuid,
+                 (SELECT id FROM campaigns WHERE slug = ${MONICA_SLUG}),
+                 ${action.domain}::text,
+                 ${action.reason}::text,
+                 ${DOMAIN_CAP}::integer
+               ) AS released
+      `);
+      const released = Number(
+        (result.rows?.[0] as { released?: number } | undefined)?.released ?? 0,
+      );
+      return NextResponse.json({ ok: true, domain: action.domain, released });
+    }
+
     if (action.action === "remove") {
       await getDb().execute(
         sql`SELECT remove_vote(
@@ -319,6 +532,46 @@ export async function POST(request: NextRequest) {
         // Fall through to the message without the instant, which is still
         // truthful. A failed read here must not turn a refusal into a 500.
       }
+    }
+
+    /*
+     * "That round is not open" is the right words for a vote cast into a
+     * closed round, and the wrong ones here: a closed round can still be
+     * swept, and the only round remove_vote_domain refuses is a published
+     * one, whose winner was announced on its tally.
+     */
+    if (code === "P0814" && action.action === "remove_domain") {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "That round's winner is announced, so its votes stay as they are.",
+        },
+        { status: 400 },
+      );
+    }
+
+    /*
+     * A deadlock Postgres had to break. The domain acts take their locks in
+     * one order (0069), so this should not happen; when it does, it is the
+     * one event worth a trace, and the owner is told to try again with words
+     * that fit what they pressed.
+     */
+    if (code === "40P01") {
+      logWarning("admin/vote-round deadlock", action.action);
+      const domainAct =
+        action.action === "block_domain" ||
+        action.action === "unblock_domain" ||
+        action.action === "remove_domain";
+      return NextResponse.json(
+        {
+          ok: false,
+          message: domainAct
+            ? "Another owner is acting on this domain right now. Reload and try again."
+            : "Another owner is changing this right now. Reload and try again.",
+        },
+        { status: 409 },
+      );
     }
 
     if (known) {

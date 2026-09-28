@@ -108,3 +108,66 @@ plain `border-line-2 bg-card` card.
   and it had already drifted on three counts by review time. If a file needs
   the control recipe, it imports `control`; a divergence is a proposal to
   change the system, made here, not a private fork.
+
+### A list of like things is one contained list, not a card each
+
+The public Community Favourite ballot was a card per nominee: four mostly
+empty boxes, "Week 1" printed on each, underlined text links with arrow
+icons, and a Vote pill as wide as the card. The owner's verdict: "This is
+ugly." It is now one hairline card (`border-line-2 bg-card`) with the
+round's state in a header row and one row per nominee divided by
+`divide-line`: the name leading, the entry as platform marks, and a
+compact Vote at the row's right hand that opens the form in place. The
+row's left edge carries its state (gold while voting, green once in).
+
+- Platform links are marks, not words: fa6 icons in `rounded-full
+  border-line-2` chips (PLATFORM_ICON in components/shared/platform-icon.ts,
+  shared by the leaderboard, the admin picker and the ballot), each with an
+  accessible name saying whose post and where.
+- A fact that is true of the whole list (the week, the close time, the
+  rule) is said once, above or in the list's header, never on every row.
+- The same list shape holds in every state the list is shown in: before
+  the open, and after the scheduled close until the round is closed in the
+  console, the rows stay and only the buttons go.
+- One row open at a time where the rows share one underlying action (one
+  pending vote per address): opening a row closes any other.
+
+### Signed-in sections use the ballot's anatomy
+
+The owner approved the ballot and called the creator page and the weekly
+winners ugly beside it: a card holding a bordered list holding cards, a
+select and pills inside pills for the week, filled amber boxes, gold on
+rank, labels, trophies and Share, and raw URLs clipping on phones. Both
+are now built the way the ballot is, and new signed-in or public list
+sections start from it rather than from SectionCard.
+
+- A section is one `border-line-2 bg-card` card: a header row that says
+  where it stands, once ("Week 2 · 5 days left", "335 total", "3 posts"),
+  and its content as `divide-line` rows. No card, list box or panel
+  inside it; a sentence is a row too.
+- A row leads with a mark or with the name: a creator's own rows lead
+  with the post's or account's mark, then the @handle with its status
+  under it; the ballot and the winners lead with the name, the marks
+  after it. Then one compact action at the right hand (Submit, Send
+  again, Take back, Add, Vote), `buttonClass` at `min-w-24`; below sm a
+  worded action drops under the text at its indent, so a handle keeps the
+  width after the mark. A form or a question opens in place under its
+  row, the row goes `border-l-brand-gold bg-card-2`, the action becomes
+  Cancel, and focus returns to the action on Cancel and after a success.
+  One row open at a time wherever the rows share an action.
+- State lives on the row's 2px left edge and in the words, never in a
+  fill: green approved, red needs a change or removed, amber a request
+  waiting on the team or a failed load, gold a form open or a vote live.
+  An entry waiting for review is neutral: waiting is its normal course,
+  and only a pending request is amber. A notice is a titled row on its
+  edge, not a warning box.
+- Gold is the clock, the submit button, an open row and a live vote.
+  Rank, week labels, category labels, prizes, Share and the rule line
+  under a field are ink.
+- Posts and accounts are marks from components/shared/platform-marks.tsx
+  (MarkLink with an accessible name saying whose post and where, MarkStill
+  dashed when the slot is empty), always in X, Instagram, TikTok order,
+  in MARK_SLOT cells from sm up. Never a raw URL, never "Instagram ↗".
+- Each fact is said once, at the level it is true of: the close time in
+  the week header, the week on its group row, the total in the points
+  header, who picks each award in the section hint.

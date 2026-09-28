@@ -13,9 +13,11 @@ import { describe, expect, it } from "vitest";
 import {
   ALLOWLISTED_DOMAINS,
   DOMAIN_CAP,
+  NEVER_BLOCK_DOMAINS,
   hashCode,
   hashIp,
   isAllowlisted,
+  isNeverBlock,
   sixDigitCode,
   voteEmailSchema,
 } from "@/lib/campaign-vote";
@@ -162,5 +164,41 @@ describe("the domain allowlist", () => {
 
   it("refuses a string with no domain at all", () => {
     expect(isAllowlisted("not-an-email")).toBe(false);
+  });
+});
+
+describe("the never-block list", () => {
+  it("covers every provider the cap exempts, so no block can land on one", () => {
+    for (const domain of ALLOWLISTED_DOMAINS) {
+      expect(NEVER_BLOCK_DOMAINS, domain).toContain(domain);
+    }
+  });
+
+  it("adds the alias domains the cap does not exempt, and nothing else", () => {
+    const extra = NEVER_BLOCK_DOMAINS.filter((d) => !ALLOWLISTED_DOMAINS.includes(d));
+    expect([...extra].sort()).toEqual(
+      [
+        "ymail.com",
+        "rocketmail.com",
+        "yahoo.co.uk",
+        "hotmail.co.uk",
+        "live.co.uk",
+        "msn.com",
+        "aol.com",
+        "me.com",
+        "mac.com",
+        "pm.me",
+      ].sort(),
+    );
+    // Wider than the allowlist on purpose: the cap still applies to these.
+    expect(isAllowlisted("voter@ymail.com")).toBe(false);
+  });
+
+  it("answers for a subdomain of a never-block provider too", () => {
+    expect(isNeverBlock("gmail.com")).toBe(true);
+    expect(isNeverBlock("mail.gmail.com")).toBe(true);
+    expect(isNeverBlock("ME.COM")).toBe(true);
+    expect(isNeverBlock("oemails.com")).toBe(false);
+    expect(isNeverBlock("gmail.com.farm.test")).toBe(false);
   });
 });

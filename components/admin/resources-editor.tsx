@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buttonClass, control, Field, JobCard, Pill } from "@/components/shared/panel";
-import { Confirm } from "@/components/shared/confirm";
+import { Confirm, ConfirmPanel } from "@/components/shared/confirm";
+import { ActionDialog } from "@/components/shared/action-dialog";
 
 /** Rows shown before the reader asks for more. */
 const PAGE = 10;
@@ -31,6 +32,15 @@ const EMPTY = { id: null as string | null, section: "pack", title: "", body: "",
 export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
   const router = useRouter();
   const [form, setForm] = useState(EMPTY);
+  /** The form as it was when this add or edit began, so a draft can be told apart. */
+  const [baseline, setBaseline] = useState(EMPTY);
+  /*
+   * Where the admin was heading when unsaved text stopped them: closing, a
+   * fresh add, or another row's edit. Nothing keeps a copy of a draft of up
+   * to two thousand characters, and Cancel sat right beside Save, so it asks
+   * first, the same as the weekly challenge editor does.
+   */
+  const [discarding, setDiscarding] = useState<{ to: ResourceRow | "new" | "close" } | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   /*
@@ -40,17 +50,44 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
    */
   const [visible, setVisible] = useState(PAGE);
 
-  function startEditing(row: ResourceRow) {
-    setForm({
-      id: row.id,
-      section: row.section,
-      title: row.title,
-      body: row.body ?? "",
-      url: row.url ?? "",
-      displayOrder: String(row.displayOrder),
-      isPublished: row.isPublished,
-    });
+  const dirty = (Object.keys(EMPTY) as (keyof typeof EMPTY)[]).some(
+    (k) => form[k] !== baseline[k],
+  );
+
+  /** Go where the admin asked, dropping whatever was typed. */
+  function leave(to: ResourceRow | "new" | "close") {
+    setDiscarding(null);
+    if (to === "close" || to === "new") {
+      setForm(EMPTY);
+      setBaseline(EMPTY);
+      setOpen(to === "new");
+      return;
+    }
+    const next = {
+      id: to.id,
+      section: to.section,
+      title: to.title,
+      body: to.body ?? "",
+      url: to.url ?? "",
+      displayOrder: String(to.displayOrder),
+      isPublished: to.isPublished,
+    };
+    setForm(next);
+    setBaseline(next);
     setOpen(true);
+  }
+
+  /** The same, but a draft is shown and asked about before it goes. */
+  function requestLeave(to: ResourceRow | "new" | "close") {
+    if (!dirty) return leave(to);
+    setDiscarding({ to });
+    setOpen(true);
+  }
+
+  function startEditing(row: ResourceRow) {
+    // Reopening the row whose edit is still in the form resumes it.
+    if (form.id === row.id) return setOpen(true);
+    requestLeave(row);
   }
 
   async function save() {
@@ -77,6 +114,7 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
       }
       toast.success(form.isPublished ? "Saved and live within a minute." : "Saved as a draft.");
       setForm(EMPTY);
+      setBaseline(EMPTY);
       setOpen(false);
       router.refresh();
     } catch {
@@ -128,6 +166,7 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
                 <button
                   type="button"
                   onClick={() => startEditing(row)}
+                  aria-haspopup="dialog"
                   className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 text-sm font-semibold text-ink-3 transition-colors hover:text-white"
                 >
                   Edit
@@ -173,11 +212,38 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
         )
       )}
 
-      {open ? (
-        <div className="mt-4 flex flex-col gap-4 rounded-lg border border-line p-4">
+      {/* A draft of a new resource survives a dismissed dialog, and comes
+          back here. Only a save, or a discard the admin agreed to, clears
+          it; leaving an unsaved edit for a fresh add asks first. */}
+      <button type="button" onClick={() => (form.id ? requestLeave("new") : setOpen(true))}
+        aria-haspopup="dialog" className={buttonClass("secondary", "mt-4 w-fit")}>
+        Add a resource
+      </button>
+
+      {/*
+       * One dialog for adding and editing, opened in front of the admin.
+       *
+       * The form used to render once, after the whole list, where the Add
+       * button sits. Edit on an upper row therefore changed nothing visible
+       * on a long list, and pressing Edit on a second row while one was open
+       * silently swapped the form underneath. The dialog opens where they are
+       * looking and holds the page still until it is saved or dismissed.
+       */}
+      <ActionDialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) {
+            setOpen(false);
+            setDiscarding(null);
+          }
+        }}
+        title={form.id ? "Edit resource" : "Add a resource"}
+        busy={busy}
+      >
+        <div className="flex flex-col gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="res-title" label="Title">
-              <input id="res-title" value={form.title} maxLength={160}
+              <input id="res-title" data-autofocus={discarding ? undefined : true} value={form.title} maxLength={160}
                 onChange={(e) => setForm({ ...form, title: e.target.value })} className={control} />
             </Field>
             <Field id="res-section" label="Section" hint="A short slug: pack, faq, announcements.">
@@ -216,21 +282,30 @@ export function ResourcesEditor({ rows }: { rows: ResourceRow[] }) {
               Published
             </label>
           </div>
-          <div className="flex gap-2">
-            <button type="button" disabled={busy} onClick={save} className={buttonClass("primary")}>
-              {busy ? "Saving…" : form.id ? "Save changes" : "Add resource"}
-            </button>
-            <button type="button" onClick={() => { setOpen(false); setForm(EMPTY); }}
-              className={buttonClass("quiet")}>
-              Cancel
-            </button>
-          </div>
+          {discarding ? (
+            <ConfirmPanel
+              label="Discard the draft"
+              intent="danger"
+              question="Discard what you have written?"
+              consequence="This resource has not been saved, and nothing here keeps a copy."
+              confirmLabel="Discard it"
+              cancelLabel="Keep editing"
+              onCancel={() => setDiscarding(null)}
+              onConfirm={() => leave(discarding.to)}
+            />
+          ) : (
+            <div className="flex gap-2">
+              <button type="button" disabled={busy} onClick={save} className={buttonClass("primary")}>
+                {busy ? "Saving…" : form.id ? "Save changes" : "Add resource"}
+              </button>
+              <button type="button" disabled={busy} onClick={() => requestLeave("close")}
+                className={buttonClass("quiet")}>
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
-      ) : (
-        <button type="button" onClick={() => setOpen(true)} className={buttonClass("secondary", "mt-4 w-fit")}>
-          Add a resource
-        </button>
-      )}
+      </ActionDialog>
     </JobCard>
   );
 }

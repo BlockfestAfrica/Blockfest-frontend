@@ -320,3 +320,127 @@ describe("a clawed-back referral stays clawed back", () => {
     expect(await pointsOf(referrer), "and the second void reverses it").toBe(0);
   });
 });
+
+describe("a referral re-paid after a rejection took it back", () => {
+  /*
+   * The same clawback, missed a different way, found by the security audit.
+   *
+   * recompute_entry_award and void_enrolment both write
+   * 'referral_reversal:<id>:n' keys into the one ledger_idempotency_key, and
+   * they counted n differently: recompute by every payment and reversal row
+   * the referral has, the void by its reversals alone. Approve, reject the
+   * only approved work, approve again, and recompute has already written
+   * ':1' by the time the void counts one reversal and builds ':1' itself.
+   * The index refused the row, the handler took the refusal for a
+   * concurrent void having won, and the referrer kept the points while the
+   * audit row recorded nothing reversed. 0067 numbers the void the way
+   * recompute does.
+   *
+   * The flip is not hypothetical: the queue has no pending guard, two
+   * reviewers on one stale view produce it, and the decided page documents
+   * sending the opposite decision as the way to change one.
+   */
+
+  /** The creator's one submission, which approveAnEntry does not return. */
+  const onlySubmission = async (enrolment: string) =>
+    (
+      await one<{ id: string }>(`
+        SELECT s.id FROM submissions s
+          JOIN challenge_entries ce ON ce.id = s.entry_id
+         WHERE ce.campaign_creator_id = '${enrolment}'`)
+    ).id;
+
+  const reversedOnTheVoid = async () =>
+    Number(
+      (
+        await one<{ after: { referral_points_reversed: number } }>(`
+          SELECT after FROM audit_log
+           WHERE action = 'enrolment.voided' ORDER BY created_at DESC LIMIT 1`)
+      ).after.referral_points_reversed,
+    );
+
+  it("is taken back when the same submission is approved again", async () => {
+    const referrer = await makeCreator();
+    const farmed = await makeCreator();
+    await link(referrer, farmed);
+    await approveAnEntry(farmed, "https://x.com/h2/status/903");
+    const sub = await onlySubmission(farmed);
+
+    await db.query(
+      `SELECT review('${sub}', 'rejected', '${adminId}', 'Not their own post')`,
+    );
+    expect(await pointsOf(referrer), "reversed with the rejection").toBe(0);
+    await db.query(`SELECT review('${sub}', 'approved', '${adminId}', NULL)`);
+    const repaid = await pointsOf(referrer);
+    expect(repaid, "paid again on the re-approval").toBeGreaterThan(0);
+
+    await voidIt(farmed);
+
+    expect(await pointsOf(referrer), "and taken back on the void").toBe(0);
+    expect(
+      await reversedOnTheVoid(),
+      "the audit row, which the owner and the referrer's notice both read",
+    ).toBe(repaid);
+  });
+
+  it("is taken back when other work pays it again", async () => {
+    const referrer = await makeCreator();
+    const farmed = await makeCreator();
+    await link(referrer, farmed);
+    await approveAnEntry(farmed, "https://x.com/h2/status/904");
+    const sub = await onlySubmission(farmed);
+    await db.query(
+      `SELECT review('${sub}', 'rejected', '${adminId}', 'Not their own post')`,
+    );
+
+    // A second platform on the same entry, approved from the queue as normal.
+    const other = await one<{ id: string }>(`
+      INSERT INTO submissions (entry_id, platform, url)
+      SELECT entry_id, 'instagram', 'https://www.instagram.com/p/L904/'
+        FROM submissions WHERE id = '${sub}'
+      RETURNING id`);
+    await db.query(`SELECT review('${other.id}', 'approved', '${adminId}', NULL)`);
+    const repaid = await pointsOf(referrer);
+    expect(repaid, "paid again on the other approval").toBeGreaterThan(0);
+
+    await voidIt(farmed);
+
+    expect(await pointsOf(referrer)).toBe(0);
+    expect(await reversedOnTheVoid()).toBe(repaid);
+  });
+
+  it("fails the void rather than report a clawback it did not make", async () => {
+    /*
+     * A taken key with points still outstanding is a numbering fault, not a
+     * race: a second void of one enrolment queues on its row lock and then
+     * finds nothing outstanding. Stand in for the fault by occupying the keys
+     * this void would build, on a stranger's ledger where the referral's own
+     * count cannot see them.
+     */
+    const referrer = await makeCreator();
+    const farmed = await makeCreator();
+    const stranger = await makeCreator();
+    await link(referrer, farmed);
+    await approveAnEntry(farmed, "https://x.com/h2/status/905");
+    const paid = await pointsOf(referrer);
+    const referral = (
+      await one<{ id: string }>(
+        `SELECT id FROM referrals WHERE referred_campaign_creator_id = '${farmed}'`,
+      )
+    ).id;
+    // The unsuffixed key as well, so 0063 collides too and fails this on its
+    // swallow rather than by building some other key.
+    for (const key of [
+      `referral_reversal:${referral}`,
+      `referral_reversal:${referral}:1`,
+    ]) {
+      await db.query(`
+        INSERT INTO point_ledger (campaign_id, campaign_creator_id, source, points,
+                                  idempotency_key, note)
+        VALUES ('${campaignId}', '${stranger}', 'referral', 1, '${key}', 'Fixture')`);
+    }
+
+    await expect(voidIt(farmed), "loud, so somebody looks").rejects.toThrow();
+    expect(await pointsOf(referrer), "and nothing half-done").toBe(paid);
+  });
+});

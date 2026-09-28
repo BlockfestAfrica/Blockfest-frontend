@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { CREATOR_PENDING_COOKIE, CREATOR_SESSION_COOKIE } from "@/lib/creator-access";
-import { creatorByToken, handlesForEnrolment } from "@/lib/creator-session";
+import { headers } from "next/headers";
+import { CREATOR_SESSION_COOKIE } from "@/lib/creator-access";
+import {
+  creatorByToken,
+  entryClaim,
+  handlesForEnrolment,
+  legacySessionClaim,
+  soleCookie,
+} from "@/lib/creator-session";
 import { monicaRoutes } from "@/lib/campaigns";
 import { buttonClass } from "@/components/shared/panel";
 import { enterAsPending, discardPending } from "./actions";
@@ -34,7 +40,7 @@ export default async function ConfirmEntryPage({
   searchParams: Promise<{ s?: string }>;
 }) {
   const { s } = await searchParams;
-  const jar = await cookies();
+  const cookieHeader = (await headers()).get("cookie");
 
   /*
    * Read only from the cookie.
@@ -42,8 +48,13 @@ export default async function ConfirmEntryPage({
    * Netlify re-appends the original query string to a redirect, so a token can
    * arrive in this page's URL whether or not anybody meant it to. Ignoring the
    * query entirely is what stops that from being a second way in.
+   *
+   * The claim is what an entry link parked or, with none, the session cookie
+   * a creator held before it took its __Host- name: see entryClaim, which the
+   * action reads through too.
    */
-  const pending = jar.get(CREATOR_PENDING_COOKIE)?.value?.trim() ?? "";
+  const claim = entryClaim(cookieHeader);
+  const pending = claim?.token ?? "";
 
   let holder: Awaited<ReturnType<typeof creatorByToken>> = null;
   let unavailable = false;
@@ -55,7 +66,12 @@ export default async function ConfirmEntryPage({
     }
   }
 
-  const current = jar.get(CREATOR_SESSION_COOKIE)?.value?.trim() ?? "";
+  // Who this browser is in as, for the swap sentence: the __Host- session, or
+  // the pre-prefix cookie of somebody not yet asked about it.
+  const current =
+    soleCookie(cookieHeader, CREATOR_SESSION_COOKIE) ??
+    legacySessionClaim(cookieHeader) ??
+    "";
   let signedInAs: string | null = null;
   if (current && current !== pending) {
     try {
@@ -127,6 +143,20 @@ export default async function ConfirmEntryPage({
                   browser over to {holder!.name} and signs {signedInAs} out. If
                   that is not what you expected, this link belongs to somebody
                   else and you should not continue.
+                </p>
+              ) : claim?.resuming ? (
+                /*
+                 * Nothing was clicked: /me sent a creator here because the
+                 * only thing this browser holds is the pre-prefix cookie,
+                 * which cannot be told from one another host planted. So the
+                 * sentence is about this browser rather than a link.
+                 */
+                <p className="mt-4 text-base leading-relaxed text-ink-2">
+                  This browser is still signed in from before, and we now ask
+                  once to be sure it is you. If that is not your name, or
+                  those are not your accounts, do not continue: anything you
+                  submit would be filed under their account and counted as
+                  their work.
                 </p>
               ) : (
                 <p className="mt-4 text-base leading-relaxed text-ink-2">

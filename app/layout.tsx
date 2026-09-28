@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { IdentityCallback } from "@/components/admin/identity-callback";
 import { gotham } from "@/lib/fonts";
 import { ORGANISATION, eventJsonLd } from "@/lib/seo-event";
+import { jsonLd } from "@/lib/json-ld";
 import { Analytics } from "@/components/shared/analytics";
 
 const siteUrl =
@@ -160,7 +161,7 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
+            __html: jsonLd(structuredData),
           }}
         />
 

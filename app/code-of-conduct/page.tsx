@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import { CURRENT_EDITION, EVENT_ID, SITE_URL } from "@/lib/seo-event";
+import { jsonLd } from "@/lib/json-ld";
 
 const EVENT = CURRENT_EDITION;
 
@@ -33,7 +34,7 @@ export default function CodeOfConductPage() {
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD requires raw script injection
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLd({
             "@context": "https://schema.org",
             "@type": "WebPage",
             name: "Code of Conduct",
