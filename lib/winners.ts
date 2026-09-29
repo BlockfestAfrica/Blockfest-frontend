@@ -2,7 +2,7 @@ import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { MONICA_SLUG } from "@/lib/campaigns";
-import type { VoteBoard } from "@/lib/vote-board";
+import type { VoteBoard, VoteBoardRow } from "@/lib/vote-board";
 
 /**
  * Weekly winners and the Community Favourite shortlist, for the public page.
@@ -290,6 +290,51 @@ export async function voteBoard(): Promise<VoteBoard | null> {
       votes: Number(r.votes ?? 0),
     })),
   };
+}
+
+/**
+ * Each published week's final Community Favourite count, for the page's
+ * Weekly winners cards.
+ *
+ * The live count under the ballot follows the latest round, so when the
+ * next week's vote opened, last week's numbers left the page and only its
+ * winner stayed. These are those numbers, kept: read from vote_tally, the
+ * view the result was decided on, for rounds whose winner is published and
+ * whose tally is therefore final. Names and counts only, like the live
+ * count. Fails soft to nothing, like the rest of this page.
+ */
+export async function finalCounts(): Promise<Record<number, VoteBoardRow[]>> {
+  try {
+    const result = await getDb().execute(sql`
+      SELECT r.week_no, t.nominee_id, t.votes, c.full_name AS display_name
+        FROM vote_rounds r
+        JOIN campaigns cm          ON cm.id = r.campaign_id
+        JOIN vote_tally t          ON t.round_id = r.id
+        JOIN vote_round_nominees n ON n.id = t.nominee_id
+        JOIN challenge_entries ce  ON ce.id = t.entry_id
+        JOIN campaign_creators cc  ON cc.id = ce.campaign_creator_id
+        JOIN creators c            ON c.id = cc.creator_id
+       WHERE cm.slug = ${MONICA_SLUG}
+         AND r.status = 'published'
+       ORDER BY r.week_no DESC, n.display_order, c.full_name
+    `);
+    const byWeek: Record<number, VoteBoardRow[]> = {};
+    for (const row of (result.rows ?? []) as Record<string, unknown>[]) {
+      const week = Number(row.week_no ?? 0);
+      (byWeek[week] ??= []).push({
+        nomineeId: String(row.nominee_id ?? ""),
+        name: String(row.display_name ?? "").trim(),
+        votes: Number(row.votes ?? 0),
+      });
+    }
+    return byWeek;
+  } catch (error) {
+    console.warn(
+      "[winners] final counts unavailable:",
+      error instanceof Error ? error.message : String(error),
+    );
+    return {};
+  }
 }
 
 /**
