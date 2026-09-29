@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera } from "lucide-react";
+import { Camera, HeartHandshake, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import {
   buttonClass,
@@ -14,6 +14,7 @@ import {
 } from "@/components/shared/panel";
 import { CreatorPicker } from "@/components/admin/creator-picker";
 import { Confirm } from "@/components/shared/confirm";
+import { ActionDialog } from "@/components/shared/action-dialog";
 import { naira } from "@/lib/format";
 import { monicaWeeklyPrizes } from "@/lib/campaigns";
 
@@ -70,6 +71,41 @@ const CATEGORY_PRIZE: Record<keyof typeof CATEGORY_LABEL, number> =
 
 type Category = keyof typeof CATEGORY_LABEL;
 
+/* What the confirmation shows is what gets sent: the modal reads this
+   snapshot, taken when the button was pressed, and the request posts it. */
+interface Pending {
+  publish: boolean;
+  category: Category;
+  enrolmentId: string;
+  name: string;
+  prizeNaira: number;
+  note: string;
+}
+
+const CATEGORY_ICON = {
+  creator_of_week: Trophy,
+  community_favourite: HeartHandshake,
+} as const;
+
+/* How each prize is decided, said in the modal so the reminder is about the
+   award and not only its name, which is the part that gets confused. */
+const CATEGORY_DECIDED_BY = {
+  creator_of_week: "the Blockfest team's pick",
+  community_favourite: "the prize the public vote decides",
+} as const;
+
+/* The award as a sentence names it: "the Community Favourite", but plain
+   "Creator of the Week", as the rules and the public page say it. */
+const CATEGORY_IN_A_SENTENCE = {
+  creator_of_week: "Creator of the Week",
+  community_favourite: "the Community Favourite",
+} as const;
+
+const OTHER_CATEGORY = {
+  creator_of_week: "community_favourite",
+  community_favourite: "creator_of_week",
+} as const;
+
 /**
  * The weekly ritual, as two jobs rather than eleven blocks.
  *
@@ -116,6 +152,14 @@ export function WinnersPanel({
   const [enrolmentId, setEnrolmentId] = useState("");
   const [prize, setPrize] = useState(String(CATEGORY_PRIZE.creator_of_week));
   const [note, setNote] = useState("");
+  /*
+   * The act being confirmed. Owner ask: no admin should announce or draft
+   * the wrong award by mistake, so Save as draft and Announce both stop on
+   * a modal that names the award first, then the week, the creator and the
+   * prize, and says which award this is not.
+   */
+  const [pending, setPending] = useState<Pending | null>(null);
+  const [checked, setChecked] = useState(false);
 
   /*
    * The vote's verdict shapes the Community Favourite half of this card.
@@ -184,12 +228,9 @@ export function WinnersPanel({
     setNote(draft.note ?? "");
   }
 
-  async function save(publish: boolean) {
-    if (!ready) {
-      toast.error("Pick a creator and enter the prize amount.");
-      return;
-    }
-
+  async function save(act: Pending): Promise<boolean> {
+    const { publish } = act;
+    const label = CATEGORY_LABEL[act.category];
     setBusy(true);
     try {
       const response = await fetch("/api/admin/winners", {
@@ -197,10 +238,10 @@ export function WinnersPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           weekNo,
-          category,
-          enrolmentId: selectedId,
-          prizeNaira: amount,
-          note: note.trim() || undefined,
+          category: act.category,
+          enrolmentId: act.enrolmentId,
+          prizeNaira: act.prizeNaira,
+          note: act.note || undefined,
           publish,
         }),
       });
@@ -208,19 +249,19 @@ export function WinnersPanel({
 
       if (!response.ok || !result.ok) {
         toast.error(result.message ?? "That did not work.");
-        return;
+        return false;
       }
 
       if (publish && result.emailed === false) {
         /* The announcement stood; only the mail died. Said here, because a
            winner who never hears is otherwise discovered on Monday. */
         toast.warning(
-          `${CATEGORY_LABEL[category]} announced for week ${weekNo}, but the winner email did not send. Follow up with them directly.`,
+          `${label} announced for week ${weekNo}, but the winner email did not send. Follow up with them directly.`,
         );
       } else {
         toast.success(
           publish
-            ? `${CATEGORY_LABEL[category]} announced for week ${weekNo}${result.emailed ? " and the winner has been emailed" : ""}`
+            ? `${label} announced for week ${weekNo}${result.emailed ? " and the winner has been emailed" : ""}`
             : "Saved as a draft. Nothing is public yet.",
         );
       }
@@ -228,11 +269,45 @@ export function WinnersPanel({
       setPrize("");
       setNote("");
       await router.refresh();
+      return true;
     } catch {
       toast.error("We could not reach the server.");
+      return false;
     } finally {
       setBusy(false);
     }
+  }
+
+  function ask(publish: boolean) {
+    if (!ready || !chosenName) {
+      toast.error("Pick a creator and enter the prize amount.");
+      return;
+    }
+    setChecked(false);
+    setPending({
+      publish,
+      category,
+      enrolmentId: selectedId,
+      name: chosenName,
+      prizeNaira: amount,
+      note: note.trim(),
+    });
+  }
+
+  /* The saved draft the pending act would overwrite, if any: one row per
+     week and prize, so saving or announcing replaces it. */
+  const pendingDraft = pending
+    ? (picked.find(
+        (p) =>
+          p.weekNo === weekNo &&
+          p.category === pending.category &&
+          !p.publishedAt,
+      ) ?? null)
+    : null;
+
+  async function confirmPending() {
+    if (!pending) return;
+    if (await save(pending)) setPending(null);
   }
 
   async function discardDraft() {
@@ -332,7 +407,8 @@ export function WinnersPanel({
             <button
               type="button"
               disabled={busy || !ready}
-              onClick={() => save(false)}
+              onClick={() => ask(false)}
+              aria-haspopup="dialog"
               className={buttonClass("quiet")}
             >
               Save as draft
@@ -360,14 +436,15 @@ export function WinnersPanel({
               * Saturday.
               */}
             {ready && frozen ? (
-              <Confirm
-                label={`Announce ${CATEGORY_LABEL[category]}`}
-                question={`Announce ${chosenName ?? "this creator"} as ${CATEGORY_LABEL[category]} for week ${weekNo}, with ${naira(amount)}?`}
-                consequence="This publishes the name and the amount on the public winners page straight away. There is no undo here."
-                confirmLabel={`Yes, announce ${naira(amount)}`}
-                pending={busy}
-                onConfirm={() => save(true)}
-              />
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => ask(true)}
+                aria-haspopup="dialog"
+                className={buttonClass("primary")}
+              >
+                Announce {CATEGORY_LABEL[category]}…
+              </button>
             ) : null}
             {!ready || !frozen ? (
               <p className="text-sm text-ink-2">
@@ -529,6 +606,181 @@ export function WinnersPanel({
           </div>
         </div>
       </JobCard>
+
+      <ActionDialog
+        open={pending !== null}
+        onOpenChange={(open) => {
+          if (!open) setPending(null);
+        }}
+        title={
+          pending
+            ? pending.publish
+              ? `Announce the week ${weekNo} ${CATEGORY_LABEL[pending.category]}?`
+              : `Save the week ${weekNo} ${CATEGORY_LABEL[pending.category]} as a draft?`
+            : ""
+        }
+        busy={busy}
+      >
+        {pending && (
+          <ConfirmWinner
+            weekNo={weekNo}
+            act={pending}
+            replaces={pendingDraft}
+            checked={checked}
+            onCheck={setChecked}
+            busy={busy}
+            onCancel={() => setPending(null)}
+            onConfirm={confirmPending}
+          />
+        )}
+      </ActionDialog>
     </>
+  );
+}
+
+/**
+ * The last look before a winner is drafted or announced.
+ *
+ * The two prizes sit one tab apart in the same form, and the owner asked
+ * that nobody be able to announce the wrong one by mistake. So the award
+ * leads, larger than anything else here, with the week under it; then the
+ * creator and the amount; then a line naming the other award, so a wrong
+ * tab is caught by reading rather than by remembering. Announcing also asks
+ * for a tick against a sentence that names the award, because it is public
+ * at once and cannot be changed from here. Cancel takes focus, so Enter
+ * never announces.
+ */
+function ConfirmWinner({
+  weekNo,
+  act,
+  replaces,
+  checked,
+  onCheck,
+  busy,
+  onCancel,
+  onConfirm,
+}: {
+  weekNo: number;
+  act: Pending;
+  replaces: PickedRow | null;
+  checked: boolean;
+  onCheck: (checked: boolean) => void;
+  busy: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const label = CATEGORY_LABEL[act.category];
+  const self = CATEGORY_IN_A_SENTENCE[act.category];
+  const other = CATEGORY_IN_A_SENTENCE[OTHER_CATEGORY[act.category]];
+  const Icon = CATEGORY_ICON[act.category];
+  const replacesSomeoneElse =
+    replaces !== null && replaces.enrolmentId !== act.enrolmentId;
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-line bg-card-2">
+        <div className="flex items-center gap-3 border-b border-line p-4">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line-2 text-white">
+            <Icon className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-lg font-semibold text-white">{label}</p>
+            <p className="text-sm text-ink-3">Week {weekNo}</p>
+          </div>
+        </div>
+        <dl className="divide-y divide-line px-4">
+          <div className="flex items-baseline justify-between gap-4 py-3">
+            <dt className="text-sm text-ink-3">Creator</dt>
+            <dd className="min-w-0 text-right text-sm font-semibold text-white [overflow-wrap:anywhere]">
+              {act.name}
+            </dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-4 py-3">
+            <dt className="text-sm text-ink-3">Prize</dt>
+            <dd className="text-sm font-semibold tabular-nums text-brand-gold">
+              {naira(act.prizeNaira)}
+            </dd>
+          </div>
+          {act.note && (
+            <div className="flex flex-col gap-1 py-3">
+              <dt className="text-sm text-ink-3">Why they won</dt>
+              <dd className="text-sm leading-relaxed text-ink-2 [overflow-wrap:anywhere]">
+                {act.note}
+              </dd>
+            </div>
+          )}
+        </dl>
+      </div>
+
+      <p className="max-w-prose text-sm leading-relaxed text-white">
+        This is {self}, {CATEGORY_DECIDED_BY[act.category]}. It is not{" "}
+        {other}. If you meant {other}, cancel and change “Which prize” in the
+        form.
+      </p>
+
+      <p className="max-w-prose text-sm leading-relaxed text-ink-2">
+        {act.publish
+          ? `Announcing puts ${act.name} and ${naira(act.prizeNaira)} on the public winners page straight away and emails them.${
+              act.category === "community_favourite"
+                ? " The other nominees are told the result."
+                : ""
+            } A published winner cannot be changed from here.${
+              replacesSomeoneElse && replaces
+                ? ` The saved draft for ${replaces.name} is replaced.`
+                : ""
+            }`
+          : `Nothing goes public. The draft waits on this screen until someone announces it.${
+              replacesSomeoneElse && replaces
+                ? ` It replaces the saved draft (${replaces.name}, ${naira(replaces.prizeNaira)}).`
+                : replaces
+                  ? ` It updates the saved draft for ${replaces.name}.`
+                  : ""
+            }`}
+      </p>
+
+      {act.publish && (
+        <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-line p-3 text-sm text-white">
+          <input
+            type="checkbox"
+            checked={checked}
+            disabled={busy}
+            onChange={(event) => onCheck(event.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-brand-gold disabled:cursor-not-allowed"
+          />
+          <span>
+            I have checked that {act.name} is the week {weekNo} {label}.
+          </span>
+        </label>
+      )}
+
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          data-autofocus
+          disabled={busy}
+          onClick={onCancel}
+          className={buttonClass("quiet", "w-full sm:w-auto")}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          disabled={busy || (act.publish && !checked)}
+          onClick={onConfirm}
+          className={buttonClass(
+            act.publish ? "primary" : "secondary",
+            "w-full sm:w-auto",
+          )}
+        >
+          {act.publish
+            ? busy
+              ? "Announcing…"
+              : `Yes, announce the ${label}`
+            : busy
+              ? "Saving…"
+              : "Yes, save the draft"}
+        </button>
+      </div>
+    </div>
   );
 }
