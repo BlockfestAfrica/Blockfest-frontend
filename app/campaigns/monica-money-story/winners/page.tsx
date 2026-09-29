@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { currentShortlist, publishedWinners, voteWindowState } from "@/lib/winners";
+import { currentShortlist, finalCounts, publishedWinners, voteWindowState } from "@/lib/winners";
 import { SectionHeading } from "@/components/shared/panel";
 import { Ballot } from "@/components/campaigns/ballot";
 import { LiveVoteCount } from "@/components/campaigns/live-vote-count";
@@ -25,9 +25,10 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function WinnersPage() {
-  const [winners, shortlist] = await Promise.all([
+  const [winners, shortlist, finals] = await Promise.all([
     publishedWinners(),
     currentShortlist(),
+    finalCounts(),
   ]);
 
   /*
@@ -77,6 +78,7 @@ export default async function WinnersPage() {
           <WeeklyWinners
             winners={winners}
             vote={round ? { weekNo: round.weekNo, state: voteState } : null}
+            finals={finals}
           />
 
           {/* The shortlist, as one ballot (components/campaigns/ballot.tsx

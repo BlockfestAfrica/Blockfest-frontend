@@ -22,7 +22,7 @@ vi.mock("@/lib/db/client", async () => {
   return { ...tables, getDb: () => state.db };
 });
 
-const { voteBoard, currentShortlist, WINNER_NEVER_PUBLISH } = await import("@/lib/winners");
+const { voteBoard, currentShortlist, finalCounts, WINNER_NEVER_PUBLISH } = await import("@/lib/winners");
 const { readBoard } = await import("@/lib/vote-board");
 
 let db: PGlite;
@@ -284,3 +284,31 @@ describe("the winners page", () => {
     expect(page).not.toMatch(/\bcookies\(|\bheaders\(|force-dynamic/);
   });
 });
+
+describe("finalCounts", () => {
+  /*
+   * Each published week's count stays public once the next week's vote
+   * takes the live count's place. Only published rounds (their tally is
+   * final), from the same view the result was decided on.
+   */
+  it("keeps a published week's count, and leaves open and closed rounds out", async () => {
+    const one = await round(1, "published", "2026-09-06T08:00:00+01:00", ["Ada", "Ben"]);
+    await vote(one.roundId, one.nominees[0], "counted");
+    await vote(one.roundId, one.nominees[0], "counted");
+    await vote(one.roundId, one.nominees[0], "held");
+    await vote(one.roundId, one.nominees[0], "fraud");
+    await vote(one.roundId, one.nominees[1], "counted");
+    const two = await round(2, "closed", "2026-09-13T08:00:00+01:00", ["Cy"]);
+    await vote(two.roundId, two.nominees[0], "counted");
+    await round(3, "open", "2026-09-20T08:00:00+01:00", ["Di"]);
+
+    const finals = await finalCounts();
+    expect(Object.keys(finals)).toEqual(["1"]);
+    expect(finals[1].map((n) => [n.name, n.votes])).toEqual([
+      ["Ada", 2],
+      ["Ben", 1],
+    ]);
+    expect(Object.keys(finals[1][0]).sort()).toEqual(["name", "nomineeId", "votes"]);
+  });
+});
+

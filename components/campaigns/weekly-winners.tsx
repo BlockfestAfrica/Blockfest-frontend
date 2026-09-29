@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ChevronDown } from "lucide-react";
 import { WINNER_CATEGORY_LABEL } from "@/lib/winner-categories";
 import type { PublishedWinner, VoteWindowState } from "@/lib/winners";
 import { buttonClass, SectionHeading } from "@/components/shared/panel";
@@ -10,6 +10,9 @@ import {
   platformLabel,
 } from "@/components/shared/platform-marks";
 import { NoteLine } from "@/components/campaigns/note-line";
+import { CountRows } from "@/components/campaigns/count-rows";
+import { count } from "@/lib/format";
+import { rankBoard, type VoteBoardRow } from "@/lib/vote-board";
 import { MONICA_FIRST_LEADERBOARD, MONICA_FIRST_LEADERBOARD_ENDS } from "@/lib/campaigns";
 
 const CATEGORY_LABEL: Record<string, string> = WINNER_CATEGORY_LABEL;
@@ -67,13 +70,53 @@ function Placeholder({
  * fixture props as from the database. The page owns the fetch and the
  * revalidate window; this owns nothing but the markup.
  */
+/**
+ * A published week's final Community Favourite count, closed until asked for.
+ *
+ * The live count under the ballot moves on to the next week's vote, and the
+ * owner wanted each week's numbers to stay public after it does. Closed by
+ * default, so the winners stay the first thing read, and the browser's own
+ * disclosure, so it works without script and says what it does.
+ */
+function FinalCount({ week, nominees }: { week: number; nominees: VoteBoardRow[] }) {
+  const { rows, total, levelAtTop } = rankBoard(nominees);
+  return (
+    <details className="group/final border-t border-line">
+      <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 text-sm transition-colors duration-150 hover:bg-card-2 sm:px-5 [&::-webkit-details-marker]:hidden">
+        <span className="inline-flex items-center gap-2 font-semibold text-ink-2">
+          <ChevronDown
+            className="h-4 w-4 shrink-0 -rotate-90 text-ink-3 transition-transform duration-150 group-open/final:rotate-0"
+            aria-hidden="true"
+          />
+          See the week {week} final count
+        </span>
+        {/* Under the label when it wraps on a phone, in line with its words. */}
+        <span className="tabular-nums text-ink-3 max-sm:pl-6">
+          {count(total)} verified {total === 1 ? "vote" : "votes"}
+        </span>
+      </summary>
+      <div className="px-4 pb-4 sm:px-5">
+        <CountRows rows={rows} className="pt-1" />
+        <p className="mt-4 text-sm text-ink-4">
+          {levelAtTop
+            ? "Verified votes, after review. Level at the top: ties are settled by that week's recorded standings."
+            : "Verified votes, after review."}
+        </p>
+      </div>
+    </details>
+  );
+}
+
 export function WeeklyWinners({
   winners,
   vote,
+  finals = {},
 }: {
   winners: PublishedWinner[];
   /** The shortlist's round, or null when no vote is on the page. */
   vote: VoteRound | null;
+  /** Each published week's final count, by week. */
+  finals?: Record<number, VoteBoardRow[]>;
 }) {
   const cfPending =
     vote !== null &&
@@ -199,6 +242,9 @@ export function WeeklyWinners({
                     />
                   )}
                 </ul>
+                {(finals[week]?.length ?? 0) > 0 && (
+                  <FinalCount week={week} nominees={finals[week]} />
+                )}
               </section>
             );
           })}
