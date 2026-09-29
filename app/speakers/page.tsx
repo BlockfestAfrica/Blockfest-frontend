@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SpeakersSchema } from "@/components/seo/speakers-schema";
 import { BreadcrumbSchema } from "@/components/seo/schema-markup";
-import { SpeakersList, is2026Speaker, speakerProfiles, type Speaker } from "@/lib/speakers";
+import { SpeakersList, is2026Speaker, type Speaker } from "@/lib/speakers";
 import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
 import { isSpeakerFormOpen } from "@/lib/speaking";
 import { gotham } from "@/lib/fonts";
@@ -17,7 +17,7 @@ import { FeaturedSpeakersGrid } from "@/components/speakers/2026-speakers-grid";
  */
 const announced = SpeakersList.some(is2026Speaker);
 const hasAnnouncedSpeakers = announced;
-const speakers2026 = speakerProfiles().filter(is2026Speaker);
+const speakers2026 = SpeakersList.filter(is2026Speaker);
 const shareTitle = announced
   ? "Blockfest Africa Speakers - The 2026 Lineup"
   : "Blockfest Africa Speakers - 2026 Lineup Coming Soon";
@@ -74,8 +74,17 @@ export const metadata: Metadata = {
 };
 
 const SpeakersPage = () => {
-  // Each person once, so a returning speaker is not two people to a search engine.
-  const speakers = speakerProfiles().map((speaker: Speaker) => ({
+  // Each person once, so a returning speaker is not two people to a search
+  // engine. A returning speaker has two entries in SpeakersList — an older
+  // one with no cohort and a current one tagged "2026" — sharing one name.
+  // Map.set overwrites on a repeated key and the 2026 entry appears later
+  // in the array, so this keeps their current entry without needing the
+  // dedup helper the profile-page route uses.
+  const dedupedSpeakers = Array.from(
+    new Map(SpeakersList.map((s) => [s.name, s])).values()
+  );
+
+  const speakers = dedupedSpeakers.map((speaker: Speaker) => ({
     name: speaker.name,
     jobTitle: speaker.title,
     description: speaker.expertise?.join(", ") || speaker.title,
