@@ -110,7 +110,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
         )}
 
         {/* Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredSpeakers.map((speaker) => {
             const slug = generateSpeakerSlug(speaker.name);
             const bioTeaser = speaker.bio?.split("\n\n")[0];
@@ -193,56 +193,56 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                     speaker.linkedin ||
                     speaker.youtube ||
                     speaker.website) && (
-                    <div className="pointer-events-auto relative z-20 mt-auto flex items-center gap-2 pt-4">
-                      {speaker.twitter && (
-                        <a
-                          href={speaker.twitter}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
-                          aria-label={`Follow ${speaker.name} on Twitter`}
-                        >
-                          <FaXTwitter className="h-4 w-4" aria-hidden="true" />
-                        </a>
-                      )}
+                      <div className="pointer-events-auto relative z-20 mt-auto flex items-center gap-2 pt-4">
+                        {speaker.twitter && (
+                          <a
+                            href={speaker.twitter}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
+                            aria-label={`Follow ${speaker.name} on Twitter`}
+                          >
+                            <FaXTwitter className="h-4 w-4" aria-hidden="true" />
+                          </a>
+                        )}
 
-                      {speaker.linkedin && (
-                        <a
-                          href={speaker.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
-                          aria-label={`Connect with ${speaker.name} on LinkedIn`}
-                        >
-                          <FaLinkedin className="h-4 w-4" aria-hidden="true" />
-                        </a>
-                      )}
+                        {speaker.linkedin && (
+                          <a
+                            href={speaker.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
+                            aria-label={`Connect with ${speaker.name} on LinkedIn`}
+                          >
+                            <FaLinkedin className="h-4 w-4" aria-hidden="true" />
+                          </a>
+                        )}
 
-                      {speaker.youtube && (
-                        <a
-                          href={speaker.youtube}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
-                          aria-label={`Watch ${speaker.name} on YouTube`}
-                        >
-                          <FaYoutube className="h-4 w-4" aria-hidden="true" />
-                        </a>
-                      )}
+                        {speaker.youtube && (
+                          <a
+                            href={speaker.youtube}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
+                            aria-label={`Watch ${speaker.name} on YouTube`}
+                          >
+                            <FaYoutube className="h-4 w-4" aria-hidden="true" />
+                          </a>
+                        )}
 
-                      {speaker.website && (
-                        <a
-                          href={speaker.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
-                          aria-label={`Visit ${speaker.name}'s website`}
-                        >
-                          <Globe className="h-4 w-4" aria-hidden="true" />
-                        </a>
-                      )}
-                    </div>
-                  )}
+                        {speaker.website && (
+                          <a
+                            href={speaker.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:border-brand-blue hover:text-brand-blue touch-manipulation"
+                            aria-label={`Visit ${speaker.name}'s website`}
+                          >
+                            <Globe className="h-4 w-4" aria-hidden="true" />
+                          </a>
+                        )}
+                      </div>
+                    )}
                 </div>
               </div>
             );
