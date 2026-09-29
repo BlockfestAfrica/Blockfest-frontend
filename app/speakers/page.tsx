@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SpeakersSchema } from "@/components/seo/speakers-schema";
 import { BreadcrumbSchema } from "@/components/seo/schema-markup";
-import { SpeakersList, is2026Speaker, speakerProfiles, type Speaker } from "@/lib/speakers";
+import { SpeakersList, is2026Speaker, type Speaker } from "@/lib/speakers";
 import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
 import { isSpeakerFormOpen } from "@/lib/speaking";
 import { gotham } from "@/lib/fonts";
@@ -16,6 +16,8 @@ import { FeaturedSpeakersGrid } from "@/components/speakers/2026-speakers-grid";
  * opened onto. Read from the same data the page renders.
  */
 const announced = SpeakersList.some(is2026Speaker);
+const hasAnnouncedSpeakers = announced;
+const speakers2026 = SpeakersList.filter(is2026Speaker);
 const shareTitle = announced
   ? "Blockfest Africa Speakers - The 2026 Lineup"
   : "Blockfest Africa Speakers - 2026 Lineup Coming Soon";
@@ -32,6 +34,7 @@ export const metadata: Metadata = {
       : "The Lagos '26 speaker lineup is announced in the coming weeks. Meet the blockchain pioneers, AI builders, founders and investors who have spoken at Blockfest Africa.",
   keywords: [
     "blockfest africa speakers",
+    "blockfest africa 2026 speakers",
     "blockchain experts africa",
     "web3 leaders",
     "crypto keynote speakers",
@@ -71,8 +74,17 @@ export const metadata: Metadata = {
 };
 
 const SpeakersPage = () => {
-  // Each person once, so a returning speaker is not two people to a search engine.
-  const speakers = speakerProfiles().map((speaker: Speaker) => ({
+  // Each person once, so a returning speaker is not two people to a search
+  // engine. A returning speaker has two entries in SpeakersList — an older
+  // one with no cohort and a current one tagged "2026" — sharing one name.
+  // Map.set overwrites on a repeated key and the 2026 entry appears later
+  // in the array, so this keeps their current entry without needing the
+  // dedup helper the profile-page route uses.
+  const dedupedSpeakers = Array.from(
+    new Map(SpeakersList.map((s) => [s.name, s])).values()
+  );
+
+  const speakers = dedupedSpeakers.map((speaker: Speaker) => ({
     name: speaker.name,
     jobTitle: speaker.title,
     description: speaker.expertise?.join(", ") || speaker.title,
@@ -87,9 +99,6 @@ const SpeakersPage = () => {
     { name: "Blockfest Africa", url: "https://blockfestafrica.com" },
     { name: "Speakers", url: "https://blockfestafrica.com/speakers" },
   ];
-
-  const speakers2026 = SpeakersList.filter(is2026Speaker);
-  const hasAnnouncedSpeakers = speakers2026.length > 0;
 
   return (
     <>
@@ -115,9 +124,8 @@ const SpeakersPage = () => {
           />
         )}
 
-        {/* Archive link — the 33 past speakers now live on their own page,
-            so this page opens with what's next instead of "coming soon"
-            followed immediately by three years of history. */}
+        {/* Archive link — past speakers live on their own page, so this page
+            opens with what's next instead of three years of history. */}
         <div className="border-t border-gray-200 bg-paper">
           <div className="container-page section-y flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-base text-gray-600">

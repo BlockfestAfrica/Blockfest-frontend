@@ -39,8 +39,14 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
   }, [speakers]);
 
   const filteredSpeakers = useMemo(() => {
-    if (!selectedExpertise) return speakers;
-    return speakers.filter((s) => s.expertise?.includes(selectedExpertise));
+    const list = selectedExpertise
+      ? speakers.filter((s) => s.expertise?.includes(selectedExpertise))
+      : speakers;
+    // Special guests lead; sort is stable, so everyone else keeps data order.
+    return [...list].sort(
+      (a, b) =>
+        Number(b.role === "special-guest") - Number(a.role === "special-guest")
+    );
   }, [speakers, selectedExpertise]);
 
   return (
@@ -104,10 +110,11 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
         )}
 
         {/* Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start">
           {filteredSpeakers.map((speaker) => {
             const slug = generateSpeakerSlug(speaker.name);
             const bioTeaser = speaker.bio?.split("\n\n")[0];
+            const isSpecialGuest = speaker.role === "special-guest";
 
             return (
               /* The ring is on the card: the profile link covering it is
@@ -120,7 +127,8 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                 <Link
                   href={`/speakers/${slug}`}
                   className="absolute inset-0 z-10"
-                  aria-label={`View ${speaker.name}'s profile`}
+                  aria-label={`View ${speaker.name}'s profile${isSpecialGuest ? " (special guest)" : ""
+                    }`}
                 />
 
                 {/* A little shorter than square on a phone, where six
@@ -138,10 +146,20 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                     // The first portrait is the page's largest paint.
                     priority={speaker === speakers[0]}
                   />
-                  {speaker.expertise?.[0] && (
-                    <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-900 backdrop-blur-sm">
-                      {speaker.expertise[0]}
+
+                  {/* Special guests wear the brand gold, the same one the
+                      site's gold CTAs use. Everyone else keeps their
+                      expertise chip. */}
+                  {isSpecialGuest ? (
+                    <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-brand-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-gray-900">
+                      Special Guest
                     </span>
+                  ) : (
+                    speaker.expertise?.[0] && (
+                      <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-900 backdrop-blur-sm">
+                        {speaker.expertise[0]}
+                      </span>
+                    )
                   )}
                 </div>
 
@@ -155,7 +173,10 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
 
                   {speaker.company && (
                     <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-brand-blue">
-                      <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <Building2
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
                       {speaker.company}
                     </p>
                   )}
@@ -168,7 +189,10 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                     </div>
                   )}
 
-                  {(speaker.twitter || speaker.linkedin || speaker.youtube || speaker.website) && (
+                  {(speaker.twitter ||
+                    speaker.linkedin ||
+                    speaker.youtube ||
+                    speaker.website) && (
                     <div className="pointer-events-auto relative z-20 mt-auto flex items-center gap-2 pt-4">
                       {speaker.twitter && (
                         <a

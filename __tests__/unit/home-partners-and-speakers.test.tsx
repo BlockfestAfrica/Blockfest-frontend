@@ -43,7 +43,7 @@ vi.mock("@/lib/speakers", () => {
   };
 });
 vi.mock("@/lib/fonts", () => ({ gotham: { className: "" } }));
-vi.mock("@/lib/hooks/use-subtle-animations", () => ({ useSubtleAnimations: () => {} }));
+vi.mock("@/lib/hooks/use-subtle-animations", () => ({ useSubtleAnimations: () => { } }));
 vi.mock("@/components/carousel", () => ({
   default: ({ speakers }: { speakers: Speaker[] }) => (
     <div data-testid="carousel">{speakers.map((s) => s.name).join(", ")}</div>
@@ -71,10 +71,11 @@ beforeEach(() => {
 });
 
 /** A plate's height on a phone (the base class) and on a laptop (sm:). */
+/** A plate's height on a phone (the base class) and on a laptop (md:). */
 function plateHeights(name: string) {
   const plate = screen.getByAltText(name).parentElement!;
   const phone = plate.className.match(/(?:^|\s)h-(\d+)/);
-  const laptop = plate.className.match(/sm:h-(\d+)/);
+  const laptop = plate.className.match(/md:h-(\d+)/);
   expect(phone && laptop, `${name} plate has both heights`).toBeTruthy();
   return { phone: Number(phone![1]), laptop: Number(laptop![1]) };
 }

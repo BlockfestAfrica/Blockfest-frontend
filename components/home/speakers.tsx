@@ -14,13 +14,12 @@ const HOMEPAGE_SPEAKER_COUNT = 12;
 export function SpeakersSection() {
   const OPTIONS: EmblaOptionsType = { loop: true };
 
-  const speakers2026 = SpeakersList.filter(is2026Speaker);
+  const speakers2026 = SpeakersList.filter(is2026Speaker).sort(
+    (a, b) =>
+      Number(b.role === "special-guest") - Number(a.role === "special-guest")
+  );
   const hasAnnouncedSpeakers = speakers2026.length > 0;
 
-  // Before any 2026 names are announced, the carousel falls back to past
-  // speakers so the section isn't empty — same as it's always worked. The
-  // moment the first speaker gets `cohort: "2026"` in the data file, this
-  // switches over on its own.
   const carouselSpeakers = hasAnnouncedSpeakers
     ? speakers2026
     : SpeakersList.filter(isPastSpeaker).slice(0, HOMEPAGE_SPEAKER_COUNT);

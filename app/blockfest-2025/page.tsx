@@ -8,7 +8,6 @@ import { SpeakersList } from "@/lib/speakers";
 import { EventHighlights } from "@/components/shared/event-highlights";
 import { EventCta } from "@/components/shared/event-cta";
 import { FaInstagram, FaTiktok, FaXTwitter, FaYoutube } from "react-icons/fa6";
-import { SpeakersSection } from "@/components/home/speakers";
 
 export const metadata: Metadata = {
   title: "Blockfest Africa 2025 - Event Recap",
@@ -103,8 +102,7 @@ export default function Blockfest2025Page() {
           </div>
         </div>
       </section>
-              <SpeakersSection />
-      
+
 
       {/* Stats Section */}
       <section className="section-y bg-ground border-t border-line-2">
@@ -276,7 +274,7 @@ export default function Blockfest2025Page() {
 
           <div className="mt-10">
             <Link
-              href="/speakers"
+              href="/past-speakers"
               className="inline-flex min-h-11 items-center gap-2 rounded-full bg-brand-blue px-6 py-3 text-base font-semibold text-white transition-colors duration-300 hover:bg-brand-blue-dark"
             >
               View All Speakers
