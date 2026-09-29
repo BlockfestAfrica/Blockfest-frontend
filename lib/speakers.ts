@@ -409,6 +409,7 @@ export const SpeakersList: Speaker[] = [
     twitter: "https://x.com/mo_ogunlende?s=21&t=6lhy88Nx16NRD-zFs2-S9w",
     bio: "Hon. Mobolaji Ogunlende Abubakre is the Commissioner for Youth & Social Development in the Lagos State Government.\n\nHe has spoken at Blockfest Africa before, and returns for 2026.\n\nAt Blockfest Africa 2026, he joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
+    role: "special-guest",
   },
 ];
 
