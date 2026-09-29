@@ -60,19 +60,10 @@ const TIER = {
     sizes: "(min-width: 768px) 180px, 45vw",
   },
 
-  /*
-   * Community, media and ecosystem.
-   *
-   * 2 per row on smaller screens.
-   * 4 per row from md upwards.
-   *
-   * The plate remains smaller than Official so the existing tests continue
-   * to pass, while the logo is visually enlarged using scale.
-   */
   community: {
     item: "w-[calc(50%-0.375rem)] md:w-[calc(25%-0.5625rem)]",
-    plate: "h-12 sm:h-16 rounded-xl",
-    logo: "h-8 sm:h-10 scale-100 md:scale-[1.2]",
+    plate: "h-12 md:h-16 rounded-xl",
+    logo: "h-8 md:h-10 scale-100 md:scale-[1.2]",
     sizes: "(min-width: 768px) 220px, 45vw",
   },
 } as const;
