@@ -199,3 +199,28 @@ three previews.
   trims empty canvas and darkens white wordmarks drawn for dark grounds.
 - Past years are the same tile, smaller and denser (8 per row), below the
   current year.
+
+### A page that spans weeks: what is happening now, then the record
+
+The owner saw week 1's final count twice on the winners page, one under
+the other, and nothing saying which week was running. The page had a
+section per kind of thing (winners, the vote), and a vote section that fell
+back to the last round when none was open. It is now a page per week,
+placed once, picked by eye from three previews (stacked weeks, week tabs,
+now-plus-record); tabs lost because they hid the winners behind a click.
+
+- "Happening now" (gold eyebrow, it is status) holds each live week as its
+  own card: a week with a vote first, then a finished week waiting on its
+  results, then the running stage. The card header names the week and its
+  dates once, and its state at the right (Voting now, Votes in review,
+  Awaiting results, This week).
+- An award not in yet is a row saying when it comes ("Announced Sunday 4
+  October"), never a promise about a day that has gone.
+- The vote is the Community Favourite row of its own week, not a section:
+  the ballot draws no card of its own there. The live count sits directly
+  under that week's card.
+- "Winners so far" is one card: a header counting the weeks announced, each
+  week a group of its award rows, and that week's final count closed at its
+  foot. A number is said once, with the week it belongs to.
+- lib/winner-weeks.ts decides which weeks are live and which are record;
+  components only draw.

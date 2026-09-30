@@ -201,7 +201,8 @@ describe("the ballot header", () => {
 
   it("says closed only when it is, and nothing it cannot know when the close is unreadable", () => {
     const { unmount } = render(<Ballot entries={entries("", "2026-09-20T07:00:00.000Z")} state="closed" />);
-    expect(document.body.textContent).toContain("Voting for week 1 has closed.");
+    // The week is said by the card around the ballot now, not by the ballot.
+    expect(document.body.textContent).toContain("Voting has closed.");
     unmount();
     render(<Ballot entries={entries("", "")} state="none" />);
     expect(document.body.textContent).not.toContain("has closed");
@@ -222,11 +223,15 @@ describe("the clock", () => {
 
 describe("the winners page ballot", () => {
   const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
-  const page = read("app/campaigns/monica-money-story/winners/page.tsx");
+  // The ballot is drawn inside its week's card now (weekly-winners.tsx), so
+  // "the page" here is the page and the week card together.
+  const page =
+    read("app/campaigns/monica-money-story/winners/page.tsx") +
+    read("components/campaigns/weekly-winners.tsx");
   const ballotSrc = read("components/campaigns/ballot.tsx");
 
   it("is one ballot with the clock in its header, not a card per nominee", () => {
-    expect(page).toContain("<Ballot entries={shortlist} state={voteState} />");
+    expect(page).toContain("<Ballot entries={shortlist} state={ballotState} />");
     expect(ballotSrc).toContain("<BallotRows");
     expect(read("components/campaigns/ballot-rows.tsx")).toContain('<ul className="divide-y divide-line">');
     expect(ballotSrc).toContain("<TimeLeftLabel");

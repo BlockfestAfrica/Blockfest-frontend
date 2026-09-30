@@ -292,6 +292,53 @@ export async function voteBoard(): Promise<VoteBoard | null> {
   };
 }
 
+/** A vote round as the public page may know it: its week and where it stands. */
+export interface PublicRound {
+  weekNo: number;
+  status: "open" | "closed" | "published";
+  opensAt: string;
+  closesAt: string;
+}
+
+/**
+ * Every round that is past draft, newest first, so the page can say for each
+ * week whether its Community Favourite vote is coming, running, being
+ * reviewed or done. The shortlist only covers the round that is still open;
+ * a round an owner has closed but not yet published is otherwise invisible,
+ * and its week would say nothing about a vote people just took part in.
+ *
+ * Weeks and times only. Fails soft to nothing, like the rest of this page.
+ */
+export async function publicRounds(): Promise<PublicRound[]> {
+  try {
+    const result = await getDb().execute(sql`
+      SELECT r.week_no, r.status::text AS status, r.opens_at, r.closes_at
+        FROM vote_rounds r
+        JOIN campaigns cm ON cm.id = r.campaign_id
+       WHERE cm.slug = ${MONICA_SLUG}
+         AND r.status IN ('open', 'closed', 'published')
+       ORDER BY r.opens_at DESC
+    `);
+    const iso = (value: unknown) => {
+      const at = value instanceof Date ? value : new Date(String(value ?? ""));
+      return Number.isNaN(at.getTime()) ? "" : at.toISOString();
+    };
+    return ((result.rows ?? []) as Record<string, unknown>[]).map((r) => ({
+      weekNo: Number(r.week_no ?? 0),
+      status:
+        r.status === "published" ? "published" : r.status === "closed" ? "closed" : "open",
+      opensAt: iso(r.opens_at),
+      closesAt: iso(r.closes_at),
+    }));
+  } catch (error) {
+    console.warn(
+      "[winners] rounds unavailable:",
+      error instanceof Error ? error.message : String(error),
+    );
+    return [];
+  }
+}
+
 /**
  * Each published week's final Community Favourite count, for the page's
  * Weekly winners cards.

@@ -33,7 +33,7 @@ export function IntegrityTicker() {
 
   return (
     <div
-      className="group mt-8 flex items-center gap-2 rounded-full border border-line-2 bg-card py-1 pl-4 pr-1"
+      className="group flex items-center gap-2 rounded-full border border-line-2 bg-card py-1 pl-4 pr-1"
     >
       <ShieldCheck className="h-4 w-4 shrink-0 text-brand-gold" aria-hidden="true" />
       <p className="sr-only">{line}.</p>

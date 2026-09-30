@@ -37,6 +37,13 @@ const DATE_ONLY = new Intl.DateTimeFormat("en-NG", {
   timeZone: "Africa/Lagos",
 });
 
+const DAY_DATE = new Intl.DateTimeFormat("en-NG", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: "Africa/Lagos",
+});
+
 const CLOCK = new Intl.DateTimeFormat("en-NG", {
   hour: "numeric",
   minute: "2-digit",
@@ -65,6 +72,10 @@ export const dateTime = (value: Date | string) =>
 /** 12 September. For a single date in a sentence. */
 export const dateOnly = (value: Date | string) =>
   DATE_ONLY.format(typeof value === "string" ? new Date(value) : value);
+
+/** Sunday 4 October. For a day that something happens on, with no time. */
+export const dayDate = (value: Date | string) =>
+  DAY_DATE.format(typeof value === "string" ? new Date(value) : value).replace(",", "");
 
 /** 15:05 Lagos. For "updated at" on something that refreshes within the day. */
 export const clockTime = (value: Date | string) =>
