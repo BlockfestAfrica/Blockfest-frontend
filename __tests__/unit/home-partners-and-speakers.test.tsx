@@ -258,11 +258,40 @@ describe("2026 partners", () => {
 describe("2025 partners", () => {
   it("puts every previous partner on the same white tile as 2026", async () => {
     const { partners2025 } = await import("@/lib/partners-2025");
-    render(<PartnersSection />);
+    const { PastPartnersWall } = await import("@/components/home/partners");
+    render(<PastPartnersWall />);
+    expect(screen.getAllByRole("img")).toHaveLength(partners2025.length);
     for (const p of partners2025) {
       const tile = screen.getByAltText(p.name).parentElement!;
       expect(tile.className, p.name).toMatch(/(^|\s)bg-white(\s|$)/);
     }
+  });
+
+  it("shows twelve on the home page, sponsors first, and links to the rest on /partners", async () => {
+    const { partners2025 } = await import("@/lib/partners-2025");
+    render(<PartnersSection />);
+    const wall = screen.getAllByRole("list")[0];
+    const shown = within(wall).getAllByRole("img");
+    expect(shown).toHaveLength(12);
+    expect(shown[0].getAttribute("alt")).toBe(partners2025[0].name);
+    const more = screen.getByRole("link", {
+      name: `See all ${partners2025.length} previous partners`,
+    });
+    expect(more.getAttribute("href")).toBe("/partners#previous-partners");
+  });
+
+  it("ends with the ways to partner, where the packages card was", () => {
+    render(<PartnersSection />);
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Partner with Blockfest Africa 2026" }),
+    ).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent)).toEqual([
+      "Sponsor",
+      "Media partner",
+      "Community partner",
+      "Government & institutions",
+    ]);
+    expect(screen.queryByText(/View 2026 Packages/)).toBeNull();
   });
 });
 
