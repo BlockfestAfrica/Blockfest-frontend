@@ -67,8 +67,23 @@ export const sponsors: Sponsor[] = [
   },
 ];
 
-/** Media, community, government and ecosystem partners, in one wall. */
+/**
+ * Media, community, government and ecosystem partners, in one wall.
+ *
+ * Lagos State and the national press lead: they were 2025 partners and are
+ * confirmed again for 2026, and their logos are the white-tile copies
+ * already prepared for the 2025 wall. A lone government partner goes in this
+ * wall, not a section of its own: the heading then reads "Media & government
+ * partners".
+ */
 export const partners: Partner[] = [
+  { name: "Lagos State Government", kind: "Government", logo: "/images/partners-2025/lagos-state.png", width: 149, height: 149, href: "https://lagosstate.gov.ng" },
+  { name: "BusinessDay", kind: "Media", logo: "/images/partners-2025/businessday.png", width: 1280, height: 267, href: "https://businessday.ng" },
+  { name: "The Guardian", kind: "Media", logo: "/images/partners-2025/guardian.png", width: 1280, height: 156, href: "https://guardian.ng" },
+  { name: "Legit", kind: "Media", logo: "/images/partners-2025/legit.png", width: 841, height: 330, href: "https://www.legit.ng" },
+  { name: "TechCabal", kind: "Media", logo: "/images/partners-2025/techcabal.png", width: 480, height: 480, href: "https://techcabal.com" },
+  { name: "Techpoint", kind: "Media", logo: "/images/partners-2025/techpoint.png", width: 407, height: 480, href: "https://techpoint.africa" },
+  { name: "Punch", kind: "Media", logo: "/images/partners-2025/punch.png", width: 1226, height: 362, href: "https://punchng.com" },
   { name: "AllConfsBot", kind: "Media", logo: "/2026/logos/allconfsbot.png", width: 1280, height: 457, href: "https://x.com/allconfsbot" },
   { name: "Blockchain Marketing Ninja", kind: "Media", logo: "/2026/logos/blockchain-marketing-ninja.png", width: 1280, height: 331, href: "https://x.com/0xblockchainmkt" },
   { name: "Blockchain Staffing Ninja", kind: "Media", logo: "/2026/logos/blockchain-staffing-ninja.png", width: 952, height: 262, href: "https://x.com/staffing_Ninja" },
