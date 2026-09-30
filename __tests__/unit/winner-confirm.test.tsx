@@ -60,7 +60,6 @@ function panel(props: Partial<Parameters<typeof WinnersPanel>[0]> = {}) {
       weekNo={2}
       creatorCandidates={[AMARA, BISI]}
       favouriteCandidates={[AMARA, BISI]}
-      excludedCount={0}
       frozen
       vote={DECIDED}
       picked={[]}

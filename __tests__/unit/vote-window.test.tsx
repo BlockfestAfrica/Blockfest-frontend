@@ -769,7 +769,6 @@ describe("a vote that outlives its week", () => {
       weekNo: 1,
       creatorCandidates: [],
       favouriteCandidates: [],
-      excludedCount: 0,
       picked: [],
       vote: null,
     };

@@ -484,6 +484,77 @@ describe("a draft is not a win", () => {
     ).toEqual(["Ada", "Bola"]);
   });
 
+  /*
+   * 0071. The candidate list stopped counting drafts in 0063, but the unique
+   * index behind P0801 still did. A Creator of the Week draft saved for one
+   * week and never announced or discarded held its creator for the rest of
+   * the campaign: the console offered her in a later week and the database
+   * refused her with "already been Creator of the Week", which was not true.
+   */
+  it("does not hold a creator whose draft in another week was never announced", async () => {
+    const ada = await creatorWith("Ada", 300);
+
+    await publish(1, "creator_of_week", ada, { publish: false });
+    await expect(publish(2, "creator_of_week", ada)).resolves.toBeTruthy();
+
+    const won = await one<{ week_no: number }>(
+      `SELECT week_no FROM weekly_winners
+        WHERE category = 'creator_of_week' AND published_at IS NOT NULL`,
+    );
+    expect(Number(won.week_no)).toBe(2);
+  });
+
+  it("still refuses a past winner as a draft in another week, and writes nothing", async () => {
+    const ada = await creatorWith("Ada", 300);
+    await publish(1, "creator_of_week", ada);
+
+    await expect(
+      publish(2, "creator_of_week", ada, { publish: false }),
+    ).rejects.toThrow(/already_creator_of_week/);
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM weekly_winners WHERE week_no = 2`,
+      ),
+    ).toBe(0);
+    expect(
+      await count(
+        `SELECT count(*)::int AS n FROM audit_log WHERE action = 'winner.drafted'`,
+      ),
+    ).toBe(0);
+  });
+
+  it("refuses announcing an old draft once that creator has won another week", async () => {
+    const ada = await creatorWith("Ada", 300);
+    await publish(1, "creator_of_week", ada, { publish: false });
+    await publish(2, "creator_of_week", ada);
+
+    await expect(publish(1, "creator_of_week", ada)).rejects.toThrow(
+      /already_creator_of_week/,
+    );
+    const week1 = await one<{ published_at: string | null }>(
+      `SELECT published_at FROM weekly_winners
+        WHERE week_no = 1 AND category = 'creator_of_week'`,
+    );
+    expect(week1.published_at, "the old draft stays a draft").toBeNull();
+  });
+
+  it("keeps the database backstop, now on announced rows only", async () => {
+    const index = await one<{ indexdef: string }>(
+      `SELECT indexdef FROM pg_indexes
+        WHERE indexname = 'creator_of_week_once_per_campaign'`,
+    );
+    expect(index.indexdef).toMatch(/UNIQUE/);
+    expect(index.indexdef).toMatch(/published_at IS NOT NULL/);
+  });
+
+  it("leaves Community Favourite drafts and repeats alone", async () => {
+    const ada = await creatorWith("Ada", 300);
+    await publish(1, "community_favourite", ada);
+    await expect(
+      publish(2, "community_favourite", ada, { publish: false }),
+    ).resolves.toBeTruthy();
+  });
+
   it("still drops her once the draft is actually announced", async () => {
     const ada = await creatorWith("Ada", 300);
     await creatorWith("Bola", 200);
