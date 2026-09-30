@@ -385,6 +385,40 @@ export async function finalCounts(): Promise<Record<number, VoteBoardRow[]>> {
 }
 
 /**
+ * The published weeks whose rounds had votes removed as fraud.
+ *
+ * The notice that says so used to sit on the live count, which follows the
+ * newest round; once a result was published the count moved into that week's
+ * record and the notice went with nothing. The owner wanted it seen that
+ * removals happened, so it stays with the week it happened in. Only that it
+ * happened, never how many or whose, like the live count's flag.
+ */
+export async function flaggedWeeks(): Promise<number[]> {
+  try {
+    const result = await getDb().execute(sql`
+      SELECT DISTINCT r.week_no
+        FROM vote_rounds r
+        JOIN campaigns cm ON cm.id = r.campaign_id
+       WHERE cm.slug = ${MONICA_SLUG}
+         AND r.status = 'published'
+         AND EXISTS (
+               SELECT 1 FROM votes fv
+                WHERE fv.round_id = r.id
+                  AND fv.status = 'removed'
+                  AND fv.removed_mode = 'fraud')
+       ORDER BY r.week_no
+    `);
+    return ((result.rows ?? []) as Record<string, unknown>[]).map((r) => Number(r.week_no ?? 0));
+  } catch (error) {
+    console.warn(
+      "[winners] flagged weeks unavailable:",
+      error instanceof Error ? error.message : String(error),
+    );
+    return [];
+  }
+}
+
+/**
  * Fields that must never appear on the winners page.
  *
  * Exported so a test asserts against the real output rather than a copy of this

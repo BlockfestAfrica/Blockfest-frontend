@@ -11,6 +11,7 @@ import {
 import { NoteLine } from "@/components/campaigns/note-line";
 import { CountRows } from "@/components/campaigns/count-rows";
 import { Ballot } from "@/components/campaigns/ballot";
+import { IntegrityTicker } from "@/components/campaigns/integrity-ticker";
 import { closingAt, count, dayDate } from "@/lib/format";
 import { rankBoard, type VoteBoardRow } from "@/lib/vote-board";
 
@@ -234,7 +235,11 @@ export function LiveWeek({
                     ? "Voting now"
                     : week.announceAhead
                       ? `Vote opens ${dayDate(week.announceOn)}`
-                      : "Vote opens soon"
+                      : week.current
+                        ? "Vote opens soon"
+                        : // Last week's vote cannot open once the next
+                          // stage has begun; promising it would be false.
+                          "Not announced yet"
             }
           />
         )}
@@ -276,6 +281,13 @@ export function WinnersRecord({ weeks, of }: { weeks: WinnersWeek[]; of: number 
                 {week.cotw && <Winner w={week.cotw} />}
                 {week.cf && <Winner w={week.cf} />}
               </ul>
+              {/* Outside the closed count, so it is seen without opening it:
+                  the owner wanted it visible that fraud was acted on. */}
+              {week.finalFlagged && (
+                <div className="border-t border-line px-4 py-3 sm:px-5">
+                  <IntegrityTicker />
+                </div>
+              )}
               {week.finalCount && (
                 <FinalCount week={week.weekNo} nominees={week.finalCount} />
               )}

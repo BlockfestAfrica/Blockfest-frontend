@@ -108,13 +108,14 @@ describe("a week that is happening now", () => {
     expect(within(week).queryByRole("button", { name: /Vote/ })).toBeNull();
   });
 
-  it("says a late week is awaiting results, and promises no day that has gone", () => {
+  it("says a late week is awaiting results, and promises neither a day that has gone nor a vote that cannot open", () => {
     const { live } = weeksAt("2026-10-05T09:00:00+01:00", [W1_COTW, W1_CF], [R1]);
     render(<LiveWeek week={live[0]} shortlist={[]} ballotState="none" />);
     const week = card(2);
     expect(week.textContent).toContain("Awaiting results");
     expect(week.textContent).toContain("Not announced yet");
-    expect(week.textContent).toContain("Vote opens soon");
+    // Last week's vote cannot open once the next stage has begun.
+    expect(week.textContent).not.toContain("Vote opens");
     expect(week.textContent).not.toContain("Sunday 4 October");
   });
 });
@@ -141,6 +142,27 @@ describe("the record", () => {
     expect(details).toHaveLength(1);
     expect(details[0].open).toBe(false);
     expect(details[0].querySelector("summary")!.textContent).toMatch(/Week 1 vote count\s*1,156 verified votes/);
+  });
+
+  it("keeps the fraud notice with a week whose round had votes removed, outside its closed count", () => {
+    const flaggedRecord = winnersByWeek({
+      stages: monicaStages,
+      winners: [W1_COTW, W1_CF],
+      rounds: [R1],
+      finals: FINALS,
+      flagged: [1],
+      now: new Date("2026-09-30T12:00:00+01:00").getTime(),
+    }).record;
+    const { container } = render(<WinnersRecord weeks={flaggedRecord} of={4} />);
+    const notice = container.querySelector("[role='status'], [aria-label]");
+    expect(container.textContent).toMatch(/genuine votes count/i);
+    expect(container.querySelector("details")!.textContent).not.toMatch(/genuine votes count/i);
+    expect(notice).toBeTruthy();
+  });
+
+  it("shows no fraud notice for a week without removals", () => {
+    const { container } = render(<WinnersRecord weeks={record()} of={4} />);
+    expect(container.textContent).not.toMatch(/genuine votes count/i);
   });
 
   it("links the winning entry as marks named for whose and where, X, Instagram, TikTok", () => {

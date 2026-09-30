@@ -59,6 +59,8 @@ export interface WinnersWeek {
   voteClosesAt: string;
   /** The published count, once the Community Favourite is announced. */
   finalCount: VoteBoardRow[] | null;
+  /** Votes in that published round were removed as fraud. */
+  finalFlagged: boolean;
 }
 
 const LAGOS_OFFSET_MS = 60 * 60 * 1000;
@@ -87,16 +89,31 @@ export function winnersByWeek({
   winners,
   rounds,
   finals,
+  flagged = [],
   now,
 }: {
   stages: CampaignStage[];
   winners: PublishedWinner[];
   rounds: PublicRound[];
   finals: Record<number, VoteBoardRow[]>;
+  /** Published weeks whose rounds had votes removed as fraud. */
+  flagged?: number[];
   now: number;
 }): { live: WinnersWeek[]; record: WinnersWeek[] } {
   const started = stages.filter((s) => new Date(s.startsAt).getTime() <= now);
-  const currentWeek = started.length ? started[started.length - 1].number : 1;
+  /* After the last stage's announcement Sunday no stage follows, so nothing
+     would ever make the last week "last week" or release the one before it:
+     a late final result would say "This week" for good. The week after the
+     last is treated as running then, so the last week reads "Awaiting
+     results" like any late week, and the one before goes to the record. */
+  const last = stages[stages.length - 1];
+  const over =
+    !!last && now >= new Date(announcementSunday(last.endsAt)).getTime() + DAY_MS;
+  const currentWeek = over
+    ? last.number + 1
+    : started.length
+      ? started[started.length - 1].number
+      : 1;
 
   const weeks: WinnersWeek[] = stages.map((stage) => {
     const weekNo = stage.number;
@@ -132,6 +149,7 @@ export function winnersByWeek({
       voteOpensAt: round?.opensAt ?? "",
       voteClosesAt: round?.closesAt ?? "",
       finalCount: cf && (finals[weekNo]?.length ?? 0) > 0 ? finals[weekNo] : null,
+      finalFlagged: Boolean(cf) && flagged.includes(weekNo),
     };
   });
 
@@ -145,11 +163,16 @@ export function winnersByWeek({
     !(w.cotw && w.cf) &&
     (w.current || voting(w) || w.weekNo === currentWeek - 1);
 
+  /* What a visitor can act on first: an open vote, then one about to open,
+     then one in review, then a week waiting on results, then the running
+     stage. #shortlist lands on the top of this list. */
+  const rank = (w: WinnersWeek) =>
+    w.vote === "open" ? 0 : w.vote === "before" ? 1 : w.vote === "closed" ? 2 : 3;
   const live = weeks
     .filter(isLive)
     .sort(
       (a, b) =>
-        Number(voting(b)) - Number(voting(a)) ||
+        rank(a) - rank(b) ||
         Number(a.current) - Number(b.current) ||
         b.weekNo - a.weekNo,
     );

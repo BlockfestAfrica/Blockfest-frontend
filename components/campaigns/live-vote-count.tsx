@@ -32,11 +32,12 @@ const LONGEST_WAIT = 2 ** 31 - 1;
  * same answer.
  *
  * Renders nothing until it has a count, and nothing before voting opens,
- * when every row would be a zero. Once the vote ends it stays up, marked
- * closed, while the votes are reviewed.
+ * when every row would be a zero. Once the vote ends it stays up, headed
+ * Voting closed, while the votes are reviewed; the week card above it says
+ * what review means, so this does not say it again.
  *
  * Once the Community Favourite is published the count is final, and the
- * page already shows it with that week under "Winners so far". Drawing it
+ * page already shows it with that week's winners, in the record. Drawing it
  * here as well said the same numbers twice, one under the other, so a
  * visitor who loads the page after publication sees it only there. One who
  * was watching when it went final keeps it, marked final, with a pointer to
@@ -160,11 +161,6 @@ export function LiveVoteCount() {
           Week {board.weekNo} · {count(total)} {total === 1 ? "vote" : "votes"}
         </p>
       </div>
-      {state === "closed" && (
-        <p className="mt-1 text-sm text-ink-3">
-          The votes are reviewed before the Community Favourite is confirmed.
-        </p>
-      )}
       {state === "final" && (
         <p className="mt-1 text-sm text-ink-3">
           The Community Favourite is confirmed.{" "}
@@ -174,7 +170,7 @@ export function LiveVoteCount() {
           >
             Reload the page
           </a>{" "}
-          to see them under Winners so far.
+          to see them with week {board.weekNo}&apos;s winners.
         </p>
       )}
 

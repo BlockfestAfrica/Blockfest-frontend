@@ -22,7 +22,7 @@ vi.mock("@/lib/db/client", async () => {
   return { ...tables, getDb: () => state.db };
 });
 
-const { voteBoard, currentShortlist, finalCounts, WINNER_NEVER_PUBLISH } = await import("@/lib/winners");
+const { voteBoard, currentShortlist, finalCounts, flaggedWeeks, WINNER_NEVER_PUBLISH } = await import("@/lib/winners");
 const { readBoard } = await import("@/lib/vote-board");
 
 let db: PGlite;
@@ -309,6 +309,23 @@ describe("finalCounts", () => {
       ["Ben", 1],
     ]);
     expect(Object.keys(finals[1][0]).sort()).toEqual(["name", "nomineeId", "votes"]);
+  });
+});
+
+describe("flaggedWeeks", () => {
+  /*
+   * The fraud notice stays with a published week in the record. Only weeks
+   * whose published round had a vote removed as fraud, and only the week.
+   */
+  it("names published weeks with a fraud removal, and nothing else", async () => {
+    const one = await round(1, "published", "2026-09-06T08:00:00+01:00", ["Ada"]);
+    await vote(one.roundId, one.nominees[0], "fraud");
+    const two = await round(2, "published", "2026-09-13T08:00:00+01:00", ["Ben"]);
+    await vote(two.roundId, two.nominees[0], "counted");
+    const three = await round(3, "closed", "2026-09-20T08:00:00+01:00", ["Cy"]);
+    await vote(three.roundId, three.nominees[0], "fraud");
+
+    expect(await flaggedWeeks()).toEqual([1]);
   });
 });
 

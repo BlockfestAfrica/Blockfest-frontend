@@ -37,12 +37,18 @@ const r2 = (status: PublicRound["status"], over: Partial<PublicRound> = {}): Pub
 const FINALS = { 1: [{ nomineeId: "a", name: "A", votes: 3 }] };
 
 const at = (iso: string) => new Date(iso).getTime();
-const place = (winners: PublishedWinner[], rounds: PublicRound[], when: string) => {
+const place = (
+  winners: PublishedWinner[],
+  rounds: PublicRound[],
+  when: string,
+  flagged: number[] = [],
+) => {
   const { live, record } = winnersByWeek({
     stages: monicaStages,
     winners,
     rounds,
     finals: FINALS,
+    flagged,
     now: at(when),
   });
   return {
@@ -158,6 +164,38 @@ describe("the page, through the campaign", () => {
     );
     expect(p.record).toEqual([2, 1]);
     expect(p.live).toEqual(["3:none:current"]);
+  });
+
+  it("puts an open vote above one in review, so #shortlist lands on the ballot", () => {
+    const w3 = win(3, "creator_of_week");
+    const r3: PublicRound = { weekNo: 3, status: "open", opensAt: "2026-10-11T11:00:00.000Z", closesAt: "2026-10-13T11:00:00.000Z" };
+    const rounds = [R1, r2("closed"), r3];
+    expect(place([...W1, W2_COTW, w3], rounds, "2026-10-11T15:00:00+01:00").live).toEqual([
+      "3:open:current",
+      "2:closed",
+    ]);
+    expect(place([...W1, W2_COTW, w3], rounds, "2026-10-12T09:00:00+01:00").live).toEqual([
+      "3:open",
+      "2:closed",
+      "4:none:current",
+    ]);
+  });
+
+  it("moves on after the last week: a late final week awaits results, the one before is record", () => {
+    const done = [1, 2].flatMap((n) => [win(n, "creator_of_week"), win(n, "community_favourite")]);
+    const p = place([...done, win(3, "creator_of_week")], [], "2026-10-19T10:00:00+01:00");
+    expect(p.live).toEqual(["4:none"]);
+    expect(p.record).toEqual([3, 2, 1]);
+    // Still the final week's own Sunday: it is the running week, as before,
+    // with the week waiting on its results ahead of it.
+    expect(place(done, [], "2026-10-18T15:00:00+01:00").live).toEqual(["3:none", "4:none:current"]);
+  });
+
+  it("marks a published week whose round had fraud removed, and no other", () => {
+    const p = place(W1, [R1], "2026-09-30T12:00:00+01:00", [1, 2]);
+    expect(p.weeks.find((w) => w.weekNo === 1)!.finalFlagged).toBe(true);
+    // Week 2 has no announced Community Favourite, so nothing is final to flag.
+    expect(p.weeks.find((w) => w.weekNo === 2)!.finalFlagged).toBe(false);
   });
 
   it("reads the newest round of a week when a week has two", () => {

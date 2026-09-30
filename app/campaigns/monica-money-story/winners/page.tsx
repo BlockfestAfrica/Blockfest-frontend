@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import {
   currentShortlist,
   finalCounts,
+  flaggedWeeks,
   publicRounds,
   publishedWinners,
   voteWindowState,
@@ -36,11 +37,12 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function WinnersPage() {
-  const [winners, shortlist, finals, rounds] = await Promise.all([
+  const [winners, shortlist, finals, rounds, flagged] = await Promise.all([
     publishedWinners(),
     currentShortlist(),
     finalCounts(),
     publicRounds(),
+    flaggedWeeks(),
   ]);
 
   /*
@@ -69,6 +71,7 @@ export default async function WinnersPage() {
     winners,
     rounds,
     finals,
+    flagged,
     now: Date.now(),
   });
 
