@@ -1,25 +1,27 @@
 /**
- * Weekly winners, in the ballot's anatomy.
+ * The winners page, week by week.
  *
- * The winners page is where the approved ballot lives, and the section above
- * it was a trophy, a gold eyebrow and a gold pill per award, each in its own
- * box. These pin the rebuilt section: one card per week with a row per
- * award, the winning entry as named platform marks in the ballot's order,
- * long notes clamped with a way to read them, and the week being voted on
- * saying so rather than leaving a visitor to connect it with the ballot.
+ * The owner saw week 1's final count twice, one under the other, and nothing
+ * saying which week was which. These render the real week cards from the
+ * real week model at moments of the campaign and pin what each says: the
+ * running week and its dates, what is next for each award, the vote inside
+ * the week it decides, and the record with each count said once.
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { WeeklyWinners } from "@/components/campaigns/weekly-winners";
-import type { PublishedWinner } from "@/lib/winners";
-import { MONICA_FIRST_LEADERBOARD, MONICA_FIRST_LEADERBOARD_ENDS } from "@/lib/campaigns";
+import { afterEach, describe, expect, it } from "vitest";
+import { LiveWeek, WinnersRecord } from "@/components/campaigns/weekly-winners";
+import { monicaStages } from "@/lib/campaigns";
+import { winnersByWeek } from "@/lib/winner-weeks";
+import type { PublicRound, PublishedWinner, ShortlistEntry } from "@/lib/winners";
 
 const LONG =
   "Ben's split-screen video compared a month of cash spending against the same month on Monica, receipts included, and the comments turned into a thread of people doing their own.";
 
-const W2_COTW: PublishedWinner = {
-  weekNo: 2,
+const W1_COTW: PublishedWinner = {
+  weekNo: 1,
   category: "creator_of_week",
   name: "Ben Eze",
   prizeNaira: 300_000,
@@ -30,216 +32,184 @@ const W2_COTW: PublishedWinner = {
     { platform: "x", url: "https://x.com/ben/status/2" },
   ],
 };
-const W2_CF: PublishedWinner = {
-  weekNo: 2,
+const W1_CF: PublishedWinner = {
+  weekNo: 1,
   category: "community_favourite",
   name: "Ada Obi",
   prizeNaira: 100_000,
   note: null,
   links: [{ platform: "x", url: "https://x.com/ada/status/2" }],
 };
-const W1_CF: PublishedWinner = {
-  weekNo: 1,
-  category: "community_favourite",
-  name: "Tolu Adeyemi",
-  prizeNaira: 100_000,
-  note: null,
-  links: [],
+const W2_COTW: PublishedWinner = { ...W1_CF, weekNo: 2, category: "creator_of_week", name: "Chidi Eze", prizeNaira: 300_000 };
+const R1: PublicRound = { weekNo: 1, status: "published", opensAt: "2026-09-27T09:00:00.000Z", closesAt: "2026-09-29T20:00:00.000Z" };
+const R2: PublicRound = { weekNo: 2, status: "open", opensAt: "2026-10-04T09:00:00.000Z", closesAt: "2026-10-06T20:00:00.000Z" };
+const FINALS = {
+  1: [
+    { nomineeId: "a", name: "Ada Obi", votes: 602 },
+    { nomineeId: "b", name: "MDee Boss", votes: 554 },
+  ],
 };
+const SHORTLIST: ShortlistEntry[] = ["Tobi Ade", "Ngozi Umeh"].map((name, i) => ({
+  name,
+  weekNo: 2,
+  links: [],
+  roundId: "r2",
+  nomineeId: `n${i}`,
+  opensAt: R2.opensAt,
+  closesAt: R2.closesAt,
+}));
 
-const week = (n: number) => screen.getByRole("region", { name: `Week ${n}` });
+const weeksAt = (when: string, winners: PublishedWinner[], rounds: PublicRound[]) =>
+  winnersByWeek({ stages: monicaStages, winners, rounds, finals: FINALS, now: new Date(when).getTime() });
 
-/** The pending Community Favourite row's state line. */
-const cfLine = (n: number) =>
-  [...week(n).querySelectorAll(":scope > ul > li")]
-    .find((li) => li.querySelector("p")?.textContent === "Community Favourite")
-    ?.querySelectorAll("p")[1]?.textContent;
+const card = (n: number) => screen.getByRole("region", { name: new RegExp(`^Week ${n}\\b`) });
 
 afterEach(() => {
-  vi.useRealTimers();
+  Reflect.deleteProperty(HTMLElement.prototype, "scrollHeight");
+  Reflect.deleteProperty(HTMLElement.prototype, "clientHeight");
 });
 
-describe("weekly winners", () => {
-  it("draws one card per week, newest first, with a row per award", () => {
-    render(<WeeklyWinners winners={[W2_COTW, W2_CF, W1_CF]} vote={null} />);
-    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
-      "Week 2",
-      "Week 1",
-    ]);
-    const rows = [...week(2).querySelectorAll(":scope > ul > li")];
-    expect(rows.map((li) => li.querySelector("p")?.textContent)).toEqual(["Ben Eze", "Ada Obi"]);
-    expect(week(1).querySelectorAll(":scope > ul > li")).toHaveLength(1);
-    expect(week(2).textContent).toContain("Creator of the Week · ₦300,000");
-    expect(week(2).textContent).toContain("Community Favourite · ₦100,000");
+describe("a week that is happening now", () => {
+  it("names the week, its dates and that it is this week, with when each award comes", () => {
+    const { live } = weeksAt("2026-09-30T12:00:00+01:00", [W1_COTW, W1_CF], [R1]);
+    render(<LiveWeek week={live[0]} shortlist={[]} ballotState="none" />);
+    const week = card(2);
+    expect(within(week).getByRole("heading", { level: 3 }).textContent).toBe(
+      "Week 2, 28 September – 3 October",
+    );
+    expect(week.textContent).toContain("This week");
+    expect(week.textContent).toContain("Entries close Saturday, 3 October at 12:00");
+    expect(week.textContent).toContain("Announced Sunday 4 October");
+    expect(week.textContent).toContain("Vote opens Sunday 4 October");
+  });
+
+  it("holds the vote as its Community Favourite row, with the clock and the rule said once", () => {
+    const { live } = weeksAt("2026-10-05T12:00:00+01:00", [W1_COTW, W1_CF, W2_COTW], [R1, R2]);
+    const week2 = live.find((w) => w.weekNo === 2)!;
+    render(<LiveWeek week={week2} shortlist={SHORTLIST} ballotState="open" />);
+    const week = card(2);
+    expect(week.textContent).toContain("Voting now");
+    expect(week.textContent).toContain("Chidi Eze");
+    expect(week.textContent).toMatch(/one vote per email address, confirmed by a six digit code/);
+    expect(within(week).getAllByRole("button", { name: /Vote/ }).length).toBe(SHORTLIST.length);
+    // Entries are yesterday's news once the vote is on.
+    expect(week.textContent).not.toContain("Entries close");
+    // No card inside the card: the ballot has no border of its own here.
+    expect(week.querySelector(".rounded-xl .rounded-xl")).toBeNull();
+  });
+
+  it("says the votes are in review once voting has closed, with no Vote", () => {
+    const closed = { ...R2, status: "closed" as const };
+    const { live } = weeksAt("2026-10-06T22:00:00+01:00", [W1_COTW, W1_CF, W2_COTW], [R1, closed]);
+    render(<LiveWeek week={live[0]} shortlist={[]} ballotState="none" />);
+    const week = card(2);
+    expect(week.textContent).toContain("Votes in review");
+    expect(week.textContent).toContain("Voting has closed. The Community Favourite is confirmed after review.");
+    expect(within(week).queryByRole("button", { name: /Vote/ })).toBeNull();
+  });
+
+  it("says a late week is awaiting results, and promises neither a day that has gone nor a vote that cannot open", () => {
+    const { live } = weeksAt("2026-10-05T09:00:00+01:00", [W1_COTW, W1_CF], [R1]);
+    render(<LiveWeek week={live[0]} shortlist={[]} ballotState="none" />);
+    const week = card(2);
+    expect(week.textContent).toContain("Awaiting results");
+    expect(week.textContent).toContain("Not announced yet");
+    // Last week's vote cannot open once the next stage has begun.
+    expect(week.textContent).not.toContain("Vote opens");
+    expect(week.textContent).not.toContain("Sunday 4 October");
+  });
+});
+
+describe("the record", () => {
+  const record = () => weeksAt("2026-09-30T12:00:00+01:00", [W1_COTW, W1_CF], [R1]).record;
+
+  it("groups each finished week under its own name, and counts the weeks", () => {
+    render(<WinnersRecord weeks={record()} of={4} />);
+    expect(screen.getByRole("heading", { level: 2, name: "Winners so far" })).toBeTruthy();
+    expect(screen.getByText(/1 of 4 weeks announced/)).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 3, name: /^Week 1/ })).toBeTruthy();
+    // Each award is a row naming its winner and its award; the count below
+    // also names the nominees, so the row is found by its award line.
+    const row = (name: string, award: string) =>
+      screen.getAllByText(name).find((el) => el.closest("li")?.textContent?.includes(award));
+    expect(row("Ben Eze", "Creator of the Week")).toBeTruthy();
+    expect(row("Ada Obi", "Community Favourite")).toBeTruthy();
+  });
+
+  it("says the week's count once, closed, with the total, and opens to the ranked count", () => {
+    const { container } = render(<WinnersRecord weeks={record()} of={4} />);
+    const details = container.querySelectorAll("details");
+    expect(details).toHaveLength(1);
+    expect(details[0].open).toBe(false);
+    expect(details[0].querySelector("summary")!.textContent).toMatch(/Week 1 vote count\s*1,156 verified votes/);
+  });
+
+  it("keeps the fraud notice with a week whose round had votes removed, outside its closed count", () => {
+    const flaggedRecord = winnersByWeek({
+      stages: monicaStages,
+      winners: [W1_COTW, W1_CF],
+      rounds: [R1],
+      finals: FINALS,
+      flagged: [1],
+      now: new Date("2026-09-30T12:00:00+01:00").getTime(),
+    }).record;
+    const { container } = render(<WinnersRecord weeks={flaggedRecord} of={4} />);
+    const notice = container.querySelector("[role='status'], [aria-label]");
+    expect(container.textContent).toMatch(/genuine votes count/i);
+    expect(container.querySelector("details")!.textContent).not.toMatch(/genuine votes count/i);
+    expect(notice).toBeTruthy();
+  });
+
+  it("shows no fraud notice for a week without removals", () => {
+    const { container } = render(<WinnersRecord weeks={record()} of={4} />);
+    expect(container.textContent).not.toMatch(/genuine votes count/i);
   });
 
   it("links the winning entry as marks named for whose and where, X, Instagram, TikTok", () => {
-    render(<WeeklyWinners winners={[W2_COTW]} vote={null} />);
+    render(<WinnersRecord weeks={record()} of={4} />);
     const entry = screen.getByRole("list", { name: "Ben Eze's winning entry" });
-    const names = within(entry)
-      .getAllByRole("link")
-      .map((a) => a.getAttribute("aria-label"));
-    expect(names).toEqual([
+    expect(within(entry).getAllByRole("link").map((a) => a.getAttribute("aria-label"))).toEqual([
       "Ben Eze's winning post on X (opens in a new tab)",
       "Ben Eze's winning post on Instagram (opens in a new tab)",
       "Ben Eze's winning post on TikTok (opens in a new tab)",
     ]);
-    const x = within(entry).getAllByRole("link")[0];
-    expect(x.getAttribute("href")).toBe("https://x.com/ben/status/2");
-    expect(x.getAttribute("target")).toBe("_blank");
   });
 
-  it("shows the week being voted on, with a pending Community Favourite row pointing at the ballot", () => {
-    render(<WeeklyWinners winners={[W2_COTW, W2_CF, W1_CF]} vote={{ weekNo: 3, state: "open" }} />);
-    const three = week(3);
-    expect(three.textContent).toContain("Creator of the WeekNot announced yet");
-    // State only: who decides is the section hint's to say, once.
-    expect(cfLine(3)).toBe("Voting now");
-    expect(three.textContent).not.toContain("public vote");
-    const vote = within(three).getByRole("link", { name: "Vote for the week 3 Community Favourite" });
-    expect(vote.getAttribute("href")).toBe("#shortlist");
-    // Newest first, the week on the ballot included.
-    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
-      "Week 3",
-      "Week 2",
-      "Week 1",
+  it("clamps a long note to two lines with More, and opens it in place", () => {
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", { configurable: true, get: () => 80 });
+    Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get: () => 40 });
+    render(<WinnersRecord weeks={record()} of={4} />);
+    const note = screen.getByText(LONG);
+    expect(note.className).toContain("line-clamp-2");
+    fireEvent.click(screen.getByRole("button", { name: /^More ?about Ben Eze$/ }));
+    expect(note.className).not.toContain("line-clamp-2");
+  });
+
+  it("is called the winners once every week is in", () => {
+    const all = [1, 2, 3, 4].flatMap((n) => [
+      { ...W1_COTW, weekNo: n, note: null },
+      { ...W1_CF, weekNo: n },
     ]);
-  });
-
-  it("says Not announced yet only for the week the ballot is about", () => {
-    // Week 1 has no Creator of the Week here, and is not the vote's week.
-    render(<WeeklyWinners winners={[W2_COTW, W1_CF]} vote={{ weekNo: 2, state: "open" }} />);
-    expect(week(1).textContent).not.toContain("Not announced yet");
-    expect(week(2).textContent).not.toContain("Not announced yet");
-    expect(cfLine(2)).toBe("Voting now");
-  });
-
-  it("drops the pending row once the week's Community Favourite is announced", () => {
-    render(<WeeklyWinners winners={[W2_COTW, W2_CF]} vote={{ weekNo: 2, state: "open" }} />);
-    expect(cfLine(2)).toBeUndefined();
-    expect(week(2).textContent).not.toContain("Voting");
-    expect(screen.queryByRole("link", { name: /Vote for the week/ })).toBeNull();
-  });
-
-  it("says the vote has closed, with no Vote, after the close", () => {
-    render(<WeeklyWinners winners={[]} vote={{ weekNo: 3, state: "closed" }} />);
-    expect(cfLine(3)).toBe("Voting has closed");
-    expect(screen.queryByRole("link", { name: /Vote for the week/ })).toBeNull();
-  });
-
-  it("says the vote opens soon, with no Vote and no gold, before it opens", () => {
-    // A round staged on the Saturday for a Sunday open: nothing is being decided yet.
-    render(<WeeklyWinners winners={[]} vote={{ weekNo: 3, state: "before" }} />);
-    expect(cfLine(3)).toBe("Voting opens soon");
-    expect(week(3).textContent).not.toContain("Voting now");
-    expect(screen.queryByRole("link", { name: /Vote for the week/ })).toBeNull();
-    expect(week(3).innerHTML).not.toContain("border-l-brand-gold");
-  });
-
-  it("claims nothing about a vote whose window it cannot read", () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-09-27T12:00:00+01:00"));
-    render(<WeeklyWinners winners={[]} vote={{ weekNo: 3, state: "none" }} />);
-    expect(screen.queryByRole("region", { name: "Week 3" })).toBeNull();
-    expect(document.body.textContent).toContain(
-      `Nothing announced yet; the first winners appear here on ${MONICA_FIRST_LEADERBOARD}.`,
-    );
-  });
-
-  it("names the first winners' day only until it has gone", () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    // The last second of the Sunday it names: still a promise that can be kept.
-    vi.setSystemTime(new Date(new Date(MONICA_FIRST_LEADERBOARD_ENDS).getTime() - 1000));
-    const { unmount } = render(<WeeklyWinners winners={[]} vote={null} />);
-    expect(document.body.textContent).toContain(`the first winners appear here on ${MONICA_FIRST_LEADERBOARD}.`);
-    unmount();
-    // The Monday after: no date in the past.
-    vi.setSystemTime(new Date(MONICA_FIRST_LEADERBOARD_ENDS));
-    render(<WeeklyWinners winners={[]} vote={null} />);
-    expect(document.body.textContent).toContain(
-      "Nothing announced yet; winners appear here once they are announced.",
-    );
-    expect(document.body.textContent).not.toContain(MONICA_FIRST_LEADERBOARD);
-  });
-
-  describe("a long note", () => {
-    // jsdom defines both on Element; the overrides shadow them on
-    // HTMLElement, so deleting those puts the originals back.
-    afterEach(() => {
-      Reflect.deleteProperty(HTMLElement.prototype, "scrollHeight");
-      Reflect.deleteProperty(HTMLElement.prototype, "clientHeight");
-    });
-
-    it("is clamped to two lines with More, and opens in place, whole in the DOM throughout", () => {
-      // jsdom does no layout: stand in for a note that overflows its clamp.
-      Object.defineProperty(HTMLElement.prototype, "scrollHeight", { configurable: true, get: () => 80 });
-      Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get: () => 40 });
-      render(<WeeklyWinners winners={[W2_COTW]} vote={null} />);
-      const note = screen.getByText(LONG);
-      expect(note.className).toContain("line-clamp-2");
-      // Named for whose note, so several on a page are told apart, with the
-      // visible word first; and a full 44px target, not the word's width.
-      // jsdom's name computation trims the hidden suffix's leading space,
-      // which browsers keep, so the name is matched loosely and the text
-      // exactly.
-      const more = screen.getByRole("button", { name: /^More ?about Ben Eze$/ });
-      expect(more.textContent).toBe("More about Ben Eze");
-      expect(more.className).toContain("min-w-11");
-      expect(more.getAttribute("aria-expanded")).toBe("false");
-      expect(more.getAttribute("aria-controls")).toBe(note.id);
-      expect(note.className).toContain("[overflow-wrap:anywhere]");
-      fireEvent.click(more);
-      expect(note.className).not.toContain("line-clamp-2");
-      expect(screen.getByRole("button", { name: /^Less ?about Ben Eze$/ }).getAttribute("aria-expanded")).toBe("true");
-    });
-
-    it("offers no More when nothing is hidden", () => {
-      render(<WeeklyWinners winners={[W2_COTW]} vote={null} />);
-      expect(screen.getByText(LONG)).toBeTruthy();
-      expect(screen.queryByRole("button", { name: /^More/ })).toBeNull();
-    });
+    const { record: done } = weeksAt("2026-10-25T12:00:00+01:00", all, []);
+    render(<WinnersRecord weeks={done} of={4} />);
+    expect(screen.getByRole("heading", { level: 2, name: "The winners" })).toBeTruthy();
   });
 });
 
-describe("each week's final count", () => {
-  /*
-   * Owner ask: keep each week's vote numbers public after the next week's
-   * vote takes the live count's place, without cluttering the winners. A
-   * closed disclosure at the foot of the week's card.
-   */
-  const winners = [
-    {
-      weekNo: 1,
-      category: "community_favourite" as const,
-      name: "Ada Obi",
-      prizeNaira: 100000,
-      note: null,
-      links: [],
-    },
-  ];
-  const finals = {
-    1: [
-      { nomineeId: "b", name: "Ben Eze", votes: 12 },
-      { nomineeId: "a", name: "Ada Obi", votes: 35 },
-    ],
-  };
+describe("the page", () => {
+  const page = readFileSync(join(process.cwd(), "app/campaigns/monica-money-story/winners/page.tsx"), "utf8");
 
-  it("sits closed at the foot of the week, with the total, and opens to the ranked count", () => {
-    const { container } = render(<WeeklyWinners winners={winners} vote={null} finals={finals} />);
-    const details = container.querySelector("details")!;
-    expect(details.open).toBe(false);
-    const summary = details.querySelector("summary")!;
-    expect(summary.textContent).toContain("See the week 1 final count");
-    expect(summary.textContent).toContain("47 verified votes");
-    const rows = [...details.querySelectorAll("ol > li")].map((li) => li.textContent);
-    expect(rows[0]).toContain("Ada Obi");
-    expect(rows[0]).toContain("35 votes,");
-    expect(rows[1]).toContain("Ben Eze");
+  it("places every week once, and keeps #shortlist for the emails and stage cards", () => {
+    expect(page).toContain("winnersByWeek(");
+    expect(page).toMatch(/id="shortlist"/);
+    expect(page).toContain("Happening now");
+    // No second section for the vote: it lives in its week now.
+    expect(page).not.toContain("Community Favourite vote");
+    expect(page).not.toContain("<Ballot");
   });
 
-  it("is not there for a week without a published count", () => {
-    const { container } = render(<WeeklyWinners winners={winners} vote={null} />);
-    expect(container.querySelector("details")).toBeNull();
+  it("draws the live count once, under the week whose round opened last", () => {
+    expect(page.match(/<LiveVoteCount \/>/g)).toHaveLength(1);
+    expect(page).toMatch(/week\.weekNo === countWeek && <LiveVoteCount \/>/);
   });
 });
-
