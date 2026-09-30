@@ -1,12 +1,24 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { currentShortlist, finalCounts, publishedWinners, voteWindowState } from "@/lib/winners";
-import { SectionHeading } from "@/components/shared/panel";
-import { Ballot } from "@/components/campaigns/ballot";
+import {
+  currentShortlist,
+  finalCounts,
+  flaggedWeeks,
+  publicRounds,
+  publishedWinners,
+  voteWindowState,
+} from "@/lib/winners";
+import { winnersByWeek } from "@/lib/winner-weeks";
 import { LiveVoteCount } from "@/components/campaigns/live-vote-count";
-import { WeeklyWinners } from "@/components/campaigns/weekly-winners";
-import { campaignBySlug, monicaRoutes, MONICA_SLUG } from "@/lib/campaigns";
+import { LiveWeek, WinnersRecord } from "@/components/campaigns/weekly-winners";
+import {
+  campaignBySlug,
+  monicaRoutes,
+  monicaStages,
+  MONICA_SLUG,
+} from "@/lib/campaigns";
 
 const CAMPAIGN = campaignBySlug(MONICA_SLUG)!;
 
@@ -25,10 +37,12 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function WinnersPage() {
-  const [winners, shortlist, finals] = await Promise.all([
+  const [winners, shortlist, finals, rounds, flagged] = await Promise.all([
     publishedWinners(),
     currentShortlist(),
     finalCounts(),
+    publicRounds(),
+    flaggedWeeks(),
   ]);
 
   /*
@@ -48,8 +62,27 @@ export default async function WinnersPage() {
    * because a page that refuses to show a live ballot kills the vote
    * outright, while the engine refuses an early cast on its own.
    */
-  const round = shortlist[0];
-  const voteState = voteWindowState(round);
+  const ballotState = voteWindowState(shortlist[0]);
+
+  /* Every week, placed once: happening now, or on record. The page is
+     rebuilt at most once a minute, so "now" is that rebuild's. */
+  const { live, record } = winnersByWeek({
+    stages: monicaStages,
+    winners,
+    rounds,
+    finals,
+    flagged,
+    now: Date.now(),
+  });
+
+  /* The live count follows one round, the newest to have opened (see
+     voteBoard), so it goes under that week only. Two weeks can be voting at
+     once, last week's in review while this week's is open, and drawing it
+     under both said the newest round's numbers twice, once under the wrong
+     week. */
+  const countWeek = live
+    .filter((week) => week.vote === "open" || week.vote === "closed")
+    .sort((a, b) => Date.parse(b.voteOpensAt) - Date.parse(a.voteOpensAt))[0]?.weekNo;
 
   return (
     <main id="main" className="bg-ground">
@@ -67,67 +100,58 @@ export default async function WinnersPage() {
           <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white">
             Winners
           </h1>
+          {/* Who decides each award, said once for the whole page. */}
+          <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
+            Every week has two prizes. Creator of the Week is chosen by the
+            Blockfest team and announced on the Sunday after the week closes;
+            Community Favourite is decided by a public vote that opens the same
+            day.
+          </p>
 
-          {/* Two named sections, present even while empty. The page holds
-              two different things, announced winners and the weekly vote,
-              and an unlabelled empty page taught neither: a visitor saw
-              "Winners" and two loose paragraphs with no shape of what
-              arrives where. It is told which round the ballot below is
-              showing, so that week can say its Community Favourite is
-              being voted on. */}
-          <WeeklyWinners
-            winners={winners}
-            vote={round ? { weekNo: round.weekNo, state: voteState } : null}
-            finals={finals}
-          />
-
-          {/* The shortlist, as one ballot (components/campaigns/ballot.tsx
-              says why it is not a card per nominee any more). */}
-          <section id="shortlist" className="mt-12 scroll-mt-24">
-            <SectionHeading
-              // The eyebrow must not say "Open now" above a line that says
-              // voting has closed, nor above a ballot the engine will
-              // refuse; the label follows the round's actual state.
-              label={
-                voteState === "open"
-                  ? "Open now"
-                  : voteState === "before"
-                    ? "Opens soon"
-                    : "The public vote"
-              }
-              title="Community Favourite vote"
-              hint={
-                round && (voteState === "open" || voteState === "before")
-                  ? `Pick your favourite week ${round.weekNo} creator: one vote per email address, confirmed by a six digit code.`
-                  : "One vote per email address, confirmed by a six digit code, and the creator with the most valid votes wins."
-              }
-            />
-          {shortlist.length === 0 ? (
-            <p className="mt-6 max-w-prose text-base leading-relaxed text-ink-3">
-              No vote is open right now. Each week&apos;s shortlist appears
-              here on Sunday, and voting stays open until the time shown with
-              it, Lagos time. Follow{" "}
-              <a
-                href="https://x.com/blockfestafrica"
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                className="text-link underline underline-offset-2 hover:text-white"
-              >
-                Blockfest on X
-              </a>{" "}
-              for the moment it opens.
-            </p>
-          ) : (
-            <Ballot entries={shortlist} state={voteState} />
+          {/* What is happening now: the stage that is running and any week
+              whose vote is on. #shortlist is where the nominee emails and
+              the stage cards send people to vote, and the open vote is
+              always first here. */}
+          {live.length > 0 && (
+            <section
+              id="shortlist"
+              aria-labelledby="happening-now"
+              className="mt-10 scroll-mt-24"
+            >
+              <h2 id="happening-now" className="eyebrow text-brand-gold">
+                Happening now
+              </h2>
+              <div className="mt-3 flex flex-col gap-4">
+                {live.map((week) => (
+                  <Fragment key={week.weekNo}>
+                    <LiveWeek
+                      week={week}
+                      shortlist={shortlist}
+                      ballotState={ballotState}
+                    />
+                    {/* The count, under the week it counts rather than on
+                        the ballot's rows: the rows stay in ballot order so a
+                        half-typed vote never moves, and nobody is nudged by
+                        a number beside the button. It loads in the browser,
+                        so this page stays static and cached. */}
+                    {week.weekNo === countWeek && <LiveVoteCount />}
+                  </Fragment>
+                ))}
+              </div>
+            </section>
           )}
-          {/* The count, under the ballot rather than on its rows: the
-              rows stay in ballot order so a half-typed vote never moves,
-              and nobody is nudged by a number sitting on the button. It
-              loads in the browser, so this page stays static and cached. */}
-          <LiveVoteCount />
-          </section>
 
-          {/* Who decides each award is said once, in the weekly hint. */}
+          {record.length > 0 ? (
+            <WinnersRecord weeks={record} of={monicaStages.length} />
+          ) : (
+            live.length === 0 && (
+              <p className="mt-10 max-w-prose text-base leading-relaxed text-ink-3">
+                Nothing announced yet; winners appear here once they are
+                announced.
+              </p>
+            )
+          )}
+
           <p className="mt-10 max-w-prose text-sm leading-relaxed text-ink-3">
             How points are earned is in the{" "}
             <Link

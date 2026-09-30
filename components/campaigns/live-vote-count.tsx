@@ -32,9 +32,16 @@ const LONGEST_WAIT = 2 ** 31 - 1;
  * same answer.
  *
  * Renders nothing until it has a count, and nothing before voting opens,
- * when every row would be a zero. Once the vote ends it stays up, marked
- * closed, and then final when the Community Favourite is published, so the
- * count people watched does not disappear the moment it matters most.
+ * when every row would be a zero. Once the vote ends it stays up, headed
+ * Voting closed, while the votes are reviewed; the week card above it says
+ * what review means, so this does not say it again.
+ *
+ * Once the Community Favourite is published the count is final, and the
+ * page already shows it with that week's winners, in the record. Drawing it
+ * here as well said the same numbers twice, one under the other, so a
+ * visitor who loads the page after publication sees it only there. One who
+ * was watching when it went final keeps it, marked final, with a pointer to
+ * reload: their copy of the page was rendered before the winner was in it.
  *
  * A failed refresh keeps the last count and its time rather than blanking
  * the board.
@@ -122,6 +129,7 @@ export function LiveVoteCount() {
   if (!board || board.nominees.length === 0) return null;
   const state = boardState(board, now);
   if (state === "before") return null;
+  if (state === "final" && !sawLive) return null;
 
   const { rows, total, levelAtTop } = rankBoard(board.nominees);
 
@@ -129,10 +137,11 @@ export function LiveVoteCount() {
     <>
     {/* On top of the count, once votes in this round were removed as fraud:
         where the numbers dropped is where the reason belongs. */}
+    {/* Spaced by the week group it sits in, right under the week it counts. */}
     {board.flagged && <IntegrityTicker />}
     <section
       aria-label="Community Favourite vote count"
-      className={`${board.flagged ? "mt-3" : "mt-8"} rounded-xl border border-line bg-card p-5 sm:p-6`}
+      className={`${board.flagged ? "-mt-1" : ""} rounded-xl border border-line bg-card p-5 sm:p-6`}
     >
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <h3 className="flex items-center gap-2.5 text-base font-semibold text-white">
@@ -152,28 +161,18 @@ export function LiveVoteCount() {
           Week {board.weekNo} · {count(total)} {total === 1 ? "vote" : "votes"}
         </p>
       </div>
-      {state === "closed" && (
+      {state === "final" && (
         <p className="mt-1 text-sm text-ink-3">
-          The votes are reviewed before the Community Favourite is confirmed.
+          The Community Favourite is confirmed.{" "}
+          <a
+            href={monicaRoutes.winners}
+            className="text-link underline underline-offset-2 hover:text-white"
+          >
+            Reload the page
+          </a>{" "}
+          to see them with week {board.weekNo}&apos;s winners.
         </p>
       )}
-      {state === "final" &&
-        (sawLive ? (
-          <p className="mt-1 text-sm text-ink-3">
-            The Community Favourite is confirmed.{" "}
-            <a
-              href={monicaRoutes.winners}
-              className="text-link underline underline-offset-2 hover:text-white"
-            >
-              Reload the page
-            </a>{" "}
-            to see them under Weekly winners.
-          </p>
-        ) : (
-          <p className="mt-1 text-sm text-ink-3">
-            The Community Favourite is listed under Weekly winners above.
-          </p>
-        ))}
 
       <CountRows rows={rows} className="mt-5" />
 

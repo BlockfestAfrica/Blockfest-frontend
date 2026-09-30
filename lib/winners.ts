@@ -292,6 +292,53 @@ export async function voteBoard(): Promise<VoteBoard | null> {
   };
 }
 
+/** A vote round as the public page may know it: its week and where it stands. */
+export interface PublicRound {
+  weekNo: number;
+  status: "open" | "closed" | "published";
+  opensAt: string;
+  closesAt: string;
+}
+
+/**
+ * Every round that is past draft, newest first, so the page can say for each
+ * week whether its Community Favourite vote is coming, running, being
+ * reviewed or done. The shortlist only covers the round that is still open;
+ * a round an owner has closed but not yet published is otherwise invisible,
+ * and its week would say nothing about a vote people just took part in.
+ *
+ * Weeks and times only. Fails soft to nothing, like the rest of this page.
+ */
+export async function publicRounds(): Promise<PublicRound[]> {
+  try {
+    const result = await getDb().execute(sql`
+      SELECT r.week_no, r.status::text AS status, r.opens_at, r.closes_at
+        FROM vote_rounds r
+        JOIN campaigns cm ON cm.id = r.campaign_id
+       WHERE cm.slug = ${MONICA_SLUG}
+         AND r.status IN ('open', 'closed', 'published')
+       ORDER BY r.opens_at DESC
+    `);
+    const iso = (value: unknown) => {
+      const at = value instanceof Date ? value : new Date(String(value ?? ""));
+      return Number.isNaN(at.getTime()) ? "" : at.toISOString();
+    };
+    return ((result.rows ?? []) as Record<string, unknown>[]).map((r) => ({
+      weekNo: Number(r.week_no ?? 0),
+      status:
+        r.status === "published" ? "published" : r.status === "closed" ? "closed" : "open",
+      opensAt: iso(r.opens_at),
+      closesAt: iso(r.closes_at),
+    }));
+  } catch (error) {
+    console.warn(
+      "[winners] rounds unavailable:",
+      error instanceof Error ? error.message : String(error),
+    );
+    return [];
+  }
+}
+
 /**
  * Each published week's final Community Favourite count, for the page's
  * Weekly winners cards.
@@ -334,6 +381,40 @@ export async function finalCounts(): Promise<Record<number, VoteBoardRow[]>> {
       error instanceof Error ? error.message : String(error),
     );
     return {};
+  }
+}
+
+/**
+ * The published weeks whose rounds had votes removed as fraud.
+ *
+ * The notice that says so used to sit on the live count, which follows the
+ * newest round; once a result was published the count moved into that week's
+ * record and the notice went with nothing. The owner wanted it seen that
+ * removals happened, so it stays with the week it happened in. Only that it
+ * happened, never how many or whose, like the live count's flag.
+ */
+export async function flaggedWeeks(): Promise<number[]> {
+  try {
+    const result = await getDb().execute(sql`
+      SELECT DISTINCT r.week_no
+        FROM vote_rounds r
+        JOIN campaigns cm ON cm.id = r.campaign_id
+       WHERE cm.slug = ${MONICA_SLUG}
+         AND r.status = 'published'
+         AND EXISTS (
+               SELECT 1 FROM votes fv
+                WHERE fv.round_id = r.id
+                  AND fv.status = 'removed'
+                  AND fv.removed_mode = 'fraud')
+       ORDER BY r.week_no
+    `);
+    return ((result.rows ?? []) as Record<string, unknown>[]).map((r) => Number(r.week_no ?? 0));
+  } catch (error) {
+    console.warn(
+      "[winners] flagged weeks unavailable:",
+      error instanceof Error ? error.message : String(error),
+    );
+    return [];
   }
 }
 

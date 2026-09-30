@@ -212,7 +212,7 @@ describe("LiveVoteCount", () => {
     expect(second.container.innerHTML).toBe("");
   });
 
-  it("stays up once voting closes, and stops asking once the result is final", async () => {
+  it("stays up once voting closes; once final it is not drawn again for a fresh visit, and stops asking", async () => {
     answer = { ok: true, board: board({ closed: true }) };
     const { unmount } = render(<LiveVoteCount />);
     await settle();
@@ -223,8 +223,10 @@ describe("LiveVoteCount", () => {
     answer = { ok: true, board: board({ closed: true, final: true }) };
     render(<LiveVoteCount />);
     await settle();
-    expect(screen.getByRole("heading", { name: "Final count" })).toBeTruthy();
-    expect(document.body.textContent).not.toContain("Refreshes every");
+    // The final count lives with its week under "Winners so far"; drawing
+    // it here too said the same numbers twice on one page.
+    expect(screen.queryByRole("heading", { name: "Final count" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Community Favourite vote count" })).toBeNull();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(REFRESH_MS * 2);
     });
