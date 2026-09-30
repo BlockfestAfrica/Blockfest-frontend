@@ -125,7 +125,6 @@ export function WinnersPanel({
   weekNo,
   creatorCandidates,
   favouriteCandidates,
-  excludedCount,
   picked,
   frozen,
   canRecord = true,
@@ -134,7 +133,6 @@ export function WinnersPanel({
   weekNo: number;
   creatorCandidates: CandidateRow[];
   favouriteCandidates: CandidateRow[];
-  excludedCount: number;
   picked: PickedRow[];
   /** Whether this week's standings have been recorded yet. */
   frozen: boolean;
@@ -202,6 +200,19 @@ export function WinnersPanel({
     amount > 0 &&
     !votePending;
 
+  /*
+   * Who the no-repeat rule keeps out of the Creator of the Week picker, by
+   * name. It was a count, worked out by subtracting the candidate list from
+   * a separate leaderboard read: a creator approved between the two reads
+   * showed as "1 creator is missing" when nobody had won, and past 500
+   * ranked creators the count shrank or vanished. The announced picks are
+   * already on this screen and are exactly the set the SQL filters on, so
+   * the names come from them.
+   */
+  const pastCreatorsOfWeek = picked
+    .filter((p) => p.category === "creator_of_week" && p.publishedAt)
+    .sort((a, b) => a.weekNo - b.weekNo);
+
   const announcedThisWeek = picked.filter(
     (p) => p.weekNo === weekNo && p.publishedAt,
   ).length;
@@ -220,6 +231,18 @@ export function WinnersPanel({
     picked.find(
       (p) => p.weekNo === weekNo && p.category === category && !p.publishedAt,
     ) ?? null;
+
+  /*
+   * A Creator of the Week draft whose creator has since been announced for
+   * another week. A draft stopped counting as a win in 0071, so this can now
+   * exist, and the database refuses announcing it for good. The banner says
+   * so rather than offering a Load that fills a blank picker.
+   */
+  const draftWonElsewhere =
+    draft && draft.category === "creator_of_week"
+      ? (pastCreatorsOfWeek.find((p) => p.enrolmentId === draft.enrolmentId) ??
+        null)
+      : null;
 
   function loadDraft() {
     if (!draft) return;
@@ -470,17 +493,20 @@ export function WinnersPanel({
                 </p>
               )}
               <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-2">
-                Not public. Load it below to announce it, or pick somebody
-                else, which replaces this draft when you save.
+                {draftWonElsewhere
+                  ? `Not public, and it cannot be: ${draft.name} was announced as Creator of the Week in week ${draftWonElsewhere.weekNo}, and nobody wins it twice. Discard it, or pick somebody else, which replaces this draft when you save.`
+                  : "Not public. Load it below to announce it, or pick somebody else, which replaces this draft when you save."}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={loadDraft}
-                  className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-3"
-                >
-                  Load the draft into the form
-                </button>
+                {!draftWonElsewhere && (
+                  <button
+                    type="button"
+                    onClick={loadDraft}
+                    className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-line-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-card-3"
+                  >
+                    Load the draft into the form
+                  </button>
+                )}
                 {/* Discarding was previously only possible by overwriting
                     with a different pick, which forced the wrong name to be
                     replaced by another name instead of by nothing. */}
@@ -512,13 +538,15 @@ export function WinnersPanel({
           />
 
           {/* The third of the three enforcements of the no-repeat rule: the
-              index refuses it, the candidate list omits them, and this says
-              why a name somebody is looking for is not there. */}
-          {category === "creator_of_week" && excludedCount > 0 && (
+              database refuses it, the candidate list omits them, and this
+              names who is not there and why. */}
+          {category === "creator_of_week" && pastCreatorsOfWeek.length > 0 && (
             <p className="max-w-prose text-sm leading-relaxed text-ink-2">
-              {excludedCount}{" "}
-              {excludedCount === 1 ? "creator is" : "creators are"} missing from
-              this list because they have already been Creator of the Week.
+              {pastCreatorsOfWeek.length === 1
+                ? `${pastCreatorsOfWeek[0].name} is not in this list: Creator of the Week in week ${pastCreatorsOfWeek[0].weekNo}, and nobody wins it twice.`
+                : `Not in this list, because nobody wins it twice: ${pastCreatorsOfWeek
+                    .map((p) => `${p.name} (week ${p.weekNo})`)
+                    .join(", ")}.`}{" "}
               Community Favourite has no such rule.
             </p>
           )}
