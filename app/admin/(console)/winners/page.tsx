@@ -17,7 +17,6 @@ import {
   unfinishedVoteWeek,
   type ClusterMember,
 } from "@/lib/admin/vote-round";
-import { leaderboard } from "@/lib/leaderboard";
 import { WinnersPanel } from "@/components/admin/winners-panel";
 import { VoteRoundPanel } from "@/components/admin/vote-round-panel";
 import { BlockedDomainsCard } from "@/components/admin/blocked-domains-card";
@@ -89,14 +88,13 @@ export default async function WinnersPage({
       ? asked
       : ((await unfinishedVoteWeek(admin.admin, current)) ?? current);
 
-  const [creators, favourites, picked, snapshots, frozenPoints, board, round, entries, blocks] =
+  const [creators, favourites, picked, snapshots, frozenPoints, round, entries, blocks] =
     await Promise.all([
       winnerCandidates(admin.admin, "creator_of_week"),
       winnerCandidates(admin.admin, "community_favourite"),
       winnersSoFar(admin.admin),
       snapshotsTaken(admin.admin),
-    tiebreakPoints(admin.admin, weekNo),
-      leaderboard(500),
+      tiebreakPoints(admin.admin, weekNo),
       currentRound(admin.admin, weekNo),
       candidateEntries(admin.admin, weekNo),
       blockedDomains(admin.admin),
@@ -129,16 +127,6 @@ export default async function WinnersPage({
     round && tally
       ? computeVoteVerdict(tally.nominees, frozenPoints, settled)
       : null;
-
-  /*
-   * How many names the no-repeat rule removed.
-   *
-   * Derived rather than counted in SQL: the candidate query already filters
-   * them, and the full board is the same ordering, so the difference is exactly
-   * the set that has already won. Showing the number is what turns a missing
-   * name from a mystery into an answer.
-   */
-  const excludedCount = Math.max(0, board.length - creators.length);
 
   return (
     <div className={SPACING.page}>
@@ -189,7 +177,6 @@ export default async function WinnersPage({
           points: c.points,
           rank: c.rank,
         }))}
-        excludedCount={excludedCount}
         picked={picked.map((p) => ({
           weekNo: p.weekNo,
           category: p.category,

@@ -32,7 +32,6 @@ function renderWithDraft() {
       weekNo={1}
       creatorCandidates={[CANDIDATE]}
       favouriteCandidates={[CANDIDATE]}
-      excludedCount={0}
       frozen
       vote={null}
       picked={[
@@ -90,7 +89,6 @@ describe("a saved draft", () => {
         weekNo={1}
         creatorCandidates={[CANDIDATE]}
         favouriteCandidates={[CANDIDATE]}
-        excludedCount={0}
         vote={null}
         frozen
         picked={[
@@ -120,7 +118,6 @@ describe("a saved draft", () => {
         weekNo={1}
         creatorCandidates={[CANDIDATE]}
         favouriteCandidates={[CANDIDATE]}
-        excludedCount={0}
         frozen
         vote={null}
         picked={[

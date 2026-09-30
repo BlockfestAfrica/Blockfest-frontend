@@ -804,10 +804,15 @@ export const weeklyWinners = pgTable(
      * partial unique index so the database refuses it, rather than trusting an
      * admin to remember on a Sunday night. Community Favourite is deliberately
      * outside this index: the brief only restricts the former.
+     *
+     * Announced rows only since 0071: a draft is not a win, and counting one
+     * held its creator for the rest of the campaign. The trigger
+     * creator_of_week_once refuses saving a past winner again, as a draft or
+     * an announcement, in any other week.
      */
     uniqueIndex("creator_of_week_once_per_campaign")
       .on(t.campaignId, t.campaignCreatorId)
-      .where(sql`category = 'creator_of_week'`),
+      .where(sql`category = 'creator_of_week' AND published_at IS NOT NULL`),
     index("winners_published_idx").on(t.campaignId, t.publishedAt),
     check("winner_week_range", sql`${t.weekNo} BETWEEN 1 AND 4`),
     check("winner_prize_positive", sql`${t.prizeAmountNaira} > 0`),

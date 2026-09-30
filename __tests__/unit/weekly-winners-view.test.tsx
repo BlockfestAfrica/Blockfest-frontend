@@ -200,3 +200,46 @@ describe("weekly winners", () => {
     });
   });
 });
+
+describe("each week's final count", () => {
+  /*
+   * Owner ask: keep each week's vote numbers public after the next week's
+   * vote takes the live count's place, without cluttering the winners. A
+   * closed disclosure at the foot of the week's card.
+   */
+  const winners = [
+    {
+      weekNo: 1,
+      category: "community_favourite" as const,
+      name: "Ada Obi",
+      prizeNaira: 100000,
+      note: null,
+      links: [],
+    },
+  ];
+  const finals = {
+    1: [
+      { nomineeId: "b", name: "Ben Eze", votes: 12 },
+      { nomineeId: "a", name: "Ada Obi", votes: 35 },
+    ],
+  };
+
+  it("sits closed at the foot of the week, with the total, and opens to the ranked count", () => {
+    const { container } = render(<WeeklyWinners winners={winners} vote={null} finals={finals} />);
+    const details = container.querySelector("details")!;
+    expect(details.open).toBe(false);
+    const summary = details.querySelector("summary")!;
+    expect(summary.textContent).toContain("See the week 1 final count");
+    expect(summary.textContent).toContain("47 verified votes");
+    const rows = [...details.querySelectorAll("ol > li")].map((li) => li.textContent);
+    expect(rows[0]).toContain("Ada Obi");
+    expect(rows[0]).toContain("35 votes,");
+    expect(rows[1]).toContain("Ben Eze");
+  });
+
+  it("is not there for a week without a published count", () => {
+    const { container } = render(<WeeklyWinners winners={winners} vote={null} />);
+    expect(container.querySelector("details")).toBeNull();
+  });
+});
+

@@ -75,7 +75,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                window has nothing else to drag.
              - scroll-px keeps a chip scrolled into view clear of the edges. */
           <div
-            className="-mx-4 -mt-1 mb-10 flex scroll-px-4 gap-2 overflow-x-auto py-1 pl-4 pr-12 mask-[linear-gradient(to_right,black_85%,transparent)] pointer-coarse:scrollbar-none sm:mx-0 sm:mt-0 sm:flex-wrap sm:overflow-visible sm:p-0 sm:mask-none lg:mb-12 pointer-coarse:[&::-webkit-scrollbar]:hidden"
+            className="-mx-4 -mt-1 mb-10 flex scroll-px-4 gap-2 overflow-x-auto py-1 pl-4 pr-12 [mask-image:linear-gradient(to_right,black_85%,transparent)] pointer-coarse:[scrollbar-width:none] sm:mx-0 sm:mt-0 sm:flex-wrap sm:overflow-visible sm:p-0 sm:[mask-image:none] lg:mb-12 pointer-coarse:[&::-webkit-scrollbar]:hidden"
             role="group"
             aria-label="Filter speakers by expertise"
           >
@@ -110,7 +110,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
         )}
 
         {/* Grid */}
-        <div className="grid grid-cols-1 items-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start">
           {filteredSpeakers.map((speaker) => {
             const slug = generateSpeakerSlug(speaker.name);
             const bioTeaser = speaker.bio?.split("\n\n")[0];
