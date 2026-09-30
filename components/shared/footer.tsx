@@ -14,6 +14,7 @@ const exploreMenu: Menu[] = [
   { path: "/", title: "Home" },
   { path: "/tickets", title: "Tickets" },
   { path: "/speakers", title: "Speakers" },
+  { path: "/partners", title: "Partners" },
   { path: "/schedule", title: "Schedule" },
   { path: "/blockfest-south-africa-2026", title: "South Africa '26" },
   { path: "/blockfest-2025", title: "2025 Recap" },

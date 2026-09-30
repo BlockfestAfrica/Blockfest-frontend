@@ -50,6 +50,71 @@ export function partnerGroupLabel(list: Partner[]): string {
   return `${named} partners`;
 }
 
+/**
+ * The 2026 sponsors and partners, without a section header, so the home page
+ * and /partners show the same thing. `level` is the heading level of the two
+ * group labels: under the home page's h2, or straight under /partners' h1.
+ */
+export function PartnerWall2026({ level = 3 }: { level?: 2 | 3 }) {
+  const Label = level === 2 ? "h2" : "h3";
+
+  return (
+    <>
+      {(headline || sponsors.length > 0) && (
+        <div>
+          <Label className="eyebrow text-ink-3">Sponsors</Label>
+
+          {headline && (
+            <LogoTile
+              partner={headline}
+              sizes="(min-width: 1024px) 600px, 80vw"
+              caption={`${headline.tier} sponsor`}
+              className="mt-4 h-32 rounded-2xl px-8 [--logo:40px] sm:h-40 sm:[--logo:52px] lg:h-44 lg:[--logo:60px]"
+            />
+          )}
+
+          {sponsors.length > 0 && (
+            // mobile-grid-ok: logo tiles, two fit at 360px
+            <ul
+              className={`mt-3 grid gap-3 ${SPONSOR_COLUMNS[sponsors.length] ?? "grid-cols-2 md:grid-cols-4"}`}
+            >
+              {sponsors.map((sponsor) => (
+                <li key={sponsor.name}>
+                  <LogoTile
+                    partner={sponsor}
+                    sizes="(min-width: 768px) 360px, 45vw"
+                    caption={`${sponsor.tier} sponsor`}
+                    className="h-24 rounded-2xl [--logo:30px] md:h-32 md:[--logo:38px]"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {partners.length > 0 && (
+        <div className={headline || sponsors.length > 0 ? "mt-12" : ""}>
+          <Label className="eyebrow text-ink-3">{partnerGroupLabel(partners)}</Label>
+
+          {/* mobile-grid-ok: logo tiles, three fit at 360px */}
+          <ul className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7">
+            {partners.map((partner) => (
+              <li key={partner.name}>
+                <LogoTile
+                  partner={partner}
+                  sizes="(min-width: 768px) 160px, 30vw"
+                  className="h-16 rounded-xl [--logo:22px] md:h-20 md:[--logo:26px]"
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function PartnersSection2026() {
   useSubtleAnimations();
 
@@ -64,62 +129,12 @@ export function PartnersSection2026() {
           </h2>
 
           <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-3">
-            The brands, communities, and media backing Blockfest Africa 2026
-            from South Africa to Lagos this October.
+            The sponsors and partners backing Blockfest Africa 2026, from
+            South Africa to Lagos this October.
           </p>
         </div>
 
-        {(headline || sponsors.length > 0) && (
-          <div>
-            <h3 className="eyebrow text-ink-3">Sponsors</h3>
-
-            {headline && (
-              <LogoTile
-                partner={headline}
-                sizes="(min-width: 1024px) 600px, 80vw"
-                caption={`${headline.tier} sponsor`}
-                className="mt-4 h-32 rounded-2xl px-8 [--logo:40px] sm:h-40 sm:[--logo:52px] lg:h-44 lg:[--logo:60px]"
-              />
-            )}
-
-            {sponsors.length > 0 && (
-              // mobile-grid-ok: logo tiles, two fit at 360px
-              <ul
-                className={`mt-3 grid gap-3 ${SPONSOR_COLUMNS[sponsors.length] ?? "grid-cols-2 md:grid-cols-4"}`}
-              >
-                {sponsors.map((sponsor) => (
-                  <li key={sponsor.name}>
-                    <LogoTile
-                      partner={sponsor}
-                      sizes="(min-width: 768px) 360px, 45vw"
-                      caption={`${sponsor.tier} sponsor`}
-                      className="h-24 rounded-2xl [--logo:30px] md:h-32 md:[--logo:38px]"
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-
-        {partners.length > 0 && (
-          <div className="mt-12">
-            <h3 className="eyebrow text-ink-3">{partnerGroupLabel(partners)}</h3>
-
-            {/* mobile-grid-ok: logo tiles, three fit at 360px */}
-            <ul className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7">
-              {partners.map((partner) => (
-                <li key={partner.name}>
-                  <LogoTile
-                    partner={partner}
-                    sizes="(min-width: 768px) 160px, 30vw"
-                    className="h-16 rounded-xl [--logo:22px] md:h-20 md:[--logo:26px]"
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <PartnerWall2026 />
       </div>
     </section>
   );
