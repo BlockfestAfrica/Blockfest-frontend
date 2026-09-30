@@ -171,3 +171,31 @@ sections start from it rather than from SectionCard.
 - Each fact is said once, at the level it is true of: the close time in
   the week header, the week on its group row, the total in the points
   header, who picks each award in the section hint.
+
+### Partner walls: two groups, white tiles, hierarchy by size
+
+The owner called the home page's sponsor section ugly: a centred title
+between two rules for every category (Headline, Silver, Mobility, Media),
+with one or two logos under each, and a new band for each new kind of
+partner. More media, community and government partners are coming. The
+fix follows what big conference sites do (TOKEN2049's partners page,
+Consensus, ETHDenver, Africa Tech Summit) and was picked by eye from
+three previews.
+
+- Two groups, each a small `eyebrow` label, never a centred title between
+  rules: "Sponsors", then one wall named once by the kinds it holds
+  ("Media, community & government partners", from `partnerGroupLabel`).
+  A new kind of partner is a line in lib/partners-2026.ts, not a section.
+- Hierarchy is size and tiles per row only: the headline tile full width,
+  sponsors one row fitted to their count, partners 3 / 4 / 5 / 7 per row.
+  No gold ring or glow on the headline; size carries it.
+- A sponsor's tier is said inside its own white tile, under the logo, in
+  small uppercase grey ("Silver sponsor"). Partners get no caption: the
+  group label says what they are, once.
+- Every logo, both years, sits on the same white tile (`LogoTile` in
+  components/home/partner-logo.tsx) and is sized by its shape
+  (`logoWeight`), so a square seal and a wide wordmark carry similar
+  weight. Logo files go through scripts/logos-on-white.mjs first: it
+  trims empty canvas and darkens white wordmarks drawn for dark grounds.
+- Past years are the same tile, smaller and denser (8 per row), below the
+  current year.
