@@ -105,6 +105,17 @@ describe("the /partners page", () => {
     );
   });
 
+  it("shares as itself, with its own card, and brands its title once", () => {
+    const og = page.metadata.openGraph as { url?: string; images?: { url: string }[] };
+    expect(og.url).toMatch(/\/partners$/);
+    expect(og.images?.[0]?.url).toMatch(/\/images\/og-image\.jpg$/);
+    const twitter = page.metadata.twitter as { title?: string; images?: string[] };
+    expect(twitter.title).toMatch(/^Partners/);
+    expect(twitter.images?.length).toBeGreaterThan(0);
+    // The root layout's template adds the brand.
+    expect(page.metadata.title).toBe("Partners");
+  });
+
   it("is its own canonical page, in the sitemap and the footer", () => {
     expect(String(page.metadata.alternates?.canonical)).toMatch(/\/partners$/);
     expect(sitemap().some((entry) => entry.url.endsWith("/partners"))).toBe(true);

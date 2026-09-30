@@ -41,7 +41,7 @@ export const partnerPaths: PartnerPath[] = [
     id: "media",
     title: "Media partner",
     blurb:
-      "Cover the festival for your readers, listeners or followers, from South Africa to Lagos.",
+      "Cover Blockfest Africa 2026 in Lagos this October for your readers, listeners or followers.",
     action: "Email us",
     label: "Email us about a media partnership",
     href: email("Media Partnership"),

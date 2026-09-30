@@ -7,8 +7,14 @@ import { partners2025 } from "@/lib/partners-2025";
 import { CURRENT_EDITION, EVENT_ID, SITE_URL } from "@/lib/seo-event";
 import { jsonLd } from "@/lib/json-ld";
 
+const OG_TITLE = "Partners | Blockf3st Africa '26 Lagos";
+const OG_DESCRIPTION =
+  "Who is backing Blockf3st Africa 2026, and how to sponsor, cover or partner with the festival.";
+
 export const metadata: Metadata = {
-  title: "Partners | Blockf3st Africa '26 Lagos",
+  // The root layout appends "| Blockf3st Africa 2026", so branding here would
+  // be the second copy in one title tag.
+  title: "Partners",
   description:
     "The sponsors, media, community and institutional partners behind Blockfest Africa 2026, the partners who backed 2025, and how to become one.",
   keywords: [
@@ -17,10 +23,27 @@ export const metadata: Metadata = {
     "web3 conference lagos sponsors",
     "media partner tech conference nigeria",
   ],
+  // Next replaces these objects wholesale rather than merging them into the
+  // layout's, so the image and url have to be restated or the card ships bare.
   openGraph: {
-    title: "Partners | Blockf3st Africa '26 Lagos",
-    description:
-      "Who is backing Blockf3st Africa 2026, and how to sponsor, cover or partner with the festival.",
+    type: "website",
+    url: `${SITE_URL}/partners`,
+    title: OG_TITLE,
+    description: OG_DESCRIPTION,
+    images: [
+      {
+        url: `${SITE_URL}/images/og-image.jpg`,
+        width: 1200,
+        height: 630,
+        alt: `Partners of ${CURRENT_EDITION.name}`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: OG_TITLE,
+    description: OG_DESCRIPTION,
+    images: [`${SITE_URL}/images/twitter-image.jpg`],
   },
   alternates: { canonical: `${SITE_URL}/partners` },
 };
