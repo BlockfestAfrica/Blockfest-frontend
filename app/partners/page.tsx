@@ -15,8 +15,10 @@ export const metadata: Metadata = {
   // The root layout appends "| Blockf3st Africa 2026", so branding here would
   // be the second copy in one title tag.
   title: "Partners",
+  // Kinds are not named here: the wall's heading is built from the data and
+  // stays true as partners are added, and this sentence would not.
   description:
-    "The sponsors, media, community and institutional partners behind Blockfest Africa 2026, the partners who backed 2025, and how to become one.",
+    "The sponsors and partners behind Blockfest Africa 2026, the partners who backed 2025, and how to become one.",
   keywords: [
     "blockfest africa partners",
     "blockfest africa sponsors",
@@ -82,8 +84,8 @@ export default function PartnersPage() {
               Our partners
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
-              The brands, communities, media and institutions backing
-              Blockfest Africa 2026, from South Africa to Lagos this October.
+              The sponsors and partners backing Blockfest Africa 2026, from
+              South Africa to Lagos this October.
             </p>
             <a
               href="#become-a-partner"
