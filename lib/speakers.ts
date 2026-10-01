@@ -339,7 +339,6 @@ export const SpeakersList: Speaker[] = [
     twitter: "https://x.com/drobafemihamzat",
     bio: "His Excellency Dr. Kadri Obafemi Hamzat is the Deputy Governor of Lagos State. Long before digital transformation became a major conversation in governance, he was already contributing to Lagos's technology journey as Commissioner for Science and Technology from 2005 to 2011.\n\nDuring that period, he supported the deployment of enterprise systems, civil service automation, digital record-keeping and technology infrastructure that helped modernize public administration in Lagos.\n\nToday, as Deputy Governor of Lagos State, he joins the room on the technologies, ideas and opportunities shaping Africa's digital future.\n\nAt Blockfest Africa 2026, he joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
-    role: "special-guest",
   },
   {
     name: "Prof. Temitayo Ogundipe",
