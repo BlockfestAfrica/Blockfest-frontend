@@ -402,6 +402,17 @@ export const SpeakersList: Speaker[] = [
     bio: "Eniola Osiyoku has built her career around digital payments, mobile money, remittances and banking infrastructure, with a focus on creating products that serve African markets.\n\nAt PawaPay, she leads product initiatives within the payments space, helping shape financial products designed for scale across the continent.\n\nHer background gives her a close view of the infrastructure, product decisions and market realities behind how money moves across Africa.\n\nAt Blockfest Africa 2026, she joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Dára Sobaloju",
+    title: "Founder, Pewbeam",
+    image: "/2026/speakers/dara.jpg",
+    expertise: ["AI & Product Design", "Design Engineering", "Product Strategy"],
+    company: "Pewbeam",
+    twitter: "https://x.com/darasoba",
+    bio: "Dára Sobaloju is an AI-native Design Engineer and Product Designer focused on AI and product design. He has built tools used by over 80,000 designers and developers globally.\n\nAs the Founder of Pewbeam, he is using AI to make church services more seamless. The platform is now used weekly by thousands of churches across 35 countries.\n\nAt Blockfest Africa 2026, Dára joins us as a speaker, bringing his experience at the intersection of AI, design, and product building to the conversations shaping Africa's next chapter.",
+    cohort: "2026",
+    role: "speaker",
+  },
 
   /*
    * Returning from a previous edition. His entry up the list stays as it is,
