@@ -317,17 +317,7 @@ export const SpeakersList: Speaker[] = [
     expertise: ["Education"],
     
   },
-  {
-    name: "Dr. Kadri Obafemi Hamzat",
-    title: "Deputy Governor of Lagos State",
-    image: "/2026/speakers/dept.jpeg",
-    expertise: ["Government & Policy", "Tech Innovation"],
-    company: "Lagos State Government",
-    twitter: "https://x.com/drobafemihamzat",
-    bio: "His Excellency Dr. Kadri Obafemi Hamzat is the Deputy Governor of Lagos State. Long before digital transformation became a major conversation in governance, he was already contributing to Lagos's technology journey as Commissioner for Science and Technology from 2005 to 2011.\n\nDuring that period, he supported the deployment of enterprise systems, civil service automation, digital record-keeping and technology infrastructure that helped modernize public administration in Lagos.\n\nToday, as Deputy Governor of Lagos State, he joins the room on the technologies, ideas and opportunities shaping Africa's digital future.\n\nAt Blockfest Africa 2026, he joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
-    cohort: "2026",
-    role: "special-guest",
-  },
+ 
   {
     name: "Dr. Tunji Alausa",
     title: "Honourable Minister of Education, Federal Republic of Nigeria",
@@ -339,6 +329,16 @@ export const SpeakersList: Speaker[] = [
     cohort: "2026",
     role: "special-guest",
 
+  },
+  {
+    name: "Dr. Kadri Obafemi Hamzat",
+    title: "Deputy Governor of Lagos State",
+    image: "/2026/speakers/dept.jpeg",
+    expertise: ["Government & Policy", "Tech Innovation"],
+    company: "Lagos State Government",
+    twitter: "https://x.com/drobafemihamzat",
+    bio: "His Excellency Dr. Kadri Obafemi Hamzat is the Deputy Governor of Lagos State. Long before digital transformation became a major conversation in governance, he was already contributing to Lagos's technology journey as Commissioner for Science and Technology from 2005 to 2011.\n\nDuring that period, he supported the deployment of enterprise systems, civil service automation, digital record-keeping and technology infrastructure that helped modernize public administration in Lagos.\n\nToday, as Deputy Governor of Lagos State, he joins the room on the technologies, ideas and opportunities shaping Africa's digital future.\n\nAt Blockfest Africa 2026, he joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
   },
   {
     name: "Prof. Temitayo Ogundipe",
@@ -401,6 +401,17 @@ export const SpeakersList: Speaker[] = [
     company: "PawaPay",
     bio: "Eniola Osiyoku has built her career around digital payments, mobile money, remittances and banking infrastructure, with a focus on creating products that serve African markets.\n\nAt PawaPay, she leads product initiatives within the payments space, helping shape financial products designed for scale across the continent.\n\nHer background gives her a close view of the infrastructure, product decisions and market realities behind how money moves across Africa.\n\nAt Blockfest Africa 2026, she joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
+  },
+  {
+    name: "Dára Sobaloju",
+    title: "Founder, Pewbeam",
+    image: "/2026/speakers/dara.jpg",
+    expertise: ["AI & Product Design", "Design Engineering", "Product Strategy"],
+    company: "Pewbeam",
+    twitter: "https://x.com/darasoba",
+    bio: "Dára Sobaloju is an AI-native Design Engineer and Product Designer focused on AI and product design. He has built tools used by over 80,000 designers and developers globally.\n\nAs the Founder of Pewbeam, he is using AI to make church services more seamless. The platform is now used weekly by thousands of churches across 35 countries.\n\nAt Blockfest Africa 2026, Dára joins us as a speaker, bringing his experience at the intersection of AI, design, and product building to the conversations shaping Africa's next chapter.",
+    cohort: "2026",
+    role: "speaker",
   },
 
   /*
