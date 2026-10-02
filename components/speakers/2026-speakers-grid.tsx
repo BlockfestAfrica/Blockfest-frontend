@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Building2, Globe } from "lucide-react";
 import { useMemo, useState } from "react";
 import { FaXTwitter, FaLinkedin, FaYoutube } from "react-icons/fa6";
-import type { Speaker } from "@/lib/speakers";
+import { arrangeLineup, type Speaker } from "@/lib/speakers";
 
 function generateSpeakerSlug(name: string) {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -42,11 +42,8 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
     const list = selectedExpertise
       ? speakers.filter((s) => s.expertise?.includes(selectedExpertise))
       : speakers;
-    // Special guests lead; sort is stable, so everyone else keeps data order.
-    return [...list].sort(
-      (a, b) =>
-        Number(b.role === "special-guest") - Number(a.role === "special-guest")
-    );
+    // The lineup's arrangement, within whatever the filter leaves.
+    return arrangeLineup(list);
   }, [speakers, selectedExpertise]);
 
   return (
@@ -115,6 +112,9 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
             const slug = generateSpeakerSlug(speaker.name);
             const bioTeaser = speaker.bio?.split("\n\n")[0];
             const isSpecialGuest = speaker.role === "special-guest";
+            const isKeynote = speaker.role === "keynote";
+            /* The one label a speaker wears in gold over their portrait. */
+            const badge = isKeynote ? "Keynote Speaker" : isSpecialGuest ? "Special Guest" : null;
 
             return (
               /* The ring is on the card: the profile link covering it is
@@ -127,7 +127,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                 <Link
                   href={`/speakers/${slug}`}
                   className="absolute inset-0 z-10"
-                  aria-label={`View ${speaker.name}'s profile${isSpecialGuest ? " (special guest)" : ""
+                  aria-label={`View ${speaker.name}'s profile${badge ? ` (${badge.toLowerCase()})` : ""
                     }`}
                 />
 
@@ -147,12 +147,12 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                     priority={speaker === speakers[0]}
                   />
 
-                  {/* Special guests wear the brand gold, the same one the
-                      site's gold CTAs use. Everyone else keeps their
-                      expertise chip. */}
-                  {isSpecialGuest ? (
+                  {/* Keynote speakers and special guests wear the brand gold,
+                      the same one the site's gold CTAs use. Everyone else
+                      keeps their expertise chip. */}
+                  {badge ? (
                     <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-brand-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-gray-900">
-                      Special Guest
+                      {badge}
                     </span>
                   ) : (
                     speaker.expertise?.[0] && (

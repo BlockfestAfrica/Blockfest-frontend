@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import Speakers from "../carousel";
 import { Button } from "../ui/button";
-import { SpeakersList, is2026Speaker, isPastSpeaker } from "@/lib/speakers";
+import { SpeakersList, arrangeLineup, is2026Speaker, isPastSpeaker } from "@/lib/speakers";
 import { isSpeakerFormOpen } from "@/lib/speaking";
 import { useSubtleAnimations } from "@/lib/hooks/use-subtle-animations";
 import "./subtle-animations.css";
@@ -14,10 +14,7 @@ const HOMEPAGE_SPEAKER_COUNT = 12;
 export function SpeakersSection() {
   const OPTIONS: EmblaOptionsType = { loop: true };
 
-  const speakers2026 = SpeakersList.filter(is2026Speaker).sort(
-    (a, b) =>
-      Number(b.role === "special-guest") - Number(a.role === "special-guest")
-  );
+  const speakers2026 = arrangeLineup(SpeakersList.filter(is2026Speaker));
   const hasAnnouncedSpeakers = speakers2026.length > 0;
 
   const carouselSpeakers = hasAnnouncedSpeakers

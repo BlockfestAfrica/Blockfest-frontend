@@ -11,7 +11,20 @@ export interface Speaker {
   company?: string; 
   bio?: string;
   cohort?: "2026" | "past";
-  role?: "speaker" | "special-guest";
+  role?: "speaker" | "special-guest" | "keynote";
+  /**
+   * As the team's own bio states them, for balancing the 2026 lineup (see
+   * arrangeLineup). Never guessed from a name or a photo: a speaker without
+   * it is placed after everyone who has it, and a test lists who is missing.
+   */
+  pronouns?: "he" | "she";
+  /**
+   * A fixed place at the front of the 2026 lineup, lowest first, ahead of
+   * the special guests. Everyone without one follows in the usual order:
+   * special guests, then the order of this list. Set when the team asks for
+   * someone to lead, without changing how they are labelled.
+   */
+  order?: number;
 }
 
 export const SpeakersList: Speaker[] = [
@@ -320,6 +333,7 @@ export const SpeakersList: Speaker[] = [
  
   {
     name: "Dr. Tunji Alausa",
+    pronouns: "he",
     title: "Honourable Minister of Education, Federal Republic of Nigeria",
     image: "/2026/speakers/alausa.jpeg",
     expertise: ["Government & Policy", "Education"],
@@ -327,21 +341,26 @@ export const SpeakersList: Speaker[] = [
     twitter: "https://x.com/drtunjialausa?s=21",
     bio: "Dr. Maruf Tunji Alausa, CON, is Nigeria's Honourable Minister of Education, appointed in October 2024 under President Bola Tinubu's administration. He previously served as Minister of State for Health and Social Welfare from 2023 to 2024.\n\nA board-certified nephrologist by training, with a background from the University of Lagos, Dr. Alausa brings a clinical and systems-thinking approach to public service, one that now shapes how Nigeria is reforming its education sector.\n\nSince taking office, he has driven a wide-ranging reform agenda spanning tertiary education policy, teacher recruitment and welfare, diaspora engagement in human capital development, and institutional innovation across the sector, work that has earned him recognition as one of the administration's most active cabinet ministers.\n\nAt Blockfest Africa 2026, Dr. Alausa joins founders, regulators and builders shaping Africa's next chapter, bringing the perspective of a policymaker working to align Nigeria's education system with a rapidly changing, increasingly onchain world.",
     cohort: "2026",
-    role: "special-guest",
+    role: "speaker",
 
   },
   {
     name: "Dr. Kadri Obafemi Hamzat",
+    pronouns: "he",
     title: "Deputy Governor of Lagos State",
+    // The team asked for the Deputy Governor to lead the lineup.
+    order: 1,
     image: "/2026/speakers/dept.jpeg",
     expertise: ["Government & Policy", "Tech Innovation"],
     company: "Lagos State Government",
     twitter: "https://x.com/drobafemihamzat",
     bio: "His Excellency Dr. Kadri Obafemi Hamzat is the Deputy Governor of Lagos State. Long before digital transformation became a major conversation in governance, he was already contributing to Lagos's technology journey as Commissioner for Science and Technology from 2005 to 2011.\n\nDuring that period, he supported the deployment of enterprise systems, civil service automation, digital record-keeping and technology infrastructure that helped modernize public administration in Lagos.\n\nToday, as Deputy Governor of Lagos State, he joins the room on the technologies, ideas and opportunities shaping Africa's digital future.\n\nAt Blockfest Africa 2026, he joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
+    role: "keynote",
   },
   {
     name: "Prof. Temitayo Ogundipe",
+    pronouns: "he",
     title: "Chairman, Governing Board, National Universities Commission (NUC)",
     image: "/2026/speakers/prof.JPEG",
     expertise: ["Government & Policy", "Education", "Research & Analysis"],
@@ -354,6 +373,7 @@ export const SpeakersList: Speaker[] = [
 
   {
     name: "Teddi Speaks",
+    pronouns: "he",
     title: "Founder & Convener, Unchain Summer",
     image: "/2026/speakers/teddi.png",
     expertise: ["Web3 & Blockchain", "Community Building", "Education"],
@@ -364,6 +384,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Opeyemi Stephen",
+    pronouns: "he",
     title: "QA & Releases Manager, Solana Developer Platform",
     image: "/2026/speakers/opeyemi.jpeg", 
     expertise: ["Web3 & Blockchain", "Development"],
@@ -374,6 +395,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Olamilekan Majekodunmi",
+    pronouns: "he",
     title: "AI, Web3 & Content Strategist",
     image: "/2026/speakers/greatola.jpg",
     expertise: ["Web3 & AI", "Web3 & Blockchain"],
@@ -385,6 +407,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Ashley Rene Olika",
+    pronouns: "she",
     title: "Co-Founder & CEO, Owego",
     image: "/2026/speakers/ashley.jpg",
     expertise: ["Fintech", "Business & Finance", "Web3 & Blockchain"],
@@ -395,6 +418,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Dára Sobaloju",
+    pronouns: "he",
     title: "Founder, Pewbeam",
     image: "/2026/speakers/dara.jpg",
     expertise: ["AI & Product Design", "Design Engineering", "Product Strategy"],
@@ -406,6 +430,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Eniola Osiyoku",
+    pronouns: "she",
     title: "Senior Product Manager, PawaPay",
     image: "/2026/speakers/eniola.jpg",
     expertise: ["Fintech", "Business & Finance"],
@@ -415,6 +440,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Faith Jerry",
+    pronouns: "she",
     title: "Founder & CEO, AILE Group",
     image: "/2026/speakers/faith.jpg",
     expertise: ["Tech Innovation", "Entrepreneurship"],
@@ -432,6 +458,7 @@ export const SpeakersList: Speaker[] = [
    */
   {
     name: "Hon. Mobolaji Ogunlende Abubakre",
+    pronouns: "he",
     title: "Commissioner for Youth & Social Development, LASG",
     image: "/images/speakers/mobolaji.jpg",
     expertise: ["Government & Policy"],
@@ -457,6 +484,49 @@ const HONORIFIC =
  * other industry leaders". Somebody named with an honorific is named in full;
  * a first name alone would be too familiar for a minister anyway.
  */
+/**
+ * The 2026 lineup's priority, for the home carousel and /speakers alike: a
+ * fixed `order` first, lowest first; then keynote speakers, then special
+ * guests, then everyone else in the order of SpeakersList. Array sort is
+ * stable, so ties keep it.
+ */
+const ROLE_RANK = { keynote: 0, "special-guest": 1, speaker: 2 } as const;
+
+export function lineupOrder(a: Speaker, b: Speaker): number {
+  const placed = (s: Speaker) => s.order ?? Number.POSITIVE_INFINITY;
+  const rank = (s: Speaker) => ROLE_RANK[s.role ?? "speaker"];
+  return placed(a) - placed(b) || rank(a) - rank(b);
+}
+
+/**
+ * The 2026 lineup as shown: one man, one woman, alternating.
+ *
+ * The owner asked for "one boy one girl" while knowing there are fewer women
+ * announced so far. Each group keeps lineupOrder within it (a fixed place,
+ * then special guests, then list order), the lineup starts with whoever
+ * leads overall, and once one group runs out the rest of the other follows.
+ * Speakers whose pronouns are not recorded come last, in their usual order,
+ * rather than being guessed into a group.
+ */
+export function arrangeLineup(speakers: Speaker[]): Speaker[] {
+  const ordered = [...speakers].sort(lineupOrder);
+  const groups = {
+    he: ordered.filter((s) => s.pronouns === "he"),
+    she: ordered.filter((s) => s.pronouns === "she"),
+  };
+  const unrecorded = ordered.filter((s) => !s.pronouns);
+  const lead = ordered.find((s) => s.pronouns)?.pronouns ?? "he";
+  const turns = lead === "he" ? (["he", "she"] as const) : (["she", "he"] as const);
+  const arranged: Speaker[] = [];
+  for (let i = 0; groups.he.length || groups.she.length; i++) {
+    const turn = turns[i % 2];
+    const other = turns[(i + 1) % 2];
+    const next = groups[turn].shift() ?? groups[other].shift();
+    if (next) arranged.push(next);
+  }
+  return [...arranged, ...unrecorded];
+}
+
 export function speakerShortName(name: string): string {
   const trimmed = name.trim();
   const first = trimmed.split(/\s+/)[0] ?? trimmed;
