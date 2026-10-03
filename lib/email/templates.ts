@@ -1218,6 +1218,60 @@ export function challengeLiveEmail(params: {
 }
 
 /**
+ * A stage is about to close, and this creator has nothing in for it yet.
+ *
+ * Sent by an owner pressing Remind on the live week in the console, once per
+ * stage, to active creators with no submission waiting for review or
+ * approved for that stage: people who never submitted, took theirs back, or
+ * had their only link sent back for a change. Like the stage announcement it
+ * carries no credential and points at the page.
+ */
+export function deadlineReminderEmail(params: {
+  to: string;
+  fullName: string;
+  weekNo: number;
+  title: string;
+  /** "today at 12:00", "tomorrow at 12:00": see closesWhen in lib/format. */
+  closesWhen: string;
+  /** Already formatted for Lagos, e.g. "Saturday, 10 October at 12:00". */
+  closesAtLagos: string;
+  pageUrl: string;
+}): Email {
+  const name = firstName(params.fullName);
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: `Stage ${params.weekNo} closes ${params.closesWhen}`,
+    text: [
+      `${name}, stage ${params.weekNo} closes ${params.closesWhen}, and your entry is not in yet.`,
+      ``,
+      `${params.title}`,
+      ``,
+      `Submissions close ${params.closesAtLagos}, Lagos time. After that the stage is locked, and its points cannot be earned.`,
+      `If one of your links was sent back for a change, send it again before then.`,
+      ``,
+      `Publish on your own account, then paste the link on your page:`,
+      params.pageUrl,
+    ].join("\n"),
+    html: layout({
+      preheader: `Your stage ${params.weekNo} entry is not in yet. Closes ${params.closesAtLagos}, Lagos time.`,
+      heading: `Stage ${params.weekNo} closes ${params.closesWhen}, ${name}`,
+      body: [
+        p(`Your entry for <strong>${escape(params.title)}</strong> is not in yet.`),
+        boxed("Closes", `${params.closesAtLagos}, Lagos time`),
+        p("After that the stage is locked, and its points cannot be earned."),
+        quiet(
+          "If one of your links was sent back for a change, send it again before then. Publish on your own account first, then paste the link on your page.",
+        ),
+      ].join(""),
+      action: { label: "Open your page and submit", href: params.pageUrl },
+    }),
+  };
+}
+
+/**
  * Removed from the campaign.
  *
  * The one decision in this system that took something away and told

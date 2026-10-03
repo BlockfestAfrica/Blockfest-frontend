@@ -14,9 +14,22 @@ import {
 } from "@/components/shared/panel";
 import { ActionDialog } from "@/components/shared/action-dialog";
 import { reveal } from "@/components/shared/reveal";
-import { dateTime } from "@/lib/format";
+import { closesWhen, closingAt, dateTime } from "@/lib/format";
+
+/** The deadline reminder's state, for the live week only (lib/admin/reminders.ts). */
+export interface ReminderView {
+  /** Active creators with nothing in for the week. */
+  waiting: number;
+  active: number;
+  sent: { at: string; sent: number; failed: number; finished: boolean } | null;
+}
+
+/** The last day and a half before a close, when a reminder is due. */
+const REMINDER_DUE_MS = 36 * 60 * 60 * 1000;
 
 export interface EditableChallenge {
+  /** Present on the live week while it still takes entries. */
+  reminder?: ReminderView;
   id: string;
   weekNo: number;
   title: string;
@@ -48,7 +61,12 @@ const STATUS_TONE = { draft: "neutral", active: "good", closed: "bad" } as const
 export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[] }) {
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  /* Which action is running, and on which week. One at a time across the
+     card, but only the button that was pressed says it is working: one
+     shared flag made Save read "Saving…" while a reminder was sending. */
+  const [busy, setBusy] = useState<{ kind: "save" | "announce" | "remind"; id: string } | null>(null);
+  const running = (kind: "save" | "announce" | "remind", id: string) =>
+    busy?.kind === kind && busy.id === id;
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -195,7 +213,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
    * nothing.
    */
   async function announce(challenge: EditableChallenge) {
-    setBusy(true);
+    setBusy({ kind: "announce", id: challenge.id });
     try {
       const response = await fetch("/api/admin/announce-challenge", {
         method: "POST",
@@ -216,7 +234,40 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     } catch {
       toast.error("We could not reach the server.");
     } finally {
-      setBusy(false);
+      setBusy(null);
+    }
+  }
+
+  /**
+   * Remind creators with nothing in that the week is about to close.
+   *
+   * Owner asked for a button, not a timer, the same as Announce. It lives
+   * on the week's row rather than inside Edit, so it is in view on the day
+   * it matters; the route sends it once per stage.
+   */
+  async function remind(challenge: EditableChallenge) {
+    setBusy({ kind: "remind", id: challenge.id });
+    try {
+      const response = await fetch("/api/admin/remind-challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeId: challenge.id }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        toast.error(result.message ?? "That did not work.");
+        return;
+      }
+      toast.success(
+        result.failed
+          ? `Week ${challenge.weekNo} reminder sent to ${result.sent}. ${result.failed} did not send.`
+          : `Week ${challenge.weekNo} reminder sent to ${result.sent} creators.`,
+      );
+      router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -227,7 +278,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
       return;
     }
 
-    setBusy(true);
+    setBusy({ kind: "save", id: challenge.id });
     try {
       const response = await fetch("/api/admin/challenge", {
         method: "POST",
@@ -264,7 +315,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     } catch {
       toast.error("We could not reach the server.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -280,7 +331,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
           (c) =>
             !c.readonly_ &&
             (c.status === "draft" || c.title === "The Proof"),
-        )
+        ) || challenges.some(reminderDue)
           ? "now"
           : "todo"
       }
@@ -368,6 +419,16 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                 </button>
               )}
             </div>
+
+            {challenge.reminder && (
+              <ReminderRow
+                challenge={challenge}
+                reminder={challenge.reminder}
+                pending={running("remind", challenge.id)}
+                disabled={busy !== null}
+                onRemind={() => remind(challenge)}
+              />
+            )}
 
             {open === challenge.id && !challenge.readonly_ && (
               <div className="mt-4 flex flex-col gap-4">
@@ -494,10 +555,11 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                     question={riskyChange(challenge)?.question ?? ""}
                     consequence={riskyChange(challenge)?.consequence ?? ""}
                     confirmLabel="Yes, save it"
-                    pending={busy}
+                    pending={running("save", challenge.id)}
+                    disabled={busy !== null && !running("save", challenge.id)}
                     onConfirm={() => save(challenge)}
                     triggerClassName={buttonClass("primary", "w-fit")}
-                    triggerContent={busy ? "Saving…" : `Save week ${challenge.weekNo}`}
+                    triggerContent={running("save", challenge.id) ? "Saving…" : `Save week ${challenge.weekNo}`}
                   />
 
                   {/* Only for a week that is actually live, because the
@@ -511,7 +573,8 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                       question={`Email every active creator that week ${challenge.weekNo} is live?`}
                       consequence="One email each, with the brief and the deadline. It can only be sent once per stage, and the audit log records who sent it and how many reached their inbox."
                       confirmLabel="Yes, announce it"
-                      pending={busy}
+                      pending={running("announce", challenge.id)}
+                      disabled={busy !== null && !running("announce", challenge.id)}
                       onConfirm={() => announce(challenge)}
                     />
                   )}
@@ -522,5 +585,71 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
         ))}
       </ul>
     </JobCard>
+  );
+}
+
+/** A reminder that has not gone out, for a week closing within a day and a half. */
+function reminderDue(challenge: EditableChallenge): boolean {
+  const r = challenge.reminder;
+  if (!r || r.sent || r.waiting === 0) return false;
+  const left = new Date(challenge.endsAt).getTime() - Date.now();
+  return left > 0 && left <= REMINDER_DUE_MS;
+}
+
+/**
+ * The live week's deadline reminder, on its row: where things stand, and the
+ * button. Visible without opening Edit, because on the day before a close
+ * this is the one thing the card needs from a person, and the card's edge
+ * turns gold until it is done.
+ */
+function ReminderRow({
+  challenge,
+  reminder,
+  pending,
+  disabled,
+  onRemind,
+}: {
+  challenge: EditableChallenge;
+  reminder: ReminderView;
+  /** This reminder is sending. */
+  pending: boolean;
+  /** Something else on the card is running. */
+  disabled: boolean;
+  onRemind: () => void;
+}) {
+  const { waiting, active, sent } = reminder;
+  const closes = closingAt(challenge.endsAt);
+  const due = reminderDue(challenge);
+
+  return (
+    <div
+      className={`mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line border-l-2 pl-3 pt-3 ${
+        due ? "border-l-brand-gold" : "border-l-transparent"
+      }`}
+    >
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-white">Deadline reminder</p>
+        <p className="mt-0.5 max-w-prose text-sm text-ink-3">
+          {sent
+            ? sent.finished
+              ? `Sent ${dateTime(sent.at)} to ${sent.sent} ${sent.sent === 1 ? "creator" : "creators"}${sent.failed ? `; ${sent.failed} did not send` : ""}.`
+              : `Started ${dateTime(sent.at)}: ${sent.sent} sent so far. It may still be sending, or it stopped part way; either way it will not send again.`
+            : waiting === 0
+              ? `Every active creator has an entry in. Submissions close ${closes}.`
+              : `${waiting} of ${active} active creators have nothing in yet. Submissions close ${closes}.`}
+        </p>
+      </div>
+      {!sent && waiting > 0 && (
+        <Confirm
+          label="Remind them"
+          question={`Email the ${waiting} ${waiting === 1 ? "creator" : "creators"} with nothing in that week ${challenge.weekNo} closes ${closesWhen(challenge.endsAt)}?`}
+          consequence="One email each, only to active creators with no entry waiting for review or approved. It can be sent once per stage, and the audit log records who sent it and how many reached their inbox."
+          confirmLabel={`Yes, remind ${waiting}`}
+          pending={pending}
+          disabled={disabled && !pending}
+          onConfirm={onRemind}
+        />
+      )}
+    </div>
   );
 }
