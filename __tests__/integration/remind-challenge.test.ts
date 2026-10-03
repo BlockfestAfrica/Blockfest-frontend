@@ -19,6 +19,7 @@ const state = vi.hoisted(() => ({
   db: null as unknown,
   adminId: "",
   sends: [] as { to: string; subject: string }[],
+  copies: [] as { to: string; subject: string }[],
   inFlight: 0,
   maxInFlight: 0,
 }));
@@ -46,7 +47,9 @@ vi.mock("@/lib/email/client", () => ({
     state.sends.push({ to: email.to, subject: email.subject });
     return { sent: true };
   },
-  sendEmailQuietly: async () => undefined,
+  sendEmailQuietly: async (email: { to: string; subject: string }) => {
+    state.copies.push({ to: email.to, subject: email.subject });
+  },
 }));
 
 const { POST } = await import("@/app/api/admin/remind-challenge/route");
@@ -156,6 +159,8 @@ beforeEach(async () => {
     [challengeId],
   );
   state.sends = [];
+  state.copies = [];
+  delete process.env.BULK_EMAIL_COPY_TO;
   state.inFlight = 0;
   state.maxInFlight = 0;
 });
@@ -171,6 +176,16 @@ describe("the deadline reminder", () => {
       `SELECT after FROM audit_log WHERE action = 'challenge.reminded'`,
     );
     expect(row.after).toMatchObject({ status: "finished", sent: 2, recipients: 2 });
+  });
+
+  it("copies the owner once, marked as a copy, and does not count it as a creator", async () => {
+    process.env.BULK_EMAIL_COPY_TO = "owner@example.test";
+    const answer = await press();
+    expect(await answer.json()).toEqual({ ok: true, sent: 2, failed: 0 });
+    expect(state.copies).toHaveLength(1);
+    expect(state.copies[0].to).toBe("owner@example.test");
+    expect(state.copies[0].subject).toMatch(/^\[Copy · sent to 2\] Stage 3 closes /);
+    expect(state.sends.map((s) => s.to)).not.toContain("owner@example.test");
   });
 
   it("goes once per stage, even when two presses land together", async () => {

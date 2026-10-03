@@ -14,6 +14,7 @@ import {
   votingPage,
   winnerEmail,
 } from "@/lib/email/templates";
+import { sendBulkCopy } from "@/lib/email/copy";
 import { campaignCreators, creators } from "@/lib/db/client";
 import { eq } from "drizzle-orm";
 
@@ -260,19 +261,23 @@ export async function POST(request: NextRequest) {
              AND n.withdrawn_at IS NULL
              AND cc.id <> ${enrolmentId}::uuid
         `);
-        for (const other of others.rows ?? []) {
-          const person = other as { email?: string; full_name?: string };
-          if (!person.email) continue;
-          await sendEmailQuietly(
-            nomineeResultEmail({
-              to: person.email,
-              fullName: person.full_name ?? "",
-              weekNo,
-              winnerName,
-              votingUrl: votingPage(),
-            }),
-            "nominee result notice",
+        const people = (others.rows ?? [])
+          .map((other) => other as { email?: string; full_name?: string })
+          .filter((person): person is { email: string; full_name?: string } =>
+            Boolean(person.email),
           );
+        const mail = (person: { email: string; full_name?: string }) =>
+          nomineeResultEmail({
+            to: person.email,
+            fullName: person.full_name ?? "",
+            weekNo,
+            winnerName,
+            votingUrl: votingPage(),
+          });
+        // The owner's copy of what went out (lib/email/copy.ts).
+        await sendBulkCopy(people[0] ? mail(people[0]) : null, people.length, "nominee result notice");
+        for (const person of people) {
+          await sendEmailQuietly(mail(person), "nominee result notice");
         }
       } catch (error) {
         logError("admin/winners nominee result mail", error);
