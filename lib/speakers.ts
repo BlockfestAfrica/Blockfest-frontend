@@ -459,6 +459,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Salemking",
+    pronouns: "he",
     title: "Storyteller & Co-Founder, Crea8torium",
     image: "/2026/speakers/salem.JPG",
     expertise: ["Education", "Marketing & Media"],
