@@ -333,6 +333,7 @@ export const SpeakersList: Speaker[] = [
  
   {
     name: "Dr. Tunji Alausa",
+    order: 8,
     pronouns: "he",
     title: "Honourable Minister of Education, Federal Republic of Nigeria",
     image: "/2026/speakers/alausa.jpeg",
@@ -348,7 +349,9 @@ export const SpeakersList: Speaker[] = [
     name: "Dr. Kadri Obafemi Hamzat",
     pronouns: "he",
     title: "Deputy Governor of Lagos State",
-    // The team asked for the Deputy Governor to lead the lineup.
+    // The lineup's first nine are in the order the team set (3 October):
+    // the Deputy Governor, Teddi Speaks, Prof. Ogundipe, Eniola Osiyoku,
+    // Hon. Abubakre, Opeyemi Stephen, Faith Jerry, Dr. Alausa, Dára Sobaloju.
     order: 1,
     image: "/2026/speakers/dept.jpeg",
     expertise: ["Government & Policy", "Tech Innovation"],
@@ -360,6 +363,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Prof. Temitayo Ogundipe",
+    order: 3,
     pronouns: "he",
     title: "Chairman, Governing Board, National Universities Commission (NUC)",
     image: "/2026/speakers/prof.JPEG",
@@ -373,6 +377,7 @@ export const SpeakersList: Speaker[] = [
 
   {
     name: "Teddi Speaks",
+    order: 2,
     pronouns: "he",
     title: "Founder & Convener, Unchain Summer",
     image: "/2026/speakers/teddi.png",
@@ -384,6 +389,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Opeyemi Stephen",
+    order: 6,
     pronouns: "he",
     title: "QA & Releases Manager, Solana Developer Platform",
     image: "/2026/speakers/opeyemi.jpeg", 
@@ -418,6 +424,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Dára Sobaloju",
+    order: 9,
     pronouns: "he",
     title: "Founder, Pewbeam",
     image: "/2026/speakers/dara.jpg",
@@ -430,6 +437,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Eniola Osiyoku",
+    order: 4,
     pronouns: "she",
     title: "Senior Product Manager, PawaPay",
     image: "/2026/speakers/eniola.jpg",
@@ -440,6 +448,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Faith Jerry",
+    order: 7,
     pronouns: "she",
     title: "Founder & CEO, AILE Group",
     image: "/2026/speakers/faith.jpg",
@@ -458,6 +467,7 @@ export const SpeakersList: Speaker[] = [
    */
   {
     name: "Hon. Mobolaji Ogunlende Abubakre",
+    order: 5,
     pronouns: "he",
     title: "Commissioner for Youth & Social Development, LASG",
     image: "/images/speakers/mobolaji.jpg",
@@ -501,15 +511,22 @@ export function lineupOrder(a: Speaker, b: Speaker): number {
 /**
  * The 2026 lineup as shown: one man, one woman, alternating.
  *
- * The owner asked for "one boy one girl" while knowing there are fewer women
- * announced so far. Each group keeps lineupOrder within it (a fixed place,
+ * Speakers with a fixed `order` come first, exactly in that order. The rest
+ * alternate: the owner asked for "one boy one girl" while knowing there are
+ * fewer women announced so far. Each group keeps lineupOrder within it (a fixed place,
  * then special guests, then list order), the lineup starts with whoever
  * leads overall, and once one group runs out the rest of the other follows.
  * Speakers whose pronouns are not recorded come last, in their usual order,
  * rather than being guessed into a group.
  */
 export function arrangeLineup(speakers: Speaker[]): Speaker[] {
-  const ordered = [...speakers].sort(lineupOrder);
+  /* A fixed place is the team's own arrangement and is kept exactly: the
+     owner's order puts two men side by side at the top, which alternating
+     would undo. Only the speakers without one are alternated, after them. */
+  const placed = speakers
+    .filter((s) => s.order !== undefined)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const ordered = speakers.filter((s) => s.order === undefined).sort(lineupOrder);
   const groups = {
     he: ordered.filter((s) => s.pronouns === "he"),
     she: ordered.filter((s) => s.pronouns === "she"),
@@ -524,7 +541,7 @@ export function arrangeLineup(speakers: Speaker[]): Speaker[] {
     const next = groups[turn].shift() ?? groups[other].shift();
     if (next) arranged.push(next);
   }
-  return [...arranged, ...unrecorded];
+  return [...placed, ...arranged, ...unrecorded];
 }
 
 export function speakerShortName(name: string): string {
