@@ -4,8 +4,9 @@
  * The owner asked for the Deputy Governor of Lagos State to lead, as a
  * keynote speaker, for the Minister of Education to be shown as a speaker
  * rather than a special guest, and for the lineup to go one man, one woman,
- * knowing there are fewer women announced so far. Pronouns come from the
- * team's own bios, never from a name.
+ * knowing there are fewer women announced so far. Then (3 October) set the
+ * first nine by hand; a fixed place is kept exactly and only the rest
+ * alternate. Pronouns come from the team's own bios, never from a name.
  */
 
 import { render, screen } from "@testing-library/react";
@@ -42,13 +43,23 @@ describe("the 2026 lineup", () => {
     expect(minister.role).toBe("speaker");
   });
 
-  it("alternates one man, one woman while both are left, then the rest follow", () => {
-    const sequence = lineup.map((s) => s.pronouns);
-    const women = sequence.filter((p) => p === "she").length;
-    for (let i = 0; i < women * 2; i++) {
-      expect(sequence[i], `position ${i + 1}`).toBe(i % 2 === 0 ? "he" : "she");
-    }
-    expect(sequence.slice(women * 2).every((p) => p === "he")).toBe(true);
+  it("follows the order the team set, exactly, then everyone else", () => {
+    expect(lineup.slice(0, 9).map((s) => s.name)).toEqual([
+      "Dr. Kadri Obafemi Hamzat",
+      "Teddi Speaks",
+      "Prof. Temitayo Ogundipe",
+      "Eniola Osiyoku",
+      "Hon. Mobolaji Ogunlende Abubakre",
+      "Opeyemi Stephen",
+      "Faith Jerry",
+      "Dr. Tunji Alausa",
+      "Dára Sobaloju",
+    ]);
+    // Not in the team's list: after it, not dropped.
+    expect(lineup.slice(9).map((s) => s.name).sort()).toEqual([
+      "Ashley Rene Olika",
+      "Olamilekan Majekodunmi",
+    ]);
   });
 
   it("records pronouns for every announced speaker, so the lineup can balance", () => {
@@ -70,7 +81,7 @@ describe("the 2026 lineup", () => {
 });
 
 describe("arrangeLineup", () => {
-  it("keeps a fixed place first, then keynote, then special guests, within each group", () => {
+  it("keeps fixed places first and exact, then alternates the rest by keynote, special guest, list order", () => {
     const list = [
       person("A", { pronouns: "he" }),
       person("B", { pronouns: "she" }),
@@ -79,7 +90,16 @@ describe("arrangeLineup", () => {
       person("E", { pronouns: "she", role: "special-guest" }),
       person("F", { pronouns: "he", order: 1 }),
     ];
-    expect(arrangeLineup(list).map((s) => s.name)).toEqual(["F", "E", "D", "B", "C", "A"]);
+    expect(arrangeLineup(list).map((s) => s.name)).toEqual(["F", "D", "E", "C", "B", "A"]);
+  });
+
+  it("keeps two fixed places side by side even when alternating would split them", () => {
+    const list = [
+      person("W", { pronouns: "she" }),
+      person("M2", { pronouns: "he", order: 2 }),
+      person("M1", { pronouns: "he", order: 1 }),
+    ];
+    expect(arrangeLineup(list).map((s) => s.name)).toEqual(["M1", "M2", "W"]);
   });
 
   it("starts with whoever leads overall, even a woman", () => {
