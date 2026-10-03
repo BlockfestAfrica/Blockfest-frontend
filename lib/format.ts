@@ -77,6 +77,25 @@ export const dateOnly = (value: Date | string) =>
 export const dayDate = (value: Date | string) =>
   DAY_DATE.format(typeof value === "string" ? new Date(value) : value).replace(",", "");
 
+/**
+ * "today at 12:00", "tomorrow at 12:00", "on Saturday at 12:00".
+ *
+ * When something closes, said the way a person would say it in the subject
+ * line of a reminder. Days are counted on the Lagos calendar, not in 24 hour
+ * steps, so a noon close read at 11pm the night before is "tomorrow", and
+ * read at 9am the same day is "today".
+ */
+export function closesWhen(value: Date | string, now: Date = new Date()): string {
+  const at = typeof value === "string" ? new Date(value) : value;
+  const lagosDay = (d: Date) => Math.floor((d.getTime() + 60 * 60 * 1000) / 86_400_000);
+  const days = lagosDay(at) - lagosDay(now);
+  const time = CLOCK.format(at);
+  if (days <= 0) return `today at ${time}`;
+  if (days === 1) return `tomorrow at ${time}`;
+  const weekday = new Intl.DateTimeFormat("en-NG", { weekday: "long", timeZone: "Africa/Lagos" }).format(at);
+  return `on ${weekday} at ${time}`;
+}
+
 /** 15:05 Lagos. For "updated at" on something that refreshes within the day. */
 export const clockTime = (value: Date | string) =>
   CLOCK.format(typeof value === "string" ? new Date(value) : value);

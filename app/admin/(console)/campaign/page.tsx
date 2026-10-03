@@ -6,6 +6,7 @@ import { PauseSwitch } from "@/components/admin/pause-switch";
 import { SectionCard } from "@/components/shared/panel";
 import { listChallenges } from "@/lib/admin/challenges";
 import { ChallengeEditor } from "@/components/admin/challenge-editor";
+import { reminderState } from "@/lib/admin/reminders";
 import { listPointRules } from "@/lib/admin/point-rules";
 import { PointRulesEditor } from "@/components/admin/point-rules-editor";
 import { currentWeekNo } from "@/lib/campaigns";
@@ -49,6 +50,16 @@ export default async function CampaignPage() {
     listPointRules(admin.admin),
   ]);
   const thisWeek = challenges.find((c) => c.weekNo === currentWeekNo());
+  /* The deadline reminder's state, for a week that is live and still taking
+     entries: the only weeks it can be sent for. */
+  const now = new Date();
+  const reminders = new Map(
+    await Promise.all(
+      challenges
+        .filter((c) => c.status === "active" && c.endsAt > now)
+        .map(async (c) => [c.id, await reminderState(admin.admin, c.id)] as const),
+    ),
+  );
   const beforeLaunch =
     pause.startsAt !== null && pause.startsAt > new Date();
 
@@ -93,6 +104,7 @@ export default async function CampaignPage() {
             startsAt: challenge.startsAt.toISOString(),
             endsAt: challenge.endsAt.toISOString(),
             readonly_: challenge.endsAt < new Date(),
+            reminder: reminders.get(challenge.id),
           }))}
         />
       </div>
