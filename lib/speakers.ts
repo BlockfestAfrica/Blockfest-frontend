@@ -457,6 +457,17 @@ export const SpeakersList: Speaker[] = [
     bio: "Faith Jerry is a technology entrepreneur building practical solutions with AI and emerging technologies.\n\nThrough AILE Group, she is developing smart home, security, mobility and robotics products for the African market.\n\nAt Blockfest Africa 2026, Faith joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Salemking",
+    pronouns: "he",
+    title: "Storyteller & Co-Founder, Crea8torium",
+    image: "/2026/speakers/salem.JPG",
+    expertise: ["Education", "Marketing & Media"],
+    company: "Crea8torium",
+    twitter: "https://x.com/salemkinging",
+    bio: "Salemking is a storyteller, author, speaker and Co-Founder of Crea8torium, known as The Creator's Creator.\n\nHe has spent years exploring stories, ideas and creativity, and how they shape the way we connect with the world.\n\nAt Blockfest Africa 2026, he brings that voice to the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
 
   /*
    * Returning from a previous edition. His entry up the list stays as it is,

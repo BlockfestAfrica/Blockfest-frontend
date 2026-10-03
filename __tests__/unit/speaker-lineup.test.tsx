@@ -59,6 +59,7 @@ describe("the 2026 lineup", () => {
     expect(lineup.slice(9).map((s) => s.name).sort()).toEqual([
       "Ashley Rene Olika",
       "Olamilekan Majekodunmi",
+      "Salemking",
     ]);
   });
 
