@@ -10,6 +10,7 @@ import { MONICA_SLUG } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { shortlistEmail, votingPage } from "@/lib/email/templates";
+import { sendBulkCopy } from "@/lib/email/copy";
 import { findVotesByEmail } from "@/lib/admin/vote-round";
 import { DOMAIN_CAP, isNeverBlock } from "@/lib/campaign-vote";
 import { normaliseBlockDomain } from "@/lib/vote-domain";
@@ -314,25 +315,27 @@ export async function POST(request: NextRequest) {
         /* Together, not one after another: five sequential sends against a
            slow provider is five times one timeout, and the round is
            already committed by the time they run. */
+        const people = (nominees.rows ?? [])
+          .map((nominee) => nominee as { email?: string; full_name?: string })
+          .filter((person): person is { email: string; full_name?: string } =>
+            Boolean(person.email),
+          );
+        const mail = (person: { email: string; full_name?: string }) =>
+          shortlistEmail({
+            to: person.email,
+            fullName: person.full_name ?? "",
+            weekNo: action.weekNo,
+            closesAtLagos: closingAt(action.closesAt),
+            opensAtLagos:
+              new Date(action.opensAt).getTime() > Date.now()
+                ? closingAt(action.opensAt)
+                : undefined,
+            votingUrl: votingPage(),
+          });
+        // The owner's copy of what went out (lib/email/copy.ts).
+        await sendBulkCopy(people[0] ? mail(people[0]) : null, people.length, "shortlist notice");
         await Promise.allSettled(
-          (nominees.rows ?? []).map((nominee) => {
-            const person = nominee as { email?: string; full_name?: string };
-            if (!person.email) return Promise.resolve();
-            return sendEmailQuietly(
-              shortlistEmail({
-                to: person.email,
-                fullName: person.full_name ?? "",
-                weekNo: action.weekNo,
-                closesAtLagos: closingAt(action.closesAt),
-                opensAtLagos:
-                  new Date(action.opensAt).getTime() > Date.now()
-                    ? closingAt(action.opensAt)
-                    : undefined,
-                votingUrl: votingPage(),
-              }),
-              "shortlist notice",
-            );
-          }),
+          people.map((person) => sendEmailQuietly(mail(person), "shortlist notice")),
         );
       } catch (error) {
         logError("admin/vote-round shortlist mail", error);

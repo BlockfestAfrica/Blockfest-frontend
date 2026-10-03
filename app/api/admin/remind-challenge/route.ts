@@ -10,6 +10,7 @@ import { MONICA_SLUG } from "@/lib/campaigns";
 import { closesWhen, closingAt } from "@/lib/format";
 import { sendEmail } from "@/lib/email/client";
 import { deadlineReminderEmail, personalPage } from "@/lib/email/templates";
+import { sendBulkCopy } from "@/lib/email/copy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -180,21 +181,23 @@ export async function POST(request: NextRequest) {
     let sent = 0;
     let failed = 0;
 
+    const mail = (person: { email: string; fullName: string }) =>
+      deadlineReminderEmail({
+        to: person.email,
+        fullName: person.fullName,
+        weekNo: Number(week.week_no ?? 0),
+        title: String(week.title ?? ""),
+        closesWhen: when,
+        closesAtLagos: closes,
+        pageUrl: personalPage(),
+      });
+
+    // The owner's copy of what went out (lib/email/copy.ts), before the batch.
+    await sendBulkCopy(mail(people[0]), people.length, "deadline reminder");
+
     for (let i = 0; i < people.length; i += BATCH) {
       const results = await Promise.allSettled(
-        people.slice(i, i + BATCH).map((person) =>
-          sendEmail(
-            deadlineReminderEmail({
-              to: person.email,
-              fullName: person.fullName,
-              weekNo: Number(week.week_no ?? 0),
-              title: String(week.title ?? ""),
-              closesWhen: when,
-              closesAtLagos: closes,
-              pageUrl: personalPage(),
-            }),
-          ),
-        ),
+        people.slice(i, i + BATCH).map((person) => sendEmail(mail(person))),
       );
       for (const result of results) {
         if (result.status === "fulfilled" && result.value.sent) sent += 1;
