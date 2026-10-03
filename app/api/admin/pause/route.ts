@@ -10,6 +10,7 @@ import { MONICA_SLUG } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { personalPage, resumedEmail } from "@/lib/email/templates";
+import { sendBulkCopy } from "@/lib/email/copy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,18 +115,22 @@ export async function POST(request: NextRequest) {
                AND COALESCE(cc.status, 'active') = 'active'
           `);
 
-          for (const person of waiting.rows ?? []) {
-            const row2 = person as { email?: string; full_name?: string };
-            if (!row2.email) continue;
-            await sendEmailQuietly(
-              resumedEmail({
-                to: row2.email,
-                fullName: row2.full_name ?? "",
-                closesAtLagos: closesAt ? closingAt(String(closesAt)) : null,
-                personalPage: personalPage(),
-              }),
-              "resume notice",
+          const people = (waiting.rows ?? [])
+            .map((person) => person as { email?: string; full_name?: string })
+            .filter((person): person is { email: string; full_name?: string } =>
+              Boolean(person.email),
             );
+          const mail = (person: { email: string; full_name?: string }) =>
+            resumedEmail({
+              to: person.email,
+              fullName: person.full_name ?? "",
+              closesAtLagos: closesAt ? closingAt(String(closesAt)) : null,
+              personalPage: personalPage(),
+            });
+          // The owner's copy of what went out (lib/email/copy.ts).
+          await sendBulkCopy(people[0] ? mail(people[0]) : null, people.length, "resume notice");
+          for (const person of people) {
+            await sendEmailQuietly(mail(person), "resume notice");
           }
         } catch (error) {
           logError("admin/pause resume notice", error);

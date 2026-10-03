@@ -41,13 +41,17 @@ vi.mock("@/lib/speaking", () => ({
   },
   SPEAKER_FORM_URL: "https://forms.example/apply",
 }));
-vi.mock("@/lib/speakers", () => {
+vi.mock("@/lib/speakers", async (importOriginal) => {
+  // The real arrangement and order helpers; only the list is a fixture.
+  const real = await importOriginal<typeof import("@/lib/speakers")>();
   const past = { name: "Past Person", title: "Founder", image: "/p.jpg", cohort: "past" };
   const current = { name: "New Person", title: "Builder", image: "/n.jpg", cohort: "2026" };
   return {
     get SpeakersList() {
       return data.announced ? [past, current] : [past];
     },
+    arrangeLineup: real.arrangeLineup,
+    lineupOrder: real.lineupOrder,
     is2026Speaker: (s: { cohort?: string }) => s.cohort === "2026",
     isPastSpeaker: (s: { cohort?: string }) => s.cohort !== "2026",
   };

@@ -9,6 +9,7 @@ import { MONICA_SLUG } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
 import { sendEmail } from "@/lib/email/client";
 import { voteLiveEmail, votingPage } from "@/lib/email/templates";
+import { sendBulkCopy } from "@/lib/email/copy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -234,20 +235,22 @@ export async function POST(request: NextRequest) {
     let sent = 0;
     let failed = 0;
 
+    const mail = (person: { email?: string; full_name?: string }) =>
+      voteLiveEmail({
+        to: person.email as string,
+        fullName: person.full_name ?? "",
+        weekNo: Number(round.week_no ?? 0),
+        nominees: names,
+        closesAtLagos: closes,
+        votingUrl: votingPage(),
+      });
+
+    // The owner's copy of what went out (lib/email/copy.ts), before the batch.
+    await sendBulkCopy(people[0] ? mail(people[0]) : null, people.length, "vote announcement");
+
     for (let i = 0; i < people.length; i += BATCH) {
       const results = await Promise.allSettled(
-        people.slice(i, i + BATCH).map((person) =>
-          sendEmail(
-            voteLiveEmail({
-              to: person.email as string,
-              fullName: person.full_name ?? "",
-              weekNo: Number(round.week_no ?? 0),
-              nominees: names,
-              closesAtLagos: closes,
-              votingUrl: votingPage(),
-            }),
-          ),
-        ),
+        people.slice(i, i + BATCH).map((person) => sendEmail(mail(person))),
       );
       for (const result of results) {
         if (result.status === "fulfilled" && result.value.sent) sent += 1;

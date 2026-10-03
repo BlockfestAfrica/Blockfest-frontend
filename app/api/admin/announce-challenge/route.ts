@@ -9,6 +9,7 @@ import { MONICA_SLUG } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
 import { sendEmail } from "@/lib/email/client";
 import { challengeLiveEmail, personalPage } from "@/lib/email/templates";
+import { sendBulkCopy } from "@/lib/email/copy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -223,23 +224,25 @@ export async function POST(request: NextRequest) {
       .map((row) => row as { email?: string; full_name?: string })
       .filter((person) => Boolean(person.email));
 
+    const mail = (person: { email?: string; full_name?: string }) =>
+      challengeLiveEmail({
+        to: person.email as string,
+        fullName: person.full_name ?? "",
+        weekNo: Number(week.week_no ?? 0),
+        title: String(week.title ?? ""),
+        question: week.question ?? null,
+        brief: String(week.description ?? ""),
+        basePoints: Number(week.base_points ?? 100),
+        closesAtLagos: closes,
+        pageUrl: personalPage(),
+      });
+
+    // The owner's copy of what went out (lib/email/copy.ts), before the batch.
+    await sendBulkCopy(people[0] ? mail(people[0]) : null, people.length, "stage announcement");
+
     for (let i = 0; i < people.length; i += BATCH) {
       const results = await Promise.allSettled(
-        people.slice(i, i + BATCH).map((person) =>
-          sendEmail(
-            challengeLiveEmail({
-              to: person.email as string,
-              fullName: person.full_name ?? "",
-              weekNo: Number(week.week_no ?? 0),
-              title: String(week.title ?? ""),
-              question: week.question ?? null,
-              brief: String(week.description ?? ""),
-              basePoints: Number(week.base_points ?? 100),
-              closesAtLagos: closes,
-              pageUrl: personalPage(),
-            }),
-          ),
-        ),
+        people.slice(i, i + BATCH).map((person) => sendEmail(mail(person))),
       );
       for (const result of results) {
         if (result.status === "fulfilled" && result.value.sent) sent += 1;
