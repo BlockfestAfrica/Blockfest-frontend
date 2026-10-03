@@ -61,7 +61,12 @@ const STATUS_TONE = { draft: "neutral", active: "good", closed: "bad" } as const
 export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[] }) {
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  /* Which action is running, and on which week. One at a time across the
+     card, but only the button that was pressed says it is working: one
+     shared flag made Save read "Saving…" while a reminder was sending. */
+  const [busy, setBusy] = useState<{ kind: "save" | "announce" | "remind"; id: string } | null>(null);
+  const running = (kind: "save" | "announce" | "remind", id: string) =>
+    busy?.kind === kind && busy.id === id;
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -208,7 +213,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
    * nothing.
    */
   async function announce(challenge: EditableChallenge) {
-    setBusy(true);
+    setBusy({ kind: "announce", id: challenge.id });
     try {
       const response = await fetch("/api/admin/announce-challenge", {
         method: "POST",
@@ -229,7 +234,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     } catch {
       toast.error("We could not reach the server.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -241,7 +246,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
    * it matters; the route sends it once per stage.
    */
   async function remind(challenge: EditableChallenge) {
-    setBusy(true);
+    setBusy({ kind: "remind", id: challenge.id });
     try {
       const response = await fetch("/api/admin/remind-challenge", {
         method: "POST",
@@ -262,7 +267,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     } catch {
       toast.error("We could not reach the server.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -273,7 +278,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
       return;
     }
 
-    setBusy(true);
+    setBusy({ kind: "save", id: challenge.id });
     try {
       const response = await fetch("/api/admin/challenge", {
         method: "POST",
@@ -310,7 +315,7 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
     } catch {
       toast.error("We could not reach the server.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -419,7 +424,8 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
               <ReminderRow
                 challenge={challenge}
                 reminder={challenge.reminder}
-                busy={busy}
+                pending={running("remind", challenge.id)}
+                disabled={busy !== null}
                 onRemind={() => remind(challenge)}
               />
             )}
@@ -549,10 +555,11 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                     question={riskyChange(challenge)?.question ?? ""}
                     consequence={riskyChange(challenge)?.consequence ?? ""}
                     confirmLabel="Yes, save it"
-                    pending={busy}
+                    pending={running("save", challenge.id)}
+                    disabled={busy !== null && !running("save", challenge.id)}
                     onConfirm={() => save(challenge)}
                     triggerClassName={buttonClass("primary", "w-fit")}
-                    triggerContent={busy ? "Saving…" : `Save week ${challenge.weekNo}`}
+                    triggerContent={running("save", challenge.id) ? "Saving…" : `Save week ${challenge.weekNo}`}
                   />
 
                   {/* Only for a week that is actually live, because the
@@ -566,7 +573,8 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
                       question={`Email every active creator that week ${challenge.weekNo} is live?`}
                       consequence="One email each, with the brief and the deadline. It can only be sent once per stage, and the audit log records who sent it and how many reached their inbox."
                       confirmLabel="Yes, announce it"
-                      pending={busy}
+                      pending={running("announce", challenge.id)}
+                      disabled={busy !== null && !running("announce", challenge.id)}
                       onConfirm={() => announce(challenge)}
                     />
                   )}
@@ -597,12 +605,16 @@ function reminderDue(challenge: EditableChallenge): boolean {
 function ReminderRow({
   challenge,
   reminder,
-  busy,
+  pending,
+  disabled,
   onRemind,
 }: {
   challenge: EditableChallenge;
   reminder: ReminderView;
-  busy: boolean;
+  /** This reminder is sending. */
+  pending: boolean;
+  /** Something else on the card is running. */
+  disabled: boolean;
   onRemind: () => void;
 }) {
   const { waiting, active, sent } = reminder;
@@ -621,7 +633,7 @@ function ReminderRow({
           {sent
             ? sent.finished
               ? `Sent ${dateTime(sent.at)} to ${sent.sent} ${sent.sent === 1 ? "creator" : "creators"}${sent.failed ? `; ${sent.failed} did not send` : ""}.`
-              : `Started ${dateTime(sent.at)} and did not finish: ${sent.sent} sent so far. It will not send again; the audit log has the counts.`
+              : `Started ${dateTime(sent.at)}: ${sent.sent} sent so far. It may still be sending, or it stopped part way; either way it will not send again.`
             : waiting === 0
               ? `Every active creator has an entry in. Submissions close ${closes}.`
               : `${waiting} of ${active} active creators have nothing in yet. Submissions close ${closes}.`}
@@ -633,7 +645,8 @@ function ReminderRow({
           question={`Email the ${waiting} ${waiting === 1 ? "creator" : "creators"} with nothing in that week ${challenge.weekNo} closes ${closesWhen(challenge.endsAt)}?`}
           consequence="One email each, only to active creators with no entry waiting for review or approved. It can be sent once per stage, and the audit log records who sent it and how many reached their inbox."
           confirmLabel={`Yes, remind ${waiting}`}
-          pending={busy}
+          pending={pending}
+          disabled={disabled && !pending}
           onConfirm={onRemind}
         />
       )}

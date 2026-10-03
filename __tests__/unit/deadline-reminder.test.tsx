@@ -140,6 +140,28 @@ describe("the live week's row", () => {
     expect(screen.queryByRole("button", { name: "Remind them" })).toBeNull();
   });
 
+  it("says how far an unfinished send got, without claiming it stopped", () => {
+    render(
+      <ChallengeEditor
+        challenges={[live({ reminder: { waiting: 5, active: 10, sent: { at: "2026-10-09T10:00:00.000Z", sent: 40, failed: 0, finished: false } } })]}
+      />,
+    );
+    expect(screen.getByText(/40 sent so far\. It may still be sending, or it stopped part way; either way it will not send again\./)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Remind them" })).toBeNull();
+  });
+
+  it("while it sends, says Working only on its own button, and holds the others", async () => {
+    fetchMock.mockImplementationOnce(() => new Promise(() => {}) as never);
+    render(<ChallengeEditor challenges={[live()]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Remind them" }));
+    fireEvent.click(screen.getByRole("button", { name: "Yes, remind 3" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    const save = screen.getByRole("button", { name: /Save week 3/ }) as HTMLButtonElement;
+    expect(save.textContent).not.toContain("Saving");
+    expect(save.disabled).toBe(true);
+  });
+
   it("says when everyone is in, with no button", () => {
     render(<ChallengeEditor challenges={[live({ reminder: { waiting: 0, active: 10, sent: null } })]} />);
     expect(screen.getByText(/Every active creator has an entry in/)).toBeTruthy();

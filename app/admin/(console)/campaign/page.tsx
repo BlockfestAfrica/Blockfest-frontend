@@ -50,13 +50,14 @@ export default async function CampaignPage() {
     listPointRules(admin.admin),
   ]);
   const thisWeek = challenges.find((c) => c.weekNo === currentWeekNo());
-  /* The deadline reminder's state, for a week that is live and still taking
-     entries: the only weeks it can be sent for. */
+  /* The deadline reminder's state, for a week that is taking entries now:
+     active, opened, not yet closed. An owner can set next week active
+     ahead of its Monday, and that week must not offer a reminder. */
   const now = new Date();
   const reminders = new Map(
     await Promise.all(
       challenges
-        .filter((c) => c.status === "active" && c.endsAt > now)
+        .filter((c) => c.status === "active" && c.startsAt <= now && c.endsAt > now)
         .map(async (c) => [c.id, await reminderState(admin.admin, c.id)] as const),
     ),
   );

@@ -198,6 +198,22 @@ describe("the deadline reminder", () => {
     expect(rows.rows).toHaveLength(0);
   });
 
+  it("refuses a week set active ahead of its start, before anything is claimed", async () => {
+    // The editor lets an owner make next week live early; the dates hold
+    // it shut. A reminder then would announce a close nobody can enter for.
+    await db.query(
+      `UPDATE challenges SET starts_at = now() + interval '2 days',
+              ends_at = now() + interval '7 days' WHERE id = $1`,
+      [challengeId],
+    );
+    const early = await press();
+    expect(early.status).toBe(409);
+    expect((await early.json()).message).toMatch(/has not opened yet/);
+    expect(state.sends).toHaveLength(0);
+    const rows = await db.query(`SELECT 1 FROM audit_log WHERE action = 'challenge.reminded'`);
+    expect(rows.rows).toHaveLength(0);
+  });
+
   it("says where things stand for the console, before and after", async () => {
     const before = await reminderState({ adminId: state.adminId } as never, challengeId);
     expect(before).toMatchObject({ waiting: 2, active: 4, sent: null });

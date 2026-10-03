@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const found = await db.execute(sql`
-      SELECT ch.id, ch.week_no, ch.title, ch.ends_at, ch.status, ch.campaign_id
+      SELECT ch.id, ch.week_no, ch.title, ch.starts_at, ch.ends_at, ch.status, ch.campaign_id
         FROM challenges ch
         JOIN campaigns c ON c.id = ch.campaign_id
        WHERE ch.id = ${parsed.data.challengeId}::uuid
@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
       id?: string;
       week_no?: number;
       title?: string;
+      starts_at?: string | Date;
       ends_at?: string | Date;
       status?: string;
       campaign_id?: string;
@@ -99,6 +100,20 @@ export async function POST(request: NextRequest) {
     if (week.status !== "active") {
       return NextResponse.json(
         { ok: false, message: "That week is not live, so there is nothing to remind people about." },
+        { status: 409 },
+      );
+    }
+    /* Active is not open: an owner can set next week live ahead of its
+       Monday, and the dates hold it shut until then. A reminder for it
+       would tell everyone a stage closes that they cannot yet enter, and
+       use up that stage's only send before the day it is due. */
+    const startsAt = new Date(String(week.starts_at));
+    if (Number.isNaN(startsAt.getTime()) || startsAt.getTime() > Date.now()) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: `Week ${week.week_no} has not opened yet, so there is nothing to remind people about.`,
+        },
         { status: 409 },
       );
     }
@@ -185,6 +200,14 @@ export async function POST(request: NextRequest) {
         if (result.status === "fulfilled" && result.value.sent) sent += 1;
         else failed += 1;
       }
+      /* The running totals, so a send cut off part way (the 300 second
+         budget, a deploy) leaves a row saying how far it got, and the
+         console can say so rather than guess. */
+      await db.execute(sql`
+        UPDATE audit_log
+           SET after = ${JSON.stringify({ week_no: week.week_no, recipients: people.length, sent, failed, status: "started" })}::jsonb
+         WHERE id = ${claimId}::uuid
+      `);
     }
 
     await db.execute(sql`
