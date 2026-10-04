@@ -465,7 +465,7 @@ export const SpeakersList: Speaker[] = [
     expertise: ["Education", "Marketing & Media"],
     company: "Crea8torium",
     twitter: "https://x.com/salemkinging",
-    bio: "Salemking is a storyteller, author, speaker and Co-Founder of Crea8torium,he is known as The Creator's Creator.\n\nHe has spent years exploring stories, ideas and creativity, and how they shape the way we connect with the world.\n\nAt Blockfest Africa 2026, he brings that voice to the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    bio: "Salemking is a storyteller, author, speaker and Co-Founder of Crea8torium, he is known as The Creator's Creator.\n\nHe has spent years exploring stories, ideas and creativity, and how they shape the way we connect with the world.\n\nAt Blockfest Africa 2026, he brings that voice to the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
 
