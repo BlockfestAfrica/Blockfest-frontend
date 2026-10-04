@@ -28,7 +28,9 @@ export const dynamic = "force-dynamic";
  */
 
 function authorised(request: NextRequest): boolean | null {
-  const secret = process.env.CRON_SECRET;
+  // Trimmed: a value pasted with a trailing newline would otherwise refuse
+  // every run, since fetch strips it from the header the function sends.
+  const secret = process.env.CRON_SECRET?.trim();
   if (!secret) return null;
   const given = Buffer.from(request.headers.get("authorization") ?? "");
   const wanted = Buffer.from(`Bearer ${secret}`);

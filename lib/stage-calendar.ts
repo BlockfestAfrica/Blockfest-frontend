@@ -8,7 +8,11 @@ import { SITE_URL } from "@/lib/seo-event";
  * reminder that would have caught it was read after noon. A calendar alert
  * fires at the right time on the device people actually look at, in their
  * own time zone. Each remaining deadline is one short event ending at the
- * close, with an alert a day before and another three hours before.
+ * close, with an alert three hours before and another a day before.
+ *
+ * The alerts are timed from the event's start, which every calendar reads
+ * the same way; Outlook ignores RELATED=END and keeps only the first alert,
+ * so the three-hour one, the one that matters most, comes first.
  *
  * Generated from monicaStages, the instants the challenges were seeded with
  * and that the console cannot edit, so the calendar says what the engine
@@ -74,15 +78,17 @@ export function buildDeadlinesIcs(now: number = Date.now()): string {
       fold(`DESCRIPTION:${text(details())}`),
       fold(`URL:${SITE_URL}${monicaRoutes.me}`),
       "TRANSP:TRANSPARENT",
+      // The event starts half an hour before the close: -PT2H30M is three
+      // hours before the close, -PT23H30M a day before it.
       "BEGIN:VALARM",
       "ACTION:DISPLAY",
-      fold(`DESCRIPTION:${text(`Monica stage ${stage.number} closes tomorrow at 12:00 noon`)}`),
-      "TRIGGER;RELATED=END:-PT24H",
+      fold(`DESCRIPTION:${text(`Monica stage ${stage.number} closes in 3 hours, at 12:00 noon Lagos time`)}`),
+      "TRIGGER:-PT2H30M",
       "END:VALARM",
       "BEGIN:VALARM",
       "ACTION:DISPLAY",
-      fold(`DESCRIPTION:${text(`Monica stage ${stage.number} closes in 3 hours, at 12:00 noon`)}`),
-      "TRIGGER;RELATED=END:-PT3H",
+      fold(`DESCRIPTION:${text(`Monica stage ${stage.number} closes tomorrow at 12:00 noon Lagos time`)}`),
+      "TRIGGER:-PT23H30M",
       "END:VALARM",
       "END:VEVENT",
     );

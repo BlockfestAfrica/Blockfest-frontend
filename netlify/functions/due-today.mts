@@ -6,7 +6,7 @@
  * functions on published production deploys only, so previews never send.
  */
 export default async () => {
-  const secret = process.env.CRON_SECRET;
+  const secret = process.env.CRON_SECRET?.trim();
   if (!secret) {
     console.warn("due-today: CRON_SECRET is not set; nothing sent");
     return;
@@ -16,7 +16,9 @@ export default async () => {
     method: "POST",
     headers: { authorization: `Bearer ${secret}` },
   });
-  console.log(`due-today: ${response.status} ${await response.text()}`);
+  const body = await response.text();
+  if (response.ok) console.log(`due-today: ${response.status} ${body}`);
+  else console.error(`due-today failed: ${response.status} ${body}`);
 };
 
 export const config = { schedule: "0 7 * * *" };

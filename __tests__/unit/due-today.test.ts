@@ -86,15 +86,22 @@ describe("the morning list", () => {
     ]);
   });
 
-  it("lists results-day work on the Sunday, linked to that week", () => {
+  it("lists results-day work on the Sunday, linked to that week, and says the record is today only", () => {
     const f = facts({ recorded: [1, 2] });
     const items = dueItems(f, at("2026-10-11T08:00:00+01:00"));
     expect(items.map((i) => i.text)).toEqual([
-      "Record the week 3 standings.",
+      "Record the week 3 standings today, before midnight: after that they cannot be recorded.",
       "Announce week 3's Creator of the Week.",
       "Open the week 3 Community Favourite vote.",
     ]);
     expect(items.every((i) => i.href === "/admin/winners?week=3")).toBe(true);
+  });
+
+  it("after its Sunday, says once that an unrecorded week needs fixing, not three refused actions", () => {
+    const f = facts({ recorded: [1, 2] });
+    expect(texts(f, "2026-10-12T08:00:00+01:00").filter((t) => t.includes("week 3") || t.includes("Week 3"))).toEqual([
+      "Week 3's standings were never recorded, so its awards cannot be announced or voted on from the console. They need fixing by hand.",
+    ]);
   });
 
   it("follows the vote: tell the creators, then review, then announce", () => {
@@ -115,6 +122,12 @@ describe("the morning list", () => {
         "2026-10-14T08:00:00+01:00",
       ).filter((t) => t.includes("vote")),
     ).toEqual([]);
+  });
+
+  it("flags a week still in draft after its start, when nobody can enter", () => {
+    expect(texts(facts({ challenges: [W3, W4] }), "2026-10-12T08:00:00+01:00")).toContain(
+      "Week 4 started Monday 12 October and is still a draft, so creators cannot enter: set it active, then announce it.",
+    );
   });
 
   it("warns two days ahead that next week is still a draft", () => {

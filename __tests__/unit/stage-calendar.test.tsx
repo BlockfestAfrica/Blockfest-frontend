@@ -26,9 +26,14 @@ describe("the deadlines file", () => {
     expect(ics).toContain("SUMMARY:Monica stage 3 closes (12:00 noon\\, Lagos)");
   });
 
-  it("alerts a day before and three hours before", () => {
-    expect(ics.match(/TRIGGER;RELATED=END:-PT24H/g)).toHaveLength(2);
-    expect(ics.match(/TRIGGER;RELATED=END:-PT3H/g)).toHaveLength(2);
+  it("alerts three hours and a day before, timed from the start, three hours first", () => {
+    // The event starts half an hour before the close; Outlook ignores
+    // RELATED=END and keeps only the first alert.
+    expect(ics).not.toContain("RELATED=END");
+    expect(ics.match(/TRIGGER:-PT2H30M/g)).toHaveLength(2);
+    expect(ics.match(/TRIGGER:-PT23H30M/g)).toHaveLength(2);
+    const first = ics.slice(ics.indexOf("BEGIN:VALARM"));
+    expect(first.indexOf("TRIGGER:-PT2H30M")).toBeLessThan(first.indexOf("TRIGGER:-PT23H30M"));
   });
 
   it("is a well-formed calendar: CRLF lines, none over 75 characters", () => {
@@ -74,6 +79,9 @@ describe("where the links show", () => {
     });
     expect(email.text).toContain("Google Calendar: https://calendar.google.com/x?a=1&b=2");
     expect(email.html).toContain('href="https://calendar.google.com/x?a=1&amp;b=2"');
-    expect(email.html).toContain("reminds you a day before and three hours before");
+    expect(email.html).toContain("reminds you three hours before the close, and in Apple Calendar a day before too");
+    // The reminder claim belongs to the file, not the Google link.
+    expect(email.text).not.toMatch(/so your phone reminds you/);
+    expect(email.text).toContain("The calendar file reminds you three hours before the close");
   });
 });

@@ -1217,9 +1217,10 @@ export function challengeLiveEmail(params: {
       ...(params.calendar
         ? [
             ``,
-            `Add the deadline to your calendar, so your phone reminds you a day and three hours before:`,
+            `Add the deadline to your calendar:`,
             `Google Calendar: ${params.calendar.google}`,
             `Apple or Outlook: ${params.calendar.ics}`,
+            `The calendar file reminds you three hours before the close, and in Apple Calendar a day before too.`,
           ]
         : []),
       ``,
@@ -1239,7 +1240,7 @@ export function challengeLiveEmail(params: {
           : "",
         params.calendar
           ? quiet(
-              `Add the deadline to your calendar: <a href="${escape(params.calendar.google)}">Google Calendar</a> or <a href="${escape(params.calendar.ics)}">Apple or Outlook</a>. The calendar file reminds you a day before and three hours before.`,
+              `Add the deadline to your calendar: <a href="${escape(params.calendar.google)}">Google Calendar</a> or <a href="${escape(params.calendar.ics)}">Apple or Outlook</a>. The calendar file reminds you three hours before the close, and in Apple Calendar a day before too.`,
             )
           : "",
         p(

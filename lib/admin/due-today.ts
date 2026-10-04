@@ -108,14 +108,32 @@ export function dueItems(facts: DueFacts, now: number): DueItem[] {
   if (ended && now >= at(announcementSunday(ended.endsAt))) {
     const w = ended.weekNo;
     const round = facts.rounds.find((r) => r.weekNo === w && r.status !== "draft");
-    if (!facts.recorded.includes(w)) {
-      items.push({ text: `Record the week ${w} standings.`, href: winners(w) });
+    /* A week's standings can only be recorded while it is the current
+       stage (the snapshot route refuses any other), and announcing and the
+       vote both need them. So on its Sunday say "today", and after that say
+       once that it needs fixing rather than list three refused actions. */
+    const started = facts.challenges.filter((c) => at(c.startsAt) <= now);
+    const current = started.length ? started[started.length - 1].weekNo : 1;
+    const recordable = w === current;
+    const later = facts.challenges.some((c) => c.weekNo > w);
+    const recorded = facts.recorded.includes(w);
+    if (!recorded) {
+      items.push({
+        text: recordable
+          ? later
+            ? `Record the week ${w} standings today, before midnight: after that they cannot be recorded.`
+            : `Record the week ${w} standings.`
+          : `Week ${w}'s standings were never recorded, so its awards cannot be announced or voted on from the console. They need fixing by hand.`,
+        href: winners(w),
+      });
     }
-    if (!facts.published.includes(`${w}:creator_of_week`)) {
-      items.push({ text: `Announce week ${w}'s Creator of the Week.`, href: winners(w) });
-    }
-    if (!round && !facts.published.includes(`${w}:community_favourite`)) {
-      items.push({ text: `Open the week ${w} Community Favourite vote.`, href: winners(w) });
+    if (recorded || recordable) {
+      if (!facts.published.includes(`${w}:creator_of_week`)) {
+        items.push({ text: `Announce week ${w}'s Creator of the Week.`, href: winners(w) });
+      }
+      if (!round && !facts.published.includes(`${w}:community_favourite`)) {
+        items.push({ text: `Open the week ${w} Community Favourite vote.`, href: winners(w) });
+      }
     }
   }
 
@@ -140,12 +158,19 @@ export function dueItems(facts: DueFacts, now: number): DueItem[] {
   }
 
   /* A stage starting within two days that is still a draft would open with
-     nothing for creators to read. */
+     nothing for creators to read; one already inside its window is worse,
+     because nobody can enter it. */
   for (const c of facts.challenges) {
+    if (c.status !== "draft") continue;
     const starts = at(c.startsAt);
-    if (c.status === "draft" && starts > now && starts - now <= 2 * DAY_MS) {
+    if (starts > now && starts - now <= 2 * DAY_MS) {
       items.push({
         text: `Week ${c.weekNo} starts ${dayDate(c.startsAt)} and is still a draft: write it and set it active.`,
+        href: stages,
+      });
+    } else if (starts <= now && now < at(c.endsAt)) {
+      items.push({
+        text: `Week ${c.weekNo} started ${dayDate(c.startsAt)} and is still a draft, so creators cannot enter: set it active, then announce it.`,
         href: stages,
       });
     }

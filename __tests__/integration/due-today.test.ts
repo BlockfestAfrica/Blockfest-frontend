@@ -82,6 +82,11 @@ describe("the morning list endpoint", () => {
     expect(state.sends).toHaveLength(0);
   });
 
+  it("accepts a secret saved with a trailing newline", async () => {
+    process.env.CRON_SECRET = "test-secret\n";
+    expect((await call("Bearer test-secret", true)).status).toBe(200);
+  });
+
   it("on a dry run returns the list and sends nothing", async () => {
     const answer = await call("Bearer test-secret", true);
     expect(answer.status).toBe(200);
