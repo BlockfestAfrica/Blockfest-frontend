@@ -1190,6 +1190,8 @@ export function challengeLiveEmail(params: {
   closesAtLagos: string;
   /** The tokenless page. See the note above on why it is not a link. */
   pageUrl: string;
+  /** Add-to-calendar links for the deadline (lib/stage-calendar.ts). */
+  calendar?: { google: string; ics: string };
 }): Email {
   const name = firstName(params.fullName);
   const opening = params.brief.trim().split(/\n{2,}/)[0]?.slice(0, 400) ?? "";
@@ -1212,6 +1214,15 @@ export function challengeLiveEmail(params: {
       ...(middayLine(params.weekNo, params.closesAtLagos)
         ? [middayLine(params.weekNo, params.closesAtLagos)]
         : []),
+      ...(params.calendar
+        ? [
+            ``,
+            `Add the deadline to your calendar:`,
+            `Google Calendar: ${params.calendar.google}`,
+            `Apple or Outlook: ${params.calendar.ics}`,
+            `The calendar file reminds you three hours before the close, and in Apple Calendar a day before too.`,
+          ]
+        : []),
       ``,
       `Publish on your own account, then paste the link on your page:`,
       params.pageUrl,
@@ -1226,6 +1237,11 @@ export function challengeLiveEmail(params: {
         boxed("Closes", `${params.closesAtLagos}, Lagos time`),
         middayLine(params.weekNo, params.closesAtLagos)
           ? p(escape(middayLine(params.weekNo, params.closesAtLagos)))
+          : "",
+        params.calendar
+          ? quiet(
+              `Add the deadline to your calendar: <a href="${escape(params.calendar.google)}">Google Calendar</a> or <a href="${escape(params.calendar.ics)}">Apple or Outlook</a>. The calendar file reminds you three hours before the close, and in Apple Calendar a day before too.`,
+            )
           : "",
         p(
           `Worth <strong>${params.basePoints} points</strong> for completing it, and more for posting the same piece on more than one platform.`,
@@ -1294,6 +1310,52 @@ export function deadlineReminderEmail(params: {
         ),
       ].join(""),
       action: { label: "Open your page and submit", href: params.pageUrl },
+    }),
+  };
+}
+
+/**
+ * The morning list for owners: what needs a person on the campaign today.
+ *
+ * Sent by the scheduled job (app/api/cron/due-today) only on a day with
+ * something due, never to creators. Each line links to the console page that
+ * does it. lib/admin/due-today.ts decides the list.
+ */
+export function ownerDueTodayEmail(params: {
+  to: string;
+  /** "Saturday 10 October", Lagos. */
+  dayLabel: string;
+  items: { text: string; href: string }[];
+}): Email {
+  const base = siteUrl();
+  const n = params.items.length;
+  return {
+    to: params.to,
+    replyTo: CONTACT_EMAIL,
+    subject:
+      n === 1
+        ? `Today on Monica: ${params.items[0].text}`
+        : `Today on Monica: ${n} things need you`,
+    text: [
+      `Good morning. ${params.dayLabel}, on the Monica campaign:`,
+      ``,
+      ...params.items.flatMap((item) => [`- ${item.text}`, `  ${base}${item.href}`]),
+      ``,
+      `Nothing here goes to creators: each link opens the console page where you do it. This comes only on days with something due.`,
+    ].join("\n"),
+    html: layout({
+      preheader: n === 1 ? params.items[0].text : `${n} things need a person today.`,
+      heading: "Today on the Monica campaign",
+      body: [
+        p(escape(params.dayLabel)),
+        ...params.items.map((item) =>
+          p(`<a href="${escape(`${base}${item.href}`)}">${escape(item.text)}</a>`),
+        ),
+        quiet(
+          "Nothing in this email goes to creators: each link opens the console page where you do it. It comes only on days with something due.",
+        ),
+      ].join(""),
+      action: { label: "Open the console", href: `${base}/admin` },
     }),
   };
 }

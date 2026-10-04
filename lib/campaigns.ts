@@ -222,6 +222,8 @@ export const monicaRoutes = {
   enterConfirm: `/campaigns/${MONICA_SLUG}/enter/confirm`,
   /** The creator's own page. Reads the cookie; never takes a token in the URL. */
   me: `/campaigns/${MONICA_SLUG}/me`,
+  /** The remaining stage deadlines as a calendar file, with alerts. */
+  deadlines: `/campaigns/${MONICA_SLUG}/deadlines.ics`,
   /** The "lost your link?" form: type your email address. */
   recover: `/campaigns/${MONICA_SLUG}/recover`,
   /** Where the mailed confirmation link points. Resolves the recovery token

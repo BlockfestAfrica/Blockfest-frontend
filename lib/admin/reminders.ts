@@ -59,6 +59,12 @@ export interface ReminderState {
   sent: ReminderSent[];
 }
 
+/** How many active creators have nothing in for the stage, right now. */
+export async function waitingCount(challengeId: string): Promise<number> {
+  const result = await getDb().execute(sql`SELECT count(*)::int AS n ${needsReminding(challengeId)}`);
+  return Number((result.rows?.[0] as { n?: number } | undefined)?.n ?? 0);
+}
+
 /** The reminder rows for a stage, oldest first. */
 export async function remindersSent(challengeId: string): Promise<ReminderSent[]> {
   const result = await getDb().execute(sql`
