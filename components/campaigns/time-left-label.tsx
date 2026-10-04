@@ -15,7 +15,10 @@ import { formatTimeLeft } from "@/lib/countdown";
  *
  * Once a minute, not once a second. Nothing here is decided in the last second
  * of a week, and a per-second interval on a page people leave open is battery
- * spent to animate a number nobody is watching.
+ * spent to animate a number nobody is watching. But each tick lands on the
+ * close's own minute boundaries, not a minute after the page opened: counted
+ * from the mount, "Under a minute left" stayed up for as much as a minute
+ * after entries had shut, and "1m left" with a second to go.
  */
 export function TimeLeftLabel({
   endsAt,
@@ -29,10 +32,18 @@ export function TimeLeftLabel({
   const [label, setLabel] = useState(initial);
 
   useEffect(() => {
-    const tick = () => setLabel(formatTimeLeft(endsAt));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const tick = () => {
+      // Read before the label, so a label written in the instant after the
+      // close is never left without a next tick to correct it.
+      const left = new Date(endsAt).getTime() - Date.now();
+      setLabel(formatTimeLeft(endsAt));
+      // Just past the next whole minute before the close, and so just past
+      // the close itself on the last one. Never more than a minute away.
+      if (left > 0) timer = setTimeout(tick, (left % 60_000) + 1);
+    };
     tick();
-    const timer = setInterval(tick, 60_000);
-    return () => clearInterval(timer);
+    return () => clearTimeout(timer);
   }, [endsAt]);
 
   return <span className="tabular-nums">{label}</span>;

@@ -1,6 +1,7 @@
 import { Clock } from "lucide-react";
 import { BallotRows } from "@/components/campaigns/ballot-rows";
 import { TimeLeftLabel } from "@/components/campaigns/time-left-label";
+import { LocalTime } from "@/components/campaigns/local-time";
 import { formatTimeLeft } from "@/lib/countdown";
 import { closingAt } from "@/lib/format";
 import type { ShortlistEntry, VoteWindowState } from "@/lib/winners";
@@ -67,7 +68,8 @@ export function Ballot({
               Vote for your favourite: one vote per email address, confirmed
               by a six digit code. Closes{" "}
               <time dateTime={round.closesAt}>{closingAt(round.closesAt)}</time>,
-              Lagos time.
+              Lagos time
+              <LocalTime at={round.closesAt} />.
             </>
           ) : state === "before" ? (
             // Both ends of the window: the FAQ sends people to "the time
