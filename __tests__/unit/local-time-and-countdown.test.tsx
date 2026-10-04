@@ -8,9 +8,10 @@
  */
 
 import { renderToString } from "react-dom/server";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LocalTime, yourTime } from "@/components/campaigns/local-time";
+import { TimeLeftLabel } from "@/components/campaigns/time-left-label";
 
 const noon = "2026-10-10T11:00:00.000Z"; // Saturday 10 October, 12:00 Lagos
 
@@ -63,17 +64,62 @@ describe("the stage card", () => {
     render(<MonicaStages />);
     await waitFor(() => expect(screen.getByText(/^1 day, \d+h left$/)).toBeTruthy());
 
-    // The close itself, with the Lagos time, is in the brief.
+    // The close itself is in the brief, in Lagos time and in yours. The
+    // test runner's clock is UTC, an hour behind Lagos.
     fireEvent.click(screen.getByRole("button", { name: /Read the full brief for this week/ }));
-    expect(screen.getByText("Closes:")).toBeTruthy();
-    expect(screen.getByText(/Lagos time/)).toBeTruthy();
+    const closes = screen.getByText("Closes:").nextElementSibling!;
+    await waitFor(() => expect(closes.textContent).toMatch(/, Lagos time \(.+ your time\)\.$/));
   });
 
-  it("shows no countdown on a week that has closed", async () => {
-    fetchMock.mockResolvedValue({ json: async () => ({ challenges: [week("closed", -2)] }) });
+  it("shows no countdown on a week an admin has closed, even before its date", async () => {
+    fetchMock.mockResolvedValue({ json: async () => ({ challenges: [week("closed", 30)] }) });
     const { MonicaStages } = await import("@/components/campaigns/monica-stages");
     render(<MonicaStages />);
     await waitFor(() => expect(screen.getByText("Money Moves")).toBeTruthy());
     expect(screen.queryByText(/left$/)).toBeNull();
+    expect(screen.getAllByText("Closed")).toHaveLength(1);
+  });
+
+  it("turns the card to Closed at the close, without a reload", async () => {
+    fetchMock.mockResolvedValue({
+      json: async () => ({ challenges: [week("active", 1.2 / 3600)] }), // 1.2s
+    });
+    const { MonicaStages } = await import("@/components/campaigns/monica-stages");
+    render(<MonicaStages />);
+    await waitFor(() => expect(screen.getByText("Open now")).toBeTruthy());
+    await waitFor(() => expect(screen.queryByText("Open now")).toBeNull(), { timeout: 4000 });
+    expect(screen.getAllByText("Closed")).toHaveLength(1);
+    expect(screen.queryByText(/left$/)).toBeNull();
+  });
+});
+
+describe("the countdown's ticks", () => {
+  const close = "2026-10-10T11:00:00.000Z";
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const at = (iso: string) => act(() => vi.setSystemTime(new Date(iso)));
+  const advanceTo = (iso: string) =>
+    act(() => vi.advanceTimersByTime(new Date(iso).getTime() - Date.now()));
+
+  it("says Closed at the close, not up to a minute later", () => {
+    vi.useFakeTimers();
+    at("2026-10-10T10:58:30.500Z");
+    render(<TimeLeftLabel endsAt={close} initial="2m left" />);
+    advanceTo("2026-10-10T10:59:59.000Z");
+    expect(screen.getByText("Under a minute left")).toBeTruthy();
+    advanceTo("2026-10-10T11:00:00.010Z");
+    expect(screen.getByText("Closed")).toBeTruthy();
+  });
+
+  it("drops to the next minute when the close's minute turns, not the page's", () => {
+    vi.useFakeTimers();
+    at("2026-10-10T10:57:59.000Z");
+    render(<TimeLeftLabel endsAt={close} initial="2m left" />);
+    expect(screen.getByText("2m left")).toBeTruthy();
+    // Counted from the mount, "1m left" would have stayed until 10:59:59.
+    advanceTo("2026-10-10T10:59:30.000Z");
+    expect(screen.getByText("Under a minute left")).toBeTruthy();
   });
 });

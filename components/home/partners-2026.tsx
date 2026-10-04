@@ -22,9 +22,9 @@ import {
  * only by how many logos share a row, Africa Tech Summit puts every logo on
  * the same white pill, and Breakpoint's home page has one wall.
  *
- * So: sponsors, where the tier is what they paid for and is said inside each
- * tile, drawn a clear step smaller from the headline down; then one wall for
- * everyone else, named once by the kinds it holds.
+ * So: sponsors, drawn a clear step smaller from the headline down, with only
+ * the headline's tile naming its tier; then one wall for everyone else, named
+ * once by the kinds it holds.
  */
 
 /* One row for the sponsors, however many there are, so two do not leave a

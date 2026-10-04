@@ -51,6 +51,25 @@ export function MonicaStages() {
   /* Which briefs are unfolded, keyed by stage so two open weeks (a closed
      one and the live one) can be read side by side. */
   const [unfolded, setUnfolded] = useState<Record<number, boolean>>({});
+  /* One render at each close, so a page left open past one turns that card
+     to Closed, chip, edge and countdown together, rather than leaving "Open
+     now" above a countdown that reads "Closed" until a reload. */
+  const [closeTick, setCloseTick] = useState(0);
+  useEffect(() => {
+    const now = Date.now();
+    const next = Object.values(weeks)
+      .map((week) => new Date(week.endsAt).getTime())
+      .filter((at) => at > now)
+      .sort((a, b) => a - b)[0];
+    if (next === undefined) return;
+    const timer = setTimeout(
+      () => setCloseTick((n) => n + 1),
+      // setTimeout's ceiling is about 24.8 days; a later close just
+      // re-arms when this fires.
+      Math.min(next - now + 250, 2_147_483_647),
+    );
+    return () => clearTimeout(timer);
+  }, [weeks, closeTick]);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,7 +139,9 @@ export function MonicaStages() {
              * schedule is not the secret; the brief is.
              */
             const week = weeks[stage.number];
-            const status = week?.status;
+            // The API's status is as of the fetch; a close since then counts.
+            const ended = Boolean(week) && new Date(week.endsAt).getTime() <= Date.now();
+            const status = week?.status === "active" && ended ? "closed" : week?.status;
             // A week the database has opened or closed is revealed even if
             // the deploy predates it; drafts never reach this component.
             const revealed = stage.number === 1 || Boolean(status);
