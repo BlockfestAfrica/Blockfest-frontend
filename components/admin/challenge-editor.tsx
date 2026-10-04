@@ -15,17 +15,20 @@ import {
 import { ActionDialog } from "@/components/shared/action-dialog";
 import { reveal } from "@/components/shared/reveal";
 import { closesWhen, closingAt, dateTime } from "@/lib/format";
+import {
+  nextReminder,
+  REMINDER_DUE_MS,
+  type ReminderSent,
+} from "@/lib/reminder-rules";
 
 /** The deadline reminder's state, for the live week only (lib/admin/reminders.ts). */
 export interface ReminderView {
   /** Active creators with nothing in for the week. */
   waiting: number;
   active: number;
-  sent: { at: string; sent: number; failed: number; finished: boolean } | null;
+  /** Reminders already sent for the week, oldest first. */
+  sent: ReminderSent[];
 }
-
-/** The last day and a half before a close, when a reminder is due. */
-const REMINDER_DUE_MS = 36 * 60 * 60 * 1000;
 
 export interface EditableChallenge {
   /** Present on the live week while it still takes entries. */
@@ -258,10 +261,11 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
         toast.error(result.message ?? "That did not work.");
         return;
       }
+      const what = result.number > 1 ? "last call" : "reminder";
       toast.success(
         result.failed
-          ? `Week ${challenge.weekNo} reminder sent to ${result.sent}. ${result.failed} did not send.`
-          : `Week ${challenge.weekNo} reminder sent to ${result.sent} creators.`,
+          ? `Week ${challenge.weekNo} ${what} sent to ${result.sent}. ${result.failed} did not send.`
+          : `Week ${challenge.weekNo} ${what} sent to ${result.sent} creators.`,
       );
       router.refresh();
     } catch {
@@ -588,19 +592,33 @@ export function ChallengeEditor({ challenges }: { challenges: EditableChallenge[
   );
 }
 
-/** A reminder that has not gone out, for a week closing within a day and a half. */
+/** A reminder that may go now, for a week closing within a day and a half. */
 function reminderDue(challenge: EditableChallenge): boolean {
   const r = challenge.reminder;
-  if (!r || r.sent || r.waiting === 0) return false;
+  if (!r || r.waiting === 0) return false;
+  if (!nextReminder(r.sent, Date.now()).ok) return false;
   const left = new Date(challenge.endsAt).getTime() - Date.now();
   return left > 0 && left <= REMINDER_DUE_MS;
 }
 
+/** One line per reminder already sent. */
+function sentLine(r: ReminderSent): string {
+  const what = r.number > 1 ? "Last call" : "Reminder";
+  const who = `${r.sent} ${r.sent === 1 ? "creator" : "creators"}`;
+  return r.finished
+    ? `${what} sent ${dateTime(r.at)} to ${who}${r.failed ? `; ${r.failed} did not send` : ""}.`
+    : `${what} started ${dateTime(r.at)}: ${r.sent} sent so far. It may still be sending, or it stopped part way; either way it will not send again.`;
+}
+
 /**
- * The live week's deadline reminder, on its row: where things stand, and the
- * button. Visible without opening Edit, because on the day before a close
- * this is the one thing the card needs from a person, and the card's edge
- * turns gold until it is done.
+ * The live week's deadline reminders, on its row: what has gone, where
+ * things stand, and the button for the next one. Visible without opening
+ * Edit, because on the day before a close this is the one thing the card
+ * needs from a person, and the card's edge turns gold while one is due.
+ *
+ * Two per stage (lib/reminder-rules.ts): "Remind them" the evening before,
+ * then "Send the last call" on the morning, at least six hours later, to
+ * whoever still has nothing in.
  */
 function ReminderRow({
   challenge,
@@ -611,7 +629,7 @@ function ReminderRow({
 }: {
   challenge: EditableChallenge;
   reminder: ReminderView;
-  /** This reminder is sending. */
+  /** A reminder for this week is sending. */
   pending: boolean;
   /** Something else on the card is running. */
   disabled: boolean;
@@ -620,6 +638,15 @@ function ReminderRow({
   const { waiting, active, sent } = reminder;
   const closes = closingAt(challenge.endsAt);
   const due = reminderDue(challenge);
+  const next = nextReminder(sent, Date.now());
+  const lastCall = sent.length > 0;
+
+  const standing =
+    waiting === 0
+      ? `Every active creator has an entry in. Submissions close ${closes}.`
+      : lastCall
+        ? `${waiting} of ${active} active creators still have nothing in. Submissions close ${closes}.`
+        : `${waiting} of ${active} active creators have nothing in yet. Submissions close ${closes}.`;
 
   return (
     <div
@@ -628,23 +655,35 @@ function ReminderRow({
       }`}
     >
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-white">Deadline reminder</p>
-        <p className="mt-0.5 max-w-prose text-sm text-ink-3">
-          {sent
-            ? sent.finished
-              ? `Sent ${dateTime(sent.at)} to ${sent.sent} ${sent.sent === 1 ? "creator" : "creators"}${sent.failed ? `; ${sent.failed} did not send` : ""}.`
-              : `Started ${dateTime(sent.at)}: ${sent.sent} sent so far. It may still be sending, or it stopped part way; either way it will not send again.`
-            : waiting === 0
-              ? `Every active creator has an entry in. Submissions close ${closes}.`
-              : `${waiting} of ${active} active creators have nothing in yet. Submissions close ${closes}.`}
-        </p>
+        <p className="text-sm font-semibold text-white">Deadline reminders</p>
+        {sent.map((r) => (
+          <p key={r.number} className="mt-0.5 max-w-prose text-sm text-ink-3">
+            {sentLine(r)}
+          </p>
+        ))}
+        {next.ok || next.reason === "too-soon" ? (
+          <p className="mt-0.5 max-w-prose text-sm text-ink-3">
+            {standing}
+            {!next.ok && next.at && waiting > 0
+              ? ` The last call can go from ${dateTime(new Date(next.at))}.`
+              : ""}
+          </p>
+        ) : null}
       </div>
-      {!sent && waiting > 0 && (
+      {next.ok && waiting > 0 && (
         <Confirm
-          label="Remind them"
-          question={`Email the ${waiting} ${waiting === 1 ? "creator" : "creators"} with nothing in that week ${challenge.weekNo} closes ${closesWhen(challenge.endsAt)}?`}
-          consequence="One email each, only to active creators with no entry waiting for review or approved. It can be sent once per stage, and the audit log records who sent it and how many reached their inbox."
-          confirmLabel={`Yes, remind ${waiting}`}
+          label={lastCall ? "Send the last call" : "Remind them"}
+          question={
+            lastCall
+              ? `Send the last call to the ${waiting} ${waiting === 1 ? "creator" : "creators"} who still have nothing in? Week ${challenge.weekNo} closes ${closesWhen(challenge.endsAt)}.`
+              : `Email the ${waiting} ${waiting === 1 ? "creator" : "creators"} with nothing in that week ${challenge.weekNo} closes ${closesWhen(challenge.endsAt)}?`
+          }
+          consequence={
+            lastCall
+              ? "One email each, only to active creators who still have nothing waiting for review or approved. This is the stage's second and last reminder."
+              : "One email each, only to active creators with no entry waiting for review or approved. A stage can have two: this one, and a last call at least six hours later. The audit log records who sent each and how many reached their inbox."
+          }
+          confirmLabel={lastCall ? `Yes, send to ${waiting}` : `Yes, remind ${waiting}`}
           pending={pending}
           disabled={disabled && !pending}
           onConfirm={onRemind}

@@ -89,7 +89,7 @@ export function closesWhen(value: Date | string, now: Date = new Date()): string
   const at = typeof value === "string" ? new Date(value) : value;
   const lagosDay = (d: Date) => Math.floor((d.getTime() + 60 * 60 * 1000) / 86_400_000);
   const days = lagosDay(at) - lagosDay(now);
-  const time = CLOCK.format(at);
+  const time = withNoon(at, CLOCK.format(at));
   if (days <= 0) return `today at ${time}`;
   if (days === 1) return `tomorrow at ${time}`;
   const weekday = new Intl.DateTimeFormat("en-NG", { weekday: "long", timeZone: "Africa/Lagos" }).format(at);
@@ -101,12 +101,27 @@ export const clockTime = (value: Date | string) =>
   CLOCK.format(typeof value === "string" ? new Date(value) : value);
 
 /**
- * Saturday, 20 September, 11:59 pm.
+ * "12:00 noon", never a bare "12:00", for a deadline.
+ *
+ * Stages 2 to 4 close at noon on Saturday, stage 1 closed at 11:59 PM, and
+ * the emails printed "Saturday, 3 October at 12:00". A creator read that as
+ * midnight, missed stage 2 by twelve hours, and asked for an exception the
+ * rules do not allow. The rules page always said "12:00 noon"; now every
+ * deadline does.
+ */
+function withNoon(at: Date, formatted: string): string {
+  return CLOCK.format(at) === "12:00" ? `${formatted} noon` : formatted;
+}
+
+/**
+ * Saturday, 20 September at 23:59, or Saturday, 3 October at 12:00 noon.
  *
  * Only for a deadline. submit_entry enforces the closing instant to the second,
  * so a creator posting at ten against a six o'clock close loses the week to a
  * formatting choice, and the weekday is what stops somebody reading it as next
- * week.
+ * week. Noon says so (withNoon).
  */
-export const closingAt = (value: Date | string) =>
-  CLOSING.format(typeof value === "string" ? new Date(value) : value);
+export const closingAt = (value: Date | string) => {
+  const at = typeof value === "string" ? new Date(value) : value;
+  return withNoon(at, CLOSING.format(at));
+};
