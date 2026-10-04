@@ -189,9 +189,11 @@ three previews.
 - Hierarchy is size and tiles per row only: the headline tile full width,
   sponsors one row fitted to their count, partners 3 / 4 / 5 / 7 per row.
   No gold ring or glow on the headline; size carries it.
-- A sponsor's tier is said inside its own white tile, under the logo, in
-  small uppercase grey ("Silver sponsor"). Partners get no caption: the
-  group label says what they are, once.
+- Only the headline sponsor's tile says its tier ("Headline sponsor",
+  small uppercase grey under the logo). Other sponsors line up under it
+  with no label, so a new one is added without deciding what to call it
+  (owner, 4 October). Partners get no caption: the group label says what
+  they are, once.
 - Every logo, both years, sits on the same white tile (`LogoTile` in
   components/home/partner-logo.tsx) and is sized by its shape
   (`logoWeight`), so a square seal and a wide wordmark carry similar

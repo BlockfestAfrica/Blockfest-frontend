@@ -15,6 +15,7 @@ import { PointsHistory } from "@/components/campaigns/points-history";
 import { SignOutForm } from "@/components/campaigns/sign-out-form";
 import { TimeLeftLabel } from "@/components/campaigns/time-left-label";
 import { AddToCalendar } from "@/components/campaigns/add-to-calendar";
+import { LocalTime } from "@/components/campaigns/local-time";
 import { WeekRows, type WeekRow } from "@/components/campaigns/week-rows";
 import { byPlatform, PLATFORM_ORDER } from "@/components/shared/platform-marks";
 import { formatTimeLeft } from "@/lib/countdown";
@@ -330,6 +331,7 @@ export function MeDashboard({
                       {closingAt(challenge.endsAt)}
                     </time>
                     , Lagos time
+                    <LocalTime at={challenge.endsAt.toISOString()} />
                   </p>
                 </div>
                 <AddToCalendar weekNo={challenge.weekNo} className="border-t border-line px-4 sm:px-5" />

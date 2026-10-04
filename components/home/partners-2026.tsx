@@ -80,10 +80,12 @@ export function PartnerWall2026({ level = 3 }: { level?: 2 | 3 }) {
             >
               {sponsors.map((sponsor) => (
                 <li key={sponsor.name}>
+                  {/* No tier under these: the owner wants only the headline
+                      named, so sponsors can be added here without a label
+                      to decide for each (4 October). */}
                   <LogoTile
                     partner={sponsor}
                     sizes="(min-width: 768px) 360px, 45vw"
-                    caption={`${sponsor.tier} sponsor`}
                     className="h-24 rounded-2xl [--logo:30px] md:h-32 md:[--logo:38px]"
                   />
                 </li>

@@ -11,6 +11,7 @@ import {
 import { NoteLine } from "@/components/campaigns/note-line";
 import { CountRows } from "@/components/campaigns/count-rows";
 import { Ballot } from "@/components/campaigns/ballot";
+import { LocalTime } from "@/components/campaigns/local-time";
 import { IntegrityTicker } from "@/components/campaigns/integrity-ticker";
 import { closingAt, count, dayDate } from "@/lib/format";
 import { rankBoard, type VoteBoardRow } from "@/lib/vote-board";
@@ -195,6 +196,8 @@ export function LiveWeek({
             <>
               Entries close{" "}
               <time dateTime={week.entriesCloseAt}>{closingAt(week.entriesCloseAt)}</time>
+              , Lagos time
+              <LocalTime at={week.entriesCloseAt} />
             </>
           ) : (
             <>

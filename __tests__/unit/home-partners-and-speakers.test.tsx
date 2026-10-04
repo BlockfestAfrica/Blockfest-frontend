@@ -122,7 +122,7 @@ describe("2026 partners", () => {
     }
   });
 
-  it("says each sponsor's tier inside its own tile, and names the partner wall once", () => {
+  it("names only the headline sponsor's tier, and the partner wall once", () => {
     data.headline = sponsor("Monica", "Headline");
     data.sponsors = [sponsor("Cake", "Silver"), sponsor("Rovv", "Mobility")];
     data.partners = [
@@ -133,8 +133,10 @@ describe("2026 partners", () => {
     ];
     render(<PartnersSection2026 />);
     expect(within(screen.getByAltText("Monica").parentElement!).getByText("Headline sponsor")).toBeTruthy();
-    expect(within(screen.getByAltText("Cake").parentElement!).getByText("Silver sponsor")).toBeTruthy();
-    expect(within(screen.getByAltText("Rovv").parentElement!).getByText("Mobility sponsor")).toBeTruthy();
+    // Only the headline is named; other sponsors carry no tier label.
+    expect(screen.queryByText("Silver sponsor")).toBeNull();
+    expect(screen.queryByText("Mobility sponsor")).toBeNull();
+    expect(screen.getByRole("link", { name: "Cake, on X (opens in a new tab)" })).toBeTruthy();
     const groups = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
     expect(groups).toEqual(["Sponsors", "Media, community & government partners"]);
     // A kind is said once, in the group's name, not under every logo.
