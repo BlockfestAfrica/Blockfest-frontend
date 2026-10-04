@@ -1159,6 +1159,22 @@ export function handleFixAckEmail(params: {
  * The brief is the admin's own words from the console, not a registry
  * copy, so it cannot go stale beside what the landing page shows.
  */
+/**
+ * "That is midday, not midnight." for a noon close, with the change from
+ * stage 1 said where it applies.
+ *
+ * Stage 1 closed at 11:59 PM; stages 2 to 4 close at 12:00 noon. A creator
+ * read "Saturday, 3 October at 12:00" as midnight and missed stage 2, so a
+ * noon deadline is now spelled out in the time (closingAt) and said once
+ * more in words. Empty for any other close.
+ */
+function middayLine(weekNo: number, closesAtLagos: string): string {
+  if (!/\bnoon\b/.test(closesAtLagos)) return "";
+  return weekNo > 1
+    ? "That is midday, not midnight: stage 1 closed at night, but stages 2 to 4 close at noon."
+    : "That is midday, not midnight.";
+}
+
 export function challengeLiveEmail(params: {
   to: string;
   fullName: string;
@@ -1193,6 +1209,9 @@ export function challengeLiveEmail(params: {
       ``,
       `Worth ${params.basePoints} points for completing it, and more for posting the same piece on more than one platform.`,
       `Submissions close ${params.closesAtLagos}, Lagos time.`,
+      ...(middayLine(params.weekNo, params.closesAtLagos)
+        ? [middayLine(params.weekNo, params.closesAtLagos)]
+        : []),
       ``,
       `Publish on your own account, then paste the link on your page:`,
       params.pageUrl,
@@ -1205,6 +1224,9 @@ export function challengeLiveEmail(params: {
         p(escape(headline)),
         opening ? p(escape(opening)) : "",
         boxed("Closes", `${params.closesAtLagos}, Lagos time`),
+        middayLine(params.weekNo, params.closesAtLagos)
+          ? p(escape(middayLine(params.weekNo, params.closesAtLagos)))
+          : "",
         p(
           `Worth <strong>${params.basePoints} points</strong> for completing it, and more for posting the same piece on more than one platform.`,
         ),
@@ -1233,23 +1255,27 @@ export function deadlineReminderEmail(params: {
   title: string;
   /** "today at 12:00", "tomorrow at 12:00": see closesWhen in lib/format. */
   closesWhen: string;
-  /** Already formatted for Lagos, e.g. "Saturday, 10 October at 12:00". */
+  /** Already formatted for Lagos, e.g. "Saturday, 10 October at 12:00 noon". */
   closesAtLagos: string;
   pageUrl: string;
+  /** The second reminder of the stage, sent on the morning of the close. */
+  lastCall?: boolean;
 }): Email {
   const name = firstName(params.fullName);
+  const midday = middayLine(params.weekNo, params.closesAtLagos);
+  const lead = params.lastCall ? "Last call: stage" : "Stage";
 
   return {
     to: params.to,
     toName: params.fullName,
     replyTo: CONTACT_EMAIL,
-    subject: `Stage ${params.weekNo} closes ${params.closesWhen}`,
+    subject: `${lead} ${params.weekNo} closes ${params.closesWhen}`,
     text: [
       `${name}, stage ${params.weekNo} closes ${params.closesWhen}, and your entry is not in yet.`,
       ``,
       `${params.title}`,
       ``,
-      `Submissions close ${params.closesAtLagos}, Lagos time. After that the stage is locked, and its points cannot be earned.`,
+      `Submissions close ${params.closesAtLagos}, Lagos time.${midday ? ` ${midday}` : ""} After that the stage is locked, and its points cannot be earned.`,
       `If one of your links was sent back for a change, send it again before then.`,
       ``,
       `Publish on your own account, then paste the link on your page:`,
@@ -1257,10 +1283,11 @@ export function deadlineReminderEmail(params: {
     ].join("\n"),
     html: layout({
       preheader: `Your stage ${params.weekNo} entry is not in yet. Closes ${params.closesAtLagos}, Lagos time.`,
-      heading: `Stage ${params.weekNo} closes ${params.closesWhen}, ${name}`,
+      heading: `${lead} ${params.weekNo} closes ${params.closesWhen}, ${name}`,
       body: [
         p(`Your entry for <strong>${escape(params.title)}</strong> is not in yet.`),
         boxed("Closes", `${params.closesAtLagos}, Lagos time`),
+        midday ? p(escape(midday)) : "",
         p("After that the stage is locked, and its points cannot be earned."),
         quiet(
           "If one of your links was sent back for a change, send it again before then. Publish on your own account first, then paste the link on your page.",

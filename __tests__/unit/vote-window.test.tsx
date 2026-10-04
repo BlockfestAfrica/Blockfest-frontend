@@ -471,6 +471,8 @@ describe("blocking a domain from its cluster", () => {
     );
   });
 
+  // Renders 501 vote rows: about 1.7s alone, past the default 5s limit when
+  // the whole suite runs at once, which failed deploys at random.
   it("stops Remove all past five hundred votes with what does work, before a reason is asked for", () => {
     const many = Array.from({ length: 501 }, (_, i) => member(i));
     render(panel([{ domain: "farm.test", votes: 501, members: many, blockable: true }]));
@@ -481,7 +483,7 @@ describe("blocking a domain from its cluster", () => {
     );
     expect(screen.queryByLabelText("Why they go")).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
-  });
+  }, 20_000);
 });
 
 describe("blocking from a round already reviewed", () => {

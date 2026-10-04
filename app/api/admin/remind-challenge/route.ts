@@ -4,7 +4,8 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
-import { REMINDER_ACTION, reminderRecipients } from "@/lib/admin/reminders";
+import { REMINDER_ACTION, reminderRecipients, remindersSent } from "@/lib/admin/reminders";
+import { nextReminder } from "@/lib/reminder-rules";
 import { logError } from "@/lib/log";
 import { MONICA_SLUG } from "@/lib/campaigns";
 import { closesWhen, closingAt } from "@/lib/format";
@@ -23,9 +24,13 @@ export const maxDuration = 300;
  * The owner asked for this as a button, pressed by a person the day before
  * or on the day of the close, not a scheduled job, the same way "Announce to
  * creators" tells them a stage has opened. It mirrors that route on purpose:
- * owners only, the stage must be live and still taking entries, one send per
- * stage held by an audit row claimed before the first mail, small batches,
- * and the counts written back to that row.
+ * owners only, the stage must be live and still taking entries, each send
+ * held by an audit row claimed before the first mail, small batches, and the
+ * counts written back to that row.
+ *
+ * Two per stage (lib/reminder-rules.ts): one the evening before and a last
+ * call on the morning, the second at least six hours after the first and
+ * only to whoever still has nothing in.
  *
  * Only to those with nothing waiting for review or approved for the stage
  * (lib/admin/reminders.ts), so a creator who has submitted is not nagged.
@@ -44,7 +49,7 @@ const FORBIDDEN = NextResponse.json(
 );
 
 const ALREADY =
-  "The reminder for this stage has already gone out. Check the audit log to see when, and by whom.";
+  "Both reminders for this stage have already gone out. Check the audit log to see when, and by whom.";
 
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return FORBIDDEN;
@@ -129,16 +134,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const already = await db.execute(sql`
-      SELECT 1 FROM audit_log
-       WHERE action = ${REMINDER_ACTION}
-         AND entity_type = 'challenge'
-         AND entity_id = ${week.id}::uuid
-       LIMIT 1
-    `);
-    if ((already.rows?.length ?? 0) > 0) {
-      return NextResponse.json({ ok: false, message: ALREADY }, { status: 409 });
+    const next = nextReminder(await remindersSent(week.id), Date.now());
+    if (!next.ok) {
+      const message =
+        next.reason === "all-sent"
+          ? ALREADY
+          : next.reason === "unfinished"
+            ? "The first reminder for this stage has not finished sending. The last call can go once it has."
+            : `The last call can go from ${closingAt(new Date(next.at ?? Date.now()))}, six hours after the first reminder, so nobody gets two back to back.`;
+      return NextResponse.json({ ok: false, message }, { status: 409 });
     }
+    const number = next.number;
 
     const people = await reminderRecipients(week.id);
     /* Nothing claimed when there is nobody to remind, so a stage where
@@ -152,28 +158,38 @@ export async function POST(request: NextRequest) {
     }
 
     /*
-     * Claimed before the first send, by a key derived from the stage, so a
-     * crash mid-batch refuses the retry rather than mailing everybody
-     * again, and two presses landing together cannot both hold it. Same
-     * shape as the announcement's claim.
+     * Claimed before the first send, by a key derived from the stage and the
+     * reminder's number, so a crash mid-batch refuses the retry rather than
+     * mailing everybody again, and two presses landing together cannot both
+     * hold it. The first keeps the key the single reminder used. The count
+     * check means a number is only claimed when exactly the ones before it
+     * exist. Same shape as the announcement's claim.
      */
+    const key = number === 1 ? `${REMINDER_ACTION}:` : `${REMINDER_ACTION}:${number}:`;
     const claimed = await db.execute(sql`
       INSERT INTO audit_log (id, campaign_id, actor_admin_id, action, entity_type, entity_id, after)
-      SELECT md5(${`${REMINDER_ACTION}:`} || ${week.id}::text)::uuid,
+      SELECT md5(${key} || ${week.id}::text)::uuid,
              ${week.campaign_id}::uuid, ${admin.admin.adminId}::uuid,
              ${REMINDER_ACTION}, 'challenge', ${week.id}::uuid,
-             ${JSON.stringify({ week_no: week.week_no, recipients: people.length, sent: 0, failed: 0, status: "started" })}::jsonb
-       WHERE NOT EXISTS (
-             SELECT 1 FROM audit_log
-              WHERE action = ${REMINDER_ACTION}
-                AND entity_type = 'challenge'
-                AND entity_id = ${week.id}::uuid)
+             ${JSON.stringify({ week_no: week.week_no, number, recipients: people.length, sent: 0, failed: 0, status: "started" })}::jsonb
+       WHERE (SELECT count(*) FROM audit_log
+               WHERE action = ${REMINDER_ACTION}
+                 AND entity_type = 'challenge'
+                 AND entity_id = ${week.id}::uuid) = ${number - 1}
       ON CONFLICT (id) DO NOTHING
       RETURNING id
     `);
     const claimId = (claimed.rows?.[0] as { id?: string } | undefined)?.id;
     if (!claimId) {
-      return NextResponse.json({ ok: false, message: ALREADY }, { status: 409 });
+      // Another press claimed this reminder between the check and here.
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "That reminder has just gone out from another press. Check the audit log to see when, and by whom.",
+        },
+        { status: 409 },
+      );
     }
 
     const when = closesWhen(endsAt);
@@ -190,6 +206,7 @@ export async function POST(request: NextRequest) {
         closesWhen: when,
         closesAtLagos: closes,
         pageUrl: personalPage(),
+        lastCall: number > 1,
       });
 
     // The owner's copy of what went out (lib/email/copy.ts), before the batch.
@@ -208,18 +225,18 @@ export async function POST(request: NextRequest) {
          console can say so rather than guess. */
       await db.execute(sql`
         UPDATE audit_log
-           SET after = ${JSON.stringify({ week_no: week.week_no, recipients: people.length, sent, failed, status: "started" })}::jsonb
+           SET after = ${JSON.stringify({ week_no: week.week_no, number, recipients: people.length, sent, failed, status: "started" })}::jsonb
          WHERE id = ${claimId}::uuid
       `);
     }
 
     await db.execute(sql`
       UPDATE audit_log
-         SET after = ${JSON.stringify({ week_no: week.week_no, recipients: people.length, sent, failed, status: "finished" })}::jsonb
+         SET after = ${JSON.stringify({ week_no: week.week_no, number, recipients: people.length, sent, failed, status: "finished" })}::jsonb
        WHERE id = ${claimId}::uuid
     `);
 
-    return NextResponse.json({ ok: true, sent, failed });
+    return NextResponse.json({ ok: true, sent, failed, number });
   } catch (error) {
     logError("admin/remind-challenge", error);
     return NextResponse.json(
