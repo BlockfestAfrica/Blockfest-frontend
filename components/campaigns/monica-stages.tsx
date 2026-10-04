@@ -9,6 +9,7 @@ import {
 } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
 import { LiveResources } from "./live-resources";
+import { AddToCalendar } from "./add-to-calendar";
 
 /** A started week, as the API publishes it. Drafts and future weeks never
     arrive here at all. */
@@ -272,6 +273,9 @@ export function MonicaStages() {
                                   </div>
                                 )}
                               </dl>
+                              {week.endsAt && new Date(week.endsAt).getTime() > Date.now() && (
+                                <AddToCalendar weekNo={stage.number} className="mt-2" />
+                              )}
 
                               <p className="mt-4 text-sm text-ink-2">
                                 Hashtags, handles and everything else you need

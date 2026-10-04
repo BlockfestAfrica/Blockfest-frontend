@@ -5,11 +5,12 @@ import { getDb } from "@/lib/db/client";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
 import { logError } from "@/lib/log";
-import { MONICA_SLUG } from "@/lib/campaigns";
+import { MONICA_SLUG, monicaStages } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
 import { sendEmail } from "@/lib/email/client";
 import { challengeLiveEmail, personalPage } from "@/lib/email/templates";
 import { sendBulkCopy } from "@/lib/email/copy";
+import { deadlinesIcsUrl, googleDeadlineUrl } from "@/lib/stage-calendar";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -224,6 +225,12 @@ export async function POST(request: NextRequest) {
       .map((row) => row as { email?: string; full_name?: string })
       .filter((person) => Boolean(person.email));
 
+    /* The deadline as calendar links, so a phone reminds them (lib/stage-calendar.ts). */
+    const stage = monicaStages.find((s) => s.number === Number(week.week_no));
+    const calendar = stage
+      ? { google: googleDeadlineUrl(stage), ics: deadlinesIcsUrl() }
+      : undefined;
+
     const mail = (person: { email?: string; full_name?: string }) =>
       challengeLiveEmail({
         to: person.email as string,
@@ -235,6 +242,7 @@ export async function POST(request: NextRequest) {
         basePoints: Number(week.base_points ?? 100),
         closesAtLagos: closes,
         pageUrl: personalPage(),
+        calendar,
       });
 
     // The owner's copy of what went out (lib/email/copy.ts), before the batch.
