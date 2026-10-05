@@ -20,7 +20,11 @@ const nav = vi.hoisted(() => ({ refresh: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: nav.refresh }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ ok: true }) }));
+type FetchAnswer = { ok: boolean; status?: number; json: () => Promise<object> };
+const fetchMock = vi.fn<(...args: unknown[]) => Promise<FetchAnswer>>(async () => ({
+  ok: true,
+  json: async () => ({ ok: true }),
+}));
 /** Saturday 26 September, 11:00 Lagos: the Sunday vote is still ahead. */
 const SATURDAY = new Date("2026-09-26T10:00:00Z");
 beforeEach(() => {
@@ -164,6 +168,22 @@ describe("safeguards", () => {
     expect(screen.getByText(/Week 1.s vote was never opened, and the week is over/)).toBeTruthy();
   });
 
+  it("says why, when the page knows, and still offers nothing", () => {
+    render(
+      <VoteRoundPanel
+        weekNo={2}
+        round={null}
+        candidates={CANDIDATES}
+        tally={null}
+        frozen={false}
+        isPast
+        pastNote="Its standings were never recorded, and closing a vote needs them, so a vote opened now could never be closed or announced."
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Open the vote" })).toBeNull();
+    expect(screen.getByText(/never opened, and the week is over\. Its standings were never recorded/)).toBeTruthy();
+  });
+
   it("stops offering to tell the creators once voting has closed", () => {
     const round = (closesAt: string) => ({
       roundId: "r1",
@@ -183,6 +203,90 @@ describe("safeguards", () => {
     const route = readFileSync(join(process.cwd(), "app/api/admin/announce-vote/route.ts"), "utf8");
     expect(route).toMatch(/closes_at\)\.getTime\(\) <= Date\.now\(\)/);
   });
+});
+
+/*
+ * A missed vote, opened late. Stage 2's was not opened on its Sunday, and on
+ * the Monday the form had gone. The page now passes the deadline the late
+ * vote must close by (lib/vote-open-rule.ts), and the form comes back with a
+ * window starting today rather than the next week's own Sunday.
+ */
+describe("a vote opened late, the Monday after", () => {
+  const LATE_CLOSE = "2026-10-10T12:00:00+01:00";
+  const renderLate = () => {
+    render(
+      <VoteRoundPanel
+        weekNo={2}
+        round={null}
+        candidates={CANDIDATES}
+        tally={null}
+        frozen
+        isPast
+        lateCloseBy={LATE_CLOSE}
+      />,
+    );
+    for (const c of CANDIDATES) fireEvent.click(screen.getByLabelText(new RegExp(c.name)));
+  };
+
+  it("offers the form again, from today for two days, never the next week's Sunday", async () => {
+    vi.setSystemTime(new Date("2026-10-05T13:00:00Z")); // Monday 14:00 Lagos
+    renderLate();
+    expect(screen.getByText("Missed Sunday")).toBeTruthy();
+    expect(screen.getByText(/missed on its Sunday, and can still be opened late/)).toBeTruthy();
+    expect(field("opens-day").value).toBe("2026-10-05");
+    expect(field("closes-day").value).toBe("2026-10-07");
+    expect(
+      screen.getByText(
+        "The open time has passed, so it opens as soon as you confirm and closes Wednesday 7 October 08:00. All times Lagos.",
+      ),
+    ).toBeTruthy();
+    expect(document.body.textContent).not.toContain("11 October");
+
+    fireEvent.click(openButton());
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Yes, open the vote" }));
+    });
+    const sent = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, { body: string }])[1].body);
+    expect(sent).toMatchObject({
+      action: "open",
+      weekNo: 2,
+      opensAt: "2026-10-05T08:00:00+01:00",
+      closesAt: "2026-10-07T08:00:00+01:00",
+    });
+  });
+
+  it("refuses a close after the next stage closes, before the round trip", () => {
+    vi.setSystemTime(new Date("2026-10-05T13:00:00Z"));
+    renderLate();
+    set("closes-day", "2026-10-10");
+    set("closes-time", "12:30");
+    expect(
+      screen.getByText(
+        "A late week 2 vote has to close by Saturday, 10 October at 12:00 noon, when stage 3 closes, so it is finished before week 3's own vote.",
+      ),
+    ).toBeTruthy();
+    expect((openButton() as HTMLButtonElement).disabled).toBe(true);
+    set("closes-time", "12:00");
+    expect((openButton() as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("starts fresh on each week's tab, so week 3's Sunday dates never reach week 2's form", () => {
+    // The tabs only change ?week=, which keeps client state; only a key per
+    // week remounts the forms. Without it, landing on week 3 and clicking
+    // Week 2 left 11 to 13 October in the late form, refused as too late.
+    const page = readFileSync(join(process.cwd(), "app/admin/(console)/winners/page.tsx"), "utf8");
+    expect(page).toMatch(/<VoteRoundPanel\s+key=\{`vote-\$\{weekNo\}`\}/);
+    expect(page).toMatch(/<WinnersPanel\s+key=\{`winners-\$\{weekNo\}`\}/);
+  });
+
+  it("starts with the deadline itself when two days would run past it", () => {
+    vi.setSystemTime(new Date("2026-10-09T09:00:00Z")); // Friday 10:00 Lagos
+    renderLate();
+    expect(field("closes-day").value).toBe("2026-10-10");
+    expect(field("closes-time").value).toBe("12:00");
+    expect((openButton() as HTMLButtonElement).disabled).toBe(false);
+  });
+
 });
 
 describe("removing a farm", () => {

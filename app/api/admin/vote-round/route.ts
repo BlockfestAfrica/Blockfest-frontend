@@ -8,6 +8,7 @@ import { pgErrorCode } from "@/lib/db/errors";
 import { logError, logWarning } from "@/lib/log";
 import { MONICA_SLUG } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
+import { openRefusal } from "@/lib/vote-open-rule";
 import { sendEmailQuietly } from "@/lib/email/client";
 import { shortlistEmail, votingPage } from "@/lib/email/templates";
 import { sendBulkCopy } from "@/lib/email/copy";
@@ -37,7 +38,10 @@ export const maxDuration = 30;
  * The rules all live in the SQL functions (0046, and 0069 for blocked
  * domains), which also write their own audit rows. This route validates shape, forwards, and translates SQLSTATEs
  * into sentences; it never restates a rule the engine already enforces, and
- * it never logs an action twice.
+ * it never logs an action twice. One rule is not in the engine: when a vote
+ * may be opened (lib/vote-open-rule.ts), the calendar's question, which the
+ * open branch asks before anything is written, because a round can never be
+ * cancelled.
  */
 
 const openSchema = z.object({
@@ -273,6 +277,37 @@ export async function POST(request: NextRequest) {
 
   try {
     if (action.action === "open") {
+      /*
+       * Whether this week's vote may be opened now, and with this close,
+       * before anything is written: the same rule the form follows, asked
+       * again here because the form is not the rule. Snapshots are never
+       * updated or deleted (0021), so a recorded week cannot become
+       * unrecorded between this read and the insert; a favourite announced
+       * in between is still refused at publish (P0802).
+       */
+      const state = await getDb().execute(sql`
+        SELECT
+          EXISTS (SELECT 1 FROM leaderboard_snapshots s
+                    JOIN campaigns c ON c.id = s.campaign_id
+                   WHERE c.slug = ${MONICA_SLUG} AND s.week_no = ${action.weekNo}) AS recorded,
+          EXISTS (SELECT 1 FROM weekly_winners w
+                    JOIN campaigns c ON c.id = w.campaign_id
+                   WHERE c.slug = ${MONICA_SLUG} AND w.week_no = ${action.weekNo}
+                     AND w.category = 'community_favourite'
+                     AND w.published_at IS NOT NULL) AS announced
+      `);
+      const facts = (state.rows?.[0] ?? {}) as { recorded?: boolean; announced?: boolean };
+      const refusal = openRefusal({
+        weekNo: action.weekNo,
+        now: new Date(),
+        closesAt: new Date(action.closesAt),
+        recorded: facts.recorded === true,
+        favouriteAnnounced: facts.announced === true,
+      });
+      if (refusal) {
+        return NextResponse.json({ ok: false, message: refusal }, { status: 409 });
+      }
+
       /*
        * A uuid[] built element by element, because the HTTP driver has no
        * reliable serialisation for a bare JavaScript array parameter and a

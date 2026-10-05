@@ -25,7 +25,8 @@ import {
   removeAllToast,
   type HeldReason,
 } from "@/lib/vote-domain-copy";
-import { count, dateTime } from "@/lib/format";
+import { closingAt, count, dateTime } from "@/lib/format";
+import { lateCloseSentence } from "@/lib/vote-open-rule";
 import { openableHref } from "@/lib/admin/openable-href";
 import { monicaStages, platformLabels, type CampaignPlatform } from "@/lib/campaigns";
 import { PLATFORM_ICON } from "@/components/shared/platform-icon";
@@ -138,6 +139,31 @@ function lagosInstant(day: string, time: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^\d{2}:\d{2}$/.test(time)) return null;
   const d = new Date(`${day}T${time}:00+01:00`);
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** An instant as its Lagos calendar date and clock, YYYY-MM-DD and HH:MM. */
+function lagosParts(at: number): { day: string; time: string } {
+  const lagos = new Date(at + 3_600_000).toISOString();
+  return { day: lagos.slice(0, 10), time: lagos.slice(11, 16) };
+}
+
+/*
+ * The window the form starts with. On a week's own Sunday, Sunday 08:00 for
+ * 48 hours. For a vote opened late, today from 08:00 (so at once, once that
+ * has passed) for two days, but never past the close it has to keep: the
+ * Sunday default would put a missed week's vote on the next week's own
+ * Sunday.
+ */
+function startingWindow(lateCloseBy?: string) {
+  if (!lateCloseBy) {
+    const sunday = defaultVoteDay();
+    return { opensDay: sunday, opensTime: "08:00", closesDay: addDays(sunday, 2), closesTime: "08:00" };
+  }
+  const today = lagosParts(Date.now()).day;
+  const closes = { day: addDays(today, 2), time: "08:00" };
+  const last = new Date(lateCloseBy).getTime();
+  const end = (lagosInstant(closes.day, closes.time)?.getTime() ?? last) > last ? lagosParts(last) : closes;
+  return { opensDay: today, opensTime: "08:00", closesDay: end.day, closesTime: end.time };
 }
 
 /** "48 hours", "36 hours 30 minutes", for the length of a vote. */
@@ -319,6 +345,8 @@ export function VoteRoundPanel({
   tally,
   frozen,
   isPast = false,
+  lateCloseBy,
+  pastNote,
 }: {
   weekNo: number;
   round: RoundView | null;
@@ -328,6 +356,13 @@ export function VoteRoundPanel({
   frozen: boolean;
   /** The week is over: the next stage has started. */
   isPast?: boolean;
+  /**
+   * Set when the week is over but its missed vote can still be opened, late
+   * (lib/vote-open-rule.ts): the ISO time it has to close by.
+   */
+  lateCloseBy?: string;
+  /** Why a week that is over cannot have its vote opened. */
+  pastNote?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -337,10 +372,11 @@ export function VoteRoundPanel({
    * a close time on it, so a vote could never run past midnight, and the plan
    * is a 48-hour vote. The close defaults to 48 hours after the open.
    */
-  const [opensDay, setOpensDay] = useState(defaultVoteDay);
-  const [opensTime, setOpensTime] = useState("08:00");
-  const [closesDay, setClosesDay] = useState(() => addDays(defaultVoteDay(), 2));
-  const [closesTime, setClosesTime] = useState("08:00");
+  const [start] = useState(() => startingWindow(lateCloseBy));
+  const [opensDay, setOpensDay] = useState(start.opensDay);
+  const [opensTime, setOpensTime] = useState(start.opensTime);
+  const [closesDay, setClosesDay] = useState(start.closesDay);
+  const [closesTime, setClosesTime] = useState(start.closesTime);
   /*
    * The clock, read after mount (so the server and the first client render
    * agree) and every minute after. An open time already past means the vote
@@ -421,12 +457,21 @@ export function VoteRoundPanel({
     nextStage !== undefined &&
     closesAt.getTime() > new Date(nextStage.startsAt).getTime();
   const needsFreeze = crossesStage && !frozen;
+  /* A late vote closes by the time the next stage closes, so it is over
+     before that week's own vote (the route refuses a later close too). */
+  const pastLateClose =
+    lateCloseBy !== undefined &&
+    closesAt !== null &&
+    closesAt.getTime() > new Date(lateCloseBy).getTime();
+  /* The week is over and its vote can no longer be opened. */
+  const lockedOut = !round && isPast && !lateCloseBy;
   const openReady =
     selected.length > 0 &&
     selected.length <= 5 &&
     (!needsOverride || fewReason.trim().length > 0) &&
     windowOk &&
-    !needsFreeze;
+    !needsFreeze &&
+    !pastLateClose;
 
   /*
    * success is a sentence, or a function of the server's answer for the
@@ -478,6 +523,8 @@ export function VoteRoundPanel({
       toast.error(
         needsFreeze && selected.length > 0
           ? `Record the week ${weekNo} standings before opening a vote that runs into the next stage.`
+          : pastLateClose && lateCloseBy && selected.length > 0
+          ? lateCloseSentence(weekNo, lateCloseBy)
           : !windowOk && selected.length > 0
           ? "The vote has to close after it opens."
           : needsOverride
@@ -503,7 +550,7 @@ export function VoteRoundPanel({
 
   /* -------------------------------------------------------------------- */
 
-  const state = reviewed ? "done" : round ? "now" : frozen ? "now" : "todo";
+  const state = reviewed ? "done" : round ? "now" : lockedOut ? "todo" : frozen ? "now" : "todo";
 
   const status = (
     <>
@@ -526,7 +573,11 @@ export function VoteRoundPanel({
     </>
   );
 
-  const hint = !round
+  const hint = lockedOut
+    ? `Week ${weekNo} is over and its vote was never opened.`
+    : !round && lateCloseBy
+    ? `Week ${weekNo}'s vote was missed on its Sunday, and can still be opened late: nominate three to five of its approved entries and close it by ${closingAt(lateCloseBy)}.`
+    : !round
     ? "Nominate three to five of this week's approved entries and open the window. One counted vote per verified inbox; the engine holds the rest."
     : reviewed
       ? "The sweep is done and the tally is final."
@@ -1135,13 +1186,13 @@ export function VoteRoundPanel({
     <JobCard
       collapsible
       id="vote-round"
-      step="Sunday"
+      step={!round && lateCloseBy ? "Missed Sunday" : "Sunday"}
       title={`Community Favourite vote, week ${weekNo}`}
       state={state}
       status={status}
       hint={hint}
       foot={
-        !round && isPast ? undefined : !round ? (
+        lockedOut ? undefined : !round ? (
           <>
             {!frozen && (
               <Panel tone="warn" className="w-full">
@@ -1251,10 +1302,10 @@ export function VoteRoundPanel({
           Open the public voting page
         </a>
       </p>
-      {!round && isPast ? (
+      {lockedOut ? (
         <p className="max-w-prose text-sm leading-relaxed text-ink-2">
-          Week {weekNo}&apos;s vote was never opened, and the week is over. A
-          vote is opened while its week is current.
+          Week {weekNo}&apos;s vote was never opened, and the week is over.{" "}
+          {pastNote ?? "A vote is opened while its week is current."}
         </p>
       ) : !round ? (
         <div className={SPACING.section}>
@@ -1372,7 +1423,7 @@ export function VoteRoundPanel({
               <p id="vote-window-title" className="text-sm font-semibold text-white">
                 Voting window
               </p>
-              {windowOk && !needsFreeze && (
+              {windowOk && !needsFreeze && !pastLateClose && (
                 <Pill tone="gold">{opensInPast ? `About ${length}` : length}</Pill>
               )}
             </div>
@@ -1396,13 +1447,15 @@ export function VoteRoundPanel({
               />
             </div>
             <p
-              className={`mt-4 text-sm ${windowOk && !needsFreeze ? "text-ink-3" : "text-red-300"}`}
+              className={`mt-4 text-sm ${windowOk && !needsFreeze && !pastLateClose ? "text-ink-3" : "text-red-300"}`}
               aria-live="polite"
             >
               {!windowOk
                 ? closesInPast
                   ? "The close time has already passed."
                   : "The vote has to close after it opens."
+                : pastLateClose && lateCloseBy
+                  ? lateCloseSentence(weekNo, lateCloseBy)
                 : needsFreeze
                   ? `Record the week ${weekNo} standings first. This vote closes after stage ${weekNo + 1} starts, and closing it needs week ${weekNo}'s standings, which can only be recorded until then.`
                   : opensInPast
