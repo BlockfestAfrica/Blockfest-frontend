@@ -99,7 +99,7 @@ export function winnersByWeek({
   /** Published weeks whose rounds had votes removed as fraud. */
   flagged?: number[];
   now: number;
-}): { live: WinnersWeek[]; record: WinnersWeek[] } {
+}): { live: WinnersWeek[]; record: WinnersWeek[]; all: WinnersWeek[] } {
   const started = stages.filter((s) => new Date(s.startsAt).getTime() <= now);
   /* After the last stage's announcement Sunday no stage follows, so nothing
      would ever make the last week "last week" or release the one before it:
@@ -180,5 +180,86 @@ export function winnersByWeek({
     .filter((w) => !isLive(w) && (w.cotw || w.cf))
     .sort((a, b) => b.weekNo - a.weekNo);
 
-  return { live, record };
+  return { live, record, all: weeks };
+}
+
+/*
+ * The page as the owner picked it on 5 October: "Do this now" first, then
+ * every week in calendar order, each saying where it stands. He asked for
+ * the page to show at a glance what has happened, what is happening and
+ * what to do now, with a breadcrumb of every week, done and to come.
+ *
+ * One vocabulary for where a week stands, shared by the index at the top
+ * and each week's own card, so the two can never say different things.
+ */
+export type WeekStatus =
+  /** Both awards in (`full`), or the one that ever will be. */
+  | { kind: "announced"; full: boolean }
+  | { kind: "voting" }
+  | { kind: "review" }
+  | { kind: "vote-before"; opensAt: string }
+  | { kind: "entries" }
+  | { kind: "awaiting" }
+  | { kind: "upcoming"; startsAt: string };
+
+export interface TimelineWeek {
+  week: WinnersWeek;
+  startsAt: string;
+  status: WeekStatus;
+}
+
+/**
+ * Every stage in calendar order with where it stands at `now`, from the
+ * same live and record decision winnersByWeek makes, so a week is never
+ * "announced" in one place and "happening now" in another.
+ */
+export function weekTimeline(
+  stages: CampaignStage[],
+  placed: { live: WinnersWeek[]; all: WinnersWeek[] },
+  now: number,
+): TimelineWeek[] {
+  const live = new Set(placed.live.map((w) => w.weekNo));
+  return stages.map((stage) => {
+    const week = placed.all.find((w) => w.weekNo === stage.number)!;
+    const status: WeekStatus =
+      new Date(stage.startsAt).getTime() > now
+        ? { kind: "upcoming", startsAt: stage.startsAt }
+        : !live.has(week.weekNo) && (week.cotw || week.cf)
+          ? { kind: "announced", full: Boolean(week.cotw && week.cf) }
+          : week.vote === "open"
+            ? { kind: "voting" }
+            : week.vote === "closed"
+              ? { kind: "review" }
+              : week.vote === "before"
+                ? { kind: "vote-before", opensAt: week.voteOpensAt }
+                : week.current && week.entriesOpen
+                  ? { kind: "entries" }
+                  : { kind: "awaiting" };
+    return { week, startsAt: stage.startsAt, status };
+  });
+}
+
+/** Something a visitor can do right now, with the moment it stops. */
+export interface NowAction {
+  kind: "vote" | "enter";
+  weekNo: number;
+  closesAt: string;
+}
+
+/**
+ * What a visitor can do now: vote in an open round, or enter the stage
+ * taking entries. Soonest deadline first, because that is the one to act
+ * on first. Empty between the two, when there is nothing to do.
+ */
+export function actionsNow(timeline: TimelineWeek[]): NowAction[] {
+  const actions: NowAction[] = [];
+  for (const { week, status } of timeline) {
+    if (status.kind === "voting") {
+      actions.push({ kind: "vote", weekNo: week.weekNo, closesAt: week.voteClosesAt });
+    }
+    if (status.kind === "entries") {
+      actions.push({ kind: "enter", weekNo: week.weekNo, closesAt: week.entriesCloseAt });
+    }
+  }
+  return actions.sort((a, b) => Date.parse(a.closesAt) - Date.parse(b.closesAt));
 }

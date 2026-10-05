@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 import { monicaStages } from "@/lib/campaigns";
-import { announcementSunday, winnersByWeek } from "@/lib/winner-weeks";
+import { actionsNow, announcementSunday, weekTimeline, winnersByWeek } from "@/lib/winner-weeks";
 import type { PublicRound, PublishedWinner } from "@/lib/winners";
 
 const win = (
@@ -205,5 +205,63 @@ describe("the page, through the campaign", () => {
       "2026-10-06T12:00:00+01:00",
     );
     expect(p.live[0]).toBe("2:open");
+  });
+});
+
+/*
+ * Every week in calendar order, with where it stands, and what a visitor
+ * can do now: the page the owner picked on 5 October. These walk the real
+ * calendar and pin the word each week gets and the actions offered.
+ */
+describe("every week, where it stands", () => {
+  const timeline = (winners: PublishedWinner[], rounds: PublicRound[], when: string) => {
+    const placed = winnersByWeek({ stages: monicaStages, winners, rounds, finals: FINALS, now: at(when) });
+    return weekTimeline(monicaStages, placed, at(when));
+  };
+  const words = (t: ReturnType<typeof timeline>) =>
+    t.map(({ week, status }) => `${week.weekNo}:${status.kind}${status.kind === "announced" && !status.full ? ":partial" : ""}`);
+
+  it("lists all four weeks in calendar order, including those not started", () => {
+    const t = timeline([], [], "2026-09-20T12:00:00+01:00");
+    expect(words(t)).toEqual(["1:entries", "2:upcoming", "3:upcoming", "4:upcoming"]);
+  });
+
+  it("on the Monday a late vote opened: week 1 announced, week 2 voting, week 3 taking entries, week 4 to come", () => {
+    const t = timeline([...W1, W2_COTW], [R1, r2("open", { opensAt: "2026-10-05T08:45:00.000Z" })], "2026-10-05T12:00:00+01:00");
+    expect(words(t)).toEqual(["1:announced", "2:voting", "3:entries", "4:upcoming"]);
+    expect(actionsNow(t)).toEqual([
+      { kind: "vote", weekNo: 2, closesAt: "2026-10-06T20:00:00.000Z" },
+      { kind: "enter", weekNo: 3, closesAt: "2026-10-10T12:00:00+01:00" },
+    ]);
+  });
+
+  it("says a staged vote opens, a closed one is in review, and offers neither as an action", () => {
+    const before = timeline([...W1], [R1, r2("open")], "2026-10-04T08:00:00+01:00");
+    expect(before.find((w) => w.week.weekNo === 2)!.status).toEqual({
+      kind: "vote-before",
+      opensAt: "2026-10-04T09:00:00.000Z",
+    });
+    expect(actionsNow(before)).toEqual([]);
+    const review = timeline([...W1, W2_COTW], [R1, r2("closed")], "2026-10-07T12:00:00+01:00");
+    expect(review.find((w) => w.week.weekNo === 2)!.status.kind).toBe("review");
+    expect(actionsNow(review).map((a) => a.kind)).toEqual(["enter"]);
+  });
+
+  it("calls a week awaiting results between its close and its vote, with nothing to do", () => {
+    const t = timeline([...W1], [R1], "2026-10-04T09:00:00+01:00");
+    expect(words(t)).toEqual(["1:announced", "2:awaiting", "3:upcoming", "4:upcoming"]);
+    expect(actionsNow(t)).toEqual([]);
+  });
+
+  it("says a past week with only one award is announced, not that its winners are", () => {
+    const t = timeline([...W1, W2_COTW], [R1], "2026-10-12T12:00:00+01:00");
+    expect(words(t)[1]).toBe("2:announced:partial");
+  });
+
+  it("is all announced once the campaign is over and every result is in", () => {
+    const all = [1, 2, 3, 4].flatMap((n) => [win(n, "creator_of_week"), win(n, "community_favourite")]);
+    const t = timeline(all, [], "2026-10-25T12:00:00+01:00");
+    expect(words(t)).toEqual(["1:announced", "2:announced", "3:announced", "4:announced"]);
+    expect(actionsNow(t)).toEqual([]);
   });
 });

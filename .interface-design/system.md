@@ -202,27 +202,39 @@ three previews.
 - Past years are the same tile, smaller and denser (8 per row), below the
   current year.
 
-### A page that spans weeks: what is happening now, then the record
+### A page that spans weeks: what to do now, then every week in order
 
 The owner saw week 1's final count twice on the winners page, one under
-the other, and nothing saying which week was running. The page had a
-section per kind of thing (winners, the vote), and a vote section that fell
-back to the last round when none was open. It is now a page per week,
-placed once, picked by eye from three previews (stacked weeks, week tabs,
-now-plus-record); tabs lost because they hid the winners behind a click.
+the other, and nothing saying which week was running. It became a page per
+week, placed once (now-plus-record won over stacked weeks and week tabs;
+tabs lost because they hid the winners behind a click). On 5 October he
+asked again: the moving fraud notice sat under a vote long closed, and a
+visitor could not see at a glance what had happened, what was happening,
+and what to do now. Of three new previews (week strip, do this now, a
+timeline rail) he picked "Do this now":
 
-- "Happening now" (gold eyebrow, it is status) holds each live week as its
-  own card: a week with a vote first, then a finished week waiting on its
-  results, then the running stage. The card header names the week and its
-  dates once, and its state at the right (Voting now, Votes in review,
-  Awaiting results, This week).
-- An award not in yet is a row saying when it comes ("Announced Sunday 4
-  October"), never a promise about a day that has gone.
-- The vote is the Community Favourite row of its own week, not a section:
-  the ballot draws no card of its own there. The live count sits directly
-  under that week's card.
-- "Winners so far" is one card: a header counting the weeks announced, each
-  week a group of its award rows, and that week's final count closed at its
+- "Do this now" comes first: one hairline card, a row per action a visitor
+  can take (vote in an open round, enter the stage taking entries), each
+  with its deadline, the time left in gold and one secondary button, gold
+  on the row's left edge. Soonest deadline first; not drawn when there is
+  nothing to do. The vote's button lands on the ballot (#shortlist).
+- Then "Week by week": an index of every week, done and to come, as one
+  hairline card of four cells (2x2 below sm), each the week, its dates and
+  its state in a word and a mark, a 2px edge green done, gold under way,
+  line-2 to come, linking to its card. No clock in it.
+- Then every week as its own card in calendar order. The header names the
+  week and its dates once and its state at the right (Winners announced,
+  Voting now, Votes in review, Vote opens…, Entries open, Awaiting
+  results). A week still to come is one dashed line: when it starts, when
+  its entries close.
+- An award not in yet is a row saying when it comes, never a promise about
+  a day that has gone.
+- The vote is the Community Favourite row of its own week; the ballot draws
+  no card of its own there. The live count is the foot of that week's card,
+  above a hairline, and a finished week's final count is closed at its
   foot. A number is said once, with the week it belongs to.
-- lib/winner-weeks.ts decides which weeks are live and which are record;
-  components only draw.
+- The moving integrity notice belongs to the live vote only, inside its
+  count under the "Live count" heading. A finished week whose round had
+  fraud removed says so as one quiet sentence inside its final count.
+- lib/winner-weeks.ts decides where each week stands (weekTimeline) and
+  what can be done (actionsNow); components only draw.

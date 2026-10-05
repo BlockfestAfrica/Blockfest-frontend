@@ -21,7 +21,13 @@ const COUNT_URL = "/api/campaigns/monica/vote/count";
 const LONGEST_WAIT = 2 ** 31 - 1;
 
 /**
- * The Community Favourite count, under the ballot.
+ * The Community Favourite count, the foot of its week's card.
+ *
+ * Drawn inside the week it counts, under the ballot, with a hairline above
+ * it rather than a card of its own (the winners page, owner's pick on 5
+ * October). The moving fraud notice is part of it, under its header: this
+ * is the round whose numbers dropped, and a past week's removals are said
+ * as one quiet sentence in its own final count instead.
  *
  * Asks once on load and then every five minutes, and only while the tab is
  * showing: a phone left open on this page overnight asks nothing. The route
@@ -134,17 +140,13 @@ export function LiveVoteCount() {
   const { rows, total, levelAtTop } = rankBoard(board.nominees);
 
   return (
-    <>
-    {/* On top of the count, once votes in this round were removed as fraud:
-        where the numbers dropped is where the reason belongs. */}
-    {/* Spaced by the week group it sits in, right under the week it counts. */}
-    {board.flagged && <IntegrityTicker />}
     <section
       aria-label="Community Favourite vote count"
-      className={`${board.flagged ? "-mt-1" : ""} rounded-xl border border-line bg-card p-5 sm:p-6`}
+      className="border-t border-line px-4 py-5 sm:px-5"
     >
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h3 className="flex items-center gap-2.5 text-base font-semibold text-white">
+        {/* A level under the week card's own heading. */}
+        <h4 className="flex items-center gap-2.5 text-base font-semibold text-white">
           {state === "open" ? (
             <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
               <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60 motion-safe:animate-ping" />
@@ -156,11 +158,19 @@ export function LiveVoteCount() {
             <Lock className="h-4 w-4 text-ink-3" aria-hidden="true" />
           )}
           {state === "open" ? "Live count" : state === "final" ? "Final count" : "Voting closed"}
-        </h3>
+        </h4>
         <p className="text-sm tabular-nums text-ink-3">
-          Week {board.weekNo} · {count(total)} {total === 1 ? "vote" : "votes"}
+          {/* The week is the card's own heading, so not said again. */}
+          {count(total)} {total === 1 ? "vote" : "votes"}
         </p>
       </div>
+      {/* Once votes in this round were removed as fraud: where the numbers
+          dropped is where the reason belongs, before the numbers. */}
+      {board.flagged && (
+        <div className="mt-4">
+          <IntegrityTicker />
+        </div>
+      )}
       {state === "final" && (
         <p className="mt-1 text-sm text-ink-3">
           The Community Favourite is confirmed.{" "}
@@ -200,6 +210,5 @@ export function LiveVoteCount() {
         </p>
       </div>
     </section>
-    </>
   );
 }
