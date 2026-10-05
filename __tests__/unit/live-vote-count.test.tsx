@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LiveVoteCount } from "@/components/campaigns/live-vote-count";
 import { INTEGRITY_NOTICE } from "@/components/campaigns/integrity-ticker";
@@ -142,7 +142,9 @@ describe("LiveVoteCount", () => {
     expect(items[0]).toContain("in the lead");
     expect(items[0]).toContain("30 votes,");
     expect(items[0]).toContain("60%");
-    expect(screen.getByText("Week 1 · 50 votes")).toBeTruthy();
+    // The week is the card's own heading, so the count does not say it again.
+    expect(screen.getByText("50 votes")).toBeTruthy();
+    expect(document.body.textContent).not.toContain("Week 1 ·");
     // 14:58 UTC is 15:58 in Lagos.
     expect(screen.getByText("15:58").tagName).toBe("TIME");
     expect(document.body.textContent).toContain("Refreshes every 5 minutes.");
@@ -186,7 +188,7 @@ describe("LiveVoteCount", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(REFRESH_MS);
     });
-    expect(screen.getByText("Week 1 · 50 votes")).toBeTruthy();
+    expect(screen.getByText("50 votes")).toBeTruthy();
   });
 
   it("keeps the last count when a refresh fails", async () => {
@@ -196,7 +198,7 @@ describe("LiveVoteCount", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(REFRESH_MS);
     });
-    expect(screen.getByText("Week 1 · 50 votes")).toBeTruthy();
+    expect(screen.getByText("50 votes")).toBeTruthy();
   });
 
   it("shows nothing before voting opens, or when there is no count", async () => {
@@ -338,7 +340,7 @@ describe("the integrity notice", () => {
     expect(screen.queryByRole("button", { name: "Pause the notice" })).toBeNull();
   });
 
-  it("appears above the count once votes were removed as fraud, and can be paused", async () => {
+  it("appears inside the count, under its heading and before the numbers, once votes were removed as fraud, and can be paused", async () => {
     answer = { ok: true, board: board({ flagged: true }) };
     render(<LiveVoteCount />);
     await settle();
@@ -350,10 +352,15 @@ describe("the integrity notice", () => {
     fireEvent.click(pause);
     const play = screen.getByRole("button", { name: "Play the notice" });
     expect(play.getAttribute("aria-pressed")).toBe("true");
-    // Above the count, not inside it.
+    // Part of the count it explains (the owner, 5 October): under the
+    // "Live count" heading, before the first number.
     const notice = play.closest("div.rounded-full")!;
     const count = screen.getByRole("region", { name: "Community Favourite vote count" });
-    expect(notice.compareDocumentPosition(count) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(count.contains(notice)).toBe(true);
+    const heading = within(count).getByRole("heading", { name: "Live count" });
+    const firstRow = within(count).getAllByRole("listitem")[0];
+    expect(heading.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(notice.compareDocumentPosition(firstRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("says nothing about how many or whose", () => {
