@@ -468,7 +468,17 @@ export const SpeakersList: Speaker[] = [
     bio: "Salemking is a storyteller, author, speaker and Co-Founder of Crea8torium, he is known as The Creator's Creator.\n\nHe has spent years exploring stories, ideas and creativity, and how they shape the way we connect with the world.\n\nAt Blockfest Africa 2026, he brings that voice to the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
-
+  {
+    name: "Uchenna Edeoga",
+    pronouns: "he",
+    title: "Associate, Hashed Emergent",
+    image: "/2026/speakers/uchenna.jpeg",
+    expertise: ["Web3 & Blockchain", "Business & Finance", "Research & Analysis"],
+    company: "Hashed Emergent",
+    twitter: "https://x.com/theucheedeoga",
+    bio: "Uchenna Edeoga is an Associate at Hashed Emergent, where he works with early-stage founders building across Web3, stablecoins and AI in Africa, supporting deal sourcing, due diligence and the investment process.\n\nHe also leads Hashed Emergent's Africa Web3 Landscape Reports and founder initiatives, helping connect promising founders with capital and strategic partners.\n\nAt Blockfest Africa 2026, Uchenna joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
   /*
    * Returning from a previous edition. His entry up the list stays as it is,
    * so the archive and the 2025 recap keep him where they had him; this one
