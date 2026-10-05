@@ -1159,6 +1159,22 @@ export function handleFixAckEmail(params: {
  * The brief is the admin's own words from the console, not a registry
  * copy, so it cannot go stale beside what the landing page shows.
  */
+/**
+ * "That is midday, not midnight." for a noon close, with the change from
+ * stage 1 said where it applies.
+ *
+ * Stage 1 closed at 11:59 PM; stages 2 to 4 close at 12:00 noon. A creator
+ * read "Saturday, 3 October at 12:00" as midnight and missed stage 2, so a
+ * noon deadline is now spelled out in the time (closingAt) and said once
+ * more in words. Empty for any other close.
+ */
+function middayLine(weekNo: number, closesAtLagos: string): string {
+  if (!/\bnoon\b/.test(closesAtLagos)) return "";
+  return weekNo > 1
+    ? "That is midday, not midnight: stage 1 closed at night, but stages 2 to 4 close at noon."
+    : "That is midday, not midnight.";
+}
+
 export function challengeLiveEmail(params: {
   to: string;
   fullName: string;
@@ -1174,6 +1190,8 @@ export function challengeLiveEmail(params: {
   closesAtLagos: string;
   /** The tokenless page. See the note above on why it is not a link. */
   pageUrl: string;
+  /** Add-to-calendar links for the deadline (lib/stage-calendar.ts). */
+  calendar?: { google: string; ics: string };
 }): Email {
   const name = firstName(params.fullName);
   const opening = params.brief.trim().split(/\n{2,}/)[0]?.slice(0, 400) ?? "";
@@ -1193,6 +1211,18 @@ export function challengeLiveEmail(params: {
       ``,
       `Worth ${params.basePoints} points for completing it, and more for posting the same piece on more than one platform.`,
       `Submissions close ${params.closesAtLagos}, Lagos time.`,
+      ...(middayLine(params.weekNo, params.closesAtLagos)
+        ? [middayLine(params.weekNo, params.closesAtLagos)]
+        : []),
+      ...(params.calendar
+        ? [
+            ``,
+            `Add the deadline to your calendar:`,
+            `Google Calendar: ${params.calendar.google}`,
+            `Apple or Outlook: ${params.calendar.ics}`,
+            `The calendar file reminds you three hours before the close, and in Apple Calendar a day before too.`,
+          ]
+        : []),
       ``,
       `Publish on your own account, then paste the link on your page:`,
       params.pageUrl,
@@ -1205,6 +1235,14 @@ export function challengeLiveEmail(params: {
         p(escape(headline)),
         opening ? p(escape(opening)) : "",
         boxed("Closes", `${params.closesAtLagos}, Lagos time`),
+        middayLine(params.weekNo, params.closesAtLagos)
+          ? p(escape(middayLine(params.weekNo, params.closesAtLagos)))
+          : "",
+        params.calendar
+          ? quiet(
+              `Add the deadline to your calendar: <a href="${escape(params.calendar.google)}">Google Calendar</a> or <a href="${escape(params.calendar.ics)}">Apple or Outlook</a>. The calendar file reminds you three hours before the close, and in Apple Calendar a day before too.`,
+            )
+          : "",
         p(
           `Worth <strong>${params.basePoints} points</strong> for completing it, and more for posting the same piece on more than one platform.`,
         ),
@@ -1233,23 +1271,27 @@ export function deadlineReminderEmail(params: {
   title: string;
   /** "today at 12:00", "tomorrow at 12:00": see closesWhen in lib/format. */
   closesWhen: string;
-  /** Already formatted for Lagos, e.g. "Saturday, 10 October at 12:00". */
+  /** Already formatted for Lagos, e.g. "Saturday, 10 October at 12:00 noon". */
   closesAtLagos: string;
   pageUrl: string;
+  /** The second reminder of the stage, sent on the morning of the close. */
+  lastCall?: boolean;
 }): Email {
   const name = firstName(params.fullName);
+  const midday = middayLine(params.weekNo, params.closesAtLagos);
+  const lead = params.lastCall ? "Last call: stage" : "Stage";
 
   return {
     to: params.to,
     toName: params.fullName,
     replyTo: CONTACT_EMAIL,
-    subject: `Stage ${params.weekNo} closes ${params.closesWhen}`,
+    subject: `${lead} ${params.weekNo} closes ${params.closesWhen}`,
     text: [
       `${name}, stage ${params.weekNo} closes ${params.closesWhen}, and your entry is not in yet.`,
       ``,
       `${params.title}`,
       ``,
-      `Submissions close ${params.closesAtLagos}, Lagos time. After that the stage is locked, and its points cannot be earned.`,
+      `Submissions close ${params.closesAtLagos}, Lagos time.${midday ? ` ${midday}` : ""} After that the stage is locked, and its points cannot be earned.`,
       `If one of your links was sent back for a change, send it again before then.`,
       ``,
       `Publish on your own account, then paste the link on your page:`,
@@ -1257,16 +1299,63 @@ export function deadlineReminderEmail(params: {
     ].join("\n"),
     html: layout({
       preheader: `Your stage ${params.weekNo} entry is not in yet. Closes ${params.closesAtLagos}, Lagos time.`,
-      heading: `Stage ${params.weekNo} closes ${params.closesWhen}, ${name}`,
+      heading: `${lead} ${params.weekNo} closes ${params.closesWhen}, ${name}`,
       body: [
         p(`Your entry for <strong>${escape(params.title)}</strong> is not in yet.`),
         boxed("Closes", `${params.closesAtLagos}, Lagos time`),
+        midday ? p(escape(midday)) : "",
         p("After that the stage is locked, and its points cannot be earned."),
         quiet(
           "If one of your links was sent back for a change, send it again before then. Publish on your own account first, then paste the link on your page.",
         ),
       ].join(""),
       action: { label: "Open your page and submit", href: params.pageUrl },
+    }),
+  };
+}
+
+/**
+ * The morning list for owners: what needs a person on the campaign today.
+ *
+ * Sent by the scheduled job (app/api/cron/due-today) only on a day with
+ * something due, never to creators. Each line links to the console page that
+ * does it. lib/admin/due-today.ts decides the list.
+ */
+export function ownerDueTodayEmail(params: {
+  to: string;
+  /** "Saturday 10 October", Lagos. */
+  dayLabel: string;
+  items: { text: string; href: string }[];
+}): Email {
+  const base = siteUrl();
+  const n = params.items.length;
+  return {
+    to: params.to,
+    replyTo: CONTACT_EMAIL,
+    subject:
+      n === 1
+        ? `Today on Monica: ${params.items[0].text}`
+        : `Today on Monica: ${n} things need you`,
+    text: [
+      `Good morning. ${params.dayLabel}, on the Monica campaign:`,
+      ``,
+      ...params.items.flatMap((item) => [`- ${item.text}`, `  ${base}${item.href}`]),
+      ``,
+      `Nothing here goes to creators: each link opens the console page where you do it. This comes only on days with something due.`,
+    ].join("\n"),
+    html: layout({
+      preheader: n === 1 ? params.items[0].text : `${n} things need a person today.`,
+      heading: "Today on the Monica campaign",
+      body: [
+        p(escape(params.dayLabel)),
+        ...params.items.map((item) =>
+          p(`<a href="${escape(`${base}${item.href}`)}">${escape(item.text)}</a>`),
+        ),
+        quiet(
+          "Nothing in this email goes to creators: each link opens the console page where you do it. It comes only on days with something due.",
+        ),
+      ].join(""),
+      action: { label: "Open the console", href: `${base}/admin` },
     }),
   };
 }

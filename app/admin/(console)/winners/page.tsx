@@ -22,6 +22,7 @@ import { VoteRoundPanel } from "@/components/admin/vote-round-panel";
 import { BlockedDomainsCard } from "@/components/admin/blocked-domains-card";
 import { PageHeader, SectionCard, SPACING } from "@/components/shared/panel";
 import { currentWeekNo } from "@/lib/campaigns";
+import { voteOpening } from "@/lib/vote-open-rule";
 import { count, dateTime } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -81,7 +82,8 @@ export default async function WinnersPage({
    * review and announce must stay reachable after the calendar moves on.
    * ?week= picks any week up to the current one.
    */
-  const current = currentWeekNo();
+  const now = new Date();
+  const current = currentWeekNo(now);
   const asked = Number((await searchParams).week);
   const weekNo =
     Number.isInteger(asked) && asked >= 1 && asked <= current
@@ -107,6 +109,26 @@ export default async function WinnersPage({
   const tally = round ? await roundTally(admin.admin, round.roundId) : null;
 
   const frozen = snapshots.some((s) => s.weekNo === weekNo);
+
+  /*
+   * Whether this week's vote can still be opened, for a week with no round:
+   * on its Sunday, or late for the week that has just ended (stage 2's was
+   * missed on its Sunday). The route asks the same question before it opens
+   * anything (lib/vote-open-rule.ts).
+   */
+  const opening = round
+    ? null
+    : voteOpening({
+        weekNo,
+        now,
+        recorded: frozen,
+        favouriteAnnounced: picked.some(
+          (p) =>
+            p.weekNo === weekNo &&
+            p.category === "community_favourite" &&
+            p.publishedAt !== null,
+        ),
+      });
 
   /*
    * What the vote has settled, for the announce card. The engine is the
@@ -163,7 +185,13 @@ export default async function WinnersPage({
         </nav>
       )}
 
+      {/* Keyed by week, both of them: the week tabs only change the search
+          params, which keeps client state, so without a key one week's form
+          (its picked creator, its vote window) was still there on the next
+          week's tab. A late week 2 vote kept week 3's Sunday dates and could
+          not be opened until they were retyped. */}
       <WinnersPanel
+        key={`winners-${weekNo}`}
         weekNo={weekNo}
         creatorCandidates={creators.map((c) => ({
           enrolmentId: c.enrolmentId,
@@ -192,9 +220,12 @@ export default async function WinnersPage({
       />
 
       <VoteRoundPanel
+        key={`vote-${weekNo}`}
         weekNo={weekNo}
         frozen={frozen}
         isPast={weekNo < current}
+        lateCloseBy={opening?.open && opening.closeBy ? opening.closeBy : undefined}
+        pastNote={opening && !opening.open ? opening.reason : undefined}
         round={
           round
             ? {

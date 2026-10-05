@@ -169,7 +169,7 @@ describe("the deadline reminder", () => {
   it("reaches only active creators with nothing in, and records the counts", async () => {
     const answer = await press();
     expect(answer.status).toBe(200);
-    expect(await answer.json()).toEqual({ ok: true, sent: 2, failed: 0 });
+    expect(await answer.json()).toEqual({ ok: true, sent: 2, failed: 0, number: 1 });
     expect(state.sends.map((s) => s.to).sort()).toEqual(["ada@e.com", "bola@e.com"]);
     expect(state.sends[0].subject).toMatch(/^Stage 3 closes (today|tomorrow) at /);
     const row = await one<{ after: { status: string; sent: number; recipients: number } }>(
@@ -181,21 +181,55 @@ describe("the deadline reminder", () => {
   it("copies the owner once, marked as a copy, and does not count it as a creator", async () => {
     process.env.BULK_EMAIL_COPY_TO = "owner@example.test";
     const answer = await press();
-    expect(await answer.json()).toEqual({ ok: true, sent: 2, failed: 0 });
+    expect(await answer.json()).toEqual({ ok: true, sent: 2, failed: 0, number: 1 });
     expect(state.copies).toHaveLength(1);
     expect(state.copies[0].to).toBe("owner@example.test");
     expect(state.copies[0].subject).toMatch(/^\[Copy · sent to 2\] Stage 3 closes /);
     expect(state.sends.map((s) => s.to)).not.toContain("owner@example.test");
   });
 
-  it("goes once per stage, even when two presses land together", async () => {
+  it("sends each reminder once, even when two presses land together", async () => {
     const answers = await Promise.all([press(), press()]);
     expect(answers.map((a) => a.status).sort()).toEqual([200, 409]);
     expect(state.sends).toHaveLength(2);
-    expect((await press()).status).toBe(409);
-    expect(state.sends).toHaveLength(2);
     const rows = await db.query(`SELECT 1 FROM audit_log WHERE action = 'challenge.reminded'`);
     expect(rows.rows).toHaveLength(1);
+  });
+
+  it("allows a last call six hours after the first, to whoever still has nothing in, and no third", async () => {
+    expect((await press()).status).toBe(200);
+    // Straight after: too soon, and it says when.
+    const soon = await press();
+    expect(soon.status).toBe(409);
+    expect((await soon.json()).message).toMatch(/last call can go from .*six hours after the first/);
+
+    // Seven hours later, and one of the two has since submitted.
+    await db.exec(
+      `UPDATE audit_log SET created_at = now() - interval '7 hours' WHERE action = 'challenge.reminded'`,
+    );
+    const ada = await one<{ id: string }>(
+      `SELECT cc.id FROM campaign_creators cc JOIN creators c ON c.id = cc.creator_id WHERE c.email = 'ada@e.com'`,
+    );
+    const entry = await one<{ id: string }>(
+      `INSERT INTO challenge_entries (campaign_creator_id, challenge_id, base_points_snapshot, bonus_2_snapshot, bonus_3_snapshot)
+       VALUES ($1, $2, 100, 150, 200) RETURNING id`,
+      [ada.id, challengeId],
+    );
+    await db.query(`INSERT INTO submissions (entry_id, platform, url) VALUES ($1, 'x', 'https://x.com/ada/status/late')`, [entry.id]);
+
+    state.sends = [];
+    const last = await press();
+    expect(await last.json()).toEqual({ ok: true, sent: 1, failed: 0, number: 2 });
+    expect(state.sends.map((s) => s.to)).toEqual(["bola@e.com"]);
+    expect(state.sends[0].subject).toMatch(/^Last call: stage 3 closes /);
+
+    const third = await press();
+    expect(third.status).toBe(409);
+    expect((await third.json()).message).toMatch(/Both reminders/);
+    const rows = await db.query(`SELECT 1 FROM audit_log WHERE action = 'challenge.reminded'`);
+    expect(rows.rows).toHaveLength(2);
+    // Put Ada back as she was, with nothing in, for the other tests.
+    await db.query(`DELETE FROM challenge_entries WHERE id = $1`, [entry.id]);
   });
 
   it("refuses a week that is not live, or has already closed, and claims nothing", async () => {
@@ -231,10 +265,11 @@ describe("the deadline reminder", () => {
 
   it("says where things stand for the console, before and after", async () => {
     const before = await reminderState({ adminId: state.adminId } as never, challengeId);
-    expect(before).toMatchObject({ waiting: 2, active: 4, sent: null });
+    expect(before).toMatchObject({ waiting: 2, active: 4, sent: [] });
     await press();
     const after = await reminderState({ adminId: state.adminId } as never, challengeId);
-    expect(after.sent).toMatchObject({ sent: 2, failed: 0, finished: true });
+    expect(after.sent).toHaveLength(1);
+    expect(after.sent[0]).toMatchObject({ number: 1, sent: 2, failed: 0, finished: true });
   });
 });
 

@@ -2,6 +2,7 @@ import "server-only";
 import { sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import type { AdminIdentity } from "@/lib/admin/session";
+import type { ReminderSent } from "@/lib/reminder-rules";
 
 /**
  * The deadline reminder: who it goes to, and whether it has gone.
@@ -14,8 +15,9 @@ import type { AdminIdentity } from "@/lib/admin/session";
  * back (withdrawing deletes the submission), or had their only link sent
  * back for a change. Somebody who has already submitted is not nagged.
  *
- * The audit row is the ledger, as for the announcement: one reminder per
- * stage, claimed before the first send, with the counts filled in after.
+ * The audit rows are the ledger, as for the announcement: up to two
+ * reminders per stage (lib/reminder-rules.ts), each claimed before its first
+ * send, with the counts filled in as it goes.
  */
 
 export const REMINDER_ACTION = "challenge.reminded";
@@ -53,8 +55,36 @@ export interface ReminderState {
   waiting: number;
   /** Active creators in the campaign. */
   active: number;
-  /** The reminder already sent for this stage, if one was. */
-  sent: { at: string; sent: number; failed: number; finished: boolean } | null;
+  /** The reminders already sent for this stage, oldest first. */
+  sent: ReminderSent[];
+}
+
+/** How many active creators have nothing in for the stage, right now. */
+export async function waitingCount(challengeId: string): Promise<number> {
+  const result = await getDb().execute(sql`SELECT count(*)::int AS n ${needsReminding(challengeId)}`);
+  return Number((result.rows?.[0] as { n?: number } | undefined)?.n ?? 0);
+}
+
+/** The reminder rows for a stage, oldest first. */
+export async function remindersSent(challengeId: string): Promise<ReminderSent[]> {
+  const result = await getDb().execute(sql`
+    SELECT created_at, after
+      FROM audit_log
+     WHERE action = ${REMINDER_ACTION}
+       AND entity_type = 'challenge'
+       AND entity_id = ${challengeId}::uuid
+     ORDER BY created_at
+  `);
+  return ((result.rows ?? []) as {
+    created_at?: Date | string;
+    after?: { sent?: number; failed?: number; status?: string; number?: number };
+  }[]).map((row, index) => ({
+    number: Number(row.after?.number ?? index + 1),
+    at: new Date(String(row.created_at)).toISOString(),
+    sent: Number(row.after?.sent ?? 0),
+    failed: Number(row.after?.failed ?? 0),
+    finished: row.after?.status === "finished",
+  }));
 }
 
 /** What the console shows on the live week's row. */
@@ -64,7 +94,7 @@ export async function reminderState(
 ): Promise<ReminderState> {
   void admin; // Reading is admin-only; the type is the proof.
   const db = getDb();
-  const [waiting, active, ledger] = await Promise.all([
+  const [waiting, active, sent] = await Promise.all([
     db.execute(sql`SELECT count(*)::int AS n ${needsReminding(challengeId)}`),
     db.execute(sql`
       SELECT count(*)::int AS n
@@ -73,31 +103,9 @@ export async function reminderState(
        WHERE cc.campaign_id = ch.campaign_id
          AND COALESCE(cc.status, 'active') = 'active'
     `),
-    db.execute(sql`
-      SELECT created_at, after
-        FROM audit_log
-       WHERE action = ${REMINDER_ACTION}
-         AND entity_type = 'challenge'
-         AND entity_id = ${challengeId}::uuid
-       ORDER BY created_at
-       LIMIT 1
-    `),
+    remindersSent(challengeId),
   ]);
   const count = (r: { rows?: unknown[] }) =>
     Number((r.rows?.[0] as { n?: number } | undefined)?.n ?? 0);
-  const row = ledger.rows?.[0] as
-    | { created_at?: Date | string; after?: { sent?: number; failed?: number; status?: string } }
-    | undefined;
-  return {
-    waiting: count(waiting),
-    active: count(active),
-    sent: row
-      ? {
-          at: new Date(String(row.created_at)).toISOString(),
-          sent: Number(row.after?.sent ?? 0),
-          failed: Number(row.after?.failed ?? 0),
-          finished: row.after?.status === "finished",
-        }
-      : null,
-  };
+  return { waiting: count(waiting), active: count(active), sent };
 }

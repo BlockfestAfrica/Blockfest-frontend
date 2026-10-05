@@ -2,7 +2,8 @@
  * Who is backing Blockfest Africa 2026.
  *
  * Two lists, not a category per kind of partner. Sponsors are drawn larger,
- * in the order they appear here, with their tier under the logo; partners
+ * in the order they appear here; only the headline's tile names its tier
+ * ("Headline sponsor"), the rest line up without a label; partners
  * share one wall with nothing under each logo, and the wall's heading names
  * the kinds it holds ("Media, community & government partners"). A new
  * government or community partner is one more line in `partners`, not a new
@@ -26,7 +27,8 @@ export interface PartnerLogo {
 }
 
 export interface Sponsor extends PartnerLogo {
-  /** Shown under the logo as "{tier} sponsor": Headline, Gold, Mobility. */
+  /** Headline, Gold, Mobility. Only the headline's is shown, as "Headline
+      sponsor"; the rest are kept for the record and the order. */
   tier: string;
 }
 

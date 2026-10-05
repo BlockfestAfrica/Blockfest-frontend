@@ -25,6 +25,17 @@ export default defineConfig({
     env: {
       NEXT_PUBLIC_CAMPAIGN_GATE_OPEN: "",
       /*
+       * Who gets the owner's copies and the morning list, and the scheduled
+       * job's secret. Production sets all three, and the builds that run this
+       * suite see them, while previews do not: two tests that assumed them
+       * unset passed on every PR and failed every production deploy from 4
+       * October until these were pinned. Empty here; the tests that need a
+       * value stub it.
+       */
+      BULK_EMAIL_COPY_TO: "",
+      DUE_TODAY_TO: "",
+      CRON_SECRET: "",
+      /*
        * The clock, pinned for the same reason the variables above are.
        *
        * The campaign is written and enforced in Lagos time, and a date test

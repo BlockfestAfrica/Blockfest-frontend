@@ -9,6 +9,10 @@ import {
 } from "@/lib/campaigns";
 import { closingAt } from "@/lib/format";
 import { LiveResources } from "./live-resources";
+import { AddToCalendar } from "./add-to-calendar";
+import { LocalTime } from "./local-time";
+import { TimeLeftLabel } from "./time-left-label";
+import { formatTimeLeft } from "@/lib/countdown";
 
 /** A started week, as the API publishes it. Drafts and future weeks never
     arrive here at all. */
@@ -47,6 +51,25 @@ export function MonicaStages() {
   /* Which briefs are unfolded, keyed by stage so two open weeks (a closed
      one and the live one) can be read side by side. */
   const [unfolded, setUnfolded] = useState<Record<number, boolean>>({});
+  /* One render at each close, so a page left open past one turns that card
+     to Closed, chip, edge and countdown together, rather than leaving "Open
+     now" above a countdown that reads "Closed" until a reload. */
+  const [closeTick, setCloseTick] = useState(0);
+  useEffect(() => {
+    const now = Date.now();
+    const next = Object.values(weeks)
+      .map((week) => new Date(week.endsAt).getTime())
+      .filter((at) => at > now)
+      .sort((a, b) => a - b)[0];
+    if (next === undefined) return;
+    const timer = setTimeout(
+      () => setCloseTick((n) => n + 1),
+      // setTimeout's ceiling is about 24.8 days; a later close just
+      // re-arms when this fires.
+      Math.min(next - now + 250, 2_147_483_647),
+    );
+    return () => clearTimeout(timer);
+  }, [weeks, closeTick]);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,7 +139,9 @@ export function MonicaStages() {
              * schedule is not the secret; the brief is.
              */
             const week = weeks[stage.number];
-            const status = week?.status;
+            // The API's status is as of the fetch; a close since then counts.
+            const ended = Boolean(week) && new Date(week.endsAt).getTime() <= Date.now();
+            const status = week?.status === "active" && ended ? "closed" : week?.status;
             // A week the database has opened or closed is revealed even if
             // the deploy predates it; drafts never reach this component.
             const revealed = stage.number === 1 || Boolean(status);
@@ -160,6 +185,21 @@ export function MonicaStages() {
                         Open now
                       </p>
                     )}
+                    {/* The live countdown /me already had, on the card itself
+                        rather than inside the folded brief, so it is seen
+                        without a click. The weeks load in the browser, after
+                        the first paint, so there is no server label for it
+                        to disagree with. */}
+                    {status === "active" &&
+                      week?.endsAt &&
+                      new Date(week.endsAt).getTime() > Date.now() && (
+                        <p className="mt-2 text-sm font-semibold text-brand-gold">
+                          <TimeLeftLabel
+                            endsAt={week.endsAt}
+                            initial={formatTimeLeft(week.endsAt)}
+                          />
+                        </p>
+                      )}
                     {status === "closed" && (
                       <p className="mt-2 inline-flex items-center rounded-full border border-line-2 px-2.5 py-0.5 text-xs font-semibold text-ink-3">
                         Closed
@@ -267,11 +307,15 @@ export function MonicaStages() {
                                       Closes:
                                     </dt>
                                     <dd className="tabular-nums text-ink-2">
-                                      {closingAt(week.endsAt)}, Lagos time.
+                                      {closingAt(week.endsAt)}, Lagos time
+                                      <LocalTime at={week.endsAt} />.
                                     </dd>
                                   </div>
                                 )}
                               </dl>
+                              {week.endsAt && new Date(week.endsAt).getTime() > Date.now() && (
+                                <AddToCalendar weekNo={stage.number} className="mt-2" />
+                              )}
 
                               <p className="mt-4 text-sm text-ink-2">
                                 Hashtags, handles and everything else you need

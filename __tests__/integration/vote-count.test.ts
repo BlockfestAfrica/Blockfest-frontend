@@ -279,7 +279,10 @@ describe("the winners page", () => {
   );
 
   it("draws the count and stays a static, cached page", () => {
-    expect(page).toContain("<LiveVoteCount />");
+    // The count is drawn inside its week's card (weekly-winners.tsx).
+    const parts = readFileSync(join(process.cwd(), "components/campaigns/weekly-winners.tsx"), "utf8");
+    expect(parts).toContain("<LiveVoteCount />");
+    expect(page).toContain("<WeekCard");
     expect(page).toContain("export const revalidate = 60");
     expect(page).not.toMatch(/\bcookies\(|\bheaders\(|force-dynamic/);
   });
