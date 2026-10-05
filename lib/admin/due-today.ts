@@ -6,6 +6,7 @@ import { remindersSent, waitingCount } from "@/lib/admin/reminders";
 import { nextReminder, REMINDER_DUE_MS, type ReminderSent } from "@/lib/reminder-rules";
 import { announcementSunday } from "@/lib/winner-weeks";
 import { closesWhen, closingAt, dayDate } from "@/lib/format";
+import { voteOpening } from "@/lib/vote-open-rule";
 
 /**
  * What needs a person on the Monica campaign today.
@@ -131,8 +132,22 @@ export function dueItems(facts: DueFacts, now: number): DueItem[] {
       if (!facts.published.includes(`${w}:creator_of_week`)) {
         items.push({ text: `Announce week ${w}'s Creator of the Week.`, href: winners(w) });
       }
-      if (!round && !facts.published.includes(`${w}:community_favourite`)) {
-        items.push({ text: `Open the week ${w} Community Favourite vote.`, href: winners(w) });
+      /* The same rule the console and the route follow, so this never asks
+         for a vote the console will not open: on the Sunday, or late until
+         the next stage closes, with the deadline said. */
+      const opening = voteOpening({
+        weekNo: w,
+        now: new Date(now),
+        recorded,
+        favouriteAnnounced: false,
+      });
+      if (!round && !facts.published.includes(`${w}:community_favourite`) && opening.open) {
+        items.push({
+          text: opening.closeBy
+            ? `Open the week ${w} Community Favourite vote: it was missed on its Sunday, and can still be opened late, closing by ${closingAt(opening.closeBy)}.`
+            : `Open the week ${w} Community Favourite vote.`,
+          href: winners(w),
+        });
       }
     }
   }

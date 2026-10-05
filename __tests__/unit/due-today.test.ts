@@ -97,6 +97,26 @@ describe("the morning list", () => {
     expect(items.every((i) => i.href === "/admin/winners?week=3")).toBe(true);
   });
 
+  it("the Monday after a missed vote, offers it late with its deadline, as the console now does", () => {
+    // Week 2 on Monday 5 October: recorded, Creator of the Week drafted, no vote.
+    const W2 = {
+      id: "c2",
+      weekNo: 2,
+      status: "closed" as const,
+      startsAt: "2026-09-28T00:00:00+01:00",
+      endsAt: "2026-10-03T12:00:00+01:00",
+    };
+    const f = facts({ challenges: [W2, W3], recorded: [1, 2], published: [] });
+    const items = dueItems(f, at("2026-10-05T08:00:00+01:00"));
+    expect(items.map((i) => i.text)).toEqual([
+      "Announce week 2's Creator of the Week.",
+      "Open the week 2 Community Favourite vote: it was missed on its Sunday, and can still be opened late, closing by Saturday, 10 October at 12:00 noon.",
+    ]);
+    expect(items.every((i) => i.href === "/admin/winners?week=2")).toBe(true);
+    // Once stage 3 has closed the late window has too, and week 3 is the one asked about.
+    expect(texts(f, "2026-10-10T13:00:00+01:00").some((t) => t.includes("week 2 Community"))).toBe(false);
+  });
+
   it("after its Sunday, says once that an unrecorded week needs fixing, not three refused actions", () => {
     const f = facts({ recorded: [1, 2] });
     expect(texts(f, "2026-10-12T08:00:00+01:00").filter((t) => t.includes("week 3") || t.includes("Week 3"))).toEqual([
