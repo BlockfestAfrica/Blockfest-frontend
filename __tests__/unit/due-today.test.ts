@@ -113,8 +113,14 @@ describe("the morning list", () => {
       "Open the week 2 Community Favourite vote: it was missed on its Sunday, and can still be opened late, closing by Saturday, 10 October at 12:00 noon.",
     ]);
     expect(items.every((i) => i.href === "/admin/winners?week=2")).toBe(true);
-    // Once stage 3 has closed the late window has too, and week 3 is the one asked about.
-    expect(texts(f, "2026-10-10T13:00:00+01:00").some((t) => t.includes("week 2 Community"))).toBe(false);
+    // The late window shuts when stage 3 closes. With week 2 alone in the
+    // facts it is still the ended week at noon, so the rule's own cutoff is
+    // what decides, not the next stage ending.
+    const only2 = facts({ challenges: [W2], recorded: [1, 2], published: [] });
+    expect(texts(only2, "2026-10-10T11:59:00+01:00")).toContain(
+      "Open the week 2 Community Favourite vote: it was missed on its Sunday, and can still be opened late, closing by Saturday, 10 October at 12:00 noon.",
+    );
+    expect(texts(only2, "2026-10-10T12:00:00+01:00").some((t) => t.includes("week 2 Community"))).toBe(false);
   });
 
   it("after its Sunday, says once that an unrecorded week needs fixing, not three refused actions", () => {

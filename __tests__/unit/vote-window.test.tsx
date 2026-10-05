@@ -270,6 +270,15 @@ describe("a vote opened late, the Monday after", () => {
     expect((openButton() as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it("starts fresh on each week's tab, so week 3's Sunday dates never reach week 2's form", () => {
+    // The tabs only change ?week=, which keeps client state; only a key per
+    // week remounts the forms. Without it, landing on week 3 and clicking
+    // Week 2 left 11 to 13 October in the late form, refused as too late.
+    const page = readFileSync(join(process.cwd(), "app/admin/(console)/winners/page.tsx"), "utf8");
+    expect(page).toMatch(/<VoteRoundPanel\s+key=\{`vote-\$\{weekNo\}`\}/);
+    expect(page).toMatch(/<WinnersPanel\s+key=\{`winners-\$\{weekNo\}`\}/);
+  });
+
   it("starts with the deadline itself when two days would run past it", () => {
     vi.setSystemTime(new Date("2026-10-09T09:00:00Z")); // Friday 10:00 Lagos
     renderLate();

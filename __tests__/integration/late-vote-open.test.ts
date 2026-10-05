@@ -147,7 +147,10 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("opening a missed vote late", () => {
+/* In order, on one database: "week 2 not yet recorded" and "no round yet"
+   cannot be restored once passed (snapshots are append-only, rounds are never
+   cancelled), so the refusals run before the open. */
+describe("opening a missed vote late", { shuffle: false }, () => {
   it("refuses while the week's standings are unrecorded, and writes and sends nothing", async () => {
     const result = await open(lateWeek2());
     expect(result.status).toBe(409);
@@ -178,7 +181,8 @@ describe("opening a missed vote late", () => {
   });
 
   it("opens it once the week is recorded, tells the nominees, and the round can be closed on the recorded board", async () => {
-    // Week 2 was recorded by the test before; snapshots are never deleted.
+    // A second version if an earlier test recorded it too; close pins the latest.
+    await record(2);
     const result = await open(lateWeek2());
     expect(result.status).toBe(200);
     expect(result.body.ok).toBe(true);
@@ -212,6 +216,8 @@ describe("opening a missed vote late", () => {
   });
 
   it("refuses a second round for the week, as the engine always has", async () => {
+    await record(2);
+    if ((await rounds(2)) === 0) expect((await open(lateWeek2())).status).toBe(200);
     const again = await open(lateWeek2());
     expect(again.status).toBe(400);
     expect(again.body.message).toBe("This week already has a round. Reload to see it.");

@@ -185,7 +185,13 @@ export default async function WinnersPage({
         </nav>
       )}
 
+      {/* Keyed by week, both of them: the week tabs only change the search
+          params, which keeps client state, so without a key one week's form
+          (its picked creator, its vote window) was still there on the next
+          week's tab. A late week 2 vote kept week 3's Sunday dates and could
+          not be opened until they were retyped. */}
       <WinnersPanel
+        key={`winners-${weekNo}`}
         weekNo={weekNo}
         creatorCandidates={creators.map((c) => ({
           enrolmentId: c.enrolmentId,
@@ -214,6 +220,7 @@ export default async function WinnersPage({
       />
 
       <VoteRoundPanel
+        key={`vote-${weekNo}`}
         weekNo={weekNo}
         frozen={frozen}
         isPast={weekNo < current}
