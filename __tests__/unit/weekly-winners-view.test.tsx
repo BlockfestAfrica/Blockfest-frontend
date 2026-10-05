@@ -11,12 +11,33 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { DoThisNow, WeekCard, WeekStrip } from "@/components/campaigns/weekly-winners";
 import { monicaStages } from "@/lib/campaigns";
 import { actionsNow, weekTimeline, winnersByWeek, type TimelineWeek } from "@/lib/winner-weeks";
 import type { PublicRound, PublishedWinner, ShortlistEntry, VoteWindowState } from "@/lib/winners";
+
+/* The page's data calls, answered from each test; everything else real.
+   The live count fetches in the browser, so it is a marker here. */
+const data = vi.hoisted(() => ({
+  winners: [] as unknown[],
+  shortlist: [] as unknown[],
+  finals: {} as Record<number, unknown[]>,
+  rounds: [] as unknown[],
+  flagged: [] as number[],
+}));
+vi.mock("@/lib/winners", async (original) => ({
+  ...(await original<typeof import("@/lib/winners")>()),
+  publishedWinners: async () => data.winners,
+  currentShortlist: async () => data.shortlist,
+  finalCounts: async () => data.finals,
+  publicRounds: async () => data.rounds,
+  flaggedWeeks: async () => data.flagged,
+}));
+vi.mock("@/components/campaigns/live-vote-count", () => ({
+  LiveVoteCount: () => <div data-testid="live-count" />,
+}));
 
 const LONG =
   "Ben's split-screen video compared a month of cash spending against the same month on Monica, receipts included, and the comments turned into a thread of people doing their own.";
@@ -90,6 +111,7 @@ const card = (n: number) => screen.getByRole("region", { name: new RegExp(`^Week
 afterEach(() => {
   Reflect.deleteProperty(HTMLElement.prototype, "scrollHeight");
   Reflect.deleteProperty(HTMLElement.prototype, "clientHeight");
+  vi.useRealTimers();
 });
 
 describe("a week that is happening now", () => {
@@ -122,6 +144,14 @@ describe("a week that is happening now", () => {
     expect(week.textContent).not.toContain("Entries close");
     // No card inside the card: the ballot has no border of its own here.
     expect(week.querySelector(".rounded-xl .rounded-xl")).toBeNull();
+  });
+
+  it("drops the entries line on the Sunday its vote opens, while it is still the current week", () => {
+    const t = timelineAt("2026-10-04T15:00:00+01:00", [W1_COTW, W1_CF, W2_COTW], [R1, R2]);
+    expect(t.find((x) => x.week.weekNo === 2)!.week.current).toBe(true);
+    drawWeek(t, 2, { shortlist: SHORTLIST, ballotState: "open", shortlistHere: true });
+    expect(card(2).textContent).toContain("Voting now");
+    expect(card(2).textContent).not.toContain("Entries close");
   });
 
   it("says the votes are in review once voting has closed, with no Vote, and keeps #shortlist on the week", () => {
@@ -192,6 +222,19 @@ describe("a finished week", () => {
     expect(screen.queryByRole("button", { name: /the notice/ })).toBeNull();
   });
 
+  it("shows only the award a finished week has, and promises none it will not get", () => {
+    // Week 2's Creator of the Week is in; its vote was never run, and the
+    // window for a late one closed with stage 3.
+    const t = timelineAt("2026-10-13T12:00:00+01:00", [W1_COTW, W1_CF, W2_COTW], [R1]);
+    drawWeek(t, 2);
+    const week = card(2);
+    expect(week.textContent).toContain("Announced");
+    expect(week.textContent).not.toContain("Winners announced");
+    expect(week.textContent).toContain("Chidi Eze");
+    expect(week.textContent).not.toContain("Not announced yet");
+    expect(week.textContent).not.toContain("Community Favourite");
+  });
+
   it("says nothing about fraud for a week without removals", () => {
     const { container } = drawWeek(t(), 1);
     expect(container.textContent).not.toMatch(/suspicious|genuine votes count/i);
@@ -250,7 +293,36 @@ describe("do this now", () => {
     expect(rows[1].textContent).toContain("Entries close Saturday 10 October at 12:00 noon");
     // The vote lands on the Vote buttons; entering happens on the creator page.
     expect(within(rows[0]).getByRole("link").getAttribute("href")).toBe("#shortlist");
-    expect(within(rows[1]).getByRole("link").getAttribute("href")).toBe("/campaigns/monica-money-story/me");
+    expect(within(rows[1]).getByRole("link", { name: /Enter week 3/ }).getAttribute("href")).toBe(
+      "/campaigns/monica-money-story/me",
+    );
+    // The creator page only knows registered creators: a way in for the rest.
+    expect(within(rows[1]).getByRole("link", { name: "Join the campaign" }).getAttribute("href")).toBe(
+      "/campaigns/monica-money-story/register",
+    );
+    // A plain anchor, not the router's Link (which also renders an <a>):
+    // only the browser's own fragment jump moves keyboard focus with it.
+    const parts = readFileSync(join(process.cwd(), "components/campaigns/weekly-winners.tsx"), "utf8");
+    expect(parts).toMatch(/<a\s+href=\{ballotWeek === action\.weekNo \? "#shortlist"/);
+    expect(within(rows[0]).queryByRole("link", { name: "Join the campaign" })).toBeNull();
+  });
+
+  it("takes each row away at its own deadline, and the card with the last", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(at));
+    render(<DoThisNow actions={actionsNow(t())} ballotWeek={2} />);
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    // Week 2's vote closes Tuesday 6 October at 21:00 Lagos.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(Date.parse("2026-10-06T20:00:01Z") - Date.now());
+    });
+    expect(screen.queryByText("Vote for week 2's Community Favourite")).toBeNull();
+    expect(screen.getByText("Enter week 3's challenge")).toBeTruthy();
+    // Week 3's entries close Saturday 10 October at noon.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(Date.parse("2026-10-10T11:00:01Z") - Date.now());
+    });
+    expect(screen.queryByRole("region", { name: "Do this now" })).toBeNull();
   });
 
   it("sends the vote to its week when the ballot is not on the page", () => {
@@ -264,32 +336,66 @@ describe("do this now", () => {
   });
 });
 
-describe("the page", () => {
-  const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
-  const page = read("app/campaigns/monica-money-story/winners/page.tsx");
-  const parts = read("components/campaigns/weekly-winners.tsx");
+describe("the page, rendered", () => {
+  const draw = async (when: string, d: Partial<typeof data>) => {
+    Object.assign(data, { winners: [], shortlist: [], finals: FINALS, rounds: [], flagged: [] }, d);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(when));
+    const { default: WinnersPage } = await import("@/app/campaigns/monica-money-story/winners/page");
+    return render(await WinnersPage());
+  };
+  const anchors = (c: HTMLElement) => c.querySelectorAll("#shortlist");
 
-  it("puts what to do first, then every week in calendar order", () => {
-    expect(page.indexOf("<DoThisNow")).toBeLessThan(page.indexOf("<WeekStrip"));
-    expect(page.indexOf("<WeekStrip")).toBeLessThan(page.indexOf("<WeekCard"));
-    expect(page).toContain("timeline.map(");
-    // No second section for the vote, and no "happening now" split.
-    expect(page).not.toContain("Community Favourite vote");
-    expect(page).not.toContain("Happening now");
+  it("puts what to do first, then all four weeks in calendar order", async () => {
+    const { container } = await draw("2026-10-05T12:00:00+01:00", {
+      winners: [W1_COTW, W1_CF, W2_COTW],
+      rounds: [R1, R2],
+      shortlist: SHORTLIST,
+    });
+    const order = [...container.querySelectorAll("#do-now, nav[aria-label='Jump to a week'], section[id^='week-']")].map(
+      (el) => el.id || "strip",
+    );
+    expect(order).toEqual(["do-now", "strip", "week-1", "week-2", "week-3", "week-4"]);
   });
 
-  it("keeps #shortlist for the emails and stage cards", () => {
-    expect(parts).toMatch(/<li id="shortlist"/);
-    expect(parts).toMatch(/<span id="shortlist"/);
+  it("puts #shortlist on the ballot, once, and the live count in the voting week only", async () => {
+    const { container } = await draw("2026-10-05T12:00:00+01:00", {
+      winners: [W1_COTW, W1_CF, W2_COTW],
+      rounds: [R1, R2],
+      shortlist: SHORTLIST,
+      flagged: [1],
+    });
+    expect(anchors(container)).toHaveLength(1);
+    expect(container.querySelector("#week-2 #shortlist")!.tagName).toBe("LI");
+    expect(screen.getAllByTestId("live-count")).toHaveLength(1);
+    expect(container.querySelector("#week-2 [data-testid='live-count']")).toBeTruthy();
+    // Week 1 had fraud removed: said once, quietly, in its count, never moving.
+    expect(container.querySelector("#week-1")!.textContent).not.toMatch(/genuine votes count/i);
+    expect(container.querySelector("#week-1 details")!.textContent).toContain("Suspicious votes were found");
   });
 
-  it("draws the live count once, in the week whose round opened last", () => {
-    expect(page).toMatch(/countHere=\{entry\.week\.weekNo === countWeek\}/);
-    expect(parts.match(/<LiveVoteCount \/>/g)).toHaveLength(1);
+  it("keeps #shortlist on the week in review once its ballot has gone", async () => {
+    const { container } = await draw("2026-10-06T22:00:00+01:00", {
+      winners: [W1_COTW, W1_CF, W2_COTW],
+      rounds: [R1, { ...R2, status: "closed" }],
+    });
+    expect(anchors(container)).toHaveLength(1);
+    expect(container.querySelector("#week-2 #shortlist")!.tagName).toBe("SPAN");
+    expect(container.querySelector("#week-2 [data-testid='live-count']")).toBeTruthy();
+    expect(screen.queryByText(/Vote for week 2/)).toBeNull();
   });
 
-  it("keeps the moving notice off every week but the live count", () => {
-    expect(parts).not.toContain("IntegrityTicker");
-    expect(page).not.toContain("IntegrityTicker");
+  it("follows the newest vote when last week's is still in review", async () => {
+    const R3: PublicRound = { weekNo: 3, status: "open", opensAt: "2026-10-11T08:00:00.000Z", closesAt: "2026-10-13T08:00:00.000Z" };
+    const { container } = await draw("2026-10-11T12:00:00+01:00", {
+      winners: [W1_COTW, W1_CF, W2_COTW],
+      rounds: [R1, { ...R2, status: "closed" }, R3],
+      shortlist: SHORTLIST.map((e) => ({ ...e, weekNo: 3, opensAt: R3.opensAt, closesAt: R3.closesAt })),
+    });
+    expect(anchors(container)).toHaveLength(1);
+    expect(container.querySelector("#week-3 #shortlist")).toBeTruthy();
+    expect(screen.getAllByTestId("live-count")).toHaveLength(1);
+    expect(container.querySelector("#week-3 [data-testid='live-count']")).toBeTruthy();
+    expect(container.querySelector("#week-2")!.textContent).toContain("Votes in review");
   });
 });

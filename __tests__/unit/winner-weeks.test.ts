@@ -258,6 +258,13 @@ describe("every week, where it stands", () => {
     expect(words(t)[1]).toBe("2:announced:partial");
   });
 
+  it("puts the soonest deadline first, whichever kind it is", () => {
+    // A vote running past the stage's entries: entering is the sooner one.
+    const late = r2("open", { opensAt: "2026-10-05T08:00:00.000Z", closesAt: "2026-10-11T08:00:00.000Z" });
+    const t = timeline([...W1, W2_COTW], [R1, late], "2026-10-05T12:00:00+01:00");
+    expect(actionsNow(t).map((a) => `${a.kind}:${a.weekNo}`)).toEqual(["enter:3", "vote:2"]);
+  });
+
   it("is all announced once the campaign is over and every result is in", () => {
     const all = [1, 2, 3, 4].flatMap((n) => [win(n, "creator_of_week"), win(n, "community_favourite")]);
     const t = timeline(all, [], "2026-10-25T12:00:00+01:00");

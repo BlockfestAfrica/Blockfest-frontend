@@ -25,6 +25,7 @@ import { Ballot } from "@/components/campaigns/ballot";
 import { LocalTime } from "@/components/campaigns/local-time";
 import { LiveVoteCount } from "@/components/campaigns/live-vote-count";
 import { TimeLeftLabel } from "@/components/campaigns/time-left-label";
+import { ShownUntil } from "@/components/campaigns/shown-until";
 import { monicaRoutes } from "@/lib/campaigns";
 import { formatTimeLeft } from "@/lib/countdown";
 import { closingAt, count, dayDate } from "@/lib/format";
@@ -141,8 +142,14 @@ function StatusLabel({ status }: { status: WeekStatus }) {
  * left, and one button. Hidden when there is nothing to do.
  *
  * The vote's button lands on the ballot itself (#shortlist), not the week's
- * header, so a phone does not open on last week's notes. The entry's goes to
- * the creator page, where entries are submitted.
+ * header, so a phone does not open on last week's notes. It is a plain
+ * anchor, not a router link: a fragment jump by the browser moves keyboard
+ * focus with the scroll, and the router's does not. The entry's goes to the
+ * creator page, where entries are submitted, with a way in for anyone not
+ * registered yet, since that page only knows registered creators.
+ *
+ * Each row goes at its own deadline, and the card with the last of them:
+ * the page is cached for a minute and a tab can stay open for days.
  */
 export function DoThisNow({
   actions,
@@ -153,7 +160,11 @@ export function DoThisNow({
   ballotWeek: number | null;
 }) {
   if (actions.length === 0) return null;
+  const lastClose = actions
+    .map((a) => a.closesAt)
+    .sort((a, b) => Date.parse(b) - Date.parse(a))[0];
   return (
+    <ShownUntil at={lastClose}>
     <section
       aria-labelledby="do-now"
       className="mt-8 overflow-hidden rounded-xl border border-line-2 bg-card"
@@ -167,12 +178,10 @@ export function DoThisNow({
       <ul className="divide-y divide-line">
         {actions.map((action) => {
           const vote = action.kind === "vote";
-          const Arrow = vote ? ArrowDown : ArrowRight;
+          const button = buttonClass("secondary", "min-w-32");
           return (
-            <li
-              key={`${action.kind}-${action.weekNo}`}
-              className="border-l-2 border-l-brand-gold px-4 py-4 sm:px-5"
-            >
+            <ShownUntil key={`${action.kind}-${action.weekNo}`} at={action.closesAt}>
+            <li className="border-l-2 border-l-brand-gold px-4 py-4 sm:px-5">
               <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
                 <div className="min-w-0 sm:flex-1">
                   <p className="text-lg font-semibold leading-snug text-pretty text-white">
@@ -200,30 +209,45 @@ export function DoThisNow({
                     </span>
                   </p>
                 </div>
-                <Link
-                  href={
-                    vote
-                      ? ballotWeek === action.weekNo
-                        ? "#shortlist"
-                        : `#week-${action.weekNo}`
-                      : monicaRoutes.me
-                  }
-                  aria-label={
-                    vote
-                      ? `Vote now on week ${action.weekNo}'s shortlist`
-                      : `Enter week ${action.weekNo} on your creator page`
-                  }
-                  className={buttonClass("secondary", "min-w-32")}
-                >
-                  {vote ? "Vote now" : "Enter"}
-                  <Arrow className="h-4 w-4" aria-hidden="true" />
-                </Link>
+                {vote ? (
+                  <a
+                    href={ballotWeek === action.weekNo ? "#shortlist" : `#week-${action.weekNo}`}
+                    aria-label={`Vote now on week ${action.weekNo}'s shortlist`}
+                    className={button}
+                  >
+                    Vote now
+                    <ArrowDown className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                ) : (
+                  <Link
+                    href={monicaRoutes.me}
+                    aria-label={`Enter week ${action.weekNo} on your creator page`}
+                    className={button}
+                  >
+                    Enter
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                )}
               </div>
+              {!vote && (
+                <p className="mt-3 text-sm text-ink-3">
+                  Not registered yet?{" "}
+                  <Link
+                    href={monicaRoutes.register}
+                    className="font-semibold text-link underline underline-offset-4 hover:text-white"
+                  >
+                    Join the campaign
+                  </Link>{" "}
+                  first.
+                </p>
+              )}
             </li>
+            </ShownUntil>
           );
         })}
       </ul>
     </section>
+    </ShownUntil>
   );
 }
 
@@ -481,6 +505,9 @@ export function WeekCard({
   /* The entries line only while entries are the news: once a vote is on,
      "entries closed on Saturday" is yesterday's. */
   const entries = week.current && week.vote === "none";
+  /* A finished week shows the awards it has and promises none it does not:
+     its header already says it is announced. */
+  const done = status.kind === "announced";
 
   return (
     <section
@@ -524,7 +551,7 @@ export function WeekCard({
       <ul className="divide-y divide-line">
         {week.cotw ? (
           <Winner w={week.cotw} />
-        ) : (
+        ) : done ? null : (
           <Pending
             title="Creator of the Week"
             line={
@@ -542,7 +569,7 @@ export function WeekCard({
           <li id="shortlist" className="scroll-mt-24">
             <Ballot entries={shortlist} state={ballotState} />
           </li>
-        ) : (
+        ) : done ? null : (
           <Pending
             title="Community Favourite"
             line={
