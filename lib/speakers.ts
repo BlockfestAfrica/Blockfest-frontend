@@ -479,7 +479,17 @@ export const SpeakersList: Speaker[] = [
     bio: "Uchenna Edeoga is an Associate at Hashed Emergent, where he works with early-stage founders building across Web3, stablecoins and AI in Africa, supporting deal sourcing, due diligence and the investment process.\n\nHe also leads Hashed Emergent's Africa Web3 Landscape Reports and founder initiatives, helping connect promising founders with capital and strategic partners.\n\nAt Blockfest Africa 2026, Uchenna joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
-
+  {
+    name: "Scott C. Eneje",
+    pronouns: "he",
+    title: "CEO, Digivo",
+    image: "/2026/speakers/scott.png",
+    expertise: ["AI & Machine Learning", "Product & Strategy", "Business & Finance"],
+    company: "Digivo",
+    twitter: "https://x.com/scottceneje",
+    bio: "Scott C. Eneje is the CEO of Digivo and a global product strategist and AI innovation leader building technology for Africa and beyond.\n\nAt Digivo, he is behind Dimma.app, an AI-powered platform that turns conversations from phone and WhatsApp into structured business intelligence.\n\nAt Blockfest Africa 2026, Scott joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
   /*
    * Returning from a previous edition. His entry up the list stays as it is,
    * so the archive and the 2025 recap keep him where they had him; this one
