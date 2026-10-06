@@ -60,6 +60,7 @@ describe("the 2026 lineup", () => {
       "Ashley Rene Olika",
       "Olamilekan Majekodunmi",
       "Salemking",
+      "Scott C. Eneje",
       "Uchenna Edeoga",
     ]);
   });
