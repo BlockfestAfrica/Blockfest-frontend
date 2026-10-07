@@ -459,7 +459,11 @@ describe("the button version", () => {
   beforeEach(async () => {
     await db.query(
       `UPDATE campaigns SET paused_at = NULL, paused_reason = NULL,
-         paused_by_admin_id = NULL, starts_at = now() + interval '2 days'
+         paused_by_admin_id = NULL, starts_at = now() + interval '2 days',
+         -- The campaign must end after it starts (campaigns_dates_ordered):
+         -- the seeded end, 17 October, is less than two days off from the
+         -- 15th, and every deploy after that would fail here.
+         ends_at = GREATEST(ends_at, now() + interval '30 days')
         WHERE slug = '${SLUG}'`,
     );
   });
