@@ -67,6 +67,14 @@ export const sponsors: Sponsor[] = [
     height: 167,
     href: "https://x.com/rovvafrica",
   },
+  {
+    name: "Hoaq",
+    tier: "Investment",
+    logo: "/2026/logos/hoaq.png",
+    width: 856,
+    height: 255,
+    href: "https://x.com/hoaqclub",
+  },
 ];
 
 /**
