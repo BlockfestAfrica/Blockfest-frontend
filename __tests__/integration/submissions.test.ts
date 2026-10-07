@@ -460,7 +460,8 @@ describe("the challenge window", () => {
 describe("the pre-launch override", () => {
   it("allows a week that has not opened yet, while the campaign has not", async () => {
     await db.query(
-      `UPDATE campaigns SET starts_at = now() + interval '2 days'
+      `UPDATE campaigns SET starts_at = now() + interval '2 days',
+                          ends_at = GREATEST(ends_at, now() + interval '30 days')
         WHERE id = '${campaignId}'`,
     );
     await notOpenYet(week2);
@@ -486,7 +487,8 @@ describe("the pre-launch override", () => {
 
   it("still refuses that week without it", async () => {
     await db.query(
-      `UPDATE campaigns SET starts_at = now() + interval '2 days'
+      `UPDATE campaigns SET starts_at = now() + interval '2 days',
+                          ends_at = GREATEST(ends_at, now() + interval '30 days')
         WHERE id = '${campaignId}'`,
     );
     await notOpenYet(week2);
@@ -525,7 +527,8 @@ describe("the pre-launch override", () => {
   it("relaxes nothing else at all", async () => {
     // Every other refusal still applies with the override set.
     await db.query(
-      `UPDATE campaigns SET starts_at = now() + interval '2 days'
+      `UPDATE campaigns SET starts_at = now() + interval '2 days',
+                          ends_at = GREATEST(ends_at, now() + interval '30 days')
         WHERE id = '${campaignId}'`,
     );
     await notOpenYet(week2);
