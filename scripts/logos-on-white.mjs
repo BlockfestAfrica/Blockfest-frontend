@@ -87,6 +87,7 @@ const LOGOS = [
   { year: 2026, from: "2026/sponsors/Monica.png", to: "monica.png" },
   { year: 2026, from: "2026/sponsors/rovv.png", to: "rovv.png" },
   { year: 2026, from: "2026/sponsors/hoaq.png", to: "hoaq.png" },
+  { year: 2026, from: "2026/sponsors/reeva.PNG", to: "reeva.PNG" },
   { year: 2026, from: "2026/media/allconf.png", to: "allconfsbot.png" },
   { year: 2026, from: "2026/media/BMN.png", to: "blockchain-marketing-ninja.png" },
   { year: 2026, from: "2026/media/BSN.png", to: "blockchain-staffing-ninja.png" },
