@@ -12,7 +12,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DoThisNow, WeekCard, WeekStrip } from "@/components/campaigns/weekly-winners";
 import { monicaStages } from "@/lib/campaigns";
 import { actionsNow, weekTimeline, winnersByWeek, type TimelineWeek } from "@/lib/winner-weeks";
@@ -280,6 +280,14 @@ describe("the index of every week", () => {
 describe("do this now", () => {
   const at = "2026-10-05T12:00:00+01:00";
   const t = () => timelineAt(at, [W1_COTW, W1_CF, W2_COTW], [R1, R2]);
+  /* The rows go at their deadlines by the browser's clock, so the clock is
+     the scenario's, not the machine's: without this, these passed on the
+     Monday they were written and failed every deploy once the week 2 vote
+     had really closed. */
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(at));
+  });
 
   it("lists the vote and the entry, soonest first, each with its deadline and one button", () => {
     render(<DoThisNow actions={actionsNow(t())} ballotWeek={2} />);

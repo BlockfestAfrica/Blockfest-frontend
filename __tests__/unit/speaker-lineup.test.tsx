@@ -57,7 +57,9 @@ describe("the 2026 lineup", () => {
     ]);
     // Not in the team's list: after it, not dropped.
     expect(lineup.slice(9).map((s) => s.name).sort()).toEqual([
+      "Akitoye Balogun",
       "Ashley Rene Olika",
+      "Ian Issa",
       "Olamilekan Majekodunmi",
       "Salemking",
       "Scott C. Eneje",

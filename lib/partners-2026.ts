@@ -75,6 +75,14 @@ export const sponsors: Sponsor[] = [
     height: 255,
     href: "https://x.com/hoaqclub",
   },
+  {
+    name: "Revva",
+    tier: "Gaming",
+    logo: "/2026/logos/reeva.PNG",
+    width: 528,
+    height: 154,
+    href: "https://x.com/myrevva",
+  },
 ];
 
 /**

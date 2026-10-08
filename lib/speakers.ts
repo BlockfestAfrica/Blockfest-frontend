@@ -490,6 +490,29 @@ export const SpeakersList: Speaker[] = [
     bio: "Scott C. Eneje is the CEO of Digivo and a global product strategist and AI innovation leader building technology for Africa and beyond.\n\nAt Digivo, he is behind Dimma.app, an AI-powered platform that turns conversations from phone and WhatsApp into structured business intelligence.\n\nAt Blockfest Africa 2026, Scott joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Ian Issa",
+    pronouns: "he",
+    title: "Founder & CEO, HashNet",
+    image: "/2026/speakers/ian.jpeg",
+    expertise: ["Web3 & Blockchain", "Entrepreneurship", "Business & Finance"],
+    company: "HashNet",
+    twitter: "https://x.com/issadefiworld",
+    bio: "Ian Issa is Founder & CEO of HashNet. Since entering the digital asset space in 2017, he has founded three companies with two successful exits across machine learning, DeFi and blockchain infrastructure.\n\nToday, he leads HashNet Infrastructure, a Dubai-based cryptocurrency mining company focused on building resilient infrastructure.\n\nAt Blockfest Africa 2026, Ian joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
+  {
+    name: "Akitoye Balogun",
+    pronouns: "he",
+    title: "CEO, Muva Networks",
+    image: "/2026/speakers/balogun.jpg",
+    expertise: ["Fintech", "Entrepreneurship", "Business & Finance"],
+    company: "Muva Networks",
+    twitter: "https://x.com/ajebutter22",
+    bio: "Akitoye Balogun is an entrepreneur and fintech executive with experience in enterprise technology, cross-border payments and digital assets.\n\nAt Muva Networks, he is building infrastructure that enables African businesses to move money seamlessly across global markets.\n\nA former Cisco professional and creative entrepreneur, he brings together technology, business and creativity in everything he builds.\n\nAt Blockfest Africa 2026, Akitoye joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
+
   /*
    * Returning from a previous edition. His entry up the list stays as it is,
    * so the archive and the 2025 recap keep him where they had him; this one
