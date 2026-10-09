@@ -43,11 +43,13 @@ photo is never uploaded.
 - **A sponsor or partner**: add a line to `lib/partners-2026.ts`. It appears
   on the picture with no change here: the headline sponsor centred, other
   sponsors either side (and, once the sides are full, on a line under it),
-  then government ("Endorsed by"), ecosystem, community and media partners
-  in a smaller second row, each kind in its own labelled column.
+  with ecosystem partners after them in the same row and no label. Then, in
+  a smaller second row, the government under "Endorsed by", and community
+  and media partners as one list of logos with no heading.
 - **The days and venues**: `publicDays` on `blockfest2026Lagos` in
-  `lib/events.ts`. Public days only; the private mixer on the 24th never goes
-  there.
+  `lib/events.ts`, drawn as stops on one line; `short` is the venue's name
+  as that line says it. Public days only; the private mixer on the 24th
+  never goes there.
 - **The mark**: `DP_LOGO_SRC` in `lib/dp.ts`. The drawing reads the new file's
   own proportions.
 - **Role wording or colours**: `ROLE_COPY` in `lib/dp.ts`.

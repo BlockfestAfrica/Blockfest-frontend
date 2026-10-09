@@ -146,19 +146,24 @@ function calendarDay(iso: string): { year: number; month: number; day: number } 
 export const DP_DAYS: readonly PublicDay[] = EVENT.publicDays ?? [];
 
 export interface DayLine {
-  /** "22 OCT 2026" */
+  /** "22 OCT" */
   when: string;
-  /** "IBIS HOTEL, LEKKI PHASE 1" */
+  /** "IBIS HOTEL, LEKKI" */
   where: string;
 }
 
-/** One line per public day, each with its own venue, as the picture sets them. */
+/**
+ * The public days as stops on one line, each with its venue's short name:
+ * "22 OCT  IBIS HOTEL, LEKKI", "23 OCT  NATIONAL ART THEATRE". The owner
+ * wanted both days on a single line (9 October); the year and the fuller
+ * addresses are on the page and in the share text.
+ */
 export function publicDayLines(days: readonly PublicDay[] = DP_DAYS): DayLine[] {
   return days.map((d) => {
-    const { year, month, day } = calendarDay(d.date);
+    const { month, day } = calendarDay(d.date);
     return {
-      when: `${day} ${MONTHS[month].slice(0, 3).toUpperCase()} ${year}`,
-      where: `${d.venue}, ${d.area}`.toUpperCase(),
+      when: `${day} ${MONTHS[month].slice(0, 3).toUpperCase()}`,
+      where: d.short.toUpperCase(),
     };
   });
 }
@@ -482,7 +487,7 @@ export interface FooterLogo {
 
 export interface FooterGroup {
   kind: PartnerKind;
-  /** The small line over the group: "ENDORSED BY", "MEDIA PARTNERS". */
+  /** The small line over the group: "ENDORSED BY", or empty for none. */
   label: string;
   logos: FooterLogo[];
 }
@@ -490,24 +495,21 @@ export interface FooterGroup {
 export interface FooterTiers {
   /** Centred in the first row, the one logo a circle crop keeps. */
   headline: FooterLogo | null;
-  /** Either side of the headline, in their listed order. */
+  /** Either side of the headline, in their listed order, ecosystem
+      partners last. */
   sponsors: FooterLogo[];
   /** The smaller second row, in this order of kinds. */
   groups: FooterGroup[];
 }
 
-const GROUP_ORDER: readonly PartnerKind[] = [
-  "Government",
-  "Ecosystem",
-  "Community",
-  "Media",
-];
-
-function groupLabel(kind: PartnerKind, count: number): string {
-  if (kind === "Government") return "ENDORSED BY";
-  const plural = count === 1 ? "PARTNER" : "PARTNERS";
-  return `${kind.toUpperCase()} ${plural}`;
-}
+/* Ecosystem partners are not a group of their own: they sit in the
+   sponsors' row, after the sponsors (the owner, 9 October: Hashed Emergent
+   beside Hoaq, with no label). Only the government's endorsement is named;
+   every other partner is its logo alone, community before media, in one
+   unlabelled list (the owner, 9 October: no "Media partners" heading). One
+   list, so an unnamed logo can never be stacked under "ENDORSED BY" and
+   read as an endorser. */
+const UNNAMED_ORDER: readonly PartnerKind[] = ["Community", "Media"];
 
 /**
  * Who goes on the picture, straight from the partners data: the headline
@@ -531,11 +533,24 @@ export function footerTiers(
   });
   return {
     headline: data.headline ? toLogo(data.headline) : null,
-    sponsors: data.sponsors.map(toLogo),
-    groups: GROUP_ORDER.map((kind) => {
-      const logos = data.partners.filter((p) => p.kind === kind).map(toLogo);
-      return { kind, label: groupLabel(kind, logos.length), logos };
-    }).filter((g) => g.logos.length > 0),
+    sponsors: [
+      ...data.sponsors,
+      ...data.partners.filter((p) => p.kind === "Ecosystem"),
+    ].map(toLogo),
+    groups: [
+      {
+        kind: "Government" as const,
+        label: "ENDORSED BY",
+        logos: data.partners.filter((p) => p.kind === "Government").map(toLogo),
+      },
+      {
+        kind: "Media" as const,
+        label: "",
+        logos: UNNAMED_ORDER.flatMap((kind) =>
+          data.partners.filter((p) => p.kind === kind).map(toLogo),
+        ),
+      },
+    ].filter((g) => g.logos.length > 0),
   };
 }
 
@@ -834,6 +849,12 @@ function partnerBands(
       if (cols[cols.length - 1].cells[0].lines.length <= FOOTER.maxLines) return [cols];
     }
   }
+  /* The endorsement beside one long unlabelled list: keep the columns and
+     let the list take another line, rather than flow it under the label. */
+  if (groups.length <= 2 && !groups[groups.length - 1].label) {
+    const cols = planColumns(groups, labelW, maxLineW, COLUMN_MIN_BASE, false);
+    if (cols) return [cols];
+  }
   return flowBands(groups, labelW, maxLineW);
 }
 
@@ -995,7 +1016,9 @@ export function layoutFooter(
       let cy = y;
       col.cells.forEach((cell, k) => {
         if (k > 0) cy += F.lineGap;
-        out.labels.push({ text: groups[cell.group].label, cx: x + col.w / 2, baseline: cy + F.groupLabelCap });
+        if (groups[cell.group].label) {
+          out.labels.push({ text: groups[cell.group].label, cx: x + col.w / 2, baseline: cy + F.groupLabelCap });
+        }
         cy += LABEL_BAND;
         if (k === 0) cy += (h - columnHeight(col)) / 2;
         for (const line of cell.lines) {

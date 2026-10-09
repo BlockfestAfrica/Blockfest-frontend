@@ -43,6 +43,9 @@ export interface PublicDay {
   venue: string;
   /** The part of town, so a Lagosian can place it: "Lekki Phase 1". */
   area: string;
+  /** The venue as a one-line picture says it, short enough to sit beside
+      the other day's: "Ibis Hotel, Lekki". */
+  short: string;
 }
 
 // A programming track for an edition (e.g. Lagos '26 tracks).
@@ -247,8 +250,8 @@ export const blockfest2026Lagos: BlockfestEvent = {
   // The 24th is the Mixer: private and invite-only, so it and its venue stay
   // off everything public. date.end still runs to the 24th on purpose.
   publicDays: [
-    { date: "2026-10-22", venue: "Ibis Hotel", area: "Lekki Phase 1" },
-    { date: "2026-10-23", venue: "National Art Theatre", area: "Iganmu" },
+    { date: "2026-10-22", venue: "Ibis Hotel", area: "Lekki Phase 1", short: "Ibis Hotel, Lekki" },
+    { date: "2026-10-23", venue: "National Art Theatre", area: "Iganmu", short: "National Art Theatre" },
   ],
 };
 
