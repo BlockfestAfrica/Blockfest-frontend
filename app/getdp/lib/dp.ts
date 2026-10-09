@@ -1005,11 +1005,43 @@ export function layoutFooter(
     (a, band) => a + Math.max(...band.map((col) => col.cells.reduce((n, c) => n + c.lines.length, 0))),
     0,
   );
+  /*
+   * The usual row two: the endorsement, then one unlabelled list. The
+   * endorsement sits under the first sponsor on the left (Hashed Emergent
+   * today) and the list spreads to the last sponsor's right edge, each line
+   * spaced across that width, so the row lines up with the one above
+   * instead of huddling in the middle (the owner, 9 October). Heights are
+   * untouched: only where things sit across the row.
+   */
+  // The row beside the headline (not a spill line under it).
+  const lead0 = out.sponsors[0];
+  const firstRow = lead0
+    ? out.sponsors.filter((s) => Math.abs(s.y + s.h / 2 - (lead0.y + lead0.h / 2)) < 1)
+    : [];
+  const anchored =
+    bands.length === 1 &&
+    bands[0].length === 2 &&
+    !!groups[bands[0][0].cells[0].group].label &&
+    !groups[bands[0][1].cells[0].group].label &&
+    firstRow.length >= 2;
+  const span = anchored
+    ? (() => {
+        const leftmost = firstRow.reduce((a, b) => (b.x < a.x ? b : a));
+        const right = Math.max(...firstRow.map((s) => s.x + s.w));
+        const [head, list] = bands[0];
+        const headX = Math.max(F.edge, leftmost.x + leftmost.w / 2 - head.w / 2);
+        const listX = headX + head.w + F.groupGap;
+        const listW = Math.min(right, S - F.edge) - listX;
+        return listW >= list.w ? { headX, listX, listW } : null;
+      })()
+    : null;
+
   bands.forEach((band, bi) => {
     const h = bandH[bi];
     const totalW = band.reduce((a, c) => a + c.w, 0) + F.groupGap * Math.max(0, band.length - 1);
-    let x = (S - totalW) / 2;
+    let x = span ? span.headX : (S - totalW) / 2;
     band.forEach((col, ci) => {
+      const colW = span && ci === 1 ? span.listW : col.w;
       // Every column's first label sits on the band's top line; what is
       // under it is centred in the rest of the band, so a kind with one
       // line sits level with the middle of a kind with two.
@@ -1017,22 +1049,29 @@ export function layoutFooter(
       col.cells.forEach((cell, k) => {
         if (k > 0) cy += F.lineGap;
         if (groups[cell.group].label) {
-          out.labels.push({ text: groups[cell.group].label, cx: x + col.w / 2, baseline: cy + F.groupLabelCap });
+          out.labels.push({ text: groups[cell.group].label, cx: x + colW / 2, baseline: cy + F.groupLabelCap });
         }
         cy += LABEL_BAND;
         if (k === 0) cy += (h - columnHeight(col)) / 2;
         for (const line of cell.lines) {
           const lh = rowHeight(line);
-          let lx = x + (col.w - rowWidth(line, F.logoGap)) / 2;
+          const inked = line.reduce((a, it) => a + it.w, 0);
+          // Spread across the list's width when anchored; never wider apart
+          // than four ordinary gaps, so a short last line does not scatter.
+          const gap =
+            span && ci === 1 && line.length > 1
+              ? Math.min((colW - inked) / (line.length - 1), F.logoGap * 4)
+              : F.logoGap;
+          let lx = x + (colW - (inked + gap * (line.length - 1))) / 2;
           for (const it of line) {
             out.partners.push({ logo: it.logo, x: lx, y: cy + (lh - it.h) / 2, w: it.w, h: it.h });
-            lx += it.w + F.logoGap;
+            lx += it.w + gap;
           }
           cy += lh + F.lineGap;
         }
         cy -= F.lineGap;
       });
-      x += col.w;
+      x += colW;
       if (ci < band.length - 1) {
         out.separators.push({ x: x + F.groupGap / 2, y1: y, y2: y + h });
         x += F.groupGap;

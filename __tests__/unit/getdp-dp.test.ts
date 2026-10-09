@@ -278,6 +278,36 @@ describe("the footer, from lib/partners-2026", () => {
     expect(footer.labels.map((l) => l.text)).not.toContain("ECOSYSTEM PARTNER");
   });
 
+  it("sets the endorsement under the first sponsor on the left and spreads the media to the last sponsor's edge", () => {
+    // The owner, 9 October: "Endorsed by" lined up under Hashed Emergent,
+    // the media logos spread out rather than huddled in the middle.
+    const lead = footer.sponsors[0];
+    const row = footer.sponsors.filter((s) => Math.abs(s.y + s.h / 2 - (lead.y + lead.h / 2)) < 1);
+    const leftmost = row.reduce((a, b) => (b.x < a.x ? b : a));
+    expect(leftmost.logo.name).toBe("Hashed Emergent");
+    const endorsed = footer.labels.find((l) => l.text === "ENDORSED BY")!;
+    expect(endorsed.cx).toBeCloseTo(leftmost.x + leftmost.w / 2, 3);
+    const seal = footer.partners.find((p) => p.logo.name === "Lagos State Government")!;
+    expect(seal.x + seal.w / 2).toBeCloseTo(leftmost.x + leftmost.w / 2, 3);
+    const rightEdge = Math.max(...row.map((s) => s.x + s.w));
+    const media = footer.partners.filter((p) => p.logo.name !== "Lagos State Government");
+    const lines = new Map<number, typeof media>();
+    for (const p of media) {
+      const key = Math.round(p.y + p.h / 2);
+      const near = [...lines.keys()].find((k) => Math.abs(k - key) < 30) ?? key;
+      lines.set(near, [...(lines.get(near) ?? []), p]);
+    }
+    expect(lines.size).toBe(2);
+    const sep = footer.separators[0].x;
+    for (const line of lines.values()) {
+      const first = line.reduce((a, b) => (b.x < a.x ? b : a));
+      const last = line.reduce((a, b) => (b.x + b.w > a.x + a.w ? b : a));
+      expect(first.x).toBeGreaterThan(sep);
+      // Each line reaches the sponsors' right edge (spread, not centred).
+      expect(last.x + last.w).toBeCloseTo(rightEdge, 0);
+    }
+  });
+
   it("endorses with Lagos State, then every media partner with no heading", () => {
     expect(tiers.groups.map((g) => [g.kind, g.label])).toEqual([
       ["Government", "ENDORSED BY"],

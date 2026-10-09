@@ -284,9 +284,11 @@ each piece lives.
   Ecosystem partners join that first row after the sponsors, with no label
   (the owner, 9 October: Hashed Emergent beside Hoaq). Under a hairline, a
   smaller second row: "Endorsed by" over Lagos State's seal in a column of
-  its own, then every other partner (community, then media) as one
-  unlabelled list wrapping to two lines (the owner: no "Media partners"
-  heading). One list, so no unnamed logo is ever stacked under "Endorsed
+  its own, centred under the first sponsor on the left (Hashed Emergent),
+  then every other partner (community, then media) as one unlabelled list
+  wrapping to two lines and spread across to the last sponsor's right edge,
+  so the row lines up with the one above (the owner, 9 October: no "Media
+  partners" heading; endorsement on the left, media spread, band no taller). One list, so no unnamed logo is ever stacked under "Endorsed
   by"; none drops below 30px tall on the 2160 post.
   Logos are sized by area, as on the home wall, so a seal and a wordmark
   weigh the same.
