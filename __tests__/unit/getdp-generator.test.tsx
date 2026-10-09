@@ -1036,7 +1036,7 @@ describe("sharing on a phone", () => {
       "Post on Instagram": /^Pick Instagram \(Feed or Stories\)/,
       "Post on TikTok": /Choose Save Image, then post it from TikTok/,
       "Post on LinkedIn": /LinkedIn leaves it out/,
-      "Send on WhatsApp": /a chat, or My status/,
+      "Send on WhatsApp": /then a chat or My status/,
     };
     let n = 0;
     for (const [label, tip] of Object.entries(tips)) {
@@ -1051,6 +1051,70 @@ describe("sharing on a phone", () => {
       await settle();
     }
     expect(writeText).toHaveBeenCalledTimes(5);
+  });
+
+  it("posts to WhatsApp Status through the share list, saying to pick My status", async () => {
+    setDevice({ ua: UA.iphone, coarse: true, files: true });
+    await mount();
+    const status = () => button("Post to WhatsApp Status");
+    expect(status().disabled).toBe(true);
+    expect(
+      screen.getByText("Opens your share list with your DP: choose WhatsApp, then My status at the top."),
+    ).toBeTruthy();
+    expect(status().getAttribute("aria-describedby")).toBe("dp-whatsapp-status-how");
+
+    fireEvent.change(nameInput(), { target: { value: "Ada Obi" } });
+    await addPhoto();
+    await waitFor(() => expect(status().disabled).toBe(false));
+    await settle(400);
+
+    // A mark's tip is about another app, so it goes when Status is tapped.
+    fireEvent.click(button("Send on WhatsApp"));
+    await settle();
+    expect(screen.getByText(/then a chat or My status/)).toBeTruthy();
+    share.mockClear();
+    writeText.mockClear();
+
+    fireEvent.click(status());
+    // No await: the share list opened in the same tap, with the picture alone.
+    expect(share).toHaveBeenCalledTimes(1);
+    const data = share.mock.calls[0][0];
+    expect(Object.keys(data)).toEqual(["files"]);
+    expect(data.files![0].type).toBe("image/jpeg");
+    expect(writeText).toHaveBeenCalledWith(shareText("attendee"));
+    expect(button("Send on WhatsApp").getAttribute("aria-pressed")).toBe("false");
+    expect(screen.queryByText(/then a chat or My status/)).toBeNull();
+    await settle();
+    cleanup();
+
+    // Android hands WhatsApp the caption beside the picture.
+    setDevice({ ua: UA.android, coarse: true, files: true });
+    share.mockClear();
+    await readyToShare("Post to WhatsApp Status");
+    fireEvent.click(button("Post to WhatsApp Status"));
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(share.mock.calls[0][0].text).toBe(shareText("attendee"));
+    await settle();
+  });
+
+  it("saves the DP for WhatsApp Status where the share list cannot take it, once per picture", async () => {
+    setDevice({ ua: UA.android, coarse: true, files: false });
+    await readyToShare("Download PNG");
+    expect(
+      screen.getByText(
+        "Saves your DP and copies your caption. Then in WhatsApp, open Updates and add it to My status.",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(button("Post to WhatsApp Status"));
+    await settle();
+    expect(anchorClick).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith(shareText("attendee"));
+    expect(live().textContent).toBe("Downloading blockfest-2026-dp-ada-obi.png. Look for it in Downloads.");
+    fireEvent.click(button("Post to WhatsApp Status"));
+    await settle();
+    expect(anchorClick).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledTimes(2);
+    expect(share).not.toHaveBeenCalled();
   });
 
   it("saves to Photos through the share list on an iPhone, with the file alone", async () => {
@@ -1124,6 +1188,9 @@ describe("saving on a desktop", () => {
     expect(live().textContent).toBe("Downloading blockfest-2026-dp-ada-obi.png.");
     expect(screen.queryByText(/Saved as/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Share…" })).toBeNull();
+    // Status is posted from the phone app.
+    expect(screen.queryByRole("button", { name: "Post to WhatsApp Status" })).toBeNull();
+    expect(document.body.textContent).not.toContain("My status");
   });
 
   it("makes each mark a real link that also saves the DP and copies the caption", async () => {
@@ -1167,6 +1234,7 @@ describe("saving on a desktop", () => {
     expect(share).toHaveBeenCalledTimes(1);
     expect(share.mock.calls[0][0]).toEqual({ files: [expect.any(File)] });
     expect(share.mock.calls[0][0].files![0].type).toBe("image/png");
+    expect(screen.queryByRole("button", { name: "Post to WhatsApp Status" })).toBeNull();
     await settle();
   });
 });
@@ -1221,6 +1289,31 @@ describe("in an app's browser", () => {
     const dialog = await screen.findByRole("dialog", { name: "Save your DP" });
     expect(dialog.textContent).toContain("Then open LinkedIn and post it. Your caption is copied.");
     expect(writeText).toHaveBeenCalledWith(shareText("attendee"));
+  });
+
+  it("sends WhatsApp Status to the press-and-hold picture, saying where Status is in WhatsApp", async () => {
+    setDevice({ ua: UA.instagramAndroid, coarse: true });
+    await readyToShare("Save image");
+    expect(screen.getByText("Save your DP, then in WhatsApp, open Updates and add it to My status.")).toBeTruthy();
+    fireEvent.click(button("Post to WhatsApp Status"));
+    const dialog = await screen.findByRole("dialog", { name: "Save your DP" });
+    expect(dialog.textContent).toContain("Press and hold the picture, then choose Download image.");
+    expect(dialog.textContent).toContain(
+      "Then open WhatsApp, go to Updates and add it to My status. Your caption is copied.",
+    );
+    expect(writeText).toHaveBeenCalledWith(shareText("attendee"));
+    expect(share).not.toHaveBeenCalled();
+    expect(anchorClick).not.toHaveBeenCalled();
+
+    fireEvent.click(button("Done"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    // A refused copy: the picture's line no longer says it is copied.
+    writeText.mockRejectedValueOnce(new DOMException("no", "NotAllowedError"));
+    fireEvent.click(button("Post to WhatsApp Status"));
+    const again = await screen.findByRole("dialog", { name: "Save your DP" });
+    await waitFor(() => expect(again.textContent).not.toContain("Your caption is copied."));
+    expect(again.textContent).toContain("Then open WhatsApp, go to Updates and add it to My status.");
+    expect(live().textContent).toBe("Couldn't copy your caption. Copy it from the box below.");
   });
 
   it("never says the caption is copied when the browser refused the copy", async () => {

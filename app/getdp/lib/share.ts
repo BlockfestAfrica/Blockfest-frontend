@@ -232,7 +232,7 @@ const TIPS_SHEET: Record<Platform, string> = {
   instagram: "Pick Instagram (Feed or Stories), then paste your caption.",
   tiktok: "",
   linkedin: "Pick LinkedIn, then paste your caption: LinkedIn leaves it out.",
-  whatsapp: "Pick WhatsApp: a chat, or My status. Paste your caption if it's missing.",
+  whatsapp: "Pick WhatsApp, then a chat or My status. Paste your caption if it's missing.",
 };
 const TIKTOK_SHEET_IOS = "Pick TikTok. Not in the list? Choose Save Image, then post it from TikTok with +.";
 const TIKTOK_SHEET_ANDROID = "Pick TikTok. Not in the list? Use Download PNG, then post it from TikTok with +.";
@@ -292,6 +292,39 @@ export function platformAction(
       return { kind: "hold", download: false, tip: COPY.holdPlatform(PLATFORM_NAME[p]) };
     case "desktop":
       return { kind: "link", href: webHref(p, caption), download: true, tip: TIPS_DESKTOP[p](fileName) };
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* WhatsApp Status                                                    */
+/* ------------------------------------------------------------------ */
+
+export interface StatusAction {
+  /**
+   * sheet: open the share list with the file, where WhatsApp offers My
+   * status. save: save and copy. hold: copy, then the press-and-hold picture.
+   */
+  kind: "sheet" | "save" | "hold";
+  /** Said under the button, before it is tapped. */
+  how: string;
+}
+
+/**
+ * The WhatsApp Status button, on a phone only: Status is posted from the
+ * phone app, and no link opens it. The share list is the one way to hand
+ * the picture to it; elsewhere the page saves the DP and says where Status
+ * is in WhatsApp.
+ */
+export function statusAction(env: ShareEnv): StatusAction | null {
+  switch (marksClass(env)) {
+    case "sheet":
+      return { kind: "sheet", how: COPY.statusSheet };
+    case "download":
+      return { kind: "save", how: COPY.statusSave };
+    case "hold":
+      return { kind: "hold", how: COPY.statusHold };
+    case "desktop":
+      return null;
   }
 }
 
@@ -472,6 +505,16 @@ export const COPY = {
       case "hold":
         return "Save your DP first, then post it in the app. Each copies your caption.";
     }
+  },
+
+  statusLabel: "Post to WhatsApp Status",
+  statusSheet: "Opens your share list with your DP: choose WhatsApp, then My status at the top.",
+  statusSave: "Saves your DP and copies your caption. Then in WhatsApp, open Updates and add it to My status.",
+  statusHold: "Save your DP, then in WhatsApp, open Updates and add it to My status.",
+  holdStatus(copied = true): string {
+    return copied
+      ? "Then open WhatsApp, go to Updates and add it to My status. Your caption is copied."
+      : "Then open WhatsApp, go to Updates and add it to My status.";
   },
 
   captionLabel: "Your caption",
