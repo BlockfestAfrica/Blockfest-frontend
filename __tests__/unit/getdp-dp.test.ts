@@ -147,10 +147,11 @@ describe("the public days", () => {
     .map((d) => `${d.when} ${d.where}`)
     .join(" | ");
 
-  it("are the 22nd at Ibis Hotel, Lekki and the 23rd at the National Art Theatre", () => {
+  it("are the 22nd at Ibis Hotel, Lekki and the 23rd at the National Art Theatre, short enough for one line", () => {
+    // The owner, 9 October: both days on a single line, shortened.
     expect(publicDayLines()).toEqual([
-      { when: "22 OCT 2026", where: "IBIS HOTEL, LEKKI PHASE 1" },
-      { when: "23 OCT 2026", where: "NATIONAL ART THEATRE, IGANMU" },
+      { when: "22 OCT", where: "IBIS HOTEL, LEKKI" },
+      { when: "23 OCT", where: "NATIONAL ART THEATRE" },
     ]);
     expect(publicDaysRange()).toBe("22–23 October");
   });
@@ -165,8 +166,8 @@ describe("the public days", () => {
   it("reads a range across a month end", () => {
     expect(
       publicDaysRange([
-        { date: "2026-10-31", venue: "A", area: "B" },
-        { date: "2026-11-01", venue: "C", area: "D" },
+        { date: "2026-10-31", venue: "A", area: "B", short: "A" },
+        { date: "2026-11-01", venue: "C", area: "D", short: "C" },
       ]),
     ).toBe("31 October – 1 November");
   });
@@ -256,32 +257,41 @@ describe("the footer, from lib/partners-2026", () => {
     expect(footer.headlineLabel?.text).toBe("HEADLINE SPONSOR");
   });
 
-  it("draws every sponsor, in the listed order", () => {
-    expect(tiers.sponsors.map((s) => s.name)).toEqual(sponsors.map((s) => s.name));
+  it("draws every sponsor, in the listed order, then the ecosystem partners in the same row", () => {
+    const ecosystem = partners.filter((p) => p.kind === "Ecosystem").map((p) => p.name);
+    expect(ecosystem).toEqual(["Hashed Emergent"]);
+    expect(tiers.sponsors.map((s) => s.name)).toEqual([...sponsors.map((s) => s.name), ...ecosystem]);
     expect(footer.sponsors.map((s) => s.logo.name).sort()).toEqual(
-      ["Monica", ...sponsors.map((s) => s.name)].sort(),
+      ["Monica", ...sponsors.map((s) => s.name), ...ecosystem].sort(),
     );
   });
 
-  it("endorses with Lagos State, then the ecosystem partners, then every media partner", () => {
+  it("sets Hashed Emergent beside Hoaq in the sponsors' row, with no label of its own", () => {
+    // The owner, 9 October: Hashed Emergent sits beside Hoaq.
+    const row = footer.sponsors.slice(1).sort((a, b) => a.x - b.x).map((s) => s.logo.name);
+    const at = row.indexOf("Hashed Emergent");
+    expect(at).toBeGreaterThanOrEqual(0);
+    expect([row[at - 1], row[at + 1]]).toContain("Hoaq");
+    const hashed = footer.sponsors.find((s) => s.logo.name === "Hashed Emergent")!;
+    const hoaq = footer.sponsors.find((s) => s.logo.name === "Hoaq")!;
+    expect(hashed.y + hashed.h / 2).toBeCloseTo(hoaq.y + hoaq.h / 2, 6);
+    expect(footer.labels.map((l) => l.text)).not.toContain("ECOSYSTEM PARTNER");
+  });
+
+  it("endorses with Lagos State, then every media partner with no heading", () => {
     expect(tiers.groups.map((g) => [g.kind, g.label])).toEqual([
       ["Government", "ENDORSED BY"],
-      ["Ecosystem", "ECOSYSTEM PARTNER"],
-      ["Media", "MEDIA PARTNERS"],
+      ["Media", ""],
     ]);
     expect(tiers.groups[0].logos.map((l) => l.name)).toEqual(["Lagos State Government"]);
-    expect(tiers.groups[1].logos.map((l) => l.name)).toEqual(["Hashed Emergent"]);
-    expect(tiers.groups[2].logos.map((l) => l.name)).toEqual(
+    expect(tiers.groups[1].logos.map((l) => l.name)).toEqual(
       partners.filter((p) => p.kind === "Media").map((p) => p.name),
     );
     expect(footer.partners.map((p) => p.logo.name)).toEqual(
       tiers.groups.flatMap((g) => g.logos.map((l) => l.name)),
     );
-    expect(footer.labels.map((l) => l.text)).toEqual([
-      "ENDORSED BY",
-      "ECOSYSTEM PARTNER",
-      "MEDIA PARTNERS",
-    ]);
+    // The owner, 9 October: no "Media partners" heading, just the logos.
+    expect(footer.labels.map((l) => l.text)).toEqual(["ENDORSED BY"]);
   });
 
   it("keeps every partner logo legible on the 2160 post, in at most two lines", () => {
@@ -316,7 +326,8 @@ describe("the footer, from lib/partners-2026", () => {
     const laid = layoutFooter(more, measureLabel);
     expect(laid.sponsors.map((s) => s.logo.name)).toContain("Newco");
     expect(laid.partners.map((p) => p.logo.name)).toContain("Lagos Builders");
-    expect(laid.labels.map((l) => l.text)).toContain("COMMUNITY PARTNER");
+    // A community partner joins the unlabelled logos, like the media.
+    expect(laid.labels.map((l) => l.text)).toEqual(["ENDORSED BY"]);
     expect(laid.sponsors[0].logo.name).toBe("Monica");
     for (const s of laid.sponsors) {
       expect(s.x).toBeGreaterThanOrEqual(FOOTER.edge - 1e-9);
@@ -339,7 +350,8 @@ describe("the footer, from lib/partners-2026", () => {
       footerTiers({ headline, sponsors: [...sponsors, ...extra], partners }),
       measureLabel,
     );
-    expect(laid.sponsors).toHaveLength(1 + sponsors.length + extra.length);
+    const ecosystem = partners.filter((p) => p.kind === "Ecosystem").length;
+    expect(laid.sponsors).toHaveLength(1 + sponsors.length + extra.length + ecosystem);
     for (const s of laid.sponsors) {
       expect(s.h).toBeGreaterThanOrEqual(FOOTER.sponsorMinH - 1e-9);
       expect(s.h).toBeGreaterThanOrEqual(FOOTER.partnerMinH - 1e-9);
@@ -360,7 +372,7 @@ describe("the footer, from lib/partners-2026", () => {
     expect(laid.top).toBeLessThan(footer.top);
   });
 
-  it("puts every partner logo under its own kind's label, however the lines wrap", () => {
+  it("puts every partner logo under its own kind's label, and never an unlabelled one under another's, however the lines wrap", () => {
     const check = (laid: ReturnType<typeof layoutFooter>, groups: FooterTiers["groups"]) => {
       const kindOf = new Map(groups.flatMap((g) => g.logos.map((l) => [l.name, g.label] as const)));
       const eps = 1e-6;
@@ -375,7 +387,8 @@ describe("the footer, from lib/partners-2026", () => {
         const [under] = laid.labels
           .filter((l) => l.baseline < p.y && l.cx > left && l.cx < right)
           .sort((a, b) => b.baseline - a.baseline || Math.abs(a.cx - cx) - Math.abs(b.cx - cx));
-        expect(under?.text, p.logo.name).toBe(kindOf.get(p.logo.name));
+        // An unlabelled kind (the media) must not read as "ENDORSED BY".
+        expect(under?.text ?? "", p.logo.name).toBe(kindOf.get(p.logo.name));
       }
     };
     check(footer, tiers.groups);

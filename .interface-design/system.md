@@ -254,7 +254,7 @@ each piece lives.
   mirror-symmetric left to right, never a pinwheel. The mark and the theme
   line on top; under the ring the role pill (attending blue, speaking pink,
   volunteering teal, partner yellow; navy text on teal and yellow), the name
-  in Bebas Neue, then the days in Gotham. No crosshair lines.
+  in Bebas Neue, then the days in Gotham on one line. No crosshair lines.
 - The name is set entirely in Bebas (app/getdp/lib/letters.ts): accents
   recomposed, a dot below (or the vertical line below some Yoruba keyboards
   type) drawn as Bebas's own full stop, a mark the face lacks borrowed from
@@ -266,20 +266,26 @@ each piece lives.
   breaks into the most even two lines only when two lines come out clearly
   larger in the height the picture has; otherwise it stays on one.
 - The public-days rule: the picture names each public day with its own
-  venue (22 Oct, Ibis Hotel, Lekki Phase 1; 23 Oct, National Art Theatre,
-  Iganmu), read from `publicDays` in lib/events.ts. The 24th is a private,
+  venue, read from `publicDays` in lib/events.ts. The 24th is a private,
   invite-only mixer and never appears, nor its venue, though the site's
-  date range still runs to the 24th.
+  date range still runs to the 24th. Both days sit on ONE line (the owner,
+  9 October, found two lines too long): each day is a stop on a short route,
+  a white station ring in the role's colour, the date in white, the venue's
+  short name (`short`) quieter, and a stretch of line in the role's colour
+  between the stops: "22 OCT IBIS HOTEL, LEKKI ── 23 OCT NATIONAL ART
+  THEATRE". It shrinks only to stay inside the circle crop's width.
 - Footer tiers, on a light paper band, all from lib/partners-2026.ts so a
   new line there is a new logo: first row, "Headline sponsor" over Monica
   dead centre and every other sponsor in two wings either side. A wing may
   shrink a little for a new sponsor but never below 48px tall; past that the
   lowest tiers go to a full-size line of their own under the headline row.
-  Under a hairline, a smaller second row in labelled columns: "Endorsed by"
-  (Lagos State's seal) stacked over "Ecosystem partner" (Hashed Emergent) on
-  the left, media partners wrapping to two lines in their own column, so no
-  logo ever sits under another kind's label, and none drops below 40px tall
-  on the 2160 post.
+  Ecosystem partners join that first row after the sponsors, with no label
+  (the owner, 9 October: Hashed Emergent beside Hoaq). Under a hairline, a
+  smaller second row: "Endorsed by" over Lagos State's seal in a column of
+  its own, then every other partner (community, then media) as one
+  unlabelled list wrapping to two lines (the owner: no "Media partners"
+  heading). One list, so no unnamed logo is ever stacked under "Endorsed
+  by"; none drops below 40px tall on the 2160 post.
   Logos are sized by area, as on the home wall, so a seal and a wordmark
   weigh the same.
 - The circle-crop rule: a profile picture crops to the inscribed circle,

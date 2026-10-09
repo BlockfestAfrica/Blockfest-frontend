@@ -89,7 +89,9 @@ const TRAIL_X = 424; // distance from the side edge where blocks fuse into line
 const ROLE_SIZE = 106; // the role pill's text
 const PILL_H = 136;
 const DAY_SIZE = 36;
-const DAY_PITCH = 58; // baseline to baseline
+const STOP_R = 17; // a day's station marker on the one-line route
+const STOP_RING = 7;
+const STOP_LINK = 120; // the stretch of route between the two days
 const LABEL_TRACK = 3.6; // the footer's small group labels
 
 /* ------------------------------------------------------------------ */
@@ -126,7 +128,7 @@ async function ensureFonts(name: string): Promise<void> {
   const bases = upper.normalize("NFD").replace(/[\u0300-\u036F]/g, "");
   const small = [
     DP_THEME,
-    ...publicDayLines().map((d) => `${d.when} · ${d.where}`),
+    ...publicDayLines().map((d) => `${d.when} ${d.where}`),
     "HEADLINE SPONSOR ENDORSED BY ECOSYSTEM COMMUNITY MEDIA PARTNERS",
   ].join(" ");
   await Promise.all([
@@ -685,7 +687,9 @@ export async function drawDP(
   const days = publicDayLines();
   ctx.font = text(DAY_SIZE);
   const dayCap = capHeight(ctx);
-  const daysH = days.length ? dayCap + DAY_PITCH * (days.length - 1) : 0;
+  // One line, however many days: the stops' markers stand a little taller
+  // than the capitals.
+  const daysH = days.length ? Math.max(dayCap, STOP_R * 2) : 0;
 
   // One rhythm from the ring down: ring, pill, name, days, footer.
   const g1 = 40; // pill to the top of the name's ink (accents included)
@@ -748,22 +752,63 @@ export async function drawDP(
   });
   y += nameH + g2;
 
-  // The public days, each with its venue. One left edge for both lines so
-  // the dates sit in a column; the pair is centred as a block.
+  // The public days as stops on a route, on one line: a station marker in
+  // the role's colour, the date, the venue, then a stretch of line to the
+  // next stop. The picture's own idea (routes) carrying the plain facts.
   if (days.length) {
-    ctx.font = text(DAY_SIZE);
     const track = 3.4;
-    const sep = "  ·  ";
-    const widths = days.map((d) => trackedWidth(ctx, `${d.when}${sep}${d.where}`, track));
-    const x0 = S / 2 - Math.max(...widths) / 2;
-    days.forEach((d, i) => {
-      const baseline = y + dayCap + i * DAY_PITCH;
+    let size = DAY_SIZE;
+    const measure = () => {
+      ctx.font = text(size);
+      const pad = size * 0.5;
+      const stops = days.map((d) => ({
+        d,
+        whenW: trackedWidth(ctx, d.when, track),
+        whereW: trackedWidth(ctx, d.where, track),
+      }));
+      const stopW = (s: (typeof stops)[number]) => STOP_R * 2 + pad + s.whenW + pad * 0.9 + s.whereW;
+      const total =
+        stops.reduce((a, s) => a + stopW(s), 0) + (stops.length - 1) * (STOP_LINK + pad * 2);
+      return { stops, pad, total };
+    };
+    // Kept inside the circle crop's width at this height; it only shrinks
+    // when a longer venue would not fit.
+    let m = measure();
+    while (m.total > NAME_MAX_W && size > 26) {
+      size -= 1;
+      m = measure();
+    }
+    const cap = capHeight(ctx);
+    const mid = y + daysH / 2;
+    const baseline = mid + cap / 2;
+    let x = S / 2 - m.total / 2;
+    m.stops.forEach((s, i) => {
+      if (i > 0) {
+        // The stretch of route between two stops.
+        ctx.strokeStyle = role.fill;
+        ctx.lineWidth = STOP_RING;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(x + m.pad, mid);
+        ctx.lineTo(x + m.pad + STOP_LINK, mid);
+        ctx.stroke();
+        x += STOP_LINK + m.pad * 2;
+      }
+      // A station: white inside a ring of the role's colour, as a transit
+      // map draws one.
+      ctx.beginPath();
+      ctx.arc(x + STOP_R, mid, STOP_R - STOP_RING / 2, 0, Math.PI * 2);
       ctx.fillStyle = COLOR.ink;
-      let x = fillTrackedFrom(ctx, d.when, x0, baseline, track);
-      ctx.fillStyle = COLOR.ink3;
-      x = fillTrackedFrom(ctx, sep, x, baseline, track);
+      ctx.fill();
+      ctx.lineWidth = STOP_RING;
+      ctx.strokeStyle = role.fill;
+      ctx.stroke();
+      x += STOP_R * 2 + m.pad;
+      ctx.font = text(size);
+      ctx.fillStyle = COLOR.ink;
+      x = fillTrackedFrom(ctx, s.d.when, x, baseline, track) + m.pad * 0.9;
       ctx.fillStyle = COLOR.ink2;
-      fillTrackedFrom(ctx, d.where, x, baseline, track);
+      x = fillTrackedFrom(ctx, s.d.where, x, baseline, track);
     });
   }
 
