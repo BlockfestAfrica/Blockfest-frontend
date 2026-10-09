@@ -274,10 +274,12 @@ each piece lives.
   short name (`short`) quieter, and a stretch of line in the role's colour
   between the stops: "22 OCT IBIS HOTEL, LEKKI ── 23 OCT NATIONAL ART
   THEATRE". It shrinks only to stay inside the circle crop's width.
-- Footer tiers, on a light paper band, all from lib/partners-2026.ts so a
+- Footer tiers, on a light paper band kept slim (the owner, 9 October: cut
+  it right down so the art above is bigger; about 280 of 2160px with
+  today's partners), all from lib/partners-2026.ts so a
   new line there is a new logo: first row, "Headline sponsor" over Monica
   dead centre and every other sponsor in two wings either side. A wing may
-  shrink a little for a new sponsor but never below 48px tall; past that the
+  shrink a little for a new sponsor but never below 36px tall; past that the
   lowest tiers go to a full-size line of their own under the headline row.
   Ecosystem partners join that first row after the sponsors, with no label
   (the owner, 9 October: Hashed Emergent beside Hoaq). Under a hairline, a
@@ -285,14 +287,17 @@ each piece lives.
   its own, then every other partner (community, then media) as one
   unlabelled list wrapping to two lines (the owner: no "Media partners"
   heading). One list, so no unnamed logo is ever stacked under "Endorsed
-  by"; none drops below 40px tall on the 2160 post.
+  by"; none drops below 30px tall on the 2160 post.
   Logos are sized by area, as on the home wall, so a seal and a wordmark
   weigh the same.
 - The circle-crop rule: a profile picture crops to the inscribed circle,
   and that circle must keep the mark, the whole photo ring, the role pill,
   the name and the headline sponsor. The rest of the footer may be cut by
   it. When the footer grows the art rebalances (layoutArt): the ring gets
-  smaller, the name's band never does.
+  smaller, the name's band never does. When it shrinks, the ring takes the
+  room, because the pill, name and days never sit below the line where the
+  crop is still as wide as the name's room (about y 1827): a slimmer footer
+  than that buys navy, not a bigger photo.
 - The page is the ballot's anatomy: one hairline card of steps in reading
   order (role, name, photo), then the picture in its own card with the
   controls that act on it under it (zoom, reset, download, share) and the
