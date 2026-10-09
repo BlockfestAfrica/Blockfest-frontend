@@ -138,7 +138,8 @@ describe("2026 partners", () => {
     expect(screen.queryByText("Mobility sponsor")).toBeNull();
     expect(screen.getByRole("link", { name: "Cake, on X (opens in a new tab)" })).toBeTruthy();
     const groups = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
-    expect(groups).toEqual(["Sponsors", "Media, community & government partners"]);
+    // The sponsors' group is headed "Partners" now that every partner is a sponsor.
+    expect(groups).toEqual(["Partners", "Media, community & government partners"]);
     // A kind is said once, in the group's name, not under every logo.
     expect(screen.queryByText(/^Media( partner)?$/)).toBeNull();
     expect(screen.queryByText(/^Government( partner)?$/)).toBeNull();
@@ -212,13 +213,13 @@ describe("2026 partners", () => {
   it("leaves out an empty group", () => {
     data.partners = [partner("Coinnews", "Media")];
     const { unmount } = render(<PartnersSection2026 />);
-    expect(screen.queryByRole("heading", { name: "Sponsors" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Partners", level: 3 })).toBeNull();
     unmount();
 
     data.headline = sponsor("Monica", "Headline");
     data.partners = [];
     render(<PartnersSection2026 />);
-    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(["Sponsors"]);
+    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(["Partners"]);
   });
 
   it("shows a partner with no link, and names every link by where it goes", () => {

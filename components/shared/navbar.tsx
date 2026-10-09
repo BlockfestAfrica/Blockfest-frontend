@@ -96,6 +96,7 @@ const Navbar = ({ sticky = true }: { sticky?: boolean } = {}) => {
 
       {/* Desktop Nav */}
       <nav className="hidden md:flex items-center gap-x-7" aria-label="Main navigation">
+        {/* Home: the logo on the left already goes there.
         <Link
           href="/"
           aria-current={pathname === "/" ? "page" : undefined}
@@ -103,6 +104,7 @@ const Navbar = ({ sticky = true }: { sticky?: boolean } = {}) => {
         >
           Home
         </Link>
+        */}
         <button type="button" onClick={handleAboutClick} className={navLinkClasses}>
           About
         </button>
@@ -159,6 +161,7 @@ const Navbar = ({ sticky = true }: { sticky?: boolean } = {}) => {
         >
           Speakers
         </Link>
+        {/* Tickets: the gold "Get Tickets" button on the right already goes there.
         <Link
           href="/tickets"
           aria-current={pathname === "/tickets" ? "page" : undefined}
@@ -166,6 +169,7 @@ const Navbar = ({ sticky = true }: { sticky?: boolean } = {}) => {
         >
           Tickets
         </Link>
+        */}
         {/* From xl only, short and on one line: below that the row has no
             room for an eighth item, and the phone menu carries it below md. */}
         <Link

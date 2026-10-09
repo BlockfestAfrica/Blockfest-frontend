@@ -524,11 +524,26 @@ export interface FooterTiers {
    read as an endorser. */
 const UNNAMED_ORDER: readonly PartnerKind[] = ["Community", "Media"];
 
+/** The sponsor tiers that are really partners of a kind (the team, 9
+    October: the government, ecosystem and media partners were moved into
+    `sponsors`, tiered by what they were). They are drawn as they were before
+    the move: by kind, not in the sponsors' row. */
+const TIER_KIND: Readonly<Record<string, PartnerKind>> = {
+  Government: "Government",
+  Ecosystem: "Ecosystem",
+  Media: "Media",
+};
+/* A "Community" tier is not here: the community sponsors (Web3Afrika, Women
+   in DeFi...) were always drawn in the sponsors' row, and stay there. */
+
 /**
  * Who goes on the picture, straight from the partners data: the headline
  * sponsor, every sponsor, then government, ecosystem, community and media
- * partners by kind. A new line in lib/partners-2026.ts is a new logo on the
- * picture, with no change here.
+ * partners by kind. A sponsor whose tier is Government or Media is drawn as
+ * that kind of partner (the endorsement, the unlabelled media logos), and an
+ * Ecosystem one in the sponsors' row after the sponsors. A logo with
+ * `onDp: false` stays off the picture. A new line in lib/partners-2026.ts is
+ * a new logo on the picture, with no change here.
  */
 export function footerTiers(
   data: {
@@ -538,32 +553,38 @@ export function footerTiers(
   },
   resolveSrc: (logo: PartnerLogo) => string = (logo) => logo.logo,
 ): FooterTiers {
-  // A partner the team keeps off the picture stays on the website's wall.
-  const onPicture = data.partners.filter((p) => p.onDp !== false);
+  // A logo the team keeps off the picture stays on the website's wall.
+  const wanted = <T extends PartnerLogo>(list: readonly T[]) => list.filter((p) => p.onDp !== false);
   const toLogo = (p: PartnerLogo): FooterLogo => ({
     name: p.name,
     src: resolveSrc(p),
     width: p.width,
     height: p.height,
   });
+
+  // Every partner, with the kind it is drawn as: the partners list by its
+  // own kind, then the sponsors whose tier names a kind.
+  const kindOfSponsor = (s: Sponsor): PartnerKind | null => TIER_KIND[s.tier] ?? null;
+  const asSponsors = wanted(data.sponsors).filter((s) => kindOfSponsor(s) === null);
+  const asPartners: { logo: PartnerLogo; kind: PartnerKind }[] = [
+    ...wanted(data.partners).map((p) => ({ logo: p as PartnerLogo, kind: p.kind })),
+    ...wanted(data.sponsors).flatMap((s) => {
+      const kind = kindOfSponsor(s);
+      return kind ? [{ logo: s as PartnerLogo, kind }] : [];
+    }),
+  ];
+  const ofKind = (kind: PartnerKind) =>
+    asPartners.filter((p) => p.kind === kind).map((p) => toLogo(p.logo));
+
   return {
-    headline: data.headline ? toLogo(data.headline) : null,
-    sponsors: [
-      ...data.sponsors,
-      ...onPicture.filter((p) => p.kind === "Ecosystem"),
-    ].map(toLogo),
+    headline: data.headline && data.headline.onDp !== false ? toLogo(data.headline) : null,
+    sponsors: [...asSponsors.map(toLogo), ...ofKind("Ecosystem")],
     groups: [
-      {
-        kind: "Government" as const,
-        label: "ENDORSED BY",
-        logos: onPicture.filter((p) => p.kind === "Government").map(toLogo),
-      },
+      { kind: "Government" as const, label: "ENDORSED BY", logos: ofKind("Government") },
       {
         kind: "Media" as const,
         label: "",
-        logos: UNNAMED_ORDER.flatMap((kind) =>
-          onPicture.filter((p) => p.kind === kind).map(toLogo),
-        ),
+        logos: UNNAMED_ORDER.flatMap((kind) => ofKind(kind)),
       },
     ].filter((g) => g.logos.length > 0),
   };
