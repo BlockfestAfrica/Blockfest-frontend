@@ -13,7 +13,10 @@ const SHARE_DESCRIPTION = `Make your Blockfest Africa 2026 DP for ${publicDaysRa
 const SITE = new URL(GETDP_URL).origin;
 
 export const metadata: Metadata = {
-  title: TITLE,
+  // The root layout appends "| Blockf3st Africa 2026", so the tab says "Get
+  // your DP | Blockf3st Africa 2026" rather than naming the event twice. The
+  // share cards below keep the full title, since they have no template.
+  title: "Get your DP",
   description: DESCRIPTION,
   keywords: ["blockfest", "africa", "dp", "display picture", "lagos", "2026"],
   alternates: {
