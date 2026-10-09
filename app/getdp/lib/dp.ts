@@ -525,6 +525,8 @@ export function footerTiers(
   },
   resolveSrc: (logo: PartnerLogo) => string = (logo) => logo.logo,
 ): FooterTiers {
+  // A partner the team keeps off the picture stays on the website's wall.
+  const onPicture = data.partners.filter((p) => p.onDp !== false);
   const toLogo = (p: PartnerLogo): FooterLogo => ({
     name: p.name,
     src: resolveSrc(p),
@@ -535,19 +537,19 @@ export function footerTiers(
     headline: data.headline ? toLogo(data.headline) : null,
     sponsors: [
       ...data.sponsors,
-      ...data.partners.filter((p) => p.kind === "Ecosystem"),
+      ...onPicture.filter((p) => p.kind === "Ecosystem"),
     ].map(toLogo),
     groups: [
       {
         kind: "Government" as const,
         label: "ENDORSED BY",
-        logos: data.partners.filter((p) => p.kind === "Government").map(toLogo),
+        logos: onPicture.filter((p) => p.kind === "Government").map(toLogo),
       },
       {
         kind: "Media" as const,
         label: "",
         logos: UNNAMED_ORDER.flatMap((kind) =>
-          data.partners.filter((p) => p.kind === kind).map(toLogo),
+          onPicture.filter((p) => p.kind === kind).map(toLogo),
         ),
       },
     ].filter((g) => g.logos.length > 0),
@@ -893,9 +895,15 @@ export function layoutFooter(
   const lead: Sized | null = tiers.headline
     ? { logo: tiers.headline, ...sizeByArea(tiers.headline, F.headlineArea, F.headlineMaxH, F.headlineMaxW) }
     : null;
+  /* A stacked lockup (a mark over a word, under twice as wide as tall,
+     like Microtraction's) stands as tall as the headline may: at a
+     wordmark's height its word is a speck. Wordmarks are unchanged. */
+  const stacked = (l: FooterLogo) => l.width / l.height < 2;
   const others: Sized[] = tiers.sponsors.map((logo) => ({
     logo,
-    ...sizeByArea(logo, F.sponsorArea, F.sponsorMaxH, F.sponsorMaxW),
+    ...(stacked(logo)
+      ? sizeByArea(logo, F.sponsorArea * 1.5, F.headlineMaxH, F.sponsorMaxW)
+      : sizeByArea(logo, F.sponsorArea, F.sponsorMaxH, F.sponsorMaxW)),
   }));
   const half = lead ? lead.w / 2 + F.wingGap : F.wingGap / 2;
   const wingW = S / 2 - half - F.edge;

@@ -41,7 +41,8 @@ photo is never uploaded.
 ## Changing what is on the picture
 
 - **A sponsor or partner**: add a line to `lib/partners-2026.ts`. It appears
-  on the picture with no change here: the headline sponsor centred, other
+  on the picture with no change here (unless marked `onDp: false`, which
+  keeps it on the website's wall only): the headline sponsor centred, other
   sponsors either side (and, once the sides are full, on a line under it),
   with ecosystem partners after them in the same row and no label. Then, in
   a smaller second row, the government under "Endorsed by", and community

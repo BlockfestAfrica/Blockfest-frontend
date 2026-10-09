@@ -37,6 +37,12 @@ export type PartnerKind = "Media" | "Community" | "Government" | "Ecosystem";
 export interface Partner extends PartnerLogo {
   /** Names the wall's heading ("Media & government partners"); not shown per logo. */
   kind: PartnerKind;
+  /**
+   * False keeps the partner off the Get DP picture while it stays on the
+   * website's partner wall (the team, 9 October: the DP carries a shorter
+   * media list than the wall).
+   */
+  onDp?: boolean;
 }
 
 /** The headline sponsor, featured on its own. */
@@ -97,12 +103,13 @@ export const sponsors: Sponsor[] = [
 export const partners: Partner[] = [
   { name: "Lagos State Government", kind: "Government", logo: "/images/partners-2025/lagos-state.png", width: 149, height: 149, href: "https://lagosstate.gov.ng" },
   { name: "Hashed Emergent", kind: "Ecosystem", logo: "/2026/logos/hashed-emergent.png", width: 1280, height: 405, href: "https://x.com/HashedEM" },
-  { name: "BusinessDay", kind: "Media", logo: "/images/partners-2025/businessday.png", width: 1280, height: 267, href: "https://businessday.ng" },
-  { name: "The Guardian", kind: "Media", logo: "/images/partners-2025/guardian.png", width: 1280, height: 156, href: "https://guardian.ng" },
-  { name: "Legit", kind: "Media", logo: "/images/partners-2025/legit.png", width: 841, height: 330, href: "https://www.legit.ng" },
-  { name: "TechCabal", kind: "Media", logo: "/images/partners-2025/techcabal.png", width: 480, height: 480, href: "https://techcabal.com" },
+  { name: "Microtraction", kind: "Ecosystem", logo: "/2026/logos/microtraction.png", width: 532, height: 331, href: "https://x.com/microtraction" },
+  { name: "BusinessDay", kind: "Media", logo: "/images/partners-2025/businessday.png", width: 1280, height: 267, href: "https://businessday.ng", onDp: false },
+  { name: "The Guardian", kind: "Media", logo: "/images/partners-2025/guardian.png", width: 1280, height: 156, href: "https://guardian.ng", onDp: false },
+  { name: "Legit", kind: "Media", logo: "/images/partners-2025/legit.png", width: 841, height: 330, href: "https://www.legit.ng", onDp: false },
+  { name: "TechCabal", kind: "Media", logo: "/images/partners-2025/techcabal.png", width: 480, height: 480, href: "https://techcabal.com", onDp: false },
   { name: "Techpoint", kind: "Media", logo: "/images/partners-2025/techpoint.png", width: 407, height: 480, href: "https://techpoint.africa" },
-  { name: "Punch", kind: "Media", logo: "/images/partners-2025/punch.png", width: 1226, height: 362, href: "https://punchng.com" },
+  { name: "Punch", kind: "Media", logo: "/images/partners-2025/punch.png", width: 1226, height: 362, href: "https://punchng.com", onDp: false },
   { name: "AllConfsBot", kind: "Media", logo: "/2026/logos/allconfsbot.png", width: 1280, height: 457, href: "https://x.com/allconfsbot" },
   { name: "Blockchain Marketing Ninja", kind: "Media", logo: "/2026/logos/blockchain-marketing-ninja.png", width: 1280, height: 331, href: "https://x.com/0xblockchainmkt" },
   { name: "Blockchain Staffing Ninja", kind: "Media", logo: "/2026/logos/blockchain-staffing-ninja.png", width: 952, height: 262, href: "https://x.com/staffing_Ninja" },

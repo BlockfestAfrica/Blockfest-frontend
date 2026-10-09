@@ -282,7 +282,12 @@ each piece lives.
   shrink a little for a new sponsor but never below 36px tall; past that the
   lowest tiers go to a full-size line of their own under the headline row.
   Ecosystem partners join that first row after the sponsors, with no label
-  (the owner, 9 October: Hashed Emergent beside Hoaq). Under a hairline, a
+  (the owner, 9 October: Hashed Emergent beside Hoaq; Microtraction with
+  them). A stacked lockup (mark over word, under twice as wide as tall) may
+  stand as tall as the headline there, since at a wordmark's height its
+  word is a speck. A partner marked `onDp: false` in lib/partners-2026.ts
+  stays on the website's wall but not on the picture (the team keeps
+  BusinessDay, The Guardian, Legit, TechCabal and Punch off it). Under a hairline, a
   smaller second row: "Endorsed by" over Lagos State's seal in a column of
   its own, centred under the first sponsor on the left (Hashed Emergent),
   then every other partner (community, then media) as one unlabelled list

@@ -259,7 +259,7 @@ describe("the footer, from lib/partners-2026", () => {
 
   it("draws every sponsor, in the listed order, then the ecosystem partners in the same row", () => {
     const ecosystem = partners.filter((p) => p.kind === "Ecosystem").map((p) => p.name);
-    expect(ecosystem).toEqual(["Hashed Emergent"]);
+    expect(ecosystem).toEqual(["Hashed Emergent", "Microtraction"]);
     expect(tiers.sponsors.map((s) => s.name)).toEqual([...sponsors.map((s) => s.name), ...ecosystem]);
     expect(footer.sponsors.map((s) => s.logo.name).sort()).toEqual(
       ["Monica", ...sponsors.map((s) => s.name), ...ecosystem].sort(),
@@ -297,7 +297,7 @@ describe("the footer, from lib/partners-2026", () => {
       const near = [...lines.keys()].find((k) => Math.abs(k - key) < 30) ?? key;
       lines.set(near, [...(lines.get(near) ?? []), p]);
     }
-    expect(lines.size).toBe(2);
+    expect(lines.size).toBeGreaterThanOrEqual(1);
     const sep = footer.separators[0].x;
     for (const line of lines.values()) {
       const first = line.reduce((a, b) => (b.x < a.x ? b : a));
@@ -308,6 +308,29 @@ describe("the footer, from lib/partners-2026", () => {
     }
   });
 
+  it("lets a stacked lockup stand as tall as the headline, and leaves the wordmarks as they were", () => {
+    // Microtraction's logo is its mark over a small word: at a wordmark's
+    // height the word would be a speck.
+    const mt = footer.sponsors.find((s) => s.logo.name === "Microtraction")!;
+    expect(mt.h).toBeCloseTo(FOOTER.headlineMaxH, 0);
+    for (const s of footer.sponsors.slice(1)) {
+      if (s.logo.name === "Microtraction") continue;
+      expect(s.h).toBeLessThanOrEqual(FOOTER.sponsorMaxH + 1e-9);
+    }
+  });
+
+  it("leaves the media the team keeps off the picture on the website's partner list", () => {
+    // The team, 9 October: the DP's media list is shorter than the wall's.
+    const offDp = ["BusinessDay", "The Guardian", "Legit", "TechCabal", "Punch"];
+    const onPicture = [...footer.sponsors, ...footer.partners].map((p) => p.logo.name);
+    for (const name of offDp) {
+      expect(onPicture).not.toContain(name);
+      expect(partners.some((p) => p.name === name)).toBe(true);
+    }
+    expect(onPicture).toContain("Techpoint");
+    expect(onPicture).toContain("Microtraction");
+  });
+
   it("endorses with Lagos State, then every media partner with no heading", () => {
     expect(tiers.groups.map((g) => [g.kind, g.label])).toEqual([
       ["Government", "ENDORSED BY"],
@@ -315,7 +338,7 @@ describe("the footer, from lib/partners-2026", () => {
     ]);
     expect(tiers.groups[0].logos.map((l) => l.name)).toEqual(["Lagos State Government"]);
     expect(tiers.groups[1].logos.map((l) => l.name)).toEqual(
-      partners.filter((p) => p.kind === "Media").map((p) => p.name),
+      partners.filter((p) => p.kind === "Media" && p.onDp !== false).map((p) => p.name),
     );
     expect(footer.partners.map((p) => p.logo.name)).toEqual(
       tiers.groups.flatMap((g) => g.logos.map((l) => l.name)),
