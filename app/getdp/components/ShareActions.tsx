@@ -12,6 +12,7 @@ import {
   buttonsFor,
   marksClass,
   platformAction,
+  statusAction,
   type ButtonId,
   type Platform,
   type ShareEnv,
@@ -24,7 +25,7 @@ import {
  */
 export interface Busy {
   kind: "prepare" | "sheet" | "download";
-  by: ButtonId | Platform;
+  by: ButtonId | Platform | "status";
 }
 
 /** PLATFORM_ICON is the campaign's three; the DP adds LinkedIn and WhatsApp here. */
@@ -46,9 +47,18 @@ const BUTTON_ICON: Record<ButtonId, typeof Share2> = {
 
 const ROW = "border-t border-line px-5 py-4 sm:px-6";
 
+/** The label a control shows while the page works on what it started. */
+function busyLabel(busy: Busy | null, by: Busy["by"], idle: string): string {
+  if (busy?.by !== by) return idle;
+  if (busy.kind === "prepare") return COPY.preparing;
+  if (busy.kind === "download") return COPY.saving;
+  return idle;
+}
+
 /**
  * The picture card's save and share rows: the buttons this device gets, the
- * status line, the "Post it on" marks and the caption with Copy.
+ * status line, WhatsApp Status on a phone, the "Post it on" marks and the
+ * caption with Copy.
  *
  * Presentational only. Every navigator call is DPGenerator's, so a tap here
  * reaches navigator.share inside the same gesture.
@@ -68,6 +78,7 @@ export default function ShareActions({
   primaryRef,
   onButton,
   onMark,
+  onStatus,
   onCopyCaption,
 }: {
   env: ShareEnv;
@@ -87,9 +98,11 @@ export default function ShareActions({
   primaryRef: Ref<HTMLButtonElement>;
   onButton: (id: ButtonId) => void;
   onMark: (p: Platform, e: MouseEvent<HTMLElement>) => void;
+  onStatus: () => void;
   onCopyCaption: () => void;
 }) {
   const shut = !ready || busy !== null;
+  const whatsappStatus = statusAction(env);
 
   return (
     <>
@@ -97,12 +110,6 @@ export default function ShareActions({
         <div className="flex flex-wrap gap-3">
           {buttonsFor(env).map(({ id, intent }, i) => {
             const Icon = BUTTON_ICON[id];
-            const label =
-              busy?.by === id && busy.kind === "prepare"
-                ? COPY.preparing
-                : busy?.by === id && busy.kind === "download"
-                  ? COPY.saving
-                  : BUTTON_LABEL[id];
             return (
               <button
                 key={id}
@@ -113,7 +120,7 @@ export default function ShareActions({
                 onClick={() => onButton(id)}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
-                {label}
+                {busyLabel(busy, id, BUTTON_LABEL[id])}
               </button>
             );
           })}
@@ -126,6 +133,24 @@ export default function ShareActions({
         </p>
         {profile && <p className="mt-2 text-sm text-ink-3">{profile}</p>}
       </div>
+
+      {whatsappStatus && (
+        <div className={ROW}>
+          <button
+            type="button"
+            className={buttonClass("secondary", "w-full sm:w-auto")}
+            disabled={shut}
+            aria-describedby="dp-whatsapp-status-how"
+            onClick={onStatus}
+          >
+            <FaWhatsapp className="h-4 w-4" aria-hidden="true" />
+            {busyLabel(busy, "status", COPY.statusLabel)}
+          </button>
+          <p id="dp-whatsapp-status-how" className="mt-3 text-sm text-ink-3">
+            {whatsappStatus.how}
+          </p>
+        </div>
+      )}
 
       <div className={ROW}>
         <p id="dp-post-label" className="text-sm font-semibold text-white">

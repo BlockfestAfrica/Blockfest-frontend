@@ -53,6 +53,7 @@ import {
   moveHint,
   platformAction,
   shareData,
+  statusAction,
   type ButtonId,
   type Platform,
   type ShareEnv,
@@ -144,8 +145,8 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const [tip, setTip] = useState<string | null>(null);
   const [pressed, setPressed] = useState<Platform | null>(null);
   const [captionState, setCaptionState] = useState<"idle" | "copied" | "failed">("idle");
-  /** The press-and-hold picture, open, with the mark that opened it. */
-  const [hold, setHold] = useState<{ platform?: Platform; copied: boolean } | null>(null);
+  /** The press-and-hold picture, open, with the mark (or WhatsApp Status) that opened it. */
+  const [hold, setHold] = useState<{ platform?: Platform | "status"; copied: boolean } | null>(null);
   /**
    * The letter check, and which name it was made for. Notes of null: the
    * check could not run (the lettering did not load), so the name is not
@@ -930,6 +931,31 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     }
   };
 
+  /** WhatsApp Status, on a phone: the share list where it takes the file, else save and say where. */
+  const onStatus = () => {
+    if (!ready || !key || busy) return;
+    const action = statusAction(env);
+    if (!action) return;
+    // The marks' tip is about another app.
+    setPressed(null);
+    setTip(null);
+    switch (action.kind) {
+      case "sheet":
+        shareNow("status");
+        return;
+      case "save":
+        void copyCaptionQuietly();
+        if (downloadedKey.current !== key) startDownload("status");
+        return;
+      case "hold":
+        setHold({ platform: "status", copied: true });
+        void copyCaptionQuietly().then((ok) => {
+          if (!ok) setHold((h) => (h?.platform === "status" ? { ...h, copied: false } : h));
+        });
+        return;
+    }
+  };
+
   const copyCaption = () => {
     let p: Promise<void> | undefined;
     try {
@@ -1236,6 +1262,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
             primaryRef={primaryRef}
             onButton={onButton}
             onMark={onMark}
+            onStatus={onStatus}
             onCopyCaption={copyCaption}
           />
 
@@ -1250,7 +1277,13 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         open={hold !== null}
         onClose={() => setHold(null)}
         env={env}
-        platformLine={hold?.platform ? COPY.holdPlatform(PLATFORM_NAME[hold.platform], hold.copied) : null}
+        platformLine={
+          hold?.platform === "status"
+            ? COPY.holdStatus(hold.copied)
+            : hold?.platform
+              ? COPY.holdPlatform(PLATFORM_NAME[hold.platform], hold.copied)
+              : null
+        }
         blobKey={key}
         getBlob={holdBlob}
       />

@@ -26,6 +26,7 @@ import {
   moveHint,
   platformAction,
   shareData,
+  statusAction,
   whatsappUrl,
   xIntentUrl,
   type ShareEnv,
@@ -257,12 +258,38 @@ describe("the platform marks", () => {
     for (const e of everyEnv) {
       for (const c of ["sheet", "download", "hold", "desktop"] as const) said.push(COPY.marksDo(c), COPY.ready(c));
       said.push(COPY.profile(e), COPY.downloading(e, FILE), COPY.holdHow(e), COPY.holdFallback(e));
+      const s = statusAction(e);
+      if (s) said.push(s.how);
       const n = inAppNotice(e);
       if (n) said.push(n.title, n.body);
     }
+    said.push(COPY.holdStatus(), COPY.holdStatus(false));
     for (const s of said) {
       expect(s).not.toMatch(/automatically|upload(ed)? (it )?for you|we('ll| will)? (post|upload|share)|posts? it for you/i);
     }
+  });
+
+  it("offers WhatsApp Status on a phone only, through the share list where it takes the file", () => {
+    for (const e of [IPHONE, ANDROID, IG_IOS, TIKTOK_IOS]) {
+      expect(statusAction(e)).toEqual({
+        kind: "sheet",
+        how: "Opens your share list with your DP: choose WhatsApp, then My status at the top.",
+      });
+    }
+    expect(statusAction(FIREFOX_ANDROID)).toEqual({
+      kind: "save",
+      how: "Saves your DP and copies your caption. Then in WhatsApp, open Updates and add it to My status.",
+    });
+    // An iPhone's download goes to Files, which WhatsApp's picker never shows: press and hold instead.
+    for (const e of [IPHONE_NO_SHARE, IG_ANDROID]) {
+      expect(statusAction(e)).toEqual({
+        kind: "hold",
+        how: "Save your DP, then in WhatsApp, open Updates and add it to My status.",
+      });
+    }
+    // Status is posted from the phone app; a desktop has nowhere to send it.
+    expect(statusAction(DESKTOP)).toBeNull();
+    expect(statusAction(DESKTOP_SHARE)).toBeNull();
   });
 
   it("keeps one definition of the X link", () => {
@@ -365,6 +392,11 @@ describe("the words", () => {
     }
     expect(COPY.holdPlatform("LinkedIn")).toBe("Then open LinkedIn and post it. Your caption is copied.");
     expect(COPY.holdPlatform("LinkedIn", false)).toBe("Then open LinkedIn and post it.");
+    expect(COPY.holdStatus()).toBe(
+      "Then open WhatsApp, go to Updates and add it to My status. Your caption is copied.",
+    );
+    expect(COPY.holdStatus(false)).toBe("Then open WhatsApp, go to Updates and add it to My status.");
+    for (const e of [IPHONE, FIREFOX_ANDROID, IG_ANDROID]) expect(statusAction(e)!.how).not.toMatch(/is copied/);
   });
 
   it("says ready in the words of what this device does next", () => {

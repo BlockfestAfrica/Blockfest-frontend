@@ -104,6 +104,14 @@ shut until there is a picture:
 | hold (C) | an app's browser that cannot share files: every Android WebView (Instagram, Facebook, TikTok, LinkedIn) | Save image (press and hold) | none: downloads are what fail there | each copies the caption and opens the press-and-hold picture |
 | desktop (D) | a fine pointer | Download PNG | Share… (quiet) where the browser shares files | real links in a new tab that also download the PNG and copy the caption |
 
+**WhatsApp Status** has its own button on a phone, under the save buttons
+(`statusAction`). No link opens My status, so on a phone whose share list
+takes the file the button opens it with the picture and says to choose
+WhatsApp, then My status, which WhatsApp puts first in the list of where to
+send it. Where the list cannot take the file, it saves the DP (press and hold
+on an iPhone or in an app's browser) and says where Status is: Updates, then
+My status. A desktop does not show it; Status is posted from the phone.
+
 **Formats.** The share list gets a JPEG at 0.92 on a phone (about a fifth
 of the PNG's 3 to 4 MB, quicker to make, and inside X's 5 MB limit; the
 platforms recompress it anyway). Download is always the PNG.
