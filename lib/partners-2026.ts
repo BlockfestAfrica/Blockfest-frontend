@@ -96,6 +96,7 @@ export const sponsors: Sponsor[] = [
  */
 export const partners: Partner[] = [
   { name: "Lagos State Government", kind: "Government", logo: "/images/partners-2025/lagos-state.png", width: 149, height: 149, href: "https://lagosstate.gov.ng" },
+  { name: "Hashed Emergent", kind: "Ecosystem", logo: "/2026/logos/hashed-emergent.png", width: 1280, height: 405, href: "https://x.com/HashedEM" },
   { name: "BusinessDay", kind: "Media", logo: "/images/partners-2025/businessday.png", width: 1280, height: 267, href: "https://businessday.ng" },
   { name: "The Guardian", kind: "Media", logo: "/images/partners-2025/guardian.png", width: 1280, height: 156, href: "https://guardian.ng" },
   { name: "Legit", kind: "Media", logo: "/images/partners-2025/legit.png", width: 841, height: 330, href: "https://www.legit.ng" },

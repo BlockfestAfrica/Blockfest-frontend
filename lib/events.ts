@@ -26,6 +26,23 @@ export interface BlockfestEvent {
   stats?: EventStats;
   sponsorshipPackages?: SponsorshipPackage[];
   highlights?: string[];
+  /**
+   * The days the public can come to, each with its own venue, in date order.
+   * Only these go on public artwork (the /getdp picture says each day and
+   * where it is). A private, invite-only day is never listed here, even when
+   * `date` spans it.
+   */
+  publicDays?: PublicDay[];
+}
+
+/** One public day of an edition and where it happens. */
+export interface PublicDay {
+  /** The calendar day in Lagos, as YYYY-MM-DD. */
+  date: string;
+  /** The building: "Ibis Hotel". */
+  venue: string;
+  /** The part of town, so a Lagosian can place it: "Lekki Phase 1". */
+  area: string;
 }
 
 // A programming track for an edition (e.g. Lagos '26 tracks).
@@ -226,6 +243,12 @@ export const blockfest2026Lagos: BlockfestEvent = {
     "Reaching Africa's 200M+ Web3 and AI users of tomorrow",
     "Six tracks spanning AI, policy, funding, infrastructure, culture and talent",
     "Part of a three-week festival of hackathons, co-working and programming",
+  ],
+  // The 24th is the Mixer: private and invite-only, so it and its venue stay
+  // off everything public. date.end still runs to the 24th on purpose.
+  publicDays: [
+    { date: "2026-10-22", venue: "Ibis Hotel", area: "Lekki Phase 1" },
+    { date: "2026-10-23", venue: "National Art Theatre", area: "Iganmu" },
   ],
 };
 

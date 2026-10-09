@@ -19,7 +19,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import type { IncomingMessage } from "node:http";
 import { join } from "node:path";
 import { ImageOptimizerCache } from "next/dist/server/image-optimizer";
@@ -96,7 +96,8 @@ function sources(): { file: string; code: string }[] {
     encoding: "utf8",
   })
     .split("\0")
-    .filter((file) => /\.tsx?$/.test(file))
+    // A tracked file deleted in the working tree has no code left to check.
+    .filter((file) => /\.tsx?$/.test(file) && existsSync(join(ROOT, file)))
     .map((file) => ({
       file,
       code: codeOnly(readFileSync(join(ROOT, file), "utf8")),

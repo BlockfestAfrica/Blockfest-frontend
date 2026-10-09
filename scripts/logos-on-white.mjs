@@ -95,6 +95,7 @@ const LOGOS = [
   { year: 2026, from: "2026/media/Coinn.png", to: "coinnewsspan.png" },
   { year: 2026, from: "2026/media/Crypto.png", to: "cryptonewsz.png" },
   { year: 2026, from: "2026/media/timesoblock.png", to: "times-of-blockchain.png" },
+  { year: 2026, from: "2026/partners/hashed-emergent.png", to: "hashed-emergent.png" },
 ];
 
 /** The lightness of a light neutral pixel (white, light grey, cream), else 0. */

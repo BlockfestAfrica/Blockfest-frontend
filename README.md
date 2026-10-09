@@ -35,7 +35,7 @@ app/
   speakers/                 # Speaker listing + [slug] pages
   schedule/                 # Event schedule
   faq/                      # FAQ
-  getdp/                    # Badge generator
+  getdp/                    # Get DP generator (2026 display pictures)
 
 components/
   home/                     # Homepage sections (hero, stats, speakers, etc.)

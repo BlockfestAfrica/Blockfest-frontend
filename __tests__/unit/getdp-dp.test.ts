@@ -1,0 +1,439 @@
+/**
+ * The Get DP picture's rules (app/getdp/lib/dp.ts), checked without a
+ * canvas: what each role says, how a name breaks, who is in the footer and
+ * where, what the days and the share text say, the file name, and the crop.
+ */
+import { describe, expect, it } from "vitest";
+import {
+  ART,
+  DP_SIZE,
+  FOOTER,
+  NAME_MAX,
+  NAME_MAX_W,
+  chooseNameLayout,
+  clampTransform,
+  cropCentre,
+  defaultTransform,
+  dpFileName,
+  drawableName,
+  footerTiers,
+  insideCircleCrop,
+  layoutArt,
+  layoutFooter,
+  nameProblem,
+  nudgeTransform,
+  photoRect,
+  publicDayLines,
+  publicDaysRange,
+  roleCopy,
+  shareText,
+  sizedSvg,
+  DP_ROLES,
+  type Box,
+  type FooterTiers,
+} from "@/app/getdp/lib/dp";
+import { blockfest2026Lagos } from "@/lib/events";
+import { headline, partners, sponsors, type Sponsor } from "@/lib/partners-2026";
+
+/** A stand-in ruler: every letter 50 units wide at 100px, a space 25. */
+const ruler = (line: string) => [...line].reduce((w, ch) => w + (ch === " " ? 25 : 50), 0);
+/** Label widths, roughly Gotham's: 0.75em a letter plus tracking. */
+const measureLabel = (text: string, size: number) => text.length * (size * 0.75 + 3.6);
+
+const tiers = footerTiers({ headline, sponsors, partners });
+const footer = layoutFooter(tiers, measureLabel);
+
+const overlaps = (a: Box, b: Box) =>
+  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+describe("the name", () => {
+  it("keeps a short name on one line at full size", () => {
+    expect(chooseNameLayout("Adaeze Nwosu", ruler)).toEqual({ lines: ["ADAEZE NWOSU"], size: 196 });
+  });
+
+  it("breaks a long name into the most even pair of lines", () => {
+    expect(chooseNameLayout("Chimamanda Ngozi Adichie-Okonkwo", ruler).lines).toEqual([
+      "CHIMAMANDA NGOZI",
+      "ADICHIE-OKONKWO",
+    ]);
+    // Both breaks reach the size cap and the lopsided one ("NGOZI /
+    // ADAEZE OGOCHUKWUOMA") is found first; the even one still wins.
+    const tied = chooseNameLayout("Ngozi Adaeze Ogochukwuoma", ruler);
+    expect(tied.lines).toEqual(["NGOZI ADAEZE", "OGOCHUKWUOMA"]);
+    expect(tied.size).toBe(156);
+    expect(chooseNameLayout("Oluwaseun Adebayo-Johnson", ruler).lines).toEqual([
+      "OLUWASEUN",
+      "ADEBAYO-JOHNSON",
+    ]);
+  });
+
+  it("compares one line with two at the size the height really allows", () => {
+    // 31 letters: one line fits the width at 102. Two lines would fit the
+    // width at the 156 cap, but the picture has room for two lines only at
+    // about 104, which is not clearly larger, so one line wins.
+    const name = "Oluwaseyifunmi Adebayo-Ogunsola";
+    expect(chooseNameLayout(name, ruler).lines).toHaveLength(2);
+    const capped = chooseNameLayout(name, ruler, NAME_MAX_W, (lines) =>
+      lines.length > 1 ? 104 : 244,
+    );
+    expect(capped).toEqual({ lines: ["OLUWASEYIFUNMI ADEBAYO-OGUNSOLA"], size: 102 });
+    // A name too long for one line at any decent size still breaks, at the
+    // height's size, never at the width's.
+    const long = chooseNameLayout(
+      "Oluwatobiloba Adebayo-Ogunsola Chukwuemeka",
+      ruler,
+      NAME_MAX_W,
+      (lines) => (lines.length > 1 ? 104 : 244),
+    );
+    expect(long.lines).toHaveLength(2);
+    expect(long.size).toBe(104);
+  });
+
+  it("never sets a line wider than the room the circle crop leaves", () => {
+    for (const name of [
+      "Jo",
+      "Oluwaseun Adebayo-Johnson Chukwuemeka Babatunde",
+      "Abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwx",
+      "WWWWWWWWWW WWWWWWWWWW WWWWWWWWWW WWWWWWWWWW WWWWWWW",
+    ]) {
+      const { lines, size } = chooseNameLayout(name, ruler);
+      for (const line of lines) expect((ruler(line) * size) / 100).toBeLessThanOrEqual(NAME_MAX_W);
+      expect(lines.join(lines.length > 1 ? " " : "").replace(/- /, "-")).toBe(
+        name.toUpperCase(),
+      );
+    }
+  });
+
+  it("explains every name it cannot take", () => {
+    expect(nameProblem("")).toMatch(/Enter your name/);
+    expect(nameProblem("   ")).toMatch(/Enter your name/);
+    expect(nameProblem("A")).toMatch(/at least 2 letters/);
+    // The same words however far over, so an alert is not re-read at every key.
+    expect(nameProblem("A".repeat(NAME_MAX + 1))).toBe("Keep it to 50 letters or fewer.");
+    expect(nameProblem("A".repeat(NAME_MAX + 9))).toBe("Keep it to 50 letters or fewer.");
+    expect(nameProblem("Ada 🎉")).toMatch(/cannot draw 🎉/);
+    expect(nameProblem("李小龙")).toMatch(/cannot draw/);
+    expect(nameProblem("--")).toMatch(/at least one letter/);
+  });
+
+  it("takes Yoruba, Igbo and Hausa names as they are written, counting letters not accents", () => {
+    expect(nameProblem("Ọláolúwa Adéṣínà-Èkọ́")).toBeNull();
+    expect(nameProblem("Chukwuemeka Ụzọ")).toBeNull();
+    expect(nameProblem("Ɗanjuma Ƙabiru")).toBeNull();
+    expect(nameProblem("D'Angelo O’Neil")).toBeNull();
+    // Fifty letters, every one carrying a mark: still fifty.
+    expect(nameProblem("Ọ́".repeat(NAME_MAX))).toBeNull();
+  });
+
+  it("previews only what the lettering can draw while a name is being typed", () => {
+    expect(drawableName("  Ada   🎉 Obi ")).toBe("Ada Obi");
+    expect(drawableName("🎉")).toBe("");
+    expect([...drawableName("Ọ́".repeat(60)).normalize("NFD").replace(/\p{M}/gu, "")]).toHaveLength(NAME_MAX);
+  });
+});
+
+describe("the four roles", () => {
+  it("say the owner's words in the mark's colours", () => {
+    expect(DP_ROLES).toEqual(["attendee", "speaker", "volunteer", "partner"]);
+    expect(roleCopy("attendee")).toMatchObject({ line: "I’M ATTENDING", fill: "#1B64E4", text: "#FFFFFF" });
+    expect(roleCopy("speaker")).toMatchObject({ line: "I’M SPEAKING", fill: "#F12D5B", text: "#FFFFFF" });
+    expect(roleCopy("volunteer")).toMatchObject({ line: "I’M VOLUNTEERING", fill: "#1BBE9F", text: "#0A1628" });
+    expect(roleCopy("partner")).toMatchObject({ line: "PROUD PARTNER", fill: "#F0C224", text: "#0A1628" });
+  });
+});
+
+describe("the public days", () => {
+  const text = publicDayLines()
+    .map((d) => `${d.when} ${d.where}`)
+    .join(" | ");
+
+  it("are the 22nd at Ibis Hotel, Lekki and the 23rd at the National Art Theatre", () => {
+    expect(publicDayLines()).toEqual([
+      { when: "22 OCT 2026", where: "IBIS HOTEL, LEKKI PHASE 1" },
+      { when: "23 OCT 2026", where: "NATIONAL ART THEATRE, IGANMU" },
+    ]);
+    expect(publicDaysRange()).toBe("22–23 October");
+  });
+
+  it("never show the private mixer on the 24th", () => {
+    expect(text).not.toMatch(/\b24\b/);
+    expect(blockfest2026Lagos.publicDays?.map((d) => d.date)).not.toContain("2026-10-24");
+    // The site's own three-day span is left as it was, on purpose.
+    expect(blockfest2026Lagos.date.end).toBe("2026-10-24T22:00:00+01:00");
+  });
+
+  it("reads a range across a month end", () => {
+    expect(
+      publicDaysRange([
+        { date: "2026-10-31", venue: "A", area: "B" },
+        { date: "2026-11-01", venue: "C", area: "D" },
+      ]),
+    ).toBe("31 October – 1 November");
+  });
+});
+
+describe("sharing", () => {
+  it("says the role, the public days, the link and #Blockfest2026", () => {
+    expect(shareText("attendee")).toBe(
+      "I'm attending Blockfest Africa 2026 in Lagos, 22–23 October. Get your DP: https://blockfestafrica.com/getdp #Blockfest2026",
+    );
+    for (const role of DP_ROLES) {
+      const text = shareText(role);
+      expect(text).toContain("#Blockfest2026");
+      expect(text).toContain("https://blockfestafrica.com/getdp");
+      expect(text).not.toMatch(/2025/);
+      expect(text).not.toMatch(/\b24\b/);
+    }
+    expect(shareText("speaker")).toMatch(/^I'm speaking at /);
+    expect(shareText("volunteer")).toMatch(/^I'm volunteering at /);
+    expect(shareText("partner")).toMatch(/^Proud partner of /);
+  });
+
+  it("names the file after the person in plain letters", () => {
+    expect(dpFileName("Ada Obi")).toBe("blockfest-2026-dp-ada-obi.png");
+    expect(dpFileName("Ọláolúwa Adéṣínà-Èkọ́")).toBe("blockfest-2026-dp-olaoluwa-adesina-eko.png");
+    expect(dpFileName("Ɗanjuma Ƙabiru Ŋozi")).toBe("blockfest-2026-dp-danjuma-kabiru-nozi.png");
+    expect(dpFileName("Ɖossou Kǝlla Ɣevu")).toBe("blockfest-2026-dp-dossou-kella-gevu.png");
+    expect(dpFileName("🎉")).toBe("blockfest-2026-dp.png");
+    const long = dpFileName("Oluwaseun Adebayo-Johnson Chukwuemeka Babatunde");
+    expect(long).toBe("blockfest-2026-dp-oluwaseun-adebayo-johnson-chukwuemeka.png");
+    expect(long.length).toBeLessThanOrEqual("blockfest-2026-dp-.png".length + 40);
+  });
+});
+
+describe("the photo crop", () => {
+  it("centres a 9:16 selfie 39% of the way down, so the whole head is in", () => {
+    const c = cropCentre(900, 1600, defaultTransform(900, 1600));
+    expect(c.x).toBeCloseTo(0.5, 5);
+    expect(c.y).toBeCloseTo(0.39, 5);
+  });
+
+  it("leaves a square or landscape photo centred: it has no height to spare", () => {
+    expect(cropCentre(1200, 1200, defaultTransform(1200, 1200))).toEqual({ x: 0.5, y: 0.5 });
+    const wide = cropCentre(1600, 900, defaultTransform(1600, 900));
+    expect(wide.x).toBeCloseTo(0.5, 5);
+    expect(wide.y).toBeCloseTo(0.5, 5);
+  });
+
+  it("keeps the frame covered however far the photo is pushed", () => {
+    const frame = 800;
+    for (const [iw, ih] of [[900, 1600], [1600, 900], [1200, 1200], [300, 2000]]) {
+      for (const zoom of [0.2, 1, 1.7, 3, 9]) {
+        for (const off of [-5, -0.4, 0, 0.3, 5]) {
+          const t = clampTransform({ zoom, offsetX: off, offsetY: -off }, iw, ih);
+          expect(t.zoom).toBeGreaterThanOrEqual(1);
+          expect(t.zoom).toBeLessThanOrEqual(3);
+          const r = photoRect(iw, ih, frame, t);
+          expect(r.x).toBeLessThanOrEqual(1e-9);
+          expect(r.y).toBeLessThanOrEqual(1e-9);
+          expect(r.x + r.w).toBeGreaterThanOrEqual(frame - 1e-9);
+          expect(r.y + r.h).toBeGreaterThanOrEqual(frame - 1e-9);
+        }
+      }
+    }
+  });
+
+  it("moves by a fraction of the frame and stops at the photo's edge", () => {
+    const start = { zoom: 2, offsetX: 0, offsetY: 0 };
+    expect(nudgeTransform(start, 0.02, 0, 1200, 1200).offsetX).toBeCloseTo(0.02, 10);
+    // At zoom 2 a square photo can move half a frame each way, no further.
+    expect(nudgeTransform(start, 9, -9, 1200, 1200)).toEqual({ zoom: 2, offsetX: 0.5, offsetY: -0.5 });
+    // At zoom 1 a square photo exactly fills the frame: nowhere to go.
+    expect(nudgeTransform({ zoom: 1, offsetX: 0, offsetY: 0 }, 0.1, 0.1, 1200, 1200)).toEqual({
+      zoom: 1,
+      offsetX: 0,
+      offsetY: 0,
+    });
+  });
+});
+
+describe("the footer, from lib/partners-2026", () => {
+  it("puts the headline sponsor first and dead centre", () => {
+    expect(tiers.headline?.name).toBe("Monica");
+    const [lead] = footer.sponsors;
+    expect(lead.logo.name).toBe("Monica");
+    expect(lead.x + lead.w / 2).toBeCloseTo(DP_SIZE / 2, 6);
+    expect(footer.headlineLabel?.text).toBe("HEADLINE SPONSOR");
+  });
+
+  it("draws every sponsor, in the listed order", () => {
+    expect(tiers.sponsors.map((s) => s.name)).toEqual(sponsors.map((s) => s.name));
+    expect(footer.sponsors.map((s) => s.logo.name).sort()).toEqual(
+      ["Monica", ...sponsors.map((s) => s.name)].sort(),
+    );
+  });
+
+  it("endorses with Lagos State, then the ecosystem partners, then every media partner", () => {
+    expect(tiers.groups.map((g) => [g.kind, g.label])).toEqual([
+      ["Government", "ENDORSED BY"],
+      ["Ecosystem", "ECOSYSTEM PARTNER"],
+      ["Media", "MEDIA PARTNERS"],
+    ]);
+    expect(tiers.groups[0].logos.map((l) => l.name)).toEqual(["Lagos State Government"]);
+    expect(tiers.groups[1].logos.map((l) => l.name)).toEqual(["Hashed Emergent"]);
+    expect(tiers.groups[2].logos.map((l) => l.name)).toEqual(
+      partners.filter((p) => p.kind === "Media").map((p) => p.name),
+    );
+    expect(footer.partners.map((p) => p.logo.name)).toEqual(
+      tiers.groups.flatMap((g) => g.logos.map((l) => l.name)),
+    );
+    expect(footer.labels.map((l) => l.text)).toEqual([
+      "ENDORSED BY",
+      "ECOSYSTEM PARTNER",
+      "MEDIA PARTNERS",
+    ]);
+  });
+
+  it("keeps every partner logo legible on the 2160 post, in at most two lines", () => {
+    expect(footer.partnerLines).toBeLessThanOrEqual(2);
+    for (const p of footer.partners) {
+      expect(p.h).toBeGreaterThanOrEqual(FOOTER.partnerMinH - 1e-9);
+      expect(p.x).toBeGreaterThanOrEqual(FOOTER.edge - 1e-9);
+      expect(p.x + p.w).toBeLessThanOrEqual(DP_SIZE - FOOTER.edge + 1e-9);
+      expect(p.y).toBeGreaterThanOrEqual(footer.top);
+      expect(p.y + p.h).toBeLessThanOrEqual(DP_SIZE);
+    }
+    const all = [...footer.sponsors, ...footer.partners];
+    all.forEach((a, i) => all.slice(i + 1).forEach((b) => expect(overlaps(a, b)).toBe(false)));
+  });
+
+  it("shows a newly added sponsor or partner with no change to the drawing code", () => {
+    const newcomer: Sponsor = {
+      name: "Newco",
+      tier: "Bronze",
+      logo: "/2026/logos/newco.png",
+      width: 900,
+      height: 300,
+    };
+    const more: FooterTiers = footerTiers({
+      headline,
+      sponsors: [...sponsors, newcomer],
+      partners: [
+        ...partners,
+        { name: "Lagos Builders", kind: "Community", logo: "/x.png", width: 600, height: 200 },
+      ],
+    });
+    const laid = layoutFooter(more, measureLabel);
+    expect(laid.sponsors.map((s) => s.logo.name)).toContain("Newco");
+    expect(laid.partners.map((p) => p.logo.name)).toContain("Lagos Builders");
+    expect(laid.labels.map((l) => l.text)).toContain("COMMUNITY PARTNER");
+    expect(laid.sponsors[0].logo.name).toBe("Monica");
+    for (const s of laid.sponsors) {
+      expect(s.x).toBeGreaterThanOrEqual(FOOTER.edge - 1e-9);
+      expect(s.x + s.w).toBeLessThanOrEqual(DP_SIZE - FOOTER.edge + 1e-9);
+    }
+  });
+
+  it("never lets an extra sponsor shrink below the floor: the lowest tiers move to a line of their own", () => {
+    const extra: Sponsor[] = [
+      ...Array.from({ length: 8 }, (_, i) => ({
+        name: `Extra ${i + 1}`,
+        tier: "Community",
+        logo: `/x${i}.png`,
+        width: 900,
+        height: 300,
+      })),
+      { name: "Very Wide", tier: "Community", logo: "/wide.png", width: 1280, height: 156 },
+    ];
+    const laid = layoutFooter(
+      footerTiers({ headline, sponsors: [...sponsors, ...extra], partners }),
+      measureLabel,
+    );
+    expect(laid.sponsors).toHaveLength(1 + sponsors.length + extra.length);
+    for (const s of laid.sponsors) {
+      expect(s.h).toBeGreaterThanOrEqual(FOOTER.sponsorMinH - 1e-9);
+      expect(s.h).toBeGreaterThanOrEqual(FOOTER.partnerMinH - 1e-9);
+      expect(s.x).toBeGreaterThanOrEqual(FOOTER.edge - 1e-9);
+      expect(s.x + s.w).toBeLessThanOrEqual(DP_SIZE - FOOTER.edge + 1e-9);
+    }
+    const all = [...laid.sponsors, ...laid.partners];
+    all.forEach((a, i) => all.slice(i + 1).forEach((b) => expect(overlaps(a, b)).toBe(false)));
+    const [lead] = laid.sponsors;
+    expect(lead.logo.name).toBe("Monica");
+    expect(lead.x + lead.w / 2).toBeCloseTo(DP_SIZE / 2, 6);
+    expect(insideCircleCrop(lead)).toBe(true);
+    // The ones the wings could not take sit below the headline row, above the partners.
+    const spilled = laid.sponsors.filter((s) => s.y > lead.y + lead.h);
+    expect(spilled.map((s) => s.logo.name)).toContain("Very Wide");
+    for (const s of spilled) expect(s.y + s.h).toBeLessThan(laid.divider!.y);
+    // The footer grew for them, so the art above rebalances.
+    expect(laid.top).toBeLessThan(footer.top);
+  });
+
+  it("puts every partner logo under its own kind's label, however the lines wrap", () => {
+    const check = (laid: ReturnType<typeof layoutFooter>, groups: FooterTiers["groups"]) => {
+      const kindOf = new Map(groups.flatMap((g) => g.logos.map((l) => [l.name, g.label] as const)));
+      const eps = 1e-6;
+      for (const p of laid.partners) {
+        const cx = p.x + p.w / 2;
+        // The hairlines either side of this logo bound its column.
+        const beside = laid.separators.filter((s) => s.y1 - eps <= p.y && p.y + p.h <= s.y2 + eps);
+        const left = Math.max(-Infinity, ...beside.filter((s) => s.x < cx).map((s) => s.x));
+        const right = Math.min(Infinity, ...beside.filter((s) => s.x > cx).map((s) => s.x));
+        // The label a reader takes it to be under: the lowest one above it in
+        // its column, and of those the nearest across.
+        const [under] = laid.labels
+          .filter((l) => l.baseline < p.y && l.cx > left && l.cx < right)
+          .sort((a, b) => b.baseline - a.baseline || Math.abs(a.cx - cx) - Math.abs(b.cx - cx));
+        expect(under?.text, p.logo.name).toBe(kindOf.get(p.logo.name));
+      }
+    };
+    check(footer, tiers.groups);
+    // Many partners of several kinds: the labelled flow, every run labelled.
+    const crowd = footerTiers({
+      headline,
+      sponsors,
+      partners: [
+        ...partners,
+        ...Array.from({ length: 9 }, (_, i) => ({
+          name: `Hub ${i}`,
+          kind: "Community" as const,
+          logo: `/hub${i}.png`,
+          width: 900,
+          height: 300,
+        })),
+      ],
+    });
+    check(layoutFooter(crowd, measureLabel), crowd.groups);
+  });
+
+  it("hands the browser an SVG with its recorded size on its root", () => {
+    const svg = `<?xml version="1.0"?><svg width="100%" height='100%' viewBox="0 0 1200 300" xmlns="http://www.w3.org/2000/svg"><rect width="10" height="5"/></svg>`;
+    const sized = sizedSvg(svg, 5000, 1250);
+    expect(sized).toContain(`<svg width="5000" height="1250" viewBox="0 0 1200 300"`);
+    expect(sized).toContain(`<rect width="10" height="5"/>`);
+    const resolved = footerTiers({ headline, sponsors, partners }, (l) =>
+      l.logo.endsWith(".svg") ? "data:svg" : l.logo,
+    );
+    expect(resolved.sponsors.find((s) => s.name === "Cake Wallet")?.src).toBe("data:svg");
+  });
+});
+
+describe("the circle crop a profile picture makes", () => {
+  const art = layoutArt(footer.top, 667 / 164);
+
+  it("keeps the mark, the photo, the role, the name and the headline sponsor", () => {
+    expect(insideCircleCrop(art.logo)).toBe(true);
+    const ring = art.ringR + ART.line / 2;
+    expect(
+      insideCircleCrop({ x: art.hub.x - ring, y: art.hub.y - ring, w: 2 * ring, h: 2 * ring }),
+    ).toBe(true);
+    // The pill, name and days live in this band, never wider than the name's room.
+    expect(
+      insideCircleCrop({
+        x: DP_SIZE / 2 - NAME_MAX_W / 2,
+        y: art.zoneTop,
+        w: NAME_MAX_W,
+        h: art.zoneBottom - art.zoneTop,
+      }),
+    ).toBe(true);
+    expect(insideCircleCrop(footer.sponsors[0])).toBe(true);
+  });
+
+  it("leaves the art room to breathe above the taller footer", () => {
+    expect(art.zoneBottom).toBeLessThanOrEqual(footer.top);
+    expect(art.zoneBottom - art.zoneTop).toBeGreaterThanOrEqual(ART.textBlock);
+    expect(art.photoR).toBeGreaterThanOrEqual(380);
+    expect(art.hub.y - art.ringR - ART.line / 2).toBeGreaterThan(art.themeBaseline);
+  });
+});
