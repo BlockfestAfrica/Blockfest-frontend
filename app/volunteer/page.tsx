@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GetDpStrip } from "@/components/shared/get-dp-strip";
 import {
   ArrowUpRight,
   CalendarDays,
@@ -357,6 +358,10 @@ export default function VolunteerPage() {
             </div>
           </div>
         </section>
+        <GetDpStrip
+          role="volunteer"
+          lead="Volunteering at Blockfest Africa '26? Make your volunteer DP and share it."
+        />
       </main>
     </>
   );

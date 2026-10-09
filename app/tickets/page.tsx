@@ -8,6 +8,7 @@ import { TicketProof } from "@/components/tickets/ticket-proof";
 import { TicketTiers } from "@/components/tickets/ticket-tiers";
 import { IdealAudience } from "@/components/tickets/ideal-audience";
 import { TicketPolicy } from "@/components/tickets/ticket-policy";
+import { GetDpStrip } from "@/components/shared/get-dp-strip";
 import { EVENT_ID, SITE_URL, CURRENT_EDITION } from "@/lib/seo-event";
 import { jsonLd } from "@/lib/json-ld";
 import {
@@ -117,6 +118,9 @@ const TicketsPage = () => {
 
         {/* The ten passes, grouped by which days they cover */}
         <TicketTiers />
+
+        {/* Got a pass: say so, with the DP that carries the dates. */}
+        <GetDpStrip lead="Got your pass? Make your Blockfest Africa '26 DP and let people know you're coming." />
 
         {/* Who the room is built for */}
         <IdealAudience />

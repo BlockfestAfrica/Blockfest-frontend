@@ -166,6 +166,15 @@ const Navbar = ({ sticky = true }: { sticky?: boolean } = {}) => {
         >
           Tickets
         </Link>
+        {/* From xl only, short and on one line: below that the row has no
+            room for an eighth item, and the phone menu carries it below md. */}
+        <Link
+          href="/getdp"
+          aria-current={pathname === "/getdp" ? "page" : undefined}
+          className={`${navLinkClasses.replace("inline-flex", "hidden xl:inline-flex")} whitespace-nowrap ${pathname === "/getdp" ? activeNavClasses : ""}`}
+        >
+          Get DP
+        </Link>
         <Link href="/#sponsorship" className={navLinkClasses}>
           Sponsor
         </Link>
@@ -337,6 +346,20 @@ const MobileMenu = () => {
             }`}
           >
             Tickets
+          </Link>
+        </SheetClose>
+
+        <SheetClose asChild>
+          <Link
+            href="/getdp"
+            aria-current={pathname === "/getdp" ? "page" : undefined}
+            className={`text-lg font-medium transition w-fit min-h-11 inline-flex items-center ${
+              pathname === "/getdp"
+                ? "text-white underline decoration-brand-gold decoration-2 underline-offset-8"
+                : "text-nav-gray hover:text-white hover:underline"
+            }`}
+          >
+            Get your DP
           </Link>
         </SheetClose>
 
