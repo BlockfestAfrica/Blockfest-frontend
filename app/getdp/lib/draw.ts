@@ -38,12 +38,9 @@ import {
   type FooterTiers,
   type PhotoTransform,
 } from "./dp";
-import { DP_FONTS } from "./fonts";
-import { FontLoadError, errorDetail } from "./errors";
+import { DP_FAMILY, loadDpFaces, primaryFamily } from "./faces";
 import {
   DOT_ABOVE,
-  MARK_SOURCES,
-  PLAIN_CAPITAL,
   clusters as spell,
   letterNotes,
   markSource,
@@ -104,88 +101,20 @@ const LABEL_TRACK = 3.6; // the footer's small group labels
 /* Fonts                                                              */
 /* ------------------------------------------------------------------ */
 
-const DISPLAY = DP_FONTS.display;
-const TEXT = DP_FONTS.text;
-
-function primaryFamily(stack: string): string {
-  return stack.split(",")[0].trim().replace(/^['"]|['"]$/g, "");
-}
+/**
+ * The faces the DP is drawn in, by the names only faces.ts gives them: no
+ * fallback face stands behind either, and nothing is drawn until both have
+ * loaded (ensureFonts).
+ */
+const DISPLAY = `"${DP_FAMILY.display}"`;
+const TEXT = `"${DP_FAMILY.text}"`;
 
 const display = (size: number) => `400 ${size}px ${DISPLAY}`;
 const text = (size: number) => `400 ${size}px ${TEXT}`;
 
-/**
- * The same faces, named alone, for document.fonts.load. next/font follows
- * each face with a "… Fallback" face whose only source is local("Arial"),
- * and a load matches every family it is given: on a device with no Arial
- * (every Android phone) that fallback face fails, and the whole load
- * rejects with a NetworkError though Bebas and Gotham loaded. Drawing keeps
- * the full stack; a fallback face that failed is simply passed over there.
- */
-const displayFace = (size: number) => `400 ${size}px "${primaryFamily(DISPLAY)}"`;
-const textFace = (size: number) => `400 ${size}px "${primaryFamily(TEXT)}"`;
-
-const FIXED_DISPLAY = "BLOCKF3ST AFRICA 2026 I’M ATTENDING SPEAKING VOLUNTEERING PROUD PARTNER YOUR NAME .";
-
-/**
- * Load both faces before any drawing. The person's name goes to
- * document.fonts.load as itself and as the letters actually drawn (accented
- * capitals recomposed, dots below taken out), and the accent sources go with
- * it, so every unicode-range file those letters live in (latin, latin-ext) is
- * fetched before the first measure.
- */
-/** Every capital a mark may be borrowed from, and every plain stand-in. */
-const BORROWED = [
-  ...Object.values(MARK_SOURCES).flatMap((sources) => sources.map(([src]) => src)),
-  ...Object.values(PLAIN_CAPITAL),
-].join("");
-
-/**
- * How long the faces may take. On a stalled connection the loads never
- * settle, and the page would say "Preparing" for ever; past this it says the
- * lettering did not load and offers Try again, keeping everything typed.
- */
-export const FONT_TIMEOUT_MS = 12_000;
-
-async function ensureFonts(name: string): Promise<void> {
-  const upper = name.toUpperCase().normalize("NFC");
-  const bases = upper.normalize("NFD").replace(/[\u0300-\u036F]/g, "");
-  const small = [
-    DP_THEME,
-    ...publicDayLines().map((d) => `${d.when} ${d.where}`),
-    "HEADLINE SPONSOR ENDORSED BY ECOSYSTEM COMMUNITY MEDIA PARTNERS",
-  ].join(" ");
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    await Promise.race([
-      (async () => {
-        await Promise.all([
-          document.fonts.load(displayFace(120), FIXED_DISPLAY),
-          document.fonts.load(displayFace(120), upper || "A"),
-          document.fonts.load(displayFace(120), `${bases} ${BORROWED}`),
-          document.fonts.load(textFace(40), small),
-        ]);
-        await document.fonts.ready;
-      })(),
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new FontLoadError("DP fonts timed out")), FONT_TIMEOUT_MS);
-      }),
-    ]);
-  } catch (e) {
-    throw e instanceof FontLoadError ? e : new FontLoadError(`DP fonts did not load (${errorDetail(e)})`);
-  } finally {
-    clearTimeout(timer);
-  }
-  const loaded = new Set<string>();
-  document.fonts.forEach((face) => {
-    if (face.status === "loaded") loaded.add(face.family.replace(/['"]/g, ""));
-  });
-  const missing = [DISPLAY, TEXT]
-    .map(primaryFamily)
-    .filter((family) => !loaded.has(family));
-  if (missing.length) {
-    throw new FontLoadError(`DP fonts did not load: ${missing.join(", ")}`);
-  }
+/** Both faces, before any measure or paint; see faces.ts. */
+function ensureFonts(): Promise<void> {
+  return loadDpFaces();
 }
 
 /* ------------------------------------------------------------------ */
@@ -576,7 +505,7 @@ function fillName(
  * the page can say so. Empty for nearly every name.
  */
 export async function nameSubstitutions(name: string): Promise<LetterNote[]> {
-  await ensureFonts(name);
+  await ensureFonts();
   const ctx = document.createElement("canvas").getContext("2d");
   if (!ctx) return [];
   ctx.font = display(100);
@@ -691,7 +620,7 @@ export async function drawDP(
   opts: DPOptions,
   assets: DPAssets,
 ): Promise<DPResult> {
-  await ensureFonts(opts.name);
+  await ensureFonts();
 
   ctx.save();
   const k = ctx.canvas.width / S;

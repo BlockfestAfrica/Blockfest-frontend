@@ -34,13 +34,22 @@ import {
   shareText,
   tidyName,
   type DPRole,
+  type FooterLogo,
   type FooterTiers,
   type PhotoTransform,
 } from "../lib/dp";
 import { drawDP, nameSubstitutions, renderFull, type DPAssets, type DPResult } from "../lib/draw";
 import { FontLoadError, errorDetail } from "../lib/errors";
+import { loadDpFaces } from "../lib/faces";
 import type { LetterNote } from "../lib/letters";
-import { loadAssets, PhotoError, readPhoto, type LoadedPhoto } from "../lib/load";
+import {
+  LATE_LOGO_TRIES,
+  loadAssets,
+  PhotoError,
+  readPhoto,
+  retryLogos,
+  type LoadedPhoto,
+} from "../lib/load";
 import {
   COPY,
   DESKTOP_ENV,
@@ -53,6 +62,7 @@ import {
   deviceClass,
   moveHint,
   platformAction,
+  copiesCaption,
   shareData,
   statusAction,
   type ButtonId,
@@ -138,6 +148,8 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   /** Why the mark and logos could not be prepared, as the error said it. */
   const [assetsError, setAssetsError] = useState<string | null>(null);
   const [assetsAttempt, setAssetsAttempt] = useState(0);
+  /** Footer logos left off the first load (a slow connection), asked for again in the background. */
+  const [lateLogos, setLateLogos] = useState<FooterLogo[]>([]);
   /** The last preview draw failed: whether for the lettering, and the error as it said it. */
   const [drawError, setDrawError] = useState<{ fonts: boolean; detail: string } | null>(null);
   const [drawAttempt, setDrawAttempt] = useState(0);
@@ -247,13 +259,13 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
 
   /* What this device can do with the picture, once, after the first paint. */
   useEffect(() => {
-    const canShare = (type: FileType) => {
+    const canShare = (type: FileType, text?: string) => {
       try {
         const probe = new File([new Blob()], type === "image/jpeg" ? "dp.jpg" : "dp.png", { type });
         return (
           typeof navigator.share === "function" &&
           typeof navigator.canShare === "function" &&
-          navigator.canShare({ files: [probe] })
+          navigator.canShare(text === undefined ? { files: [probe] } : { files: [probe], text })
         );
       } catch {
         return false;
@@ -266,6 +278,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         coarse: !!window.matchMedia?.("(pointer: coarse)")?.matches,
         canShareJpeg: canShare("image/jpeg"),
         canSharePng: canShare("image/png"),
+        canShareJpegText: canShare("image/jpeg", "Blockfest Africa 2026"),
       }),
     );
   }, []);
@@ -273,10 +286,15 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   /* The mark and the partner logos; again on Try again. */
   useEffect(() => {
     let live = true;
+    // The lettering's files come at the same time, not after the logos. A
+    // failure here is said by the draw that waits on it.
+    loadDpFaces().catch(() => undefined);
     loadAssets(tiers)
       .then((a) => {
         if (!live) return;
-        setAssets(a);
+        const { missing, ...parts } = a;
+        setAssets(parts);
+        setLateLogos(missing);
         setAssetsError(null);
       })
       .catch((e) => {
@@ -287,6 +305,28 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       live = false;
     };
   }, [tiers, assetsAttempt]);
+
+  /*
+   * The logos left off, asked for again; the picture is drawn again with
+   * each round that brings any, so a slow connection still gets every
+   * partner on it, unless the person saves before they come.
+   */
+  useEffect(() => {
+    if (!lateLogos.length) return;
+    let live = true;
+    void (async () => {
+      let left = lateLogos;
+      for (let attempt = 1; attempt <= LATE_LOGO_TRIES && left.length; attempt++) {
+        const got = await retryLogos(left, attempt);
+        if (!live) return;
+        if (Object.keys(got).length) setAssets((a) => a && { ...a, logos: { ...a.logos, ...got } });
+        left = left.filter((l) => !(l.name in got));
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, [lateLogos]);
 
   /*
    * Letters the lettering has no form of, said under the name. A check that
@@ -380,8 +420,10 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     };
   }, [assets, options, drawAttempt]);
 
+  /* A logo that comes late makes a new picture: the files drawn without it are let go. */
+  const logoCount = assets ? Object.keys(assets.logos).length : 0;
   const key = photo && transform
-    ? `${role}|${drawableName(name)}|${photo.id}|${transform.zoom}|${transform.offsetX}|${transform.offsetY}`
+    ? `${role}|${drawableName(name)}|${photo.id}|${transform.zoom}|${transform.offsetX}|${transform.offsetY}|${logoCount}`
     : null;
 
   /*
@@ -935,7 +977,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     setTip(action.tip);
     switch (action.kind) {
       case "sheet":
-        shareNow(p);
+        shareNow(p, { copy: copiesCaption(p, env) });
         return;
       case "link":
       case "save":
@@ -965,7 +1007,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     setTip(null);
     switch (action.kind) {
       case "sheet":
-        shareNow("status");
+        shareNow("status", { copy: copiesCaption("status", env) });
         return;
       case "save":
         void copyCaptionQuietly();

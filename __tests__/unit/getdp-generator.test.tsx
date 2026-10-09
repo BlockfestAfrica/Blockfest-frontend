@@ -63,16 +63,23 @@ vi.mock("@/app/getdp/lib/draw", () => ({
 
 const readPhoto = vi.fn();
 const loadAssets = vi.fn<(tiers: unknown) => Promise<unknown>>();
+const retryLogos = vi.fn<(missing: { name: string }[], attempt: number) => Promise<Record<string, unknown>>>();
 vi.mock("@/app/getdp/lib/load", async () => {
   class PhotoError extends Error {}
   return {
+    LATE_LOGO_TRIES: 2,
     PhotoError,
     loadAssets: (tiers: unknown) => loadAssets(tiers),
     readPhoto: (file: File) => readPhoto(file),
+    retryLogos: (missing: { name: string }[], attempt: number) => retryLogos(missing, attempt),
   };
 });
 
 vi.mock("server-only", () => ({}));
+
+/** The DP's faces (lib/faces, tested on its own): loaded at once, and asked for when the page opens. */
+const loadDpFaces = vi.fn(async () => undefined);
+vi.mock("@/app/getdp/lib/faces", () => ({ loadDpFaces: () => loadDpFaces() }));
 
 const { default: DPGenerator } = await import("@/app/getdp/components/DPGenerator");
 const { FontLoadError } = await import("@/app/getdp/lib/errors");
@@ -146,7 +153,10 @@ beforeEach(() => {
   nameSubstitutions.mockReset();
   nameSubstitutions.mockResolvedValue([]);
   loadAssets.mockReset();
-  loadAssets.mockImplementation(async (tiers) => ({ logo: {}, tiers, logos: {} }));
+  loadAssets.mockImplementation(async (tiers) => ({ logo: {}, tiers, logos: {}, missing: [] }));
+  retryLogos.mockReset();
+  retryLogos.mockResolvedValue({});
+  loadDpFaces.mockClear();
   readPhoto.mockReset();
   readPhoto.mockResolvedValue({ photo: { width: 900, height: 1600 }, width: 900, height: 1600 });
   share.mockReset();
@@ -402,6 +412,41 @@ describe("the Get DP generator", () => {
     await waitFor(() => expect(drawDP.mock.calls.length).toBeGreaterThan(before));
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
     expect(lastDrawn()).toMatchObject({ role: "speaker", name: "Ada Obi", photo: picked });
+  });
+
+  it("asks for the lettering as the page opens, beside the logos", async () => {
+    await mount();
+    expect(loadDpFaces).toHaveBeenCalled();
+    expect(loadAssets).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks again for logos a slow connection left off, and draws the picture again with them", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const monica = { name: "Monica" };
+    const techpoint = { name: "Techpoint" };
+    loadAssets.mockImplementation(async (tiers) => ({
+      logo: {},
+      tiers,
+      logos: { Hoaq: {} },
+      missing: [monica, techpoint],
+    }));
+    const late = deferred<Record<string, unknown>>();
+    retryLogos.mockReturnValueOnce(late.promise).mockResolvedValueOnce({ Techpoint: {} });
+    await readyToShare("Download PNG");
+    expect(retryLogos).toHaveBeenCalledWith([monica, techpoint], 1);
+    const before = fullDraws().length;
+    expect(before).toBeGreaterThan(0);
+
+    // Monica comes on the first round: the preview and the full picture are drawn again.
+    const previews = draws.filter((d) => !d.full).length;
+    await act(async () => late.resolve({ Monica: {} }));
+    await waitFor(() => expect(draws.filter((d) => !d.full).length).toBeGreaterThan(previews));
+    await settle(400);
+    expect(fullDraws().length).toBeGreaterThan(before);
+    // Only Techpoint is asked for on the second round, and nothing after it.
+    await waitFor(() => expect(retryLogos).toHaveBeenCalledWith([techpoint], 2));
+    await settle();
+    expect(retryLogos).toHaveBeenCalledTimes(2);
   });
 
   it("keeps sharing shut on a picture that could not be drawn, and says what broke", async () => {
@@ -1110,7 +1155,7 @@ describe("sharing on a phone", () => {
     const status = () => button("Post to WhatsApp Status");
     expect(status().disabled).toBe(true);
     expect(
-      screen.getByText("Opens your share list with your DP: choose WhatsApp, then My status at the top."),
+      screen.getByText("Opens your share list with your DP: pick WhatsApp, then My status."),
     ).toBeTruthy();
     expect(status().getAttribute("aria-describedby")).toBe("dp-whatsapp-status-how");
 
@@ -1138,13 +1183,15 @@ describe("sharing on a phone", () => {
     await settle();
     cleanup();
 
-    // Android hands WhatsApp the caption beside the picture.
+    // Android hands WhatsApp the caption beside the picture, so nothing is copied.
     setDevice({ ua: UA.android, coarse: true, files: true });
     share.mockClear();
+    writeText.mockClear();
     await readyToShare("Post to WhatsApp Status");
     fireEvent.click(button("Post to WhatsApp Status"));
     expect(share).toHaveBeenCalledTimes(1);
     expect(share.mock.calls[0][0].text).toBe(shareText("attendee"));
+    expect(writeText).not.toHaveBeenCalled();
     await settle();
   });
 
@@ -1166,6 +1213,37 @@ describe("sharing on a phone", () => {
     expect(anchorClick).toHaveBeenCalledTimes(1);
     expect(writeText).toHaveBeenCalledTimes(2);
     expect(share).not.toHaveBeenCalled();
+  });
+
+  it("shares on Android without copying where the caption goes with the picture, and copies where it does not", async () => {
+    setDevice({ ua: UA.android, coarse: true, files: true });
+    await readyToShare("Share your DP");
+    expect(screen.getByText("Each opens your phone's share list with your DP: pick the app there.")).toBeTruthy();
+    for (const label of ["Post on X", "Send on WhatsApp"]) {
+      fireEvent.click(button(label));
+      expect(share).toHaveBeenCalledTimes(1);
+      expect(share.mock.calls[0][0].text).toBe(shareText("attendee"));
+      expect(writeText).not.toHaveBeenCalled();
+      share.mockClear();
+      await settle();
+    }
+    expect(screen.getByText("Pick WhatsApp in the list, then a chat or My status.")).toBeTruthy();
+    // Instagram leaves the caption out, so that tap copies it to paste.
+    fireEvent.click(button("Post on Instagram"));
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith(shareText("attendee"));
+    await settle();
+    cleanup();
+
+    // An Android browser whose share list takes the file alone copies, as before.
+    setDevice({ ua: UA.android, coarse: true, files: true, text: false });
+    share.mockClear();
+    writeText.mockClear();
+    await readyToShare("Share your DP");
+    fireEvent.click(button("Post on X"));
+    expect(Object.keys(share.mock.calls[0][0])).toEqual(["files"]);
+    expect(writeText).toHaveBeenCalledWith(shareText("attendee"));
+    await settle();
   });
 
   it("saves to Photos through the share list on an iPhone, with the file alone", async () => {

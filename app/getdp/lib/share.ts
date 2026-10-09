@@ -89,6 +89,12 @@ export interface ShareEnv {
   fileShare: boolean;
   /** What a share hands over: JPEG on a phone that shares files, else PNG. */
   shareType: "image/jpeg" | "image/png";
+  /**
+   * The caption goes with the picture (Android: the share list takes text
+   * beside the file, and X and WhatsApp put it in the post), so a tap for
+   * those need not copy it too.
+   */
+  captionTravels: boolean;
 }
 
 /**
@@ -104,6 +110,7 @@ export const DESKTOP_ENV: ShareEnv = {
   phone: false,
   fileShare: false,
   shareType: "image/png",
+  captionTravels: false,
 };
 
 export function detectEnv(probe: {
@@ -112,17 +119,24 @@ export function detectEnv(probe: {
   coarse: boolean;
   canShareJpeg: boolean;
   canSharePng: boolean;
+  /** navigator.canShare accepts the JPEG with text beside it. */
+  canShareJpegText?: boolean;
 }): ShareEnv {
-  const { ua, maxTouchPoints, coarse, canShareJpeg, canSharePng } = probe;
+  const { ua, maxTouchPoints, coarse, canShareJpeg, canSharePng, canShareJpegText = false } = probe;
   const inApp = IN_APP.test(ua);
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && maxTouchPoints > 1);
+  const android = /Android/i.test(ua);
+  const shareType = coarse && canShareJpeg ? "image/jpeg" : "image/png";
   return {
-    ios: /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && maxTouchPoints > 1),
-    android: /Android/i.test(ua),
+    ios,
+    android,
     inApp,
     app: inApp ? appName(ua) : null,
     phone: coarse,
     fileShare: canShareJpeg || canSharePng,
-    shareType: coarse && canShareJpeg ? "image/jpeg" : "image/png",
+    shareType,
+    // As shareData decides: text goes beside the file on Android only.
+    captionTravels: android && !ios && coarse && shareType === "image/jpeg" && canShareJpegText,
   };
 }
 
@@ -227,6 +241,22 @@ export interface PlatformAction {
   tip: string;
 }
 
+/** On a phone whose share hands the caption over with the picture, for the apps that take it. */
+const TIPS_SHEET_CAPTION: Partial<Record<Platform, string>> = {
+  x: "Pick X in the list. If your caption is missing, use Copy below and paste it.",
+  whatsapp: "Pick WhatsApp in the list, then a chat or My status.",
+};
+
+/**
+ * Whether a tap copies the caption as well. Not for X, WhatsApp or WhatsApp
+ * Status on a phone that hands the caption over with the picture: there it
+ * would only be a second, needless copy. Everywhere else it is how the
+ * caption gets into the post.
+ */
+export function copiesCaption(target: Platform | "status" | "share", env: ShareEnv): boolean {
+  return !(env.captionTravels && (target === "x" || target === "whatsapp" || target === "status"));
+}
+
 const TIPS_SHEET: Record<Platform, string> = {
   x: "Pick X. If your caption isn't in the post, paste it.",
   instagram: "Pick Instagram (Feed or Stories), then paste your caption.",
@@ -281,7 +311,12 @@ export function platformAction(
       return {
         kind: "sheet",
         download: false,
-        tip: p === "tiktok" ? (env.ios ? TIKTOK_SHEET_IOS : TIKTOK_SHEET_ANDROID) : TIPS_SHEET[p],
+        tip:
+          p === "tiktok"
+            ? env.ios
+              ? TIKTOK_SHEET_IOS
+              : TIKTOK_SHEET_ANDROID
+            : ((env.captionTravels ? TIPS_SHEET_CAPTION[p] : undefined) ?? TIPS_SHEET[p]),
       };
     case "download":
       // Neither TikTok nor Instagram has a page to post from on a phone.
@@ -499,10 +534,12 @@ export const COPY = {
    * that it is done ("Your caption is copied" would be untrue until a tap,
    * and after a copy the browser refused).
    */
-  marksDo(cls: DeviceClass): string {
+  marksDo(cls: DeviceClass, captionTravels = false): string {
     switch (cls) {
       case "sheet":
-        return "Each opens your phone's share list with your DP and copies your caption: paste it into the post.";
+        return captionTravels
+          ? "Each opens your phone's share list with your DP: pick the app there."
+          : "Each opens your phone's share list with your DP and copies your caption: paste it into the post.";
       case "desktop":
         return "Each downloads your DP, copies your caption and opens the site in a new tab. Attach the DP and paste.";
       case "download":
@@ -513,7 +550,7 @@ export const COPY = {
   },
 
   statusLabel: "Post to WhatsApp Status",
-  statusSheet: "Opens your share list with your DP: choose WhatsApp, then My status at the top.",
+  statusSheet: "Opens your share list with your DP: pick WhatsApp, then My status.",
   statusSave: "Saves your DP and copies your caption. Then in WhatsApp, open Updates and add it to My status.",
   statusHold: "Save your DP, then in WhatsApp, open Updates and add it to My status.",
   holdStatus(copied = true): string {
