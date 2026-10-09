@@ -589,39 +589,39 @@ export interface FooterLayout {
 /** The footer's measures. Label sizes are the Gotham sizes draw.ts uses. */
 export const FOOTER = {
   edge: 96,
-  padTop: 28,
-  padBottom: 32,
+  padTop: 18,
+  padBottom: 20,
   headLabelSize: 20,
   headLabelCap: 14,
-  headLabelGap: 16,
+  headLabelGap: 10,
   /** Sponsors: sized by area, so a wordmark and a square carry equal weight. */
-  headlineArea: 24000,
-  headlineMaxH: 72,
-  headlineMaxW: 360,
-  sponsorArea: 13000,
-  sponsorMaxH: 60,
-  sponsorMaxW: 240,
+  headlineArea: 16000,
+  headlineMaxH: 58,
+  headlineMaxW: 300,
+  sponsorArea: 8500,
+  sponsorMaxH: 46,
+  sponsorMaxW: 200,
   /**
    * No sponsor is drawn shorter than this, above the partners' floor. A wing
    * beside the headline shrinks only this far; past it, the next sponsors
    * move to a line of their own under the headline row, full size.
    */
-  sponsorMinH: 48,
-  sponsorGap: 72,
+  sponsorMinH: 36,
+  sponsorGap: 60,
   wingGap: 84,
-  rowGap: 26,
+  rowGap: 16,
   groupLabelSize: 18,
   groupLabelCap: 13,
-  groupLabelGap: 16,
+  groupLabelGap: 10,
   /** No partner logo is drawn shorter than this: it must read on the post. */
-  partnerMinH: 40,
+  partnerMinH: 30,
   /** A square mark (Lagos State's seal) may stand taller than a wordmark. */
-  partnerMaxH: 76,
-  partnerMaxW: 340,
-  partnerBase: 58,
-  logoGap: 48,
+  partnerMaxH: 54,
+  partnerMaxW: 260,
+  partnerBase: 42,
+  logoGap: 40,
   groupGap: 92,
-  lineGap: 24,
+  lineGap: 14,
   /** Partners wrap to at most this many lines before their logos get smaller. */
   maxLines: 2,
 } as const;
@@ -1075,14 +1075,14 @@ export const ART = {
   /** Photo edge to the ring's centre line: a navy moat inside the ring. */
   moat: 52,
   /** The ring is never larger than concept C first drew it. */
-  maxRingR: 532,
+  maxRingR: 568,
   /** Ring to the role pill, and the days to the footer. */
   zoneGap: 36,
   /**
    * Room for the pill (136), the name (one line at full size, or two lines
    * a little smaller), the two day lines and the gaps between them.
    */
-  textBlock: 472,
+  textBlock: 414,
 } as const;
 
 /**
@@ -1097,7 +1097,11 @@ export function layoutArt(footerTop: number, logoAspect: number): ArtLayout {
   const logo = { x: S / 2 - ART.logoW / 2, y: ART.logoTop, w: ART.logoW, h: logoH };
   const themeBaseline = ART.logoTop + logoH + ART.themeGap;
   const ringTop = themeBaseline + ART.ringGap;
-  const zoneBottom = footerTop - ART.zoneGap;
+  /* The pill, name and days never sit lower than where a profile picture's
+     circle crop is still as wide as the name's room, so a shorter footer
+     gives the ring the space, not the text. */
+  const cropFloor = S / 2 + Math.sqrt((S / 2) ** 2 - (NAME_MAX_W / 2) ** 2);
+  const zoneBottom = Math.min(footerTop - ART.zoneGap, cropFloor);
   const ringBottomMax = zoneBottom - ART.textBlock - ART.zoneGap;
   const outer = Math.min(
     ringBottomMax - ringTop,
