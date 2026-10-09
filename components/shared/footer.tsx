@@ -13,6 +13,7 @@ import { Newsletter } from "./newsletter";
 const exploreMenu: Menu[] = [
   { path: "/", title: "Home" },
   { path: "/tickets", title: "Tickets" },
+  { path: "/getdp", title: "Get your DP" },
   { path: "/speakers", title: "Speakers" },
   { path: "/partners", title: "Partners" },
   { path: "/schedule", title: "Schedule" },

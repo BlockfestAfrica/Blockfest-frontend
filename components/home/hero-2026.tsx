@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Calendar, CalendarPlus, MapPin } from "lucide-react";
+import { ArrowRight, Calendar, CalendarPlus, ImagePlus, MapPin } from "lucide-react";
 import { Button } from "../ui/button";
 import { trackButtonClick } from "@/lib/sabilytics";
 import { blockfest2026Lagos } from "@/lib/events";
@@ -127,6 +127,13 @@ export function HeroSection2026() {
               <CalendarPlus className="h-4 w-4" aria-hidden="true" />
               Add to calendar
             </a>
+            <Link
+              href="/getdp"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-ink-3 hover:text-white"
+            >
+              <ImagePlus className="h-4 w-4" aria-hidden="true" />
+              Get your DP
+            </Link>
           </div>
         </div>
       </div>

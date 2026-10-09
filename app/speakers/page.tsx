@@ -8,6 +8,7 @@ import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
 import { isSpeakerFormOpen } from "@/lib/speaking";
 import { gotham } from "@/lib/fonts";
 import { FeaturedSpeakersGrid } from "@/components/speakers/2026-speakers-grid";
+import { GetDpStrip } from "@/components/shared/get-dp-strip";
 
 /*
  * What search results and link previews say, which has to follow the page.
@@ -126,6 +127,11 @@ const SpeakersPage = () => {
 
         {/* Archive link — past speakers live on their own page, so this page
             opens with what's next instead of three years of history. */}
+        <GetDpStrip
+          role="speaker"
+          tone="light"
+          lead="Speaking at Blockfest Africa '26? Make your speaker DP and share it."
+        />
         <div className="border-t border-gray-200 bg-paper">
           <div className="container-page section-y flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-base text-gray-600">

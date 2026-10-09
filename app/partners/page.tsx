@@ -3,6 +3,7 @@ import { ArrowDown } from "lucide-react";
 import { PartnerWall2026 } from "@/components/home/partners-2026";
 import { PastPartnersWall } from "@/components/home/partners";
 import { PartnerPaths } from "@/components/partners/partner-paths";
+import { GetDpStrip } from "@/components/shared/get-dp-strip";
 import { partners2025 } from "@/lib/partners-2025";
 import { CURRENT_EDITION, EVENT_ID, SITE_URL } from "@/lib/seo-event";
 import { jsonLd } from "@/lib/json-ld";
@@ -118,6 +119,11 @@ export default function PartnersPage() {
             </div>
           </div>
         </section>
+
+        <GetDpStrip
+          role="partner"
+          lead="Partnering with Blockfest Africa '26? Make your partner DP and share it."
+        />
 
         <section
           id="previous-partners"
