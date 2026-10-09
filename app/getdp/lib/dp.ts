@@ -68,6 +68,16 @@ export const DP_ROLES: readonly DPRole[] = [
   "partner",
 ];
 
+/**
+ * The role a link asks the generator to start on (`/getdp?role=speaker`,
+ * from the speakers, volunteer and partners pages), or null for anything
+ * else, which leaves the attendee default.
+ */
+export function roleFromQuery(search: string): DPRole | null {
+  const asked = new URLSearchParams(search).get("role");
+  return DP_ROLES.find((r) => r === asked) ?? null;
+}
+
 export interface RoleCopy {
   /** The choice on the page. */
   label: string;

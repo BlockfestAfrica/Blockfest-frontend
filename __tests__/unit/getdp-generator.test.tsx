@@ -253,6 +253,29 @@ describe("the Get DP generator", () => {
     await waitFor(() => expect(lastDrawn().role).toBe("partner"));
   });
 
+  it("starts on the role a link asks for, such as /getdp?role=speaker from the speakers page", async () => {
+    window.history.replaceState({}, "", "/getdp?role=speaker");
+    try {
+      await mount();
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: "Speaking" }).getAttribute("aria-pressed")).toBe("true"),
+      );
+      await waitFor(() => expect(lastDrawn().role).toBe("speaker"));
+    } finally {
+      window.history.replaceState({}, "", "/");
+    }
+  });
+
+  it("ignores a role a link gets wrong, and starts on attending", async () => {
+    window.history.replaceState({}, "", "/getdp?role=organiser");
+    try {
+      await mount();
+      expect(screen.getByRole("button", { name: "Attending" }).getAttribute("aria-pressed")).toBe("true");
+    } finally {
+      window.history.replaceState({}, "", "/");
+    }
+  });
+
   it("says what is wrong with a name, in place", async () => {
     await mount();
     const input = nameInput();

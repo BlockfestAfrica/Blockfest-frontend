@@ -17,6 +17,7 @@ import { Field, Segmented, buttonClass, control } from "@/components/shared/pane
 import {
   ART,
   DP_ROLES,
+  roleFromQuery,
   DP_SIZE,
   NAME_MAX,
   PREVIEW_SIZE,
@@ -218,6 +219,13 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const cls = deviceClass(env);
   const caption = shareText(role);
   const fileName = dpFileName(tidy);
+
+  /* The role a link asked for (/getdp?role=speaker from /speakers), after
+     the first paint so the server's page and the first render agree. */
+  useEffect(() => {
+    const asked = roleFromQuery(window.location.search);
+    if (asked) setRole(asked);
+  }, []);
 
   /* What this device can do with the picture, once, after the first paint. */
   useEffect(() => {

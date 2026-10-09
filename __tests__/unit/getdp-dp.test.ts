@@ -509,3 +509,15 @@ describe("the circle crop a profile picture makes", () => {
     expect(art.hub.y - art.ringR - ART.line / 2).toBeGreaterThan(art.themeBaseline);
   });
 });
+
+describe("the role a link asks for", () => {
+  it("is one of the four roles, or nothing", async () => {
+    const { roleFromQuery } = await import("@/app/getdp/lib/dp");
+    expect(roleFromQuery("?role=speaker")).toBe("speaker");
+    expect(roleFromQuery("?role=volunteer&utm_source=x")).toBe("volunteer");
+    expect(roleFromQuery("?role=partner")).toBe("partner");
+    expect(roleFromQuery("?role=organiser")).toBeNull();
+    expect(roleFromQuery("?role=SPEAKER")).toBeNull();
+    expect(roleFromQuery("")).toBeNull();
+  });
+});
