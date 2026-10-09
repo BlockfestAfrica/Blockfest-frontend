@@ -38,6 +38,7 @@ import {
   type PhotoTransform,
 } from "../lib/dp";
 import { drawDP, nameSubstitutions, renderFull, type DPAssets, type DPResult } from "../lib/draw";
+import { FontLoadError, errorDetail } from "../lib/errors";
 import type { LetterNote } from "../lib/letters";
 import { loadAssets, PhotoError, readPhoto, type LoadedPhoto } from "../lib/load";
 import {
@@ -134,9 +135,11 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const [readingPhoto, setReadingPhoto] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [assets, setAssets] = useState<DPAssets | null>(null);
-  const [assetsError, setAssetsError] = useState(false);
+  /** Why the mark and logos could not be prepared, as the error said it. */
+  const [assetsError, setAssetsError] = useState<string | null>(null);
   const [assetsAttempt, setAssetsAttempt] = useState(0);
-  const [drawError, setDrawError] = useState(false);
+  /** The last preview draw failed: whether for the lettering, and the error as it said it. */
+  const [drawError, setDrawError] = useState<{ fonts: boolean; detail: string } | null>(null);
   const [drawAttempt, setDrawAttempt] = useState(0);
   const [geometry, setGeometry] = useState<Geometry | null>(null);
   const [env, setEnv] = useState<ShareEnv>(DESKTOP_ENV);
@@ -152,7 +155,11 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
    * check could not run (the lettering did not load), so the name is not
    * cleared, and Try again runs it again.
    */
-  const [letterCheck, setLetterCheck] = useState<{ name: string; notes: LetterNote[] | null } | null>(null);
+  const [letterCheck, setLetterCheck] = useState<{
+    name: string;
+    notes: LetterNote[] | null;
+    detail?: string;
+  } | null>(null);
 
   const previewRef = useRef<HTMLCanvasElement>(null);
   const stripRef = useRef<HTMLCanvasElement>(null);
@@ -204,6 +211,8 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       : null;
   /* The check for this name failed: saving stays shut, and Try again is offered. */
   const checkFailed = needsLetterCheck && letterCheck?.name === shown && letterCheck.notes === null;
+  /** What the failure said, shown small under the message so a screenshot says what broke. */
+  const failDetail = assetsError ?? drawError?.detail ?? (checkFailed ? letterCheck?.detail : undefined);
   const undrawable = (notes ?? []).filter((n) => n.drawn === null).map((n) => n.letter);
   const substitutions = (notes ?? []).filter(
     (n): n is { letter: string; drawn: string } => n.drawn !== null,
@@ -214,8 +223,16 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       ? `The picture's lettering cannot draw ${undrawable.slice(0, 3).join(" ")}. Write it the nearest plain way to get your DP.`
       : null);
   const showProblem = problem !== null && (nameTouched || nameLength(name) >= 2);
+  // Never on a picture that could not be drawn: a tap would copy the caption and share nothing.
   const ready =
-    problem === null && notes !== null && !!photo && !!transform && !!assets && !readingPhoto;
+    problem === null &&
+    notes !== null &&
+    !!photo &&
+    !!transform &&
+    !!assets &&
+    !readingPhoto &&
+    !drawError &&
+    !assetsError;
   const roleText = roleCopy(role);
   const cls = deviceClass(env);
   const caption = shareText(role);
@@ -260,9 +277,12 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       .then((a) => {
         if (!live) return;
         setAssets(a);
-        setAssetsError(false);
+        setAssetsError(null);
       })
-      .catch(() => live && setAssetsError(true));
+      .catch((e) => {
+        console.error("Get DP: the picture's mark could not be prepared", e);
+        if (live) setAssetsError(errorDetail(e));
+      });
     return () => {
       live = false;
     };
@@ -278,7 +298,10 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     let live = true;
     nameSubstitutions(shown)
       .then((s) => live && setLetterCheck({ name: shown, notes: s }))
-      .catch(() => live && setLetterCheck({ name: shown, notes: null }));
+      .catch((e) => {
+        console.error("Get DP: the letter check failed", e);
+        if (live) setLetterCheck({ name: shown, notes: null, detail: errorDetail(e) });
+      });
     return () => {
       live = false;
     };
@@ -331,7 +354,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         .then((result) => {
           if (!live) return;
           frameRef.current = result;
-          setDrawError(false);
+          setDrawError(null);
           if (result.zone) {
             setGeometry((prev) =>
               prev &&
@@ -346,8 +369,9 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
           }
           paintStrip(result.zone);
         })
-        .catch(() => {
-          if (live) setDrawError(true);
+        .catch((e) => {
+          console.error("Get DP: the picture could not be drawn", e);
+          if (live) setDrawError({ fonts: e instanceof FontLoadError, detail: errorDetail(e) });
         });
     });
     return () => {
@@ -720,11 +744,11 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
 
   const retry = () => {
     if (assetsError) {
-      setAssetsError(false);
+      setAssetsError(null);
       setAssetsAttempt((n) => n + 1);
     } else {
       // Draws again, and runs a letter check that failed again (pending till it answers).
-      setDrawError(false);
+      setDrawError(null);
       setLetterCheck((c) => (c?.notes === null ? null : c));
       setDrawAttempt((n) => n + 1);
     }
@@ -1239,8 +1263,11 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
           {(assetsError || drawError || checkFailed) && (
             <div className="border-t border-line px-5 py-4 sm:px-6">
               <p role="alert" className="text-sm text-red-300">
-                {assetsError ? COPY.assetsError : COPY.fontsError}
+                {assetsError ? COPY.assetsError : drawError && !drawError.fonts ? COPY.drawError : COPY.fontsError}
               </p>
+              {failDetail && (
+                <p className="mt-1 text-xs text-ink-3 [overflow-wrap:anywhere]">{COPY.errorDetail(failDetail)}</p>
+              )}
               <button type="button" className={buttonClass("secondary", "mt-3")} onClick={retry}>
                 {COPY.tryAgain}
               </button>

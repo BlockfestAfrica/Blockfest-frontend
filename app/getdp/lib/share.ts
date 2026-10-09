@@ -439,6 +439,11 @@ export const COPY = {
 
   assetsError: "The picture could not be prepared. Check your connection and try again.",
   fontsError: "The picture's lettering did not load. Check your connection and try again.",
+  drawError: "Your DP could not be drawn in this browser. Try again, or open this page in another browser.",
+  /** The error as it was said, small under the message, so a screenshot tells us what broke. */
+  errorDetail(detail: string): string {
+    return `Details: ${detail}`;
+  },
   tryAgain: "Try again",
 
   preparing: "Preparing…",

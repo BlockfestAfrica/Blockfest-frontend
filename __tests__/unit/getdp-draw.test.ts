@@ -7,15 +7,17 @@
  *
  * jsdom has no 2D canvas and no document.fonts, so both are stand-ins: a
  * context that records nothing and measures every letter alike, and a font
- * set whose loads settle (or never do) on cue.
+ * set whose loads settle (or never do) on cue. The faces are named as
+ * next/font names them: each with a "… Fallback" face behind it.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/getdp/lib/fonts", () => ({
-  DP_FONTS: { display: "'Bebas Neue', sans-serif", text: "Gotham, sans-serif" },
+  DP_FONTS: { display: "'Bebas Neue', 'Bebas Neue Fallback'", text: "'gotham', 'gotham Fallback'" },
 }));
 
 const { FONT_TIMEOUT_MS, drawDP, nameSubstitutions, renderFull } = await import("@/app/getdp/lib/draw");
+const { FontLoadError } = await import("@/app/getdp/lib/errors");
 const { DP_SIZE } = await import("@/app/getdp/lib/dp");
 
 /** A 2D context that accepts every call and measures each letter as half its size. */
@@ -44,21 +46,33 @@ function fakeContext(canvas: { width: number; height: number }): CanvasRendering
   }) as unknown as CanvasRenderingContext2D;
 }
 
-let fontLoad: () => Promise<unknown>;
+let fontLoad: (font: string, text?: string) => Promise<unknown>;
+let faces: { family: string; status: string }[];
+
+/**
+ * What Chromium does on a phone with no Arial (every Android phone): the
+ * fallback faces next/font adds, local("Arial") only, fail, and a load that
+ * names their family rejects with a NetworkError though the real face loaded.
+ */
+const noArial = (font: string) =>
+  /Fallback/.test(font)
+    ? Promise.reject(new DOMException("A network error occurred.", "NetworkError"))
+    : Promise.resolve([]);
 
 beforeEach(() => {
   fontLoad = async () => [];
+  faces = [
+    { family: "Bebas Neue", status: "loaded" },
+    { family: "gotham", status: "loaded" },
+  ];
   Object.defineProperty(document, "fonts", {
     configurable: true,
     value: {
-      load: () => fontLoad(),
+      load: (font: string, text?: string) => fontLoad(font, text),
       get ready() {
         return Promise.resolve();
       },
-      forEach: (cb: (f: { family: string; status: string }) => void) => {
-        cb({ family: "Bebas Neue", status: "loaded" });
-        cb({ family: "Gotham", status: "loaded" });
-      },
+      forEach: (cb: (f: { family: string; status: string }) => void) => faces.forEach((f) => cb(f)),
     },
   });
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(function (this: HTMLCanvasElement) {
@@ -90,6 +104,37 @@ describe("drawing the DP", () => {
     expect(await drawn).toBe("DP fonts timed out");
     expect(await checked).toBe("DP fonts timed out");
     expect(FONT_TIMEOUT_MS).toBe(12000);
+  });
+
+  it("asks for Bebas and Gotham alone, so a fallback face with no Arial behind it cannot stop the picture (Android)", async () => {
+    const asked: string[] = [];
+    fontLoad = (font) => {
+      asked.push(font);
+      return noArial(font);
+    };
+    faces.push({ family: "Bebas Neue Fallback", status: "error" }, { family: "gotham Fallback", status: "error" });
+    const result = await drawDP(fakeContext({ width: 1080, height: 1080 }), opts, assets);
+    expect(result.zone.bottom).toBeGreaterThan(result.zone.top);
+    // The letter check for an accented name goes through the same loads.
+    await expect(nameSubstitutions("Ọlá Ńkem")).resolves.toEqual(expect.any(Array));
+    expect(asked.length).toBeGreaterThanOrEqual(8);
+    expect(asked.filter((f) => /Fallback/.test(f))).toEqual([]);
+    expect(asked).toContain('400 120px "Bebas Neue"');
+    expect(asked).toContain('400 40px "gotham"');
+  });
+
+  it("says a lettering failure as such, with the browser's own reason, and refuses to draw without a face", async () => {
+    fontLoad = () => Promise.reject(new DOMException("A network error occurred.", "NetworkError"));
+    const failed = await drawDP(fakeContext({ width: 1080, height: 1080 }), opts, assets).catch((e: Error) => e);
+    expect(failed).toBeInstanceOf(FontLoadError);
+    expect((failed as Error).message).toBe("DP fonts did not load (NetworkError: A network error occurred.)");
+
+    // Loads that answer, but Bebas never arrived: no picture in a fallback face.
+    fontLoad = async () => [];
+    faces = [{ family: "gotham", status: "loaded" }];
+    const missing = await nameSubstitutions("Ọlá").catch((e: Error) => e);
+    expect(missing).toBeInstanceOf(FontLoadError);
+    expect((missing as Error).message).toBe("DP fonts did not load: Bebas Neue");
   });
 
   it("says where the role, name and days band landed, under the photo", async () => {
