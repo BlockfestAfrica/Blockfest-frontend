@@ -62,7 +62,7 @@ export function PartnerWall2026({ level = 3 }: { level?: 2 | 3 }) {
     <>
       {(headline || sponsors.length > 0) && (
         <div>
-          <Label className="eyebrow text-ink-3">Sponsors</Label>
+          <Label className="eyebrow text-ink-3">Partners</Label>
 
           {headline && (
             <LogoTile
