@@ -238,3 +238,57 @@ timeline rail) he picked "Do this now":
   fraud removed says so as one quiet sentence inside its final count.
 - lib/winner-weeks.ts decides where each week stands (weekTimeline) and
   what can be done (actionsNow); components only draw.
+
+### Get DP (/getdp): concept C, "New trade routes"
+
+Of three concepts drawn as previews (A, B, C) the owner picked C on 9
+October 2026 and asked for every sponsor, the government, ecosystem and
+media partners, and both public venues on it. app/getdp/README.md says where
+each piece lives.
+
+- Fixed: the navy ground; the photo as the hub inside a ring of the mark's
+  four colours in the mark's own arrangement (pink top-left, blue top-right,
+  teal bottom-left, yellow bottom-right), a navy moat between; four
+  transit-style routes (45 and 90 degree runs, one bend radius) leaving the
+  ring and arriving from the edges as trails of the mark's D tiles;
+  mirror-symmetric left to right, never a pinwheel. The mark and the theme
+  line on top; under the ring the role pill (attending blue, speaking pink,
+  volunteering teal, partner yellow; navy text on teal and yellow), the name
+  in Bebas Neue, then the days in Gotham. No crosshair lines.
+- The name is set entirely in Bebas (app/getdp/lib/letters.ts): accents
+  recomposed, a dot below (or the vertical line below some Yoruba keyboards
+  type) drawn as Bebas's own full stop, a mark the face lacks borrowed from
+  a capital that has it (Ǒ's caron from Ě), and a letter it has no form of
+  (the hooked Ɓ Ɗ Ƙ Ƴ, Ewe Ɖ Ɣ, Ǝ) set as its plain letter with a note on the
+  page. A letter with no plain stand-in is left out and the page holds the
+  download back until it is rewritten. Nothing is drawn in a fallback face;
+  the drawing refuses to start until both faces have loaded. A long name
+  breaks into the most even two lines only when two lines come out clearly
+  larger in the height the picture has; otherwise it stays on one.
+- The public-days rule: the picture names each public day with its own
+  venue (22 Oct, Ibis Hotel, Lekki Phase 1; 23 Oct, National Art Theatre,
+  Iganmu), read from `publicDays` in lib/events.ts. The 24th is a private,
+  invite-only mixer and never appears, nor its venue, though the site's
+  date range still runs to the 24th.
+- Footer tiers, on a light paper band, all from lib/partners-2026.ts so a
+  new line there is a new logo: first row, "Headline sponsor" over Monica
+  dead centre and every other sponsor in two wings either side. A wing may
+  shrink a little for a new sponsor but never below 48px tall; past that the
+  lowest tiers go to a full-size line of their own under the headline row.
+  Under a hairline, a smaller second row in labelled columns: "Endorsed by"
+  (Lagos State's seal) stacked over "Ecosystem partner" (Hashed Emergent) on
+  the left, media partners wrapping to two lines in their own column, so no
+  logo ever sits under another kind's label, and none drops below 40px tall
+  on the 2160 post.
+  Logos are sized by area, as on the home wall, so a seal and a wordmark
+  weigh the same.
+- The circle-crop rule: a profile picture crops to the inscribed circle,
+  and that circle must keep the mark, the whole photo ring, the role pill,
+  the name and the headline sponsor. The rest of the footer may be cut by
+  it. When the footer grows the art rebalances (layoutArt): the ring gets
+  smaller, the name's band never does.
+- The page is the ballot's anatomy: one hairline card of steps in reading
+  order (role, name, photo), then the picture in its own card with the
+  controls that act on it under it (zoom, reset, download, share) and the
+  privacy line last. Side by side from lg, the picture sticky. Gold only on
+  the chosen role and Download.
