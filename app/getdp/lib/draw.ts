@@ -39,6 +39,7 @@ import {
   type PhotoTransform,
 } from "./dp";
 import { DP_FONTS } from "./fonts";
+import { FontLoadError, errorDetail } from "./errors";
 import {
   DOT_ABOVE,
   MARK_SOURCES,
@@ -113,6 +114,17 @@ function primaryFamily(stack: string): string {
 const display = (size: number) => `400 ${size}px ${DISPLAY}`;
 const text = (size: number) => `400 ${size}px ${TEXT}`;
 
+/**
+ * The same faces, named alone, for document.fonts.load. next/font follows
+ * each face with a "… Fallback" face whose only source is local("Arial"),
+ * and a load matches every family it is given: on a device with no Arial
+ * (every Android phone) that fallback face fails, and the whole load
+ * rejects with a NetworkError though Bebas and Gotham loaded. Drawing keeps
+ * the full stack; a fallback face that failed is simply passed over there.
+ */
+const displayFace = (size: number) => `400 ${size}px "${primaryFamily(DISPLAY)}"`;
+const textFace = (size: number) => `400 ${size}px "${primaryFamily(TEXT)}"`;
+
 const FIXED_DISPLAY = "BLOCKF3ST AFRICA 2026 I’M ATTENDING SPEAKING VOLUNTEERING PROUD PARTNER YOUR NAME .";
 
 /**
@@ -148,17 +160,19 @@ async function ensureFonts(name: string): Promise<void> {
     await Promise.race([
       (async () => {
         await Promise.all([
-          document.fonts.load(display(120), FIXED_DISPLAY),
-          document.fonts.load(display(120), upper || "A"),
-          document.fonts.load(display(120), `${bases} ${BORROWED}`),
-          document.fonts.load(text(40), small),
+          document.fonts.load(displayFace(120), FIXED_DISPLAY),
+          document.fonts.load(displayFace(120), upper || "A"),
+          document.fonts.load(displayFace(120), `${bases} ${BORROWED}`),
+          document.fonts.load(textFace(40), small),
         ]);
         await document.fonts.ready;
       })(),
       new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error("DP fonts timed out")), FONT_TIMEOUT_MS);
+        timer = setTimeout(() => reject(new FontLoadError("DP fonts timed out")), FONT_TIMEOUT_MS);
       }),
     ]);
+  } catch (e) {
+    throw e instanceof FontLoadError ? e : new FontLoadError(`DP fonts did not load (${errorDetail(e)})`);
   } finally {
     clearTimeout(timer);
   }
@@ -170,7 +184,7 @@ async function ensureFonts(name: string): Promise<void> {
     .map(primaryFamily)
     .filter((family) => !loaded.has(family));
   if (missing.length) {
-    throw new Error(`DP fonts did not load: ${missing.join(", ")}`);
+    throw new FontLoadError(`DP fonts did not load: ${missing.join(", ")}`);
   }
 }
 

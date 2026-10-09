@@ -75,6 +75,7 @@ vi.mock("@/app/getdp/lib/load", async () => {
 vi.mock("server-only", () => ({}));
 
 const { default: DPGenerator } = await import("@/app/getdp/components/DPGenerator");
+const { FontLoadError } = await import("@/app/getdp/lib/errors");
 const { PhotoError } = await import("@/app/getdp/lib/load");
 
 const tiers = footerTiers({ headline, sponsors, partners });
@@ -391,7 +392,7 @@ describe("the Get DP generator", () => {
     expect(lastDrawn().name).toBe("Ada Obi");
 
     // Lettering that would not load: Try again draws again, keeping everything.
-    drawDP.mockRejectedValueOnce(new Error("DP fonts timed out"));
+    drawDP.mockRejectedValueOnce(new FontLoadError("DP fonts timed out"));
     fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
     expect((await screen.findByRole("alert")).textContent).toBe(
       "The picture's lettering did not load. Check your connection and try again.",
@@ -401,6 +402,56 @@ describe("the Get DP generator", () => {
     await waitFor(() => expect(drawDP.mock.calls.length).toBeGreaterThan(before));
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
     expect(lastDrawn()).toMatchObject({ role: "speaker", name: "Ada Obi", photo: picked });
+  });
+
+  it("keeps sharing shut on a picture that could not be drawn, and says what broke", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    setDevice({ ua: UA.android, coarse: true, files: true });
+    drawDP.mockRejectedValue(
+      new FontLoadError("DP fonts did not load (NetworkError: A network error occurred.)"),
+    );
+    await mount();
+    fireEvent.change(nameInput(), { target: { value: "Ada Obi" } });
+    await addPhoto();
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "The picture's lettering did not load. Check your connection and try again.",
+    );
+    expect(
+      screen.getByText("Details: FontLoadError: DP fonts did not load (NetworkError: A network error occurred.)"),
+    ).toBeTruthy();
+    expect(live().textContent).toBe("Tap Try again to finish your DP.");
+    await settle(400);
+    // A name and a photo are in, but there is no picture: nothing copies, nothing pretends to share.
+    expect(button("Share your DP").disabled).toBe(true);
+    expect(button("Post to WhatsApp Status").disabled).toBe(true);
+    for (const label of ["Post on X", "Send on WhatsApp"]) {
+      expect(button(label).getAttribute("aria-disabled")).toBe("true");
+      fireEvent.click(button(label));
+    }
+    fireEvent.click(button("Share your DP"));
+    expect(writeText).not.toHaveBeenCalled();
+    expect(share).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith("Get DP: the picture could not be drawn", expect.any(FontLoadError));
+
+    // Any other fault is not called a connection problem.
+    drawDP.mockRejectedValue(new TypeError("e.getTransform is not a function"));
+    fireEvent.click(button("Try again"));
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toBe(
+        "Your DP could not be drawn in this browser. Try again, or open this page in another browser.",
+      ),
+    );
+    expect(screen.getByText("Details: TypeError: e.getTransform is not a function")).toBeTruthy();
+
+    // Drawn at last: the details go, and sharing opens.
+    drawDP.mockImplementation(async (ctx: Ctx, o: Opts) => {
+      draws.push({ full: ctx?.canvas?.width === 2160, opts: o });
+      return { hub: { x: 1080, y: 760 }, photoR: 410, zone: { top: 1400, bottom: 1872 } };
+    });
+    fireEvent.click(button("Try again"));
+    await waitFor(() => expect(button("Share your DP").disabled).toBe(false));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByText(/^Details:/)).toBeNull();
   });
 
   it("holds the download back for a letter the lettering cannot draw, and waits for the check", async () => {
