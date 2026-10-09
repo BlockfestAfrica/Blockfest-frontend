@@ -200,6 +200,12 @@ describe("sharing", () => {
     expect(long).toBe("blockfest-2026-dp-oluwaseun-adebayo-johnson-chukwuemeka.png");
     expect(long.length).toBeLessThanOrEqual("blockfest-2026-dp-.png".length + 40);
   });
+
+  it("names a phone's share-list copy the same way, as a JPEG", () => {
+    expect(dpFileName("Ada Obi", "jpg")).toBe("blockfest-2026-dp-ada-obi.jpg");
+    expect(dpFileName("🎉", "jpg")).toBe("blockfest-2026-dp.jpg");
+    expect(dpFileName("Ada Obi", "png")).toBe(dpFileName("Ada Obi"));
+  });
 });
 
 describe("the photo crop", () => {

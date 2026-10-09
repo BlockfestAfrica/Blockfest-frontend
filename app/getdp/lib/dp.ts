@@ -232,8 +232,11 @@ const PLAIN: Record<string, string> = {
 
 const SLUG_MAX = 40;
 
-/** blockfest-2026-dp-ada-obi.png: plain letters, short, never empty. */
-export function dpFileName(name: string): string {
+/**
+ * blockfest-2026-dp-ada-obi.png: plain letters, short, never empty. A phone's
+ * share list gets the same name as a .jpg.
+ */
+export function dpFileName(name: string, ext: "png" | "jpg" = "png"): string {
   const plain = name
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
@@ -247,7 +250,7 @@ export function dpFileName(name: string): string {
     slug = slug.slice(0, slug.lastIndexOf("-"));
   }
   slug = slug.replace(/-+$/g, "");
-  return `blockfest-${EVENT.year}-dp${slug ? `-${slug}` : ""}.png`;
+  return `blockfest-${EVENT.year}-dp${slug ? `-${slug}` : ""}.${ext}`;
 }
 
 /* ------------------------------------------------------------------ */

@@ -307,6 +307,47 @@ each piece lives.
   than that buys navy, not a bigger photo.
 - The page is the ballot's anatomy: one hairline card of steps in reading
   order (role, name, photo), then the picture in its own card with the
-  controls that act on it under it (zoom, reset, download, share) and the
-  privacy line last. Side by side from lg, the picture sticky. Gold only on
-  the chosen role and Download.
+  controls that act on it under it (zoom, reset, save and share, the "Post
+  it on" marks, the caption) and the privacy line last. Side by side from
+  lg.
+- Phones first (the owner, 9 October: "people would be doing it on their
+  phone"). On a phone the steps card carries a slice of the live picture
+  (the role pill, the name and the days) as its own full-bleed row between
+  the role and the name: the picture itself, cut from the preview, never a
+  copy of it, so typing shows the real lettering above the keyboard. It is
+  gone from lg up, where the picture is beside the steps. It is never
+  taller than a fifth of the screen, which only a phone held sideways
+  reaches: there it narrows and centres, so it still shows above the name
+  field with the keyboard up. Adding a photo, or Enter in the name (once
+  the keyboard is down, so the screen is measured whole), scrolls the
+  picture to the top of a phone's screen, giving up at most the mark and
+  the theme line, never past the ring's outer edge, so the first save
+  button is on screen too where it fits. Below lg, held sideways, the
+  picture is capped at the screen's height; from lg it fills its card.
+- The photo moves only from its circle and ring (a handle 1.3 times the
+  photo's radius); a swipe anywhere else on the picture scrolls the page. A
+  second finger anywhere on the picture pinches to zoom. A hidden "Move
+  your photo" group of four buttons, shown on focus, is the screen reader's
+  way to move it.
+- Gold goes on the chosen role and on ONE save action, the one this device
+  does best: Share your DP on a phone whose share list takes the file,
+  Download PNG on a desktop or a phone that cannot share files, Save image
+  (press and hold) in an app's browser. Never two golds.
+- A "Post it on" row of marks, X, Instagram, TikTok, LinkedIn, WhatsApp in
+  that order, with one sentence saying what they do on this device and a
+  tip after a tap. Nothing may say or imply that the page posts or uploads
+  for anybody: a link to X, LinkedIn or TikTok cannot carry a picture, and
+  only the phone's share list can (app/getdp/README.md). The caption is
+  said once, in its own row with Copy.
+- In an app's browser a note sits above the steps before anything is
+  typed: a titled row on a line-3 edge, as every notice is, saying what may
+  not work and how to get out (Open in Chrome on Android, Copy link).
+
+Found while building the phone layout (October 2026): position: sticky does
+nothing anywhere on the site, because globals.css gives html and body
+overflow-x: hidden, which makes body a scroll container that never scrolls.
+The navbar never sticks, and neither does /getdp's lg:sticky picture.
+Nothing may rely on sticky until body moves to overflow-x: clip (Safari 16
+and up), which belongs in its own change because it makes the navbar stick
+on every page; when it does, the phone reveal's 12px gap on /getdp must
+grow to the navbar's height.

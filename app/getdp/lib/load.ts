@@ -11,12 +11,48 @@
 import { DP_LOGO_SRC, type FooterLogo, type FooterTiers } from "./dp";
 import type { Bitmap, DPAssets } from "./draw";
 
-export function loadImage(src: string): Promise<HTMLImageElement> {
+/** The mark may take this long on a weak connection before the page says so. */
+export const MARK_TIMEOUT_MS = 12_000;
+/** A footer logo that takes longer than this is left off, as a failed one is. */
+export const LOGO_TIMEOUT_MS = 8_000;
+/**
+ * A logo's bitmap is at most this on its long side. The footer places logos
+ * at the sizes recorded in lib/partners-2026 (never the bitmap's), and none
+ * is drawn wider than about 600 on the 2160 post, so this keeps every logo
+ * sharp while Cake Wallet's 5000x1250 (25 MB of canvas) becomes 1200x300.
+ */
+export const LOGO_MAX_SIDE = 1200;
+
+/**
+ * Loads an image. With a timeout, a request that never answers is given up
+ * on: its handlers are cleared and the load is cancelled. A photo is a local
+ * file, so it is read without one.
+ */
+export function loadImage(src: string, timeoutMs?: number): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const settle = () => {
+      if (timer !== undefined) clearTimeout(timer);
+      img.onload = null;
+      img.onerror = null;
+    };
     img.decoding = "async";
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Could not load ${src.slice(0, 80)}`));
+    img.onload = () => {
+      settle();
+      resolve(img);
+    };
+    img.onerror = () => {
+      settle();
+      reject(new Error(`Could not load ${src.slice(0, 80)}`));
+    };
+    if (timeoutMs !== undefined) {
+      timer = setTimeout(() => {
+        settle();
+        img.src = "";
+        reject(new Error(`Timed out loading ${src.slice(0, 80)}`));
+      }, timeoutMs);
+    }
     img.src = src;
   });
 }
@@ -35,28 +71,35 @@ function inked(c: HTMLCanvasElement): boolean {
 }
 
 /**
- * Every logo becomes a bitmap at exactly the width x height recorded in
+ * Every logo becomes a bitmap in the proportions recorded in
  * lib/partners-2026 before drawDP sees it: an SVG sized 100% has no natural
  * size of its own, and some browsers draw it at 0x0 or squashed. (The page
  * hands SVGs over with that size already written on their root element.)
+ * The recorded size, capped at LOGO_MAX_SIDE on its long side.
  */
-export async function rasteriseLogo(logo: FooterLogo): Promise<HTMLCanvasElement> {
-  const img = await loadImage(logo.src);
+export async function rasteriseLogo(
+  logo: FooterLogo,
+  timeoutMs: number = LOGO_TIMEOUT_MS,
+): Promise<HTMLCanvasElement> {
+  const img = await loadImage(logo.src, timeoutMs);
+  const k = Math.min(1, LOGO_MAX_SIDE / Math.max(logo.width, logo.height));
   const c = document.createElement("canvas");
-  c.width = logo.width;
-  c.height = logo.height;
+  c.width = Math.max(1, Math.round(logo.width * k));
+  c.height = Math.max(1, Math.round(logo.height * k));
   const g = c.getContext("2d");
   if (!g) throw new Error("No 2D canvas");
   g.imageSmoothingEnabled = true;
   g.imageSmoothingQuality = "high";
-  g.drawImage(img, 0, 0, logo.width, logo.height);
+  g.drawImage(img, 0, 0, c.width, c.height);
   if (!inked(c)) throw new Error(`${logo.name}'s logo rasterised blank`);
   return c;
 }
 
 /**
- * The mark and every footer logo. A logo that fails to load is left out
- * (and said so in the console) rather than costing everybody their DP.
+ * The mark and every footer logo. A logo that fails to load, or takes longer
+ * than LOGO_TIMEOUT_MS, is left out (and said so in the console) rather than
+ * costing everybody their DP. The mark is not optional: if it has not come
+ * in MARK_TIMEOUT_MS this rejects, and the page offers Try again.
  */
 export async function loadAssets(tiers: FooterTiers): Promise<DPAssets> {
   const all = [
@@ -65,8 +108,8 @@ export async function loadAssets(tiers: FooterTiers): Promise<DPAssets> {
     ...tiers.groups.flatMap((g) => g.logos),
   ];
   const [logo, settled] = await Promise.all([
-    loadImage(DP_LOGO_SRC),
-    Promise.allSettled(all.map(rasteriseLogo)),
+    loadImage(DP_LOGO_SRC, MARK_TIMEOUT_MS),
+    Promise.allSettled(all.map((l) => rasteriseLogo(l))),
   ]);
   const logos: Record<string, Bitmap> = {};
   settled.forEach((r, i) => {
