@@ -76,10 +76,15 @@ export interface DPAssets {
   logos: Record<string, Bitmap>;
 }
 
-/** Where the photo frame landed, in the 2160 square: for dragging the photo. */
+/**
+ * Where things landed, in the 2160 square: the photo frame, for dragging the
+ * photo, and the band holding the role pill, the name and the days, which
+ * the page shows on its own beside the name field on a phone.
+ */
 export interface DPResult {
   hub: { x: number; y: number };
   photoR: number;
+  zone: { top: number; bottom: number };
 }
 
 const S = DP_SIZE;
@@ -123,6 +128,13 @@ const BORROWED = [
   ...Object.values(PLAIN_CAPITAL),
 ].join("");
 
+/**
+ * How long the faces may take. On a stalled connection the loads never
+ * settle, and the page would say "Preparing" for ever; past this it says the
+ * lettering did not load and offers Try again, keeping everything typed.
+ */
+export const FONT_TIMEOUT_MS = 12_000;
+
 async function ensureFonts(name: string): Promise<void> {
   const upper = name.toUpperCase().normalize("NFC");
   const bases = upper.normalize("NFD").replace(/[\u0300-\u036F]/g, "");
@@ -131,13 +143,25 @@ async function ensureFonts(name: string): Promise<void> {
     ...publicDayLines().map((d) => `${d.when} ${d.where}`),
     "HEADLINE SPONSOR ENDORSED BY ECOSYSTEM COMMUNITY MEDIA PARTNERS",
   ].join(" ");
-  await Promise.all([
-    document.fonts.load(display(120), FIXED_DISPLAY),
-    document.fonts.load(display(120), upper || "A"),
-    document.fonts.load(display(120), `${bases} ${BORROWED}`),
-    document.fonts.load(text(40), small),
-  ]);
-  await document.fonts.ready;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      (async () => {
+        await Promise.all([
+          document.fonts.load(display(120), FIXED_DISPLAY),
+          document.fonts.load(display(120), upper || "A"),
+          document.fonts.load(display(120), `${bases} ${BORROWED}`),
+          document.fonts.load(text(40), small),
+        ]);
+        await document.fonts.ready;
+      })(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("DP fonts timed out")), FONT_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
   const loaded = new Set<string>();
   document.fonts.forEach((face) => {
     if (face.status === "loaded") loaded.add(face.family.replace(/['"]/g, ""));
@@ -815,5 +839,32 @@ export async function drawDP(
   drawFooter(ctx, footer, assets.logos);
 
   ctx.restore();
-  return { hub: art.hub, photoR: art.photoR };
+  return { hub: art.hub, photoR: art.photoR, zone: { top: art.zoneTop, bottom: art.zoneBottom } };
+}
+
+/**
+ * The full 2160 picture as a file: PNG to download, JPEG for a phone's share
+ * list. Its canvas is let go as soon as the file exists (or does not), so a
+ * phone never holds two full-size canvases.
+ */
+export async function renderFull(
+  opts: DPOptions,
+  assets: DPAssets,
+  type: "image/png" | "image/jpeg",
+  quality?: number,
+): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  canvas.width = S;
+  canvas.height = S;
+  try {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("No 2D canvas");
+    await drawDP(ctx, opts, assets);
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("No picture file"))), type, quality),
+    );
+  } finally {
+    canvas.width = 0;
+    canvas.height = 0;
+  }
 }

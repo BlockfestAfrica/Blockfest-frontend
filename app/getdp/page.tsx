@@ -86,7 +86,7 @@ export default function GetDPPage() {
             <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
               Your picture for {publicDaysRange()} in Lagos, for your profile
               and your posts. Say how you&apos;re coming, add your name and a
-              photo, then download it or share it.
+              photo, then share it or save it.
             </p>
             <DPGenerator tiers={tiers} />
           </div>

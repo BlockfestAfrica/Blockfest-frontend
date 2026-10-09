@@ -200,6 +200,12 @@ describe("sharing", () => {
     expect(long).toBe("blockfest-2026-dp-oluwaseun-adebayo-johnson-chukwuemeka.png");
     expect(long.length).toBeLessThanOrEqual("blockfest-2026-dp-.png".length + 40);
   });
+
+  it("names a phone's share-list copy the same way, as a JPEG", () => {
+    expect(dpFileName("Ada Obi", "jpg")).toBe("blockfest-2026-dp-ada-obi.jpg");
+    expect(dpFileName("🎉", "jpg")).toBe("blockfest-2026-dp.jpg");
+    expect(dpFileName("Ada Obi", "png")).toBe(dpFileName("Ada Obi"));
+  });
 });
 
 describe("the photo crop", () => {
@@ -501,5 +507,17 @@ describe("the circle crop a profile picture makes", () => {
     expect(art.zoneBottom - art.zoneTop).toBeGreaterThanOrEqual(ART.textBlock);
     expect(art.photoR).toBeGreaterThanOrEqual(380);
     expect(art.hub.y - art.ringR - ART.line / 2).toBeGreaterThan(art.themeBaseline);
+  });
+});
+
+describe("the role a link asks for", () => {
+  it("is one of the four roles, or nothing", async () => {
+    const { roleFromQuery } = await import("@/app/getdp/lib/dp");
+    expect(roleFromQuery("?role=speaker")).toBe("speaker");
+    expect(roleFromQuery("?role=volunteer&utm_source=x")).toBe("volunteer");
+    expect(roleFromQuery("?role=partner")).toBe("partner");
+    expect(roleFromQuery("?role=organiser")).toBeNull();
+    expect(roleFromQuery("?role=SPEAKER")).toBeNull();
+    expect(roleFromQuery("")).toBeNull();
   });
 });

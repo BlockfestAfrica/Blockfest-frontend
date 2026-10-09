@@ -68,6 +68,16 @@ export const DP_ROLES: readonly DPRole[] = [
   "partner",
 ];
 
+/**
+ * The role a link asks the generator to start on (`/getdp?role=speaker`,
+ * from the speakers, volunteer and partners pages), or null for anything
+ * else, which leaves the attendee default.
+ */
+export function roleFromQuery(search: string): DPRole | null {
+  const asked = new URLSearchParams(search).get("role");
+  return DP_ROLES.find((r) => r === asked) ?? null;
+}
+
 export interface RoleCopy {
   /** The choice on the page. */
   label: string;
@@ -232,8 +242,11 @@ const PLAIN: Record<string, string> = {
 
 const SLUG_MAX = 40;
 
-/** blockfest-2026-dp-ada-obi.png: plain letters, short, never empty. */
-export function dpFileName(name: string): string {
+/**
+ * blockfest-2026-dp-ada-obi.png: plain letters, short, never empty. A phone's
+ * share list gets the same name as a .jpg.
+ */
+export function dpFileName(name: string, ext: "png" | "jpg" = "png"): string {
   const plain = name
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
@@ -247,7 +260,7 @@ export function dpFileName(name: string): string {
     slug = slug.slice(0, slug.lastIndexOf("-"));
   }
   slug = slug.replace(/-+$/g, "");
-  return `blockfest-${EVENT.year}-dp${slug ? `-${slug}` : ""}.png`;
+  return `blockfest-${EVENT.year}-dp${slug ? `-${slug}` : ""}.${ext}`;
 }
 
 /* ------------------------------------------------------------------ */
