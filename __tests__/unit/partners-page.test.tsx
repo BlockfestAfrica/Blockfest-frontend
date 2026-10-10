@@ -89,7 +89,8 @@ describe("the /partners page", () => {
     render(<page.default />);
     expect(screen.getByRole("heading", { level: 1, name: "Our partners" })).toBeTruthy();
     const sections = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
-    expect(sections[0]).toBe("Sponsors");
+    // The sponsors' group is headed "Partners" now that every partner is a sponsor.
+    expect(sections[0]).toBe("Partners");
     expect(sections.slice(-2)).toEqual(["Become a partner", "Previous partners"]);
 
     const logos = (headline ? 1 : 0) + sponsors.length + partners.length + partners2025.length;
