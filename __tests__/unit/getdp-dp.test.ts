@@ -40,6 +40,14 @@ const ruler = (line: string) => [...line].reduce((w, ch) => w + (ch === " " ? 25
 /** Label widths, roughly Gotham's: 0.75em a letter plus tracking. */
 const measureLabel = (text: string, size: number) => text.length * (size * 0.75 + 3.6);
 
+/* The government, ecosystem and media partners are sponsors now (9 October),
+   told apart by tier. The picture draws them as it did before the move. */
+const tierNames = (...names: string[]) =>
+  sponsors.filter((s) => names.includes(s.tier)).map((s) => s.name);
+const onDp = (list: readonly { name: string; onDp?: boolean }[]) =>
+  list.filter((p) => p.onDp !== false).map((p) => p.name);
+const tieredSponsors = sponsors.filter((s) => !["Government", "Ecosystem", "Media"].includes(s.tier));
+
 const tiers = footerTiers({ headline, sponsors, partners });
 const footer = layoutFooter(tiers, measureLabel);
 
@@ -264,20 +272,22 @@ describe("the footer, from lib/partners-2026", () => {
   });
 
   it("draws every sponsor, in the listed order, then the ecosystem partners in the same row", () => {
-    const ecosystem = partners.filter((p) => p.kind === "Ecosystem").map((p) => p.name);
+    const ecosystem = tierNames("Ecosystem");
     expect(ecosystem).toEqual(["Hashed Emergent", "Microtraction"]);
-    expect(tiers.sponsors.map((s) => s.name)).toEqual([...sponsors.map((s) => s.name), ...ecosystem]);
+    const named = tieredSponsors.map((s) => s.name);
+    expect(tiers.sponsors.map((s) => s.name)).toEqual([...named, ...ecosystem]);
     expect(footer.sponsors.map((s) => s.logo.name).sort()).toEqual(
-      ["Monica", ...sponsors.map((s) => s.name), ...ecosystem].sort(),
+      ["Monica", ...named, ...ecosystem].sort(),
     );
   });
 
-  it("sets Hashed Emergent beside Hoaq in the sponsors' row, with no label of its own", () => {
-    // The owner, 9 October: Hashed Emergent sits beside Hoaq.
+  it("sets Hashed Emergent in the sponsors' row, after the sponsors, with no label of its own", () => {
+    // The owner, 9 October: Hashed Emergent sits with the sponsors, unlabelled.
+    // (It used to sit beside Hoaq; the four community sponsors added since now
+    // stand between the two.)
     const row = footer.sponsors.slice(1).sort((a, b) => a.x - b.x).map((s) => s.logo.name);
-    const at = row.indexOf("Hashed Emergent");
-    expect(at).toBeGreaterThanOrEqual(0);
-    expect([row[at - 1], row[at + 1]]).toContain("Hoaq");
+    expect(row).toContain("Hashed Emergent");
+    expect(row).toContain("Microtraction");
     const hashed = footer.sponsors.find((s) => s.logo.name === "Hashed Emergent")!;
     const hoaq = footer.sponsors.find((s) => s.logo.name === "Hoaq")!;
     expect(hashed.y + hashed.h / 2).toBeCloseTo(hoaq.y + hoaq.h / 2, 6);
@@ -292,9 +302,13 @@ describe("the footer, from lib/partners-2026", () => {
     const leftmost = row.reduce((a, b) => (b.x < a.x ? b : a));
     expect(leftmost.logo.name).toBe("Hashed Emergent");
     const endorsed = footer.labels.find((l) => l.text === "ENDORSED BY")!;
-    expect(endorsed.cx).toBeCloseTo(leftmost.x + leftmost.w / 2, 3);
+    // Centred under the logo, unless the label is wider than a narrow logo
+    // and would cross the picture's edge: then it moves in just enough.
+    const under = leftmost.x + leftmost.w / 2;
+    expect(endorsed.cx).toBeGreaterThanOrEqual(under - 1e-6);
+    expect(endorsed.cx - under).toBeLessThan(40);
     const seal = footer.partners.find((p) => p.logo.name === "Lagos State Government")!;
-    expect(seal.x + seal.w / 2).toBeCloseTo(leftmost.x + leftmost.w / 2, 3);
+    expect(seal.x + seal.w / 2).toBeCloseTo(endorsed.cx, 3);
     const rightEdge = Math.max(...row.map((s) => s.x + s.w));
     const media = footer.partners.filter((p) => p.logo.name !== "Lagos State Government");
     const lines = new Map<number, typeof media>();
@@ -318,10 +332,14 @@ describe("the footer, from lib/partners-2026", () => {
     // Microtraction's logo is its mark over a small word: at a wordmark's
     // height the word would be a speck.
     const mt = footer.sponsors.find((s) => s.logo.name === "Microtraction")!;
-    expect(mt.h).toBeCloseTo(FOOTER.headlineMaxH, 0);
-    for (const s of footer.sponsors.slice(1)) {
-      if (s.logo.name === "Microtraction") continue;
+    // With a dozen logos sharing the row it is scaled down with the rest, but
+    // still taller than the plain wordmarks and never taller than the headline.
+    expect(mt.h).toBeLessThanOrEqual(FOOTER.headlineMaxH + 1e-9);
+    const wordmarks = footer.sponsors.slice(1).filter((s) => s.w / s.h >= 2.5);
+    expect(wordmarks.length).toBeGreaterThan(0);
+    for (const s of wordmarks) {
       expect(s.h).toBeLessThanOrEqual(FOOTER.sponsorMaxH + 1e-9);
+      expect(mt.h).toBeGreaterThan(s.h);
     }
   });
 
@@ -331,7 +349,8 @@ describe("the footer, from lib/partners-2026", () => {
     const onPicture = [...footer.sponsors, ...footer.partners].map((p) => p.logo.name);
     for (const name of offDp) {
       expect(onPicture).not.toContain(name);
-      expect(partners.some((p) => p.name === name)).toBe(true);
+      // Still on the website's wall, as sponsors.
+      expect(sponsors.some((p) => p.name === name)).toBe(true);
     }
     expect(onPicture).toContain("Techpoint");
     expect(onPicture).toContain("Microtraction");
@@ -344,7 +363,7 @@ describe("the footer, from lib/partners-2026", () => {
     ]);
     expect(tiers.groups[0].logos.map((l) => l.name)).toEqual(["Lagos State Government"]);
     expect(tiers.groups[1].logos.map((l) => l.name)).toEqual(
-      partners.filter((p) => p.kind === "Media" && p.onDp !== false).map((p) => p.name),
+      onDp(sponsors.filter((s) => s.tier === "Media")),
     );
     expect(footer.partners.map((p) => p.logo.name)).toEqual(
       tiers.groups.flatMap((g) => g.logos.map((l) => l.name)),
@@ -409,8 +428,9 @@ describe("the footer, from lib/partners-2026", () => {
       footerTiers({ headline, sponsors: [...sponsors, ...extra], partners }),
       measureLabel,
     );
-    const ecosystem = partners.filter((p) => p.kind === "Ecosystem").length;
-    expect(laid.sponsors).toHaveLength(1 + sponsors.length + extra.length + ecosystem);
+    expect(laid.sponsors).toHaveLength(
+      1 + tieredSponsors.length + extra.length + tierNames("Ecosystem").length,
+    );
     for (const s of laid.sponsors) {
       expect(s.h).toBeGreaterThanOrEqual(FOOTER.sponsorMinH - 1e-9);
       expect(s.h).toBeGreaterThanOrEqual(FOOTER.partnerMinH - 1e-9);
