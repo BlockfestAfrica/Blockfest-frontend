@@ -343,17 +343,26 @@ describe("the footer, from lib/partners-2026", () => {
     }
   });
 
-  it("leaves the media the team keeps off the picture on the website's partner list", () => {
-    // The team, 9 October: the DP's media list is shorter than the wall's.
-    const offDp = ["BusinessDay", "The Guardian", "Legit", "TechCabal", "Punch"];
+  it("carries none of the five media the owner took off the 2026 wall", () => {
+    // The owner, 10 October: off the wall and the picture, after the DP alone (9 October).
+    const removed = ["BusinessDay", "The Guardian", "Legit", "TechCabal", "Punch"];
     const onPicture = [...footer.sponsors, ...footer.partners].map((p) => p.logo.name);
-    for (const name of offDp) {
+    for (const name of removed) {
       expect(onPicture).not.toContain(name);
-      // Still on the website's wall, as sponsors.
-      expect(sponsors.some((p) => p.name === name)).toBe(true);
+      expect(sponsors.some((p) => p.name === name)).toBe(false);
     }
     expect(onPicture).toContain("Techpoint");
     expect(onPicture).toContain("Microtraction");
+  });
+
+  it("keeps a logo marked onDp: false off the picture, though it stays on the wall", () => {
+    const offPicture = { name: "Wall Only", tier: "Media", logo: "/2026/logos/wall-only.png", width: 400, height: 100, onDp: false };
+    const withIt = footerTiers({ headline, sponsors: [...sponsors, offPicture], partners });
+    const names = [withIt.headline, ...withIt.sponsors, ...withIt.groups.flatMap((g) => g.logos)]
+      .filter((l) => l !== null)
+      .map((l) => l!.name);
+    expect(names).not.toContain("Wall Only");
+    expect(names).toEqual([tiers.headline, ...tiers.sponsors, ...tiers.groups.flatMap((g) => g.logos)].filter((l) => l !== null).map((l) => l!.name));
   });
 
   it("endorses with Lagos State, then every media partner with no heading", () => {

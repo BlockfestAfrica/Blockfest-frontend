@@ -123,17 +123,14 @@ export const sponsors: Sponsor[] = [
   },
   /* Moved here from `partners` (the team, 9 October): the government,
      ecosystem and media partners are now sponsors, tiered by what they were
-     (the tier is kept for the record and the order; it is not shown). The
-     media the DP leaves out stay off it with onDp: false. */
+     (the tier is kept for the record and the order; it is not shown).
+     BusinessDay, The Guardian, Legit, TechCabal and Punch are off the 2026
+     wall and the DP (the owner, 10 October); they stay in lib/partners-2025.ts,
+     where they were partners. */
   { name: "Lagos State Government", tier: "Government", logo: "/images/partners-2025/lagos-state.png", width: 149, height: 149, href: "https://lagosstate.gov.ng" },
   { name: "Hashed Emergent", tier: "Ecosystem", logo: "/2026/logos/hashed-emergent.png", width: 1280, height: 405, href: "https://x.com/HashedEM" },
   { name: "Microtraction", tier: "Ecosystem", logo: "/2026/logos/microtraction.png", width: 532, height: 331, href: "https://x.com/microtraction" },
-  { name: "BusinessDay", tier: "Media", logo: "/images/partners-2025/businessday.png", width: 1280, height: 267, href: "https://businessday.ng", onDp: false },
-  { name: "The Guardian", tier: "Media", logo: "/images/partners-2025/guardian.png", width: 1280, height: 156, href: "https://guardian.ng", onDp: false },
-  { name: "Legit", tier: "Media", logo: "/images/partners-2025/legit.png", width: 841, height: 330, href: "https://www.legit.ng", onDp: false },
-  { name: "TechCabal", tier: "Media", logo: "/images/partners-2025/techcabal.png", width: 480, height: 480, href: "https://techcabal.com", onDp: false },
   { name: "Techpoint", tier: "Media", logo: "/images/partners-2025/techpoint.png", width: 407, height: 480, href: "https://techpoint.africa" },
-  { name: "Punch", tier: "Media", logo: "/images/partners-2025/punch.png", width: 1226, height: 362, href: "https://punchng.com", onDp: false },
   { name: "AllConfsBot", tier: "Media", logo: "/2026/logos/allconfsbot.png", width: 1280, height: 457, href: "https://x.com/allconfsbot" },
   { name: "Blockchain Marketing Ninja", tier: "Media", logo: "/2026/logos/blockchain-marketing-ninja.png", width: 1280, height: 331, href: "https://x.com/0xblockchainmkt" },
   { name: "Blockchain Staffing Ninja", tier: "Media", logo: "/2026/logos/blockchain-staffing-ninja.png", width: 952, height: 262, href: "https://x.com/staffing_Ninja" },
