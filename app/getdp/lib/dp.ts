@@ -21,11 +21,12 @@ export const DP_SIZE = 2160;
 export const PREVIEW_SIZE = 1080;
 
 /**
- * The 2026 mark, white for the navy ground: the transparent cut-out until the
- * official file arrives. Swapping it is this one line; the drawing reads the
- * file's own proportions.
+ * The 2026 mark from the brand kit (10 October): white lettering for a dark
+ * ground, and black lettering for a light one (the "Colour fields" look).
+ * The drawing reads each file's own proportions.
  */
-export const DP_LOGO_SRC = "/images/getdp/2026/logo-dark.png";
+export const DP_LOGO_SRC = "/images/getdp/2026/mark-on-dark.png";
+export const DP_MARK_LIGHT_SRC = "/images/getdp/2026/mark-on-light.png";
 
 export const GETDP_URL = "https://blockfestafrica.com/getdp";
 export const HASHTAG = "#Blockfest2026";

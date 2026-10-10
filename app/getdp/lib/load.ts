@@ -8,7 +8,7 @@
  * policy says the photo never leaves the browser, and
  * __tests__/unit/privacy.test.ts holds this folder to it.
  */
-import { DP_LOGO_SRC, type FooterLogo, type FooterTiers } from "./dp";
+import { DP_LOGO_SRC, DP_MARK_LIGHT_SRC, type FooterLogo, type FooterTiers } from "./dp";
 import type { Bitmap, DPAssets } from "./draw";
 
 /** The mark may take this long on a weak connection before the page says so. */
@@ -121,8 +121,9 @@ export async function loadAssets(tiers: FooterTiers): Promise<LoadedAssets> {
     ...tiers.sponsors,
     ...tiers.groups.flatMap((g) => g.logos),
   ];
-  const [logo, settled] = await Promise.all([
+  const [logo, onLight, settled] = await Promise.all([
     loadImage(DP_LOGO_SRC, MARK_TIMEOUT_MS),
+    loadImage(DP_MARK_LIGHT_SRC, MARK_TIMEOUT_MS),
     Promise.allSettled(all.map((l) => rasteriseLogo(l))),
   ]);
   const logos: Record<string, Bitmap> = {};
@@ -134,7 +135,7 @@ export async function loadAssets(tiers: FooterTiers): Promise<LoadedAssets> {
       console.warn(`DP footer: ${all[i].name} left out:`, r.reason);
     }
   });
-  return { logo, tiers, logos, missing };
+  return { logo, marks: { onLight }, tiers, logos, missing };
 }
 
 /**

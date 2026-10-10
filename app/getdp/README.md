@@ -1,11 +1,20 @@
 # /getdp: the Blockfest Africa 2026 DP generator
 
 A person picks how they are coming (attending, speaking, volunteering,
-partner), types their name, adds a photo and moves it in the frame, then
-shares the 2160×2160 picture through their phone's share list or saves it
-(a PNG download, or press and hold where downloads fail). The design is concept C, "New trade
-routes", picked by the owner on 9 October 2026; `.interface-design/system.md`
-records what is fixed about it.
+partner) and a design from two dropdowns, types their name, adds a photo and
+moves it in the frame, then shares the 2160×2160 picture through their
+phone's share list or saves it (a PNG download, or press and hold where
+downloads fail).
+
+**Designs** (`lib/looks.ts`). "Trade routes" is concept C, picked by the
+owner on 9 October 2026, and stays the default: people were already posting
+it. "Wave crown" and "Colour fields" come from the 2026 brand kit the design
+team shared on 10 October (the four colours, the wave pattern, the colour
+fields, the mark on a card); the owner picked them from three to offer as
+choices. Every design shares one layout (`layoutArt`), so the photo frame,
+the name's sizing, the days and the partners' band are the same in each, and
+only the ground, the decoration and the colours change.
+`.interface-design/system.md` records what is fixed about concept C.
 
 The photo never leaves the device: it is read into a canvas in the tab and
 drawn there, and neither the photo nor the name is ever sent. The only
@@ -112,8 +121,12 @@ the row.
   `lib/events.ts`, drawn as stops on one line; `short` is the venue's name
   as that line says it. Public days only; the private mixer on the 24th
   never goes there.
-- **The mark**: `DP_LOGO_SRC` in `lib/dp.ts`. The drawing reads the new file's
-  own proportions.
+- **The mark**: the brand kit's official files (10 October), `DP_LOGO_SRC`
+  (white lettering, for the dark designs) and `DP_MARK_LIGHT_SRC` (black
+  lettering, for "Colour fields") in `lib/dp.ts`. The drawing reads each
+  file's own proportions.
+- **A design**: `LOOKS` and `drawLookGround` in `lib/looks.ts`; add its id to
+  `DP_STYLES` and a name to `STYLE_LABEL`.
 - **Role wording or colours**: `ROLE_COPY` in `lib/dp.ts`.
 
 ## Sharing and saving

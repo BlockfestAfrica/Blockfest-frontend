@@ -13,7 +13,7 @@ import {
   type PointerEvent,
 } from "react";
 import { ImagePlus, Lock, RotateCcw } from "lucide-react";
-import { Field, Segmented, buttonClass, control } from "@/components/shared/panel";
+import { Field, buttonClass, control, selectControl } from "@/components/shared/panel";
 import {
   ART,
   DP_ROLES,
@@ -40,6 +40,7 @@ import {
 } from "../lib/dp";
 import { drawDP, nameSubstitutions, renderFull, type DPAssets, type DPResult } from "../lib/draw";
 import { FontLoadError, errorDetail } from "../lib/errors";
+import { DP_STYLES, STYLE_LABEL, type DPStyle } from "../lib/looks";
 import { countDp, type DPChannel } from "../lib/count";
 import { GETDP_EVENTS, track } from "@/lib/sabilytics";
 import { loadDpFaces } from "../lib/faces";
@@ -139,6 +140,8 @@ const pct = (v: number) => `${(v / DP_SIZE) * 100}%`;
  */
 export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const [role, setRole] = useState<DPRole>("attendee");
+  /** The look: concept C's "Trade routes" unless the person picks another (looks.ts). */
+  const [style, setStyle] = useState<DPStyle>("routes");
   const [name, setName] = useState("");
   const [nameTouched, setNameTouched] = useState(false);
   const [photo, setPhoto] = useState<(LoadedPhoto & { id: number }) | null>(null);
@@ -361,10 +364,11 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         name: shown || "Your name",
         ghostName: !shown,
         role,
+        style,
         photoTransform: transform ?? undefined,
       };
     },
-    [name, photo, role, transform],
+    [name, photo, role, style, transform],
   );
 
   /*
@@ -428,7 +432,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
 
   /** The picture the person made: their role, name, photo and its place. */
   const pictureKey = photo && transform
-    ? `${role}|${drawableName(name)}|${photo.id}|${transform.zoom}|${transform.offsetX}|${transform.offsetY}`
+    ? `${style}|${role}|${drawableName(name)}|${photo.id}|${transform.zoom}|${transform.offsetX}|${transform.offsetY}`
     : null;
   /**
    * What a file is drawn from: that picture, and the logos in hand. A logo
@@ -1160,8 +1164,39 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
           onSubmit={onSubmit}
           noValidate
         >
-          <div className="p-5 sm:p-6">
-            <Segmented legend="How you're coming" value={role} options={ROLE_OPTIONS} onChange={setRole} />
+          {/* Two choices: the role (Attending unless a link asked for another)
+              and the look (the one people were already posting unless they
+              pick another). One above the other on a phone, where side by
+              side would cut "Volunteering" and "Colour fields" short. */}
+          <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
+            <Field id="dp-role" label="How you're coming">
+              <select
+                id="dp-role"
+                value={role}
+                onChange={(e) => setRole(e.target.value as DPRole)}
+                className={selectControl}
+              >
+                {ROLE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field id="dp-style" label="Design">
+              <select
+                id="dp-style"
+                value={style}
+                onChange={(e) => setStyle(e.target.value as DPStyle)}
+                className={selectControl}
+              >
+                {DP_STYLES.map((st) => (
+                  <option key={st} value={st}>
+                    {STYLE_LABEL[st]}
+                  </option>
+                ))}
+              </select>
+            </Field>
           </div>
 
           {/*
