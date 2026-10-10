@@ -5,10 +5,12 @@ import { requireAdmin } from "@/lib/admin/session";
 import {
   addressClusters,
   campaignMetrics,
+  dpGenerations,
   weeklyActivity,
 } from "@/lib/admin/metrics";
 import { SectionCard, Stat } from "@/components/shared/panel";
 import { AddressClusters } from "@/components/admin/address-clusters";
+import { DpGenerationsCard } from "@/components/admin/dp-generations";
 import { SABILYTICS_SHARE_URL } from "@/lib/sabilytics";
 
 export const metadata: Metadata = {
@@ -41,10 +43,11 @@ export default async function OverviewPage() {
   const admin = await requireAdmin();
   if (!admin.ok) return null;
 
-  const [metrics, weeks, clusters] = await Promise.all([
+  const [metrics, weeks, clusters, dps] = await Promise.all([
     campaignMetrics(admin.admin),
     weeklyActivity(admin.admin),
     addressClusters(admin.admin),
+    dpGenerations(admin.admin),
   ]);
 
   const pct = (value: number, target: number) =>
@@ -90,6 +93,8 @@ export default async function OverviewPage() {
         <Stat label="Points" value={metrics.pointsAwarded} />
       </div>
 
+
+      <DpGenerationsCard dps={dps} sabilyticsUrl={SABILYTICS_SHARE_URL || undefined} />
 
       <SectionCard id="by-week" title="By week" className="mt-10">
         <div className="mt-4 overflow-x-auto rounded-lg border border-line">

@@ -8,10 +8,34 @@ routes", picked by the owner on 9 October 2026; `.interface-design/system.md`
 records what is fixed about it.
 
 The photo never leaves the device: it is read into a canvas in the tab and
-drawn there. The only things this folder loads are the site's own logo
-images, and it sends nothing: `__tests__/unit/privacy.test.ts` fails if a
-request call appears anywhere in it, because the privacy policy says the
-photo is never uploaded.
+drawn there, and neither the photo nor the name is ever sent. The only
+things this folder loads are the site's own fonts and logo images. It sends
+two kinds of thing, each carrying a role and, where there is one, how the DP
+left the page, and nothing else:
+
+- The count. When a DP is first downloaded, shared or saved, `lib/count.ts`
+  tells `/api/getdp/generated` its role and channel, and the admin overview
+  counts the rows. `__tests__/unit/privacy.test.ts` fails if any other
+  request call appears in this folder, or if that one carries anything but
+  the role and the channel, because the privacy policy says so (version 1.1,
+  "Badge count").
+- Three Sabilytics events, through `track()` in `lib/sabilytics.ts`
+  (`GETDP_EVENTS`): `getdp_dp_made` with the role, once a visit when a
+  picture is first ready; `getdp_dp_generated` with the role and channel, at
+  the same moment as the count; and `getdp_share_clicked` with the role and
+  channel, on every save or share tap. The policy covers these under
+  Analytics.
+
+**Counting.** A DP counts as generated once a visit for each photo as each
+role, at the moment it leaves the page: a share the person went through with
+(a share list they closed is not counted), a download that started, or the
+press-and-hold picture opening (a save from there cannot be seen). Fixing a
+letter of the name or the crop is the same DP, and so is going back to a
+role already counted; a new photo or a new role is a new one. Each counted
+DP is a row in `dp_generations` (migration 0072), which the admin overview
+totals for all time, today in Lagos, by role and by channel. The database
+count is the one to report: an ad blocker stops the Sabilytics events, not
+the row.
 
 ## Files
 
@@ -175,4 +199,4 @@ a phone held sideways.
 
 **Left for later**: shrinking very large photos while decoding them (a
 48 MP photo is still decoded at full size first), a HEIC decoder for
-Android, a 9:16 picture for TikTok, analytics.
+Android, a 9:16 picture for TikTok.

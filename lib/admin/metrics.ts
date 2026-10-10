@@ -192,3 +192,59 @@ export async function addressClusters(
     };
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* DPs generated on /getdp                                            */
+/* ------------------------------------------------------------------ */
+
+/** Lagos is UTC+1 all year: no daylight saving to account for. */
+const LAGOS_OFFSET_MS = 60 * 60 * 1000;
+
+/** The midnight in Lagos that began the day `now` falls in. */
+export function lagosMidnight(now: Date): Date {
+  const lagos = new Date(now.getTime() + LAGOS_OFFSET_MS);
+  return new Date(
+    Date.UTC(lagos.getUTCFullYear(), lagos.getUTCMonth(), lagos.getUTCDate()) - LAGOS_OFFSET_MS,
+  );
+}
+
+export interface DpGenerations {
+  /** Every DP counted: the first download, share or save of a photo as a role. */
+  total: number;
+  /** Since midnight in Lagos. */
+  today: number;
+  /** By role (attendee, speaker, volunteer, partner), most first. */
+  byRole: { name: string; count: number }[];
+  /** By how it left the page (download, share, x, whatsapp, status…), most first. */
+  byChannel: { name: string; count: number }[];
+}
+
+/**
+ * The DPs made on /getdp, counted from dp_generations' rows (one per DP; see
+ * 0072_dp_generations.sql). `now` is a parameter so "today" can be tested
+ * against a pinned clock; SQL's now() would ignore one.
+ */
+export async function dpGenerations(
+  admin: AdminIdentity,
+  now: Date = new Date(),
+): Promise<DpGenerations> {
+  void admin;
+  const since = lagosMidnight(now).toISOString();
+  const result = await getDb().execute(sql`
+    SELECT 'total' AS kind, NULL::text AS name, count(*)::int AS n FROM dp_generations
+    UNION ALL
+    SELECT 'today', NULL, count(*)::int FROM dp_generations WHERE created_at >= ${since}::timestamptz
+    UNION ALL
+    (SELECT 'role', role, count(*)::int FROM dp_generations GROUP BY role)
+    UNION ALL
+    (SELECT 'channel', channel, count(*)::int FROM dp_generations GROUP BY channel)
+  `);
+  const rows = (result.rows ?? []) as Record<string, unknown>[];
+  const scalar = (kind: string) => Number(rows.find((r) => r.kind === kind)?.n ?? 0);
+  const list = (kind: string) =>
+    rows
+      .filter((r) => r.kind === kind)
+      .map((r) => ({ name: String(r.name), count: Number(r.n) }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  return { total: scalar("total"), today: scalar("today"), byRole: list("role"), byChannel: list("channel") };
+}

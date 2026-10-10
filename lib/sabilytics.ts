@@ -111,6 +111,30 @@ export const CAMPAIGN_EVENTS = {
  */
 export const CAMPAIGN_EVENT_NAMES = Object.values(CAMPAIGN_EVENTS);
 
+/**
+ * The DP maker on /getdp.
+ *
+ * Prefixed for the campaign's reason: the property is shared, and an
+ * unprefixed "share_clicked" could be anybody's. Each carries the DP's role
+ * and, for a save or share, how it left the page; never a name, since the
+ * name and the photograph never leave the browser (lib/privacy.ts).
+ *
+ * `generated` is the one the admin overview also counts (one row per DP in
+ * our own database, app/api/getdp/generated): that count does not depend on
+ * the visitor's ad blocker, and this one says who and from where.
+ */
+export const GETDP_EVENTS = {
+  /** A picture with a name and a photo is ready, once a visit: someone made a DP. */
+  made: "getdp_dp_made",
+  /** A DP first downloaded, shared or saved: a DP generated. */
+  generated: "getdp_dp_generated",
+  /** Any tap on a save or share button or an app's mark, every time. */
+  shareClicked: "getdp_share_clicked",
+} as const;
+
+/** Every DP event name, for the dashboard and for a test. */
+export const GETDP_EVENT_NAMES = Object.values(GETDP_EVENTS);
+
 /** Fire a custom event. Safe to call before the script loads. */
 export function track(event: string, data?: Record<string, unknown>): void {
   if (typeof window === "undefined") return;

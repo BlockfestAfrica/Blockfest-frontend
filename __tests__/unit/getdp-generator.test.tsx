@@ -82,6 +82,16 @@ vi.mock("@/app/getdp/lib/load", async () => {
 
 vi.mock("server-only", () => ({}));
 
+/** The count of DPs made (lib/count, tested on its own) and the analytics events. */
+const countDp = vi.fn<(role: string, channel: string) => void>();
+vi.mock("@/app/getdp/lib/count", () => ({ countDp: (role: string, channel: string) => countDp(role, channel) }));
+const track = vi.fn<(event: string, data?: Record<string, unknown>) => void>();
+vi.mock("@/lib/sabilytics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/sabilytics")>()),
+  track: (event: string, data?: Record<string, unknown>) => track(event, data),
+}));
+const events = (name: string) => track.mock.calls.filter(([e]) => e === name).map(([, d]) => d);
+
 /** The DP's faces (lib/faces, tested on its own): loaded at once, and asked for when the page opens. */
 const loadDpFaces = vi.fn(async () => undefined);
 vi.mock("@/app/getdp/lib/faces", () => ({ loadDpFaces: () => loadDpFaces() }));
@@ -163,6 +173,8 @@ beforeEach(() => {
   retryLogos.mockReset();
   retryLogos.mockResolvedValue({});
   loadDpFaces.mockClear();
+  countDp.mockClear();
+  track.mockClear();
   readPhoto.mockReset();
   readPhoto.mockResolvedValue({ photo: { width: 900, height: 1600 }, width: 900, height: 1600 });
   share.mockReset();
@@ -1527,6 +1539,104 @@ describe("in an app's browser", () => {
     await mount();
     await settle();
     expect(screen.queryByRole("note")).toBeNull();
+  });
+});
+
+describe("counting the DPs made", () => {
+  it("says a DP was made once a visit, when the picture is first ready", async () => {
+    expect(events("getdp_dp_made")).toEqual([]);
+    await readyToShare("Download PNG");
+    expect(events("getdp_dp_made")).toEqual([{ role: "attendee" }]);
+    fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
+    await settle(400);
+    expect(events("getdp_dp_made")).toHaveLength(1);
+  });
+
+  it("counts a DP the first time it is shared or saved, and every tap as a click", async () => {
+    setDevice({ ua: UA.android, coarse: true, files: true });
+    await readyToShare("Share your DP");
+    fireEvent.click(button("Post on X"));
+    await settle();
+    expect(countDp.mock.calls).toEqual([["attendee", "x"]]);
+    expect(events("getdp_dp_generated")).toEqual([{ role: "attendee", channel: "x" }]);
+
+    // The same DP, shared again: clicks, not more DPs.
+    fireEvent.click(button("Send on WhatsApp"));
+    await settle();
+    fireEvent.click(button("Share your DP"));
+    await settle();
+    expect(countDp).toHaveBeenCalledTimes(1);
+    expect(events("getdp_share_clicked")).toEqual([
+      { role: "attendee", channel: "x" },
+      { role: "attendee", channel: "whatsapp" },
+      { role: "attendee", channel: "share" },
+    ]);
+
+    // Fixing the name is the same DP.
+    fireEvent.change(nameInput(), { target: { value: "Ada Obi-Okafor" } });
+    await waitFor(() => expect(button("Share your DP").disabled).toBe(false));
+    await settle(400);
+    fireEvent.click(button("Post on X"));
+    await settle();
+    expect(countDp).toHaveBeenCalledTimes(1);
+
+    // Another role is another DP.
+    fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
+    await settle(400);
+    fireEvent.click(button("Post to WhatsApp Status"));
+    await settle();
+    expect(countDp.mock.calls).toEqual([
+      ["attendee", "x"],
+      ["speaker", "status"],
+    ]);
+
+    // Back to a role already counted for this photo: the same DP.
+    fireEvent.click(screen.getByRole("button", { name: "Attending" }));
+    await settle(400);
+    fireEvent.click(button("Post on X"));
+    await settle();
+    expect(countDp).toHaveBeenCalledTimes(2);
+    // Never the name, anywhere it goes.
+    expect(JSON.stringify([countDp.mock.calls, track.mock.calls])).not.toMatch(/Ada|Obi|Okafor/);
+  });
+
+  it("counts a share only once the person goes through with it, not a list they closed", async () => {
+    setDevice({ ua: UA.iphone, coarse: true, files: true });
+    await readyToShare("Share your DP");
+    share.mockRejectedValueOnce(new DOMException("cancelled", "AbortError"));
+    fireEvent.click(button("Send on WhatsApp"));
+    await settle();
+    expect(countDp).not.toHaveBeenCalled();
+    expect(events("getdp_dp_generated")).toEqual([]);
+    expect(events("getdp_share_clicked")).toEqual([{ role: "attendee", channel: "whatsapp" }]);
+
+    fireEvent.click(button("Send on WhatsApp"));
+    expect(countDp).not.toHaveBeenCalled();
+    await settle();
+    expect(countDp.mock.calls).toEqual([["attendee", "whatsapp"]]);
+  });
+
+  it("counts a download, a save and an app's mark the same way, and nothing while the picture is not ready", async () => {
+    await mount();
+    // A desktop's marks are links; shut, a tap does nothing.
+    fireEvent.click(screen.getByRole("link", { name: "Post on X" }));
+    expect(countDp).not.toHaveBeenCalled();
+    expect(events("getdp_share_clicked")).toEqual([]);
+    fireEvent.change(nameInput(), { target: { value: "Ada Obi" } });
+    await addPhoto();
+    await waitFor(() => expect(download().disabled).toBe(false));
+    await settle(400);
+    fireEvent.click(download());
+    await settle();
+    expect(countDp.mock.calls).toEqual([["attendee", "download"]]);
+    cleanup();
+
+    countDp.mockClear();
+    setDevice({ ua: UA.instagramAndroid, coarse: true });
+    await readyToShare("Save image");
+    fireEvent.click(button("Save image"));
+    await settle();
+    expect(countDp.mock.calls).toEqual([["attendee", "save"]]);
   });
 });
 
