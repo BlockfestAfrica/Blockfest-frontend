@@ -25,6 +25,7 @@ import {
   marksClass,
   moveHint,
   platformAction,
+  copiesCaption,
   shareData,
   statusAction,
   whatsappUrl,
@@ -64,7 +65,7 @@ const UA = {
 
 const env = (
   ua: string,
-  o: { coarse?: boolean; share?: boolean; jpeg?: boolean; touch?: number } = {},
+  o: { coarse?: boolean; share?: boolean; jpeg?: boolean; text?: boolean; touch?: number } = {},
 ): ShareEnv =>
   detectEnv({
     ua,
@@ -72,11 +73,14 @@ const env = (
     coarse: o.coarse ?? false,
     canShareJpeg: o.jpeg ?? o.share ?? false,
     canSharePng: o.share ?? false,
+    canShareJpegText: o.text ?? false,
   });
 
 const IPHONE = env(UA.iphone, { coarse: true, share: true });
 const IPHONE_NO_SHARE = env(UA.iphone, { coarse: true }); // Lockdown Mode
 const ANDROID = env(UA.android, { coarse: true, share: true });
+/** Chrome on Android today: the share list takes the caption beside the file. */
+const ANDROID_TEXT = env(UA.android, { coarse: true, share: true, text: true });
 const FIREFOX_ANDROID = env(UA.firefoxAndroid, { coarse: true });
 const IG_ANDROID = env(UA.instagramAndroid, { coarse: true });
 const IG_IOS = env(UA.instagramIos, { coarse: true, share: true });
@@ -238,7 +242,19 @@ describe("the platform marks", () => {
   });
 
   it("never puts the picture in a link, and never claims to post or upload for anybody", () => {
-    const everyEnv = [IPHONE, ANDROID, FIREFOX_ANDROID, IPHONE_NO_SHARE, IG_ANDROID, IG_IOS, TIKTOK_IOS, DESKTOP, DESKTOP_SHARE];
+    const everyEnv = [
+      IPHONE,
+      ANDROID,
+      ANDROID_TEXT,
+      FIREFOX_ANDROID,
+      IPHONE_NO_SHARE,
+      IG_ANDROID,
+      IG_ANDROID_SHARE,
+      IG_IOS,
+      TIKTOK_IOS,
+      DESKTOP,
+      DESKTOP_SHARE,
+    ];
     for (const e of everyEnv) {
       for (const p of PLATFORMS) {
         const a = platformAction(p, e, CAPTION, FILE);
@@ -256,7 +272,9 @@ describe("the platform marks", () => {
       if (typeof v === "string") said.push(v);
     }
     for (const e of everyEnv) {
-      for (const c of ["sheet", "download", "hold", "desktop"] as const) said.push(COPY.marksDo(c), COPY.ready(c));
+      for (const c of ["sheet", "download", "hold", "desktop"] as const) {
+        said.push(COPY.marksDo(c), COPY.marksDo(c, true), COPY.ready(c));
+      }
       said.push(COPY.profile(e), COPY.downloading(e, FILE), COPY.holdHow(e), COPY.holdFallback(e));
       const s = statusAction(e);
       if (s) said.push(s.how);
@@ -273,7 +291,7 @@ describe("the platform marks", () => {
     for (const e of [IPHONE, ANDROID, IG_IOS, TIKTOK_IOS]) {
       expect(statusAction(e)).toEqual({
         kind: "sheet",
-        how: "Opens your share list with your DP: choose WhatsApp, then My status at the top.",
+        how: "Opens your share list with your DP: pick WhatsApp, then My status.",
       });
     }
     expect(statusAction(FIREFOX_ANDROID)).toEqual({
@@ -290,6 +308,46 @@ describe("the platform marks", () => {
     // Status is posted from the phone app; a desktop has nowhere to send it.
     expect(statusAction(DESKTOP)).toBeNull();
     expect(statusAction(DESKTOP_SHARE)).toBeNull();
+  });
+
+  it("knows when the caption goes with the picture: Android's share list taking text beside the file", () => {
+    expect(ANDROID_TEXT.captionTravels).toBe(true);
+    // Not where the list takes the file alone, nor on an Apple device, where text is never sent.
+    expect(ANDROID.captionTravels).toBe(false);
+    expect(env(UA.iphone, { coarse: true, share: true, text: true }).captionTravels).toBe(false);
+    expect(env(UA.macSafari, { share: true, text: true }).captionTravels).toBe(false);
+    expect(env(UA.android, { coarse: true, share: true, jpeg: false, text: true }).captionTravels).toBe(false);
+    expect(DESKTOP_ENV.captionTravels).toBe(false);
+  });
+
+  it("copies the caption only where it does not go with the picture", () => {
+    for (const t of ["x", "whatsapp", "status"] as const) {
+      expect(copiesCaption(t, ANDROID_TEXT)).toBe(false);
+      expect(copiesCaption(t, IPHONE)).toBe(true);
+      expect(copiesCaption(t, ANDROID)).toBe(true);
+    }
+    // Instagram, TikTok and LinkedIn leave the caption out, and the big Share button's app is unknown.
+    for (const t of ["instagram", "tiktok", "linkedin", "share"] as const) expect(copiesCaption(t, ANDROID_TEXT)).toBe(true);
+  });
+
+  it("tells an Android phone to pick the app, and to paste only where the caption was copied", () => {
+    expect(platformAction("x", ANDROID_TEXT, CAPTION, FILE).tip).toBe(
+      "Pick X in the list. If your caption is missing, use Copy below and paste it.",
+    );
+    expect(platformAction("whatsapp", ANDROID_TEXT, CAPTION, FILE).tip).toBe(
+      "Pick WhatsApp in the list, then a chat or My status.",
+    );
+    expect(platformAction("instagram", ANDROID_TEXT, CAPTION, FILE).tip).toMatch(/paste your caption/);
+    expect(platformAction("linkedin", ANDROID_TEXT, CAPTION, FILE).tip).toMatch(/paste your caption/);
+    expect(platformAction("x", IPHONE, CAPTION, FILE).tip).toBe("Pick X. If your caption isn't in the post, paste it.");
+    expect(COPY.marksDo("sheet", true)).toBe("Each opens your phone's share list with your DP: pick the app there.");
+    // The line under the marks no longer says to paste, so every tap that copies says it in its tip.
+    for (const p of PLATFORMS) {
+      if (copiesCaption(p, ANDROID_TEXT)) expect(platformAction(p, ANDROID_TEXT, CAPTION, FILE).tip).toMatch(/paste your caption/);
+    }
+    expect(platformAction("tiktok", ANDROID_TEXT, CAPTION, FILE).tip).toBe(
+      "Pick TikTok, then paste your caption. Not in the list? Use Download PNG, then post it from TikTok with +.",
+    );
   });
 
   it("keeps one definition of the X link", () => {
@@ -389,6 +447,7 @@ describe("the words", () => {
     for (const c of ["sheet", "download", "hold", "desktop"] as const) {
       expect(COPY.marksDo(c)).toMatch(/copies your caption/);
       expect(COPY.marksDo(c)).not.toMatch(/is copied/);
+      expect(COPY.marksDo(c, true)).not.toMatch(/is copied/);
     }
     expect(COPY.holdPlatform("LinkedIn")).toBe("Then open LinkedIn and post it. Your caption is copied.");
     expect(COPY.holdPlatform("LinkedIn", false)).toBe("Then open LinkedIn and post it.");

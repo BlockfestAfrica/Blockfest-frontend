@@ -24,13 +24,19 @@ type Opts = {
 };
 type Ctx = { canvas?: { width: number } };
 
-/** Every drawDP call: whether it was a full 2160 render (told at call time), and what it drew. */
-const draws: { full: boolean; opts: Opts }[] = [];
+type Assets = { logos: Record<string, unknown> };
+
+/** Every drawDP call: whether it was a full 2160 render (told at call time), what it drew, and with which logos. */
+const draws: { full: boolean; opts: Opts; assets?: Assets }[] = [];
 let fullRunning = 0;
 let fullMostAtOnce = 0;
+/** While set, a full render waits on it before it finishes (a render under way). */
+let fullGate: Promise<void> | null = null;
 
-const drawDP = vi.fn(async (ctx: Ctx, opts: Opts) => {
-  draws.push({ full: ctx?.canvas?.width === 2160, opts });
+const drawDP = vi.fn(async (ctx: Ctx, opts: Opts, assets?: Assets) => {
+  const full = ctx?.canvas?.width === 2160;
+  draws.push({ full, opts, assets });
+  if (full && fullGate) await fullGate;
   return { hub: { x: 1080, y: 760 }, photoR: 410, zone: { top: 1400, bottom: 1872 } };
 });
 const nameSubstitutions = vi.fn<(name: string) => Promise<{ letter: string; drawn: string | null }[]>>(
@@ -44,8 +50,7 @@ const renderFull = vi.fn(async (opts: Opts, assets: unknown, type: string, quali
   fullRunning += 1;
   fullMostAtOnce = Math.max(fullMostAtOnce, fullRunning);
   try {
-    await drawDP(canvas.getContext("2d") as unknown as Ctx, opts);
-    void assets;
+    await drawDP(canvas.getContext("2d") as unknown as Ctx, opts, assets as Assets);
     return await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("No picture file"))), type, quality),
     );
@@ -56,23 +61,30 @@ const renderFull = vi.fn(async (opts: Opts, assets: unknown, type: string, quali
   }
 });
 vi.mock("@/app/getdp/lib/draw", () => ({
-  drawDP: (ctx: Ctx, opts: Opts) => drawDP(ctx, opts),
+  drawDP: (ctx: Ctx, opts: Opts, assets: Assets) => drawDP(ctx, opts, assets),
   nameSubstitutions: (name: string) => nameSubstitutions(name),
   renderFull: (opts: Opts, assets: unknown, type: string, quality?: number) => renderFull(opts, assets, type, quality),
 }));
 
 const readPhoto = vi.fn();
 const loadAssets = vi.fn<(tiers: unknown) => Promise<unknown>>();
+const retryLogos = vi.fn<(missing: { name: string }[], attempt: number) => Promise<Record<string, unknown>>>();
 vi.mock("@/app/getdp/lib/load", async () => {
   class PhotoError extends Error {}
   return {
+    LATE_LOGO_TRIES: 2,
     PhotoError,
     loadAssets: (tiers: unknown) => loadAssets(tiers),
     readPhoto: (file: File) => readPhoto(file),
+    retryLogos: (missing: { name: string }[], attempt: number) => retryLogos(missing, attempt),
   };
 });
 
 vi.mock("server-only", () => ({}));
+
+/** The DP's faces (lib/faces, tested on its own): loaded at once, and asked for when the page opens. */
+const loadDpFaces = vi.fn(async () => undefined);
+vi.mock("@/app/getdp/lib/faces", () => ({ loadDpFaces: () => loadDpFaces() }));
 
 const { default: DPGenerator } = await import("@/app/getdp/components/DPGenerator");
 const { FontLoadError } = await import("@/app/getdp/lib/errors");
@@ -139,6 +151,7 @@ function setDevice({
 
 beforeEach(() => {
   draws.length = 0;
+  fullGate = null;
   fullRunning = 0;
   fullMostAtOnce = 0;
   drawDP.mockClear();
@@ -146,7 +159,10 @@ beforeEach(() => {
   nameSubstitutions.mockReset();
   nameSubstitutions.mockResolvedValue([]);
   loadAssets.mockReset();
-  loadAssets.mockImplementation(async (tiers) => ({ logo: {}, tiers, logos: {} }));
+  loadAssets.mockImplementation(async (tiers) => ({ logo: {}, tiers, logos: {}, missing: [] }));
+  retryLogos.mockReset();
+  retryLogos.mockResolvedValue({});
+  loadDpFaces.mockClear();
   readPhoto.mockReset();
   readPhoto.mockResolvedValue({ photo: { width: 900, height: 1600 }, width: 900, height: 1600 });
   share.mockReset();
@@ -404,6 +420,78 @@ describe("the Get DP generator", () => {
     expect(lastDrawn()).toMatchObject({ role: "speaker", name: "Ada Obi", photo: picked });
   });
 
+  it("asks for the lettering as the page opens, not after the logos", async () => {
+    const parts = deferred<unknown>();
+    loadAssets.mockReturnValue(parts.promise);
+    render(<DPGenerator tiers={tiers} />);
+    await waitFor(() => expect(loadAssets).toHaveBeenCalledTimes(1));
+    expect(loadDpFaces).toHaveBeenCalled();
+    await act(async () => parts.resolve({ logo: {}, tiers, logos: {}, missing: [] }));
+  });
+
+  it("asks again for logos a slow connection left off, and draws the picture again with each round", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const monica = { name: "Monica" };
+    const techpoint = { name: "Techpoint" };
+    loadAssets.mockImplementation(async (t) => ({ logo: {}, tiers: t, logos: { Hoaq: {} }, missing: [monica, techpoint] }));
+    const round1 = deferred<Record<string, unknown>>();
+    const round2 = deferred<Record<string, unknown>>();
+    retryLogos.mockReturnValueOnce(round1.promise).mockReturnValueOnce(round2.promise);
+    await readyToShare("Download PNG");
+    expect(retryLogos).toHaveBeenCalledWith([monica, techpoint], 1);
+    const logos = (full: boolean) => Object.keys(draws.filter((d) => d.full === full).at(-1)!.assets!.logos).sort();
+    expect(logos(false)).toEqual(["Hoaq"]);
+    expect(logos(true)).toEqual(["Hoaq"]);
+
+    // Monica comes on the first round: the preview and the file have her while the second round is still out.
+    await act(async () => round1.resolve({ Monica: {} }));
+    await waitFor(() => expect(logos(false)).toEqual(["Hoaq", "Monica"]));
+    await settle(400);
+    expect(logos(true)).toEqual(["Hoaq", "Monica"]);
+    expect(retryLogos).toHaveBeenLastCalledWith([techpoint], 2);
+
+    await act(async () => round2.resolve({ Techpoint: {} }));
+    await waitFor(() => expect(logos(false)).toEqual(["Hoaq", "Monica", "Techpoint"]));
+    await settle();
+    expect(retryLogos).toHaveBeenCalledTimes(2);
+  });
+
+  it("still saves a download a late logo lands in the middle of, with the logo, and keeps what it said", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    loadAssets.mockImplementation(async (t) => ({ logo: {}, tiers: t, logos: {}, missing: [{ name: "Monica" }] }));
+    const round = deferred<Record<string, unknown>>();
+    retryLogos.mockReturnValueOnce(round.promise);
+    await mount();
+    fireEvent.change(nameInput(), { target: { value: "Ada Obi" } });
+    await addPhoto();
+    await waitFor(() => expect(download().disabled).toBe(false));
+
+    // The PNG is still being drawn when Monica comes.
+    const gate = deferred<void>();
+    fullGate = gate.promise;
+    fireEvent.click(download());
+    expect(await screen.findByRole("button", { name: "Saving…" })).toBeTruthy();
+    await act(async () => round.resolve({ Monica: {} }));
+    fullGate = null;
+    await act(async () => gate.resolve());
+    await waitFor(() => expect(anchorClick).toHaveBeenCalledTimes(1));
+    // The file saved is the one drawn again with Monica, once: the first, without her, was let go.
+    expect(draws.filter((d) => d.full).map((d) => Object.keys(d.assets!.logos))).toEqual([[], ["Monica"]]);
+    expect(live().textContent).toBe("Downloading blockfest-2026-dp-ada-obi.png.");
+
+    // A logo coming later does not take back what the page said.
+    cleanup();
+    const later = deferred<Record<string, unknown>>();
+    retryLogos.mockReturnValueOnce(later.promise);
+    anchorClick.mockClear();
+    await readyToShare("Download PNG");
+    fireEvent.click(download());
+    await waitFor(() => expect(live().textContent).toBe("Downloading blockfest-2026-dp-ada-obi.png."));
+    await act(async () => later.resolve({ Monica: {} }));
+    await settle(400);
+    expect(live().textContent).toBe("Downloading blockfest-2026-dp-ada-obi.png.");
+  });
+
   it("keeps sharing shut on a picture that could not be drawn, and says what broke", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     setDevice({ ua: UA.android, coarse: true, files: true });
@@ -444,8 +532,8 @@ describe("the Get DP generator", () => {
     expect(screen.getByText("Details: TypeError: e.getTransform is not a function")).toBeTruthy();
 
     // Drawn at last: the details go, and sharing opens.
-    drawDP.mockImplementation(async (ctx: Ctx, o: Opts) => {
-      draws.push({ full: ctx?.canvas?.width === 2160, opts: o });
+    drawDP.mockImplementation(async (ctx: Ctx, o: Opts, a?: Assets) => {
+      draws.push({ full: ctx?.canvas?.width === 2160, opts: o, assets: a });
       return { hub: { x: 1080, y: 760 }, photoR: 410, zone: { top: 1400, bottom: 1872 } };
     });
     fireEvent.click(button("Try again"));
@@ -1110,7 +1198,7 @@ describe("sharing on a phone", () => {
     const status = () => button("Post to WhatsApp Status");
     expect(status().disabled).toBe(true);
     expect(
-      screen.getByText("Opens your share list with your DP: choose WhatsApp, then My status at the top."),
+      screen.getByText("Opens your share list with your DP: pick WhatsApp, then My status."),
     ).toBeTruthy();
     expect(status().getAttribute("aria-describedby")).toBe("dp-whatsapp-status-how");
 
@@ -1138,13 +1226,15 @@ describe("sharing on a phone", () => {
     await settle();
     cleanup();
 
-    // Android hands WhatsApp the caption beside the picture.
+    // Android hands WhatsApp the caption beside the picture, so nothing is copied.
     setDevice({ ua: UA.android, coarse: true, files: true });
     share.mockClear();
+    writeText.mockClear();
     await readyToShare("Post to WhatsApp Status");
     fireEvent.click(button("Post to WhatsApp Status"));
     expect(share).toHaveBeenCalledTimes(1);
     expect(share.mock.calls[0][0].text).toBe(shareText("attendee"));
+    expect(writeText).not.toHaveBeenCalled();
     await settle();
   });
 
@@ -1166,6 +1256,37 @@ describe("sharing on a phone", () => {
     expect(anchorClick).toHaveBeenCalledTimes(1);
     expect(writeText).toHaveBeenCalledTimes(2);
     expect(share).not.toHaveBeenCalled();
+  });
+
+  it("shares on Android without copying where the caption goes with the picture, and copies where it does not", async () => {
+    setDevice({ ua: UA.android, coarse: true, files: true });
+    await readyToShare("Share your DP");
+    expect(screen.getByText("Each opens your phone's share list with your DP: pick the app there.")).toBeTruthy();
+    for (const label of ["Post on X", "Send on WhatsApp"]) {
+      fireEvent.click(button(label));
+      expect(share).toHaveBeenCalledTimes(1);
+      expect(share.mock.calls[0][0].text).toBe(shareText("attendee"));
+      expect(writeText).not.toHaveBeenCalled();
+      share.mockClear();
+      await settle();
+    }
+    expect(screen.getByText("Pick WhatsApp in the list, then a chat or My status.")).toBeTruthy();
+    // Instagram leaves the caption out, so that tap copies it to paste.
+    fireEvent.click(button("Post on Instagram"));
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith(shareText("attendee"));
+    await settle();
+    cleanup();
+
+    // An Android browser whose share list takes the file alone copies, as before.
+    setDevice({ ua: UA.android, coarse: true, files: true, text: false });
+    share.mockClear();
+    writeText.mockClear();
+    await readyToShare("Share your DP");
+    fireEvent.click(button("Post on X"));
+    expect(Object.keys(share.mock.calls[0][0])).toEqual(["files"]);
+    expect(writeText).toHaveBeenCalledWith(shareText("attendee"));
+    await settle();
   });
 
   it("saves to Photos through the share list on an iPhone, with the file alone", async () => {
@@ -1365,6 +1486,22 @@ describe("in an app's browser", () => {
     await waitFor(() => expect(again.textContent).not.toContain("Your caption is copied."));
     expect(again.textContent).toContain("Then open WhatsApp, go to Updates and add it to My status.");
     expect(live().textContent).toBe("Couldn't copy your caption. Copy it from the box below.");
+  });
+
+  it("keeps the press-and-hold picture in place when a late logo comes", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    setDevice({ ua: UA.instagramAndroid, coarse: true });
+    loadAssets.mockImplementation(async (t) => ({ logo: {}, tiers: t, logos: {}, missing: [{ name: "Monica" }] }));
+    const round = deferred<Record<string, unknown>>();
+    retryLogos.mockReturnValueOnce(round.promise);
+    await readyToShare("Save image");
+    fireEvent.click(button("Save image"));
+    const img = (await screen.findByRole("img", { name: "Your Blockfest Africa 2026 DP" })) as HTMLImageElement;
+    const src = img.getAttribute("src");
+    await act(async () => round.resolve({ Monica: {} }));
+    await settle(400);
+    expect(screen.getByRole("img", { name: "Your Blockfest Africa 2026 DP" }).getAttribute("src")).toBe(src);
+    expect(revokeObjectURL).not.toHaveBeenCalledWith(src);
   });
 
   it("never says the caption is copied when the browser refused the copy", async () => {

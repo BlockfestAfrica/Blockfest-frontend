@@ -39,19 +39,35 @@ photo is never uploaded.
   file name, crop maths, footer tiers and footer and art layout. Unit tested
   in `__tests__/unit/getdp-dp.test.ts`.
 - `lib/draw.ts`: `drawDP(ctx, options, assets)`, the canvas painting. No
-  React. Refuses to draw until Bebas Neue and Gotham have loaded.
+  React. Refuses to draw until Bebas Neue and Gotham have loaded, and draws
+  in nothing else (`lib/faces.ts`).
 - `lib/letters.ts`: how a name is spelt in Bebas's own letters (recomposed
   accents, dots below, borrowed marks, plain stand-ins), and which letters
   the page must mention or refuse. Pure; tested in
   `__tests__/unit/getdp-letters.test.ts`.
 - `lib/fonts.ts`: Bebas Neue via next/font (self-hosted; the CSP allows only
   the site's own fonts) and the site's Gotham.
+- `lib/faces.ts`: the two faces the DP draws in, loaded by the page itself.
+  It reads where next/font's @font-face rules put the files and loads each
+  as a FontFace under a family only the DP uses ("Blockfest DP Display",
+  "Blockfest DP Text"). The CSS faces are never asked for: next/font puts a
+  "… Fallback" face whose only source is `local("Arial")` behind each, and
+  Android has no Arial, so any `document.fonts.load()` that names that
+  family rejects on every Android phone (#312). A try that fails or runs
+  past 12 seconds is forgotten and the next one asks for the file under a
+  new URL (`?dp=N`), so Try again works after a failed or stalled download,
+  which a CSS face never does. Files that loaded are not asked for again.
+  It starts as the page opens, beside the logos. Tested in
+  `__tests__/unit/getdp-faces.test.ts`.
 - `lib/load.ts`: loading the mark and rasterising partner logos at their
   recorded proportions (at most 1200 on the long side); reading the photo,
   with the messages a person sees when a file will not open (HEIC outside
   Safari, for one). A logo that takes over 8 seconds is left off the
-  footer; a mark that takes over 12 ends in "Try again", as fonts that take
-  over 12 do in `lib/draw.ts`. Try again keeps the role, name and photo. A
+  footer at first, then asked for again in the background (twice, 30
+  seconds each, under a new URL), and the picture is drawn again with each
+  one that comes: on slow data, the smaller partners' logos used to drop off
+  for good. A mark that takes over 12 seconds ends in "Try again", as fonts
+  that take over 12 do in `lib/faces.ts`. Try again keeps the role, name and photo. A
   name's letter check that times out with the fonts keeps saving shut (a
   letter the face cannot draw must never reach a picture) and also ends in
   "Try again", which runs the check again.
@@ -129,8 +145,11 @@ hands over a picture the person has since changed. "Tap again" and "Sharing
 didn't work" go as soon as the share list opens.
 On iOS the share gets the file alone (text hides Save Image and makes some
 apps take the words instead of the picture); on Android it gets the caption
-beside the file when the browser accepts it. The caption is copied to the
-clipboard in the same tap, since LinkedIn and Instagram drop it.
+beside the file when the browser accepts it (`captionTravels`). The caption
+is copied to the clipboard in the same tap, since LinkedIn and Instagram
+drop it, except for X, WhatsApp and WhatsApp Status where it already goes
+with the picture (`copiesCaption`): there a copy would only be a second,
+needless one, and Android shows "Copied" for it.
 
 **In an app's browser** a note above the steps says what may not work and
 how to get out (Open in Chrome on Android through an `intent://` link,

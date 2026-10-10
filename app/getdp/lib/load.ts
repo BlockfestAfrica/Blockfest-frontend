@@ -16,6 +16,14 @@ export const MARK_TIMEOUT_MS = 12_000;
 /** A footer logo that takes longer than this is left off, as a failed one is. */
 export const LOGO_TIMEOUT_MS = 8_000;
 /**
+ * A logo left off is asked for again, in the background, this many times,
+ * each waiting this long: on slow data the first 8 seconds are not enough
+ * for the smaller partners' logos, and the picture is drawn again with each
+ * one that comes.
+ */
+export const LATE_LOGO_TRIES = 2;
+export const LATE_LOGO_TIMEOUT_MS = 30_000;
+/**
  * A logo's bitmap is at most this on its long side. The footer places logos
  * at the sizes recorded in lib/partners-2026 (never the bitmap's), and none
  * is drawn wider than about 600 on the 2160 post, so this keeps every logo
@@ -95,13 +103,19 @@ export async function rasteriseLogo(
   return c;
 }
 
+/** The assets, and the logos left off them for now (see retryLogos). */
+export interface LoadedAssets extends DPAssets {
+  missing: FooterLogo[];
+}
+
 /**
  * The mark and every footer logo. A logo that fails to load, or takes longer
  * than LOGO_TIMEOUT_MS, is left out (and said so in the console) rather than
- * costing everybody their DP. The mark is not optional: if it has not come
- * in MARK_TIMEOUT_MS this rejects, and the page offers Try again.
+ * costing everybody their DP, and listed in `missing` for retryLogos. The
+ * mark is not optional: if it has not come in MARK_TIMEOUT_MS this rejects,
+ * and the page offers Try again.
  */
-export async function loadAssets(tiers: FooterTiers): Promise<DPAssets> {
+export async function loadAssets(tiers: FooterTiers): Promise<LoadedAssets> {
   const all = [
     ...(tiers.headline ? [tiers.headline] : []),
     ...tiers.sponsors,
@@ -112,11 +126,40 @@ export async function loadAssets(tiers: FooterTiers): Promise<DPAssets> {
     Promise.allSettled(all.map((l) => rasteriseLogo(l))),
   ]);
   const logos: Record<string, Bitmap> = {};
+  const missing: FooterLogo[] = [];
   settled.forEach((r, i) => {
     if (r.status === "fulfilled") logos[all[i].name] = r.value;
-    else console.warn(`DP footer: ${all[i].name} left out:`, r.reason);
+    else {
+      missing.push(all[i]);
+      console.warn(`DP footer: ${all[i].name} left out:`, r.reason);
+    }
   });
-  return { logo, tiers, logos };
+  return { logo, tiers, logos, missing };
+}
+
+/**
+ * The same logo under a new URL, so a second try cannot wait on a request
+ * that stalled. A logo written into the page (data:) cannot stall.
+ */
+export function freshLogo(logo: FooterLogo, attempt: number): FooterLogo {
+  if (/^(data|blob):/.test(logo.src)) return logo;
+  return { ...logo, src: `${logo.src}${logo.src.includes("?") ? "&" : "?"}dp=${attempt}` };
+}
+
+/**
+ * Another try at the logos left off, each under a new URL and given
+ * LATE_LOGO_TIMEOUT_MS. The ones that come, by name; the rest stay off.
+ */
+export async function retryLogos(missing: FooterLogo[], attempt: number): Promise<Record<string, Bitmap>> {
+  const settled = await Promise.allSettled(
+    missing.map((l) => rasteriseLogo(freshLogo(l, attempt), LATE_LOGO_TIMEOUT_MS)),
+  );
+  const logos: Record<string, Bitmap> = {};
+  settled.forEach((r, i) => {
+    if (r.status === "fulfilled") logos[missing[i].name] = r.value;
+    else console.warn(`DP footer: ${missing[i].name} still left out:`, r.reason);
+  });
+  return logos;
 }
 
 /** A photo problem, in words for the person who picked it. */
