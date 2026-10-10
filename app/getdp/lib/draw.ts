@@ -39,6 +39,7 @@ import {
   type PhotoTransform,
 } from "./dp";
 import { DP_FAMILY, loadDpFaces, primaryFamily } from "./faces";
+import { LOOKS, drawLookGround, drawLookRing, type DPStyle, type MarkTone } from "./looks";
 import {
   DOT_ABOVE,
   clusters as spell,
@@ -59,10 +60,12 @@ export interface DPOptions {
   photoTransform?: PhotoTransform;
   /** The name is a stand-in ("Your name"): drawn quieter. */
   ghostName?: boolean;
+  /** Which look (looks.ts); concept C's "routes" when unset. */
+  style?: DPStyle;
 }
 
 export interface DPAssets {
-  /** The white mark for the navy ground (DP_LOGO_SRC). */
+  /** The mark with white lettering, for a dark ground (DP_LOGO_SRC). */
   logo: Bitmap;
   /** Who goes in the footer, from footerTiers. */
   tiers: FooterTiers;
@@ -72,6 +75,8 @@ export interface DPAssets {
    * no natural size of its own). A logo missing here is left out.
    */
   logos: Record<string, Bitmap>;
+  /** The mark with black lettering, for a light ground (DP_MARK_LIGHT_SRC, looks.ts). */
+  marks?: Partial<Record<Exclude<MarkTone, "onDark">, Bitmap>>;
 }
 
 /**
@@ -330,6 +335,7 @@ function drawPhoto(
   art: ArtLayout,
   photo: Bitmap | null,
   t: PhotoTransform | undefined,
+  empty: { frame: string; face: string } = { frame: COLOR.deep, face: "#132A4E" },
 ) {
   const { hub, photoR } = art;
   const frame = photoR * 2;
@@ -337,7 +343,7 @@ function drawPhoto(
   ctx.beginPath();
   ctx.arc(hub.x, hub.y, photoR, 0, Math.PI * 2);
   ctx.closePath();
-  ctx.fillStyle = COLOR.deep;
+  ctx.fillStyle = empty.frame;
   ctx.fill();
   ctx.clip();
   if (photo) {
@@ -347,8 +353,8 @@ function drawPhoto(
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(photo, hub.x - photoR + r.x, hub.y - photoR + r.y, r.w, r.h);
   } else {
-    // The empty frame: a quiet head and shoulders in the ground's own blues.
-    ctx.fillStyle = "#132A4E";
+    // The empty frame: a quiet head and shoulders in the ground's own tones.
+    ctx.fillStyle = empty.face;
     ctx.beginPath();
     ctx.arc(hub.x, hub.y - photoR * 0.2, photoR * 0.34, 0, Math.PI * 2);
     ctx.fill();
@@ -359,14 +365,31 @@ function drawPhoto(
   ctx.restore();
 }
 
-function drawMasthead(ctx: CanvasRenderingContext2D, art: ArtLayout, logo: Bitmap) {
+function drawMasthead(
+  ctx: CanvasRenderingContext2D,
+  art: ArtLayout,
+  logo: Bitmap,
+  look: { card: string | null; theme: string } = { card: null, theme: COLOR.ink3 },
+) {
   const { x, y, w, h } = art.logo;
+  ctx.font = text(27);
+  const themeW = trackedWidth(ctx, DP_THEME, 5.2);
+  if (look.card) {
+    // The kit's way with a busy ground: the mark, and here its theme, on a card.
+    const padX = 56;
+    const cw = Math.max(w, themeW) + padX * 2;
+    const top = y - 30;
+    const bottom = art.themeBaseline + 30;
+    ctx.fillStyle = look.card;
+    tracePill(ctx, S / 2 - cw / 2, top, cw, bottom - top, 34);
+    ctx.fill();
+  }
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(logo, x, y, w, h);
 
   ctx.font = text(27);
-  ctx.fillStyle = COLOR.ink3;
+  ctx.fillStyle = look.theme;
   ctx.textBaseline = "alphabetic";
   fillTracked(ctx, DP_THEME, S / 2, art.themeBaseline, 5.2);
 }
@@ -631,19 +654,42 @@ export async function drawDP(
     ctx.font = text(size);
     return trackedWidth(ctx, label, LABEL_TRACK);
   });
-  const [lw, lh] = bitmapSize(assets.logo);
+  const style = opts.style ?? "routes";
+  const look = style === "routes" ? null : LOOKS[style];
+  // White lettering on a white card would vanish: a design that needs the
+  // black-lettered mark is never drawn without it (the page waits for it).
+  if (look?.mark === "onLight" && !assets.marks?.onLight) throw new Error(`The ${style} design needs its mark`);
+  const mark = look?.mark === "onLight" ? assets.marks!.onLight! : assets.logo;
+  const [lw, lh] = bitmapSize(mark);
   const art = layoutArt(footer.top, lw && lh ? lw / lh : 667 / 164);
 
-  const rs = routes(art);
-  drawGround(ctx, art);
-  drawRoutes(ctx, rs);
-  drawRing(ctx, rs, art);
-  drawTrails(ctx, rs);
-  drawPhoto(ctx, art, opts.photo, opts.photoTransform);
-  drawMasthead(ctx, art, assets.logo);
+  if (style === "routes") {
+    const rs = routes(art);
+    drawGround(ctx, art);
+    drawRoutes(ctx, rs);
+    drawRing(ctx, rs, art);
+    drawTrails(ctx, rs);
+    drawPhoto(ctx, art, opts.photo, opts.photoTransform);
+    drawMasthead(ctx, art, mark);
+  } else {
+    drawLookGround(ctx, style, art);
+    drawLookRing(ctx, style, art, opts.role);
+    drawPhoto(ctx, art, opts.photo, opts.photoTransform, { frame: look!.frame, face: look!.face });
+    drawMasthead(ctx, art, mark, { card: look!.markCard, theme: look!.theme });
+  }
 
   /* Text block: role, name, the public days, centred in the art's zone. */
-  const role = roleCopy(opts.role);
+  const roleBase = roleCopy(opts.role);
+  const pill = look ? look.pill(opts.role) : { fill: roleBase.fill, text: roleBase.text };
+  const role = { ...roleBase, fill: pill.fill, text: pill.text };
+  const routeColour = look ? look.route(opts.role) : roleBase.fill;
+  const ink = {
+    name: look ? look.name : COLOR.ink,
+    ghost: look ? look.ghost : COLOR.ink3,
+    day: look ? look.day : COLOR.ink,
+    day2: look ? look.day2 : COLOR.ink2,
+    stop: look ? look.stop : COLOR.ink,
+  };
 
   ctx.font = display(ROLE_SIZE);
   const roleCap = capHeight(ctx);
@@ -713,7 +759,7 @@ export async function drawDP(
 
   // Name
   ctx.font = display(name.size);
-  ctx.fillStyle = opts.ghostName ? COLOR.ink3 : COLOR.ink;
+  ctx.fillStyle = opts.ghostName ? ink.ghost : ink.name;
   name.lines.forEach((line, i) => {
     fillName(ctx, line, S / 2, y + nameTop + i * nameLead, name.size);
   });
@@ -752,7 +798,7 @@ export async function drawDP(
     m.stops.forEach((s, i) => {
       if (i > 0) {
         // The stretch of route between two stops.
-        ctx.strokeStyle = role.fill;
+        ctx.strokeStyle = routeColour;
         ctx.lineWidth = STOP_RING;
         ctx.lineCap = "round";
         ctx.beginPath();
@@ -765,16 +811,16 @@ export async function drawDP(
       // map draws one.
       ctx.beginPath();
       ctx.arc(x + STOP_R, mid, STOP_R - STOP_RING / 2, 0, Math.PI * 2);
-      ctx.fillStyle = COLOR.ink;
+      ctx.fillStyle = ink.stop;
       ctx.fill();
       ctx.lineWidth = STOP_RING;
-      ctx.strokeStyle = role.fill;
+      ctx.strokeStyle = routeColour;
       ctx.stroke();
       x += STOP_R * 2 + m.pad;
       ctx.font = text(size);
-      ctx.fillStyle = COLOR.ink;
+      ctx.fillStyle = ink.day;
       x = fillTrackedFrom(ctx, s.d.when, x, baseline, track) + m.pad * 0.9;
-      ctx.fillStyle = COLOR.ink2;
+      ctx.fillStyle = ink.day2;
       x = fillTrackedFrom(ctx, s.d.where, x, baseline, track);
     });
   }

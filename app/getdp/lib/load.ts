@@ -8,7 +8,7 @@
  * policy says the photo never leaves the browser, and
  * __tests__/unit/privacy.test.ts holds this folder to it.
  */
-import { DP_LOGO_SRC, type FooterLogo, type FooterTiers } from "./dp";
+import { DP_LOGO_SRC, DP_MARK_LIGHT_SRC, type FooterLogo, type FooterTiers } from "./dp";
 import type { Bitmap, DPAssets } from "./draw";
 
 /** The mark may take this long on a weak connection before the page says so. */
@@ -160,6 +160,15 @@ export async function retryLogos(missing: FooterLogo[], attempt: number): Promis
     else console.warn(`DP footer: ${missing[i].name} still left out:`, r.reason);
   });
   return logos;
+}
+
+/**
+ * The mark with black lettering, which only "Colour fields" draws (on its
+ * white card). Not part of loadAssets: nobody on another design waits for it
+ * or loses their DP to it. The page asks for it once the rest has come.
+ */
+export function loadLightMark(): Promise<HTMLImageElement> {
+  return loadImage(DP_MARK_LIGHT_SRC, MARK_TIMEOUT_MS);
 }
 
 /** A photo problem, in words for the person who picked it. */

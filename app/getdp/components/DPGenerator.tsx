@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -13,7 +14,7 @@ import {
   type PointerEvent,
 } from "react";
 import { ImagePlus, Lock, RotateCcw } from "lucide-react";
-import { Field, Segmented, buttonClass, control } from "@/components/shared/panel";
+import { Field, buttonClass, control, selectControl } from "@/components/shared/panel";
 import {
   ART,
   DP_ROLES,
@@ -40,6 +41,7 @@ import {
 } from "../lib/dp";
 import { drawDP, nameSubstitutions, renderFull, type DPAssets, type DPResult } from "../lib/draw";
 import { FontLoadError, errorDetail } from "../lib/errors";
+import { DP_STYLES, STYLE_LABEL, type DPStyle } from "../lib/looks";
 import { countDp, type DPChannel } from "../lib/count";
 import { GETDP_EVENTS, track } from "@/lib/sabilytics";
 import { loadDpFaces } from "../lib/faces";
@@ -47,6 +49,7 @@ import type { LetterNote } from "../lib/letters";
 import {
   LATE_LOGO_TRIES,
   loadAssets,
+  loadLightMark,
   PhotoError,
   readPhoto,
   retryLogos,
@@ -139,6 +142,12 @@ const pct = (v: number) => `${(v / DP_SIZE) * 100}%`;
  */
 export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const [role, setRole] = useState<DPRole>("attendee");
+  /** The look: concept C's "Trade routes" unless the person picks another (looks.ts). */
+  const [style, setStyle] = useState<DPStyle>("routes");
+  /** The mark with black lettering, which only "Colour fields" draws; see drawParts. */
+  const [lightMark, setLightMark] = useState<HTMLImageElement | null>(null);
+  const [lightError, setLightError] = useState<string | null>(null);
+  const [lightAttempt, setLightAttempt] = useState(0);
   const [name, setName] = useState("");
   const [nameTouched, setNameTouched] = useState(false);
   const [photo, setPhoto] = useState<(LoadedPhoto & { id: number }) | null>(null);
@@ -229,8 +238,21 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       : null;
   /* The check for this name failed: saving stays shut, and Try again is offered. */
   const checkFailed = needsLetterCheck && letterCheck?.name === shown && letterCheck.notes === null;
+  /*
+   * What this design is drawn from: the shared parts, and for "Colour fields"
+   * the mark with black lettering too. Null while something it needs is still
+   * coming; only the design that needs the light mark waits on it, or fails
+   * for it.
+   */
+  const needsLight = style === "fields";
+  const drawParts = useMemo<DPAssets | null>(() => {
+    if (!assets) return null;
+    if (!needsLight) return assets;
+    return lightMark ? { ...assets, marks: { onLight: lightMark } } : null;
+  }, [assets, needsLight, lightMark]);
+  const partsError = assetsError ?? (needsLight ? lightError : null);
   /** What the failure said, shown small under the message so a screenshot says what broke. */
-  const failDetail = assetsError ?? drawError?.detail ?? (checkFailed ? letterCheck?.detail : undefined);
+  const failDetail = partsError ?? drawError?.detail ?? (checkFailed ? letterCheck?.detail : undefined);
   const undrawable = (notes ?? []).filter((n) => n.drawn === null).map((n) => n.letter);
   const substitutions = (notes ?? []).filter(
     (n): n is { letter: string; drawn: string } => n.drawn !== null,
@@ -247,10 +269,10 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     notes !== null &&
     !!photo &&
     !!transform &&
-    !!assets &&
+    !!drawParts &&
     !readingPhoto &&
     !drawError &&
-    !assetsError;
+    !partsError;
   const roleText = roleCopy(role);
   const cls = deviceClass(env);
   const caption = shareText(role);
@@ -313,6 +335,30 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   }, [tiers, assetsAttempt]);
 
   /*
+   * The mark with black lettering, once the shared parts are in (so it never
+   * competes with them): ready before anyone picks "Colour fields", usually.
+   * A failure is only said, with Try again, while that design is chosen.
+   */
+  useEffect(() => {
+    if (!assets || lightMark) return;
+    let live = true;
+    loadLightMark().then(
+      (m) => {
+        if (!live) return;
+        setLightMark(m);
+        setLightError(null);
+      },
+      (e) => {
+        console.error("Get DP: the mark for Colour fields could not be prepared", e);
+        if (live) setLightError(errorDetail(e));
+      },
+    );
+    return () => {
+      live = false;
+    };
+  }, [assets, lightMark, lightAttempt]);
+
+  /*
    * The logos left off, asked for again; the picture is drawn again with
    * each round that brings any, so a slow connection still gets every
    * partner on it, unless the person saves before they come.
@@ -361,10 +407,11 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         name: shown || "Your name",
         ghostName: !shown,
         role,
+        style,
         photoTransform: transform ?? undefined,
       };
     },
-    [name, photo, role, transform],
+    [name, photo, role, style, transform],
   );
 
   /*
@@ -373,7 +420,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
    * while typing) and records where the photo and the text band landed.
    */
   useEffect(() => {
-    if (!assets) return;
+    if (!drawParts) return;
     const canvas = previewRef.current;
     const ctx = canvas?.getContext("2d");
     if (!ctx) return;
@@ -396,7 +443,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       g.drawImage(preview, (DP_SIZE / 2 - STRIP_HALF_W) * k, zone.top * k, STRIP_HALF_W * 2 * k, zoneH * k, 0, 0, w, h);
     };
     const id = requestAnimationFrame(() => {
-      drawDP(ctx, options(), assets)
+      drawDP(ctx, options(), drawParts)
         .then((result) => {
           if (!live) return;
           frameRef.current = result;
@@ -424,11 +471,11 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       live = false;
       cancelAnimationFrame(id);
     };
-  }, [assets, options, drawAttempt]);
+  }, [drawParts, options, drawAttempt]);
 
   /** The picture the person made: their role, name, photo and its place. */
   const pictureKey = photo && transform
-    ? `${role}|${drawableName(name)}|${photo.id}|${transform.zoom}|${transform.offsetX}|${transform.offsetY}`
+    ? `${style}|${role}|${drawableName(name)}|${photo.id}|${transform.zoom}|${transform.offsetX}|${transform.offsetY}`
     : null;
   /**
    * What a file is drawn from: that picture, and the logos in hand. A logo
@@ -473,11 +520,12 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       const id = `${k}|${type}`;
       const hit = renders.current.get(id);
       if (hit) return hit.promise;
-      if (!assets) return Promise.reject(new Error("Not ready"));
+      if (!drawParts) return Promise.reject(new Error("Not ready"));
       const opts = options();
+      const parts = drawParts;
       const promise = chain.current.then(async () => {
         if (latestKey.current !== k) throw new Error(STALE);
-        const blob = await renderFull(opts, assets, type, type === "image/jpeg" ? SHARE_QUALITY : undefined);
+        const blob = await renderFull(opts, parts, type, type === "image/jpeg" ? SHARE_QUALITY : undefined);
         if (latestKey.current !== k) throw new Error(STALE);
         return blob;
       });
@@ -494,7 +542,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       );
       return promise;
     },
-    [assets, options],
+    [drawParts, options],
   );
 
   /* What renderLatest reads: the newest key and ensure, for work begun on an older one. */
@@ -829,6 +877,9 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     if (assetsError) {
       setAssetsError(null);
       setAssetsAttempt((n) => n + 1);
+    } else if (partsError) {
+      setLightError(null);
+      setLightAttempt((n) => n + 1);
     } else {
       // Draws again, and runs a letter check that failed again (pending till it answers).
       setDrawError(null);
@@ -1130,13 +1181,13 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
 
   /** Why saving is shut, in words; null once it is open. */
   const needs = ((): string | null => {
-    if (assetsError || drawError || checkFailed) return COPY.needsRetry;
+    if (partsError || drawError || checkFailed) return COPY.needsRetry;
     const noPhoto = !photo && !readingPhoto;
     if (tidy === "") return noPhoto ? COPY.needsNameAndPhoto : COPY.needsName;
     if (problem !== null) return noPhoto ? COPY.fixNameAndPhoto : COPY.fixName;
     if (noPhoto) return COPY.needsPhoto;
     if (readingPhoto) return COPY.openingPhoto;
-    if (!assets || notes === null) return COPY.preparingDP;
+    if (!drawParts || notes === null) return COPY.preparingDP;
     return null;
   })();
 
@@ -1160,8 +1211,39 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
           onSubmit={onSubmit}
           noValidate
         >
-          <div className="p-5 sm:p-6">
-            <Segmented legend="How you're coming" value={role} options={ROLE_OPTIONS} onChange={setRole} />
+          {/* Two choices: the role (Attending unless a link asked for another)
+              and the look (the one people were already posting unless they
+              pick another). One above the other on a phone, where side by
+              side would cut "Volunteering" and "Colour fields" short. */}
+          <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
+            <Field id="dp-role" label="How you're coming">
+              <select
+                id="dp-role"
+                value={role}
+                onChange={(e) => setRole(e.target.value as DPRole)}
+                className={selectControl}
+              >
+                {ROLE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field id="dp-style" label="Design">
+              <select
+                id="dp-style"
+                value={style}
+                onChange={(e) => setStyle(e.target.value as DPStyle)}
+                className={selectControl}
+              >
+                {DP_STYLES.map((st) => (
+                  <option key={st} value={st}>
+                    {STYLE_LABEL[st]}
+                  </option>
+                ))}
+              </select>
+            </Field>
           </div>
 
           {/*
@@ -1328,7 +1410,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
                 }}
               />
             )}
-            {!assets && !assetsError && (
+            {!drawParts && !partsError && (
               <p className="absolute inset-0 flex items-center justify-center text-sm text-ink-3" aria-live="polite">
                 Preparing the picture…
               </p>
@@ -1386,10 +1468,10 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
             </div>
           )}
 
-          {(assetsError || drawError || checkFailed) && (
+          {(partsError || drawError || checkFailed) && (
             <div className="border-t border-line px-5 py-4 sm:px-6">
               <p role="alert" className="text-sm text-red-300">
-                {assetsError ? COPY.assetsError : drawError && !drawError.fonts ? COPY.drawError : COPY.fontsError}
+                {partsError ? COPY.assetsError : drawError && !drawError.fonts ? COPY.drawError : COPY.fontsError}
               </p>
               {failDetail && (
                 <p className="mt-1 text-xs text-ink-3 [overflow-wrap:anywhere]">{COPY.errorDetail(failDetail)}</p>

@@ -246,6 +246,15 @@ October 2026 and asked for every sponsor, the government, ecosystem and
 media partners, and both public venues on it. app/getdp/README.md says where
 each piece lives.
 
+Since 10 October it is the default of three designs (app/getdp/lib/looks.ts):
+people were already posting it. From the 2026 brand kit the design team
+shared (the four colours, the wave pattern, the colour fields, the mark on a
+card), the owner picked "Wave crown" and "Colour fields" from three previews
+as choices. Every design shares layoutArt, so what follows about the layout,
+the circle crop, the name and the footer holds for all three; what is fixed
+about the ground and the ring is concept C's. The mark is the kit's official
+file, trimmed to its artwork, on every design.
+
 - Fixed: the navy ground; the photo as the hub inside a ring of the mark's
   four colours in the mark's own arrangement (pink top-left, blue top-right,
   teal bottom-left, yellow bottom-right), a navy moat between; four
@@ -306,7 +315,7 @@ each piece lives.
   crop is still as wide as the name's room (about y 1827): a slimmer footer
   than that buys navy, not a bigger photo.
 - The page is the ballot's anatomy: one hairline card of steps in reading
-  order (role, name, photo), then the picture in its own card with the
+  order (role and design, name, photo), then the picture in its own card with the
   controls that act on it under it (zoom, reset, save and share, the "Post
   it on" marks, the caption) and the privacy line last. Side by side from
   lg.
@@ -329,8 +338,10 @@ each piece lives.
   second finger anywhere on the picture pinches to zoom. A hidden "Move
   your photo" group of four buttons, shown on focus, is the screen reader's
   way to move it.
-- Gold goes on the chosen role and on ONE save action, the one this device
-  does best: Share your DP on a phone whose share list takes the file,
+- The role and the design are two native selects (the owner, 10 October:
+  a cleaner page), one above the other on a phone, side by side from sm,
+  with no accent of their own. Gold goes on ONE save action, the one this
+  device does best: Share your DP on a phone whose share list takes the file,
   Download PNG on a desktop or a phone that cannot share files, Save image
   (press and hold) in an app's browser. Never two golds.
 - A "Post it on" row of marks, X, Instagram, TikTok, LinkedIn, WhatsApp in

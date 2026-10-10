@@ -36,6 +36,9 @@ function fakeContext(canvas: { width: number; height: number }): CanvasRendering
       };
     },
     getTransform: () => ({ a: canvas.width / DP_SIZE }),
+    drawImage: (img: unknown) => {
+      drawnImages.push(img);
+    },
     createRadialGradient: () => ({ addColorStop: () => undefined }),
     createLinearGradient: () => ({ addColorStop: () => undefined }),
   };
@@ -51,10 +54,13 @@ function fakeContext(canvas: { width: number; height: number }): CanvasRendering
 
 /** The fonts each draw used, as set on the context. */
 let fontsSet: string[];
+/** Every bitmap drawn, in order. */
+let drawnImages: unknown[];
 
 beforeEach(() => {
   facesLoad = async () => undefined;
   fontsSet = [];
+  drawnImages = [];
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(function (this: HTMLCanvasElement) {
     return fakeContext(this);
   } as unknown as HTMLCanvasElement["getContext"]);
@@ -87,6 +93,29 @@ describe("drawing the DP", () => {
     expect([...families].filter((f) => !/^"Blockfest DP (Display|Text)"(, (monospace|serif))?$/.test(f))).toEqual([]);
     expect(families).toContain('"Blockfest DP Display"');
     expect(families).toContain('"Blockfest DP Text"');
+  });
+
+  it("keeps the photo and the name band where they are whichever design is picked, and uses the right mark", async () => {
+    const onDark = { width: 1536, height: 420, tone: "dark" } as unknown as HTMLCanvasElement;
+    const onLight = { width: 1536, height: 420, tone: "light" } as unknown as HTMLCanvasElement;
+    const kit = { ...assets, logo: onDark, marks: { onLight } };
+    const results = [];
+    for (const style of ["routes", "scallop", "fields"] as const) {
+      drawnImages = [];
+      results.push(await drawDP(fakeContext({ width: 1080, height: 1080 }), { ...opts, style }, kit));
+      // The mark is the first bitmap drawn: black lettering only on the white ground.
+      expect(drawnImages[0], style).toBe(style === "fields" ? onLight : onDark);
+    }
+    expect(results[1]).toEqual(results[0]);
+    expect(results[2]).toEqual(results[0]);
+    // Colour fields is never drawn with white lettering on its white card.
+    await expect(drawDP(fakeContext({ width: 1080, height: 1080 }), { ...opts, style: "fields" }, { ...kit, marks: {} })).rejects.toThrow(
+      "The fields design needs its mark",
+    );
+    // Unset is the design people were already posting.
+    drawnImages = [];
+    expect(await drawDP(fakeContext({ width: 1080, height: 1080 }), opts, kit)).toEqual(results[0]);
+    expect(drawnImages[0]).toBe(onDark);
   });
 
   it("says where the role, name and days band landed, under the photo", async () => {

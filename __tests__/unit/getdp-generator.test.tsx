@@ -18,6 +18,7 @@ import { headline, partners, sponsors } from "@/lib/partners-2026";
 
 type Opts = {
   role: string;
+  style?: string;
   name: string;
   photo: unknown;
   photoTransform?: { zoom: number; offsetX: number; offsetY: number };
@@ -69,6 +70,8 @@ vi.mock("@/app/getdp/lib/draw", () => ({
 const readPhoto = vi.fn();
 const loadAssets = vi.fn<(tiers: unknown) => Promise<unknown>>();
 const retryLogos = vi.fn<(missing: { name: string }[], attempt: number) => Promise<Record<string, unknown>>>();
+/** Colour fields' mark with black lettering, loaded apart (lib/load.ts). */
+const loadLightMark = vi.fn<() => Promise<unknown>>();
 vi.mock("@/app/getdp/lib/load", async () => {
   class PhotoError extends Error {}
   return {
@@ -77,6 +80,7 @@ vi.mock("@/app/getdp/lib/load", async () => {
     loadAssets: (tiers: unknown) => loadAssets(tiers),
     readPhoto: (file: File) => readPhoto(file),
     retryLogos: (missing: { name: string }[], attempt: number) => retryLogos(missing, attempt),
+    loadLightMark: () => loadLightMark(),
   };
 });
 
@@ -172,6 +176,8 @@ beforeEach(() => {
   loadAssets.mockImplementation(async (tiers) => ({ logo: {}, tiers, logos: {}, missing: [] }));
   retryLogos.mockReset();
   retryLogos.mockResolvedValue({});
+  loadLightMark.mockReset();
+  loadLightMark.mockResolvedValue({ light: true });
   loadDpFaces.mockClear();
   countDp.mockClear();
   track.mockClear();
@@ -223,6 +229,16 @@ const lastDrawn = () => draws.filter((d) => !d.full).at(-1)!.opts;
 const fullDraws = () => draws.filter((d) => d.full).map((d) => d.opts);
 
 const nameInput = () => screen.getByLabelText("Your name") as HTMLInputElement;
+/** The role and design dropdowns, and a pick from each by what it says. */
+const roleSelect = () => screen.getByLabelText("How you're coming") as HTMLSelectElement;
+const styleSelect = () => screen.getByLabelText("Design") as HTMLSelectElement;
+const ROLE_BY_LABEL: Record<string, string> = {
+  Attending: "attendee",
+  Speaking: "speaker",
+  Volunteering: "volunteer",
+  Partner: "partner",
+};
+const pickRole = (label: string) => fireEvent.change(roleSelect(), { target: { value: ROLE_BY_LABEL[label] } });
 const button = (name: string | RegExp) => screen.getByRole("button", { name }) as HTMLButtonElement;
 const download = () => button(/Download PNG/);
 /** The polite status line under the buttons, and the whole line it sits in. */
@@ -267,28 +283,80 @@ async function readyToShare(primary: string) {
 /* ------------------------------------------------------------------ */
 
 describe("the Get DP generator", () => {
-  it("starts on attending, draws the empty frame, and switches role on a tap", async () => {
+  it("starts on attending, draws the empty frame, and switches role from the dropdown", async () => {
     await mount();
-    expect(screen.getByRole("button", { name: "Attending" }).getAttribute("aria-pressed")).toBe("true");
+    expect(roleSelect().value).toBe("attendee");
+    expect([...roleSelect().options].map((o) => o.textContent)).toEqual(["Attending", "Speaking", "Volunteering", "Partner"]);
     expect(lastDrawn()).toMatchObject({ role: "attendee", name: "Your name", photo: null });
 
-    fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
-    expect(screen.getByRole("button", { name: "Speaking" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByRole("button", { name: "Attending" }).getAttribute("aria-pressed")).toBe("false");
+    pickRole("Speaking");
+    expect(roleSelect().value).toBe("speaker");
     await waitFor(() => expect(lastDrawn().role).toBe("speaker"));
     expect(screen.getByRole("img", { name: /I'M SPEAKING/ })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Partner" }));
+    pickRole("Partner");
     await waitFor(() => expect(lastDrawn().role).toBe("partner"));
+  });
+
+  it("starts on the design people already post, and redraws in the one picked", async () => {
+    await mount();
+    expect(styleSelect().value).toBe("routes");
+    expect([...styleSelect().options].map((o) => o.textContent)).toEqual(["Trade routes", "Wave crown", "Colour fields"]);
+    expect(lastDrawn().style).toBe("routes");
+    fireEvent.change(styleSelect(), { target: { value: "scallop" } });
+    await waitFor(() => expect(lastDrawn().style).toBe("scallop"));
+    fireEvent.change(styleSelect(), { target: { value: "fields" } });
+    await waitFor(() => expect(lastDrawn().style).toBe("fields"));
+  });
+
+  it("waits for Colour fields' own mark only when it is picked, and says so only there when it fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    loadLightMark.mockRejectedValueOnce(new Error("Timed out loading /images/getdp/2026/mark-on-light.png"));
+    await readyToShare("Download PNG");
+    // The default design never waits for it, and its failure is not said there.
+    expect(download().disabled).toBe(false);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(loadLightMark).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(styleSelect(), { target: { value: "fields" } });
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "The picture could not be prepared. Check your connection and try again.",
+    );
+    expect(download().disabled).toBe(true);
+    expect(lastDrawn().style).toBe("routes");
+
+    const later = deferred<unknown>();
+    loadLightMark.mockReturnValueOnce(later.promise);
+    fireEvent.click(button("Try again"));
+    await waitFor(() => expect(loadLightMark).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(live().textContent).toBe("Preparing your DP…");
+    await act(async () => later.resolve({ light: true }));
+    await waitFor(() => expect(lastDrawn().style).toBe("fields"));
+    await waitFor(() => expect(download().disabled).toBe(false));
+    expect(draws.filter((d) => !d.full).at(-1)!.assets).toMatchObject({ marks: { onLight: { light: true } } });
+
+    // Back to the default: no wait, and the light mark is not asked for again.
+    fireEvent.change(styleSelect(), { target: { value: "routes" } });
+    await waitFor(() => expect(lastDrawn().style).toBe("routes"));
+    expect(loadLightMark).toHaveBeenCalledTimes(2);
+  });
+
+  it("makes a new file for a new design, and never shares the old one", async () => {
+    await readyToShare("Download PNG");
+    const before = fullDraws().length;
+    expect(fullDraws().at(-1)!.style).toBe("routes");
+    fireEvent.change(styleSelect(), { target: { value: "fields" } });
+    await settle(400);
+    expect(fullDraws().length).toBeGreaterThan(before);
+    expect(fullDraws().at(-1)!.style).toBe("fields");
   });
 
   it("starts on the role a link asks for, such as /getdp?role=speaker from the speakers page", async () => {
     window.history.replaceState({}, "", "/getdp?role=speaker");
     try {
       await mount();
-      await waitFor(() =>
-        expect(screen.getByRole("button", { name: "Speaking" }).getAttribute("aria-pressed")).toBe("true"),
-      );
+      await waitFor(() => expect(roleSelect().value).toBe("speaker"));
       await waitFor(() => expect(lastDrawn().role).toBe("speaker"));
     } finally {
       window.history.replaceState({}, "", "/");
@@ -299,7 +367,7 @@ describe("the Get DP generator", () => {
     window.history.replaceState({}, "", "/getdp?role=organiser");
     try {
       await mount();
-      expect(screen.getByRole("button", { name: "Attending" }).getAttribute("aria-pressed")).toBe("true");
+      expect(roleSelect().value).toBe("attendee");
     } finally {
       window.history.replaceState({}, "", "/");
     }
@@ -421,7 +489,7 @@ describe("the Get DP generator", () => {
 
     // Lettering that would not load: Try again draws again, keeping everything.
     drawDP.mockRejectedValueOnce(new FontLoadError("DP fonts timed out"));
-    fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
+    pickRole("Speaking");
     expect((await screen.findByRole("alert")).textContent).toBe(
       "The picture's lettering did not load. Check your connection and try again.",
     );
@@ -751,9 +819,10 @@ describe("the picture on a phone", () => {
     const row = strip.parentElement!;
     expect(row.getAttribute("aria-hidden")).toBe("true");
     expect(row.className).toContain("lg:hidden");
-    const fieldset = document.querySelector("form fieldset")!;
+    const choices = roleSelect();
     const label = document.querySelector('label[for="dp-name"]')!;
-    expect(fieldset.compareDocumentPosition(strip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(choices.compareDocumentPosition(strip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(styleSelect().compareDocumentPosition(strip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(strip.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // Its shape is the band's: 1800 wide by the zone's 472 tall.
     await waitFor(() => expect(strip.style.aspectRatio.replace(/\s/g, "")).toBe("1800/472"));
@@ -968,9 +1037,9 @@ describe("drawing the full picture ahead", () => {
     await readyToShare("Download PNG");
     expect(fullDraws()).toHaveLength(1);
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-    fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
+    pickRole("Speaking");
     await act(async () => vi.advanceTimersByTimeAsync(200));
-    fireEvent.click(screen.getByRole("button", { name: "Volunteering" }));
+    pickRole("Volunteering");
     await act(async () => vi.advanceTimersByTimeAsync(299));
     expect(fullDraws()).toHaveLength(1);
     await act(async () => vi.advanceTimersByTimeAsync(1));
@@ -1004,9 +1073,9 @@ describe("drawing the full picture ahead", () => {
     await readyToShare("Download PNG");
     expect(fullDraws().map((o) => o.role)).toEqual(["attendee"]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
+    pickRole("Speaking");
     await settle(400); // queued behind the first
-    fireEvent.click(screen.getByRole("button", { name: "Volunteering" }));
+    pickRole("Volunteering");
     await settle(400);
     expect(fullDraws()).toHaveLength(1);
 
@@ -1034,7 +1103,7 @@ describe("drawing the full picture ahead", () => {
     expect(fullDraws().at(-1)!.role).toBe("attendee");
 
     // Speaking, while it says Saving…
-    fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
+    pickRole("Speaking");
     await act(async () => pending[1](new Blob(["attending png"], { type: "image/png" })));
     await settle(20);
     expect(anchorClick).not.toHaveBeenCalled();
@@ -1052,7 +1121,7 @@ describe("drawing the full picture ahead", () => {
 
     fireEvent.click(button("Share your DP"));
     expect(button("Preparing…").disabled).toBe(true);
-    fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
+    pickRole("Speaking");
     await act(async () => pending[0](new Blob(["attending"], { type: "image/jpeg" })));
     await settle(20);
     expect(share).not.toHaveBeenCalled();
@@ -1348,7 +1417,7 @@ describe("sharing on a phone", () => {
   it("shows the caption with a Copy button, and says when copying fails", async () => {
     await mount();
     expect(screen.getByText(shareText("attendee"))).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Volunteering" }));
+    pickRole("Volunteering");
     expect(screen.getByText(shareText("volunteer"))).toBeTruthy();
 
     fireEvent.click(button("Copy"));
@@ -1547,7 +1616,7 @@ describe("counting the DPs made", () => {
     expect(events("getdp_dp_made")).toEqual([]);
     await readyToShare("Download PNG");
     expect(events("getdp_dp_made")).toEqual([{ role: "attendee" }]);
-    fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
+    pickRole("Speaking");
     await settle(400);
     expect(events("getdp_dp_made")).toHaveLength(1);
   });
@@ -1581,7 +1650,7 @@ describe("counting the DPs made", () => {
     expect(countDp).toHaveBeenCalledTimes(1);
 
     // Another role is another DP.
-    fireEvent.click(screen.getByRole("button", { name: "Speaking" }));
+    pickRole("Speaking");
     await settle(400);
     fireEvent.click(button("Post to WhatsApp Status"));
     await settle();
@@ -1591,7 +1660,7 @@ describe("counting the DPs made", () => {
     ]);
 
     // Back to a role already counted for this photo: the same DP.
-    fireEvent.click(screen.getByRole("button", { name: "Attending" }));
+    pickRole("Attending");
     await settle(400);
     fireEvent.click(button("Post on X"));
     await settle();
