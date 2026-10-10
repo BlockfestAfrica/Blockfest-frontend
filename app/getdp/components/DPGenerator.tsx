@@ -208,8 +208,8 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const lastDownload = useRef<{ key: string; at: number } | null>(null);
   const lastUrl = useRef<{ url: string; timer: number } | null>(null);
   const downloadedKey = useRef<string | null>(null);
-  /** The DP last counted as generated (its photo and role); see taken(). */
-  const countedDp = useRef<string | null>(null);
+  /** Every DP counted as generated this visit (its photo and role); see generated(). */
+  const countedDps = useRef(new Set<string>());
   /** Whether "a DP was made" has been said this visit. */
   const madeSaid = useRef(false);
   const copiedTimer = useRef<number | undefined>(undefined);
@@ -869,7 +869,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const clearShareFailure = () =>
     setNotice((n) => (n === COPY.tapAgain || n === COPY.shareFailed || n === COPY.shareFailedHold ? null : n));
 
-  const onShareError = (e: unknown) => {
+  const onShareError = (e: unknown, by: Busy["by"]) => {
     const why = (e as { name?: string } | null)?.name;
     if (why === "AbortError" || why === "InvalidStateError") return;
     if (why === "NotAllowedError") {
@@ -877,6 +877,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     } else if (env.inApp) {
       setNotice(COPY.shareFailedHold);
       setHold({ copied: true });
+      generated(by);
     } else {
       setNotice(COPY.shareFailed);
     }
@@ -903,7 +904,8 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     } catch (e) {
       pending = Promise.reject(e);
     }
-    pending.then(() => undefined, onShareError).finally(() => {
+    // Counted only once the person has shared it: a list they closed is no DP.
+    pending.then(() => generated(by), (e: unknown) => onShareError(e, by)).finally(() => {
       sheetOpen.current = false;
       setBusy(null);
     });
@@ -936,7 +938,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     );
   };
 
-  const saveFile = (blob: Blob, k: string) => {
+  const saveFile = (blob: Blob, k: string, by: Busy["by"]) => {
     if (lastUrl.current) {
       window.clearTimeout(lastUrl.current.timer);
       URL.revokeObjectURL(lastUrl.current.url);
@@ -954,6 +956,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     }, REVOKE_AFTER_MS);
     lastUrl.current = { url, timer };
     downloadedKey.current = k;
+    generated(by);
     // The browser takes it from here: say what was asked for, and where it
     // goes, not that it is saved.
     setNotice(COPY.downloading(env, fileName));
@@ -965,14 +968,14 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     const pk = pictureKey;
     const cached = renders.current.get(`${key}|image/png`)?.blob;
     if (cached) {
-      saveFile(cached, pk);
+      saveFile(cached, pk, by);
       return;
     }
     setBusy({ kind: "download", by });
     // A picture the person changed while it was drawn rejects as stale and saves nothing.
     renderLatest(pk, "image/png")
       .then(
-        (blob) => saveFile(blob, pk),
+        (blob) => saveFile(blob, pk, by),
         (e) => {
           if (!isStale(e)) setNotice(COPY.notSaved);
         },
@@ -988,19 +991,22 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     startDownload("download");
   };
 
+  /** A save or share tap, every time, for analytics. Role and channel only. */
+  const clicked = (channel: DPChannel) => track(GETDP_EVENTS.shareClicked, { role, channel });
+
   /**
-   * A save or share tap. Every tap is told to analytics; the first for a DP
-   * (this photo as this role: fixing a letter or the crop is the same DP) is
-   * the DP generated, told to analytics and counted on the admin overview.
-   * Sent after the action has started, so nothing gets between a tap and the
-   * share list it opens. Role and channel only: never the name or the photo.
+   * The DP left the page: a share the person went through with, a download
+   * that started, or the press-and-hold picture opened (a save from there
+   * cannot be seen, so opening it is the nearest true moment). Counted once a
+   * visit for each photo as each role: fixing a letter or the crop is the
+   * same DP, and so is going back to a role already counted. Told to
+   * analytics and to the admin overview's count; never the name or the photo.
    */
-  const taken = (channel: DPChannel) => {
-    track(GETDP_EVENTS.shareClicked, { role, channel });
+  const generated = (channel: DPChannel) => {
     if (!photo) return;
     const dp = `${photo.id}|${role}`;
-    if (countedDp.current === dp) return;
-    countedDp.current = dp;
+    if (countedDps.current.has(dp)) return;
+    countedDps.current.add(dp);
     track(GETDP_EVENTS.generated, { role, channel });
     countDp(role, channel);
   };
@@ -1008,7 +1014,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const onButton = (id: ButtonId) => {
     if (!ready || busy) return;
     onButtonAction(id);
-    taken(id);
+    clicked(id);
   };
 
   const onButtonAction = (id: ButtonId) => {
@@ -1018,14 +1024,19 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         shareNow(id);
         return;
       case "photos":
-        if (cls === "sheet") shareNow(id, { copy: false, before: COPY.choosePhotos });
-        else setHold({ copied: true });
+        if (cls === "sheet") {
+          shareNow(id, { copy: false, before: COPY.choosePhotos });
+        } else {
+          setHold({ copied: true });
+          generated(id);
+        }
         return;
       case "download":
         download();
         return;
       case "save":
         setHold({ copied: true });
+        generated(id);
         return;
     }
   };
@@ -1036,7 +1047,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       return;
     }
     markAction(p);
-    taken(p);
+    clicked(p);
   };
 
   const markAction = (p: Platform) => {
@@ -1055,6 +1066,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         return;
       case "hold":
         setHold({ platform: p, copied: true });
+        generated(p);
         // A refused copy: neither the dialog nor the tip may say it is copied.
         void copyCaptionQuietly().then((ok) => {
           if (ok) return;
@@ -1071,7 +1083,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     const action = statusAction(env);
     if (!action) return;
     statusRun(action);
-    taken("status");
+    clicked("status");
   };
 
   const statusRun = (action: NonNullable<ReturnType<typeof statusAction>>) => {
@@ -1088,6 +1100,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         return;
       case "hold":
         setHold({ platform: "status", copied: true });
+        generated("status");
         void copyCaptionQuietly().then((ok) => {
           if (!ok) setHold((h) => (h?.platform === "status" ? { ...h, copied: false } : h));
         });

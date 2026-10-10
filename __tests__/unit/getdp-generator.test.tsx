@@ -1589,8 +1589,31 @@ describe("counting the DPs made", () => {
       ["attendee", "x"],
       ["speaker", "status"],
     ]);
+
+    // Back to a role already counted for this photo: the same DP.
+    fireEvent.click(screen.getByRole("button", { name: "Attending" }));
+    await settle(400);
+    fireEvent.click(button("Post on X"));
+    await settle();
+    expect(countDp).toHaveBeenCalledTimes(2);
     // Never the name, anywhere it goes.
     expect(JSON.stringify([countDp.mock.calls, track.mock.calls])).not.toMatch(/Ada|Obi|Okafor/);
+  });
+
+  it("counts a share only once the person goes through with it, not a list they closed", async () => {
+    setDevice({ ua: UA.iphone, coarse: true, files: true });
+    await readyToShare("Share your DP");
+    share.mockRejectedValueOnce(new DOMException("cancelled", "AbortError"));
+    fireEvent.click(button("Send on WhatsApp"));
+    await settle();
+    expect(countDp).not.toHaveBeenCalled();
+    expect(events("getdp_dp_generated")).toEqual([]);
+    expect(events("getdp_share_clicked")).toEqual([{ role: "attendee", channel: "whatsapp" }]);
+
+    fireEvent.click(button("Send on WhatsApp"));
+    expect(countDp).not.toHaveBeenCalled();
+    await settle();
+    expect(countDp.mock.calls).toEqual([["attendee", "whatsapp"]]);
   });
 
   it("counts a download, a save and an app's mark the same way, and nothing while the picture is not ready", async () => {

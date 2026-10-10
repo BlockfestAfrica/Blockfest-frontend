@@ -7,10 +7,11 @@
  *
  * The one that matters most is the badge generator. The policy says a
  * photograph and a name never leave the browser, which is true because that
- * feature makes one network call, the count in app/getdp/lib/count.ts, and it
- * carries a role and a channel and nothing else. Somebody adding an upload to
- * it, or a field to that count, would make the policy a false statement about
- * personal data, and nothing else in the codebase would notice.
+ * feature makes one request of its own, the count in app/getdp/lib/count.ts,
+ * and it carries a role and a channel and nothing else (its analytics events,
+ * sent through lib/sabilytics.ts, carry the same two). Somebody adding an
+ * upload to it, or a field to that count, would make the policy a false
+ * statement about personal data, and nothing else in the codebase would notice.
  */
 
 import { execSync } from "node:child_process";
@@ -54,11 +55,15 @@ describe("claims the policy makes about the code", () => {
     expect(count).toMatch(/body: JSON\.stringify\(\{ role, channel \}\)/);
     expect(count).toMatch(/export function countDp\(role: DPRole, channel: DPChannel\): void/);
 
-    const badge = privacySurfaces.find((s) => /badge/i.test(s.name));
-    expect(badge).toBeTruthy();
+    const badge = privacySurfaces.find((s) => s.name === "Badge generator");
     expect(badge!.destination).toMatch(/photograph and your name are never uploaded/i);
-    expect(badge!.destination).toMatch(/no name, photo or identifier/i);
-    expect(badge!.collects).toMatch(/the role on it/i);
+    expect(badge!.heldByUs).toBe(false);
+    // What we do keep is its own surface, held by us, so a request about it comes to us.
+    const tally = privacySurfaces.find((s) => s.name === "Badge count");
+    expect(tally!.collects).toMatch(/the role on it/i);
+    expect(tally!.destination).toMatch(/no name, photo or identifier/i);
+    expect(tally!.destination).toMatch(/address of the connection it came from is kept for about a day/i);
+    expect(tally!.heldByUs).toBe(true);
   });
 
   it("is right that the campaign registration is the data we hold ourselves", () => {
