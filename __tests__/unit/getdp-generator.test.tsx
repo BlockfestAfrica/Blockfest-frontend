@@ -70,6 +70,8 @@ vi.mock("@/app/getdp/lib/draw", () => ({
 const readPhoto = vi.fn();
 const loadAssets = vi.fn<(tiers: unknown) => Promise<unknown>>();
 const retryLogos = vi.fn<(missing: { name: string }[], attempt: number) => Promise<Record<string, unknown>>>();
+/** Colour fields' mark with black lettering, loaded apart (lib/load.ts). */
+const loadLightMark = vi.fn<() => Promise<unknown>>();
 vi.mock("@/app/getdp/lib/load", async () => {
   class PhotoError extends Error {}
   return {
@@ -78,6 +80,7 @@ vi.mock("@/app/getdp/lib/load", async () => {
     loadAssets: (tiers: unknown) => loadAssets(tiers),
     readPhoto: (file: File) => readPhoto(file),
     retryLogos: (missing: { name: string }[], attempt: number) => retryLogos(missing, attempt),
+    loadLightMark: () => loadLightMark(),
   };
 });
 
@@ -173,6 +176,8 @@ beforeEach(() => {
   loadAssets.mockImplementation(async (tiers) => ({ logo: {}, tiers, logos: {}, missing: [] }));
   retryLogos.mockReset();
   retryLogos.mockResolvedValue({});
+  loadLightMark.mockReset();
+  loadLightMark.mockResolvedValue({ light: true });
   loadDpFaces.mockClear();
   countDp.mockClear();
   track.mockClear();
@@ -302,6 +307,39 @@ describe("the Get DP generator", () => {
     await waitFor(() => expect(lastDrawn().style).toBe("scallop"));
     fireEvent.change(styleSelect(), { target: { value: "fields" } });
     await waitFor(() => expect(lastDrawn().style).toBe("fields"));
+  });
+
+  it("waits for Colour fields' own mark only when it is picked, and says so only there when it fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    loadLightMark.mockRejectedValueOnce(new Error("Timed out loading /images/getdp/2026/mark-on-light.png"));
+    await readyToShare("Download PNG");
+    // The default design never waits for it, and its failure is not said there.
+    expect(download().disabled).toBe(false);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(loadLightMark).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(styleSelect(), { target: { value: "fields" } });
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "The picture could not be prepared. Check your connection and try again.",
+    );
+    expect(download().disabled).toBe(true);
+    expect(lastDrawn().style).toBe("routes");
+
+    const later = deferred<unknown>();
+    loadLightMark.mockReturnValueOnce(later.promise);
+    fireEvent.click(button("Try again"));
+    await waitFor(() => expect(loadLightMark).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(live().textContent).toBe("Preparing your DP…");
+    await act(async () => later.resolve({ light: true }));
+    await waitFor(() => expect(lastDrawn().style).toBe("fields"));
+    await waitFor(() => expect(download().disabled).toBe(false));
+    expect(draws.filter((d) => !d.full).at(-1)!.assets).toMatchObject({ marks: { onLight: { light: true } } });
+
+    // Back to the default: no wait, and the light mark is not asked for again.
+    fireEvent.change(styleSelect(), { target: { value: "routes" } });
+    await waitFor(() => expect(lastDrawn().style).toBe("routes"));
+    expect(loadLightMark).toHaveBeenCalledTimes(2);
   });
 
   it("makes a new file for a new design, and never shares the old one", async () => {

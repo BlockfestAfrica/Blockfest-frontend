@@ -149,11 +149,13 @@ export function drawLookGround(ctx: CanvasRenderingContext2D, style: Exclude<DPS
     ctx.fillStyle = fade;
     ctx.fillRect(0, 0, S, S);
     // Quiet behind the mark, so it reads on its card.
-    const top = ctx.createLinearGradient(0, 0, 0, art.themeBaseline + 40);
+    // Fading out by the ring's top, so no line crosses the waves.
+    const until = art.hub.y - art.ringR;
+    const top = ctx.createLinearGradient(0, 0, 0, until);
     top.addColorStop(0, "rgba(11,11,15,0.55)");
-    top.addColorStop(1, "rgba(11,11,15,0.25)");
+    top.addColorStop(1, "rgba(11,11,15,0)");
     ctx.fillStyle = top;
-    ctx.fillRect(0, 0, S, art.themeBaseline + 40);
+    ctx.fillRect(0, 0, S, until);
     return;
   }
   // fields: white, with the kit's three great discs behind the photo.

@@ -121,9 +121,8 @@ export async function loadAssets(tiers: FooterTiers): Promise<LoadedAssets> {
     ...tiers.sponsors,
     ...tiers.groups.flatMap((g) => g.logos),
   ];
-  const [logo, onLight, settled] = await Promise.all([
+  const [logo, settled] = await Promise.all([
     loadImage(DP_LOGO_SRC, MARK_TIMEOUT_MS),
-    loadImage(DP_MARK_LIGHT_SRC, MARK_TIMEOUT_MS),
     Promise.allSettled(all.map((l) => rasteriseLogo(l))),
   ]);
   const logos: Record<string, Bitmap> = {};
@@ -135,7 +134,7 @@ export async function loadAssets(tiers: FooterTiers): Promise<LoadedAssets> {
       console.warn(`DP footer: ${all[i].name} left out:`, r.reason);
     }
   });
-  return { logo, marks: { onLight }, tiers, logos, missing };
+  return { logo, tiers, logos, missing };
 }
 
 /**
@@ -161,6 +160,15 @@ export async function retryLogos(missing: FooterLogo[], attempt: number): Promis
     else console.warn(`DP footer: ${missing[i].name} still left out:`, r.reason);
   });
   return logos;
+}
+
+/**
+ * The mark with black lettering, which only "Colour fields" draws (on its
+ * white card). Not part of loadAssets: nobody on another design waits for it
+ * or loses their DP to it. The page asks for it once the rest has come.
+ */
+export function loadLightMark(): Promise<HTMLImageElement> {
+  return loadImage(DP_MARK_LIGHT_SRC, MARK_TIMEOUT_MS);
 }
 
 /** A photo problem, in words for the person who picked it. */

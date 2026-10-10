@@ -17,6 +17,7 @@ import {
   freshLogo,
   loadAssets,
   loadImage,
+  loadLightMark,
   rasteriseLogo,
   retryLogos,
 } from "@/app/getdp/lib/load";
@@ -130,24 +131,27 @@ describe("loading the picture's parts", () => {
     expect(MARK_TIMEOUT_MS).toBe(12000);
   });
 
-  it("brings both versions of the kit's mark, and holds the picture for the light one too", async () => {
+  it("waits only for the mark every design draws, and brings Colour fields' own mark apart", async () => {
     const tiers: FooterTiers = { headline: logo("Monica"), sponsors: [], groups: [] };
+    // Colour fields' mark never answers: nobody on another design waits for it.
+    stalled.add(DP_MARK_LIGHT_SRC);
     const assets = await loadAssets(tiers);
     expect((assets.logo as HTMLImageElement).src).toBe(DP_LOGO_SRC);
-    expect((assets.marks!.onLight as HTMLImageElement).src).toBe(DP_MARK_LIGHT_SRC);
+    expect("marks" in assets).toBe(false);
     expect([DP_LOGO_SRC, DP_MARK_LIGHT_SRC]).toEqual([
       "/images/getdp/2026/mark-on-dark.png",
       "/images/getdp/2026/mark-on-light.png",
     ]);
 
-    // "Colour fields" cannot draw its white card without it, so it is not optional.
-    stalled.add(DP_MARK_LIGHT_SRC);
-    const outcome = loadAssets(tiers).then(
+    // Asked for apart, with the mark's own time limit.
+    const light = loadLightMark().then(
       () => "loaded",
       (e: Error) => e.message,
     );
     await vi.advanceTimersByTimeAsync(MARK_TIMEOUT_MS);
-    expect(await outcome).toMatch(/^Timed out loading/);
+    expect(await light).toMatch(/^Timed out loading \/images\/getdp\/2026\/mark-on-light\.png/);
+    stalled.delete(DP_MARK_LIGHT_SRC);
+    expect(((await loadLightMark()) as HTMLImageElement).src).toBe(DP_MARK_LIGHT_SRC);
   });
 
   it("waits as long as it takes for a photo, which is a file on the device", async () => {

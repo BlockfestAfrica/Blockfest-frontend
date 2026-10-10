@@ -656,7 +656,10 @@ export async function drawDP(
   });
   const style = opts.style ?? "routes";
   const look = style === "routes" ? null : LOOKS[style];
-  const mark = (look?.mark === "onLight" && assets.marks?.onLight) || assets.logo;
+  // White lettering on a white card would vanish: a design that needs the
+  // black-lettered mark is never drawn without it (the page waits for it).
+  if (look?.mark === "onLight" && !assets.marks?.onLight) throw new Error(`The ${style} design needs its mark`);
+  const mark = look?.mark === "onLight" ? assets.marks!.onLight! : assets.logo;
   const [lw, lh] = bitmapSize(mark);
   const art = layoutArt(footer.top, lw && lh ? lw / lh : 667 / 164);
 

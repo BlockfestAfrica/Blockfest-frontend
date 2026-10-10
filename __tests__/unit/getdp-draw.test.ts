@@ -108,6 +108,10 @@ describe("drawing the DP", () => {
     }
     expect(results[1]).toEqual(results[0]);
     expect(results[2]).toEqual(results[0]);
+    // Colour fields is never drawn with white lettering on its white card.
+    await expect(drawDP(fakeContext({ width: 1080, height: 1080 }), { ...opts, style: "fields" }, { ...kit, marks: {} })).rejects.toThrow(
+      "The fields design needs its mark",
+    );
     // Unset is the design people were already posting.
     drawnImages = [];
     expect(await drawDP(fakeContext({ width: 1080, height: 1080 }), opts, kit)).toEqual(results[0]);
