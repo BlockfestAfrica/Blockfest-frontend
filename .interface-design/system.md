@@ -247,13 +247,16 @@ media partners, and both public venues on it. app/getdp/README.md says where
 each piece lives.
 
 Since 10 October it is the default of three designs (app/getdp/lib/looks.ts):
-people were already posting it. From the 2026 brand kit the design team
-shared (the four colours, the wave pattern, the colour fields, the mark on a
-card), the owner picked "Wave crown" and "Colour fields" from three previews
-as choices. Every design shares layoutArt, so what follows about the layout,
-the circle crop, the name and the footer holds for all three; what is fixed
-about the ground and the ring is concept C's. The mark is the kit's official
-file, trimmed to its artwork, on every design.
+people were already posting it. "Colour fields" (the 2026 brand kit's three
+great circles on white) shares layoutArt, so what follows about the layout,
+the circle crop, the name and the footer holds for it too. "Sunset" is the
+design team's own DP sample fitted to the square (layoutSunset), and follows
+the team, not this section: the mark top left (outside a profile picture's
+circle crop, as in their sample), the role in black and the name in white
+with no pill, the days in a black band. A pattern on the kit's orange is laid
+in a lighter tone of the orange, never in the kit's four colours (the team,
+replacing "Wave crown"). The mark is the kit's official file, trimmed to its
+artwork, on every design.
 
 - Fixed: the navy ground; the photo as the hub inside a ring of the mark's
   four colours in the mark's own arrangement (pink top-left, blue top-right,

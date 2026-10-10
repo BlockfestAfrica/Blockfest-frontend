@@ -7,7 +7,7 @@
  * stand-in that answers, fails or never answers on cue.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DP_LOGO_SRC, DP_MARK_LIGHT_SRC, type FooterTiers } from "@/app/getdp/lib/dp";
+import { DP_LOGO_SRC, DP_MARK_LIGHT_SRC, DP_MARK_WHITE_SRC, type FooterTiers } from "@/app/getdp/lib/dp";
 import {
   LATE_LOGO_TIMEOUT_MS,
   LATE_LOGO_TRIES,
@@ -17,7 +17,7 @@ import {
   freshLogo,
   loadAssets,
   loadImage,
-  loadLightMark,
+  loadMark,
   rasteriseLogo,
   retryLogos,
 } from "@/app/getdp/lib/load";
@@ -131,7 +131,7 @@ describe("loading the picture's parts", () => {
     expect(MARK_TIMEOUT_MS).toBe(12000);
   });
 
-  it("waits only for the mark every design draws, and brings Colour fields' own mark apart", async () => {
+  it("waits only for the mark every design draws, and brings the other versions apart", async () => {
     const tiers: FooterTiers = { headline: logo("Monica"), sponsors: [], groups: [] };
     // Colour fields' mark never answers: nobody on another design waits for it.
     stalled.add(DP_MARK_LIGHT_SRC);
@@ -143,15 +143,17 @@ describe("loading the picture's parts", () => {
       "/images/getdp/2026/mark-on-light.png",
     ]);
 
-    // Asked for apart, with the mark's own time limit.
-    const light = loadLightMark().then(
+    // Asked for apart, each with the mark's own time limit.
+    const light = loadMark("onLight").then(
       () => "loaded",
       (e: Error) => e.message,
     );
     await vi.advanceTimersByTimeAsync(MARK_TIMEOUT_MS);
     expect(await light).toMatch(/^Timed out loading \/images\/getdp\/2026\/mark-on-light\.png/);
     stalled.delete(DP_MARK_LIGHT_SRC);
-    expect(((await loadLightMark()) as HTMLImageElement).src).toBe(DP_MARK_LIGHT_SRC);
+    expect(((await loadMark("onLight")) as HTMLImageElement).src).toBe(DP_MARK_LIGHT_SRC);
+    expect(((await loadMark("white")) as HTMLImageElement).src).toBe(DP_MARK_WHITE_SRC);
+    expect(DP_MARK_WHITE_SRC).toBe("/images/getdp/2026/mark-white.png");
   });
 
   it("waits as long as it takes for a photo, which is a file on the device", async () => {

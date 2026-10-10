@@ -41,7 +41,7 @@ import {
 } from "../lib/dp";
 import { drawDP, nameSubstitutions, renderFull, type DPAssets, type DPResult } from "../lib/draw";
 import { FontLoadError, errorDetail } from "../lib/errors";
-import { DP_STYLES, STYLE_LABEL, type DPStyle } from "../lib/looks";
+import { DP_STYLES, EXTRA_TONES, STYLE_LABEL, STYLE_MARK, type DPStyle, type ExtraTone } from "../lib/looks";
 import { countDp, type DPChannel } from "../lib/count";
 import { GETDP_EVENTS, track } from "@/lib/sabilytics";
 import { loadDpFaces } from "../lib/faces";
@@ -49,7 +49,7 @@ import type { LetterNote } from "../lib/letters";
 import {
   LATE_LOGO_TRIES,
   loadAssets,
-  loadLightMark,
+  loadMark,
   PhotoError,
   readPhoto,
   retryLogos,
@@ -144,10 +144,12 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const [role, setRole] = useState<DPRole>("attendee");
   /** The look: concept C's "Trade routes" unless the person picks another (looks.ts). */
   const [style, setStyle] = useState<DPStyle>("routes");
-  /** The mark with black lettering, which only "Colour fields" draws; see drawParts. */
-  const [lightMark, setLightMark] = useState<HTMLImageElement | null>(null);
-  const [lightError, setLightError] = useState<string | null>(null);
-  const [lightAttempt, setLightAttempt] = useState(0);
+  /** The versions of the mark only some designs draw (STYLE_MARK); see drawParts. */
+  const [marks, setMarks] = useState<Partial<Record<ExtraTone, HTMLImageElement>>>({});
+  const [markErrors, setMarkErrors] = useState<Partial<Record<ExtraTone, string>>>({});
+  const [markAttempt, setMarkAttempt] = useState(0);
+  /** Each version asked for and not failed, so a render never asks twice. */
+  const marksAsked = useRef(new Set<ExtraTone>());
   const [name, setName] = useState("");
   const [nameTouched, setNameTouched] = useState(false);
   const [photo, setPhoto] = useState<(LoadedPhoto & { id: number }) | null>(null);
@@ -239,18 +241,20 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   /* The check for this name failed: saving stays shut, and Try again is offered. */
   const checkFailed = needsLetterCheck && letterCheck?.name === shown && letterCheck.notes === null;
   /*
-   * What this design is drawn from: the shared parts, and for "Colour fields"
-   * the mark with black lettering too. Null while something it needs is still
-   * coming; only the design that needs the light mark waits on it, or fails
-   * for it.
+   * What this design is drawn from: the shared parts, and its own version of
+   * the mark when that is not the dark-ground one (STYLE_MARK: black
+   * lettering for "Colour fields", all white for "Sunset"). Null while
+   * something it needs is still coming; only a design that needs a version
+   * waits on it, or says that it failed.
    */
-  const needsLight = style === "fields";
+  const tone = STYLE_MARK[style];
+  const extraTone = tone === "onDark" ? null : tone;
   const drawParts = useMemo<DPAssets | null>(() => {
     if (!assets) return null;
-    if (!needsLight) return assets;
-    return lightMark ? { ...assets, marks: { onLight: lightMark } } : null;
-  }, [assets, needsLight, lightMark]);
-  const partsError = assetsError ?? (needsLight ? lightError : null);
+    if (!extraTone) return assets;
+    return marks[extraTone] ? { ...assets, marks } : null;
+  }, [assets, extraTone, marks]);
+  const partsError = assetsError ?? (extraTone ? (markErrors[extraTone] ?? null) : null);
   /** What the failure said, shown small under the message so a screenshot says what broke. */
   const failDetail = partsError ?? drawError?.detail ?? (checkFailed ? letterCheck?.detail : undefined);
   const undrawable = (notes ?? []).filter((n) => n.drawn === null).map((n) => n.letter);
@@ -335,28 +339,31 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   }, [tiers, assetsAttempt]);
 
   /*
-   * The mark with black lettering, once the shared parts are in (so it never
-   * competes with them): ready before anyone picks "Colour fields", usually.
-   * A failure is only said, with Try again, while that design is chosen.
+   * The other versions of the mark, once the shared parts are in (so they
+   * never compete with them): ready before anyone picks those designs,
+   * usually. A failure is only said, with Try again, while a design that
+   * needs it is chosen.
    */
   useEffect(() => {
-    if (!assets || lightMark) return;
-    let live = true;
-    loadLightMark().then(
-      (m) => {
-        if (!live) return;
-        setLightMark(m);
-        setLightError(null);
-      },
-      (e) => {
-        console.error("Get DP: the mark for Colour fields could not be prepared", e);
-        if (live) setLightError(errorDetail(e));
-      },
-    );
-    return () => {
-      live = false;
-    };
-  }, [assets, lightMark, lightAttempt]);
+    if (!assets) return;
+    for (const t of EXTRA_TONES) {
+      if (marksAsked.current.has(t)) continue;
+      marksAsked.current.add(t);
+      // Asked for again: what its last failure said is no longer true.
+      setMarkErrors((x) => (x[t] ? { ...x, [t]: undefined } : x));
+      loadMark(t).then(
+        (m) => {
+          setMarks((x) => ({ ...x, [t]: m }));
+          setMarkErrors((x) => ({ ...x, [t]: undefined }));
+        },
+        (e) => {
+          console.error("Get DP: a version of the mark could not be prepared", e);
+          marksAsked.current.delete(t);
+          setMarkErrors((x) => ({ ...x, [t]: errorDetail(e) }));
+        },
+      );
+    }
+  }, [assets, markAttempt]);
 
   /*
    * The logos left off, asked for again; the picture is drawn again with
@@ -877,9 +884,9 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     if (assetsError) {
       setAssetsError(null);
       setAssetsAttempt((n) => n + 1);
-    } else if (partsError) {
-      setLightError(null);
-      setLightAttempt((n) => n + 1);
+    } else if (partsError && extraTone) {
+      // Asks again for every version that failed; each clears its own error.
+      setMarkAttempt((n) => n + 1);
     } else {
       // Draws again, and runs a letter check that failed again (pending till it answers).
       setDrawError(null);

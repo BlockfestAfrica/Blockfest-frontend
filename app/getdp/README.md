@@ -8,12 +8,19 @@ downloads fail).
 
 **Designs** (`lib/looks.ts`). "Trade routes" is concept C, picked by the
 owner on 9 October 2026, and stays the default: people were already posting
-it. "Wave crown" and "Colour fields" come from the 2026 brand kit the design
-team shared on 10 October (the four colours, the wave pattern, the colour
-fields, the mark on a card); the owner picked them from three to offer as
-choices. Every design shares one layout (`layoutArt`), so the photo frame,
-the name's sizing, the days and the partners' band are the same in each, and
-only the ground, the decoration and the colours change.
+it. "Colour fields" comes from the 2026 brand kit the design team shared on
+10 October (the kit's three great circles on white, the mark on a card) and
+shares concept C's layout (`layoutArt`). "Sunset" is the design team's own
+sample for the DP, fitted to the square on a layout of its own
+(`layoutSunset`): their orange gradient with the kit's tile pattern laid on
+it in a lighter tone of itself, the all-white mark top left with "Buidl
+Bridge Become" top right, the photo in a soft ring, the role in black and the
+name in white, and the days in a black band. It replaced "Wave crown" the
+same day ("we don't apply this pattern this way", the team). Every design
+keeps the partners' band at the foot; each draws its own version of the
+mark (`STYLE_MARK`), and the page brings the two that only some designs draw
+apart from the rest (`loadMark`), so nobody waits for one their design does
+not use.
 `.interface-design/system.md` records what is fixed about concept C.
 
 The photo never leaves the device: it is read into a canvas in the tab and
@@ -118,12 +125,16 @@ the row.
   a smaller second row, the government under "Endorsed by", and community
   and media partners as one list of logos with no heading.
 - **The days and venues**: `publicDays` on `blockfest2026Lagos` in
-  `lib/events.ts`, drawn as stops on one line; `short` is the venue's name
-  as that line says it. Public days only; the private mixer on the 24th
-  never goes there.
-- **The mark**: the brand kit's official files (10 October), `DP_LOGO_SRC`
-  (white lettering, for the dark designs) and `DP_MARK_LIGHT_SRC` (black
-  lettering, for "Colour fields") in `lib/dp.ts`. The drawing reads each
+  `lib/events.ts`. `short` is the venue as Trade routes and Colour fields
+  say it, as stops on one line (`publicDayLines`); `full` is the venue with
+  its town as Sunset's black band says it (`publicDayBand`, falling back to
+  `short`). Change the two together. Public days only; the private mixer on
+  the 24th never goes there.
+- **The mark**: the brand kit's official files (10 October), trimmed to
+  their artwork, in `lib/dp.ts`: `DP_LOGO_SRC` (white lettering, for Trade
+  routes), `DP_MARK_LIGHT_SRC` (black lettering, for "Colour fields") and
+  `DP_MARK_WHITE_SRC` (all white, for "Sunset"); `STYLE_MARK` in
+  `lib/looks.ts` says which design draws which. The drawing reads each
   file's own proportions.
 - **A design**: `LOOKS` and `drawLookGround` in `lib/looks.ts`; add its id to
   `DP_STYLES` and a name to `STYLE_LABEL`.

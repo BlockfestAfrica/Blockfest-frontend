@@ -3,30 +3,44 @@
  *
  * "routes" is concept C, "New trade routes" (the owner, 9 October), drawn by
  * draw.ts itself and still the default: people were already posting it. The
- * others come from the 2026 brand kit the design team shared on 10 October
- * (the four colours, the wave pattern, the colour fields, the mark on a
- * card); the owner picked "Wave crown" and "Colour fields" from three for
- * people to switch to. Every look keeps the
- * same layout (layoutArt): the mark at the top, the photo in its circle, the
- * role, name and days below it, and the partners' band at the foot, so the
- * photo, the name and the partners behave the same whichever is chosen.
+ * others come from the 2026 brand kit the design team shared on 10 October.
+ * "Colour fields" (the kit's three great circles on white) keeps concept C's
+ * layout (layoutArt). "Sunset" is the design team's own sample for the DP,
+ * fitted to the square (layoutSunset): their orange gradient with the kit's
+ * tile pattern laid on it in a lighter tone of itself, which is how the team
+ * applies a pattern to that colour (it replaced "Wave crown", which laid the
+ * kit's colour waves on black: "we don't apply this pattern this way"). All
+ * of them keep the partners' band at the foot.
  */
 import { DP_COLOR, DP_SIZE, type ArtLayout, type DPRole, roleCopy } from "./dp";
 
-export type DPStyle = "routes" | "scallop" | "fields";
+export type DPStyle = "routes" | "sunset" | "fields";
 
 /** In the order the page offers them; the first is the default. */
-export const DP_STYLES: readonly DPStyle[] = ["routes", "scallop", "fields"];
+export const DP_STYLES: readonly DPStyle[] = ["routes", "sunset", "fields"];
 
 /** What the page calls each look. */
 export const STYLE_LABEL: Record<DPStyle, string> = {
   routes: "Trade routes",
-  scallop: "Wave crown",
+  sunset: "Sunset",
   fields: "Colour fields",
 };
 
-/** Which version of the mark a look puts at the top. */
-export type MarkTone = "onDark" | "onLight";
+/**
+ * Which version of the mark a look puts at the top: white lettering on a dark
+ * ground, black lettering on white, or all white on the orange.
+ */
+export type MarkTone = "onDark" | "onLight" | "white";
+
+export const STYLE_MARK: Record<DPStyle, MarkTone> = {
+  routes: "onDark",
+  sunset: "white",
+  fields: "onLight",
+};
+
+/** The versions of the mark that only some designs draw, brought apart (loadMark). */
+export type ExtraTone = Exclude<MarkTone, "onDark">;
+export const EXTRA_TONES: readonly ExtraTone[] = ["onLight", "white"];
 
 export interface Look {
   /** The mark: white lettering for a dark ground, black for a light one. */
@@ -55,21 +69,7 @@ export interface Look {
 const S = DP_SIZE;
 const INK = "#0B0B0F";
 
-export const LOOKS: Record<Exclude<DPStyle, "routes">, Look> = {
-  scallop: {
-    mark: "onDark",
-    markCard: INK,
-    theme: "rgba(255,255,255,0.72)",
-    name: "#FFFFFF",
-    ghost: "rgba(255,255,255,0.55)",
-    day: "#FFFFFF",
-    day2: "rgba(255,255,255,0.78)",
-    stop: "#FFFFFF",
-    face: "#26262E",
-    frame: "#15151B",
-    pill: (role) => ({ fill: roleCopy(role).fill, text: roleCopy(role).text === DP_COLOR.ink ? "#FFFFFF" : INK }),
-    route: (role) => roleCopy(role).fill,
-  },
+export const LOOKS: Record<"fields", Look> = {
   fields: {
     mark: "onLight",
     markCard: "#FFFFFF",
@@ -87,43 +87,78 @@ export const LOOKS: Record<Exclude<DPStyle, "routes">, Look> = {
 };
 
 /* ------------------------------------------------------------------ */
-/* The scallop pattern                                                */
+/* Sunset                                                             */
 /* ------------------------------------------------------------------ */
 
+/** The design team's sample, sampled: its gradient, ring, band and icons. */
+export const SUN = {
+  top: "#F2A843",
+  bottom: "#F37A64",
+  ring: "rgba(255,255,255,0.45)",
+  role: "#0B0B0F",
+  name: "#FFFFFF",
+  ghost: "rgba(255,255,255,0.62)",
+  band: "#000000",
+  bandInk: "#FFFFFF",
+  icon: DP_COLOR.pink,
+  /** The pattern's two tones: the ground, lightened a little and a little more. */
+  tile: "rgba(255,255,255,0.10)",
+  tile2: "rgba(255,255,255,0.055)",
+  frame: "#F6BC8C",
+  face: "#FBDCC2",
+} as const;
+
 /**
- * The kit's wave pattern: rows of circles, each a set of rings, every row
- * half a circle along from the one above and drawn over its lower part, so
- * what shows of each is an arch. `fill(row)` colours a row's rings; `gap` is
- * the colour between them.
+ * The kit's tile pattern: square cells holding the mark's own shapes, rows
+ * of domes (two quarter rounds, each cell a tone of its own) between rows of
+ * arches and double lobes in turn, as the kit's book cover sets them. Here
+ * in the ground's own colour, a shade lighter, as the team's sample lays it.
  */
-export function drawScallops(
-  ctx: CanvasRenderingContext2D,
-  o: {
-    r: number;
-    top: number;
-    bottom: number;
-    fill: (row: number) => string;
-    gap: string;
-    rings?: number;
-    pitch?: number;
-  },
-) {
-  const rings = o.rings ?? 4;
-  const pitchY = o.r * (o.pitch ?? 0.56);
-  for (let j = 0; ; j++) {
-    const cy = o.top + j * pitchY;
-    if (cy - o.r > o.bottom) break;
-    const shift = (j % 2) * o.r;
-    for (let cx = -2 * o.r + shift; cx < S + 2 * o.r; cx += 2 * o.r) {
-      for (let k = 0; k < rings * 2; k++) {
-        const rr = o.r * (1 - k / (rings * 2));
-        ctx.beginPath();
-        ctx.arc(cx, cy, rr, 0, Math.PI * 2);
-        ctx.fillStyle = k % 2 === 0 ? o.gap : o.fill(j);
-        ctx.fill();
+export function drawPetals(ctx: CanvasRenderingContext2D, bottom: number, cell = 432) {
+  const C = cell;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, S, bottom);
+  ctx.clip();
+  for (let r = 0; r * C - C * 0.3 < bottom; r++) {
+    const y = r * C - C * 0.3;
+    for (let c = -1; c * C < S; c++) {
+      const x = c * C;
+      ctx.fillStyle = (r + c) % 2 === 0 ? SUN.tile : SUN.tile2;
+      ctx.beginPath();
+      if (r % 2 === 0) {
+        // A dome: the left cell rounds its top left corner, the right its top right.
+        const left = ((c % 2) + 2) % 2 === 0;
+        if (left) ctx.arc(x + C, y + C, C, Math.PI, Math.PI * 1.5);
+        else ctx.arc(x, y + C, C, Math.PI * 1.5, Math.PI * 2);
+        ctx.lineTo(left ? x + C : x, y + C);
+      } else if (((c % 2) + 2) % 2 === 0) {
+        // An arch: a square with a round top.
+        ctx.moveTo(x, y + C);
+        ctx.lineTo(x, y + C / 2);
+        ctx.arc(x + C / 2, y + C / 2, C / 2, Math.PI, Math.PI * 2);
+        ctx.lineTo(x + C, y + C);
+      } else {
+        // Two lobes side by side.
+        ctx.ellipse(x + C * 0.3, y + C / 2, C * 0.3, C / 2, 0, 0, Math.PI * 2);
+        ctx.moveTo(x + C, y + C / 2);
+        ctx.ellipse(x + C * 0.7, y + C / 2, C * 0.3, C / 2, 0, 0, Math.PI * 2);
       }
+      ctx.closePath();
+      ctx.fill();
     }
   }
+  ctx.restore();
+}
+
+/** Sunset's ground: the sample's gradient down to the band, and the tiles on it. */
+export function drawSunsetGround(ctx: CanvasRenderingContext2D, bandTop: number) {
+  const g = ctx.createLinearGradient(0, 0, 0, bandTop);
+  g.addColorStop(0, SUN.top);
+  g.addColorStop(1, SUN.bottom);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, bandTop);
+  drawPetals(ctx, bandTop);
 }
 
 /* ------------------------------------------------------------------ */
@@ -131,33 +166,8 @@ export function drawScallops(
 /* ------------------------------------------------------------------ */
 
 /** The look's ground and decoration, under the photo and the text. */
-export function drawLookGround(ctx: CanvasRenderingContext2D, style: Exclude<DPStyle, "routes">, art: ArtLayout) {
-  if (style === "scallop") {
-    ctx.fillStyle = INK;
-    ctx.fillRect(0, 0, S, S);
-    // A crown of the kit's colour waves, fading into black behind the text.
-    const colours = [DP_COLOR.pink, DP_COLOR.yellow, DP_COLOR.blue, DP_COLOR.teal];
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, S, art.zoneTop);
-    ctx.clip();
-    drawScallops(ctx, { r: 92, top: -40, bottom: art.zoneTop, fill: (j) => colours[j % 4], gap: INK });
-    ctx.restore();
-    const fade = ctx.createLinearGradient(0, art.hub.y - art.ringR * 0.2, 0, art.zoneTop + 40);
-    fade.addColorStop(0, "rgba(11,11,15,0)");
-    fade.addColorStop(1, INK);
-    ctx.fillStyle = fade;
-    ctx.fillRect(0, 0, S, S);
-    // Quiet behind the mark, so it reads on its card.
-    // Fading out by the ring's top, so no line crosses the waves.
-    const until = art.hub.y - art.ringR;
-    const top = ctx.createLinearGradient(0, 0, 0, until);
-    top.addColorStop(0, "rgba(11,11,15,0.55)");
-    top.addColorStop(1, "rgba(11,11,15,0)");
-    ctx.fillStyle = top;
-    ctx.fillRect(0, 0, S, until);
-    return;
-  }
+export function drawLookGround(ctx: CanvasRenderingContext2D, style: "fields", art: ArtLayout) {
+  void style;
   // fields: white, with the kit's three great discs behind the photo.
   ctx.fillStyle = "#FFFFFF";
   ctx.fillRect(0, 0, S, S);
@@ -181,13 +191,14 @@ export function drawLookGround(ctx: CanvasRenderingContext2D, style: Exclude<DPS
  * The photo's surround: a clean band of the ground's opposite, and a ring of
  * the role's colour, where concept C has its four arcs.
  */
-export function drawLookRing(ctx: CanvasRenderingContext2D, style: Exclude<DPStyle, "routes">, art: ArtLayout, role: DPRole) {
+export function drawLookRing(ctx: CanvasRenderingContext2D, style: "fields", art: ArtLayout, role: DPRole) {
   const { hub, photoR, ringR } = art;
   const outer = (photoR + ringR) / 2 + 26;
   ctx.save();
   ctx.beginPath();
   ctx.arc(hub.x, hub.y, outer, 0, Math.PI * 2);
-  ctx.fillStyle = style === "scallop" ? INK : "#FFFFFF";
+  void style;
+  ctx.fillStyle = "#FFFFFF";
   ctx.fill();
   ctx.lineWidth = 18;
   ctx.strokeStyle = roleCopy(role).fill;

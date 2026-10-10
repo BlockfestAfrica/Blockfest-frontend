@@ -23,13 +23,17 @@ import {
   ART,
   DP_COLOR as COLOR,
   DP_SIZE,
+  DP_SLOGAN,
   DP_THEME,
   FOOTER,
   NAME_MAX_W,
+  SUNSET,
   chooseNameLayout,
   layoutArt,
   layoutFooter,
+  layoutSunset,
   photoRect,
+  publicDayBand,
   publicDayLines,
   roleCopy,
   type ArtLayout,
@@ -39,7 +43,16 @@ import {
   type PhotoTransform,
 } from "./dp";
 import { DP_FAMILY, loadDpFaces, primaryFamily } from "./faces";
-import { LOOKS, drawLookGround, drawLookRing, type DPStyle, type MarkTone } from "./looks";
+import {
+  LOOKS,
+  STYLE_MARK,
+  SUN,
+  drawLookGround,
+  drawLookRing,
+  drawSunsetGround,
+  type DPStyle,
+  type MarkTone,
+} from "./looks";
 import {
   DOT_ABOVE,
   clusters as spell,
@@ -75,7 +88,11 @@ export interface DPAssets {
    * no natural size of its own). A logo missing here is left out.
    */
   logos: Record<string, Bitmap>;
-  /** The mark with black lettering, for a light ground (DP_MARK_LIGHT_SRC, looks.ts). */
+  /**
+   * The other versions of the mark, for the designs that draw them
+   * (STYLE_MARK in looks.ts): black lettering (DP_MARK_LIGHT_SRC) and all
+   * white (DP_MARK_WHITE_SRC). The page brings each only when it is needed.
+   */
   marks?: Partial<Record<Exclude<MarkTone, "onDark">, Bitmap>>;
 }
 
@@ -332,7 +349,7 @@ function drawTrails(ctx: CanvasRenderingContext2D, rs: Route[]) {
 
 function drawPhoto(
   ctx: CanvasRenderingContext2D,
-  art: ArtLayout,
+  art: Pick<ArtLayout, "hub" | "photoR">,
   photo: Bitmap | null,
   t: PhotoTransform | undefined,
   empty: { frame: string; face: string } = { frame: COLOR.deep, face: "#132A4E" },
@@ -638,6 +655,186 @@ function present(tiers: FooterTiers, logos: Record<string, Bitmap>): FooterTiers
 /* drawDP                                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * A name's real ink, as fractions of its size: accents above the first line,
+ * dots below the last, and a line pitch that keeps one line's dots clear of
+ * the next line's accents.
+ */
+function nameInk(ctx: CanvasRenderingContext2D, lines: string[]) {
+  ctx.font = display(100);
+  const inks = lines.map((l) => lineInk(ctx, l, 100));
+  let lead = 0.94;
+  for (let i = 0; i + 1 < inks.length; i++) {
+    lead = Math.max(lead, (inks[i].descent + inks[i + 1].ascent) / 100 + 0.08);
+  }
+  const top = inks[0].ascent / 100;
+  return { top, lead, perSize: top + lead * (lines.length - 1) + inks[inks.length - 1].descent / 100 };
+}
+
+/** The band's calendar, as the sample has it: a white calendar on a pink disc, its days showing the pink. */
+function calendarIcon(ctx: CanvasRenderingContext2D, x: number, mid: number, s: number) {
+  ctx.fillStyle = SUN.icon;
+  ctx.beginPath();
+  ctx.arc(x + s / 2, mid, s / 2, 0, Math.PI * 2);
+  ctx.fill();
+  const w = s * 0.5;
+  const h = s * 0.44;
+  const left = x + s / 2 - w / 2;
+  const top = mid - h / 2;
+  ctx.fillStyle = SUN.bandInk;
+  tracePill(ctx, left, top, w, h, s * 0.06);
+  ctx.fill();
+  // Three by two days under the calendar's top bar.
+  ctx.fillStyle = SUN.icon;
+  const cell = w * 0.2;
+  const gapX = (w - cell * 3) / 4;
+  const rowsTop = top + h * 0.34;
+  const gapY = (h * 0.66 - cell * 2) / 3;
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 3; c++) {
+      ctx.fillRect(left + gapX + c * (cell + gapX), rowsTop + gapY + r * (cell + gapY), cell, cell);
+    }
+  }
+}
+
+/** The band's place marker, as the sample has it: a white pin on a pink disc, its eye showing the pink. */
+function pinIcon(ctx: CanvasRenderingContext2D, x: number, mid: number, s: number) {
+  const cx = x + s / 2;
+  ctx.fillStyle = SUN.icon;
+  ctx.beginPath();
+  ctx.arc(cx, mid, s / 2, 0, Math.PI * 2);
+  ctx.fill();
+  const r = s * 0.17;
+  const cy = mid - s * 0.07;
+  ctx.fillStyle = SUN.bandInk;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI * 0.8, Math.PI * 2.2);
+  ctx.lineTo(cx, mid + s * 0.26);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = SUN.icon;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.45, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/**
+ * "Sunset": the design team's own sample for the DP (10 October), fitted to
+ * the square on its own layout (layoutSunset in dp.ts).
+ */
+function drawSunset(
+  ctx: CanvasRenderingContext2D,
+  opts: DPOptions,
+  assets: DPAssets,
+  footer: FooterLayout,
+  mark: Bitmap,
+): DPResult {
+  const [lw, lh] = bitmapSize(mark);
+  const L = layoutSunset(footer.top, lw && lh ? lw / lh : 960 / 235);
+  drawSunsetGround(ctx, L.bandTop);
+
+  // The soft ring, and the photo inside it.
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(L.hub.x, L.hub.y, L.outerR - SUNSET.ring / 2, 0, Math.PI * 2);
+  ctx.lineWidth = SUNSET.ring;
+  ctx.strokeStyle = SUN.ring;
+  ctx.stroke();
+  ctx.restore();
+  drawPhoto(ctx, L, opts.photo, opts.photoTransform, { frame: SUN.frame, face: SUN.face });
+
+  // The mark top left; the three words top right, on the mark's middle.
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(mark, L.logo.x, L.logo.y, L.logo.w, L.logo.h);
+  ctx.font = text(38);
+  ctx.fillStyle = SUN.bandInk;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  const wordGap = 30;
+  const widths = DP_SLOGAN.map((w) => ctx.measureText(w).width);
+  let x = S - SUNSET.side - widths.reduce((a, b) => a + b, 0) - wordGap * (widths.length - 1);
+  const sloganBaseline = L.logo.y + L.logo.h / 2 + capHeight(ctx) / 2;
+  DP_SLOGAN.forEach((w, i) => {
+    ctx.fillText(w, x, sloganBaseline);
+    x += widths[i] + wordGap;
+  });
+
+  // The role in black; the name in white under it, as large as its room allows.
+  const role = roleCopy(opts.role);
+  ctx.font = display(SUNSET.roleSize);
+  ctx.fillStyle = SUN.role;
+  fillTracked(ctx, role.line, S / 2, L.roleTop + capHeight(ctx), 2);
+
+  const room = L.nameBottom - L.nameTop;
+  ctx.font = display(100);
+  const name = chooseNameLayout(
+    opts.name,
+    (line) => ctx.measureText(drawable(ctx, line)).width,
+    SUNSET.nameW,
+    (lines) => Math.floor(room / nameInk(ctx, lines).perSize),
+    SUNSET.name,
+  );
+  const ink = nameInk(ctx, name.lines);
+  name.size = Math.max(40, Math.min(name.size, Math.floor(room / ink.perSize)));
+  const top = L.nameTop + (room - name.size * ink.perSize) / 2;
+  ctx.font = display(name.size);
+  ctx.fillStyle = opts.ghostName ? SUN.ghost : SUN.name;
+  name.lines.forEach((line, i) => {
+    fillName(ctx, line, S / 2, top + name.size * ink.top + i * name.size * ink.lead, name.size);
+  });
+
+  // The days in a black band: the range by a calendar, each day by a pin.
+  ctx.fillStyle = SUN.band;
+  ctx.fillRect(0, L.bandTop, S, L.bandBottom - L.bandTop);
+  const band = publicDayBand();
+  if (band.stops.length) {
+    let rangeSize = 46;
+    let stopSize = 36;
+    const measure = () => {
+      const icon = rangeSize * 0.92;
+      const pad = rangeSize * 0.32;
+      ctx.font = text(rangeSize);
+      const rangeW = ctx.measureText(band.range).width;
+      ctx.font = text(stopSize);
+      const stopWs = band.stops.map((t) => ctx.measureText(t).width);
+      const gap = rangeSize * 1.3;
+      const total =
+        icon + pad + rangeW + stopWs.reduce((a, w) => a + gap + icon + pad + w, 0);
+      return { icon, pad, rangeW, stopWs, gap, total };
+    };
+    let m = measure();
+    while (m.total > S - 160 && stopSize > 24) {
+      rangeSize -= 1;
+      stopSize -= 1;
+      m = measure();
+    }
+    const mid = (L.bandTop + L.bandBottom) / 2;
+    let bx = S / 2 - m.total / 2;
+    calendarIcon(ctx, bx, mid, m.icon);
+    bx += m.icon + m.pad;
+    ctx.font = text(rangeSize);
+    ctx.fillStyle = SUN.bandInk;
+    ctx.textAlign = "left";
+    ctx.fillText(band.range, bx, mid + capHeight(ctx) / 2);
+    bx += m.rangeW;
+    band.stops.forEach((t, i) => {
+      bx += m.gap;
+      pinIcon(ctx, bx, mid, m.icon);
+      bx += m.icon + m.pad;
+      ctx.font = text(stopSize);
+      ctx.fillStyle = SUN.bandInk;
+      ctx.fillText(t, bx, mid + capHeight(ctx) / 2);
+      bx += m.stopWs[i];
+    });
+  }
+
+  drawFooter(ctx, footer, assets.logos);
+  // The band a phone shows above the name field: the role and the name, with
+  // room for the apostrophe and the accents that rise above the capitals.
+  return { hub: L.hub, photoR: L.photoR, zone: { top: L.roleTop - 24, bottom: L.nameBottom + 12 } };
+}
+
 export async function drawDP(
   ctx: CanvasRenderingContext2D,
   opts: DPOptions,
@@ -655,11 +852,17 @@ export async function drawDP(
     return trackedWidth(ctx, label, LABEL_TRACK);
   });
   const style = opts.style ?? "routes";
+  // Each design draws its own version of the mark, and never another in its
+  // place: white lettering on a white card would vanish. The page waits for it.
+  const tone = STYLE_MARK[style];
+  const mark = tone === "onDark" ? assets.logo : assets.marks?.[tone];
+  if (!mark) throw new Error(`The ${style} design needs its mark`);
+  if (style === "sunset") {
+    const result = drawSunset(ctx, opts, assets, footer, mark);
+    ctx.restore();
+    return result;
+  }
   const look = style === "routes" ? null : LOOKS[style];
-  // White lettering on a white card would vanish: a design that needs the
-  // black-lettered mark is never drawn without it (the page waits for it).
-  if (look?.mark === "onLight" && !assets.marks?.onLight) throw new Error(`The ${style} design needs its mark`);
-  const mark = look?.mark === "onLight" ? assets.marks!.onLight! : assets.logo;
   const [lw, lh] = bitmapSize(mark);
   const art = layoutArt(footer.top, lw && lh ? lw / lh : 667 / 164);
 
@@ -712,19 +915,7 @@ export async function drawDP(
   // The height the name has: the zone, less the pill, the days and the gaps.
   const room = zoneBottom - zoneTop - (PILL_H + g1 + g2 + daysH);
 
-  // A name's real ink, as fractions of its size: accents above the first
-  // line, dots below the last, and a line pitch that keeps one line's dots
-  // clear of the next line's accents.
-  const inkOf = (lines: string[]) => {
-    ctx.font = display(100);
-    const inks = lines.map((l) => lineInk(ctx, l, 100));
-    let lead = 0.94;
-    for (let i = 0; i + 1 < inks.length; i++) {
-      lead = Math.max(lead, (inks[i].descent + inks[i + 1].ascent) / 100 + 0.08);
-    }
-    const top = inks[0].ascent / 100;
-    return { top, lead, perSize: top + lead * (lines.length - 1) + inks[inks.length - 1].descent / 100 };
-  };
+  const inkOf = (lines: string[]) => nameInk(ctx, lines);
 
   // One line or two, each compared at the size the room really lets it take.
   ctx.font = display(100);

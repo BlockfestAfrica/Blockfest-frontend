@@ -8,7 +8,8 @@
  * policy says the photo never leaves the browser, and
  * __tests__/unit/privacy.test.ts holds this folder to it.
  */
-import { DP_LOGO_SRC, DP_MARK_LIGHT_SRC, type FooterLogo, type FooterTiers } from "./dp";
+import { DP_LOGO_SRC, DP_MARK_LIGHT_SRC, DP_MARK_WHITE_SRC, type FooterLogo, type FooterTiers } from "./dp";
+import type { ExtraTone } from "./looks";
 import type { Bitmap, DPAssets } from "./draw";
 
 /** The mark may take this long on a weak connection before the page says so. */
@@ -162,13 +163,19 @@ export async function retryLogos(missing: FooterLogo[], attempt: number): Promis
   return logos;
 }
 
+const MARK_SRC: Record<ExtraTone, string> = {
+  onLight: DP_MARK_LIGHT_SRC,
+  white: DP_MARK_WHITE_SRC,
+};
+
 /**
- * The mark with black lettering, which only "Colour fields" draws (on its
- * white card). Not part of loadAssets: nobody on another design waits for it
- * or loses their DP to it. The page asks for it once the rest has come.
+ * A version of the mark only some designs draw: black lettering ("Colour
+ * fields", on its white card) or all white ("Sunset"). Not part of
+ * loadAssets: nobody on another design waits for it or loses their DP to it.
+ * The page asks for each once the rest has come.
  */
-export function loadLightMark(): Promise<HTMLImageElement> {
-  return loadImage(DP_MARK_LIGHT_SRC, MARK_TIMEOUT_MS);
+export function loadMark(tone: ExtraTone): Promise<HTMLImageElement> {
+  return loadImage(MARK_SRC[tone], MARK_TIMEOUT_MS);
 }
 
 /** A photo problem, in words for the person who picked it. */
