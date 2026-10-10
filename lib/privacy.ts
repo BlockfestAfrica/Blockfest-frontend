@@ -13,17 +13,23 @@
  * data actually goes, and says plainly which ones we hold ourselves.
  *
  * The badge generator is worth stating for the opposite reason. It takes a
- * photograph and never uploads it: there is no fetch in that feature at all,
- * and the image is composed in the browser. People assume uploading a photo to
- * a website means the website has their photograph, and here it does not.
+ * photograph and never uploads it: the image is composed in the browser.
+ * People assume uploading a photo to a website means the website has their
+ * photograph, and here it does not.
+ *
+ * Since 1.1 the badge generator makes one request: when a badge is first
+ * downloaded, shared or saved, it tells us the role on it and how it left the
+ * page, so the team can count the badges made (app/getdp/lib/count.ts). No
+ * name, photograph or identifier goes with it, and __tests__/unit/privacy.test.ts
+ * holds the feature to that one request and that payload.
  */
 
 import { CONTACT_EMAIL } from "@/lib/constants";
 
-export const PRIVACY_VERSION = "1.0";
+export const PRIVACY_VERSION = "1.1";
 
 /** ISO date. Rendered in the event's own timezone. */
-export const PRIVACY_UPDATED = "2026-09-12";
+export const PRIVACY_UPDATED = "2026-10-10";
 
 export interface PolicySection {
   /** Anchor, so a specific answer can be linked to in a request or complaint. */
@@ -86,15 +92,16 @@ export const privacySurfaces: DataSurface[] = [
   },
   {
     name: "Badge generator",
-    collects: "A photograph, if you choose one.",
+    collects:
+      "A photograph, if you choose one. When you first download, share or save your badge: the role on it (such as attending or speaking) and how you saved or shared it.",
     destination:
-      "Nothing is uploaded. The badge is made in your browser and your photograph never reaches us or anybody else. Closing the tab is all it takes to remove it.",
+      "Your photograph and your name are never uploaded. The badge is made in your browser, and closing the tab is all it takes to remove it. To count the badges made, the page sends us only the role and how you saved or shared it, with no name, photo or identifier. As with every form here, those requests are limited per connection to stop automated abuse.",
     heldByUs: false,
   },
   {
     name: "Analytics",
     collects:
-      "Pages visited, roughly where in the world the visit came from, and which buttons were used.",
+      "Pages visited, roughly where in the world the visit came from, and which buttons were used, including, on the badge generator, the role picked and how the badge was saved or shared.",
     destination:
       "Collected through Sabilytics. Used to understand which pages work, not to identify you.",
     heldByUs: false,

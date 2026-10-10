@@ -40,6 +40,8 @@ import {
 } from "../lib/dp";
 import { drawDP, nameSubstitutions, renderFull, type DPAssets, type DPResult } from "../lib/draw";
 import { FontLoadError, errorDetail } from "../lib/errors";
+import { countDp, type DPChannel } from "../lib/count";
+import { GETDP_EVENTS, track } from "@/lib/sabilytics";
 import { loadDpFaces } from "../lib/faces";
 import type { LetterNote } from "../lib/letters";
 import {
@@ -206,6 +208,10 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const lastDownload = useRef<{ key: string; at: number } | null>(null);
   const lastUrl = useRef<{ url: string; timer: number } | null>(null);
   const downloadedKey = useRef<string | null>(null);
+  /** The DP last counted as generated (its photo and role); see taken(). */
+  const countedDp = useRef<string | null>(null);
+  /** Whether "a DP was made" has been said this visit. */
+  const madeSaid = useRef(false);
   const copiedTimer = useRef<number | undefined>(undefined);
 
   const tidy = tidyName(name);
@@ -511,6 +517,13 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       throw e;
     });
   };
+
+  /* Someone made a DP: a name and a photo, drawn. Said once a visit. */
+  useEffect(() => {
+    if (!ready || madeSaid.current) return;
+    madeSaid.current = true;
+    track(GETDP_EVENTS.made, { role });
+  }, [ready, role]);
 
   /* Drawn ahead once the picture settles, in the type this device shares. */
   useEffect(() => {
@@ -975,8 +988,30 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     startDownload("download");
   };
 
+  /**
+   * A save or share tap. Every tap is told to analytics; the first for a DP
+   * (this photo as this role: fixing a letter or the crop is the same DP) is
+   * the DP generated, told to analytics and counted on the admin overview.
+   * Sent after the action has started, so nothing gets between a tap and the
+   * share list it opens. Role and channel only: never the name or the photo.
+   */
+  const taken = (channel: DPChannel) => {
+    track(GETDP_EVENTS.shareClicked, { role, channel });
+    if (!photo) return;
+    const dp = `${photo.id}|${role}`;
+    if (countedDp.current === dp) return;
+    countedDp.current = dp;
+    track(GETDP_EVENTS.generated, { role, channel });
+    countDp(role, channel);
+  };
+
   const onButton = (id: ButtonId) => {
     if (!ready || busy) return;
+    onButtonAction(id);
+    taken(id);
+  };
+
+  const onButtonAction = (id: ButtonId) => {
     switch (id) {
       case "share":
       case "more":
@@ -1000,6 +1035,11 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       e.preventDefault();
       return;
     }
+    markAction(p);
+    taken(p);
+  };
+
+  const markAction = (p: Platform) => {
     const action = platformAction(p, env, caption, fileName);
     setPressed(p);
     setTip(action.tip);
@@ -1030,6 +1070,11 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     if (!ready || !key || busy) return;
     const action = statusAction(env);
     if (!action) return;
+    statusRun(action);
+    taken("status");
+  };
+
+  const statusRun = (action: NonNullable<ReturnType<typeof statusAction>>) => {
     // The marks' tip is about another app.
     setPressed(null);
     setTip(null);

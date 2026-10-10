@@ -8,10 +8,25 @@ routes", picked by the owner on 9 October 2026; `.interface-design/system.md`
 records what is fixed about it.
 
 The photo never leaves the device: it is read into a canvas in the tab and
-drawn there. The only things this folder loads are the site's own logo
-images, and it sends nothing: `__tests__/unit/privacy.test.ts` fails if a
-request call appears anywhere in it, because the privacy policy says the
-photo is never uploaded.
+drawn there, and neither the photo nor the name is ever sent. The only
+things this folder loads are the site's own fonts and logo images, and it
+sends one thing: when a DP is first downloaded, shared or saved,
+`lib/count.ts` tells `/api/getdp/generated` its role and how it left the
+page, so the admin overview can count the DPs made. `__tests__/unit/privacy.test.ts`
+fails if any other request call appears in this folder, or if that one
+carries anything but the role and the channel, because the privacy policy
+says so (version 1.1).
+
+**Counting.** A DP counts as generated the first time a photo, as a role, is
+downloaded, shared or saved: fixing a letter of the name or the crop is the
+same DP, a new photo or a new role is a new one. Each counted DP is a row in
+`dp_generations` (migration 0072), which the admin overview totals for all
+time, today in Lagos, by role and by channel. Sabilytics gets three events
+from the page (`GETDP_EVENTS` in `lib/sabilytics.ts`): `getdp_dp_made` once a
+visit when a picture is first ready, `getdp_dp_generated` at the same moment
+as the row, and `getdp_share_clicked` on every save or share tap, each with
+the role and the channel. The database count is the one to report: an ad
+blocker stops the Sabilytics events, not the row.
 
 ## Files
 
@@ -175,4 +190,4 @@ a phone held sideways.
 
 **Left for later**: shrinking very large photos while decoding them (a
 48 MP photo is still decoded at full size first), a HEIC decoder for
-Android, a 9:16 picture for TikTok, analytics.
+Android, a 9:16 picture for TikTok.
