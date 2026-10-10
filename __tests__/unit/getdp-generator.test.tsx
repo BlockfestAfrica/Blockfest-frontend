@@ -352,6 +352,29 @@ describe("the Get DP generator", () => {
     expect(markCalls("white")).toBe(1);
   });
 
+  it("never says a version of the mark failed while it is being asked for again", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    loadMark.mockImplementation(async (tone) => {
+      throw new Error(`Timed out loading ${tone}`);
+    });
+    await readyToShare("Download PNG");
+    fireEvent.change(styleSelect(), { target: { value: "sunset" } });
+    expect(await screen.findByRole("alert")).toBeTruthy();
+
+    // Try again on Sunset asks for every version that failed, Colour fields' too...
+    const coming = deferred<unknown>();
+    loadMark.mockImplementation(() => coming.promise);
+    fireEvent.click(button("Try again"));
+    await waitFor(() => expect(markCalls("onLight")).toBe(2));
+    // ...so Colour fields, picked meanwhile, is preparing, not failed.
+    fireEvent.change(styleSelect(), { target: { value: "fields" } });
+    await settle();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(live().textContent).toBe("Preparing your DP…");
+    await act(async () => coming.resolve({ tone: "any" }));
+    await waitFor(() => expect(lastDrawn().style).toBe("fields"));
+  });
+
   it("makes a new file for a new design, and never shares the old one", async () => {
     await readyToShare("Download PNG");
     const before = fullDraws().length;

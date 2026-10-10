@@ -125,12 +125,16 @@ the row.
   a smaller second row, the government under "Endorsed by", and community
   and media partners as one list of logos with no heading.
 - **The days and venues**: `publicDays` on `blockfest2026Lagos` in
-  `lib/events.ts`, drawn as stops on one line; `short` is the venue's name
-  as that line says it. Public days only; the private mixer on the 24th
-  never goes there.
-- **The mark**: the brand kit's official files (10 October), `DP_LOGO_SRC`
-  (white lettering, for the dark designs) and `DP_MARK_LIGHT_SRC` (black
-  lettering, for "Colour fields") in `lib/dp.ts`. The drawing reads each
+  `lib/events.ts`. `short` is the venue as Trade routes and Colour fields
+  say it, as stops on one line (`publicDayLines`); `full` is the venue with
+  its town as Sunset's black band says it (`publicDayBand`, falling back to
+  `short`). Change the two together. Public days only; the private mixer on
+  the 24th never goes there.
+- **The mark**: the brand kit's official files (10 October), trimmed to
+  their artwork, in `lib/dp.ts`: `DP_LOGO_SRC` (white lettering, for Trade
+  routes), `DP_MARK_LIGHT_SRC` (black lettering, for "Colour fields") and
+  `DP_MARK_WHITE_SRC` (all white, for "Sunset"); `STYLE_MARK` in
+  `lib/looks.ts` says which design draws which. The drawing reads each
   file's own proportions.
 - **A design**: `LOOKS` and `drawLookGround` in `lib/looks.ts`; add its id to
   `DP_STYLES` and a name to `STYLE_LABEL`.

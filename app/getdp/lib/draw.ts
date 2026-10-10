@@ -671,34 +671,50 @@ function nameInk(ctx: CanvasRenderingContext2D, lines: string[]) {
   return { top, lead, perSize: top + lead * (lines.length - 1) + inks[inks.length - 1].descent / 100 };
 }
 
-/** The band's calendar: a pink card with two rows of white days. */
+/** The band's calendar, as the sample has it: a white calendar on a pink disc, its days showing the pink. */
 function calendarIcon(ctx: CanvasRenderingContext2D, x: number, mid: number, s: number) {
   ctx.fillStyle = SUN.icon;
-  tracePill(ctx, x, mid - s / 2, s, s, s * 0.2);
+  ctx.beginPath();
+  ctx.arc(x + s / 2, mid, s / 2, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = SUN.band;
-  const d = s * 0.14;
+  const w = s * 0.5;
+  const h = s * 0.44;
+  const left = x + s / 2 - w / 2;
+  const top = mid - h / 2;
+  ctx.fillStyle = SUN.bandInk;
+  tracePill(ctx, left, top, w, h, s * 0.06);
+  ctx.fill();
+  // Three by two days under the calendar's top bar.
+  ctx.fillStyle = SUN.icon;
+  const cell = w * 0.2;
+  const gapX = (w - cell * 3) / 4;
+  const rowsTop = top + h * 0.34;
+  const gapY = (h * 0.66 - cell * 2) / 3;
   for (let r = 0; r < 2; r++) {
     for (let c = 0; c < 3; c++) {
-      ctx.fillRect(x + s * 0.2 + c * s * 0.23, mid - s * 0.06 + r * s * 0.23, d, d);
+      ctx.fillRect(left + gapX + c * (cell + gapX), rowsTop + gapY + r * (cell + gapY), cell, cell);
     }
   }
 }
 
-/** The band's place marker: a pink pin with a dark eye. */
+/** The band's place marker, as the sample has it: a white pin on a pink disc, its eye showing the pink. */
 function pinIcon(ctx: CanvasRenderingContext2D, x: number, mid: number, s: number) {
   const cx = x + s / 2;
-  const cy = mid - s * 0.12;
-  const r = s * 0.4;
   ctx.fillStyle = SUN.icon;
   ctx.beginPath();
-  ctx.arc(cx, cy, r, Math.PI * 0.82, Math.PI * 2.18);
-  ctx.lineTo(cx, mid + s * 0.5);
+  ctx.arc(cx, mid, s / 2, 0, Math.PI * 2);
+  ctx.fill();
+  const r = s * 0.17;
+  const cy = mid - s * 0.07;
+  ctx.fillStyle = SUN.bandInk;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI * 0.8, Math.PI * 2.2);
+  ctx.lineTo(cx, mid + s * 0.26);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = SUN.band;
+  ctx.fillStyle = SUN.icon;
   ctx.beginPath();
-  ctx.arc(cx, cy, r * 0.42, 0, Math.PI * 2);
+  ctx.arc(cx, cy, r * 0.45, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -776,7 +792,7 @@ function drawSunset(
     let rangeSize = 46;
     let stopSize = 36;
     const measure = () => {
-      const icon = rangeSize * 0.8;
+      const icon = rangeSize * 0.92;
       const pad = rangeSize * 0.32;
       ctx.font = text(rangeSize);
       const rangeW = ctx.measureText(band.range).width;
