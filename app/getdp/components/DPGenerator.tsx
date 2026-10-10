@@ -420,23 +420,30 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     };
   }, [assets, options, drawAttempt]);
 
-  /* A logo that comes late makes a new picture: the files drawn without it are let go. */
-  const logoCount = assets ? Object.keys(assets.logos).length : 0;
-  const key = photo && transform
-    ? `${role}|${drawableName(name)}|${photo.id}|${transform.zoom}|${transform.offsetX}|${transform.offsetY}|${logoCount}`
+  /** The picture the person made: their role, name, photo and its place. */
+  const pictureKey = photo && transform
+    ? `${role}|${drawableName(name)}|${photo.id}|${transform.zoom}|${transform.offsetX}|${transform.offsetY}`
     : null;
-
-  /*
-   * A new picture: an old notice ("Downloading…") stops being true, and the
-   * files drawn for other pictures are let go.
+  /**
+   * What a file is drawn from: that picture, and the logos in hand. A logo
+   * that comes late makes new files, but not a new picture: what the page
+   * said about it stays true, and the press-and-hold picture stays put.
    */
+  const logoCount = assets ? Object.keys(assets.logos).length : 0;
+  const key = pictureKey && `${pictureKey}|${logoCount}`;
+
+  /* Files drawn from anything else are let go. */
   useEffect(() => {
     latestKey.current = key;
-    setNotice(null);
     for (const [id, entry] of renders.current) {
       if (entry.key !== key) renders.current.delete(id);
     }
   }, [key]);
+
+  /* A new picture: an old notice ("Downloading…") stops being true. */
+  useEffect(() => {
+    setNotice(null);
+  }, [pictureKey]);
 
   useEffect(() => {
     transformRef.current = transform;
@@ -483,6 +490,27 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     },
     [assets, options],
   );
+
+  /* What renderLatest reads: the newest key and ensure, for work begun on an older one. */
+  const latest = useRef({ pictureKey, key, ensure });
+  useEffect(() => {
+    latest.current = { pictureKey, key, ensure };
+  });
+
+  /**
+   * The person's picture `pk` as `type`, with the logos in hand. A late logo
+   * landing while it is drawn makes that file stale though the person
+   * changed nothing, so it is drawn again with the logo (at most twice); a
+   * picture the person changed rejects as stale.
+   */
+  const renderLatest = (pk: string, type: FileType, again = 2): Promise<Blob> => {
+    const now = latest.current;
+    if (!now.key || now.pictureKey !== pk) return Promise.reject(new Error(STALE));
+    return now.ensure(now.key, type).catch((e: unknown) => {
+      if (isStale(e) && again > 0 && latest.current.pictureKey === pk) return renderLatest(pk, type, again - 1);
+      throw e;
+    });
+  };
 
   /* Drawn ahead once the picture settles, in the type this device shares. */
   useEffect(() => {
@@ -920,18 +948,18 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
 
   /** The PNG, in the same tap when it is drawn already. */
   const startDownload = (by: Busy["by"]) => {
-    if (!key) return;
-    const k = key;
-    const cached = renders.current.get(`${k}|image/png`)?.blob;
+    if (!key || !pictureKey) return;
+    const pk = pictureKey;
+    const cached = renders.current.get(`${key}|image/png`)?.blob;
     if (cached) {
-      saveFile(cached, k);
+      saveFile(cached, pk);
       return;
     }
     setBusy({ kind: "download", by });
-    // A picture changed while it was drawn rejects as stale and saves nothing.
-    ensure(k, "image/png")
+    // A picture the person changed while it was drawn rejects as stale and saves nothing.
+    renderLatest(pk, "image/png")
       .then(
-        (blob) => saveFile(blob, k),
+        (blob) => saveFile(blob, pk),
         (e) => {
           if (!isStale(e)) setNotice(COPY.notSaved);
         },
@@ -940,10 +968,10 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   };
 
   const download = () => {
-    if (!ready || !key) return;
+    if (!ready || !pictureKey) return;
     const now = Date.now();
-    if (lastDownload.current?.key === key && now - lastDownload.current.at < DOWNLOAD_GUARD_MS) return;
-    lastDownload.current = { key, at: now };
+    if (lastDownload.current?.key === pictureKey && now - lastDownload.current.at < DOWNLOAD_GUARD_MS) return;
+    lastDownload.current = { key: pictureKey, at: now };
     startDownload("download");
   };
 
@@ -983,7 +1011,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       case "save":
         // A link opens by itself: a real link, so no popup blocker applies.
         void copyCaptionQuietly();
-        if (downloadedKey.current !== key) startDownload(p);
+        if (downloadedKey.current !== pictureKey) startDownload(p);
         return;
       case "hold":
         setHold({ platform: p, copied: true });
@@ -1011,7 +1039,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         return;
       case "save":
         void copyCaptionQuietly();
-        if (downloadedKey.current !== key) startDownload("status");
+        if (downloadedKey.current !== pictureKey) startDownload("status");
         return;
       case "hold":
         setHold({ platform: "status", copied: true });
@@ -1039,10 +1067,8 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     );
   };
 
-  const holdBlob = useCallback(
-    () => (key ? ensure(key, "image/png") : Promise.reject(new Error("Not ready"))),
-    [ensure, key],
-  );
+  const holdBlob = () =>
+    pictureKey ? renderLatest(pictureKey, "image/png") : Promise.reject(new Error("Not ready"));
 
   /** Why saving is shut, in words; null once it is open. */
   const needs = ((): string | null => {
@@ -1353,7 +1379,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
               ? COPY.holdPlatform(PLATFORM_NAME[hold.platform], hold.copied)
               : null
         }
-        blobKey={key}
+        blobKey={pictureKey}
         getBlob={holdBlob}
       />
     </div>

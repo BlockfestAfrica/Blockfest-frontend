@@ -171,6 +171,52 @@ describe("loading the faces", () => {
     expect(document.fonts.load).not.toHaveBeenCalled();
   });
 
+  it("shares one try between draws that ask while it runs", async () => {
+    holdPath = GOTHAM;
+    const a = loadDpFaces();
+    const b = loadDpFaces();
+    expect(b).toBe(a);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(loadDpFaces()).toBe(a);
+    held!();
+    await Promise.all([a, b]);
+    expect(asked).toEqual([LATIN_EXT, LATIN, GOTHAM]);
+  });
+
+  it("takes a slow file that lands during the next try, rather than waiting on the try's own copy", async () => {
+    vi.useFakeTimers();
+    holdPath = GOTHAM;
+    answers.set(GOTHAM, ["ok", "stall"]);
+    const first = loadDpFaces().then(() => "loaded", (e: Error) => e.message);
+    await vi.advanceTimersByTimeAsync(FONT_TIMEOUT_MS);
+    expect(await first).toBe("DP fonts timed out");
+
+    // The next try asks again (the first copy is a whole try old), and that copy stalls...
+    let second = "";
+    void loadDpFaces().then(() => (second = "loaded"), (e: Error) => (second = e.message));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(asked.filter((a) => a.startsWith(GOTHAM))).toEqual([GOTHAM, `${GOTHAM}?dp=1`]);
+    // ...but the first copy lands: that is Gotham, and the try is done.
+    held!();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(second).toBe("loaded");
+    expect(added.filter((a) => a.family === DP_FAMILY.text)).toHaveLength(1);
+  });
+
+  it("waits on a file still coming when another fails at once, instead of asking for it twice", async () => {
+    holdPath = GOTHAM;
+    answers.set(LATIN, ["fail", "ok"]);
+    await expect(loadDpFaces()).rejects.toThrow("NetworkError");
+    const again = loadDpFaces();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(asked).toEqual([LATIN_EXT, LATIN, GOTHAM, `${LATIN}?dp=1`]);
+    held!();
+    await again;
+    expect(added.map((a) => a.family).sort()).toEqual([DP_FAMILY.display, DP_FAMILY.display, DP_FAMILY.text]);
+  });
+
   it("tries again for real after a file fails, asking only for what did not load, under a new URL", async () => {
     answers.set(LATIN, ["fail", "ok"]);
     const first = await loadDpFaces().catch((e: Error) => e);

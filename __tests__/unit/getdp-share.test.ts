@@ -242,7 +242,19 @@ describe("the platform marks", () => {
   });
 
   it("never puts the picture in a link, and never claims to post or upload for anybody", () => {
-    const everyEnv = [IPHONE, ANDROID, FIREFOX_ANDROID, IPHONE_NO_SHARE, IG_ANDROID, IG_IOS, TIKTOK_IOS, DESKTOP, DESKTOP_SHARE];
+    const everyEnv = [
+      IPHONE,
+      ANDROID,
+      ANDROID_TEXT,
+      FIREFOX_ANDROID,
+      IPHONE_NO_SHARE,
+      IG_ANDROID,
+      IG_ANDROID_SHARE,
+      IG_IOS,
+      TIKTOK_IOS,
+      DESKTOP,
+      DESKTOP_SHARE,
+    ];
     for (const e of everyEnv) {
       for (const p of PLATFORMS) {
         const a = platformAction(p, e, CAPTION, FILE);
@@ -329,6 +341,13 @@ describe("the platform marks", () => {
     expect(platformAction("linkedin", ANDROID_TEXT, CAPTION, FILE).tip).toMatch(/paste your caption/);
     expect(platformAction("x", IPHONE, CAPTION, FILE).tip).toBe("Pick X. If your caption isn't in the post, paste it.");
     expect(COPY.marksDo("sheet", true)).toBe("Each opens your phone's share list with your DP: pick the app there.");
+    // The line under the marks no longer says to paste, so every tap that copies says it in its tip.
+    for (const p of PLATFORMS) {
+      if (copiesCaption(p, ANDROID_TEXT)) expect(platformAction(p, ANDROID_TEXT, CAPTION, FILE).tip).toMatch(/paste your caption/);
+    }
+    expect(platformAction("tiktok", ANDROID_TEXT, CAPTION, FILE).tip).toBe(
+      "Pick TikTok, then paste your caption. Not in the list? Use Download PNG, then post it from TikTok with +.",
+    );
   });
 
   it("keeps one definition of the X link", () => {

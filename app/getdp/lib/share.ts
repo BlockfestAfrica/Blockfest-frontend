@@ -266,6 +266,9 @@ const TIPS_SHEET: Record<Platform, string> = {
 };
 const TIKTOK_SHEET_IOS = "Pick TikTok. Not in the list? Choose Save Image, then post it from TikTok with +.";
 const TIKTOK_SHEET_ANDROID = "Pick TikTok. Not in the list? Use Download PNG, then post it from TikTok with +.";
+/** Where the line under the marks no longer says to paste: TikTok drops the caption, so its tip does. */
+const TIKTOK_SHEET_CAPTION =
+  "Pick TikTok, then paste your caption. Not in the list? Use Download PNG, then post it from TikTok with +.";
 
 const TIPS_DOWNLOAD: Record<Platform, string> = {
   x: "Attach the DP you just saved, then post.",
@@ -315,7 +318,9 @@ export function platformAction(
           p === "tiktok"
             ? env.ios
               ? TIKTOK_SHEET_IOS
-              : TIKTOK_SHEET_ANDROID
+              : env.captionTravels
+                ? TIKTOK_SHEET_CAPTION
+                : TIKTOK_SHEET_ANDROID
             : ((env.captionTravels ? TIPS_SHEET_CAPTION[p] : undefined) ?? TIPS_SHEET[p]),
       };
     case "download":

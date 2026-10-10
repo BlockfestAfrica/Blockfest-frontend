@@ -104,23 +104,68 @@ export function faceSources(
   return found;
 }
 
-/** Each file that has loaded, by URL: a later try does not ask for it again. */
-const loaded = new Map<string, FontFace>();
+/**
+ * Each file's state, by URL: its face once any copy of it has loaded, and
+ * the copies still on their way. A copy is the file asked for once; a
+ * FontFace load cannot be cancelled, so a copy that outlived its try is
+ * still waited on by the next.
+ */
+interface FileState {
+  face: FontFace | null;
+  copies: { started: number; done: Promise<FontFace> }[];
+  /** How many copies have been asked for: only the first goes by the plain URL. */
+  asked: number;
+}
+const files = new Map<string, FileState>();
 /** The try under way, shared by every draw that asks meanwhile. */
 let current: Promise<void> | null = null;
 /** How many tries have started: a retry's URL carries it. */
 let tries = 0;
 
+/** The first of these loads to succeed; fails only when every one has. */
+function firstLoaded(loads: Promise<FontFace>[]): Promise<FontFace> {
+  return new Promise((resolve, reject) => {
+    let left = loads.length;
+    for (const load of loads) {
+      load.then(resolve, (e: unknown) => {
+        left -= 1;
+        if (left === 0) reject(e);
+      });
+    }
+  });
+}
+
 async function loadSource(source: FaceSource, attempt: number): Promise<void> {
-  if (loaded.has(source.url)) return;
-  // A retry asks for the file under a new URL, so it can never wait on the
-  // request that stalled (a face on the same URL joins it).
-  const url = attempt === 0 ? source.url : `${source.url}${source.url.includes("?") ? "&" : "?"}dp=${attempt}`;
-  const face = await new FontFace(source.family, `url("${url}")`, source.descriptors).load();
-  // A file that came after its try gave up still counts, but only once.
-  if (loaded.has(source.url)) return;
-  document.fonts.add(face);
-  loaded.set(source.url, face);
+  let state = files.get(source.url);
+  if (!state) {
+    state = { face: null, copies: [], asked: 0 };
+    files.set(source.url, state);
+  }
+  if (state.face) return;
+  const file = state;
+  // A copy younger than a try may yet come: wait on it rather than ask again.
+  // Otherwise ask afresh, under a new URL after the first, so the request
+  // cannot be joined to one that stalled.
+  const now = Date.now();
+  if (!file.copies.some((c) => now - c.started < FONT_TIMEOUT_MS)) {
+    const url =
+      file.asked === 0 ? source.url : `${source.url}${source.url.includes("?") ? "&" : "?"}dp=${attempt}`;
+    file.asked += 1;
+    const copy = { started: now, done: new FontFace(source.family, `url("${url}")`, source.descriptors).load() };
+    file.copies.push(copy);
+    const gone = () => {
+      file.copies = file.copies.filter((c) => c !== copy);
+    };
+    copy.done.then((face) => {
+      gone();
+      // Any copy will do, once: the first to load is the face.
+      if (!file.face) {
+        document.fonts.add(face);
+        file.face = face;
+      }
+    }, gone);
+  }
+  await firstLoaded(file.copies.map((c) => c.done));
 }
 
 /**
@@ -151,7 +196,7 @@ export function loadDpFaces(): Promise<void> {
 
 /** For tests: forget every face and try, as a fresh page would. */
 export function resetDpFaces(): void {
-  loaded.clear();
+  files.clear();
   current = null;
   tries = 0;
 }
