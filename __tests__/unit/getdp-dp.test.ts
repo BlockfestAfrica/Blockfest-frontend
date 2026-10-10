@@ -10,6 +10,7 @@ import {
   FOOTER,
   NAME_MAX,
   NAME_MAX_W,
+  SUNSET,
   chooseNameLayout,
   clampTransform,
   cropCentre,
@@ -20,9 +21,11 @@ import {
   insideCircleCrop,
   layoutArt,
   layoutFooter,
+  layoutSunset,
   nameProblem,
   nudgeTransform,
   photoRect,
+  publicDayBand,
   publicDayLines,
   publicDaysRange,
   roleCopy,
@@ -169,6 +172,17 @@ describe("the public days", () => {
     expect(blockfest2026Lagos.publicDays?.map((d) => d.date)).not.toContain("2026-10-24");
     // The site's own three-day span is left as it was, on purpose.
     expect(blockfest2026Lagos.date.end).toBe("2026-10-24T22:00:00+01:00");
+  });
+
+  it("are said in full in Sunset's black band, as the design team's sample says them", () => {
+    expect(publicDayBand()).toEqual({
+      range: "October 22–23",
+      stops: ["Oct 22 – Ibis Hotel, Lekki, Lagos", "Oct 23 – National Theatre, Iganmu, Lagos"],
+    });
+    // A day without its full line keeps its short one.
+    expect(publicDayBand([{ date: "2026-10-31", venue: "A", area: "B", short: "Hall A" }]).stops).toEqual([
+      "Oct 31 – Hall A",
+    ]);
   });
 
   it("reads a range across a month end", () => {
@@ -507,6 +521,36 @@ describe("the footer, from lib/partners-2026", () => {
       l.logo.endsWith(".svg") ? "data:svg" : l.logo,
     );
     expect(resolved.sponsors.find((s) => s.name === "Cake Wallet")?.src).toBe("data:svg");
+  });
+});
+
+describe("Sunset, the design team's sample fitted to the square", () => {
+  const tiers = footerTiers({ headline, sponsors, partners });
+  const footer = layoutFooter(tiers, measureLabel);
+  const L = layoutSunset(footer.top, 960 / 235);
+
+  it("stacks mark, photo, role, name and the days' band above the partners, nothing overlapping", () => {
+    expect(L.logo).toMatchObject({ x: SUNSET.side, y: SUNSET.logoTop, w: SUNSET.logoW });
+    expect(L.hub.y - L.outerR).toBeCloseTo(L.logo.y + L.logo.h + SUNSET.ringGap, 6);
+    expect(L.hub.y + L.outerR + SUNSET.textGap).toBeCloseTo(L.roleTop, 6);
+    expect(L.roleTop + SUNSET.roleLine + SUNSET.roleGap).toBe(L.nameTop);
+    expect(L.nameBottom - L.nameTop).toBe(SUNSET.nameRoom);
+    expect(L.bandTop - L.nameBottom).toBe(SUNSET.bandGap);
+    expect([L.bandTop, L.bandBottom]).toEqual([footer.top - SUNSET.band, footer.top]);
+    expect(L.photoR).toBe(L.outerR - SUNSET.ring);
+  });
+
+  it("keeps the photo large with today's partners", () => {
+    expect(L.photoR).toBeGreaterThan(360);
+    expect(L.hub.x).toBe(DP_SIZE / 2);
+  });
+
+  it("sets the name larger than the other designs, as the sample does, and still in two lines when it must", () => {
+    expect(chooseNameLayout("Ada Obi", ruler).size).toBe(196);
+    expect(chooseNameLayout("Ada Obi", ruler, SUNSET.nameW, () => Infinity, SUNSET.name).size).toBe(SUNSET.name.one);
+    const long = chooseNameLayout("Chimamanda Ngozi Adichie-Okonkwo", ruler, SUNSET.nameW, () => Infinity, SUNSET.name);
+    expect(long.lines.length).toBe(2);
+    expect(long.size).toBeLessThanOrEqual(SUNSET.name.two);
   });
 });
 

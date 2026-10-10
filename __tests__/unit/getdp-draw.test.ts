@@ -98,16 +98,25 @@ describe("drawing the DP", () => {
   it("keeps the photo and the name band where they are whichever design is picked, and uses the right mark", async () => {
     const onDark = { width: 1536, height: 420, tone: "dark" } as unknown as HTMLCanvasElement;
     const onLight = { width: 1536, height: 420, tone: "light" } as unknown as HTMLCanvasElement;
-    const kit = { ...assets, logo: onDark, marks: { onLight } };
+    const white = { width: 960, height: 235, tone: "white" } as unknown as HTMLCanvasElement;
+    const kit = { ...assets, logo: onDark, marks: { onLight, white } };
     const results = [];
-    for (const style of ["routes", "scallop", "fields"] as const) {
+    for (const style of ["routes", "fields"] as const) {
       drawnImages = [];
       results.push(await drawDP(fakeContext({ width: 1080, height: 1080 }), { ...opts, style }, kit));
       // The mark is the first bitmap drawn: black lettering only on the white ground.
       expect(drawnImages[0], style).toBe(style === "fields" ? onLight : onDark);
     }
     expect(results[1]).toEqual(results[0]);
-    expect(results[2]).toEqual(results[0]);
+    // Sunset has a layout of its own (the team's sample), with the all-white mark.
+    drawnImages = [];
+    const sunset = await drawDP(fakeContext({ width: 1080, height: 1080 }), { ...opts, style: "sunset" }, kit);
+    expect(drawnImages[0]).toBe(white);
+    expect(sunset.hub.x).toBe(DP_SIZE / 2);
+    expect(sunset.zone.top).toBeGreaterThan(sunset.hub.y + sunset.photoR);
+    await expect(
+      drawDP(fakeContext({ width: 1080, height: 1080 }), { ...opts, style: "sunset" }, { ...kit, marks: { onLight } }),
+    ).rejects.toThrow("The sunset design needs its mark");
     // Colour fields is never drawn with white lettering on its white card.
     await expect(drawDP(fakeContext({ width: 1080, height: 1080 }), { ...opts, style: "fields" }, { ...kit, marks: {} })).rejects.toThrow(
       "The fields design needs its mark",

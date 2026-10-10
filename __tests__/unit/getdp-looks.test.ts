@@ -1,11 +1,11 @@
 /**
  * The DP's looks (app/getdp/lib/looks.ts): the design people were already
- * posting stays first and the default; the two the owner picked from the
- * 2026 brand kit follow; every role's pill stays readable on each.
+ * posting stays first and the default; "Sunset" (the design team's own
+ * sample) and "Colour fields" follow; every role stays readable on each.
  */
 import { describe, expect, it } from "vitest";
 import { DP_ROLES } from "@/app/getdp/lib/dp";
-import { DP_STYLES, LOOKS, STYLE_LABEL } from "@/app/getdp/lib/looks";
+import { DP_STYLES, EXTRA_TONES, LOOKS, STYLE_LABEL, STYLE_MARK, SUN } from "@/app/getdp/lib/looks";
 
 /** WCAG relative luminance and contrast, for #rrggbb. */
 function luminance(hex: string): number {
@@ -19,15 +19,20 @@ const contrast = (a: string, b: string) => {
 };
 
 describe("the looks", () => {
-  it("offers the design people already post first, then Wave crown and Colour fields", () => {
-    expect(DP_STYLES).toEqual(["routes", "scallop", "fields"]);
-    expect(DP_STYLES.map((s) => STYLE_LABEL[s])).toEqual(["Trade routes", "Wave crown", "Colour fields"]);
-    expect(Object.keys(LOOKS).sort()).toEqual(["fields", "scallop"]);
+  it("offers the design people already post first, then Sunset and Colour fields", () => {
+    expect(DP_STYLES).toEqual(["routes", "sunset", "fields"]);
+    expect(DP_STYLES.map((s) => STYLE_LABEL[s])).toEqual(["Trade routes", "Sunset", "Colour fields"]);
+    expect(Object.keys(LOOKS)).toEqual(["fields"]);
   });
 
-  it("puts black lettering only on the white ground", () => {
-    expect(LOOKS.scallop.mark).toBe("onDark");
+  it("gives each design its own version of the mark: black lettering only on white, all white on the orange", () => {
+    expect(STYLE_MARK).toEqual({ routes: "onDark", sunset: "white", fields: "onLight" });
     expect(LOOKS.fields.mark).toBe("onLight");
+    expect(EXTRA_TONES).toEqual(["onLight", "white"]);
+  });
+
+  it("keeps Sunset's black role line readable on its whole gradient, as the team's sample sets it", () => {
+    for (const ground of [SUN.top, SUN.bottom]) expect(contrast(SUN.role, ground), ground).toBeGreaterThanOrEqual(4.5);
   });
 
   it("keeps every role's pill readable: at least 3:1, the large-text floor", () => {

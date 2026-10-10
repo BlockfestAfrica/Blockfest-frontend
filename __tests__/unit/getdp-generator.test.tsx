@@ -70,8 +70,9 @@ vi.mock("@/app/getdp/lib/draw", () => ({
 const readPhoto = vi.fn();
 const loadAssets = vi.fn<(tiers: unknown) => Promise<unknown>>();
 const retryLogos = vi.fn<(missing: { name: string }[], attempt: number) => Promise<Record<string, unknown>>>();
-/** Colour fields' mark with black lettering, loaded apart (lib/load.ts). */
-const loadLightMark = vi.fn<() => Promise<unknown>>();
+/** The versions of the mark only some designs draw, loaded apart (lib/load.ts). */
+const loadMark = vi.fn<(tone: string) => Promise<unknown>>();
+const markCalls = (tone: string) => loadMark.mock.calls.filter(([t]) => t === tone).length;
 vi.mock("@/app/getdp/lib/load", async () => {
   class PhotoError extends Error {}
   return {
@@ -80,7 +81,7 @@ vi.mock("@/app/getdp/lib/load", async () => {
     loadAssets: (tiers: unknown) => loadAssets(tiers),
     readPhoto: (file: File) => readPhoto(file),
     retryLogos: (missing: { name: string }[], attempt: number) => retryLogos(missing, attempt),
-    loadLightMark: () => loadLightMark(),
+    loadMark: (tone: string) => loadMark(tone),
   };
 });
 
@@ -176,8 +177,8 @@ beforeEach(() => {
   loadAssets.mockImplementation(async (tiers) => ({ logo: {}, tiers, logos: {}, missing: [] }));
   retryLogos.mockReset();
   retryLogos.mockResolvedValue({});
-  loadLightMark.mockReset();
-  loadLightMark.mockResolvedValue({ light: true });
+  loadMark.mockReset();
+  loadMark.mockImplementation(async (tone) => ({ tone }));
   loadDpFaces.mockClear();
   countDp.mockClear();
   track.mockClear();
@@ -301,22 +302,26 @@ describe("the Get DP generator", () => {
   it("starts on the design people already post, and redraws in the one picked", async () => {
     await mount();
     expect(styleSelect().value).toBe("routes");
-    expect([...styleSelect().options].map((o) => o.textContent)).toEqual(["Trade routes", "Wave crown", "Colour fields"]);
+    expect([...styleSelect().options].map((o) => o.textContent)).toEqual(["Trade routes", "Sunset", "Colour fields"]);
     expect(lastDrawn().style).toBe("routes");
-    fireEvent.change(styleSelect(), { target: { value: "scallop" } });
-    await waitFor(() => expect(lastDrawn().style).toBe("scallop"));
+    fireEvent.change(styleSelect(), { target: { value: "sunset" } });
+    await waitFor(() => expect(lastDrawn().style).toBe("sunset"));
     fireEvent.change(styleSelect(), { target: { value: "fields" } });
     await waitFor(() => expect(lastDrawn().style).toBe("fields"));
   });
 
-  it("waits for Colour fields' own mark only when it is picked, and says so only there when it fails", async () => {
+  it("waits for a design's own mark only when it is picked, and says so only there when it fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
-    loadLightMark.mockRejectedValueOnce(new Error("Timed out loading /images/getdp/2026/mark-on-light.png"));
+    loadMark.mockImplementation(async (tone) => {
+      if (tone === "onLight") throw new Error("Timed out loading /images/getdp/2026/mark-on-light.png");
+      return { tone };
+    });
     await readyToShare("Download PNG");
     // The default design never waits for it, and its failure is not said there.
     expect(download().disabled).toBe(false);
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(loadLightMark).toHaveBeenCalledTimes(1);
+    expect(markCalls("onLight")).toBe(1);
+    expect(markCalls("white")).toBe(1);
 
     fireEvent.change(styleSelect(), { target: { value: "fields" } });
     expect((await screen.findByRole("alert")).textContent).toBe(
@@ -326,20 +331,25 @@ describe("the Get DP generator", () => {
     expect(lastDrawn().style).toBe("routes");
 
     const later = deferred<unknown>();
-    loadLightMark.mockReturnValueOnce(later.promise);
+    loadMark.mockImplementation((tone) => (tone === "onLight" ? later.promise : Promise.resolve({ tone })));
     fireEvent.click(button("Try again"));
-    await waitFor(() => expect(loadLightMark).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(markCalls("onLight")).toBe(2));
     expect(screen.queryByRole("alert")).toBeNull();
     expect(live().textContent).toBe("Preparing your DP…");
-    await act(async () => later.resolve({ light: true }));
+    await act(async () => later.resolve({ tone: "onLight" }));
     await waitFor(() => expect(lastDrawn().style).toBe("fields"));
     await waitFor(() => expect(download().disabled).toBe(false));
-    expect(draws.filter((d) => !d.full).at(-1)!.assets).toMatchObject({ marks: { onLight: { light: true } } });
+    expect(draws.filter((d) => !d.full).at(-1)!.assets).toMatchObject({ marks: { onLight: { tone: "onLight" } } });
 
     // Back to the default: no wait, and the light mark is not asked for again.
     fireEvent.change(styleSelect(), { target: { value: "routes" } });
     await waitFor(() => expect(lastDrawn().style).toBe("routes"));
-    expect(loadLightMark).toHaveBeenCalledTimes(2);
+    expect(markCalls("onLight")).toBe(2);
+    // Sunset's own mark came the first time, and is never asked for again.
+    fireEvent.change(styleSelect(), { target: { value: "sunset" } });
+    await waitFor(() => expect(lastDrawn().style).toBe("sunset"));
+    expect(draws.filter((d) => !d.full).at(-1)!.assets).toMatchObject({ marks: { white: { tone: "white" } } });
+    expect(markCalls("white")).toBe(1);
   });
 
   it("makes a new file for a new design, and never shares the old one", async () => {

@@ -8,12 +8,19 @@ downloads fail).
 
 **Designs** (`lib/looks.ts`). "Trade routes" is concept C, picked by the
 owner on 9 October 2026, and stays the default: people were already posting
-it. "Wave crown" and "Colour fields" come from the 2026 brand kit the design
-team shared on 10 October (the four colours, the wave pattern, the colour
-fields, the mark on a card); the owner picked them from three to offer as
-choices. Every design shares one layout (`layoutArt`), so the photo frame,
-the name's sizing, the days and the partners' band are the same in each, and
-only the ground, the decoration and the colours change.
+it. "Colour fields" comes from the 2026 brand kit the design team shared on
+10 October (the kit's three great circles on white, the mark on a card) and
+shares concept C's layout (`layoutArt`). "Sunset" is the design team's own
+sample for the DP, fitted to the square on a layout of its own
+(`layoutSunset`): their orange gradient with the kit's tile pattern laid on
+it in a lighter tone of itself, the all-white mark top left with "Buidl
+Bridge Become" top right, the photo in a soft ring, the role in black and the
+name in white, and the days in a black band. It replaced "Wave crown" the
+same day ("we don't apply this pattern this way", the team). Every design
+keeps the partners' band at the foot; each draws its own version of the
+mark (`STYLE_MARK`), and the page brings the two that only some designs draw
+apart from the rest (`loadMark`), so nobody waits for one their design does
+not use.
 `.interface-design/system.md` records what is fixed about concept C.
 
 The photo never leaves the device: it is read into a canvas in the tab and
