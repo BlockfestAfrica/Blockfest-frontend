@@ -143,7 +143,7 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
 
           {campaign.sponsorLogo && (
             <span className="flex flex-col items-end gap-1.5">
-              <span className="text-xs text-ink-4">Headline sponsor</span>
+              <span className="text-xs text-ink-4">{campaign.sponsorLabel}</span>
               <span className="inline-flex items-center rounded-md bg-white px-3 py-1.5">
                 <Image
                   src={campaign.sponsorLogo}

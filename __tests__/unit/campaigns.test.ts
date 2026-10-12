@@ -118,6 +118,9 @@ describe("the campaign registry", () => {
     expect(rovv.startsAt).toBe(ROVV.opensAt);
     expect(rovv.endsAt).toBe(ROVV.closesAt);
     expect(rovv.sponsorLogo).toBe("/2026/logos/rovv.png");
+    // ROVV is the mobility sponsor, not the headline one: the card says so.
+    expect(rovv.sponsorLabel).toBe("Mobility sponsor");
+    expect(campaignBySlug("monica-money-story")!.sponsorLabel).toBe("Headline sponsor");
   });
 
   it("returns undefined for a slug that does not exist", () => {
