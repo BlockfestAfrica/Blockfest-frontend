@@ -163,3 +163,52 @@ describe("the morning list", () => {
     expect(texts(facts({ challenges: [W3, W4] }), "2026-10-08T08:00:00+01:00").join(" ")).not.toContain("still a draft");
   });
 });
+
+/*
+ * Rovv's lines (lib/rovv.ts): entries left waiting while the campaign runs,
+ * and on the Monday after the close, what stands between now and the 4 PM
+ * announcement. Real entries only; tests never reach these counts.
+ */
+describe("the morning list, for ROVV", () => {
+  const quiet: DueFacts = facts({ challenges: [], reminders: {} });
+  const rovv = (r: Partial<NonNullable<DueFacts["rovv"]>>) =>
+    ({ ...quiet, rovv: { pending: 0, pendingOverADay: 0, winners: 0, notified: 0, needCode: 0, ...r } }) as DueFacts;
+
+  it("asks for the referral file every day entries are open, names entries waiting over a day, and says nothing before", () => {
+    expect(texts(rovv({ pendingOverADay: 3 }), "2026-10-15T08:00:00+01:00")).toEqual([
+      "ROVV: send ROVV today's referral check file, and rule out what they cannot confirm.",
+      "3 ROVV entries have waited over a day for review.",
+    ]);
+    expect(texts(rovv({ pendingOverADay: 3 }), "2026-10-12T08:00:00+01:00")).toEqual([]);
+  });
+
+  it("on the last day, says to have the codes ready", () => {
+    expect(texts(rovv({}), "2026-10-18T08:00:00+01:00")[0]).toBe(
+      "ROVV closes tonight at 11:59 PM, and winners are due by 4 PM on Monday 19 October: have the 20 BUIDL PASS codes ready.",
+    );
+  });
+
+  it("on the Monday morning, says what is left before the 4 PM announcement", () => {
+    expect(texts(rovv({ pending: 12, winners: 5, needCode: 5 }), "2026-10-19T08:00:00+01:00")).toEqual([
+      "ROVV: send ROVV the final referral check file, and rule out what they cannot confirm, before picking winners.",
+      "ROVV winners are due by 4 PM on Monday 19 October: 12 entries still to review, 5 of 20 winners picked, 5 picked without a ticket code, 0 emailed.",
+    ]);
+  });
+
+  it("says it is late once 4 PM on the Monday has passed, and keeps saying so until the event", () => {
+    expect(texts(rovv({ winners: 20, notified: 12 }), "2026-10-20T08:00:00+01:00")).toEqual([
+      "ROVV winners were due by 4 PM on Monday 19 October: 20 of 20 winners picked, 12 emailed.",
+    ]);
+    expect(texts(rovv({ winners: 20, notified: 12 }), "2026-10-23T08:00:00+01:00")).toEqual([]);
+  });
+
+  it("goes quiet once every picked winner is emailed and nothing waits, even short of twenty", () => {
+    expect(texts(rovv({ winners: 20, notified: 20 }), "2026-10-19T08:00:00+01:00")).toEqual([]);
+    expect(texts(rovv({ winners: 14, notified: 14 }), "2026-10-19T17:00:00+01:00")).toEqual([]);
+  });
+
+  it("links each line to the ROVV console", () => {
+    const items = dueItems(rovv({ pending: 1 }), at("2026-10-19T08:00:00+01:00"));
+    expect(items.map((i) => i.href)).toEqual(["/admin/rovv#winners", "/admin/rovv#winners"]);
+  });
+});

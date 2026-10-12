@@ -53,7 +53,9 @@ describe("the privacy notice", () => {
   it("says exactly what ROVV receives, and the form says the same", () => {
     const sharing = rovvPrivacySections.find((s) => s.id === "sharing")!.paragraphs.join(" ");
     expect(sharing).toMatch(/ROVV[^.]*receives your name, email address, TikTok username and ROVV referral code/);
-    expect(sharing).toMatch(/not for its own marketing/);
+    expect(sharing).toMatch(/for that check and for nothing else/);
+    // Winners register their own pass with a code; we pass the ticketing provider nothing.
+    expect(sharing).toMatch(/we pass it nothing about you/);
     expect(FORM).toMatch(/shares my name, email address, TikTok username and referral code\s+with ROVV/);
   });
 
@@ -83,8 +85,11 @@ describe("the rules", () => {
     ["the tags and hashtag", /@rovvafrica[^.]*@blockfestafrica[^.]*#ROVVMeToBlockfest/],
     ["how many win, and on what", /20 winners for creativity and relevance/],
     ["that engagement does not decide it", /Views, likes and follower counts do not decide it/],
-    ["the ticket is not transferable", /cannot be transferred/],
-    ["when winners must reply", /6:00 PM on Wednesday 21 October 2026/],
+    ["the prize, and which day it is for", /one BUIDL PASS[^.]*Day 2, Conference Day, on Friday 23 October 2026/],
+    ["how a winner claims it, with no deadline", /code takes the full price off\. There is no deadline/],
+    ["when winners are announced", /by 4:00 PM on Monday 19 October 2026/],
+    ["that a ruled-out entry can be fixed", /rules your entry out, we email you the reason\. You can fix it/],
+    ["that the code cannot become cash", /cannot be exchanged for cash/],
     ["what ROVV receives", /share your name, email address, TikTok username and referral code with ROVV/],
     ["road safety", /driving or riding/],
     ["the operator", /Tevah Synergy/],

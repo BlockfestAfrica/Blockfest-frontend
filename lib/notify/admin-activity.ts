@@ -2,10 +2,11 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { activeAdminEmails } from "@/lib/admin/recipients";
 import { sendEmail } from "@/lib/email/client";
-import { adminActivityEmail, siteUrl } from "@/lib/email/templates";
+import { adminActivityEmail, rovvEntryAlertEmail, siteUrl } from "@/lib/email/templates";
 import { allowKeyStrict } from "@/lib/throttle";
 import { logError } from "@/lib/log";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { ROVV_SLUG } from "@/lib/rovv";
 
 /**
  * Tell the team a creator registered or submitted.
@@ -38,40 +39,69 @@ function enabled(): boolean {
   return (process.env.ADMIN_ACTIVITY_ALERTS ?? "").trim() === "on";
 }
 
-/** Events swallowed by the pace window, per kind, so the next mail says so. */
-async function countSuppressed(kind: string): Promise<number> {
+/**
+ * Events swallowed by the pace since the last alert, so this one says so.
+ *
+ * The pace and the counter share fixed windows (take_token, 0026), and the
+ * first event of a window is the one that sends. So when an alert goes, its
+ * own window holds only itself; what went unsent is in the last earlier
+ * window that saw anything: all of it but its first, which was that window's
+ * alert. Every older window was reported by the alert after it.
+ *
+ * This used to read the current window, and under the key alone rather than
+ * the bucket allowKeyStrict writes ("seen:" plus the key), so it found
+ * nothing and the "N more" line never appeared.
+ */
+async function countSuppressed(pace: string): Promise<number> {
   const rows = await getDb().execute(sql`
     SELECT hits FROM request_throttle
-     WHERE bucket = ${`admin-activity-seen:${kind}`}
+     WHERE bucket = ${`seen:admin-activity-seen:${pace}`}
+       AND window_start < to_timestamp(
+             floor(extract(epoch FROM now()) / ${WINDOW_SECONDS}::int) * ${WINDOW_SECONDS}::int
+           )
      ORDER BY window_start DESC LIMIT 1
   `);
-  return Number((rows.rows?.[0] as { hits?: number } | undefined)?.hits ?? 1) - 1;
+  const hits = Number((rows.rows?.[0] as { hits?: number } | undefined)?.hits ?? 1);
+  return Math.max(0, hits - 1);
 }
 
 export async function notifyAdminsOfActivity(params: {
-  kind: "registration" | "submission";
+  /** rovv_entry: a new entry to Rovv's campaign (lib/rovv.ts), its own pace. */
+  kind: "registration" | "submission" | "rovv_entry";
   who: string;
   platformLabel?: string;
+  /** An admin's test entry (Rovv, 0074): its own pace, never a real one's. */
+  test?: boolean;
 }): Promise<void> {
   if (!enabled()) return;
+
+  /* The pace key: per kind, and a test apart, so an owner trying the form
+     never takes the slot the next real entry's alert needs. */
+  const pace = params.test ? `${params.kind}:test` : params.kind;
+  /* The daily ceiling: Monica's kinds share the bucket they always had; Rovv
+     has its own, because its form is public and a busy (or hostile) Rovv
+     day must never silence Monica's alerts. */
+  const daily = params.kind === "rovv_entry" ? "admin-activity-rovv" : "admin-activity";
 
   try {
     /*
      * Counted before the pace check, so "and N more" is the real number of
      * events rather than the number that happened to arrive after a send.
      */
-    await allowKeyStrict(
-      `admin-activity-seen:${params.kind}`,
-      "seen",
-      1_000_000,
-      WINDOW_SECONDS,
-    );
+    await allowKeyStrict(`admin-activity-seen:${pace}`, "seen", 1_000_000, WINDOW_SECONDS);
 
     // take_token floors a limit of 0 up to 1, so this guard is what makes a
     // ceiling of zero actually mean zero.
     if (DAILY_MAX <= 0) return;
 
-    if (!(await allowKeyStrict("admin-activity", "daily", DAILY_MAX, 86_400))) {
+    if (!(await allowKeyStrict(`admin-activity:${pace}`, "pace", 1, WINDOW_SECONDS))) {
+      return;
+    }
+
+    /* After the pace check, so the ceiling counts alerts SENT, as its name
+       says. Before it, every paced-away event spent a token too, and a busy
+       hour used up the day without sending anything. */
+    if (!(await allowKeyStrict(daily, "daily", DAILY_MAX, 86_400))) {
       logError(
         "notify/admin-activity",
         new Error(`daily ceiling of ${DAILY_MAX} reached; alerts paused`),
@@ -79,13 +109,7 @@ export async function notifyAdminsOfActivity(params: {
       return;
     }
 
-    if (
-      !(await allowKeyStrict(`admin-activity:${params.kind}`, "pace", 1, WINDOW_SECONDS))
-    ) {
-      return;
-    }
-
-    const suppressed = await countSuppressed(params.kind);
+    const suppressed = await countSuppressed(pace);
 
     let waiting: number | undefined;
     if (params.kind === "submission") {
@@ -98,19 +122,36 @@ export async function notifyAdminsOfActivity(params: {
          WHERE cp.slug = ${MONICA_SLUG} AND s.status = 'pending'
       `);
       waiting = Number((rows.rows?.[0] as { n?: number } | undefined)?.n ?? 0);
+    } else if (params.kind === "rovv_entry") {
+      const rows = await getDb().execute(sql`
+        SELECT count(*)::int AS n
+          FROM rovv_entries e
+          JOIN campaigns cp ON cp.id = e.campaign_id
+         WHERE cp.slug = ${ROVV_SLUG} AND e.status = 'pending'
+           AND e.is_test = ${Boolean(params.test)}
+      `);
+      waiting = Number((rows.rows?.[0] as { n?: number } | undefined)?.n ?? 0);
     }
 
     for (const admin of await activeAdminEmails()) {
       const result = await sendEmail(
-        adminActivityEmail({
-          to: admin.email,
-          kind: params.kind,
-          who: params.who,
-          platformLabel: params.platformLabel,
-          waiting,
-          alsoSince: suppressed > 0 ? suppressed : undefined,
-          consoleUrl: `${siteUrl()}/admin`,
-        }),
+        params.kind === "rovv_entry"
+          ? rovvEntryAlertEmail({
+              to: admin.email,
+              who: params.who,
+              waiting,
+              alsoSince: suppressed > 0 ? suppressed : undefined,
+              consoleUrl: `${siteUrl()}/admin/rovv?status=${params.test ? "test" : "pending"}`,
+            })
+          : adminActivityEmail({
+              to: admin.email,
+              kind: params.kind,
+              who: params.who,
+              platformLabel: params.platformLabel,
+              waiting,
+              alsoSince: suppressed > 0 ? suppressed : undefined,
+              consoleUrl: `${siteUrl()}/admin`,
+            }),
       );
       if (!result.sent) {
         logError(

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
@@ -15,7 +16,8 @@ import { allowKeyStrict } from "@/lib/throttle";
 import { sendEmail } from "@/lib/email/client";
 import { sendBulkCopy } from "@/lib/email/copy";
 import { rovvWinnerEmail } from "@/lib/email/templates";
-import { ROVV, ROVV_SLUG } from "@/lib/rovv";
+import { ROVV, ROVV_SLUG, rovvRoutes } from "@/lib/rovv";
+import { ticketUrl } from "@/lib/tickets";
 import { logError } from "@/lib/log";
 
 export const runtime = "nodejs";
@@ -90,7 +92,9 @@ export async function POST(request: NextRequest) {
               ? "Nobody has been picked yet. Pick the winners first, then email them."
               : counts.sending > 0
                 ? "Those winners are being emailed by another press right now. Reload in a minute to see who was told."
-                : "Every winner picked so far has already been emailed.",
+                : counts.needCode > 0
+                  ? `${counts.needCode} ${counts.needCode === 1 ? "winner has" : "winners have"} no ticket code yet. Add their codes, then email them.`
+                  : "Every winner picked so far has already been emailed.",
         },
         { status: 409 },
       );
@@ -101,7 +105,9 @@ export async function POST(request: NextRequest) {
        skips them instead of mailing them again (claimRovvNotice). */
     const claimed: RovvWinnerToNotify[] = [];
     for (const winner of untold) {
-      if (await claimRovvNotice(admin.admin, winner)) claimed.push(winner);
+      // The row as claimed, not as listed: its code is the one now locked in.
+      const held = await claimRovvNotice(admin.admin, winner);
+      if (held) claimed.push(held);
     }
     if (claimed.length === 0) {
       return NextResponse.json(
@@ -114,8 +120,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const ticketLink = ticketUrl("rovv winner email");
     const mail = (winner: RovvWinnerToNotify) =>
-      rovvWinnerEmail({ to: winner.email, fullName: winner.fullName, tiktokUrl: winner.tiktokUrl });
+      rovvWinnerEmail({
+        to: winner.email,
+        fullName: winner.fullName,
+        tiktokHandle: winner.tiktokHandle,
+        tiktokUrl: winner.tiktokUrl,
+        ticketCode: winner.ticketCode,
+        ticketLink,
+      });
 
     // The owner's copy of what went out (lib/email/copy.ts), before the batch.
     await sendBulkCopy(mail(claimed[0]), claimed.length, "rovv winner notice");
@@ -157,6 +171,17 @@ export async function POST(request: NextRequest) {
 
     if (failed > 0) {
       logError("admin/rovv notify", new Error(`${failed} of ${claimed.length} winner notices not sent`));
+    }
+
+    /* The page lists winners who have been emailed and is rebuilt every five
+       minutes; ask for it now, so a winner who opens it from their email
+       finds their name there. Best effort: the five minutes still apply. */
+    if (sent > 0) {
+      try {
+        revalidatePath(rovvRoutes.home);
+      } catch (error) {
+        logError("admin/rovv notify revalidate", error);
+      }
     }
 
     await getDb()

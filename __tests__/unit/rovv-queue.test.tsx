@@ -5,7 +5,7 @@
 
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { RovvNotify, RovvQueue, type RovvQueueItem } from "@/components/admin/rovv-queue";
+import { RovvCodePaste, RovvNotify, RovvQueue, RovvResults, RovvTestTools, type RovvQueueItem } from "@/components/admin/rovv-queue";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
@@ -49,6 +49,8 @@ const item = (over: Partial<RovvQueueItem> = {}): RovvQueueItem => ({
   notifiedAtLabel: null,
   revision: 1,
   sameVideo: 0,
+  isTest: false,
+  ticketCode: null,
   ...over,
 });
 
@@ -80,7 +82,7 @@ describe("an entry", () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(sent()).toEqual({
       url: "/api/admin/rovv/decision",
-      body: { entryId: item().id, status: "ineligible", note: "No ROVV account with this code", revision: 1 },
+      body: { entryId: item().id, status: "ineligible", note: "No ROVV account with this code", revision: 1, from: "pending" },
     });
   });
 });
@@ -119,7 +121,7 @@ describe("picking winners", () => {
 
 describe("emailing the winners", () => {
   it("asks first, saying how many will go and that fewer than all are picked", async () => {
-    render(<RovvNotify untold={3} sending={0} winners={3} cap={20} closed />);
+    render(<RovvNotify untold={3} sending={0} needCode={0} winners={3} cap={20} closed />);
     fireEvent.click(screen.getByRole("button", { name: "Email the winners (3)" }));
 
     const question = screen.getByRole("alertdialog");
@@ -134,19 +136,19 @@ describe("emailing the winners", () => {
   });
 
   it("offers nothing to press when nobody is waiting to be told", () => {
-    render(<RovvNotify untold={0} sending={0} winners={20} cap={20} closed />);
+    render(<RovvNotify untold={0} sending={0} needCode={0} winners={20} cap={20} closed />);
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.getByText("All 20 picked so far have been emailed.")).toBeTruthy();
   });
 
   it("offers nothing to press before entries close, which the route would refuse", () => {
-    render(<RovvNotify untold={3} sending={0} winners={3} cap={20} closed={false} />);
+    render(<RovvNotify untold={3} sending={0} needCode={0} winners={3} cap={20} closed={false} />);
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.getByText(/once entries close/)).toBeTruthy();
   });
 
   it("says when winners are being emailed by another press", () => {
-    render(<RovvNotify untold={0} sending={2} winners={2} cap={20} closed />);
+    render(<RovvNotify untold={0} sending={2} needCode={0} winners={2} cap={20} closed />);
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.getByText(/2 winners are being emailed right now/)).toBeTruthy();
   });
@@ -163,5 +165,169 @@ describe("emailing the winners", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Eligible$/ }));
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(sent().body).toMatchObject({ status: "eligible", revision: 3 });
+  });
+});
+
+describe("a winner's ticket code", () => {
+  it("is offered to an owner on a winner, saved with the code trimmed, and never to a reviewer", async () => {
+    const { unmount } = render(<RovvQueue items={[item({ status: "eligible", winner: true })]} owner={false} winners={1} cap={20} />);
+    expect(screen.queryByLabelText("Ticket code")).toBeNull();
+    unmount();
+
+    render(<RovvQueue items={[item({ status: "eligible", winner: true })]} owner winners={1} cap={20} />);
+    expect(screen.getByText(/No code yet, so this winner cannot be emailed/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Ticket code"), { target: { value: "  BUIDL-9 " } });
+    fireEvent.click(screen.getByRole("button", { name: "Save code" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent()).toEqual({ url: "/api/admin/rovv/code", body: { entryId: item().id, code: "BUIDL-9" } });
+  });
+
+  it("is shown as sent, and no longer editable, once the winner has been emailed", () => {
+    render(
+      <RovvQueue
+        items={[item({ status: "eligible", winner: true, ticketCode: "BUIDL-7", notifiedAtLabel: "19 Oct, 15:00" })]}
+        owner
+        winners={1}
+        cap={20}
+      />,
+    );
+    expect(screen.queryByLabelText("Ticket code")).toBeNull();
+    expect(screen.getByText("BUIDL-7")).toBeTruthy();
+  });
+
+  it("lets a test winner with a code be sent the winner email, and no real one", async () => {
+    const { unmount } = render(
+      <RovvQueue items={[item({ status: "eligible", winner: true, ticketCode: "REAL-1" })]} owner winners={1} cap={20} />,
+    );
+    expect(screen.queryByRole("button", { name: /Send the winner email/ })).toBeNull();
+    unmount();
+
+    render(
+      <RovvQueue items={[item({ status: "eligible", winner: true, ticketCode: "TEST-1", isTest: true })]} owner winners={1} cap={20} />,
+    );
+    expect(screen.getByText("Test entry")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Send the winner email to/ }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent()).toEqual({ url: "/api/admin/rovv/test-notify", body: { entryId: item().id } });
+  });
+
+  it("lets a test entry be picked even with all 20 real winners picked", () => {
+    render(<RovvQueue items={[item({ status: "eligible", isTest: true })]} owner winners={20} cap={20} />);
+    expect((screen.getByRole("button", { name: /Pick as winner/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("says when picked winners are still missing a code", () => {
+    render(<RovvNotify untold={0} sending={0} needCode={2} winners={2} cap={20} closed />);
+    expect(screen.getByText(/2 winners have no ticket code yet/)).toBeTruthy();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+});
+
+describe("the testing tools", () => {
+  it("link to the page in test mode, and delete the tests only after asking", async () => {
+    render(<RovvTestTools tests={3} />);
+    expect(screen.getByRole("link", { name: /test mode/ }).getAttribute("href")).toBe("/campaigns/rovv?test=1#enter");
+    fireEvent.click(screen.getByRole("button", { name: "Delete all test entries (3)" }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    const question = screen.getByRole("alertdialog");
+    fireEvent.click(within(question).getByRole("button", { name: "Yes, delete the tests" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent().url).toBe("/api/admin/rovv/test-clear");
+  });
+
+  it("offer nothing to delete when there are no tests", () => {
+    render(<RovvTestTools tests={0} />);
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+});
+
+describe("pasting all the codes", () => {
+  it("says what it found as it is pasted, and gives them out only after asking", async () => {
+    render(<RovvCodePaste waiting={3} />);
+    fireEvent.change(screen.getByLabelText("Paste all the codes"), { target: { value: "C-1\nC-2, C-3\nC-4" } });
+    expect(screen.getByText("4 codes found for 3 winners waiting: 1 will be left over.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Give 3 codes to the winners" }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    const question = screen.getByRole("alertdialog");
+    expect(question.textContent).toContain("starting with C-1");
+    fireEvent.click(within(question).getByRole("button", { name: "Yes, give out 3" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent()).toEqual({ url: "/api/admin/rovv/codes", body: { text: "C-1\nC-2, C-3\nC-4", test: false } });
+  });
+
+  it("will not offer to give out a list with a repeat or a non-code in it", () => {
+    render(<RovvCodePaste waiting={3} />);
+    fireEvent.change(screen.getByLabelText("Paste all the codes"), { target: { value: "C-1\nc-1" } });
+    expect(screen.getByText(/In the list twice: c-1/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Give/ })).toBeNull();
+    fireEvent.change(screen.getByLabelText("Paste all the codes"), { target: { value: "C-1 x!" } });
+    expect(screen.getByText(/Not codes: x!/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Give/ })).toBeNull();
+  });
+
+  it("hands test codes to test winners when used from the test panel", async () => {
+    render(<RovvCodePaste waiting={1} test />);
+    fireEvent.change(screen.getByLabelText("Paste all the codes"), { target: { value: "T-1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Give 1 code to the test winners" }));
+    fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Yes, give out 1" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent().body).toEqual({ text: "T-1", test: true });
+  });
+});
+
+describe("the end-to-end walk's console fixes", () => {
+  it("flags the same username or referral code on another entry", () => {
+    render(<RovvQueue items={[item({ sameHandle: 1, sameReferral: 2 })]} owner={false} winners={0} cap={20} />);
+    expect(screen.getByText("Same TikTok username as 1 other entry")).toBeTruthy();
+    expect(screen.getByText("Same referral code as 2 other entries")).toBeTruthy();
+  });
+
+  it("offers the common reasons in one tap, and the box stays editable", () => {
+    render(<RovvQueue items={[item()]} owner={false} winners={0} cap={20} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Ineligible$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /does not tag @rovvafrica/ }));
+    expect((screen.getByLabelText("Why this entry is ineligible") as HTMLInputElement).value).toMatch(/does not tag @rovvafrica/);
+  });
+
+  it("asks for a second tap before unpicking a winner who holds a code, and names the code", async () => {
+    render(<RovvQueue items={[item({ status: "eligible", winner: true, ticketCode: "CODE-9" })]} owner winners={1} cap={20} />);
+    fireEvent.click(screen.getByRole("button", { name: "Unpick winner" }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /Tap again to unpick: CODE-9 becomes free/ }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent()).toEqual({ url: "/api/admin/rovv/winner", body: { entryId: item().id, pick: false } });
+  });
+
+  it("lets an owner correct a username or email, sending only what changed", async () => {
+    render(<RovvQueue items={[item()]} owner winners={0} cap={20} />);
+    fireEvent.click(screen.getByRole("button", { name: "Correct username or email" }));
+    fireEvent.change(screen.getByLabelText("TikTok username"), { target: { value: "@right.name" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save correction" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent()).toEqual({ url: "/api/admin/rovv/correct", body: { entryId: item().id, tiktokHandle: "right.name" } });
+  });
+
+  it("shows who gets which code before handing a pasted list out", () => {
+    render(<RovvCodePaste waiting={2} queue={["ada", "bola"]} />);
+    fireEvent.change(screen.getByLabelText("Paste all the codes"), { target: { value: "C-1\nC-2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Give 2 codes to the winners" }));
+    expect(screen.getByRole("alertdialog").textContent).toContain("@ada gets C-1, @bola gets C-2");
+  });
+
+  it("asks ROVV's question before any winner email goes", () => {
+    render(<RovvNotify untold={3} sending={0} needCode={0} winners={3} cap={20} closed />);
+    fireEvent.click(screen.getByRole("button", { name: "Email the winners (3)" }));
+    expect(screen.getByRole("alertdialog").textContent).toMatch(/Has ROVV confirmed every winner's referral code/);
+  });
+
+  it("offers the results email only with people to send it to, and asks first", async () => {
+    const { unmount } = render(<RovvResults toSend={0} sent={40} />);
+    expect(screen.getByText(/has gone to 40 entrants/)).toBeTruthy();
+    unmount();
+    render(<RovvResults toSend={12} sent={0} />);
+    fireEvent.click(screen.getByRole("button", { name: "Email the results to 12 who did not win" }));
+    fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Yes, email 12" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent().url).toBe("/api/admin/rovv/results");
   });
 });

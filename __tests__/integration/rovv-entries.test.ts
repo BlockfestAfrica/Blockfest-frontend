@@ -22,14 +22,15 @@ const entry = (o: Partial<Record<string, unknown>> = {}) => ({
   handle: "adaobi",
   url: "https://tiktok.com/@adaobi/video/7300000000000000001",
   code: "ADA123",
+  test: false,
   ...o,
 });
 
 async function submit(o: Partial<Record<string, unknown>> = {}) {
   const e = entry(o);
   const r = await db.query<{ entry_id: string; outcome: string }>(
-    `SELECT * FROM submit_rovv_entry('rovv', $1, $2, $3, $4, $5, $6, '1.0', '1.0', false, '198.51.100.1', 'test')`,
-    [e.name, e.email, e.canonical, e.handle, e.url, e.code],
+    `SELECT * FROM submit_rovv_entry('rovv', $1, $2, $3, $4, $5, $6, '1.0', '1.0', false, '198.51.100.1', 'test', $7)`,
+    [e.name, e.email, e.canonical, e.handle, e.url, e.code, e.test],
   );
   return r.rows[0];
 }
@@ -136,7 +137,7 @@ describe("entering", () => {
     expect((await submit({ email: "Ada@Example.test" })).outcome).toBe("updated");
     expect(await rev()).toEqual({ revision: 1, email: "Ada@Example.test" });
     const r = await db.query<{ outcome: string }>(
-      `SELECT * FROM submit_rovv_entry('rovv', 'Ada Obi', 'Ada@Example.test', 'ada@example.test', 'adaobi', $1, 'ADA123', '1.0', '1.0', true, NULL, NULL)`,
+      `SELECT * FROM submit_rovv_entry('rovv', 'Ada Obi', 'Ada@Example.test', 'ada@example.test', 'adaobi', $1, 'ADA123', '1.0', '1.0', true, NULL, NULL, false)`,
       [entry().url],
     );
     expect(r.rows[0].outcome).toBe("updated");
@@ -187,6 +188,205 @@ describe("reviewing and picking", () => {
     expect(await errorOf(db.query(`SELECT * FROM set_rovv_winner($1, false, $2)`, [ids[0], admin]))).toBe("P1010");
     expect((await db.query<{ winners: number }>(`SELECT * FROM set_rovv_winner($1, false, $2)`, [ids[1], admin])).rows[0].winners).toBe(19);
     expect((await db.query<{ winners: number }>(`SELECT * FROM set_rovv_winner($1, true, $2)`, [ids[20], admin])).rows[0].winners).toBe(20);
+  });
+});
+
+describe("test entries (0074)", () => {
+  it("are taken outside the window, never meet a real entry, and leave every count alone", async () => {
+    await db.exec(`UPDATE campaigns SET starts_at = now() + interval '1 day', ends_at = now() + interval '2 days' WHERE slug = 'rovv'`);
+    expect(await errorOf(submit())).toBe("P1001");
+    const t = await submit({ test: true });
+    expect(t.outcome).toBe("created");
+    // The same email as a real entry later, and a test of the same video: neither is in the way.
+    await db.exec(`UPDATE campaigns SET starts_at = now() - interval '1 day', ends_at = now() + interval '1 day' WHERE slug = 'rovv'`);
+    expect((await submit()).outcome).toBe("created");
+    const rows = (await db.query<{ is_test: boolean }>(`SELECT is_test FROM rovv_entries ORDER BY is_test`)).rows;
+    expect(rows.map((r) => r.is_test)).toEqual([false, true]);
+  });
+
+  it("still stop while the campaign is paused", async () => {
+    await db.exec(`UPDATE campaigns SET paused_at = now(), paused_reason = 'x' WHERE slug = 'rovv'`);
+    expect(await errorOf(submit({ test: true }))).toBe("P1002");
+  });
+
+  it("never take a real winner's place: the cap of 20 counts real winners only", async () => {
+    for (let i = 0; i < 20; i++) {
+      const r = await submit({ email: `r${i}@example.test`, canonical: `r${i}@example.test`, handle: `r${i}x`, url: `https://tiktok.com/@r${i}x/video/73000000000000002${String(i).padStart(2, "0")}` });
+      await db.query(`SELECT * FROM decide_rovv_entry($1, 'eligible', NULL, $2, 1)`, [r.entry_id, admin]);
+      await db.query(`SELECT * FROM set_rovv_winner($1, true, $2)`, [r.entry_id, admin]);
+    }
+    const t = await submit({ test: true });
+    await db.query(`SELECT * FROM decide_rovv_entry($1, 'eligible', NULL, $2, 1)`, [t.entry_id, admin]);
+    expect((await db.query<{ winners: number }>(`SELECT * FROM set_rovv_winner($1, true, $2)`, [t.entry_id, admin])).rows[0].winners).toBe(20);
+  });
+
+  it("are deleted in one go, and nothing real with them", async () => {
+    await submit();
+    await submit({ test: true });
+    await submit({ test: true, email: "t2@example.test", canonical: "t2@example.test" });
+    const r = await db.query<{ deleted: number }>(`SELECT * FROM clear_rovv_test_entries('rovv', $1)`, [admin]);
+    expect(r.rows[0].deleted).toBe(2);
+    expect((await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM rovv_entries`)).rows[0].n).toBe(1);
+    expect(await errorOf(db.query(`SELECT * FROM clear_rovv_test_entries('rovv', NULL)`))).toBe("P0401");
+  });
+});
+
+describe("fixing a ruled-out entry (0074)", () => {
+  it("lets the same person send it again, which puts it back to waiting as a new version", async () => {
+    const { entry_id } = await submit();
+    await db.query(`SELECT * FROM decide_rovv_entry($1, 'ineligible', 'Not tagged', $2, 1)`, [entry_id, admin]);
+    // The usual fix (adding the tag) happens on TikTok, so the link can be the same.
+    const again = await submit();
+    expect(again).toEqual({ entry_id, outcome: "updated" });
+    const row = (await db.query<{ status: string; review_note: string | null; reviewed_at: Date | null; revision: number }>(
+      `SELECT status, review_note, reviewed_at, revision FROM rovv_entries WHERE id = $1`, [entry_id])).rows[0];
+    expect(row).toEqual({ status: "pending", review_note: null, reviewed_at: null, revision: 2 });
+  });
+
+  it("never lets an accepted entry be swapped", async () => {
+    const { entry_id } = await submit();
+    await db.query(`SELECT * FROM decide_rovv_entry($1, 'eligible', NULL, $2, 1)`, [entry_id, admin]);
+    expect(await errorOf(submit({ url: "https://tiktok.com/@adaobi/video/7300000000000000555" }))).toBe("P1003");
+  });
+
+  it("says what a ruling changed from, so only a change is emailed", async () => {
+    const { entry_id } = await submit();
+    const first = (await db.query<{ previous: string }>(`SELECT * FROM decide_rovv_entry($1, 'eligible', NULL, $2, 1)`, [entry_id, admin])).rows[0];
+    const again = (await db.query<{ previous: string }>(`SELECT * FROM decide_rovv_entry($1, 'eligible', NULL, $2, 1)`, [entry_id, admin])).rows[0];
+    expect([first.previous, again.previous]).toEqual(["pending", "eligible"]);
+  });
+});
+
+describe("ticket codes (0074)", () => {
+  async function winner(i = 0) {
+    const r = await submit({ email: `w${i}@example.test`, canonical: `w${i}@example.test`, handle: `w${i}x`, url: `https://tiktok.com/@w${i}x/video/73000000000000003${String(i).padStart(2, "0")}` });
+    await db.query(`SELECT * FROM decide_rovv_entry($1, 'eligible', NULL, $2, 1)`, [r.entry_id, admin]);
+    await db.query(`SELECT * FROM set_rovv_winner($1, true, $2)`, [r.entry_id, admin]);
+    return r.entry_id;
+  }
+  const setCode = (id: string, code: string) => db.query(`SELECT * FROM set_rovv_ticket_code($1, $2, $3)`, [id, code, admin]);
+
+  it("goes only to a winner, one each, of the right shape, and is cleared with an empty one", async () => {
+    const { entry_id: notWinner } = await submit({ email: "n@example.test", canonical: "n@example.test", handle: "nn", url: "https://tiktok.com/@nn/video/7300000000000000999" });
+    expect(await errorOf(setCode(notWinner, "BUIDL-1"))).toBe("P1014");
+    const a = await winner(0);
+    const b = await winner(1);
+    await setCode(a, "  BUIDL-1 ");
+    expect(await errorOf(setCode(b, "BUIDL-1"))).toBe("P1015");
+    expect(await errorOf(setCode(b, "has space"))).toBe("P1016");
+    await setCode(a, "");
+    await setCode(b, "BUIDL-1");
+    const codes = (await db.query<{ ticket_code: string | null }>(`SELECT ticket_code FROM rovv_entries WHERE id IN ($1, $2) ORDER BY email`, [a, b])).rows;
+    expect(codes.map((c) => c.ticket_code)).toEqual([null, "BUIDL-1"]);
+    const audit = (await db.query<{ action: string; after: Record<string, unknown> }>(`SELECT action, after FROM audit_log WHERE action LIKE 'rovv_code.%' ORDER BY created_at`)).rows;
+    expect(audit.map((x) => x.action)).toEqual(["rovv_code.set", "rovv_code.cleared", "rovv_code.set"]);
+    expect(JSON.stringify(audit), "the code itself is never written to the audit log").not.toContain("BUIDL-1");
+  });
+
+  it("is fixed once the winner is emailed, refused while they are being emailed, and goes with an unpick", async () => {
+    const a = await winner(2);
+    await setCode(a, "CODE-A");
+    await db.query(`UPDATE rovv_entries SET notice_claimed_at = now() WHERE id = $1`, [a]);
+    expect(await errorOf(setCode(a, "CODE-B"))).toBe("P1011");
+    await db.query(`UPDATE rovv_entries SET notice_claimed_at = NULL, notified_at = now() WHERE id = $1`, [a]);
+    expect(await errorOf(setCode(a, "CODE-B"))).toBe("P1013");
+
+    const b = await winner(3);
+    await setCode(b, "CODE-C");
+    await db.query(`SELECT * FROM set_rovv_winner($1, false, $2)`, [b, admin]);
+    expect((await db.query<{ ticket_code: string | null }>(`SELECT ticket_code FROM rovv_entries WHERE id = $1`, [b])).rows[0].ticket_code).toBeNull();
+  });
+});
+
+describe("handing out a pasted list of codes (0074)", () => {
+  async function winner(i: number, test = false) {
+    const r = await submit({ email: `h${i}@example.test`, canonical: `h${i}@example.test`, handle: `h${i}x`, url: `https://tiktok.com/@h${i}x/video/73000000000000004${String(i).padStart(2, "0")}`, test });
+    await db.query(`SELECT * FROM decide_rovv_entry($1, 'eligible', NULL, $2, 1)`, [r.entry_id, admin]);
+    await db.query(`SELECT * FROM set_rovv_winner($1, true, $2)`, [r.entry_id, admin]);
+    // Picked in order, a second apart, as real picks are; a frozen clock would tie them.
+    await db.query(`UPDATE rovv_entries SET winner_at = now() - interval '1 hour' + $2 * interval '1 second' WHERE id = $1`, [r.entry_id, i]);
+    return r.entry_id;
+  }
+  const assign = (codes: string[], test = false) =>
+    db.query<{ entry_id: string; handle: string; code: string }>(`SELECT * FROM assign_rovv_ticket_codes('rovv', $1, $2, $3)`, [codes, test, admin]);
+
+  it("gives one code each, in the order the winners were picked, skipping anyone who has one or was emailed", async () => {
+    const a = await winner(1);
+    const b = await winner(2);
+    const c = await winner(3);
+    const d = await winner(4);
+    await db.query(`SELECT * FROM set_rovv_ticket_code($1, 'KEPT-1', $2)`, [b, admin]);
+    await db.query(`UPDATE rovv_entries SET notified_at = now() WHERE id = $1`, [c]);
+    const out = (await assign(["C-1", "C-2", "C-3"])).rows;
+    expect(out.map((r) => [r.entry_id, r.code])).toEqual([[a, "C-1"], [d, "C-2"]]);
+    const codes = (await db.query<{ id: string; ticket_code: string | null }>(`SELECT id, ticket_code FROM rovv_entries WHERE id IN ($1,$2,$3,$4)`, [a, b, c, d])).rows;
+    const byId = Object.fromEntries(codes.map((r) => [r.id, r.ticket_code]));
+    expect([byId[a], byId[b], byId[c], byId[d]]).toEqual(["C-1", "KEPT-1", "C-1" === byId[c] ? "never" : byId[c], "C-2"]);
+    expect(byId[c]).toBeNull();
+  });
+
+  it("leaves the last winners waiting when there are fewer codes than winners", async () => {
+    const a = await winner(5);
+    const b = await winner(6);
+    expect((await assign(["ONLY-1"])).rows.map((r) => r.entry_id)).toEqual([a]);
+    expect((await db.query<{ ticket_code: string | null }>(`SELECT ticket_code FROM rovv_entries WHERE id = $1`, [b])).rows[0].ticket_code).toBeNull();
+  });
+
+  it("refuses the whole list for a repeat (in any case), a bad code or a code already held, saving nothing", async () => {
+    const a = await winner(7);
+    const b = await winner(8);
+    expect(await errorOf(assign(["X-1", "x-1"]))).toBe("P1017");
+    expect(await errorOf(assign(["X-1", "no good"]))).toBe("P1016");
+    await db.query(`SELECT * FROM set_rovv_ticket_code($1, 'HELD-1', $2)`, [a, admin]);
+    expect(await errorOf(assign(["NEW-1", "held-1"]))).toBe("P1015");
+    expect((await db.query<{ ticket_code: string | null }>(`SELECT ticket_code FROM rovv_entries WHERE id = $1`, [b])).rows[0].ticket_code).toBeNull();
+  });
+
+  it("gives test codes to test winners and real codes to real winners, never across", async () => {
+    const real = await winner(9);
+    const test = await winner(10, true);
+    expect((await assign(["T-1"], true)).rows.map((r) => r.entry_id)).toEqual([test]);
+    expect((await assign(["R-1"])).rows.map((r) => r.entry_id)).toEqual([real]);
+  });
+
+  it("writes how many went to the audit log, never the codes", async () => {
+    await db.exec(`DELETE FROM audit_log WHERE action = 'rovv_code.assigned'`);
+    await winner(11);
+    await assign(["SECRET-1", "SECRET-2"]);
+    const audit = (await db.query<{ after: Record<string, unknown> }>(`SELECT after FROM audit_log WHERE action = 'rovv_code.assigned'`)).rows;
+    expect(audit.map((r) => r.after)).toEqual([{ assigned: 1, pasted: 2, test: false }]);
+    expect(JSON.stringify(audit)).not.toContain("SECRET");
+  });
+});
+
+describe("which ruling the entrant was last emailed (0074)", () => {
+  it("is forgotten when they replace the entry, so a ruling on the new one is news", async () => {
+    const { entry_id } = await submit();
+    await db.query(`SELECT * FROM decide_rovv_entry($1, 'ineligible', 'Not tagged', $2, 1)`, [entry_id, admin]);
+    await db.query(`UPDATE rovv_entries SET ruling_emailed = 'ineligible' WHERE id = $1`, [entry_id]);
+    await submit();
+    const row = (await db.query<{ ruling_emailed: string | null }>(`SELECT ruling_emailed FROM rovv_entries WHERE id = $1`, [entry_id])).rows[0];
+    expect(row.ruling_emailed).toBeNull();
+  });
+
+  it("is kept through a resubmission that changes nothing a reviewer judges", async () => {
+    const { entry_id } = await submit();
+    await db.query(`UPDATE rovv_entries SET ruling_emailed = 'eligible' WHERE id = $1`, [entry_id]);
+    await submit({ email: "Ada@Example.test" });
+    const row = (await db.query<{ ruling_emailed: string | null }>(`SELECT ruling_emailed FROM rovv_entries WHERE id = $1`, [entry_id])).rows[0];
+    expect(row.ruling_emailed).toBe("eligible");
+  });
+});
+
+describe("the deploy still serving while 0074 applies", () => {
+  it("can still enter with 0073's twelve arguments, as a real entry", async () => {
+    const r = await db.query<{ outcome: string }>(
+      `SELECT * FROM submit_rovv_entry('rovv', 'Old Deploy', 'old@example.test', 'old@example.test', 'olddeploy',
+         'https://tiktok.com/@olddeploy/video/7300000000000000888', 'OLD123', '1.0', '1.0', false, NULL, NULL)`,
+    );
+    expect(r.rows[0].outcome).toBe("created");
+    const row = (await db.query<{ is_test: boolean }>(`SELECT is_test FROM rovv_entries WHERE email = 'old@example.test'`)).rows[0];
+    expect(row.is_test).toBe(false);
   });
 });
 

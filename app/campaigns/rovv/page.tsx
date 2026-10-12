@@ -3,9 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { CampaignPhasePill } from "@/components/campaigns/campaign-phase-pill";
+import { RovvHeroActions } from "@/components/campaigns/rovv-hero-actions";
 import { RovvEntryForm } from "@/components/campaigns/rovv-entry-form";
 import { TrackView } from "@/components/campaigns/track-view";
-import { buttonClass } from "@/components/shared/panel";
+import { CONTACT_EMAIL } from "@/lib/constants";
 import { campaignBySlug, campaignOpensLabel, campaignPhase, campaignRun } from "@/lib/campaigns";
 import { ROVV, ROVV_SLUG, rovvRoutes } from "@/lib/rovv";
 import { publicRovvWinners } from "@/lib/rovv-winners";
@@ -43,7 +44,14 @@ export const metadata: Metadata = {
  */
 export const revalidate = 300;
 
-const STEPS: { title: string; body: string }[] = [
+/* Where to get the app: the store links once ROVV gives them, and until
+   then an honest "search for it" rather than a guessed URL. */
+const appLinks = [
+  ROVV.appLinks.android ? { label: "Get ROVV for Android", href: ROVV.appLinks.android } : null,
+  ROVV.appLinks.ios ? { label: "Get ROVV for iPhone", href: ROVV.appLinks.ios } : null,
+].filter((x): x is { label: string; href: string } => Boolean(x));
+
+const STEPS: { title: string; body: React.ReactNode }[] = [
   {
     title: "Make a TikTok on the prompt",
     body: "“If ROVV takes me to Blockfest…” Finish it however you like. The format is yours.",
@@ -54,7 +62,22 @@ const STEPS: { title: string; body: string }[] = [
   },
   {
     title: "Register on the ROVV app",
-    body: "Download the ROVV app, register, and find your referral code.",
+    body:
+      appLinks.length > 0 ? (
+        <>
+          Download the ROVV app, register, and find your referral code in the app.{" "}
+          {appLinks.map((l, i) => (
+            <span key={l.href}>
+              {i > 0 ? " · " : ""}
+              <a href={l.href} target="_blank" rel="noopener noreferrer" className="font-semibold text-link underline underline-offset-2 hover:text-white">
+                {l.label}
+              </a>
+            </span>
+          ))}
+        </>
+      ) : (
+        "Search for ROVV in the Google Play Store or the App Store, download it, register, and find your referral code in the app."
+      ),
   },
   {
     title: "Copy your video's link",
@@ -69,19 +92,23 @@ const STEPS: { title: string; body: string }[] = [
 const FAQS: { q: string; a: React.ReactNode }[] = [
   {
     q: "Who can enter?",
-    a: "Anyone aged 18 or over who can attend Blockfest Africa 2026 in Lagos, from 22 to 24 October.",
+    a: "Anyone aged 18 or over who can attend Blockfest Africa 2026 in Lagos on Friday 23 October, the day the prize is for.",
   },
   {
     q: "Can I enter more than once?",
-    a: "No, one entry each. If you made a mistake, send the form again before the close with the same email address and TikTok username, and your new details replace the old ones, as long as the team has not reviewed your entry yet.",
+    a: "No, one entry each. If you made a mistake, send the form again before the close with the same email address and TikTok username, and your new details replace the old ones, as long as the team has not accepted your entry yet.",
+  },
+  {
+    q: "What if my entry is ruled out?",
+    a: "We email you the reason. Fix it, then send the form again before the close with the same email address and TikTok username, and it goes back to the team.",
   },
   {
     q: "How are winners chosen?",
-    a: `The team watches every entry and picks ${ROVV.winners} for creativity and relevance to the prompt. Views, likes and follower counts do not decide it.`,
+    a: `The team watches every entry and picks ${ROVV.winners} for creativity and relevance to the prompt, the day after entries close. Views, likes and follower counts do not decide it. Winners are announced by ${ROVV.winnersByLabel}.`,
   },
   {
     q: "What do winners get?",
-    a: "One Blockfest Africa 2026 ticket each, issued in the winner's own name. It cannot be transferred or exchanged for cash, and travel is not included.",
+    a: `One ${ROVV.prize} each, for ${ROVV.prizeDay}: the main stage and the exhibition area. We email you a code that takes the full price off, and you register for the pass in your own name whenever you like. It cannot be exchanged for cash, and travel is not included.`,
   },
   {
     q: "Why do you need my ROVV referral code?",
@@ -119,6 +146,11 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 export default async function RovvCampaignPage() {
   const winners = await publicRovvWinners();
   const run = campaignRun(CAMPAIGN);
+  /* As of this render. The page is rebuilt at most five minutes apart, so
+     what is decided here (which sections show) is never more than that
+     behind; the buttons and the form follow the visitor's own clock. */
+  const phase = campaignPhase(CAMPAIGN);
+  const closed = phase === "closed";
 
   return (
     <main id="main" className="bg-ground">
@@ -142,24 +174,17 @@ export default async function RovvCampaignPage() {
               </h1>
               <p className="mt-4 text-2xl font-bold text-brand-gold sm:text-3xl">{ROVV.hashtag}</p>
               <p className="mt-6 max-w-prose text-lg leading-relaxed text-ink-2">
-                Make a TikTok on the prompt. The {ROVV.winners} most creative win a ticket to Blockfest Africa 2026, 22
-                to 24 October in Lagos.
+                Make a TikTok on the prompt. The {ROVV.winners} most creative each win a {ROVV.prize} to Blockfest
+                Africa 2026&apos;s Conference Day, Friday 23 October in Lagos.
               </p>
-              <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
-                <a href="#enter" className={buttonClass("primary")}>
-                  Enter now
-                </a>
-                <Link href={rovvRoutes.rules} className={buttonClass("secondary")}>
-                  Read the rules
-                </Link>
-              </div>
+              <RovvHeroActions campaign={CAMPAIGN} initial={phase} winners={winners.length} />
             </div>
 
             <div className="lg:col-span-5">
               <div className="rounded-2xl border border-line-2 bg-card-2 p-6 sm:p-8">
                 <CampaignPhasePill
                   campaign={CAMPAIGN}
-                  initial={campaignPhase(CAMPAIGN)}
+                  initial={phase}
                   opensLabel={campaignOpensLabel(CAMPAIGN)}
                 />
                 <dl className="mt-7 flex flex-col gap-7">
@@ -167,17 +192,31 @@ export default async function RovvCampaignPage() {
                     <p className="text-display-sm font-bold tabular-nums leading-none text-white">
                       {ROVV.winners} tickets
                     </p>
-                    <p className="mt-2 text-sm text-ink-3">One Blockfest Africa 2026 ticket for each winner.</p>
+                    <p className="mt-2 text-sm text-ink-3">
+                      One {ROVV.prize} each, for Conference Day on Friday 23 October.
+                    </p>
                   </Fact>
                   {run && (
                     <Fact label="Entries">
                       <p className="text-base font-semibold text-white">{run}</p>
-                      <p className="mt-1 text-sm text-ink-3">Closes 11:59 PM on Sunday 18 October, Lagos time.</p>
+                      <p className="mt-1 text-sm text-ink-3">
+                        {closed ? "Closed" : "Closes"} 11:59 PM on Sunday 18 October, Lagos time.
+                      </p>
                     </Fact>
                   )}
                   <Fact label="Winners">
-                    <p className="text-base font-semibold text-white">By Tuesday 20 October</p>
-                    <p className="mt-1 text-sm text-ink-3">Emailed, then listed on this page.</p>
+                    <p className="text-base font-semibold text-white">
+                      {winners.length > 0 ? "Announced" : "By 4 PM, Monday 19 October"}
+                    </p>
+                    <p className="mt-1 text-sm text-ink-3">
+                      {winners.length > 0 ? (
+                        <a href="#winners" className="text-link underline underline-offset-2 hover:text-white">
+                          See who won
+                        </a>
+                      ) : (
+                        "Emailed their code, then listed on this page."
+                      )}
+                    </p>
                   </Fact>
                   <Fact label="With">
                     {/* On a white chip, as the partner sections do it: the
@@ -212,7 +251,8 @@ export default async function RovvCampaignPage() {
               The winners
             </h2>
             <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-3">
-              Congratulations. Each wins a ticket to Blockfest Africa 2026, and has been emailed.
+              Congratulations. Each wins a {ROVV.prize} to Blockfest Africa 2026&apos;s Conference Day, and has been
+              emailed their code.
             </p>
             <ul className="mt-8 flex flex-wrap gap-3">
               {winners.map((handle) => (
@@ -228,10 +268,25 @@ export default async function RovvCampaignPage() {
                 </li>
               ))}
             </ul>
+            {winners.length < ROVV.winners && (
+              <p className="mt-6 text-sm text-ink-3">More winners are being told now, and appear here once they have been emailed.</p>
+            )}
+            <div className="mt-8 flex max-w-prose flex-col gap-2 text-sm leading-relaxed text-ink-3">
+              <p>
+                Listed here, but no email from us? Check Spam and Promotions for mail from Blockfest Africa, then write
+                to{" "}
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-link underline underline-offset-2 hover:text-white">
+                  {CONTACT_EMAIL}
+                </a>{" "}
+                from the address you entered with.
+              </p>
+              <p>Not on the list? Thank you for entering, and we hope to see you at Blockfest.</p>
+            </div>
           </div>
         </section>
       )}
 
+      {!closed && (
       <section aria-labelledby="how" className="border-t border-line py-14 sm:py-16">
         <div className="container-page max-w-4xl">
           <h2 id="how" className="text-2xl font-bold text-white sm:text-3xl">
@@ -252,15 +307,38 @@ export default async function RovvCampaignPage() {
           </ol>
         </div>
       </section>
+      )}
 
       <section id="enter" aria-labelledby="enter-heading" className="scroll-mt-20 border-t border-line py-14 sm:py-16">
         <div className="container-page max-w-3xl">
           <h2 id="enter-heading" className="text-2xl font-bold text-white sm:text-3xl">
             Send your entry
           </h2>
-          <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-3">
-            Post your video and register on the ROVV app first. Every field is needed.
-          </p>
+          {!closed && (
+            <>
+              <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-3">
+                Post your video and register on the ROVV app first. Every field is needed.
+              </p>
+              {/* The rules that most often rule a video out, where the
+                  decision to send is made, not only on the rules page. */}
+              <div className="mt-6 rounded-xl border border-line-2 bg-card p-5">
+                <p className="text-sm font-semibold text-white">Before you send, check your video:</p>
+                <ul className="mt-3 flex list-disc flex-col gap-1.5 pl-5 text-sm leading-relaxed text-ink-2 marker:text-ink-4">
+                  <li>is your own original work, on the prompt;</li>
+                  <li>
+                    is public, tags {ROVV.rovvHandle} and {ROVV.blockfestHandle}, and uses {ROVV.hashtag};
+                  </li>
+                  <li>was not filmed while driving or riding;</li>
+                  <li>and that you have registered on the ROVV app and can be in Lagos on Friday 23 October.</li>
+                </ul>
+              </div>
+            </>
+          )}
+          <noscript>
+            <p className="mt-6 rounded-lg border border-line-2 bg-card-2 px-4 py-3 text-sm text-ink-2">
+              The entry form needs JavaScript. In TikTok or Instagram, tap the ⋯ menu, then &quot;Open in browser&quot;.
+            </p>
+          </noscript>
           <div className="mt-8">
             <RovvEntryForm />
           </div>
