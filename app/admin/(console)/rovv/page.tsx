@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
-import { rovvCounts, rovvEntries, type RovvFilter } from "@/lib/admin/rovv";
-import { RovvCodePaste, RovvNotify, RovvQueue, RovvTestTools } from "@/components/admin/rovv-queue";
+import { rovvCodeQueue, rovvCounts, rovvEntries, rovvHeldCodes, type RovvFilter } from "@/lib/admin/rovv";
+import { RovvCodePaste, RovvNotify, RovvQueue, RovvResults, RovvTestTools } from "@/components/admin/rovv-queue";
 import { PageHeader, Pill, SectionCard, SPACING, Stat } from "@/components/shared/panel";
 import { ROVV } from "@/lib/rovv";
 import { dateTime, dayDate } from "@/lib/format";
@@ -39,20 +39,28 @@ const FILTERS: { value: RovvFilter; label: string }[] = [
 export default async function RovvPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
 }) {
   // The layout has already refused everybody who is not an admin.
   const admin = await requireAdmin();
   if (!admin.ok) return null;
 
   const owner = isOwner(admin.admin);
-  const asked = (await searchParams).status;
+  const params = await searchParams;
+  const asked = params.status;
   // Only values the links offer. Anything else is the default, not a query.
   const filter = FILTERS.find((f) => f.value === asked)?.value ?? "all";
+  /* A search, for the entry somebody is writing in about: a name, email,
+     username or referral code (and a ticket code, for an owner). */
+  const q = params.q?.trim().slice(0, 100) || undefined;
+  const withQ = (href: string) => (q ? `${href}${href.includes("?") ? "&" : "?"}q=${encodeURIComponent(q)}` : href);
 
-  const [entries, counts] = await Promise.all([
-    rovvEntries(admin.admin, { status: filter, limit: PAGE_SIZE }),
+  const [entries, counts, codeQueue, testCodeQueue, heldCodes] = await Promise.all([
+    rovvEntries(admin.admin, { status: filter, limit: PAGE_SIZE, q }),
     rovvCounts(admin.admin),
+    owner ? rovvCodeQueue(admin.admin, false) : Promise.resolve([] as string[]),
+    owner ? rovvCodeQueue(admin.admin, true) : Promise.resolve([] as string[]),
+    rovvHeldCodes(admin.admin),
   ]);
 
   const matching: Record<RovvFilter, number> = {
@@ -99,14 +107,22 @@ export default async function RovvPage({
           }
         >
           <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
-            {counts.winners} of {ROVV.winners} picked. Winners are promised by{" "}
-            {ROVV.winnersByLabel}. Give each winner their 100%-off {ROVV.prize}{" "}
-            code on their card below; the winner email carries it, and a winner
-            shows on the campaign page once theirs has gone.
+            {counts.winners} of {ROVV.winners} picked. Winners are promised by {ROVV.winnersByLabel}.
           </p>
+          {/* The order the owner works in. A winner email cannot be taken
+              back, so ROVV's check of the referral codes comes first. */}
+          <ol className="mt-3 flex max-w-prose list-decimal flex-col gap-1 pl-5 text-sm leading-relaxed text-ink-2 marker:text-ink-4">
+            <li>
+              Send ROVV the referral check file below: daily while entries are open, and once more after the close.
+            </li>
+            <li>Rule out whatever ROVV cannot confirm (the entrant is emailed the reason).</li>
+            <li>Pick the {ROVV.winners} winners from eligible entries.</li>
+            <li>Paste the {ROVV.winners} {ROVV.prize} codes: each winner gets their own.</li>
+            <li>Email the winners. Each gets their own code, and their username goes on the campaign page.</li>
+          </ol>
           {counts.needCode > 0 && (
             <div className="mt-4 border-t border-line pt-4">
-              <RovvCodePaste waiting={counts.needCode} />
+              <RovvCodePaste waiting={counts.needCode} queue={codeQueue} held={heldCodes} />
             </div>
           )}
           <div className="mt-4">
@@ -119,6 +135,16 @@ export default async function RovvPage({
               closed={closed}
             />
           </div>
+          {counts.notified > 0 && counts.notified === counts.winners && (
+            <div className="mt-4 border-t border-line pt-4">
+              <RovvResults
+                toSend={counts.resultsToSend}
+                sent={counts.resultsSent}
+                winners={counts.winners}
+                cap={ROVV.winners}
+              />
+            </div>
+          )}
 
           {/* Links rather than buttons: a GET that changes nothing, and a file
               somebody attaches to an email. The ROVV file is the one that
@@ -137,14 +163,14 @@ export default async function RovvPage({
               className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
-              Every entry, for the team (CSV)
+              Every entry, for the team only (CSV: has codes and notes)
             </a>
             <a
               href="/api/admin/rovv/export?of=winners"
               className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
-              The winners (CSV)
+              The winners, for the team only (CSV: has codes)
             </a>
           </div>
         </SectionCard>
@@ -161,7 +187,7 @@ export default async function RovvPage({
           </div>
           {counts.testNeedCode > 0 && (
             <div className="mt-4 border-t border-line pt-4">
-              <RovvCodePaste waiting={counts.testNeedCode} test />
+              <RovvCodePaste waiting={counts.testNeedCode} queue={testCodeQueue} held={heldCodes} test />
             </div>
           )}
         </SectionCard>
@@ -171,11 +197,31 @@ export default async function RovvPage({
         <h2 id="entries-title" className="sr-only">
           Entries
         </h2>
+        <form action="/admin/rovv" method="get" role="search" className="mb-4 flex gap-2">
+          {filter !== "all" && <input type="hidden" name="status" value={filter} />}
+          <label htmlFor="rovv-search" className="sr-only">
+            Search entries
+          </label>
+          <input
+            id="rovv-search"
+            name="q"
+            type="search"
+            defaultValue={q ?? ""}
+            maxLength={100}
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder={owner ? "Name, email, username, referral or ticket code" : "Name, email, username or referral code"}
+            className="min-h-12 w-full min-w-0 flex-1 rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-3"
+          />
+          <button type="submit" className="inline-flex min-h-12 shrink-0 cursor-pointer items-center rounded-full border border-line-2 px-5 text-sm font-semibold text-white hover:bg-card-3">
+            Search
+          </button>
+        </form>
         <nav aria-label="Show" className="flex flex-wrap items-center gap-2">
           {FILTERS.map((f) => (
             <Link
               key={f.value}
-              href={f.value === "all" ? "/admin/rovv" : `/admin/rovv?status=${f.value}`}
+              href={withQ(f.value === "all" ? "/admin/rovv" : `/admin/rovv?status=${f.value}`)}
               aria-current={f.value === filter ? "page" : undefined}
               className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold transition-colors ${
                 f.value === filter
@@ -191,17 +237,29 @@ export default async function RovvPage({
 
         {entries.length === 0 ? (
           <p className="mt-6 max-w-prose text-base leading-relaxed text-ink-2">
-            {counts.total === 0
+            {q
+              ? `Nothing matches “${q}”${filter === "all" ? "" : " under this filter"}.`
+              : counts.total === 0
               ? `No entries yet. They appear here as people enter, from ${dayDate(ROVV.opensAt)}.`
               : "Nothing here under that filter."}
           </p>
         ) : (
           <div className="mt-6">
-            {entries.length < matching[filter] && (
+            {q ? (
               <p className="mb-3 text-sm text-ink-3">
-                The newest {entries.length} of {matching[filter]}. Pick a filter
-                above to narrow it.
+                {entries.length} {entries.length === 1 ? "entry matches" : "entries match"} &ldquo;{q}&rdquo;.{" "}
+                <Link href={filter === "all" ? "/admin/rovv" : `/admin/rovv?status=${filter}`} className="text-link underline underline-offset-2">
+                  Clear the search
+                </Link>
               </p>
+            ) : (
+              entries.length < matching[filter] && (
+                <p className="mb-3 text-sm text-ink-3">
+                  {filter === "pending"
+                    ? `The ${entries.length} that have waited longest, of ${matching[filter]}. Rule on these and the rest move up.`
+                    : `The newest ${entries.length} of ${matching[filter]}. Search, or pick a filter above to narrow it.`}
+                </p>
+              )
             )}
             <RovvQueue
               owner={owner}
@@ -224,6 +282,9 @@ export default async function RovvPage({
                 revision: e.revision,
                 sameVideo: e.sameVideo,
                 isTest: e.isTest,
+                sameHandle: e.sameHandle,
+                sameReferral: e.sameReferral,
+                updatedAtLabel: dateTime(e.updatedAt),
                 // A code is a free pass, and owner business: a reviewer's
                 // page never carries one, even in the data behind it.
                 ticketCode: owner ? e.ticketCode : null,

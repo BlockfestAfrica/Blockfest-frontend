@@ -211,22 +211,52 @@ export function dueItems(facts: DueFacts, now: number): DueItem[] {
   if (facts.rovv) {
     const r = facts.rovv;
     const open = at(ROVV.opensAt) <= now && now <= at(ROVV.closesAt);
+    /* The last day: winners are due the next afternoon, so the codes have
+       to be bought before then. */
+    const lastDay = open && at(ROVV.closesAt) - now < DAY_MS;
+    if (lastDay) {
+      items.push({
+        text: `ROVV closes tonight at 11:59 PM, and winners are due by ${ROVV.winnersByLabel}: have the ${ROVV.winners} ${ROVV.prize} codes ready.`,
+        href: "/admin/rovv#winners",
+      });
+    }
+    /* ROVV confirms the referral codes from this file, and a winner email
+       cannot be taken back, so it goes every day the campaign runs. */
+    if (open) {
+      items.push({
+        text: "ROVV: send ROVV today's referral check file, and rule out what they cannot confirm.",
+        href: "/admin/rovv#winners",
+      });
+    }
     if (open && r.pendingOverADay > 0) {
       items.push({
         text: `${r.pendingOverADay} ROVV ${r.pendingOverADay === 1 ? "entry has" : "entries have"} waited over a day for review.`,
         href: "/admin/rovv?status=pending",
       });
     }
-    const judging = now > at(ROVV.closesAt) && now < at(ROVV.closesAt) + 3 * DAY_MS;
-    if (judging && r.notified < ROVV.winners) {
+    /* From the close until the event, while anything is left: nobody
+       picked, a picked winner not yet emailed, or entries not yet ruled on.
+       Late after 4 PM on the Monday, and said so. */
+    const judging = now > at(ROVV.closesAt) && now < at("2026-10-23T00:00:00+01:00");
+    const unfinished = r.winners === 0 || r.notified < r.winners || r.pending > 0;
+    /* The console's step 1 says once more after the close: before anyone is
+       picked, ROVV checks the last day's codes. */
+    if (judging && r.notified === 0) {
+      items.push({
+        text: "ROVV: send ROVV the final referral check file, and rule out what they cannot confirm, before picking winners.",
+        href: "/admin/rovv#winners",
+      });
+    }
+    if (judging && unfinished) {
       const left = [
         r.pending > 0 ? `${r.pending} ${r.pending === 1 ? "entry" : "entries"} still to review` : "",
         `${r.winners} of ${ROVV.winners} winners picked`,
         r.needCode > 0 ? `${r.needCode} picked without a ticket code` : "",
         `${r.notified} emailed`,
       ].filter(Boolean);
+      const late = now > at(ROVV.winnersBy);
       items.push({
-        text: `ROVV winners are due by ${ROVV.winnersByLabel}: ${left.join(", ")}.`,
+        text: `ROVV winners ${late ? "were" : "are"} due by ${ROVV.winnersByLabel}: ${left.join(", ")}.`,
         href: "/admin/rovv#winners",
       });
     }

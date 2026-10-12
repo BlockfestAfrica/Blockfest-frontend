@@ -13,6 +13,13 @@
  */
 export const TICKET_CODE = /^[A-Za-z0-9_-]{3,64}$/;
 
+/**
+ * Column headings a spreadsheet copy brings with it. Shaped like codes, so
+ * without this "Discount" and "Code" would be handed to two winners and
+ * emailed as their passes. Letters-only real codes still pass.
+ */
+const HEADING = /^(discount|promo|coupon|voucher|codes?|tickets?|ticket_?codes?|discount_?codes?|promo_?codes?|pass(es)?|code_?name|name)$/i;
+
 export interface PastedCodes {
   /** Every well-formed code, in the order pasted, first sighting only. */
   codes: string[];
@@ -29,7 +36,7 @@ export function readTicketCodes(text: string): PastedCodes {
   const repeated: string[] = [];
   const seen = new Set<string>();
   for (const piece of pieces) {
-    if (!TICKET_CODE.test(piece)) {
+    if (!TICKET_CODE.test(piece) || HEADING.test(piece)) {
       invalid.push(piece);
       continue;
     }

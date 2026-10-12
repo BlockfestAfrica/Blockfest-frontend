@@ -10,6 +10,7 @@ import {
   type Campaign,
 } from "@/lib/campaigns";
 import { CampaignPhasePill } from "@/components/campaigns/campaign-phase-pill";
+import { CampaignCardCta } from "@/components/campaigns/campaign-card-cta";
 import { formatNaira } from "@/lib/tickets";
 import { SITE_URL } from "@/lib/seo-event";
 
@@ -137,7 +138,10 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
         <div className="mt-auto flex flex-wrap items-end justify-between gap-4 pt-8">
           {/* A span, not a nested link: the whole card is the link already. */}
           <span className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand-gold px-7 text-base font-semibold text-black transition-colors duration-150 group-hover:bg-brand-gold-hover">
-            Enter the campaign
+            <CampaignCardCta
+              campaign={campaign}
+              initial={campaignPhase(campaign) === "open" ? "Enter the campaign" : "See the campaign"}
+            />
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </span>
 

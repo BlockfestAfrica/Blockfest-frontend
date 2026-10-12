@@ -67,6 +67,8 @@ const coder = await import("@/app/api/admin/rovv/code/route");
 const testClear = await import("@/app/api/admin/rovv/test-clear/route");
 const testNotify = await import("@/app/api/admin/rovv/test-notify/route");
 const codesRoute = await import("@/app/api/admin/rovv/codes/route");
+const correctRoute = await import("@/app/api/admin/rovv/correct/route");
+const resultsRoute = await import("@/app/api/admin/rovv/results/route");
 
 const SITE = "https://blockfestafrica.com";
 const ENTRY = "00000000-0000-4000-8000-0000000000aa";
@@ -101,6 +103,8 @@ describe("a request from another site", () => {
     ["test-notify", () => testNotify.POST(post("/api/admin/rovv/test-notify", { entryId: ENTRY }, "https://evil.example"))],
     ["test-clear, no origin", () => testClear.POST(post("/api/admin/rovv/test-clear", {}, null))],
     ["codes", () => codesRoute.POST(post("/api/admin/rovv/codes", { text: "A-1" }, "https://evil.example"))],
+    ["correct", () => correctRoute.POST(post("/api/admin/rovv/correct", { entryId: ENTRY, tiktokHandle: "x1" }, "https://evil.example"))],
+    ["results", () => resultsRoute.POST(post("/api/admin/rovv/results", {}, "https://evil.example"))],
   ])("is refused at %s before the session is read", async (_name, call) => {
     const answer = await call();
     expect(answer.status).toBe(403);
@@ -138,6 +142,8 @@ describe("a reviewer at an owner route", () => {
     ["delete the test entries", () => testClear.POST(post("/api/admin/rovv/test-clear", {}))],
     ["send a test winner email", () => testNotify.POST(post("/api/admin/rovv/test-notify", { entryId: ENTRY }))],
     ["hand out pasted codes", () => codesRoute.POST(post("/api/admin/rovv/codes", { text: "A-1" }))],
+    ["correct an entrant", () => correctRoute.POST(post("/api/admin/rovv/correct", { entryId: ENTRY, tiktokHandle: "x1" }))],
+    ["email the results", () => resultsRoute.POST(post("/api/admin/rovv/results", {}))],
   ])("cannot %s, and nothing is read or sent", async (_name, call) => {
     const answer = await call();
     expect(answer.status).toBe(403);

@@ -31,4 +31,10 @@ describe("a pasted list of codes", () => {
   it("is empty for nothing", () => {
     expect(readTicketCodes("  \n ")).toEqual({ codes: [], invalid: [], repeated: [] });
   });
+
+  it("refuses the column headings a spreadsheet copy brings, so they are never handed out as codes", () => {
+    const r = readTicketCodes("Discount Code\nBUIDL-7Q2K\nBUIDL-9XW4");
+    expect(r.codes).toEqual(["BUIDL-7Q2K", "BUIDL-9XW4"]);
+    expect(r.invalid).toEqual(["Discount", "Code"]);
+  });
 });

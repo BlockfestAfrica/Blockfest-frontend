@@ -73,6 +73,8 @@ const testClear = await import("@/app/api/admin/rovv/test-clear/route");
 const testNotify = await import("@/app/api/admin/rovv/test-notify/route");
 const codesRoute = await import("@/app/api/admin/rovv/codes/route");
 const adminLib = await import("@/lib/admin/rovv");
+const correctRoute = await import("@/app/api/admin/rovv/correct/route");
+const resultsRoute = await import("@/app/api/admin/rovv/results/route");
 
 let db: PGlite;
 let campaignId: string;
@@ -472,7 +474,7 @@ describe("picking winners", () => {
   it("picks an eligible entry, refuses one that is not, and says how many are picked", async () => {
     const good = await entry({ status: "eligible" });
     const waiting = await entry();
-    expect(await (await pick(good.id)).json()).toEqual({ ok: true, winners: 1 });
+    expect(await (await pick(good.id)).json()).toEqual({ ok: true, winners: 1, freedCode: null });
     const refused = await pick(waiting.id);
     expect(refused.status).toBe(409);
     expect(((await refused.json()) as { message: string }).message).toMatch(/Only an eligible entry can win/);
@@ -567,8 +569,8 @@ describe("ticket codes and the winner email (0074)", () => {
     expect(await answer.json()).toEqual({ ok: true, sent: 1, failed: 0 });
     expect(sends()).toEqual([coded.email]);
     expect(state.mails[0].text).toContain("Your code: BUIDL-ADA");
-    expect(state.mails[0].text).toMatch(/Register here: https:\/\/meetumo\.ai\/e\/blockfest-africa-2026\?/);
-    expect(state.mails[0].subject).toBe("You won a BUIDL PASS with ROVV");
+    expect(state.mails[0].text).toMatch(/Register with your code: https:\/\/meetumo\.ai\/e\/blockfest-africa-2026\?/);
+    expect(state.mails[0].subject).toBe("Your BUIDL PASS code: ROVV x Blockfest, Friday 23 October");
     expect(await notifiedAt(bare.id)).toBeNull();
 
     const again = await press();
@@ -670,10 +672,12 @@ describe("pasting every code at once (0074)", () => {
     expect(((await twice.json()) as { message: string }).message).toMatch(/twice: a-1/);
     const junk = await paste("A-1 not!a!code");
     expect(((await junk.json()) as { message: string }).message).toMatch(/not ticket codes: not!a!code/);
+    // A code a winner already holds is skipped and named, not a reason to refuse the rest.
     const held = await paste("NEW-1\nheld-1");
-    expect(held.status).toBe(409);
-    expect(((await held.json()) as { message: string }).message).toMatch(/already given to a winner: HELD-1/);
-    expect((await db.query(`SELECT 1 FROM rovv_entries WHERE ticket_code = 'NEW-1'`)).rows).toHaveLength(0);
+    const body = (await held.json()) as { ok: boolean; skipped: string[]; assigned: { code: string }[] };
+    expect(body.ok).toBe(true);
+    expect(body.skipped).toEqual(["held-1"]);
+    expect(body.assigned.map((a) => a.code)).toEqual(["NEW-1"]);
   });
 
   it("is owner work, and refused from another site", async () => {
@@ -702,5 +706,161 @@ describe("the claim on a winner's notice (0074)", () => {
     await db.query(`UPDATE rovv_entries SET ticket_code = 'NEW-RIGHT' WHERE id = $1`, [w.id]);
     const held = await adminLib.claimRovvNotice(admin, listed);
     expect(held?.ticketCode).toBe("NEW-RIGHT");
+  });
+});
+
+describe("the end-to-end walk's console fixes", () => {
+  it("refuses a ruling from a card that is out of date, and leaves the other reviewer's ruling alone", async () => {
+    const e = await entry();
+    await rule(e.id, "ineligible", "Not public");
+    // A second reviewer's card still says Waiting.
+    const stale = await decision.POST(
+      post("/api/admin/rovv/decision", { entryId: e.id, status: "eligible", revision: 1, from: "pending" }),
+    );
+    expect(stale.status).toBe(409);
+    expect(((await stale.json()) as { message: string }).message).toMatch(/Another reviewer has just ruled/);
+    expect((await one<{ status: string }>(`SELECT status FROM rovv_entries WHERE id = $1`, [e.id])).status).toBe("ineligible");
+    expect(state.mails.map((m) => m.subject)).toEqual(["About your ROVV entry"]);
+  });
+
+  it("stops sending 'in the running' once the winners are announced", async () => {
+    await entry({ winner: true, notified: true });
+    const late = await entry();
+    expect(await (await rule(late.id, "eligible")).json()).toMatchObject({ ok: true, emailed: false });
+    expect(state.mails).toEqual([]);
+  });
+
+  it("lets each person win once, and says which code an unpick frees", async () => {
+    const first = await entry({ winner: true, code: "FREE-ME" });
+    await db.query(`UPDATE rovv_entries SET tiktok_handle = 'samehand' WHERE id = $1`, [first.id]);
+    const second = await entry({ status: "eligible" });
+    await db.query(`UPDATE rovv_entries SET tiktok_handle = 'samehand' WHERE id = $1`, [second.id]);
+    const twice = await pick(second.id);
+    expect(twice.status).toBe(409);
+    expect(((await twice.json()) as { message: string }).message).toMatch(/already a winner from another entry/);
+    expect(await (await pick(first.id, false)).json()).toMatchObject({ ok: true, freedCode: "FREE-ME" });
+  });
+
+  it("lets an owner correct a username or email, never a reviewer, never once emailed as a winner", async () => {
+    const e = await entry();
+    const fix = (body: object) => correctRoute.POST(post("/api/admin/rovv/correct", { entryId: e.id, ...body }));
+    expect(await (await fix({ tiktokHandle: "@Right.Name" })).json()).toEqual({ ok: true });
+    expect((await one<{ tiktok_handle: string }>(`SELECT tiktok_handle FROM rovv_entries WHERE id = $1`, [e.id])).tiktok_handle).toBe("right.name");
+    expect(await (await fix({ email: "Fixed.Address@Gmail.com" })).json()).toEqual({ ok: true });
+    const row = await one<{ email: string; email_canonical: string }>(`SELECT email, email_canonical FROM rovv_entries WHERE id = $1`, [e.id]);
+    expect(row).toEqual({ email: "fixed.address@gmail.com", email_canonical: "fixedaddress@gmail.com" });
+    const other = await entry();
+    expect((await correctRoute.POST(post("/api/admin/rovv/correct", { entryId: other.id, email: "fixed.address@gmail.com" }))).status).toBe(409);
+    state.role = "reviewer";
+    expect((await fix({ tiktokHandle: "nope" })).status).toBe(403);
+    state.role = "owner";
+    const told = await entry({ winner: true, notified: true });
+    expect((await correctRoute.POST(post("/api/admin/rovv/correct", { entryId: told.id, tiktokHandle: "late" }))).status).toBe(409);
+  });
+
+  it("puts leftover pasted codes back, by value", async () => {
+    await entry({ winner: true, code: null });
+    const body = (await (await codesRoute.POST(post("/api/admin/rovv/codes", { text: "L-1\nL-2\nL-3" }))).json()) as { unusedCodes: string[] };
+    expect(body.unusedCodes).toEqual(["L-2", "L-3"]);
+  });
+});
+
+describe("the results email (0075)", () => {
+  const press = () => resultsRoute.POST(post("/api/admin/rovv/results", {}));
+
+  it("waits until every picked winner has been emailed", async () => {
+    await entry({ winner: true, notified: true });
+    await entry({ winner: true });
+    await entry({ status: "eligible" });
+    const early = await press();
+    expect(early.status).toBe(409);
+    expect(((await early.json()) as { message: string }).message).toMatch(/Email every picked winner first/);
+    expect(state.events).toEqual([]);
+  });
+
+  it("goes once to everyone who did not win and was not ruled out, with the owner's copy first", async () => {
+    await entry({ winner: true, notified: true });
+    const waiting = await entry();
+    const accepted = await entry({ status: "eligible" });
+    await entry({ status: "ineligible" });
+    await entry({ status: "eligible", test: true });
+    expect(await (await press()).json()).toEqual({ ok: true, sent: 2, failed: 0, left: 0 });
+    expect(state.events[0]).toBe("copy");
+    expect(sends().sort()).toEqual([waiting.email, accepted.email].sort());
+    expect(state.mails.every((m) => m.subject === "The ROVV campaign winners are announced")).toBe(true);
+    state.events = [];
+    expect((await press()).status).toBe(409);
+    expect(state.events, "nobody twice").toEqual([]);
+  });
+
+  it("retries only the mail that failed", async () => {
+    await entry({ winner: true, notified: true });
+    const a = await entry();
+    const b = await entry();
+    state.failFor.add(b.email);
+    expect(await (await press()).json()).toMatchObject({ sent: 1, failed: 1 });
+    state.failFor.clear();
+    state.events = [];
+    expect(await (await press()).json()).toMatchObject({ sent: 1, failed: 0 });
+    expect(sends()).toEqual([b.email]);
+    void a;
+  });
+
+  it("is owner work, and refused from another site", async () => {
+    state.role = "reviewer";
+    expect((await press()).status).toBe(403);
+    state.role = "owner";
+    expect((await resultsRoute.POST(post("/api/admin/rovv/results", {}, "https://evil.example"))).status).toBe(403);
+  });
+});
+
+describe("the second review's fixes (0075)", () => {
+  it("never picks somebody already emailed that they did not win", async () => {
+    const e = await entry({ status: "eligible" });
+    await db.query(`UPDATE rovv_entries SET results_emailed_at = now() WHERE id = $1`, [e.id]);
+    const answer = await pick(e.id);
+    expect(answer.status).toBe(409);
+    expect(((await answer.json()) as { message: string }).message).toMatch(/emailed that they did not win/);
+  });
+
+  it("takes over a results claim left by a press that died, and never strands anyone as sent", async () => {
+    await entry({ winner: true, notified: true });
+    const a = await entry();
+    await db.query(`UPDATE rovv_entries SET results_claimed_at = now() - interval '5 minutes' WHERE id = $1`, [a.id]);
+    expect((await resultsRoute.POST(post("/api/admin/rovv/results", {}))).status, "a fresh claim may still be sending").toBe(409);
+    await db.query(`UPDATE rovv_entries SET results_claimed_at = now() - interval '7 minutes' WHERE id = $1`, [a.id]);
+    expect(await (await resultsRoute.POST(post("/api/admin/rovv/results", {}))).json()).toMatchObject({ sent: 1 });
+    const row = await one<{ results_emailed_at: Date | null; results_claimed_at: Date | null }>(
+      `SELECT results_emailed_at, results_claimed_at FROM rovv_entries WHERE id = $1`,
+      [a.id],
+    );
+    expect(row.results_emailed_at).not.toBeNull();
+    expect(row.results_claimed_at).toBeNull();
+  });
+
+  it("refuses to correct a winner whose email is being sent, or to make a username win twice", async () => {
+    const sending = await entry({ winner: true, code: "C-77" });
+    await db.query(`UPDATE rovv_entries SET notice_claimed_at = now() WHERE id = $1`, [sending.id]);
+    expect((await correctRoute.POST(post("/api/admin/rovv/correct", { entryId: sending.id, email: "new@example.test" }))).status).toBe(409);
+    const champ = await entry({ winner: true });
+    const other = await entry();
+    const handle = (await one<{ tiktok_handle: string }>(`SELECT tiktok_handle FROM rovv_entries WHERE id = $1`, [champ.id])).tiktok_handle;
+    const twice = await correctRoute.POST(post("/api/admin/rovv/correct", { entryId: other.id, tiktokHandle: handle }));
+    expect(twice.status).toBe(409);
+    expect(((await twice.json()) as { message: string }).message).toMatch(/already a winner/);
+  });
+
+  it("lets a ruling go again to a corrected address", async () => {
+    const e = await entry();
+    await rule(e.id, "eligible");
+    await correctRoute.POST(post("/api/admin/rovv/correct", { entryId: e.id, email: "right@example.test" }));
+    await rule(e.id, "eligible");
+    expect(state.mails.map((m) => m.to)).toEqual([e.email, "right@example.test"]);
+  });
+
+  it("does not offer a reply deadline in an 'in the running' email sent after the close", async () => {
+    const e = await entry();
+    await rule(e.id, "eligible");
+    expect(state.mails[0].text).not.toMatch(/before 11:59 PM on Sunday 18 October/);
   });
 });

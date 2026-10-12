@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
-import { decideRovvEntry, markRovvRulingEmailed, rovvEntrant } from "@/lib/admin/rovv";
+import { decideRovvEntry, markRovvRulingEmailed, rovvEntrant, rovvWinnersAnnounced } from "@/lib/admin/rovv";
 import { PG, pgErrorCode } from "@/lib/db/errors";
 import { sendEmail } from "@/lib/email/client";
 import { rovvEligibleEmail, rovvIneligibleEmail } from "@/lib/email/templates";
@@ -37,6 +37,12 @@ const schema = z.object({
   note: z.string().trim().max(500, "Keep the note under 500 characters.").optional(),
   /** The version of the entry the reviewer was looking at. */
   revision: z.number().int().positive(),
+  /**
+   * The ruling the reviewer's card showed. Two reviewers work the list at
+   * once; a card minutes out of date would otherwise overturn the other
+   * reviewer's ruling and email the entrant the opposite news.
+   */
+  from: z.enum(ROVV_ENTRY_STATUSES).optional(),
 });
 
 const FORBIDDEN = NextResponse.json(
@@ -60,6 +66,10 @@ const MESSAGES: Record<string, { status: number; message: string }> = {
     message: "That entry is not there any more. The list has been reloaded.",
   },
   [PG.ADMIN_REQUIRED]: { status: 403, message: "Only a signed-in admin can do this." },
+  [PG.ROVV_RULED_MEANWHILE]: {
+    status: 409,
+    message: "Another reviewer has just ruled on this entry. The list has been reloaded: check it before ruling again.",
+  },
   [PG.ROVV_ENTRY_CHANGED]: {
     status: 409,
     message:
@@ -96,7 +106,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { entryId, status, note, revision } = parsed.data;
+  const { entryId, status, note, revision, from } = parsed.data;
 
   // Asked here as well as in the function, so the reviewer gets the words
   // before a round trip, and the function's check stays the one that counts.
@@ -108,7 +118,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const outcome = await decideRovvEntry(admin.admin, entryId, status, note || null, revision);
+    // Checked by the database under the row's lock (0075), so two reviewers
+    // ruling at once cannot both get through.
+    const outcome = await decideRovvEntry(admin.admin, entryId, status, note || null, revision, from ?? null);
 
     /* The ruling is made whatever happens to the email: a failure to read
        or send is logged, never turned into a failed ruling. */
@@ -119,18 +131,30 @@ export async function POST(request: NextRequest) {
         logError("admin/rovv decision entrant", error);
         return null;
       });
-      if (entrant && entrant.rulingEmailed !== ruled) {
+      /* "In the running" means nothing once the winners are out, so after
+         the first winner email it is not sent; a ruling-out still is. */
+      const late = ruled === "eligible" && (await rovvWinnersAnnounced(admin.admin).catch(() => false));
+      if (entrant && entrant.rulingEmailed !== ruled && !late) {
         // A test entry can always be fixed (the window never applied to it),
         // and its fix happens in test mode, not on the real form.
         const open = entrant.isTest || Date.now() <= new Date(ROVV.closesAt).getTime();
         const fixUrl = `${siteUrl()}${entrant.isTest ? `${rovvRoutes.home}?test=1#enter` : rovvRoutes.enter}`;
         const result = await sendEmail(
           ruled === "eligible"
-            ? rovvEligibleEmail({ to: entrant.email, fullName: entrant.fullName, tiktokUrl: entrant.tiktokUrl })
-            : rovvIneligibleEmail({
+            ? rovvEligibleEmail({
                 to: entrant.email,
                 fullName: entrant.fullName,
                 tiktokUrl: entrant.tiktokUrl,
+                referralCode: entrant.referralCode,
+                // After the close there is no "reply before Sunday" to give.
+                closed: !open,
+              })
+            : rovvIneligibleEmail({
+                to: entrant.email,
+                fullName: entrant.fullName,
+                tiktokHandle: entrant.tiktokHandle,
+                tiktokUrl: entrant.tiktokUrl,
+                referralCode: entrant.referralCode,
                 reason: entrant.reviewNote ?? note ?? "",
                 canFix: open,
                 fixUrl,

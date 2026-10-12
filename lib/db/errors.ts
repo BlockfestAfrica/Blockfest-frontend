@@ -83,6 +83,12 @@ export const PG = {
   ROVV_BAD_CODE: "P1016",
   /** A pasted list of codes has the same code in it twice. */
   ROVV_CODES_REPEATED: "P1017",
+  /** Another reviewer ruled on the entry since the card was loaded (0075). */
+  ROVV_RULED_MEANWHILE: "P1018",
+  /** Another entry under this TikTok username has already won. */
+  ROVV_ALREADY_WON: "P1019",
+  /** This entrant has already been sent the results email, so cannot be picked. */
+  ROVV_RESULTS_SENT: "P1020",
   ADMIN_REQUIRED: "P0401",
   REASON_REQUIRED: "P0402",
 } as const;

@@ -24,6 +24,8 @@ const state = vi.hoisted(() => ({
   /** What the route handed to after(), run by the test when it wants. */
   later: [] as (() => unknown)[],
   alerts: [] as { kind: string; who: string }[],
+  /** The mail provider failing. */
+  mailDown: false,
 }));
 
 vi.mock("next/server", async (importOriginal) => {
@@ -54,7 +56,10 @@ vi.mock("@/lib/email/client", () => ({
   sendEmailQuietly: vi.fn(async (mail: { subject: string; to: string }) => {
     state.sent.push({ subject: mail.subject, to: mail.to });
   }),
-  sendEmail: vi.fn(),
+  sendEmail: vi.fn(async (mail: { subject: string; to: string }) => {
+    state.sent.push({ subject: mail.subject, to: mail.to });
+    return state.mailDown ? { sent: false, reason: "test" } : { sent: true };
+  }),
 }));
 
 const { POST } = await import("@/app/api/campaigns/rovv/enter/route");
@@ -110,6 +115,7 @@ beforeEach(async () => {
   state.admin = false;
   state.later = [];
   state.alerts = [];
+  state.mailDown = false;
   await db.exec(`DELETE FROM rovv_entries; DELETE FROM request_throttle;
     UPDATE campaigns SET starts_at = now() - interval '1 day', ends_at = now() + interval '1 day', paused_at = NULL, paused_reason = NULL WHERE slug = 'rovv';`);
 });
@@ -139,7 +145,7 @@ describe("an entry", () => {
   it("is taken, stored as typed and tidied, and receipted once", async () => {
     const response = await enter(ENTRY);
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, outcome: "created", test: false });
+    expect(await response.json()).toEqual({ ok: true, outcome: "created", test: false, emailed: true });
     expect(await rows()).toEqual([
       {
         email: "ada@example.test",
@@ -156,18 +162,52 @@ describe("an entry", () => {
 
   it("sent again unchanged sends no second email, and changed replaces the first", async () => {
     await enter(ENTRY);
-    expect(await (await enter(ENTRY)).json()).toEqual({ ok: true, outcome: "unchanged", test: false });
+    expect(await (await enter(ENTRY)).json()).toEqual({ ok: true, outcome: "unchanged", test: false, emailed: false });
     const changed = await enter({ ...ENTRY, tiktokUrl: "https://vt.tiktok.com/ZSqxCpWFD", referralCode: "ada999" });
-    expect(await changed.json()).toEqual({ ok: true, outcome: "updated", test: false });
-    expect((await rows()).map((r) => [r.tiktok_url, r.referral_code])).toEqual([["https://vt.tiktok.com/ZSqxCpWFD", "ADA999"]]);
+    expect(await changed.json()).toEqual({ ok: true, outcome: "updated", test: false, emailed: true });
+    expect((await rows()).map((r) => [r.tiktok_url, r.referral_code])).toEqual([["https://vt.tiktok.com/ZSqxCpWFD", "ada999"]]);
     expect(state.sent.map((m) => m.subject)).toEqual(["We got your ROVV entry", "Your ROVV entry is updated"]);
   });
 
-  it("from the same email with another username is refused on the email", async () => {
+  /* One message for "another username" and "already accepted": emails are
+     not verified, so telling them apart would tell anybody holding an
+     address which account entered with it, or that it was accepted. */
+  it("refuses another username and an accepted entry with the same words, naming neither", async () => {
     await enter(ENTRY);
-    const response = await enter({ ...ENTRY, tiktokHandle: "other", tiktokUrl: "https://tiktok.com/@other/video/7300000000000000002" });
-    expect(response.status).toBe(409);
-    expect(await response.json()).toMatchObject({ ok: false, field: "email" });
+    const other = await enter({ ...ENTRY, tiktokHandle: "other", tiktokUrl: "https://tiktok.com/@other/video/7300000000000000002" });
+    await db.exec(`UPDATE rovv_entries SET status = 'eligible', reviewed_at = now()`);
+    const accepted = await enter({ ...ENTRY, referralCode: "NEW999" });
+    const a = (await other.json()) as { field: string; message: string };
+    const b = (await accepted.json()) as { field: string; message: string };
+    expect(other.status).toBe(409);
+    expect(accepted.status).toBe(409);
+    expect(a).toEqual(b);
+    expect(a.field).toBe("email");
+    expect(a.message).not.toContain("adaobi");
+  });
+
+  it("emails the copy again when the form says the last one could not be sent, even unchanged", async () => {
+    await enter(ENTRY);
+    state.sent = [];
+    expect(await (await enter(ENTRY)).json()).toMatchObject({ outcome: "unchanged", emailed: false });
+    expect(state.sent).toEqual([]);
+    expect(await (await enter({ ...ENTRY, resendReceipt: true })).json()).toMatchObject({ outcome: "unchanged", emailed: true });
+    expect(state.sent).toHaveLength(1);
+  });
+
+  it("says when the copy could not be emailed, and still saves the entry", async () => {
+    state.mailDown = true;
+    expect(await (await enter(ENTRY)).json()).toEqual({ ok: true, outcome: "created", test: false, emailed: false });
+    expect(await rows()).toHaveLength(1);
+  });
+
+  it("tells the form which side of the window a refusal is on", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-10-19T08:00:00+01:00") });
+    await db.exec(`UPDATE campaigns SET starts_at = now() - interval '2 days', ends_at = now() - interval '1 second' WHERE slug = 'rovv'`);
+    expect(await (await enter(ENTRY)).json()).toMatchObject({ ok: false, closed: "after" });
+    vi.setSystemTime(new Date("2026-10-12T23:59:00+01:00"));
+    await db.exec(`UPDATE campaigns SET starts_at = now() + interval '1 minute', ends_at = now() + interval '2 days' WHERE slug = 'rovv'`);
+    expect(await (await enter(ENTRY)).json()).toMatchObject({ ok: false, closed: "before" });
   });
 
   it("of a video someone else entered is taken while theirs is pending, and refused on the link once it is eligible", async () => {
@@ -212,7 +252,7 @@ describe("an entry", () => {
   it("from a bot is answered as success, and nothing is written or sent", async () => {
     for (const trap of [{ hp_contact: "filled" }, { elapsedMs: 400 }]) {
       const response = await enter({ ...ENTRY, ...trap });
-      expect(await response.json()).toEqual({ ok: true, outcome: "created", test: false });
+      expect(await response.json()).toEqual({ ok: true, outcome: "created", test: false, emailed: true });
     }
     expect(await rows()).toEqual([]);
     expect(state.sent).toEqual([]);
@@ -246,7 +286,7 @@ describe("test entries (0074)", () => {
     state.admin = true;
     // A quick tester trips no bot check: the session is the check.
     const response = await enter({ ...ENTRY, test: true, elapsedMs: 300 });
-    expect(await response.json()).toEqual({ ok: true, outcome: "created", test: true });
+    expect(await response.json()).toEqual({ ok: true, outcome: "created", test: true, emailed: true });
     const flagged = (await db.query<{ is_test: boolean }>(`SELECT is_test FROM rovv_entries`)).rows;
     expect(flagged).toEqual([{ is_test: true }]);
     expect(state.sent).toEqual([{ subject: "We got your ROVV entry", to: "ada@example.test" }]);
@@ -258,7 +298,7 @@ describe("test entries (0074)", () => {
     state.admin = true;
     await enter({ ...ENTRY, test: true });
     state.admin = false;
-    expect(await (await enter(ENTRY)).json()).toEqual({ ok: true, outcome: "created", test: false });
+    expect(await (await enter(ENTRY)).json()).toEqual({ ok: true, outcome: "created", test: false, emailed: true });
   });
 });
 

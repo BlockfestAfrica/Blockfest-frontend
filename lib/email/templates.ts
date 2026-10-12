@@ -1364,10 +1364,10 @@ export function ownerDueTodayEmail(params: {
     replyTo: CONTACT_EMAIL,
     subject:
       n === 1
-        ? `Today on Monica: ${params.items[0].text}`
-        : `Today on Monica: ${n} things need you`,
+        ? `Today on the campaigns: ${params.items[0].text}`
+        : `Today on the campaigns: ${n} things need you`,
     text: [
-      `Good morning. ${params.dayLabel}, on the Monica campaign:`,
+      `Good morning. ${params.dayLabel}, on the campaigns:`,
       ``,
       ...params.items.flatMap((item) => [`- ${item.text}`, `  ${base}${item.href}`]),
       ``,
@@ -1375,7 +1375,7 @@ export function ownerDueTodayEmail(params: {
     ].join("\n"),
     html: layout({
       preheader: n === 1 ? params.items[0].text : `${n} things need a person today.`,
-      heading: "Today on the Monica campaign",
+      heading: "Today on the campaigns",
       body: [
         p(escape(params.dayLabel)),
         ...params.items.map((item) =>
@@ -1887,12 +1887,13 @@ export function withdrawnEmail(params: {
  * Sent on every entry the database took, so a person who mistyped their link
  * sees it in their inbox and can submit again before the close. Unchanged
  * resubmissions send nothing (the route never calls this for them). The
- * referral code is read back because it is the thing most likely to be wrong
- * and the one Rovv checks.
+ * username and the referral code are read back because they are what is
+ * most likely to be wrong, and what ROVV checks.
  */
 export function rovvEntryEmail(params: {
   to: string;
   fullName: string;
+  tiktokHandle: string;
   tiktokUrl: string;
   referralCode: string;
   replaced: boolean;
@@ -1901,9 +1902,10 @@ export function rovvEntryEmail(params: {
   const closes = "11:59 PM on Sunday 18 October";
   const lead = params.replaced
     ? `${name}, your entry is updated. This replaces the one you sent before.`
-    : `${name}, your entry to ${ROVV.title.replace(/…$/, "")} is in.`;
-  const review = `The team reviews every entry by hand and picks ${ROVV.winners} winners for creativity and relevance. Each wins a ${ROVV.prize} to Blockfest Africa 2026, for ${ROVV.prizeDay}. Winners are announced by ${ROVV.winnersByLabel}: emailed, and listed on the campaign page.`;
-  const fix = `Something wrong? Enter again from the campaign page with the same email address and TikTok username before ${closes} (Lagos time) and the new details replace these.`;
+    : `${name}, your entry to the ROVV campaign is in.`;
+  const review = `The team checks every entry by hand and picks ${ROVV.winners} winners for creativity and relevance. Each wins a ${ROVV.prize} to Blockfest Africa 2026, for ${ROVV.prizeDay}. Winners are announced by ${ROVV.winnersByLabel}: emailed, and listed on the campaign page.`;
+  const fix = `Something wrong? Until the team has checked your entry, enter again on the campaign page before ${closes} (Lagos time), with this email address and the TikTok username @${params.tiktokHandle}, and the new details replace these. After that, reply to this email.`;
+  const page = `${siteUrl()}${rovvRoutes.home}`;
 
   return {
     to: params.to,
@@ -1913,6 +1915,7 @@ export function rovvEntryEmail(params: {
     text: [
       lead,
       ``,
+      `Your TikTok username: @${params.tiktokHandle}`,
       `Your video: ${params.tiktokUrl}`,
       `Your ROVV referral code: ${params.referralCode}`,
       ``,
@@ -1920,8 +1923,9 @@ export function rovvEntryEmail(params: {
       `Keep the video public and tagged until Saturday 24 October.`,
       ``,
       fix,
+      `Fix it here: ${siteUrl()}${rovvRoutes.enter}`,
       ``,
-      `Campaign page: ${siteUrl()}${rovvRoutes.home}`,
+      `Campaign page: ${page}`,
     ].join("\n"),
     html: layout({
       brand: ROVV_BRAND,
@@ -1931,40 +1935,80 @@ export function rovvEntryEmail(params: {
       heading: params.replaced ? `Updated, ${name}` : `You're in, ${name}`,
       body: [
         p(escape(lead)),
+        boxed("Your TikTok username", `@${params.tiktokHandle}`),
         boxed("Your video", params.tiktokUrl),
         boxed("Your ROVV referral code", params.referralCode),
         p(escape(review)),
         p("Keep the video public and tagged until Saturday 24 October."),
         quiet(escape(fix)),
       ].join(""),
-      action: { label: "See the campaign", href: `${siteUrl()}${rovvRoutes.home}` },
+      action: { label: "See the campaign", href: page },
     }),
   };
 }
 
+/** A reason a person wrote, set as prose rather than a code box: it is read, not copied. */
+const reasonBlock = (label: string, text: string) =>
+  `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 16px;">
+     <tr><td style="padding:14px 16px;background:#fdf6f6;border-left:3px solid #d47a7a;border-radius:0 10px 10px 0;">
+       <p style="margin:0 0 4px;font-family:Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${MUTED};">${escape(label)}</p>
+       <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:${INK};">${escape(text)}</p>
+     </td></tr>
+   </table>`;
+
 /**
  * Your entry has been checked and meets the rules.
  *
- * Careful about what it promises: eligible is not winning. It says the entry
- * is in the running, and when the winners are announced.
+ * Careful about what it promises: eligible is not winning, and ROVV still
+ * confirms the referral code. Says the entry is now locked, since an
+ * accepted entry can no longer be replaced from the form, and how to raise
+ * anything wrong in it.
  */
-export function rovvEligibleEmail(params: { to: string; fullName: string; tiktokUrl: string }): Email {
+export function rovvEligibleEmail(params: {
+  to: string;
+  fullName: string;
+  tiktokUrl: string;
+  referralCode: string;
+  /** Ruled after entries closed: there is no "before Sunday" left to give. */
+  closed?: boolean;
+}): Email {
   const name = firstName(params.fullName);
   const lead = `${name}, the team has checked your entry and it meets the rules, so it is in the running.`;
-  const next = `${ROVV.winners} winners are chosen for creativity and relevance, and announced by ${ROVV.winnersByLabel}: emailed, and listed on the campaign page. Keep your video public and tagged until Saturday 24 October.`;
+  const next = `The winners are chosen for creativity and relevance, and announced by ${ROVV.winnersByLabel}: emailed, and listed on the campaign page. Keep your video public and tagged until Saturday 24 October.`;
+  const locked = params.closed
+    ? "ROVV still confirms your referral code; if it can't, we will email you. If your code or anything else in your entry is wrong, reply to this email."
+    : "ROVV still confirms your referral code; if it can't, we will email you. Your entry is now locked in, so if your code or anything else in it is wrong, reply to this email before 11:59 PM on Sunday 18 October.";
+  const page = `${siteUrl()}${rovvRoutes.home}`;
 
   return {
     to: params.to,
     toName: params.fullName,
     replyTo: CONTACT_EMAIL,
     subject: "Your ROVV entry is in the running",
-    text: [lead, ``, `Your video: ${params.tiktokUrl}`, ``, next, ``, `Campaign page: ${siteUrl()}${rovvRoutes.home}`].join("\n"),
+    text: [
+      lead,
+      ``,
+      `Your video: ${params.tiktokUrl}`,
+      `Your ROVV referral code: ${params.referralCode}`,
+      ``,
+      next,
+      ``,
+      locked,
+      ``,
+      `Campaign page: ${page}`,
+    ].join("\n"),
     html: layout({
       brand: ROVV_BRAND,
       preheader: `Winners are announced by ${ROVV.winnersByLabel}.`,
       heading: `You're in the running, ${name}`,
-      body: [p(escape(lead)), boxed("Your video", params.tiktokUrl), p(escape(next))].join(""),
-      action: { label: "See the campaign", href: `${siteUrl()}${rovvRoutes.home}` },
+      body: [
+        p(escape(lead)),
+        boxed("Your video", params.tiktokUrl),
+        boxed("Your ROVV referral code", params.referralCode),
+        p(escape(next)),
+        quiet(escape(locked)),
+      ].join(""),
+      action: { label: "See the campaign", href: page },
     }),
   };
 }
@@ -1972,15 +2016,18 @@ export function rovvEligibleEmail(params: { to: string; fullName: string; tiktok
 /**
  * Your entry was ruled out, and why.
  *
- * The reason is the reviewer's own words, escaped like everything typed.
- * Before the close it says how to fix it: the same person can enter again
- * and the entry goes back to waiting (0074). After the close it says only
- * what happened, since nothing can change any more.
+ * The reason is the reviewer's own words, escaped like everything typed and
+ * set as prose. Before the close it says how to fix it, with the username
+ * and code to send again with: the same person can enter again and the
+ * entry goes back to waiting (0074). After the close it says only what
+ * happened. Either way, a person can reply and a person reads it.
  */
 export function rovvIneligibleEmail(params: {
   to: string;
   fullName: string;
+  tiktokHandle: string;
   tiktokUrl: string;
+  referralCode: string;
   reason: string;
   /** Whether entries are still open, so it can be fixed and sent again. */
   canFix: boolean;
@@ -1990,8 +2037,10 @@ export function rovvIneligibleEmail(params: {
   const name = firstName(params.fullName);
   const lead = `${name}, the team has checked your entry and it cannot go forward as it is.`;
   const fix = params.canFix
-    ? "You can fix it and send it again before 11:59 PM on Sunday 18 October (Lagos time): enter on the campaign page with the same email address and TikTok username, and it goes back to the team."
-    : "Entries have closed, so it can no longer be changed. If you think this is a mistake, reply to this email.";
+    ? `You can fix it and send it again before 11:59 PM on Sunday 18 October (Lagos time). Enter on the campaign page with this email address and the TikTok username @${params.tiktokHandle}, and it goes back to the team.`
+    : "Entries have closed, so it can no longer be changed.";
+  const reply = "If you think this is wrong, or your username or email address was wrong, reply to this email and a person will look at it again.";
+  const fixUrl = params.fixUrl ?? `${siteUrl()}${rovvRoutes.enter}`;
 
   return {
     to: params.to,
@@ -2003,83 +2052,139 @@ export function rovvIneligibleEmail(params: {
       ``,
       `Why: ${params.reason}`,
       ``,
+      `Your TikTok username: @${params.tiktokHandle}`,
       `Your video: ${params.tiktokUrl}`,
+      `Your ROVV referral code: ${params.referralCode}`,
       ``,
       fix,
+      params.canFix ? `Fix it here: ${fixUrl}` : "",
       ``,
-      `Campaign page: ${siteUrl()}${rovvRoutes.home}`,
-    ].join("\n"),
+      reply,
+    ]
+      .filter((line, i, all) => line !== "" || all[i - 1] !== "")
+      .join("\n"),
     html: layout({
       brand: ROVV_BRAND,
       preheader: params.reason,
       heading: params.canFix ? `Your entry needs a fix, ${name}` : `About your entry, ${name}`,
       body: [
         p(escape(lead)),
-        boxed("Why", params.reason),
+        reasonBlock("Why", params.reason),
+        boxed("Your TikTok username", `@${params.tiktokHandle}`),
         boxed("Your video", params.tiktokUrl),
+        boxed("Your ROVV referral code", params.referralCode),
         p(escape(fix)),
+        quiet(escape(reply)),
       ].join(""),
-      action: params.canFix
-        ? { label: "Fix my entry", href: params.fixUrl ?? `${siteUrl()}${rovvRoutes.enter}` }
-        : undefined,
+      action: params.canFix ? { label: "Fix my entry", href: fixUrl } : undefined,
     }),
   };
 }
 
 /**
- * You won: your BUIDL PASS code.
+ * You won: your BUIDL PASS code, and exactly how to use it.
  *
  * Sent once per winner from the console, as a bulk send (the owner gets a
- * copy first). The code is the prize, so it comes straight after the news,
- * with the one step that turns it into a pass. No deadline: winners register
- * when they like (the owner, 12 October). No link that signs anyone in.
+ * copy first). The code comes straight after the news with the button under
+ * it, then the steps, written for somebody who has never bought a ticket
+ * online. No "free" and no "claim": both read as a prize scam to a spam
+ * filter and to a person. No deadline (the owner, 12 October). No link
+ * that signs anyone in.
  */
 export function rovvWinnerEmail(params: {
   to: string;
   fullName: string;
+  tiktokHandle: string;
   tiktokUrl: string;
   ticketCode: string;
   /** Where to register: the ticket page, with this campaign's tracking. */
   ticketLink: string;
 }): Email {
   const name = firstName(params.fullName);
-  const lead = `${name}, your video is one of the ${ROVV.winners} winners of ${ROVV.title.replace(/…$/, "")}. You have won a ${ROVV.prize} to Blockfest Africa 2026, for ${ROVV.prizeDay}.`;
-  const how = `To claim it, register for the ${ROVV.prize} on our ticket page and enter this code at checkout. It takes the full price off, so the pass is free. Register in your own name.`;
-  const event =
-    "Blockfest Africa 2026 is at the National Art Theatre, Lagos. The pass gives you the main stage and the exhibition area on Conference Day.";
-  const keep = "The code is your ticket: keep it to yourself. It cannot be exchanged for cash, and travel is not included.";
+  const lead = `${name}, your video is one of the winners of the ROVV campaign. You have won a ${ROVV.prize} to Blockfest Africa 2026, for ${ROVV.prizeDay}.`;
+  const steps = [
+    `Tap Register with my code and choose the ${ROVV.prize} (Day 2, Conference Day).`,
+    "Enter your code where the ticket page asks for a discount or promo code. The total should come to ₦0.",
+    "Register in your own name, with the email address you want your ticket sent to.",
+    "Your ticket arrives by email. Bring it on Friday 23 October to the National Art Theatre, Lagos.",
+  ];
+  const trouble = "Code refused, or the total isn't ₦0? Reply to this email with a screenshot and we will sort it out.";
+  const keep = "Until you register, this code is your pass: don't share it. It cannot be exchanged for cash, and travel is not included.";
+  const listed = `Your username @${params.tiktokHandle} is now on the campaign page. Keep your video public and tagged until Saturday 24 October.`;
+  const winnersPage = `${siteUrl()}${rovvRoutes.home}#winners`;
 
   return {
     to: params.to,
     toName: params.fullName,
     replyTo: CONTACT_EMAIL,
-    subject: `You won a ${ROVV.prize} with ROVV`,
+    subject: `Your ${ROVV.prize} code: ROVV x Blockfest, Friday 23 October`,
     text: [
       lead,
       ``,
       `Your code: ${params.ticketCode}`,
       ``,
-      how,
-      `Register here: ${params.ticketLink}`,
+      `Register with your code: ${params.ticketLink}`,
       ``,
-      `Your winning video: ${params.tiktokUrl}`,
+      ...steps.map((step, i) => `${i + 1}. ${step}`),
       ``,
-      event,
+      trouble,
+      ``,
       keep,
-      `Questions? Reply to this email.`,
+      ``,
+      listed,
+      `Winners: ${winnersPage}`,
     ].join("\n"),
     html: layout({
       brand: ROVV_BRAND,
-      preheader: `Your ${ROVV.prize} code is inside. Register with it for free.`,
+      preheader: `Your ${ROVV.prize} code for Friday 23 October is inside.`,
       heading: `You won, ${name}`,
       body: [
         p(escape(lead)),
         boxed("Your code", params.ticketCode),
-        p(escape(how)),
-        boxed("Your winning video", params.tiktokUrl),
-        quiet(`${escape(event)} ${escape(keep)}`),
+        `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 20px;">
+           <tr><td style="border-radius:999px;background:${GOLD};">
+             <a href="${escape(params.ticketLink)}" style="display:inline-block;padding:14px 30px;font-family:Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#111111;text-decoration:none;border-radius:999px;">Register with my code</a>
+           </td></tr>
+         </table>`,
+        `<ol style="margin:0 0 16px;padding-left:20px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:${INK};">${steps
+          .map((step) => `<li style="margin:0 0 8px;">${escape(step)}</li>`)
+          .join("")}</ol>`,
+        p(escape(trouble)),
+        quiet(escape(keep)),
+        quiet(
+          `Your username <a href="${escape(winnersPage)}" style="color:${MUTED};">@${escape(params.tiktokHandle)}</a> is now on the campaign page. Keep your video public and tagged until Saturday 24 October.`,
+        ),
       ].join(""),
-      action: { label: `Register for your ${ROVV.prize}`, href: params.ticketLink },
+    }),
+  };
+}
+
+/**
+ * The results are out, for everybody whose eligible entry did not win.
+ *
+ * Sent once, from the console, after every winner has been emailed (a bulk
+ * send, so the owner gets a copy first). Without it the only people who ever
+ * hear the result are the twenty who won. Says thank you, says plainly it
+ * was not one of the twenty, and where the winners are. No marketing.
+ */
+export function rovvResultsEmail(params: { to: string; fullName: string }): Email {
+  const name = firstName(params.fullName);
+  const lead = `${name}, thank you for entering the ROVV campaign. The winners have been picked and told, and your video was not one of them this time.`;
+  const after = "Your video may still be shared by Blockfest Africa or ROVV, with credit to you, as the campaign rules say, so please keep it up until Saturday 24 October.";
+  const winnersPage = `${siteUrl()}${rovvRoutes.home}#winners`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: "The ROVV campaign winners are announced",
+    text: [lead, ``, `See the winners: ${winnersPage}`, ``, after, ``, `Thank you for taking part.`].join("\n"),
+    html: layout({
+      brand: ROVV_BRAND,
+      preheader: "Thank you for taking part.",
+      heading: `Thank you, ${name}`,
+      body: [p(escape(lead)), p(escape(after)), quiet("Thank you for taking part.")].join(""),
+      action: { label: "See the winners", href: winnersPage },
     }),
   };
 }
@@ -2096,7 +2201,7 @@ export function rovvEntryAlertEmail(params: {
   alsoSince?: number;
   consoleUrl: string;
 }): Email {
-  const headline = `${params.who} entered ${ROVV.title.replace(/…$/, "")}`;
+  const headline = `${params.who} entered the ROVV campaign`;
   const queue =
     typeof params.waiting === "number"
       ? `${params.waiting} ${params.waiting === 1 ? "entry is" : "entries are"} waiting for review.`

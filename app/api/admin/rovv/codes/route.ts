@@ -13,10 +13,10 @@ export const dynamic = "force-dynamic";
 /**
  * Hand out a pasted list of ticket codes, one per winner (the owner, 12
  * October). Owners only. The list is read the way the console showed it
- * (lib/rovv-codes.ts) and refused whole if anything in it is wrong, so a
- * paste never half-lands: a piece that is not a code, a code twice, or a
- * code a winner already holds. assign_rovv_ticket_codes does the handing
- * out, in the order the winners were picked, and checks all three again.
+ * (lib/rovv-codes.ts) and refused whole if a piece is not a code or a code
+ * appears twice. Codes a winner already holds are left out and named.
+ * assign_rovv_ticket_codes does the handing out, in the order the winners
+ * were picked, and checks all of it again.
  *
  * Nothing is emailed here. The codes show on each winner's card, and the
  * winner email (its own button) carries each winner's own.
@@ -49,15 +49,23 @@ export async function POST(request: NextRequest) {
   if (repeated.length > 0) return fail(`These codes are in the list twice: ${listed(repeated)}. Each winner needs their own.`);
 
   try {
-    const held = await heldRovvTicketCodes(admin.admin, codes);
-    if (held.length > 0) {
-      return fail(`These codes are already given to a winner: ${listed(held)}. Take them out and paste again.`, 409);
-    }
-    const assigned = await assignRovvTicketCodes(admin.admin, codes, parsed.data.test);
+    /* Codes a winner already holds are left out rather than refusing the
+       list, so pasting the whole list again after a few have gone out (or
+       after an unpick) just carries on. Compared without case, as the
+       database does. */
+    const held = new Set((await heldRovvTicketCodes(admin.admin, codes)).map((c) => c.toUpperCase()));
+    const fresh = codes.filter((c) => !held.has(c.toUpperCase()));
+    const skipped = codes.filter((c) => held.has(c.toUpperCase()));
+    const assigned = fresh.length > 0 ? await assignRovvTicketCodes(admin.admin, fresh, parsed.data.test) : [];
+    const given = new Set(assigned.map((a) => a.code.toUpperCase()));
     return NextResponse.json({
       ok: true,
       assigned,
-      unused: codes.length - assigned.length,
+      skipped,
+      /* By value, so the console can put them back in the box: a leftover
+         code is a paid-for ticket and must not be lost. */
+      unusedCodes: fresh.filter((c) => !given.has(c.toUpperCase())),
+      unused: fresh.length - assigned.length,
     });
   } catch (error) {
     switch (pgErrorCode(error)) {

@@ -38,7 +38,25 @@ export interface RovvQueueItem {
   isTest: boolean;
   /** The winner's ticket code, once an owner has given one. */
   ticketCode: string | null;
+  /** Other entries under the same TikTok username. */
+  sameHandle?: number;
+  /** Other entries with the same referral code. */
+  sameReferral?: number;
+  /** When it last changed, Lagos, pre-formatted: shown on a replaced entry. */
+  updatedAtLabel?: string;
 }
+
+/** Reasons reviewers give most, one tap each; the box stays editable. */
+const QUICK_REASONS = [
+  "Your video is not public, so we cannot watch it.",
+  "Your video does not tag @rovvafrica and @blockfestafrica.",
+  "Your video does not use #ROVVMeToBlockfest.",
+  "The video is not from the TikTok account you entered with.",
+  "Your video is not on the prompt \u201cIf ROVV takes me to Blockfest\u2026\u201d.",
+  "ROVV could not confirm your referral code.",
+];
+
+const isShortLink = (url: string) => /\/\/(vm|vt)\.tiktok\.com\/|tiktok\.com\/t\//i.test(url);
 
 const STATUS: Record<RovvStatus, { tone: "warn" | "good" | "bad"; label: string; edge: string }> = {
   pending: { tone: "warn", label: "Waiting", edge: "border-l-amber-400" },
@@ -80,6 +98,10 @@ async function postJson(url: string, body: unknown) {
     sentTo?: string;
     assigned?: { entryId: string; handle: string; code: string }[];
     unused?: number;
+    unusedCodes?: string[];
+    skipped?: string[];
+    emailed?: boolean;
+    freedCode?: string | null;
   };
   return { good: response.ok && result.ok === true, result };
 }
@@ -117,6 +139,10 @@ export function RovvQueue({
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState<string | null>(null);
   const [visible, setVisible] = useState(PAGE);
+  /** The winner whose unpick is waiting for a second tap (it frees their code). */
+  const [unpicking, setUnpicking] = useState<string | null>(null);
+  /** The entry whose username or email is being corrected. */
+  const [correcting, setCorrecting] = useState<string | null>(null);
   const reasonRef = useRef<HTMLInputElement>(null);
   const shown = items.slice(0, visible);
 
@@ -132,6 +158,13 @@ export function RovvQueue({
       toast.error("Ruling an entry out needs a reason. The entrant is emailed it.");
       return;
     }
+    /* Unpicking a winner who holds a code frees that code (a paid ticket),
+       so it takes a second tap that says so. */
+    if (action === "unpick" && item.ticketCode && unpicking !== item.id) {
+      setUnpicking(item.id);
+      return;
+    }
+    setUnpicking(null);
 
     setBusy({ id: item.id, action });
     try {
@@ -143,6 +176,7 @@ export function RovvQueue({
               status: action,
               note: action === "ineligible" ? note : undefined,
               revision: item.revision,
+              from: item.status,
             });
 
       if (!good) {
@@ -151,11 +185,19 @@ export function RovvQueue({
         return;
       }
 
-      // Named, so a mis-tap can be found again by who it was.
+      // Named, so a mis-tap can be found again by who it was. And whether
+      // the entrant heard, since a ruling now emails them.
+      const heard =
+        action === "eligible" || action === "ineligible"
+          ? result.emailed
+            ? " The entrant has been emailed."
+            : " No email went to the entrant (already told, or it did not send)."
+          : "";
+      const freed = action === "unpick" && result.freedCode ? ` Their code ${result.freedCode} is free again.` : "";
       toast.success(
         `${DONE_LABEL[action]}: ${item.fullName} (@${item.tiktokHandle})${
           typeof result.winners === "number" ? `. ${result.winners} of ${cap} picked.` : ""
-        }`,
+        }${heard}${freed}`,
       );
       if (action === "ineligible") {
         setRuling(null);
@@ -202,7 +244,21 @@ export function RovvQueue({
                 )}
                 {/* The entrant sent it again, so the video may not be the one
                     somebody watched earlier. */}
-                {item.revision > 1 && <Pill tone="neutral">Replaced by entrant</Pill>}
+                {item.revision > 1 && (
+                  <Pill tone="neutral">Replaced by entrant{item.updatedAtLabel ? ` ${item.updatedAtLabel}` : ""}</Pill>
+                )}
+                {/* The same person entering twice, under another email: each
+                    person enters, and wins, once. */}
+                {(item.sameHandle ?? 0) > 0 && (
+                  <Pill tone="bad">
+                    Same TikTok username as {item.sameHandle} other {item.sameHandle === 1 ? "entry" : "entries"}
+                  </Pill>
+                )}
+                {(item.sameReferral ?? 0) > 0 && (
+                  <Pill tone="bad">
+                    Same referral code as {item.sameReferral} other {item.sameReferral === 1 ? "entry" : "entries"}
+                  </Pill>
+                )}
                 {/* Somebody else entered this video too. Usernames and links
                     can be copied; check which entrant really posted it. */}
                 {item.sameVideo > 0 && (
@@ -240,6 +296,11 @@ export function RovvQueue({
                   <code className="block break-all py-2 text-sm text-ink-2">{item.tiktokUrl}</code>
                 )}
               </div>
+
+              {/* A short link hides whose video it is until it is opened. */}
+              {isShortLink(item.tiktokUrl) && (
+                <p className="text-sm text-ink-3">Short link: open it and check it is posted by @{item.tiktokHandle}.</p>
+              )}
 
               {/* The code Rovv checks against its app. Monospace, so a 0 and
                   an O can be told apart when it is read out. */}
@@ -338,7 +399,11 @@ export function RovvQueue({
                     onClick={() => act(item, "unpick")}
                     className={buttonClass("secondary", "px-5")}
                   >
-                    {isBusy(item, "unpick") ? BUSY_LABEL.unpick : "Unpick winner"}
+                    {isBusy(item, "unpick")
+                      ? BUSY_LABEL.unpick
+                      : unpicking === item.id
+                        ? `Tap again to unpick: ${item.ticketCode} becomes free`
+                        : "Unpick winner"}
                   </button>
                 )}
               </div>
@@ -351,6 +416,19 @@ export function RovvQueue({
                       ? "Picked, not emailed yet. Unpick before emailing if this was a mistake."
                       : "Picked as a winner. Only an owner can change that."}
                 </p>
+              )}
+
+              {owner && !item.notifiedAtLabel && (
+                <Correction
+                  key={`${item.id}:${item.tiktokHandle}:${item.email}:${correcting === item.id}`}
+                  item={item}
+                  open={correcting === item.id}
+                  onToggle={() => setCorrecting((c) => (c === item.id ? null : item.id))}
+                  onDone={() => {
+                    setCorrecting(null);
+                    router.refresh();
+                  }}
+                />
               )}
 
               {owner && item.winner && (
@@ -366,7 +444,7 @@ export function RovvQueue({
 
               {ruling === item.id && (
                 <form
-                  className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center"
+                  className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
                   onSubmit={(event) => {
                     event.preventDefault();
                     act(item, "ineligible");
@@ -375,6 +453,18 @@ export function RovvQueue({
                   <label htmlFor={`reason-${item.id}`} className="sr-only">
                     Why this entry is ineligible
                   </label>
+                  <div className="flex w-full basis-full flex-wrap gap-2">
+                    {QUICK_REASONS.map((reason) => (
+                      <button
+                        key={reason}
+                        type="button"
+                        onClick={() => setReasons((r) => ({ ...r, [item.id]: reason }))}
+                        className="min-h-11 cursor-pointer rounded-full border border-line-2 px-3 py-2 text-left text-xs text-ink-2 hover:bg-card-2"
+                      >
+                        {reason}
+                      </button>
+                    ))}
+                  </div>
                   <p id={`reason-hint-${item.id}`} className="text-sm text-ink-3 sm:sr-only">
                     The entrant is emailed this reason, word for word.
                   </p>
@@ -424,6 +514,100 @@ export function RovvQueue({
         <p className="mt-3 text-sm text-ink-4">Showing all {items.length} here, newest first.</p>
       )}
     </>
+  );
+}
+
+/**
+ * Correct an entrant's TikTok username or email address, when they write in
+ * (owners only, never once emailed as a winner). The form cannot do it: it
+ * only replaces an entry under the same email and username.
+ */
+function Correction({
+  item,
+  open,
+  onToggle,
+  onDone,
+}: {
+  item: RovvQueueItem;
+  open: boolean;
+  onToggle: () => void;
+  onDone: () => void;
+}) {
+  const [handle, setHandle] = useState(item.tiktokHandle);
+  const [email, setEmail] = useState(item.email);
+  const [saving, setSaving] = useState(false);
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    const change = {
+      entryId: item.id,
+      ...(handle.trim() !== item.tiktokHandle ? { tiktokHandle: handle } : {}),
+      ...(email.trim().toLowerCase() !== item.email.toLowerCase() ? { email } : {}),
+    };
+    if (!("tiktokHandle" in change) && !("email" in change)) {
+      onToggle();
+      return;
+    }
+    setSaving(true);
+    try {
+      const { good, result } = await postJson("/api/admin/rovv/correct", change);
+      if (good) {
+        toast.success(`Corrected ${item.fullName}'s details.`);
+        onDone();
+      } else toast.error(result.message ?? "That did not work.");
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        className="mt-2 inline-flex min-h-11 cursor-pointer items-center text-sm text-ink-3 underline underline-offset-2 hover:text-white"
+      >
+        Correct username or email
+      </button>
+    );
+  }
+  return (
+    <form onSubmit={save} className="mt-3 flex flex-col gap-2 rounded-lg border border-line-2 bg-card-2 p-3">
+      <label htmlFor={`fix-handle-${item.id}`} className="text-sm font-semibold text-white">
+        TikTok username
+      </label>
+      <input
+        id={`fix-handle-${item.id}`}
+        value={handle}
+        onChange={(e) => setHandle(e.target.value.replace(/^\s*@+/, ""))}
+        autoCapitalize="none"
+        spellCheck={false}
+        className="min-h-12 rounded-lg border border-line bg-control px-4 py-3 font-mono text-base text-white"
+      />
+      <label htmlFor={`fix-email-${item.id}`} className="text-sm font-semibold text-white">
+        Email address
+      </label>
+      <input
+        id={`fix-email-${item.id}`}
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        autoCapitalize="none"
+        spellCheck={false}
+        className="min-h-12 rounded-lg border border-line bg-control px-4 py-3 text-base text-white"
+      />
+      <p className="text-sm text-ink-3">Only when the entrant asks. Emails about this entry go to the new address.</p>
+      <div className="flex gap-2">
+        <button type="submit" disabled={saving} className={buttonClass("primary", "px-5")}>
+          {saving ? "Saving…" : "Save correction"}
+        </button>
+        <button type="button" onClick={onToggle} className={buttonClass("secondary", "px-5")}>
+          Cancel
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -530,11 +714,27 @@ function WinnerCode({ item, onChanged }: { item: RovvQueueItem; onChanged: () =>
  * and refuses it whole if anything is wrong, so no code reaches two people.
  * Nothing is emailed here; the codes appear on each winner's card.
  */
-export function RovvCodePaste({ waiting, test = false }: { waiting: number; test?: boolean }) {
+export function RovvCodePaste({
+  waiting,
+  test = false,
+  queue = [],
+  held = [],
+}: {
+  waiting: number;
+  test?: boolean;
+  /** The waiting winners' usernames, in the order the codes will reach them. */
+  queue?: string[];
+  /** Codes winners already hold, which the server skips: left out of the preview too. */
+  held?: string[];
+}) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [pending, setPending] = useState(false);
-  const found = readTicketCodes(text);
+  const read = readTicketCodes(text);
+  const heldSet = new Set(held.map((c) => c.toUpperCase()));
+  const skipped = read.codes.filter((c) => heldSet.has(c.toUpperCase()));
+  // What the server will hand out: the list, less codes a winner already has.
+  const found = { ...read, codes: read.codes.filter((c) => !heldSet.has(c.toUpperCase())) };
   const fieldId = test ? "rovv-codes-test" : "rovv-codes";
   const who = test ? "test winners" : "winners";
   const n = Math.min(found.codes.length, waiting);
@@ -553,11 +753,15 @@ export function RovvCodePaste({ waiting, test = false }: { waiting: number; test
         toast.error(result.message ?? "That did not work.");
       } else {
         const given = result.assigned?.length ?? 0;
-        const left = result.unused ?? 0;
+        const left = result.unusedCodes ?? [];
+        const skipped = result.skipped ?? [];
         toast.success(
-          `Gave ${given} ${given === 1 ? "code" : "codes"}${left > 0 ? `; ${left} left over, not saved` : ""}. Check them on each card, then email the ${who}.`,
+          `Gave ${given} ${given === 1 ? "code" : "codes"}${
+            skipped.length > 0 ? `; skipped ${skipped.length} a winner already has` : ""
+          }${left.length > 0 ? `; ${left.length} left over, kept in the box` : ""}. Check them on each card, then email the ${who}.`,
         );
-        setText("");
+        // Leftovers are paid-for tickets: they stay in the box, never thrown away.
+        setText(left.join("\n"));
       }
       await router.refresh();
     } catch {
@@ -590,7 +794,7 @@ export function RovvCodePaste({ waiting, test = false }: { waiting: number; test
       {text.trim() && (
         <p role="status" className={`text-sm ${problem ? "text-red-300" : "text-ink-2"}`}>
           {problem ||
-            `${found.codes.length} ${found.codes.length === 1 ? "code" : "codes"} found for ${waiting} ${who} waiting${
+            `${skipped.length > 0 ? `${skipped.length} already given, skipped. ` : ""}${found.codes.length} ${found.codes.length === 1 ? "code" : "codes"} found for ${waiting} ${who} waiting${
               found.codes.length > waiting
                 ? `: ${found.codes.length - waiting} will be left over`
                 : found.codes.length < waiting
@@ -603,7 +807,14 @@ export function RovvCodePaste({ waiting, test = false }: { waiting: number; test
         <Confirm
           label={`Give ${n} ${n === 1 ? "code" : "codes"} to the ${who}`}
           question={`Give ${n} ${n === 1 ? "code" : "codes"} out, one per ${test ? "test winner" : "winner"}?`}
-          consequence={`Each of the next ${n} ${who}, in the order they were picked, gets their own code from the list, starting with ${found.codes[0]}. Nothing is emailed yet: check the codes on each card, then press Email the winners.`}
+          consequence={`${
+            queue.length > 0
+              ? queue
+                  .slice(0, n)
+                  .map((h, i) => `@${h} gets ${found.codes[i]}`)
+                  .join(", ") + ". "
+              : `Each of the next ${n} ${who}, in the order they were picked, gets their own code from the list, starting with ${found.codes[0]}. `
+          }Codes a winner already has are skipped. Nothing is emailed yet: check the codes on each card, then press Email the winners.`}
           confirmLabel={`Yes, give out ${n}`}
           pending={pending}
           onConfirm={give}
@@ -664,6 +875,62 @@ export function RovvTestTools({ tests }: { tests: number }) {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * "The winners are announced", to everyone who entered and did not win
+ * (0075). Offered once every picked winner has been emailed; asks first,
+ * saying how many; a second press carries on from where one stopped.
+ */
+export function RovvResults({
+  toSend,
+  sent,
+  winners = 20,
+  cap = 20,
+}: {
+  toSend: number;
+  sent: number;
+  winners?: number;
+  cap?: number;
+}) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+
+  async function send() {
+    setPending(true);
+    try {
+      const { good, result } = await postJson("/api/admin/rovv/results", {});
+      const r = result as typeof result & { left?: number };
+      if (!good) toast.error(result.message ?? "That did not work.");
+      else
+        toast.success(
+          `Sent the results to ${result.sent ?? 0}.${(result.failed ?? 0) > 0 ? ` ${result.failed} did not send; press again to retry them.` : ""}${(r.left ?? 0) > 0 ? ` ${r.left} still to go: press again.` : ""}`,
+        );
+      await router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (toSend === 0) {
+    return sent > 0 ? <p className="text-sm text-ink-2">The results email has gone to {sent} entrants who did not win.</p> : null;
+  }
+  return (
+    <Confirm
+      label={`Email the results to ${toSend} who did not win`}
+      question={`Email ${toSend} entrants that the winners are announced?`}
+      consequence={`${
+        winners < cap
+          ? `Only ${winners} of ${cap} winners are picked. Once this goes, the people it reaches cannot be picked. `
+          : ""
+      }Everyone who entered, was not ruled out and did not win gets one thank-you email with a link to the winners. You get one copy first. Nobody gets it twice.`}
+      confirmLabel={`Yes, email ${toSend}`}
+      pending={pending}
+      onConfirm={send}
+    />
   );
 }
 
@@ -746,6 +1013,7 @@ export function RovvNotify({
       label={`Email the winners (${untold})`}
       question={`Email ${people} now?`}
       consequence={[
+        "Has ROVV confirmed every winner's referral code? Once emailed, a winner cannot be unpicked or ruled out, and their username goes public.",
         "Each gets the winner email with their own ticket code and the link to register their BUIDL PASS with it. You get one copy first.",
         missing,
         winners < cap ? `Only ${winners} of ${cap} are picked; the rest can be emailed once they are.` : "",

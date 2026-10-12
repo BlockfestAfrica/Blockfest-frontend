@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
@@ -15,7 +16,7 @@ import { allowKeyStrict } from "@/lib/throttle";
 import { sendEmail } from "@/lib/email/client";
 import { sendBulkCopy } from "@/lib/email/copy";
 import { rovvWinnerEmail } from "@/lib/email/templates";
-import { ROVV, ROVV_SLUG } from "@/lib/rovv";
+import { ROVV, ROVV_SLUG, rovvRoutes } from "@/lib/rovv";
 import { ticketUrl } from "@/lib/tickets";
 import { logError } from "@/lib/log";
 
@@ -124,6 +125,7 @@ export async function POST(request: NextRequest) {
       rovvWinnerEmail({
         to: winner.email,
         fullName: winner.fullName,
+        tiktokHandle: winner.tiktokHandle,
         tiktokUrl: winner.tiktokUrl,
         ticketCode: winner.ticketCode,
         ticketLink,
@@ -169,6 +171,17 @@ export async function POST(request: NextRequest) {
 
     if (failed > 0) {
       logError("admin/rovv notify", new Error(`${failed} of ${claimed.length} winner notices not sent`));
+    }
+
+    /* The page lists winners who have been emailed and is rebuilt every five
+       minutes; ask for it now, so a winner who opens it from their email
+       finds their name there. Best effort: the five minutes still apply. */
+    if (sent > 0) {
+      try {
+        revalidatePath(rovvRoutes.home);
+      } catch (error) {
+        logError("admin/rovv notify revalidate", error);
+      }
     }
 
     await getDb()

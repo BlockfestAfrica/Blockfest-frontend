@@ -67,6 +67,8 @@ const ACTION_LABELS: Record<string, string> = {
   "rovv_code.cleared": "ROVV ticket code cleared",
   "rovv_code.assigned": "ROVV ticket codes handed out",
   "rovv.test_cleared": "ROVV test entries deleted",
+  "rovv_entry.corrected": "ROVV entrant's username or email corrected",
+  "rovv.results_sent": "ROVV results emailed to entrants",
 };
 
 export const actionLabel = (action: string) => ACTION_LABELS[action] ?? action;

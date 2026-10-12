@@ -5,7 +5,7 @@
 
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { RovvCodePaste, RovvNotify, RovvQueue, RovvTestTools, type RovvQueueItem } from "@/components/admin/rovv-queue";
+import { RovvCodePaste, RovvNotify, RovvQueue, RovvResults, RovvTestTools, type RovvQueueItem } from "@/components/admin/rovv-queue";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
@@ -82,7 +82,7 @@ describe("an entry", () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(sent()).toEqual({
       url: "/api/admin/rovv/decision",
-      body: { entryId: item().id, status: "ineligible", note: "No ROVV account with this code", revision: 1 },
+      body: { entryId: item().id, status: "ineligible", note: "No ROVV account with this code", revision: 1, from: "pending" },
     });
   });
 });
@@ -272,5 +272,62 @@ describe("pasting all the codes", () => {
     fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Yes, give out 1" }));
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(sent().body).toEqual({ text: "T-1", test: true });
+  });
+});
+
+describe("the end-to-end walk's console fixes", () => {
+  it("flags the same username or referral code on another entry", () => {
+    render(<RovvQueue items={[item({ sameHandle: 1, sameReferral: 2 })]} owner={false} winners={0} cap={20} />);
+    expect(screen.getByText("Same TikTok username as 1 other entry")).toBeTruthy();
+    expect(screen.getByText("Same referral code as 2 other entries")).toBeTruthy();
+  });
+
+  it("offers the common reasons in one tap, and the box stays editable", () => {
+    render(<RovvQueue items={[item()]} owner={false} winners={0} cap={20} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Ineligible$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /does not tag @rovvafrica/ }));
+    expect((screen.getByLabelText("Why this entry is ineligible") as HTMLInputElement).value).toMatch(/does not tag @rovvafrica/);
+  });
+
+  it("asks for a second tap before unpicking a winner who holds a code, and names the code", async () => {
+    render(<RovvQueue items={[item({ status: "eligible", winner: true, ticketCode: "CODE-9" })]} owner winners={1} cap={20} />);
+    fireEvent.click(screen.getByRole("button", { name: "Unpick winner" }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /Tap again to unpick: CODE-9 becomes free/ }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent()).toEqual({ url: "/api/admin/rovv/winner", body: { entryId: item().id, pick: false } });
+  });
+
+  it("lets an owner correct a username or email, sending only what changed", async () => {
+    render(<RovvQueue items={[item()]} owner winners={0} cap={20} />);
+    fireEvent.click(screen.getByRole("button", { name: "Correct username or email" }));
+    fireEvent.change(screen.getByLabelText("TikTok username"), { target: { value: "@right.name" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save correction" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent()).toEqual({ url: "/api/admin/rovv/correct", body: { entryId: item().id, tiktokHandle: "right.name" } });
+  });
+
+  it("shows who gets which code before handing a pasted list out", () => {
+    render(<RovvCodePaste waiting={2} queue={["ada", "bola"]} />);
+    fireEvent.change(screen.getByLabelText("Paste all the codes"), { target: { value: "C-1\nC-2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Give 2 codes to the winners" }));
+    expect(screen.getByRole("alertdialog").textContent).toContain("@ada gets C-1, @bola gets C-2");
+  });
+
+  it("asks ROVV's question before any winner email goes", () => {
+    render(<RovvNotify untold={3} sending={0} needCode={0} winners={3} cap={20} closed />);
+    fireEvent.click(screen.getByRole("button", { name: "Email the winners (3)" }));
+    expect(screen.getByRole("alertdialog").textContent).toMatch(/Has ROVV confirmed every winner's referral code/);
+  });
+
+  it("offers the results email only with people to send it to, and asks first", async () => {
+    const { unmount } = render(<RovvResults toSend={0} sent={40} />);
+    expect(screen.getByText(/has gone to 40 entrants/)).toBeTruthy();
+    unmount();
+    render(<RovvResults toSend={12} sent={0} />);
+    fireEvent.click(screen.getByRole("button", { name: "Email the results to 12 who did not win" }));
+    fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Yes, email 12" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent().url).toBe("/api/admin/rovv/results");
   });
 });

@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
       rovvWinnerEmail({
         to: winner.email,
         fullName: winner.fullName,
+        tiktokHandle: winner.tiktokHandle,
         tiktokUrl: winner.tiktokUrl,
         ticketCode: winner.ticketCode,
         ticketLink: ticketUrl("rovv winner email"),

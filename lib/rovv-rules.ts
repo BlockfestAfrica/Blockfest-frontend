@@ -85,7 +85,7 @@ export const rovvRules: RuleSection[] = [
     id: "keeping-it-up",
     title: "Keeping your video up",
     paragraphs: [
-      "Keep your video public, with its tags and hashtag, until Saturday 24 October 2026. A winning video that is deleted or made private before winners are announced may lose its prize.",
+      "Keep your video public, with its tags and hashtag, until Saturday 24 October 2026. A winning video that is deleted or made private before then may lose its prize.",
     ],
   },
   {
