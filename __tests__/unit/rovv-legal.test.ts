@@ -109,6 +109,11 @@ describe("the rules", () => {
     expect(Array.isArray(rovvRulesOpenPoints)).toBe(true);
   });
 
+  it("keep road safety in the rules but out of the page's checklist (marketing, 12 October)", () => {
+    expect(rules).toMatch(/driving or riding/);
+    expect(PAGE).not.toMatch(/driving or riding/);
+  });
+
   it("agree with the page on the numbers people decide on", () => {
     expect(rules).toContain(String(ROVV.winners));
     expect(PAGE).toMatch(/Saturday 24 October 2026/);
