@@ -354,9 +354,35 @@ export function RovvEntryForm() {
             : "Entries are closed."}
         </p>
         <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
-          {phase === "upcoming"
-            ? "Make your video and register on the ROVV app now, then come back here to enter."
-            : `Entries closed at 11:59 PM on Sunday 18 October, Lagos time. Winners are announced by ${ROVV.winnersByLabel}, and listed on this page.`}
+          {phase === "upcoming" ? (
+            <>
+              Make your video and register on the ROVV app now (
+              {ROVV.appLinks.android && (
+                <a
+                  href={ROVV.appLinks.android}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-link underline underline-offset-2 hover:text-white"
+                >
+                  Google Play
+                </a>
+              )}
+              {ROVV.appLinks.android && ROVV.appLinks.ios ? " or " : ""}
+              {ROVV.appLinks.ios && (
+                <a
+                  href={ROVV.appLinks.ios}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-link underline underline-offset-2 hover:text-white"
+                >
+                  App Store
+                </a>
+              )}
+              ), then come back here to enter.
+            </>
+          ) : (
+            `Entries closed at 11:59 PM on Sunday 18 October, Lagos time. Winners are announced by ${ROVV.winnersByLabel}, and listed on this page.`
+          )}
         </p>
       </div>
     );
@@ -502,7 +528,7 @@ export function RovvEntryForm() {
       <Labelled
         label="ROVV referral code"
         htmlFor="referralCode"
-        hint="Your own referral code, from the ROVV app once you have registered. Type it exactly as the app shows it."
+        hint="Your own referral code, from Referral Rewards in the ROVV app once you have registered. Type it exactly as the app shows it."
         error={errors.referralCode}
       >
         <input

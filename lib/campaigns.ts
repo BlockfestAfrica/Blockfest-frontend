@@ -101,7 +101,7 @@ export const campaigns: Campaign[] = [
     sponsor: "ROVV",
     sponsorLogo: "/2026/logos/rovv.png",
     sponsorLabel: "Mobility sponsor",
-    sponsorUrl: "https://x.com/rovvafrica",
+    sponsorUrl: "https://www.getrovv.com/",
     summary:
       "Make a TikTok on the prompt, tag @rovvafrica and @blockfestafrica, and 20 of the most creative win a Blockfest Africa 2026 ticket.",
     status: "live",

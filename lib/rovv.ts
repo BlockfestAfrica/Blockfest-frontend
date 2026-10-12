@@ -27,7 +27,8 @@ export const ROVV = {
   hashtag: "#ROVVMeToBlockfest",
   rovvHandle: "@rovvafrica",
   blockfestHandle: "@blockfestafrica",
-  rovvUrl: "https://x.com/rovvafrica",
+  /** ROVV's own website (the owner, 12 October), where people get the app. */
+  rovvUrl: "https://www.getrovv.com/",
   /** How many entries win, one ticket each. */
   winners: 20,
   /** Entries open and close, Lagos time. The database holds the same (0073). */
@@ -41,10 +42,17 @@ export const ROVV = {
   prize: "BUIDL PASS",
   prizeDay: "Day 2, Conference Day, on Friday 23 October",
   /**
-   * Where to get the ROVV app. Null until ROVV gives us the store links; the
-   * page then says to search for ROVV in the store rather than guess a URL.
+   * The passenger app's store pages. getrovv.com shows them only as QR
+   * codes; the codes are ROVV's own onelink.to/p95t3a, which opens these two
+   * listings (checked 12 October: "Rovv" by Rovv on Google Play, "ROVV: Ride
+   * on Rovv App" on the App Store). The addresses still say jetride, the
+   * app's earlier name. onelink.to/dzak96 is the driver app, not for
+   * entrants.
    */
-  appLinks: { android: null as string | null, ios: null as string | null },
+  appLinks: {
+    android: "https://play.google.com/store/apps/details?id=com.jetRide.rider" as string | null,
+    ios: "https://apps.apple.com/ng/app/jetride-no-surge-rides/id1366805176" as string | null,
+  },
 } as const;
 
 export const rovvRoutes = {
