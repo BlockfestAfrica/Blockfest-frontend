@@ -1,17 +1,57 @@
 # /getdp: the Blockfest Africa 2026 DP generator
 
 A person picks how they are coming (attending, speaking, volunteering,
-partner), types their name, adds a photo and moves it in the frame, then
-shares the 2160×2160 picture through their phone's share list or saves it
-(a PNG download, or press and hold where downloads fail). The design is concept C, "New trade
-routes", picked by the owner on 9 October 2026; `.interface-design/system.md`
-records what is fixed about it.
+partner) and a design from two dropdowns, types their name, adds a photo and
+moves it in the frame, then shares the 2160×2160 picture through their
+phone's share list or saves it (a PNG download, or press and hold where
+downloads fail).
+
+**Designs** (`lib/looks.ts`). "Trade routes" is concept C, picked by the
+owner on 9 October 2026, and stays the default: people were already posting
+it. "Colour fields" comes from the 2026 brand kit the design team shared on
+10 October (the kit's three great circles on white, the mark on a card) and
+shares concept C's layout (`layoutArt`). "Sunset" is the design team's own
+sample for the DP, fitted to the square on a layout of its own
+(`layoutSunset`): their orange gradient with the kit's tile pattern laid on
+it in a lighter tone of itself, the all-white mark top left with "Buidl
+Bridge Become" top right, the photo in a soft ring, the role in black and the
+name in white, and the days in a black band. It replaced "Wave crown" the
+same day ("we don't apply this pattern this way", the team). Every design
+keeps the partners' band at the foot; each draws its own version of the
+mark (`STYLE_MARK`), and the page brings the two that only some designs draw
+apart from the rest (`loadMark`), so nobody waits for one their design does
+not use.
+`.interface-design/system.md` records what is fixed about concept C.
 
 The photo never leaves the device: it is read into a canvas in the tab and
-drawn there. The only things this folder loads are the site's own logo
-images, and it sends nothing: `__tests__/unit/privacy.test.ts` fails if a
-request call appears anywhere in it, because the privacy policy says the
-photo is never uploaded.
+drawn there, and neither the photo nor the name is ever sent. The only
+things this folder loads are the site's own fonts and logo images. It sends
+two kinds of thing, each carrying a role and, where there is one, how the DP
+left the page, and nothing else:
+
+- The count. When a DP is first downloaded, shared or saved, `lib/count.ts`
+  tells `/api/getdp/generated` its role and channel, and the admin overview
+  counts the rows. `__tests__/unit/privacy.test.ts` fails if any other
+  request call appears in this folder, or if that one carries anything but
+  the role and the channel, because the privacy policy says so (version 1.1,
+  "Badge count").
+- Three Sabilytics events, through `track()` in `lib/sabilytics.ts`
+  (`GETDP_EVENTS`): `getdp_dp_made` with the role, once a visit when a
+  picture is first ready; `getdp_dp_generated` with the role and channel, at
+  the same moment as the count; and `getdp_share_clicked` with the role and
+  channel, on every save or share tap. The policy covers these under
+  Analytics.
+
+**Counting.** A DP counts as generated once a visit for each photo as each
+role, at the moment it leaves the page: a share the person went through with
+(a share list they closed is not counted), a download that started, or the
+press-and-hold picture opening (a save from there cannot be seen). Fixing a
+letter of the name or the crop is the same DP, and so is going back to a
+role already counted; a new photo or a new role is a new one. Each counted
+DP is a row in `dp_generations` (migration 0072), which the admin overview
+totals for all time, today in Lagos, by role and by channel. The database
+count is the one to report: an ad blocker stops the Sabilytics events, not
+the row.
 
 ## Files
 
@@ -39,19 +79,35 @@ photo is never uploaded.
   file name, crop maths, footer tiers and footer and art layout. Unit tested
   in `__tests__/unit/getdp-dp.test.ts`.
 - `lib/draw.ts`: `drawDP(ctx, options, assets)`, the canvas painting. No
-  React. Refuses to draw until Bebas Neue and Gotham have loaded.
+  React. Refuses to draw until Bebas Neue and Gotham have loaded, and draws
+  in nothing else (`lib/faces.ts`).
 - `lib/letters.ts`: how a name is spelt in Bebas's own letters (recomposed
   accents, dots below, borrowed marks, plain stand-ins), and which letters
   the page must mention or refuse. Pure; tested in
   `__tests__/unit/getdp-letters.test.ts`.
 - `lib/fonts.ts`: Bebas Neue via next/font (self-hosted; the CSP allows only
   the site's own fonts) and the site's Gotham.
+- `lib/faces.ts`: the two faces the DP draws in, loaded by the page itself.
+  It reads where next/font's @font-face rules put the files and loads each
+  as a FontFace under a family only the DP uses ("Blockfest DP Display",
+  "Blockfest DP Text"). The CSS faces are never asked for: next/font puts a
+  "… Fallback" face whose only source is `local("Arial")` behind each, and
+  Android has no Arial, so any `document.fonts.load()` that names that
+  family rejects on every Android phone (#312). A try that fails or runs
+  past 12 seconds is forgotten and the next one asks for the file under a
+  new URL (`?dp=N`), so Try again works after a failed or stalled download,
+  which a CSS face never does. Files that loaded are not asked for again.
+  It starts as the page opens, beside the logos. Tested in
+  `__tests__/unit/getdp-faces.test.ts`.
 - `lib/load.ts`: loading the mark and rasterising partner logos at their
   recorded proportions (at most 1200 on the long side); reading the photo,
   with the messages a person sees when a file will not open (HEIC outside
   Safari, for one). A logo that takes over 8 seconds is left off the
-  footer; a mark that takes over 12 ends in "Try again", as fonts that take
-  over 12 do in `lib/draw.ts`. Try again keeps the role, name and photo. A
+  footer at first, then asked for again in the background (twice, 30
+  seconds each, under a new URL), and the picture is drawn again with each
+  one that comes: on slow data, the smaller partners' logos used to drop off
+  for good. A mark that takes over 12 seconds ends in "Try again", as fonts
+  that take over 12 do in `lib/faces.ts`. Try again keeps the role, name and photo. A
   name's letter check that times out with the fonts keeps saving shut (a
   letter the face cannot draw must never reach a picture) and also ends in
   "Try again", which runs the check again.
@@ -69,11 +125,19 @@ photo is never uploaded.
   a smaller second row, the government under "Endorsed by", and community
   and media partners as one list of logos with no heading.
 - **The days and venues**: `publicDays` on `blockfest2026Lagos` in
-  `lib/events.ts`, drawn as stops on one line; `short` is the venue's name
-  as that line says it. Public days only; the private mixer on the 24th
-  never goes there.
-- **The mark**: `DP_LOGO_SRC` in `lib/dp.ts`. The drawing reads the new file's
-  own proportions.
+  `lib/events.ts`. `short` is the venue as Trade routes and Colour fields
+  say it, as stops on one line (`publicDayLines`); `full` is the venue with
+  its town as Sunset's black band says it (`publicDayBand`, falling back to
+  `short`). Change the two together. Public days only; the private mixer on
+  the 24th never goes there.
+- **The mark**: the brand kit's official files (10 October), trimmed to
+  their artwork, in `lib/dp.ts`: `DP_LOGO_SRC` (white lettering, for Trade
+  routes), `DP_MARK_LIGHT_SRC` (black lettering, for "Colour fields") and
+  `DP_MARK_WHITE_SRC` (all white, for "Sunset"); `STYLE_MARK` in
+  `lib/looks.ts` says which design draws which. The drawing reads each
+  file's own proportions.
+- **A design**: `LOOKS` and `drawLookGround` in `lib/looks.ts`; add its id to
+  `DP_STYLES` and a name to `STYLE_LABEL`.
 - **Role wording or colours**: `ROLE_COPY` in `lib/dp.ts`.
 
 ## Sharing and saving
@@ -129,8 +193,11 @@ hands over a picture the person has since changed. "Tap again" and "Sharing
 didn't work" go as soon as the share list opens.
 On iOS the share gets the file alone (text hides Save Image and makes some
 apps take the words instead of the picture); on Android it gets the caption
-beside the file when the browser accepts it. The caption is copied to the
-clipboard in the same tap, since LinkedIn and Instagram drop it.
+beside the file when the browser accepts it (`captionTravels`). The caption
+is copied to the clipboard in the same tap, since LinkedIn and Instagram
+drop it, except for X, WhatsApp and WhatsApp Status where it already goes
+with the picture (`copiesCaption`): there a copy would only be a second,
+needless one, and Android shows "Copied" for it.
 
 **In an app's browser** a note above the steps says what may not work and
 how to get out (Open in Chrome on Android through an `intent://` link,
@@ -156,4 +223,4 @@ a phone held sideways.
 
 **Left for later**: shrinking very large photos while decoding them (a
 48 MP photo is still decoded at full size first), a HEIC decoder for
-Android, a 9:16 picture for TikTok, analytics.
+Android, a 9:16 picture for TikTok.

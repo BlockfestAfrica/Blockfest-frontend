@@ -21,11 +21,17 @@ export const DP_SIZE = 2160;
 export const PREVIEW_SIZE = 1080;
 
 /**
- * The 2026 mark, white for the navy ground: the transparent cut-out until the
- * official file arrives. Swapping it is this one line; the drawing reads the
- * file's own proportions.
+ * The 2026 mark from the brand kit (10 October): white lettering for a dark
+ * ground, and black lettering for a light one (the "Colour fields" look).
+ * The drawing reads each file's own proportions.
  */
-export const DP_LOGO_SRC = "/images/getdp/2026/logo-dark.png";
+export const DP_LOGO_SRC = "/images/getdp/2026/mark-on-dark.png";
+export const DP_MARK_LIGHT_SRC = "/images/getdp/2026/mark-on-light.png";
+/** All white, mark and lettering, for the "Sunset" design's orange ground. */
+export const DP_MARK_WHITE_SRC = "/images/getdp/2026/mark-white.png";
+
+/** The brand's three words, top right on the "Sunset" design (the design team's sample, 10 October). */
+export const DP_SLOGAN = ["Buidl", "Bridge", "Become"] as const;
 
 export const GETDP_URL = "https://blockfestafrica.com/getdp";
 export const HASHTAG = "#Blockfest2026";
@@ -178,6 +184,28 @@ export function publicDayLines(days: readonly PublicDay[] = DP_DAYS): DayLine[] 
   });
 }
 
+/**
+ * The days as the "Sunset" design's black band says them, after the design
+ * team's sample: the range ("October 22–23"), then each day with its venue
+ * and town ("Oct 22 – Ibis Hotel, Lekki, Lagos").
+ */
+export function publicDayBand(days: readonly PublicDay[] = DP_DAYS): { range: string; stops: string[] } {
+  if (!days.length) return { range: "", stops: [] };
+  const first = calendarDay(days[0].date);
+  const last = calendarDay(days[days.length - 1].date);
+  const range =
+    days.length === 1
+      ? `${MONTHS[first.month]} ${first.day}`
+      : first.month === last.month
+        ? `${MONTHS[first.month]} ${first.day}–${last.day}`
+        : `${MONTHS[first.month]} ${first.day} – ${MONTHS[last.month]} ${last.day}`;
+  const stops = days.map((d) => {
+    const { month, day } = calendarDay(d.date);
+    return `${MONTHS[month].slice(0, 3)} ${day} – ${d.full ?? d.short}`;
+  });
+  return { range, stops };
+}
+
 /** "22–23 October", or "31 October – 1 November" across a month end. */
 export function publicDaysRange(days: readonly PublicDay[] = DP_DAYS): string {
   if (!days.length) return "";
@@ -327,8 +355,15 @@ export interface NameLayout {
 
 /** Keeps the name well inside the circle crop. */
 export const NAME_MAX_W = 1560;
-const ONE_LINE_MAX = 196;
-const TWO_LINE_MAX = 156;
+export interface NameLimits {
+  /** The largest one line is set. */
+  one: number;
+  /** The largest two lines are set. */
+  two: number;
+  /** Below this, one line may give way to two. */
+  twoBelow: number;
+}
+const NAME_LIMITS: NameLimits = { one: 196, two: 156, twoBelow: 150 };
 
 /**
  * The largest size that fits NAME_MAX_W. One line up to 196px; when one line
@@ -352,6 +387,8 @@ export function chooseNameLayout(
   widthAt100: (line: string) => number,
   maxW: number = NAME_MAX_W,
   maxForHeight: (lines: string[]) => number = () => Infinity,
+  /** The sizes above, for a design that sets its name larger ("Sunset"). */
+  limits: NameLimits = NAME_LIMITS,
 ): NameLayout {
   const t = tidyName(raw).toUpperCase().normalize("NFC");
   const fit = (lines: string[], cap: number) =>
@@ -361,20 +398,20 @@ export function chooseNameLayout(
       Math.floor((100 * maxW) / Math.max(1, ...lines.map(widthAt100))),
     );
 
-  const one = fit([t], ONE_LINE_MAX);
+  const one = fit([t], limits.one);
   let two: (NameLayout & { skew: number }) | null = null;
   for (let i = 1; i < t.length - 1; i++) {
     let cand: string[] | null = null;
     if (t[i] === " ") cand = [t.slice(0, i), t.slice(i + 1)];
     else if (t[i] === "-") cand = [t.slice(0, i + 1), t.slice(i + 1)];
     if (!cand || !cand[0].trim() || !cand[1].trim()) continue;
-    const size = fit(cand, TWO_LINE_MAX);
+    const size = fit(cand, limits.two);
     const skew = Math.abs(widthAt100(cand[0]) - widthAt100(cand[1]));
     if (!two || size > two.size || (size === two.size && skew < two.skew)) {
       two = { lines: cand, size, skew };
     }
   }
-  if (one >= 150 || !two || two.size <= one * 1.12) return { lines: [t], size: one };
+  if (one >= limits.twoBelow || !two || two.size <= one * 1.12) return { lines: [t], size: one };
   return { lines: two.lines, size: two.size };
 }
 
@@ -640,9 +677,11 @@ export const FOOTER = {
   /**
    * No sponsor is drawn shorter than this, above the partners' floor. A wing
    * beside the headline shrinks only this far; past it, the next sponsors
-   * move to a line of their own under the headline row, full size.
+   * move to a line of their own under the headline row, full size. 33 since
+   * Nirvana Academy joined (12 October), so every sponsor still fits beside
+   * the headline.
    */
-  sponsorMinH: 36,
+  sponsorMinH: 33,
   sponsorGap: 60,
   wingGap: 84,
   rowGap: 16,
@@ -1011,10 +1050,17 @@ export function layoutFooter(
         if (!wing.length) return;
         const k = wingScale(wing);
         const w = rowWidth(wing, F.sponsorGap) * k;
-        let x = side < 0 ? F.edge + (wingW - w) / 2 : S / 2 + half + (wingW - w) / 2;
+        // A wing with room to spare spreads across it, as the media row does,
+        // so both wings reach the footer's edges and the row below can line
+        // up with them; one logo, or room past twice the gap, stays centred.
+        const spare = wingW - w;
+        const spread = wing.length > 1 ? Math.min(spare / (wing.length - 1), F.sponsorGap * 1.5) : 0;
+        const gap = F.sponsorGap * k + spread;
+        const used = w + spread * (wing.length - 1);
+        let x = side < 0 ? F.edge + (wingW - used) / 2 : S / 2 + half + (wingW - used) / 2;
         for (const s of wing) {
           out.sponsors.push({ logo: s.logo, x, y: cy - (s.h * k) / 2, w: s.w * k, h: s.h * k });
-          x += s.w * k + F.sponsorGap * k;
+          x += s.w * k + gap;
         }
       };
       layWing(left, -1);
@@ -1198,6 +1244,76 @@ export function layoutArt(footerTop: number, logoAspect: number): ArtLayout {
     photoR: ringR - ART.moat,
     zoneTop: hubY + outer / 2 + ART.zoneGap,
     zoneBottom,
+  };
+}
+
+/**
+ * The "Sunset" design's measures: the design team's sample (10 October,
+ * drawn 4:5) fitted to the square. The mark sits top left and the slogan top
+ * right; the photo in a soft ring; the role in black and the name in white
+ * under it; the days in a black band above the partners.
+ */
+export const SUNSET = {
+  /** The mark's left edge, and the slogan's right margin. */
+  side: 212,
+  logoTop: 112,
+  logoW: 520,
+  /** The mark's bottom to the ring's outer edge. */
+  ringGap: 44,
+  /** The soft ring's width, outside the photo. */
+  ring: 62,
+  /** The ring's bottom to the top of the role line. */
+  textGap: 34,
+  roleSize: 124,
+  /** The role line's capitals (Bebas's are seven tenths of its size). */
+  roleLine: 88,
+  /** The role line to the top of the name's room. */
+  roleGap: 26,
+  /** The name's room: one line at full size, or two a little smaller. */
+  nameRoom: 262,
+  /** How large the name is set (the sample's is the loudest line after the
+      face), and how wide it may run. */
+  name: { one: 300, two: 236, twoBelow: 230 } satisfies NameLimits,
+  nameW: 1760,
+  /** The name's room to the band. */
+  bandGap: 46,
+  /** The black band of days. */
+  band: 136,
+} as const;
+
+export interface SunsetLayout {
+  logo: Box;
+  hub: { x: number; y: number };
+  /** The soft ring's outer edge. */
+  outerR: number;
+  photoR: number;
+  roleTop: number;
+  nameTop: number;
+  nameBottom: number;
+  bandTop: number;
+  bandBottom: number;
+}
+
+/** Where the "Sunset" design's parts go, above a footer starting at `footerTop`. */
+export function layoutSunset(footerTop: number, logoAspect: number): SunsetLayout {
+  const logo = { x: SUNSET.side, y: SUNSET.logoTop, w: SUNSET.logoW, h: SUNSET.logoW / logoAspect };
+  const bandBottom = footerTop;
+  const bandTop = bandBottom - SUNSET.band;
+  const nameBottom = bandTop - SUNSET.bandGap;
+  const nameTop = nameBottom - SUNSET.nameRoom;
+  const roleTop = nameTop - SUNSET.roleGap - SUNSET.roleLine;
+  const ringTop = logo.y + logo.h + SUNSET.ringGap;
+  const outerR = (roleTop - SUNSET.textGap - ringTop) / 2;
+  return {
+    logo,
+    hub: { x: DP_SIZE / 2, y: ringTop + outerR },
+    outerR,
+    photoR: outerR - SUNSET.ring,
+    roleTop,
+    nameTop,
+    nameBottom,
+    bandTop,
+    bandBottom,
   };
 }
 

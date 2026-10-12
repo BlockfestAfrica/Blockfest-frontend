@@ -21,6 +21,7 @@ import {
   MONICA_FIRST_LEADERBOARD,
   MONICA_FIRST_LEADERBOARD_ENDS,
   campaignBySlug,
+  campaignPhase,
   campaignRun,
   campaigns,
   currentWeekNo,
@@ -34,6 +35,7 @@ import {
   monicaWeeklyPrizes,
   monicaWeeklyTotal,
 } from "@/lib/campaigns";
+import { ROVV } from "@/lib/rovv";
 
 /** The figure the campaign advertises everywhere. */
 const ADVERTISED_POOL = 5_000_000;
@@ -105,16 +107,17 @@ describe("the campaign registry", () => {
     expect(new Set(campaigns.map((c) => c.slug)).size).toBe(campaigns.length);
   });
 
-  it("has exactly one live campaign, and it is Monica", () => {
-    expect(liveCampaigns).toHaveLength(1);
-    expect(liveCampaigns[0].slug).toBe("monica-money-story");
+  it("lists Monica and Rovv as the live campaigns", () => {
+    expect(liveCampaigns.map((c) => c.slug)).toEqual(["monica-money-story", "rovv"]);
   });
 
-  it("carries Rovv as coming soon, with no pool or dates to imply otherwise", () => {
-    const rovv = campaignBySlug("rovv");
-    expect(rovv?.status).toBe("coming-soon");
-    expect(rovv?.rewardPool).toBeUndefined();
-    expect(rovv?.startsAt).toBeUndefined();
+  it("carries Rovv with its tickets and its own dates, and no naira pool", () => {
+    const rovv = campaignBySlug("rovv")!;
+    expect(rovv.rewardPool).toBeUndefined();
+    expect(rovv.prizeLabel).toBe("20 Blockfest tickets");
+    expect(rovv.startsAt).toBe(ROVV.opensAt);
+    expect(rovv.endsAt).toBe(ROVV.closesAt);
+    expect(rovv.sponsorLogo).toBe("/2026/logos/rovv.png");
   });
 
   it("returns undefined for a slug that does not exist", () => {
@@ -260,7 +263,35 @@ describe("campaignRun", () => {
   });
 
   it("returns nothing for a campaign with no dates", () => {
-    expect(campaignRun(campaignBySlug("rovv")!)).toBeNull();
+    expect(campaignRun({ ...campaignBySlug("rovv")!, startsAt: undefined, endsAt: undefined })).toBeNull();
+  });
+
+  it("sets Rovv's six days in Lagos time", () => {
+    expect(campaignRun(campaignBySlug("rovv")!)).toBe("13 October \u2013 18 October 2026");
+  });
+});
+
+/**
+ * The card's "Open now" was hardcoded, so it said so before a campaign opened
+ * and after it closed. The phase is read from the dates, at the edges too.
+ */
+describe("a campaign's phase", () => {
+  const rovv = () => campaignBySlug("rovv")!;
+  const at = (iso: string) => new Date(iso).getTime();
+
+  it("is upcoming until the first second, open through the last, then closed", () => {
+    expect(campaignPhase(rovv(), at("2026-10-12T23:59:59+01:00"))).toBe("upcoming");
+    expect(campaignPhase(rovv(), at("2026-10-13T00:00:00+01:00"))).toBe("open");
+    expect(campaignPhase(rovv(), at("2026-10-18T23:59:59+01:00"))).toBe("open");
+    expect(campaignPhase(rovv(), at("2026-10-19T00:00:00+01:00"))).toBe("closed");
+  });
+
+  it("closes Monica after the 17th", () => {
+    expect(campaignPhase(campaignBySlug("monica-money-story")!, at("2026-10-18T00:00:00+01:00"))).toBe("closed");
+  });
+
+  it("calls a campaign with no dates open while it is listed", () => {
+    expect(campaignPhase({ ...rovv(), startsAt: undefined, endsAt: undefined }, 0)).toBe("open");
   });
 });
 

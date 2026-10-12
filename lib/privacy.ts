@@ -13,17 +13,32 @@
  * data actually goes, and says plainly which ones we hold ourselves.
  *
  * The badge generator is worth stating for the opposite reason. It takes a
- * photograph and never uploads it: there is no fetch in that feature at all,
- * and the image is composed in the browser. People assume uploading a photo to
- * a website means the website has their photograph, and here it does not.
+ * photograph and never uploads it: the image is composed in the browser.
+ * People assume uploading a photo to a website means the website has their
+ * photograph, and here it does not.
+ *
+ * Since 1.1 the badge generator also tells us, when a badge is first
+ * downloaded, shared or saved, the role on it and how it left the page, so the
+ * team can count the badges made (app/getdp/lib/count.ts, kept in our own
+ * database). That is its own surface, "Badge count", because we hold it and
+ * the photograph we do not. No name, photograph or identifier goes with it,
+ * and __tests__/unit/privacy.test.ts holds the feature to that one request
+ * and that payload. The page's analytics events (role, and how the badge was
+ * saved or shared) are covered under Analytics.
+ *
+ * 1.2 adds Rovv's campaign entry (lib/rovv-privacy.ts has the detail), the
+ * first surface whose data a sponsor receives, and says so where this policy
+ * promises nobody else gets it. It also corrects Monica's registration, which
+ * still listed a "content niche" question the form stopped asking and left
+ * out the Monica tag it asks instead.
  */
 
 import { CONTACT_EMAIL } from "@/lib/constants";
 
-export const PRIVACY_VERSION = "1.0";
+export const PRIVACY_VERSION = "1.2";
 
 /** ISO date. Rendered in the event's own timezone. */
-export const PRIVACY_UPDATED = "2026-09-12";
+export const PRIVACY_UPDATED = "2026-10-12";
 
 export interface PolicySection {
   /** Anchor, so a specific answer can be linked to in a request or complaint. */
@@ -48,11 +63,19 @@ export interface DataSurface {
 
 export const privacySurfaces: DataSurface[] = [
   {
-    name: "Campaign registration",
+    name: "Monica campaign registration",
     collects:
-      "Name, email address, phone number, social handles, content niche, and optionally audience size and location. Your IP address and browser are recorded automatically.",
+      "Name, email address, phone number, social handles, your Monica tag, and optionally audience size and location. Your IP address and browser are recorded automatically.",
     destination:
-      "Held by us, in our own database. Covered in full by the campaign privacy notice.",
+      "Held by us, in our own database. Covered in full by the Monica campaign privacy notice.",
+    heldByUs: true,
+  },
+  {
+    name: "ROVV campaign entry",
+    collects:
+      "Full name, email address, TikTok username, the link to your TikTok video and your ROVV referral code. Your IP address and browser are recorded automatically.",
+    destination:
+      "Held by us, in our own database. Your name, email address, TikTok username and referral code are also shared with ROVV, so it can confirm you registered on its app. Covered in full by the ROVV campaign privacy notice.",
     heldByUs: true,
   },
   {
@@ -86,15 +109,23 @@ export const privacySurfaces: DataSurface[] = [
   },
   {
     name: "Badge generator",
-    collects: "A photograph, if you choose one.",
+    collects: "A photograph and a name, if you choose them.",
     destination:
-      "Nothing is uploaded. The badge is made in your browser and your photograph never reaches us or anybody else. Closing the tab is all it takes to remove it.",
+      "Your photograph and your name are never uploaded. The badge is made in your browser and they never reach us or anybody else. Closing the tab is all it takes to remove them.",
     heldByUs: false,
+  },
+  {
+    name: "Badge count",
+    collects:
+      "When you first download, share or save a badge: the role on it (such as attending or speaking) and how you saved or shared it.",
+    destination:
+      "Kept in our own database as an anonymous tally, so we know how many badges were made, with no name, photo or identifier. To stop automated abuse, the address of the connection it came from is kept for about a day.",
+    heldByUs: true,
   },
   {
     name: "Analytics",
     collects:
-      "Pages visited, roughly where in the world the visit came from, and which buttons were used.",
+      "Pages visited, roughly where in the world the visit came from, and which buttons were used, including, on the badge generator, the role picked and how the badge was saved or shared.",
     destination:
       "Collected through Sabilytics. Used to understand which pages work, not to identify you.",
     heldByUs: false,
@@ -117,6 +148,7 @@ export const privacySections: PolicySection[] = [
       "Several things this site asks for are handled by somebody else. Newsletter signups go to Substack, tickets to Meetumo, and speaker and volunteer applications to Google Forms. When you use one of those, you are giving your details to that provider as well as to us, under their own privacy terms.",
       "This matters for what you can ask for. We can act on a request about anything we hold ourselves, and the table above says which of these that is. Where a provider holds the record, we will pass your request on and tell you we have, but they are the ones who can act on it.",
       "We do not sell personal data, and we do not share it with anyone for their own marketing.",
+      "Where a campaign's sponsor needs some of your details to run that campaign, as ROVV does to confirm referral codes, that campaign's own notice says exactly what goes to them, and they receive it for that campaign only.",
     ],
   },
   {

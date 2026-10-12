@@ -1,19 +1,25 @@
 /**
  * Getting the mark and the partner logos in (app/getdp/lib/load.ts) on a weak
- * connection: a stalled logo costs only its place in the footer, a stalled
+ * connection: a stalled logo costs only its place in the footer until it is
+ * asked for again (under a new URL, for longer), a stalled
  * mark ends in an error the page can offer Try again on, and no logo's bitmap
  * is bigger than it needs to be. jsdom loads no images, so Image is a
  * stand-in that answers, fails or never answers on cue.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DP_LOGO_SRC, type FooterTiers } from "@/app/getdp/lib/dp";
+import { DP_LOGO_SRC, DP_MARK_LIGHT_SRC, DP_MARK_WHITE_SRC, type FooterTiers } from "@/app/getdp/lib/dp";
 import {
+  LATE_LOGO_TIMEOUT_MS,
+  LATE_LOGO_TRIES,
   LOGO_MAX_SIDE,
   LOGO_TIMEOUT_MS,
   MARK_TIMEOUT_MS,
+  freshLogo,
   loadAssets,
   loadImage,
+  loadMark,
   rasteriseLogo,
+  retryLogos,
 } from "@/app/getdp/lib/load";
 
 /** Sources that never answer. Anything else loads on the next microtask. */
@@ -80,9 +86,36 @@ describe("loading the picture's parts", () => {
     await vi.advanceTimersByTimeAsync(1);
     const assets = await done;
     expect(Object.keys(assets.logos).sort()).toEqual(["Hoaq", "Monica"]);
+    expect(assets.missing).toEqual([slow]);
     expect(cancelled).toEqual([slow.src]);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Slow left out"), expect.anything());
     expect(LOGO_TIMEOUT_MS).toBe(8000);
+  });
+
+  it("asks again for a logo left off, under a new URL so it cannot wait on the stalled one, for 30 seconds", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const slow = logo("Slow");
+    const gone = logo("Gone");
+    stalled.add(slow.src);
+    stalled.add(`${gone.src}?dp=1`);
+    const got = retryLogos([slow, gone], 1).then((l) => Object.keys(l));
+    await vi.advanceTimersByTimeAsync(LATE_LOGO_TIMEOUT_MS - 1);
+    let early: string[] | null = null;
+    void got.then((k) => (early = k));
+    await Promise.resolve();
+    expect(early).toBeNull();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await got).toEqual(["Slow"]);
+    expect(cancelled).toEqual([`${gone.src}?dp=1`]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Gone still left out"), expect.anything());
+    expect([LATE_LOGO_TRIES, LATE_LOGO_TIMEOUT_MS]).toEqual([2, 30000]);
+  });
+
+  it("keeps a logo written into the page as it is when asking again", () => {
+    const inline = { name: "Cake Wallet", src: "data:image/svg+xml,%3Csvg%3E", width: 4, height: 1 };
+    expect(freshLogo(inline, 2)).toBe(inline);
+    expect(freshLogo(logo("Hoaq"), 2).src).toBe("/logos/Hoaq.png?dp=2");
+    expect(freshLogo({ ...logo("Hoaq"), src: "/logos/Hoaq.png?v=3" }, 1).src).toBe("/logos/Hoaq.png?v=3&dp=1");
   });
 
   it("gives up on a mark that never loads after 12 seconds, so the page can offer Try again", async () => {
@@ -96,6 +129,31 @@ describe("loading the picture's parts", () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(await outcome).toMatch(/^Timed out loading/);
     expect(MARK_TIMEOUT_MS).toBe(12000);
+  });
+
+  it("waits only for the mark every design draws, and brings the other versions apart", async () => {
+    const tiers: FooterTiers = { headline: logo("Monica"), sponsors: [], groups: [] };
+    // Colour fields' mark never answers: nobody on another design waits for it.
+    stalled.add(DP_MARK_LIGHT_SRC);
+    const assets = await loadAssets(tiers);
+    expect((assets.logo as HTMLImageElement).src).toBe(DP_LOGO_SRC);
+    expect("marks" in assets).toBe(false);
+    expect([DP_LOGO_SRC, DP_MARK_LIGHT_SRC]).toEqual([
+      "/images/getdp/2026/mark-on-dark.png",
+      "/images/getdp/2026/mark-on-light.png",
+    ]);
+
+    // Asked for apart, each with the mark's own time limit.
+    const light = loadMark("onLight").then(
+      () => "loaded",
+      (e: Error) => e.message,
+    );
+    await vi.advanceTimersByTimeAsync(MARK_TIMEOUT_MS);
+    expect(await light).toMatch(/^Timed out loading \/images\/getdp\/2026\/mark-on-light\.png/);
+    stalled.delete(DP_MARK_LIGHT_SRC);
+    expect(((await loadMark("onLight")) as HTMLImageElement).src).toBe(DP_MARK_LIGHT_SRC);
+    expect(((await loadMark("white")) as HTMLImageElement).src).toBe(DP_MARK_WHITE_SRC);
+    expect(DP_MARK_WHITE_SRC).toBe("/images/getdp/2026/mark-white.png");
   });
 
   it("waits as long as it takes for a photo, which is a file on the device", async () => {

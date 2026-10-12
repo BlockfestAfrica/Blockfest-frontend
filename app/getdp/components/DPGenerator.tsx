@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -13,7 +14,7 @@ import {
   type PointerEvent,
 } from "react";
 import { ImagePlus, Lock, RotateCcw } from "lucide-react";
-import { Field, Segmented, buttonClass, control } from "@/components/shared/panel";
+import { Field, buttonClass, control, selectControl } from "@/components/shared/panel";
 import {
   ART,
   DP_ROLES,
@@ -34,13 +35,26 @@ import {
   shareText,
   tidyName,
   type DPRole,
+  type FooterLogo,
   type FooterTiers,
   type PhotoTransform,
 } from "../lib/dp";
 import { drawDP, nameSubstitutions, renderFull, type DPAssets, type DPResult } from "../lib/draw";
 import { FontLoadError, errorDetail } from "../lib/errors";
+import { DP_STYLES, EXTRA_TONES, STYLE_LABEL, STYLE_MARK, type DPStyle, type ExtraTone } from "../lib/looks";
+import { countDp, type DPChannel } from "../lib/count";
+import { GETDP_EVENTS, track } from "@/lib/sabilytics";
+import { loadDpFaces } from "../lib/faces";
 import type { LetterNote } from "../lib/letters";
-import { loadAssets, PhotoError, readPhoto, type LoadedPhoto } from "../lib/load";
+import {
+  LATE_LOGO_TRIES,
+  loadAssets,
+  loadMark,
+  PhotoError,
+  readPhoto,
+  retryLogos,
+  type LoadedPhoto,
+} from "../lib/load";
 import {
   COPY,
   DESKTOP_ENV,
@@ -53,6 +67,7 @@ import {
   deviceClass,
   moveHint,
   platformAction,
+  copiesCaption,
   shareData,
   statusAction,
   type ButtonId,
@@ -127,6 +142,14 @@ const pct = (v: number) => `${(v / DP_SIZE) * 100}%`;
  */
 export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const [role, setRole] = useState<DPRole>("attendee");
+  /** The look: concept C's "Trade routes" unless the person picks another (looks.ts). */
+  const [style, setStyle] = useState<DPStyle>("routes");
+  /** The versions of the mark only some designs draw (STYLE_MARK); see drawParts. */
+  const [marks, setMarks] = useState<Partial<Record<ExtraTone, HTMLImageElement>>>({});
+  const [markErrors, setMarkErrors] = useState<Partial<Record<ExtraTone, string>>>({});
+  const [markAttempt, setMarkAttempt] = useState(0);
+  /** Each version asked for and not failed, so a render never asks twice. */
+  const marksAsked = useRef(new Set<ExtraTone>());
   const [name, setName] = useState("");
   const [nameTouched, setNameTouched] = useState(false);
   const [photo, setPhoto] = useState<(LoadedPhoto & { id: number }) | null>(null);
@@ -138,6 +161,8 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   /** Why the mark and logos could not be prepared, as the error said it. */
   const [assetsError, setAssetsError] = useState<string | null>(null);
   const [assetsAttempt, setAssetsAttempt] = useState(0);
+  /** Footer logos left off the first load (a slow connection), asked for again in the background. */
+  const [lateLogos, setLateLogos] = useState<FooterLogo[]>([]);
   /** The last preview draw failed: whether for the lettering, and the error as it said it. */
   const [drawError, setDrawError] = useState<{ fonts: boolean; detail: string } | null>(null);
   const [drawAttempt, setDrawAttempt] = useState(0);
@@ -194,6 +219,10 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const lastDownload = useRef<{ key: string; at: number } | null>(null);
   const lastUrl = useRef<{ url: string; timer: number } | null>(null);
   const downloadedKey = useRef<string | null>(null);
+  /** Every DP counted as generated this visit (its photo and role); see generated(). */
+  const countedDps = useRef(new Set<string>());
+  /** Whether "a DP was made" has been said this visit. */
+  const madeSaid = useRef(false);
   const copiedTimer = useRef<number | undefined>(undefined);
 
   const tidy = tidyName(name);
@@ -211,8 +240,23 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       : null;
   /* The check for this name failed: saving stays shut, and Try again is offered. */
   const checkFailed = needsLetterCheck && letterCheck?.name === shown && letterCheck.notes === null;
+  /*
+   * What this design is drawn from: the shared parts, and its own version of
+   * the mark when that is not the dark-ground one (STYLE_MARK: black
+   * lettering for "Colour fields", all white for "Sunset"). Null while
+   * something it needs is still coming; only a design that needs a version
+   * waits on it, or says that it failed.
+   */
+  const tone = STYLE_MARK[style];
+  const extraTone = tone === "onDark" ? null : tone;
+  const drawParts = useMemo<DPAssets | null>(() => {
+    if (!assets) return null;
+    if (!extraTone) return assets;
+    return marks[extraTone] ? { ...assets, marks } : null;
+  }, [assets, extraTone, marks]);
+  const partsError = assetsError ?? (extraTone ? (markErrors[extraTone] ?? null) : null);
   /** What the failure said, shown small under the message so a screenshot says what broke. */
-  const failDetail = assetsError ?? drawError?.detail ?? (checkFailed ? letterCheck?.detail : undefined);
+  const failDetail = partsError ?? drawError?.detail ?? (checkFailed ? letterCheck?.detail : undefined);
   const undrawable = (notes ?? []).filter((n) => n.drawn === null).map((n) => n.letter);
   const substitutions = (notes ?? []).filter(
     (n): n is { letter: string; drawn: string } => n.drawn !== null,
@@ -229,10 +273,10 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     notes !== null &&
     !!photo &&
     !!transform &&
-    !!assets &&
+    !!drawParts &&
     !readingPhoto &&
     !drawError &&
-    !assetsError;
+    !partsError;
   const roleText = roleCopy(role);
   const cls = deviceClass(env);
   const caption = shareText(role);
@@ -247,13 +291,13 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
 
   /* What this device can do with the picture, once, after the first paint. */
   useEffect(() => {
-    const canShare = (type: FileType) => {
+    const canShare = (type: FileType, text?: string) => {
       try {
         const probe = new File([new Blob()], type === "image/jpeg" ? "dp.jpg" : "dp.png", { type });
         return (
           typeof navigator.share === "function" &&
           typeof navigator.canShare === "function" &&
-          navigator.canShare({ files: [probe] })
+          navigator.canShare(text === undefined ? { files: [probe] } : { files: [probe], text })
         );
       } catch {
         return false;
@@ -266,6 +310,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         coarse: !!window.matchMedia?.("(pointer: coarse)")?.matches,
         canShareJpeg: canShare("image/jpeg"),
         canSharePng: canShare("image/png"),
+        canShareJpegText: canShare("image/jpeg", "Blockfest Africa 2026"),
       }),
     );
   }, []);
@@ -273,10 +318,15 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   /* The mark and the partner logos; again on Try again. */
   useEffect(() => {
     let live = true;
+    // The lettering's files come at the same time, not after the logos. A
+    // failure here is said by the draw that waits on it.
+    loadDpFaces().catch(() => undefined);
     loadAssets(tiers)
       .then((a) => {
         if (!live) return;
-        setAssets(a);
+        const { missing, ...parts } = a;
+        setAssets(parts);
+        setLateLogos(missing);
         setAssetsError(null);
       })
       .catch((e) => {
@@ -287,6 +337,55 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       live = false;
     };
   }, [tiers, assetsAttempt]);
+
+  /*
+   * The other versions of the mark, once the shared parts are in (so they
+   * never compete with them): ready before anyone picks those designs,
+   * usually. A failure is only said, with Try again, while a design that
+   * needs it is chosen.
+   */
+  useEffect(() => {
+    if (!assets) return;
+    for (const t of EXTRA_TONES) {
+      if (marksAsked.current.has(t)) continue;
+      marksAsked.current.add(t);
+      // Asked for again: what its last failure said is no longer true.
+      setMarkErrors((x) => (x[t] ? { ...x, [t]: undefined } : x));
+      loadMark(t).then(
+        (m) => {
+          setMarks((x) => ({ ...x, [t]: m }));
+          setMarkErrors((x) => ({ ...x, [t]: undefined }));
+        },
+        (e) => {
+          console.error("Get DP: a version of the mark could not be prepared", e);
+          marksAsked.current.delete(t);
+          setMarkErrors((x) => ({ ...x, [t]: errorDetail(e) }));
+        },
+      );
+    }
+  }, [assets, markAttempt]);
+
+  /*
+   * The logos left off, asked for again; the picture is drawn again with
+   * each round that brings any, so a slow connection still gets every
+   * partner on it, unless the person saves before they come.
+   */
+  useEffect(() => {
+    if (!lateLogos.length) return;
+    let live = true;
+    void (async () => {
+      let left = lateLogos;
+      for (let attempt = 1; attempt <= LATE_LOGO_TRIES && left.length; attempt++) {
+        const got = await retryLogos(left, attempt);
+        if (!live) return;
+        if (Object.keys(got).length) setAssets((a) => a && { ...a, logos: { ...a.logos, ...got } });
+        left = left.filter((l) => !(l.name in got));
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, [lateLogos]);
 
   /*
    * Letters the lettering has no form of, said under the name. A check that
@@ -315,10 +414,11 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
         name: shown || "Your name",
         ghostName: !shown,
         role,
+        style,
         photoTransform: transform ?? undefined,
       };
     },
-    [name, photo, role, transform],
+    [name, photo, role, style, transform],
   );
 
   /*
@@ -327,7 +427,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
    * while typing) and records where the photo and the text band landed.
    */
   useEffect(() => {
-    if (!assets) return;
+    if (!drawParts) return;
     const canvas = previewRef.current;
     const ctx = canvas?.getContext("2d");
     if (!ctx) return;
@@ -350,7 +450,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       g.drawImage(preview, (DP_SIZE / 2 - STRIP_HALF_W) * k, zone.top * k, STRIP_HALF_W * 2 * k, zoneH * k, 0, 0, w, h);
     };
     const id = requestAnimationFrame(() => {
-      drawDP(ctx, options(), assets)
+      drawDP(ctx, options(), drawParts)
         .then((result) => {
           if (!live) return;
           frameRef.current = result;
@@ -378,23 +478,32 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       live = false;
       cancelAnimationFrame(id);
     };
-  }, [assets, options, drawAttempt]);
+  }, [drawParts, options, drawAttempt]);
 
-  const key = photo && transform
-    ? `${role}|${drawableName(name)}|${photo.id}|${transform.zoom}|${transform.offsetX}|${transform.offsetY}`
+  /** The picture the person made: their role, name, photo and its place. */
+  const pictureKey = photo && transform
+    ? `${style}|${role}|${drawableName(name)}|${photo.id}|${transform.zoom}|${transform.offsetX}|${transform.offsetY}`
     : null;
-
-  /*
-   * A new picture: an old notice ("Downloading…") stops being true, and the
-   * files drawn for other pictures are let go.
+  /**
+   * What a file is drawn from: that picture, and the logos in hand. A logo
+   * that comes late makes new files, but not a new picture: what the page
+   * said about it stays true, and the press-and-hold picture stays put.
    */
+  const logoCount = assets ? Object.keys(assets.logos).length : 0;
+  const key = pictureKey && `${pictureKey}|${logoCount}`;
+
+  /* Files drawn from anything else are let go. */
   useEffect(() => {
     latestKey.current = key;
-    setNotice(null);
     for (const [id, entry] of renders.current) {
       if (entry.key !== key) renders.current.delete(id);
     }
   }, [key]);
+
+  /* A new picture: an old notice ("Downloading…") stops being true. */
+  useEffect(() => {
+    setNotice(null);
+  }, [pictureKey]);
 
   useEffect(() => {
     transformRef.current = transform;
@@ -418,11 +527,12 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       const id = `${k}|${type}`;
       const hit = renders.current.get(id);
       if (hit) return hit.promise;
-      if (!assets) return Promise.reject(new Error("Not ready"));
+      if (!drawParts) return Promise.reject(new Error("Not ready"));
       const opts = options();
+      const parts = drawParts;
       const promise = chain.current.then(async () => {
         if (latestKey.current !== k) throw new Error(STALE);
-        const blob = await renderFull(opts, assets, type, type === "image/jpeg" ? SHARE_QUALITY : undefined);
+        const blob = await renderFull(opts, parts, type, type === "image/jpeg" ? SHARE_QUALITY : undefined);
         if (latestKey.current !== k) throw new Error(STALE);
         return blob;
       });
@@ -439,8 +549,36 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       );
       return promise;
     },
-    [assets, options],
+    [drawParts, options],
   );
+
+  /* What renderLatest reads: the newest key and ensure, for work begun on an older one. */
+  const latest = useRef({ pictureKey, key, ensure });
+  useEffect(() => {
+    latest.current = { pictureKey, key, ensure };
+  });
+
+  /**
+   * The person's picture `pk` as `type`, with the logos in hand. A late logo
+   * landing while it is drawn makes that file stale though the person
+   * changed nothing, so it is drawn again with the logo (at most twice); a
+   * picture the person changed rejects as stale.
+   */
+  const renderLatest = (pk: string, type: FileType, again = 2): Promise<Blob> => {
+    const now = latest.current;
+    if (!now.key || now.pictureKey !== pk) return Promise.reject(new Error(STALE));
+    return now.ensure(now.key, type).catch((e: unknown) => {
+      if (isStale(e) && again > 0 && latest.current.pictureKey === pk) return renderLatest(pk, type, again - 1);
+      throw e;
+    });
+  };
+
+  /* Someone made a DP: a name and a photo, drawn. Said once a visit. */
+  useEffect(() => {
+    if (!ready || madeSaid.current) return;
+    madeSaid.current = true;
+    track(GETDP_EVENTS.made, { role });
+  }, [ready, role]);
 
   /* Drawn ahead once the picture settles, in the type this device shares. */
   useEffect(() => {
@@ -746,6 +884,9 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     if (assetsError) {
       setAssetsError(null);
       setAssetsAttempt((n) => n + 1);
+    } else if (partsError && extraTone) {
+      // Asks again for every version that failed; each clears its own error.
+      setMarkAttempt((n) => n + 1);
     } else {
       // Draws again, and runs a letter check that failed again (pending till it answers).
       setDrawError(null);
@@ -786,7 +927,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   const clearShareFailure = () =>
     setNotice((n) => (n === COPY.tapAgain || n === COPY.shareFailed || n === COPY.shareFailedHold ? null : n));
 
-  const onShareError = (e: unknown) => {
+  const onShareError = (e: unknown, by: Busy["by"]) => {
     const why = (e as { name?: string } | null)?.name;
     if (why === "AbortError" || why === "InvalidStateError") return;
     if (why === "NotAllowedError") {
@@ -794,6 +935,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     } else if (env.inApp) {
       setNotice(COPY.shareFailedHold);
       setHold({ copied: true });
+      generated(by);
     } else {
       setNotice(COPY.shareFailed);
     }
@@ -820,7 +962,8 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     } catch (e) {
       pending = Promise.reject(e);
     }
-    pending.then(() => undefined, onShareError).finally(() => {
+    // Counted only once the person has shared it: a list they closed is no DP.
+    pending.then(() => generated(by), (e: unknown) => onShareError(e, by)).finally(() => {
       sheetOpen.current = false;
       setBusy(null);
     });
@@ -853,7 +996,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     );
   };
 
-  const saveFile = (blob: Blob, k: string) => {
+  const saveFile = (blob: Blob, k: string, by: Busy["by"]) => {
     if (lastUrl.current) {
       window.clearTimeout(lastUrl.current.timer);
       URL.revokeObjectURL(lastUrl.current.url);
@@ -871,6 +1014,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     }, REVOKE_AFTER_MS);
     lastUrl.current = { url, timer };
     downloadedKey.current = k;
+    generated(by);
     // The browser takes it from here: say what was asked for, and where it
     // goes, not that it is saved.
     setNotice(COPY.downloading(env, fileName));
@@ -878,18 +1022,18 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
 
   /** The PNG, in the same tap when it is drawn already. */
   const startDownload = (by: Busy["by"]) => {
-    if (!key) return;
-    const k = key;
-    const cached = renders.current.get(`${k}|image/png`)?.blob;
+    if (!key || !pictureKey) return;
+    const pk = pictureKey;
+    const cached = renders.current.get(`${key}|image/png`)?.blob;
     if (cached) {
-      saveFile(cached, k);
+      saveFile(cached, pk, by);
       return;
     }
     setBusy({ kind: "download", by });
-    // A picture changed while it was drawn rejects as stale and saves nothing.
-    ensure(k, "image/png")
+    // A picture the person changed while it was drawn rejects as stale and saves nothing.
+    renderLatest(pk, "image/png")
       .then(
-        (blob) => saveFile(blob, k),
+        (blob) => saveFile(blob, pk, by),
         (e) => {
           if (!isStale(e)) setNotice(COPY.notSaved);
         },
@@ -898,29 +1042,59 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
   };
 
   const download = () => {
-    if (!ready || !key) return;
+    if (!ready || !pictureKey) return;
     const now = Date.now();
-    if (lastDownload.current?.key === key && now - lastDownload.current.at < DOWNLOAD_GUARD_MS) return;
-    lastDownload.current = { key, at: now };
+    if (lastDownload.current?.key === pictureKey && now - lastDownload.current.at < DOWNLOAD_GUARD_MS) return;
+    lastDownload.current = { key: pictureKey, at: now };
     startDownload("download");
+  };
+
+  /** A save or share tap, every time, for analytics. Role and channel only. */
+  const clicked = (channel: DPChannel) => track(GETDP_EVENTS.shareClicked, { role, channel });
+
+  /**
+   * The DP left the page: a share the person went through with, a download
+   * that started, or the press-and-hold picture opened (a save from there
+   * cannot be seen, so opening it is the nearest true moment). Counted once a
+   * visit for each photo as each role: fixing a letter or the crop is the
+   * same DP, and so is going back to a role already counted. Told to
+   * analytics and to the admin overview's count; never the name or the photo.
+   */
+  const generated = (channel: DPChannel) => {
+    if (!photo) return;
+    const dp = `${photo.id}|${role}`;
+    if (countedDps.current.has(dp)) return;
+    countedDps.current.add(dp);
+    track(GETDP_EVENTS.generated, { role, channel });
+    countDp(role, channel);
   };
 
   const onButton = (id: ButtonId) => {
     if (!ready || busy) return;
+    onButtonAction(id);
+    clicked(id);
+  };
+
+  const onButtonAction = (id: ButtonId) => {
     switch (id) {
       case "share":
       case "more":
         shareNow(id);
         return;
       case "photos":
-        if (cls === "sheet") shareNow(id, { copy: false, before: COPY.choosePhotos });
-        else setHold({ copied: true });
+        if (cls === "sheet") {
+          shareNow(id, { copy: false, before: COPY.choosePhotos });
+        } else {
+          setHold({ copied: true });
+          generated(id);
+        }
         return;
       case "download":
         download();
         return;
       case "save":
         setHold({ copied: true });
+        generated(id);
         return;
     }
   };
@@ -930,21 +1104,27 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
       e.preventDefault();
       return;
     }
+    markAction(p);
+    clicked(p);
+  };
+
+  const markAction = (p: Platform) => {
     const action = platformAction(p, env, caption, fileName);
     setPressed(p);
     setTip(action.tip);
     switch (action.kind) {
       case "sheet":
-        shareNow(p);
+        shareNow(p, { copy: copiesCaption(p, env) });
         return;
       case "link":
       case "save":
         // A link opens by itself: a real link, so no popup blocker applies.
         void copyCaptionQuietly();
-        if (downloadedKey.current !== key) startDownload(p);
+        if (downloadedKey.current !== pictureKey) startDownload(p);
         return;
       case "hold":
         setHold({ platform: p, copied: true });
+        generated(p);
         // A refused copy: neither the dialog nor the tip may say it is copied.
         void copyCaptionQuietly().then((ok) => {
           if (ok) return;
@@ -960,19 +1140,25 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     if (!ready || !key || busy) return;
     const action = statusAction(env);
     if (!action) return;
+    statusRun(action);
+    clicked("status");
+  };
+
+  const statusRun = (action: NonNullable<ReturnType<typeof statusAction>>) => {
     // The marks' tip is about another app.
     setPressed(null);
     setTip(null);
     switch (action.kind) {
       case "sheet":
-        shareNow("status");
+        shareNow("status", { copy: copiesCaption("status", env) });
         return;
       case "save":
         void copyCaptionQuietly();
-        if (downloadedKey.current !== key) startDownload("status");
+        if (downloadedKey.current !== pictureKey) startDownload("status");
         return;
       case "hold":
         setHold({ platform: "status", copied: true });
+        generated("status");
         void copyCaptionQuietly().then((ok) => {
           if (!ok) setHold((h) => (h?.platform === "status" ? { ...h, copied: false } : h));
         });
@@ -997,20 +1183,18 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
     );
   };
 
-  const holdBlob = useCallback(
-    () => (key ? ensure(key, "image/png") : Promise.reject(new Error("Not ready"))),
-    [ensure, key],
-  );
+  const holdBlob = () =>
+    pictureKey ? renderLatest(pictureKey, "image/png") : Promise.reject(new Error("Not ready"));
 
   /** Why saving is shut, in words; null once it is open. */
   const needs = ((): string | null => {
-    if (assetsError || drawError || checkFailed) return COPY.needsRetry;
+    if (partsError || drawError || checkFailed) return COPY.needsRetry;
     const noPhoto = !photo && !readingPhoto;
     if (tidy === "") return noPhoto ? COPY.needsNameAndPhoto : COPY.needsName;
     if (problem !== null) return noPhoto ? COPY.fixNameAndPhoto : COPY.fixName;
     if (noPhoto) return COPY.needsPhoto;
     if (readingPhoto) return COPY.openingPhoto;
-    if (!assets || notes === null) return COPY.preparingDP;
+    if (!drawParts || notes === null) return COPY.preparingDP;
     return null;
   })();
 
@@ -1034,8 +1218,39 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
           onSubmit={onSubmit}
           noValidate
         >
-          <div className="p-5 sm:p-6">
-            <Segmented legend="How you're coming" value={role} options={ROLE_OPTIONS} onChange={setRole} />
+          {/* Two choices: the role (Attending unless a link asked for another)
+              and the look (the one people were already posting unless they
+              pick another). One above the other on a phone, where side by
+              side would cut "Volunteering" and "Colour fields" short. */}
+          <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
+            <Field id="dp-role" label="How you're coming">
+              <select
+                id="dp-role"
+                value={role}
+                onChange={(e) => setRole(e.target.value as DPRole)}
+                className={selectControl}
+              >
+                {ROLE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field id="dp-style" label="Design">
+              <select
+                id="dp-style"
+                value={style}
+                onChange={(e) => setStyle(e.target.value as DPStyle)}
+                className={selectControl}
+              >
+                {DP_STYLES.map((st) => (
+                  <option key={st} value={st}>
+                    {STYLE_LABEL[st]}
+                  </option>
+                ))}
+              </select>
+            </Field>
           </div>
 
           {/*
@@ -1202,7 +1417,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
                 }}
               />
             )}
-            {!assets && !assetsError && (
+            {!drawParts && !partsError && (
               <p className="absolute inset-0 flex items-center justify-center text-sm text-ink-3" aria-live="polite">
                 Preparing the picture…
               </p>
@@ -1260,10 +1475,10 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
             </div>
           )}
 
-          {(assetsError || drawError || checkFailed) && (
+          {(partsError || drawError || checkFailed) && (
             <div className="border-t border-line px-5 py-4 sm:px-6">
               <p role="alert" className="text-sm text-red-300">
-                {assetsError ? COPY.assetsError : drawError && !drawError.fonts ? COPY.drawError : COPY.fontsError}
+                {partsError ? COPY.assetsError : drawError && !drawError.fonts ? COPY.drawError : COPY.fontsError}
               </p>
               {failDetail && (
                 <p className="mt-1 text-xs text-ink-3 [overflow-wrap:anywhere]">{COPY.errorDetail(failDetail)}</p>
@@ -1311,7 +1526,7 @@ export default function DPGenerator({ tiers }: { tiers: FooterTiers }) {
               ? COPY.holdPlatform(PLATFORM_NAME[hold.platform], hold.copied)
               : null
         }
-        blobKey={key}
+        blobKey={pictureKey}
         getBlob={holdBlob}
       />
     </div>

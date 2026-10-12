@@ -16,7 +16,13 @@ import {
   SPACING,
   Stat,
 } from "@/components/shared/panel";
-import { campaigns as allCampaigns, MONICA_SLUG } from "@/lib/campaigns";
+import { campaigns as everyCampaign, MONICA_SLUG } from "@/lib/campaigns";
+import { ROVV_SLUG } from "@/lib/rovv";
+
+/* The campaigns people register for. Rovv takes entries, not registrations,
+   and has its own console page, so offering it here would only ever show an
+   empty list. */
+const allCampaigns = everyCampaign.filter((c) => c.slug !== ROVV_SLUG);
 import { dateTime } from "@/lib/format";
 
 export const metadata: Metadata = {

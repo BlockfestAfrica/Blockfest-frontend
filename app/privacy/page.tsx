@@ -1,3 +1,4 @@
+import { rovvRoutes } from "@/lib/rovv";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -46,13 +47,20 @@ export default function PrivacyPage() {
               Privacy policy
             </h1>
             <p className="mt-4 text-base leading-relaxed text-ink-3">
-              Last updated {updated}. Running a
-              campaign has its own notice, which goes further: see the{" "}
+              Last updated {updated}. Each campaign
+              has its own notice, which goes further: see{" "}
               <Link
                 href={monicaRoutes.privacy}
                 className="text-link underline underline-offset-2 hover:text-white"
               >
-                campaign privacy notice
+                Monica&apos;s
+              </Link>{" "}
+              and{" "}
+              <Link
+                href={rovvRoutes.privacy}
+                className="text-link underline underline-offset-2 hover:text-white"
+              >
+                ROVV&apos;s
               </Link>
               .
             </p>

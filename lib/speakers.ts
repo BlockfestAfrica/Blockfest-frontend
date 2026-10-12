@@ -512,6 +512,17 @@ export const SpeakersList: Speaker[] = [
     bio: "Akitoye Balogun is an entrepreneur and fintech executive with experience in enterprise technology, cross-border payments and digital assets.\n\nAt Muva Networks, he is building infrastructure that enables African businesses to move money seamlessly across global markets.\n\nA former Cisco professional and creative entrepreneur, he brings together technology, business and creativity in everything he builds.\n\nAt Blockfest Africa 2026, Akitoye joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Dr. Bolutife Kusimo",
+    pronouns: "he",
+    title: "Venture Operations Lead, HoaQ",
+    image: "/2026/speakers/drbolu.jpg",
+    expertise: ["Entrepreneurship", "Business & Finance"],
+    company: "HoaQ",
+    twitter: "https://x.com/bolurefined",
+    bio: "Dr. Bolutife Kusimo is a venture operator and investor supporting founders and investors in building and backing scalable African businesses.\n\nAt HoaQ, he helps manage the investment process and supports a global angel community that has invested over $5 million in more than 130 startups.\n\nAt Blockfest Africa 2026, Bolutife joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
 
   /*
    * Returning from a previous edition. His entry up the list stays as it is,

@@ -54,6 +54,14 @@ const ACTION_LABELS: Record<string, string> = {
   "admin.identity_bound": "Admin identity bound",
   "admin.identity_mismatch": "Identity mismatch refused",
   "enrolment.voided": "Creator disqualified",
+  /* Rovv's campaign (0073), named so a mixed trail says which campaign. */
+  "rovv_entry.eligible": "ROVV entry marked eligible",
+  "rovv_entry.ineligible": "ROVV entry marked ineligible",
+  "rovv_entry.pending": "ROVV entry put back to waiting",
+  "rovv_winner.picked": "ROVV winner picked",
+  "rovv_winner.unpicked": "ROVV winner unpicked",
+  "rovv.exported": "ROVV entries exported",
+  "rovv.winners_notified": "ROVV winners emailed",
 };
 
 export const actionLabel = (action: string) => ACTION_LABELS[action] ?? action;

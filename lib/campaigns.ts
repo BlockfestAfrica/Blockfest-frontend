@@ -50,6 +50,8 @@ export interface Campaign {
   status: CampaignStatus;
   /** Total reward pool in naira. Undefined until a campaign announces one. */
   rewardPool?: number;
+  /** A prize that is not money, said in a few words ("20 Blockfest tickets"). */
+  prizeLabel?: string;
   startsAt?: string;
   endsAt?: string;
 }
@@ -82,12 +84,21 @@ export const campaigns: Campaign[] = [
     endsAt: "2026-10-17T23:59:59+01:00",
   },
   {
+    /* Rovv's TikTok campaign, from its brief of 12 October. Everything else
+       about it lives in lib/rovv.ts; these are the card's facts, and the
+       dates match the database row (0073). */
     slug: "rovv",
-    name: "Rovv",
-    hook: "Coming soon",
-    sponsor: "Rovv",
-    summary: "The next campaign. Details to be announced.",
-    status: "coming-soon",
+    name: "If ROVV Takes Me to Blockfest…",
+    hook: "#ROVVMeToBlockfest",
+    sponsor: "ROVV",
+    sponsorLogo: "/2026/logos/rovv.png",
+    sponsorUrl: "https://x.com/rovvafrica",
+    summary:
+      "Make a TikTok on the prompt, tag @rovvafrica and @blockfestafrica, and 20 of the most creative win a Blockfest Africa 2026 ticket.",
+    status: "live",
+    prizeLabel: "20 Blockfest tickets",
+    startsAt: "2026-10-13T00:00:00+01:00",
+    endsAt: "2026-10-18T23:59:59+01:00",
   },
 ];
 
@@ -139,6 +150,19 @@ export function campaignOpensLabel(campaign: Campaign): string | null {
     month: "long",
     timeZone: CAMPAIGN_TIME_ZONE,
   });
+}
+
+/**
+ * Where a campaign stands at `now`: not open yet, open, or closed. A campaign
+ * with no dates is open while it is listed live, which is what the card said
+ * before it knew any better.
+ */
+export type CampaignPhase = "upcoming" | "open" | "closed";
+
+export function campaignPhase(campaign: Campaign, now: number = Date.now()): CampaignPhase {
+  if (campaign.startsAt && now < new Date(campaign.startsAt).getTime()) return "upcoming";
+  if (campaign.endsAt && now > new Date(campaign.endsAt).getTime()) return "closed";
+  return "open";
 }
 
 export function campaignBySlug(slug: string): Campaign | undefined {

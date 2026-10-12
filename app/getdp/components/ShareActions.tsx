@@ -210,7 +210,7 @@ export default function ShareActions({
             );
           })}
         </ul>
-        <p className="mt-1 text-sm text-ink-3">{COPY.marksDo(marksClass(env))}</p>
+        <p className="mt-1 text-sm text-ink-3">{COPY.marksDo(marksClass(env), env.captionTravels)}</p>
         <p aria-live="polite" className={tip ? "mt-2 text-sm text-ink-2" : "sr-only"}>
           {tip}
         </p>

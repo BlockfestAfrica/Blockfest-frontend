@@ -59,6 +59,7 @@ describe("the 2026 lineup", () => {
     expect(lineup.slice(9).map((s) => s.name).sort()).toEqual([
       "Akitoye Balogun",
       "Ashley Rene Olika",
+      "Dr. Bolutife Kusimo",
       "Ian Issa",
       "Olamilekan Majekodunmi",
       "Salemking",

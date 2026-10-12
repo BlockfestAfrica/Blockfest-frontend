@@ -6,10 +6,12 @@
  * false silently rather than loudly.
  *
  * The one that matters most is the badge generator. The policy says a
- * photograph never leaves the browser, which is true today because that feature
- * contains no network call at all. Somebody adding an upload to it would make
- * the policy a false statement about personal data, and nothing else in the
- * codebase would notice.
+ * photograph and a name never leave the browser, which is true because that
+ * feature makes one request of its own, the count in app/getdp/lib/count.ts,
+ * and it carries a role and a channel and nothing else (its analytics events,
+ * sent through lib/sabilytics.ts, carry the same two). Somebody adding an
+ * upload to it, or a field to that count, would make the policy a false
+ * statement about personal data, and nothing else in the codebase would notice.
  */
 
 import { execSync } from "node:child_process";
@@ -29,7 +31,7 @@ const allText = [
 ].join(" ");
 
 describe("claims the policy makes about the code", () => {
-  it("is right that the badge generator never uploads a photograph", () => {
+  it("is right that the badge generator never uploads a photograph or a name", () => {
     // grep rather than an import, because the claim is about the whole feature
     // and not about one module's exports.
     let hits = "";
@@ -43,13 +45,25 @@ describe("claims the policy makes about the code", () => {
     }
 
     expect(
-      hits,
-      `app/getdp now contains a network call, so the privacy policy claim that the photograph never leaves the browser is no longer true:\n${hits}`,
-    ).toBe("");
+      hits.split("\n").filter(Boolean),
+      `app/getdp now makes a network call other than the count, so the privacy policy claim that the photograph and the name never leave the browser may no longer be true:\n${hits}`,
+    ).toEqual(["app/getdp/lib/count.ts"]);
 
-    const badge = privacySurfaces.find((s) => /badge/i.test(s.name));
-    expect(badge).toBeTruthy();
-    expect(badge!.destination).toMatch(/Nothing is uploaded/i);
+    // That one call sends a role and a channel, typed so nothing else can reach it.
+    const count = readFileSync(join(process.cwd(), "app/getdp/lib/count.ts"), "utf8");
+    expect(count.match(/fetch\(/g)).toHaveLength(1);
+    expect(count).toMatch(/body: JSON\.stringify\(\{ role, channel \}\)/);
+    expect(count).toMatch(/export function countDp\(role: DPRole, channel: DPChannel\): void/);
+
+    const badge = privacySurfaces.find((s) => s.name === "Badge generator");
+    expect(badge!.destination).toMatch(/photograph and your name are never uploaded/i);
+    expect(badge!.heldByUs).toBe(false);
+    // What we do keep is its own surface, held by us, so a request about it comes to us.
+    const tally = privacySurfaces.find((s) => s.name === "Badge count");
+    expect(tally!.collects).toMatch(/the role on it/i);
+    expect(tally!.destination).toMatch(/no name, photo or identifier/i);
+    expect(tally!.destination).toMatch(/address of the connection it came from is kept for about a day/i);
+    expect(tally!.heldByUs).toBe(true);
   });
 
   it("is right that the campaign registration is the data we hold ourselves", () => {
@@ -57,6 +71,20 @@ describe("claims the policy makes about the code", () => {
       /campaign registration/i.test(s.name),
     );
     expect(registration?.heldByUs).toBe(true);
+    // The form asks for a Monica tag and has not asked for a niche since it
+    // switched; the surface says what the form asks.
+    expect(registration!.collects).toMatch(/Monica tag/);
+    expect(registration!.collects).not.toMatch(/niche/i);
+  });
+
+  it("names Rovv's entry as ours, and says what Rovv itself receives", () => {
+    const rovv = privacySurfaces.find((s) => /rovv/i.test(s.name));
+    expect(rovv?.heldByUs).toBe(true);
+    expect(rovv!.destination).toMatch(/name, email address, TikTok username and referral code are also shared with ROVV/);
+    // The "nobody else" promise names the exception rather than standing
+    // beside it unqualified.
+    const notOurs = privacySections.find((s) => s.id === "not-ours")!.paragraphs.join(" ");
+    expect(notOurs).toMatch(/ROVV[^.]*referral codes/);
   });
 
   it("names the third parties it says handle things for us", () => {

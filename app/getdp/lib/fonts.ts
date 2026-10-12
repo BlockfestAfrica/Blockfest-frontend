@@ -15,9 +15,9 @@ import { gotham } from "@/lib/fonts";
  * Gotham is the site's own face, already loaded by the root layout; the DP
  * uses it for the small tracked lines.
  *
- * Neither is page text, only canvas paint, so neither is preloaded: draw.ts
- * asks document.fonts for each by name before it draws, and refuses to draw
- * if either is missing.
+ * Neither is preloaded. The DP does not draw in these CSS faces: faces.ts
+ * reads where their files are and loads them as faces of its own (see why
+ * there), and draw.ts refuses to draw until both have loaded.
  */
 export const bebas = Bebas_Neue({
   weight: "400",

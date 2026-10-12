@@ -10,6 +10,7 @@ import {
   FOOTER,
   NAME_MAX,
   NAME_MAX_W,
+  SUNSET,
   chooseNameLayout,
   clampTransform,
   cropCentre,
@@ -20,9 +21,11 @@ import {
   insideCircleCrop,
   layoutArt,
   layoutFooter,
+  layoutSunset,
   nameProblem,
   nudgeTransform,
   photoRect,
+  publicDayBand,
   publicDayLines,
   publicDaysRange,
   roleCopy,
@@ -171,6 +174,17 @@ describe("the public days", () => {
     expect(blockfest2026Lagos.date.end).toBe("2026-10-24T22:00:00+01:00");
   });
 
+  it("are said in full in Sunset's black band, as the design team's sample says them", () => {
+    expect(publicDayBand()).toEqual({
+      range: "October 22–23",
+      stops: ["Oct 22 – Ibis Hotel, Lekki, Lagos", "Oct 23 – National Theatre, Iganmu, Lagos"],
+    });
+    // A day without its full line keeps its short one.
+    expect(publicDayBand([{ date: "2026-10-31", venue: "A", area: "B", short: "Hall A" }]).stops).toEqual([
+      "Oct 31 – Hall A",
+    ]);
+  });
+
   it("reads a range across a month end", () => {
     expect(
       publicDaysRange([
@@ -273,12 +287,25 @@ describe("the footer, from lib/partners-2026", () => {
 
   it("draws every sponsor, in the listed order, then the ecosystem partners in the same row", () => {
     const ecosystem = tierNames("Ecosystem");
-    expect(ecosystem).toEqual(["Hashed Emergent", "Microtraction"]);
+    // Hashed Emergent last, so it takes the left wing's outer place (see below).
+    expect(ecosystem).toEqual(["Microtraction", "Hashed Emergent"]);
     const named = tieredSponsors.map((s) => s.name);
     expect(tiers.sponsors.map((s) => s.name)).toEqual([...named, ...ecosystem]);
     expect(footer.sponsors.map((s) => s.logo.name).sort()).toEqual(
       ["Monica", ...named, ...ecosystem].sort(),
     );
+  });
+
+  it("keeps every sponsor beside the headline, Nirvana Academy too, none shorter than the floor", () => {
+    // The owner, 12 October: Nirvana Academy joins the community sponsors. The
+    // row must still hold everyone beside the headline, not wrap a line under it.
+    const lead = footer.sponsors[0];
+    const row = footer.sponsors.filter((s) => Math.abs(s.y + s.h / 2 - (lead.y + lead.h / 2)) < 1);
+    expect(row.length).toBe(footer.sponsors.length);
+    expect(row.map((s) => s.logo.name)).toContain("Nirvana Academy");
+    for (const s of row.slice(1)) expect(s.h).toBeGreaterThanOrEqual(FOOTER.sponsorMinH - 1e-9);
+    expect(Math.min(...row.map((s) => s.x))).toBeCloseTo(FOOTER.edge, 6);
+    expect(Math.max(...row.map((s) => s.x + s.w))).toBeCloseTo(DP_SIZE - FOOTER.edge, 6);
   });
 
   it("sets Hashed Emergent in the sponsors' row, after the sponsors, with no label of its own", () => {
@@ -306,7 +333,9 @@ describe("the footer, from lib/partners-2026", () => {
     // and would cross the picture's edge: then it moves in just enough.
     const under = leftmost.x + leftmost.w / 2;
     expect(endorsed.cx).toBeGreaterThanOrEqual(under - 1e-6);
-    expect(endorsed.cx - under).toBeLessThan(40);
+    // Hashed Emergent is narrower than the label since the row took a 12th
+    // sponsor (Nirvana Academy), so the label moves in a little further.
+    expect(endorsed.cx - under).toBeLessThan(48);
     const seal = footer.partners.find((p) => p.logo.name === "Lagos State Government")!;
     expect(seal.x + seal.w / 2).toBeCloseTo(endorsed.cx, 3);
     const rightEdge = Math.max(...row.map((s) => s.x + s.w));
@@ -343,17 +372,26 @@ describe("the footer, from lib/partners-2026", () => {
     }
   });
 
-  it("leaves the media the team keeps off the picture on the website's partner list", () => {
-    // The team, 9 October: the DP's media list is shorter than the wall's.
-    const offDp = ["BusinessDay", "The Guardian", "Legit", "TechCabal", "Punch"];
+  it("carries none of the five media the owner took off the 2026 wall", () => {
+    // The owner, 10 October: off the wall and the picture, after the DP alone (9 October).
+    const removed = ["BusinessDay", "The Guardian", "Legit", "TechCabal", "Punch"];
     const onPicture = [...footer.sponsors, ...footer.partners].map((p) => p.logo.name);
-    for (const name of offDp) {
+    for (const name of removed) {
       expect(onPicture).not.toContain(name);
-      // Still on the website's wall, as sponsors.
-      expect(sponsors.some((p) => p.name === name)).toBe(true);
+      expect(sponsors.some((p) => p.name === name)).toBe(false);
     }
     expect(onPicture).toContain("Techpoint");
     expect(onPicture).toContain("Microtraction");
+  });
+
+  it("keeps a logo marked onDp: false off the picture, though it stays on the wall", () => {
+    const offPicture = { name: "Wall Only", tier: "Media", logo: "/2026/logos/wall-only.png", width: 400, height: 100, onDp: false };
+    const withIt = footerTiers({ headline, sponsors: [...sponsors, offPicture], partners });
+    const names = [withIt.headline, ...withIt.sponsors, ...withIt.groups.flatMap((g) => g.logos)]
+      .filter((l) => l !== null)
+      .map((l) => l!.name);
+    expect(names).not.toContain("Wall Only");
+    expect(names).toEqual([tiers.headline, ...tiers.sponsors, ...tiers.groups.flatMap((g) => g.logos)].filter((l) => l !== null).map((l) => l!.name));
   });
 
   it("endorses with Lagos State, then every media partner with no heading", () => {
@@ -498,6 +536,36 @@ describe("the footer, from lib/partners-2026", () => {
       l.logo.endsWith(".svg") ? "data:svg" : l.logo,
     );
     expect(resolved.sponsors.find((s) => s.name === "Cake Wallet")?.src).toBe("data:svg");
+  });
+});
+
+describe("Sunset, the design team's sample fitted to the square", () => {
+  const tiers = footerTiers({ headline, sponsors, partners });
+  const footer = layoutFooter(tiers, measureLabel);
+  const L = layoutSunset(footer.top, 960 / 235);
+
+  it("stacks mark, photo, role, name and the days' band above the partners, nothing overlapping", () => {
+    expect(L.logo).toMatchObject({ x: SUNSET.side, y: SUNSET.logoTop, w: SUNSET.logoW });
+    expect(L.hub.y - L.outerR).toBeCloseTo(L.logo.y + L.logo.h + SUNSET.ringGap, 6);
+    expect(L.hub.y + L.outerR + SUNSET.textGap).toBeCloseTo(L.roleTop, 6);
+    expect(L.roleTop + SUNSET.roleLine + SUNSET.roleGap).toBe(L.nameTop);
+    expect(L.nameBottom - L.nameTop).toBe(SUNSET.nameRoom);
+    expect(L.bandTop - L.nameBottom).toBe(SUNSET.bandGap);
+    expect([L.bandTop, L.bandBottom]).toEqual([footer.top - SUNSET.band, footer.top]);
+    expect(L.photoR).toBe(L.outerR - SUNSET.ring);
+  });
+
+  it("keeps the photo large with today's partners", () => {
+    expect(L.photoR).toBeGreaterThan(360);
+    expect(L.hub.x).toBe(DP_SIZE / 2);
+  });
+
+  it("sets the name larger than the other designs, as the sample does, and still in two lines when it must", () => {
+    expect(chooseNameLayout("Ada Obi", ruler).size).toBe(196);
+    expect(chooseNameLayout("Ada Obi", ruler, SUNSET.nameW, () => Infinity, SUNSET.name).size).toBe(SUNSET.name.one);
+    const long = chooseNameLayout("Chimamanda Ngozi Adichie-Okonkwo", ruler, SUNSET.nameW, () => Infinity, SUNSET.name);
+    expect(long.lines.length).toBe(2);
+    expect(long.size).toBeLessThanOrEqual(SUNSET.name.two);
   });
 });
 
