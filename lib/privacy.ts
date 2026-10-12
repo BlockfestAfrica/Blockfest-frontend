@@ -25,14 +25,20 @@
  * and __tests__/unit/privacy.test.ts holds the feature to that one request
  * and that payload. The page's analytics events (role, and how the badge was
  * saved or shared) are covered under Analytics.
+ *
+ * 1.2 adds Rovv's campaign entry (lib/rovv-privacy.ts has the detail), the
+ * first surface whose data a sponsor receives, and says so where this policy
+ * promises nobody else gets it. It also corrects Monica's registration, which
+ * still listed a "content niche" question the form stopped asking and left
+ * out the Monica tag it asks instead.
  */
 
 import { CONTACT_EMAIL } from "@/lib/constants";
 
-export const PRIVACY_VERSION = "1.1";
+export const PRIVACY_VERSION = "1.2";
 
 /** ISO date. Rendered in the event's own timezone. */
-export const PRIVACY_UPDATED = "2026-10-10";
+export const PRIVACY_UPDATED = "2026-10-12";
 
 export interface PolicySection {
   /** Anchor, so a specific answer can be linked to in a request or complaint. */
@@ -57,11 +63,19 @@ export interface DataSurface {
 
 export const privacySurfaces: DataSurface[] = [
   {
-    name: "Campaign registration",
+    name: "Monica campaign registration",
     collects:
-      "Name, email address, phone number, social handles, content niche, and optionally audience size and location. Your IP address and browser are recorded automatically.",
+      "Name, email address, phone number, social handles, your Monica tag, and optionally audience size and location. Your IP address and browser are recorded automatically.",
     destination:
-      "Held by us, in our own database. Covered in full by the campaign privacy notice.",
+      "Held by us, in our own database. Covered in full by the Monica campaign privacy notice.",
+    heldByUs: true,
+  },
+  {
+    name: "ROVV campaign entry",
+    collects:
+      "Full name, email address, TikTok username, the link to your TikTok video and your ROVV referral code. Your IP address and browser are recorded automatically.",
+    destination:
+      "Held by us, in our own database. Your name, email address, TikTok username and referral code are also shared with ROVV, so it can confirm you registered on its app. Covered in full by the ROVV campaign privacy notice.",
     heldByUs: true,
   },
   {
@@ -134,6 +148,7 @@ export const privacySections: PolicySection[] = [
       "Several things this site asks for are handled by somebody else. Newsletter signups go to Substack, tickets to Meetumo, and speaker and volunteer applications to Google Forms. When you use one of those, you are giving your details to that provider as well as to us, under their own privacy terms.",
       "This matters for what you can ask for. We can act on a request about anything we hold ourselves, and the table above says which of these that is. Where a provider holds the record, we will pass your request on and tell you we have, but they are the ones who can act on it.",
       "We do not sell personal data, and we do not share it with anyone for their own marketing.",
+      "Where a campaign's sponsor needs some of your details to run that campaign, as ROVV does to confirm referral codes, that campaign's own notice says exactly what goes to them, and they receive it for that campaign only.",
     ],
   },
   {

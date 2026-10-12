@@ -2,6 +2,7 @@ import "server-only";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import { monicaPointLadder, monicaRoutes } from "@/lib/campaigns";
 import type { Email } from "@/lib/email/client";
+import { ROVV, rovvRoutes } from "@/lib/rovv";
 
 /**
  * The campaign's transactional emails.
@@ -137,9 +138,38 @@ interface Shell {
   /** Already-escaped HTML paragraphs and blocks. */
   body: string;
   action?: { label: string; href: string };
+  /** Whose campaign the mail is about. Monica unless it says otherwise. */
+  brand?: Brand;
 }
 
-function layout({ preheader, heading, body, action }: Shell): string {
+/**
+ * The campaign a mail speaks for: the line above the heading, the footer and
+ * its two links. Rovv's entrants never signed up to Monica, so a Rovv mail
+ * that said "for the Monica campaign" and linked Monica's rules would be
+ * telling them the wrong thing about what they agreed to.
+ */
+interface Brand {
+  eyebrow: string;
+  campaign: string;
+  rules: string;
+  privacy: string;
+}
+
+const MONICA_BRAND: Brand = {
+  eyebrow: "Monica: The Money Story",
+  campaign: "the Monica campaign",
+  rules: monicaRoutes.rules,
+  privacy: monicaRoutes.privacy,
+};
+
+const ROVV_BRAND: Brand = {
+  eyebrow: "If ROVV Takes Me to Blockfest",
+  campaign: "the ROVV campaign",
+  rules: rovvRoutes.rules,
+  privacy: rovvRoutes.privacy,
+};
+
+function layout({ preheader, heading, body, action, brand = MONICA_BRAND }: Shell): string {
   const button = action
     ? `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 8px;">
@@ -160,7 +190,7 @@ function layout({ preheader, heading, body, action }: Shell): string {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#ffffff;border-radius:14px;border:1px solid ${LINE};overflow:hidden;">
     <tr><td style="height:5px;background:${GOLD};line-height:5px;font-size:0;">&nbsp;</td></tr>
     <tr><td style="padding:28px 28px 8px;">
-      <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:${MUTED};">Monica: The Money Story</p>
+      <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:${MUTED};">${escape(brand.eyebrow)}</p>
       <h1 style="margin:12px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:24px;line-height:1.25;font-weight:700;color:${INK};">${escape(heading)}</h1>
     </td></tr>
     <tr><td style="padding:4px 28px 32px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${INK};">
@@ -168,8 +198,8 @@ function layout({ preheader, heading, body, action }: Shell): string {
       ${button}
     </td></tr>
     <tr><td style="padding:20px 28px 28px;border-top:1px solid ${LINE};font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:${MUTED};">
-      <p style="margin:0;">Blockfest Africa, for the Monica campaign. Reply to this email and a person reads it.</p>
-      <p style="margin:8px 0 0;"><a href="${siteUrl()}${monicaRoutes.rules}" style="color:${MUTED};">Rules</a> &nbsp;·&nbsp; <a href="${siteUrl()}${monicaRoutes.privacy}" style="color:${MUTED};">How we handle your details</a></p>
+      <p style="margin:0;">Blockfest Africa, for ${escape(brand.campaign)}. Reply to this email and a person reads it.</p>
+      <p style="margin:8px 0 0;"><a href="${siteUrl()}${brand.rules}" style="color:${MUTED};">Rules</a> &nbsp;·&nbsp; <a href="${siteUrl()}${brand.privacy}" style="color:${MUTED};">How we handle your details</a></p>
     </td></tr>
   </table>
 </td></tr></table></body></html>`;
@@ -1844,6 +1874,119 @@ export function withdrawnEmail(params: {
          meant to do this and now needs to send another. The line above
          carries the "not me" path for the rare case. */
       action: { label: "Send a replacement", href: params.personalPage },
+    }),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Rovv's campaign. Its own brand on every one, and nothing about Monica.
+
+/**
+ * An entry received, or replaced.
+ *
+ * Sent on every entry the database took, so a person who mistyped their link
+ * sees it in their inbox and can submit again before the close. Unchanged
+ * resubmissions send nothing (the route never calls this for them). The
+ * referral code is read back because it is the thing most likely to be wrong
+ * and the one Rovv checks.
+ */
+export function rovvEntryEmail(params: {
+  to: string;
+  fullName: string;
+  tiktokUrl: string;
+  referralCode: string;
+  replaced: boolean;
+}): Email {
+  const name = firstName(params.fullName);
+  const closes = "11:59 PM on Sunday 18 October";
+  const lead = params.replaced
+    ? `${name}, your entry is updated. This replaces the one you sent before.`
+    : `${name}, your entry to ${ROVV.title.replace(/…$/, "")} is in.`;
+  const review = `The team reviews every entry by hand and picks ${ROVV.winners} winners for creativity and relevance. Each wins a Blockfest Africa 2026 ticket. Winners hear from us by email by Tuesday 20 October, and their TikTok usernames go up on the campaign page.`;
+  const fix = `Something wrong? Enter again from the campaign page with the same email address and TikTok username before ${closes} (Lagos time) and the new details replace these.`;
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: params.replaced ? "Your ROVV entry is updated" : "We got your ROVV entry",
+    text: [
+      lead,
+      ``,
+      `Your video: ${params.tiktokUrl}`,
+      `Your ROVV referral code: ${params.referralCode}`,
+      ``,
+      review,
+      `Keep the video public and tagged until Saturday 24 October.`,
+      ``,
+      fix,
+      ``,
+      `Campaign page: ${siteUrl()}${rovvRoutes.home}`,
+    ].join("\n"),
+    html: layout({
+      brand: ROVV_BRAND,
+      preheader: params.replaced
+        ? "Your new details replace your earlier entry."
+        : `The team picks ${ROVV.winners} winners by Tuesday 20 October.`,
+      heading: params.replaced ? `Updated, ${name}` : `You're in, ${name}`,
+      body: [
+        p(escape(lead)),
+        boxed("Your video", params.tiktokUrl),
+        boxed("Your ROVV referral code", params.referralCode),
+        p(escape(review)),
+        p("Keep the video public and tagged until Saturday 24 October."),
+        quiet(escape(fix)),
+      ].join(""),
+      action: { label: "See the campaign", href: `${siteUrl()}${rovvRoutes.home}` },
+    }),
+  };
+}
+
+/**
+ * You won a ticket.
+ *
+ * Sent once per winner from the console, as a bulk send (the owner gets a
+ * copy first). Carries no link that signs anyone in: the only thing a winner
+ * has to do is reply, so the reply is the claim and a person reads it.
+ */
+export function rovvWinnerEmail(params: {
+  to: string;
+  fullName: string;
+  tiktokUrl: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const claim = "Reply to this email by 6:00 PM on Wednesday 21 October (Lagos time) with the full name to put on your ticket. We issue it in that name, to this email address.";
+  const event = "Blockfest Africa 2026 runs from 22 to 24 October at the National Art Theatre, Lagos.";
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: "You won a Blockfest ticket with ROVV",
+    text: [
+      `${name}, your video is one of the ${ROVV.winners} winners of ${ROVV.title.replace(/…$/, "")}. You have won a Blockfest Africa 2026 ticket.`,
+      ``,
+      `Your winning video: ${params.tiktokUrl}`,
+      ``,
+      claim,
+      `If we do not hear from you by then, the ticket may go to another entrant.`,
+      ``,
+      event,
+      `The ticket is in your name and cannot be transferred or exchanged for cash.`,
+    ].join("\n"),
+    html: layout({
+      brand: ROVV_BRAND,
+      preheader: "Reply by 21 October to claim your Blockfest Africa 2026 ticket.",
+      heading: `You won, ${name}`,
+      body: [
+        p(
+          `Your video is one of the ${ROVV.winners} winners of ${escape(ROVV.title.replace(/…$/, ""))}. You have won a <strong>Blockfest Africa 2026 ticket</strong>.`,
+        ),
+        boxed("Your winning video", params.tiktokUrl),
+        p(`<strong>${escape(claim)}</strong>`),
+        p("If we do not hear from you by then, the ticket may go to another entrant."),
+        quiet(`${escape(event)} The ticket is in your name and cannot be transferred or exchanged for cash.`),
+      ].join(""),
     }),
   };
 }

@@ -109,6 +109,9 @@ export default async function AdminLayout({
     { href: "/admin/overview", label: "Overview" },
     { href: "/admin/participants", label: "People" },
     { href: "/admin/decided", label: "Decided" },
+    // Rovv's entries. Every admin reviews them; the page and its routes keep
+    // picking, exporting and emailing winners to owners.
+    { href: "/admin/rovv", label: "ROVV" },
     { href: "/admin/tools", label: "Tools" },
     // Pausing and clearing are owner work, so the tab is not offered to a
     // reviewer. The routes check the role again themselves: a hidden tab is a

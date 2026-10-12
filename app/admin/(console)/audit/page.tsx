@@ -43,7 +43,7 @@ export default async function AuditPage() {
   return (
     <div className={SPACING.page}>
       <PageHeader
-        context="Monica"
+        context="Monica and ROVV"
         title="Audit log"
         hint="Every admin action, written by the engine in the same transaction as the act. Newest first; filter by action, admin, or a word from a note."
       />

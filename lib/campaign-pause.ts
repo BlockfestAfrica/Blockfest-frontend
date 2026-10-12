@@ -50,7 +50,10 @@ const RUNNING: PauseState = { paused: false, reason: null, startsAt: null };
  * Deduplicated per request, for the same reason requireAdmin is: the console
  * layout reads it to show the state to every reviewer, and pages read it again.
  */
-export const pauseState = cache(async function pauseState(): Promise<PauseState> {
+export const pauseState = cache(async function pauseState(
+  /** Monica's unless a route for another campaign says which. */
+  slug: string = MONICA_SLUG,
+): Promise<PauseState> {
   try {
     const db = getDb();
     const rows = await db
@@ -60,7 +63,7 @@ export const pauseState = cache(async function pauseState(): Promise<PauseState>
         startsAt: campaigns.startsAt,
       })
       .from(campaigns)
-      .where(eq(campaigns.slug, MONICA_SLUG))
+      .where(eq(campaigns.slug, slug))
       .limit(1);
 
     const row = rows[0];

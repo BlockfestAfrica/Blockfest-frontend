@@ -75,6 +75,7 @@ describe("what a copy can carry", () => {
       templates.shortlistEmail({ ...base, closesAtLagos: "x", votingUrl: templates.votingPage() }),
       templates.nomineeResultEmail({ ...base, winnerName: "B", votingUrl: templates.votingPage() }),
       templates.resumedEmail({ to: "ada@e.com", fullName: "Ada Obi", closesAtLagos: "x", personalPage: templates.personalPage() }),
+      templates.rovvWinnerEmail({ to: "ada@example.test", fullName: "Ada Obi", tiktokUrl: "https://tiktok.com/@adaobi/video/7300000000000000001" }),
     ];
     const login = new URL(templates.personalLink("SECRET")).pathname;
     for (const mail of mails) {
@@ -91,6 +92,7 @@ describe("what a copy can carry", () => {
       "app/api/admin/vote-round/route.ts",
       "app/api/admin/winners/route.ts",
       "app/api/admin/pause/route.ts",
+      "app/api/admin/rovv/notify/route.ts",
     ]) {
       expect(readFileSync(join(process.cwd(), route), "utf8"), route).toMatch(/await sendBulkCopy\(/);
     }
