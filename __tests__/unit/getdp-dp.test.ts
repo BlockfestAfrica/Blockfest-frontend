@@ -287,12 +287,25 @@ describe("the footer, from lib/partners-2026", () => {
 
   it("draws every sponsor, in the listed order, then the ecosystem partners in the same row", () => {
     const ecosystem = tierNames("Ecosystem");
-    expect(ecosystem).toEqual(["Hashed Emergent", "Microtraction"]);
+    // Hashed Emergent last, so it takes the left wing's outer place (see below).
+    expect(ecosystem).toEqual(["Microtraction", "Hashed Emergent"]);
     const named = tieredSponsors.map((s) => s.name);
     expect(tiers.sponsors.map((s) => s.name)).toEqual([...named, ...ecosystem]);
     expect(footer.sponsors.map((s) => s.logo.name).sort()).toEqual(
       ["Monica", ...named, ...ecosystem].sort(),
     );
+  });
+
+  it("keeps every sponsor beside the headline, Nirvana Academy too, none shorter than the floor", () => {
+    // The owner, 12 October: Nirvana Academy joins the community sponsors. The
+    // row must still hold everyone beside the headline, not wrap a line under it.
+    const lead = footer.sponsors[0];
+    const row = footer.sponsors.filter((s) => Math.abs(s.y + s.h / 2 - (lead.y + lead.h / 2)) < 1);
+    expect(row.length).toBe(footer.sponsors.length);
+    expect(row.map((s) => s.logo.name)).toContain("Nirvana Academy");
+    for (const s of row.slice(1)) expect(s.h).toBeGreaterThanOrEqual(FOOTER.sponsorMinH - 1e-9);
+    expect(Math.min(...row.map((s) => s.x))).toBeCloseTo(FOOTER.edge, 6);
+    expect(Math.max(...row.map((s) => s.x + s.w))).toBeCloseTo(DP_SIZE - FOOTER.edge, 6);
   });
 
   it("sets Hashed Emergent in the sponsors' row, after the sponsors, with no label of its own", () => {
@@ -320,7 +333,9 @@ describe("the footer, from lib/partners-2026", () => {
     // and would cross the picture's edge: then it moves in just enough.
     const under = leftmost.x + leftmost.w / 2;
     expect(endorsed.cx).toBeGreaterThanOrEqual(under - 1e-6);
-    expect(endorsed.cx - under).toBeLessThan(40);
+    // Hashed Emergent is narrower than the label since the row took a 12th
+    // sponsor (Nirvana Academy), so the label moves in a little further.
+    expect(endorsed.cx - under).toBeLessThan(48);
     const seal = footer.partners.find((p) => p.logo.name === "Lagos State Government")!;
     expect(seal.x + seal.w / 2).toBeCloseTo(endorsed.cx, 3);
     const rightEdge = Math.max(...row.map((s) => s.x + s.w));

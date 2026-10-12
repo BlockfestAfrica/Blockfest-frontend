@@ -121,6 +121,13 @@ export const sponsors: Sponsor[] = [
     height: 457,
     href: "https://www.web3bridgeafrica.com/"
   },
+  {
+    name: "Nirvana Academy",
+    tier: "Community",
+    logo: "/2026/logos/nirvana-academy.png",
+    width: 154,
+    height: 59,
+  },
   /* Moved here from `partners` (the team, 9 October): the government,
      ecosystem and media partners are now sponsors, tiered by what they were
      (the tier is kept for the record and the order; it is not shown).
@@ -128,8 +135,11 @@ export const sponsors: Sponsor[] = [
      wall and the DP (the owner, 10 October); they stay in lib/partners-2025.ts,
      where they were partners. */
   { name: "Lagos State Government", tier: "Government", logo: "/images/partners-2025/lagos-state.png", width: 149, height: 149, href: "https://lagosstate.gov.ng" },
-  { name: "Hashed Emergent", tier: "Ecosystem", logo: "/2026/logos/hashed-emergent.png", width: 1280, height: 405, href: "https://x.com/HashedEM" },
   { name: "Microtraction", tier: "Ecosystem", logo: "/2026/logos/microtraction.png", width: 532, height: 331, href: "https://x.com/microtraction" },
+  { name: "Hashed Emergent", tier: "Ecosystem", logo: "/2026/logos/hashed-emergent.png", width: 1280, height: 405, href: "https://x.com/HashedEM" },
+  /* Hashed Emergent last of the sponsors' row on the DP, so it takes the
+     left wing's outer place and "Endorsed by" lines up under it (the owner,
+     9 October). Each new sponsor flips which wing the last one lands in. */
   { name: "Techpoint", tier: "Media", logo: "/images/partners-2025/techpoint.png", width: 407, height: 480, href: "https://techpoint.africa" },
   { name: "AllConfsBot", tier: "Media", logo: "/2026/logos/allconfsbot.png", width: 1280, height: 457, href: "https://x.com/allconfsbot" },
   { name: "Blockchain Marketing Ninja", tier: "Media", logo: "/2026/logos/blockchain-marketing-ninja.png", width: 1280, height: 331, href: "https://x.com/0xblockchainmkt" },

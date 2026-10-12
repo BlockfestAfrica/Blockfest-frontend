@@ -677,9 +677,11 @@ export const FOOTER = {
   /**
    * No sponsor is drawn shorter than this, above the partners' floor. A wing
    * beside the headline shrinks only this far; past it, the next sponsors
-   * move to a line of their own under the headline row, full size.
+   * move to a line of their own under the headline row, full size. 33 since
+   * Nirvana Academy joined (12 October), so every sponsor still fits beside
+   * the headline.
    */
-  sponsorMinH: 36,
+  sponsorMinH: 33,
   sponsorGap: 60,
   wingGap: 84,
   rowGap: 16,
@@ -1048,10 +1050,17 @@ export function layoutFooter(
         if (!wing.length) return;
         const k = wingScale(wing);
         const w = rowWidth(wing, F.sponsorGap) * k;
-        let x = side < 0 ? F.edge + (wingW - w) / 2 : S / 2 + half + (wingW - w) / 2;
+        // A wing with room to spare spreads across it, as the media row does,
+        // so both wings reach the footer's edges and the row below can line
+        // up with them; one logo, or room past twice the gap, stays centred.
+        const spare = wingW - w;
+        const spread = wing.length > 1 ? Math.min(spare / (wing.length - 1), F.sponsorGap * 1.5) : 0;
+        const gap = F.sponsorGap * k + spread;
+        const used = w + spread * (wing.length - 1);
+        let x = side < 0 ? F.edge + (wingW - used) / 2 : S / 2 + half + (wingW - used) / 2;
         for (const s of wing) {
           out.sponsors.push({ logo: s.logo, x, y: cy - (s.h * k) / 2, w: s.w * k, h: s.h * k });
-          x += s.w * k + F.sponsorGap * k;
+          x += s.w * k + gap;
         }
       };
       layWing(left, -1);
