@@ -44,11 +44,11 @@ export const metadata: Metadata = {
  */
 export const revalidate = 300;
 
-/* Where to get the app: the store links once ROVV gives them, and until
-   then an honest "search for it" rather than a guessed URL. */
+/* Where to get the app: the store pages if ROVV gives us them, and until
+   then ROVV's own website, never a guessed store link. */
 const appLinks = [
-  ROVV.appLinks.android ? { label: "Get ROVV for Android", href: ROVV.appLinks.android } : null,
-  ROVV.appLinks.ios ? { label: "Get ROVV for iPhone", href: ROVV.appLinks.ios } : null,
+  ROVV.appLinks.android ? { label: "Get ROVV on Google Play", href: ROVV.appLinks.android } : null,
+  ROVV.appLinks.ios ? { label: "Get ROVV on the App Store", href: ROVV.appLinks.ios } : null,
 ].filter((x): x is { label: string; href: string } => Boolean(x));
 
 const STEPS: { title: string; body: React.ReactNode }[] = [
@@ -65,7 +65,7 @@ const STEPS: { title: string; body: React.ReactNode }[] = [
     body:
       appLinks.length > 0 ? (
         <>
-          Download the ROVV app, register, and find your referral code in the app.{" "}
+          Download the ROVV app, register, and find your referral code under Referral Rewards in the app.{" "}
           {appLinks.map((l, i) => (
             <span key={l.href}>
               {i > 0 ? " · " : ""}
@@ -76,7 +76,18 @@ const STEPS: { title: string; body: React.ReactNode }[] = [
           ))}
         </>
       ) : (
-        "Search for ROVV in the Google Play Store or the App Store, download it, register, and find your referral code in the app."
+        <>
+          Get the ROVV app from{" "}
+          <a
+            href={ROVV.rovvUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-link underline underline-offset-2 hover:text-white"
+          >
+            getrovv.com
+          </a>
+          , register, and find your referral code in the app.
+        </>
       ),
   },
   {

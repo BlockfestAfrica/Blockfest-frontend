@@ -147,3 +147,13 @@ describe("what people actually paste and type (the end-to-end walk)", () => {
     expect(suggestEmail("not an email")).toBeNull();
   });
 });
+
+describe("where to get the ROVV app", () => {
+  it("is the passenger app's own store listings, the ones ROVV's onelink QR codes open", () => {
+    expect(ROVV.rovvUrl).toBe("https://www.getrovv.com/");
+    // com.jetRide.rider is "Rovv" by Rovv; the partner (driver) app is not for entrants.
+    expect(ROVV.appLinks.android).toBe("https://play.google.com/store/apps/details?id=com.jetRide.rider");
+    expect(ROVV.appLinks.ios).toBe("https://apps.apple.com/ng/app/jetride-no-surge-rides/id1366805176");
+    expect(JSON.stringify(ROVV.appLinks)).not.toMatch(/partner/i);
+  });
+});
