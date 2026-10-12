@@ -340,6 +340,17 @@ const nextConfig: NextConfig = {
         destination: "/campaigns/monica-money-story/register",
         permanent: false,
       },
+      /*
+       * ROVV's campaign. /rovv is the short address for posts (Next matches
+       * redirects without regard to case, so /ROVV is caught too, and a rule
+       * for /campaigns/ROVV would also catch /campaigns/rovv and loop).
+       * /campaignsCampaignlink is the TikTok bio link as it was set on 12
+       * October, a typo for the campaign link, caught so anybody who tapped
+       * or saved it still lands on the campaign. 307, so pointing either
+       * elsewhere later is never cached for good.
+       */
+      { source: "/rovv", destination: "/campaigns/rovv", permanent: false },
+      { source: "/campaignsCampaignlink", destination: "/campaigns/rovv", permanent: false },
     ];
   },
 
