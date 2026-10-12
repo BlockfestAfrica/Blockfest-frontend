@@ -177,6 +177,7 @@ const LOGOS = [
     { year: 2026, from: "2026/sponsors/web3afrika.png", to: "web3afrika.png" },
     { year: 2026, from: "2026/sponsors/web3bridge.png", to: "web3bridge.png" },
     { year: 2026, from: "2026/sponsors/wid.png", to: "wid.png" },
+    { year: 2026, from: "2026/sponsors/nirvana-academy.png", to: "nirvana-academy.png" },
 
     { year: 2026, from: "2026/media/allconf.png", to: "allconfsbot.png" },
     {
