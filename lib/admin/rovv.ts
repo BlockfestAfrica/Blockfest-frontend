@@ -2,8 +2,11 @@ import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { csvFile } from "@/lib/csv";
-import { ROVV_SLUG, type RovvEntryStatus } from "@/lib/rovv";
+import { ROVV, ROVV_SLUG, rovvRoutes, type RovvEntryStatus } from "@/lib/rovv";
 import { isOwner, type AdminIdentity } from "@/lib/admin/session";
+import { sendEmail, type Email } from "@/lib/email/client";
+import { rovvEligibleEmail, rovvIneligibleEmail, siteUrl } from "@/lib/email/templates";
+import { logError } from "@/lib/log";
 
 /**
  * Rovv's entries, read and decided for the console (0073_rovv_campaign.sql).
@@ -17,10 +20,12 @@ import { isOwner, type AdminIdentity } from "@/lib/admin/session";
 
 /**
  * What the console's filter can ask for: a review state, the winners, every
- * real entry, or the test entries. Every filter but "test" leaves tests out,
- * so nothing an export or a count reads ever includes one (0074).
+ * real entry, the test entries, or (for an owner looking over the judges'
+ * shortlist) the eligible entries a judge left a note on. Every filter but
+ * "test" leaves tests out, so nothing an export or a count reads ever
+ * includes one (0074).
  */
-export type RovvFilter = "all" | RovvEntryStatus | "winners" | "test";
+export type RovvFilter = "all" | RovvEntryStatus | "winners" | "test" | "noted";
 
 export interface RovvEntryRow {
   id: string;
@@ -51,6 +56,11 @@ export interface RovvEntryRow {
   sameReferral: number;
   /** When the entry last changed: a replacement shows when it came back. */
   updatedAt: Date;
+  /**
+   * The ruling the entrant was last emailed (0074), or null. Differs from
+   * status when a ruling's email did not leave, so the console can say so.
+   */
+  rulingEmailed: RovvEntryStatus | null;
 }
 
 export interface RovvCounts {
@@ -73,6 +83,8 @@ export interface RovvCounts {
   resultsToSend: number;
   /** How many have had it. */
   resultsSent: number;
+  /** Real eligible entries a judge left a note on (the "noted" filter). */
+  noted: number;
 }
 
 /** A winner not yet emailed, and not being emailed by another press. */
@@ -148,13 +160,15 @@ export async function rovvEntries(
         ? sql`AND NOT e.is_test AND e.winner_at IS NOT NULL`
         : status === "all"
           ? sql`AND NOT e.is_test`
-          : sql`AND NOT e.is_test AND e.status = ${status}`;
+          : status === "noted"
+            ? sql`AND NOT e.is_test AND e.status = 'eligible' AND e.review_note IS NOT NULL`
+            : sql`AND NOT e.is_test AND e.status = ${status}`;
 
   const result = await getDb().execute(sql`
     SELECT e.id, e.full_name, e.email, e.tiktok_handle, e.tiktok_url,
            e.referral_code, e.status, e.review_note, e.reviewed_at,
            e.winner_at, e.notified_at, e.created_at, e.revision,
-           e.is_test, e.ticket_code, e.updated_at,
+           e.is_test, e.ticket_code, e.updated_at, e.ruling_emailed,
            (SELECT count(*)::int FROM rovv_entries o
              WHERE o.campaign_id = e.campaign_id AND o.post_key = e.post_key
                AND o.is_test = e.is_test AND o.id <> e.id) AS same_video,
@@ -198,6 +212,7 @@ export async function rovvEntries(
       sameHandle: Number(r.same_handle ?? 0),
       sameReferral: Number(r.same_referral ?? 0),
       updatedAt: toDate(r.updated_at),
+      rulingEmailed: r.ruling_emailed ? (String(r.ruling_emailed) as RovvEntryStatus) : null,
     };
   });
 }
@@ -221,7 +236,9 @@ export async function rovvCounts(admin: AdminIdentity): Promise<RovvCounts> {
                               AND e.ticket_code IS NULL)::int                           AS test_need_code,
            count(*) FILTER (WHERE NOT e.is_test AND e.winner_at IS NULL AND e.status <> 'ineligible'
                               AND e.results_emailed_at IS NULL)::int                    AS results_to_send,
-           count(*) FILTER (WHERE NOT e.is_test AND e.results_emailed_at IS NOT NULL)::int AS results_sent
+           count(*) FILTER (WHERE NOT e.is_test AND e.results_emailed_at IS NOT NULL)::int AS results_sent,
+           count(*) FILTER (WHERE NOT e.is_test AND e.status = 'eligible'
+                              AND e.review_note IS NOT NULL)::int                       AS noted
       FROM rovv_entries e
       JOIN campaigns c ON c.id = e.campaign_id
      WHERE c.slug = ${ROVV_SLUG}
@@ -241,6 +258,7 @@ export async function rovvCounts(admin: AdminIdentity): Promise<RovvCounts> {
     testNeedCode: Number(r.test_need_code ?? 0),
     resultsToSend: Number(r.results_to_send ?? 0),
     resultsSent: Number(r.results_sent ?? 0),
+    noted: Number(r.noted ?? 0),
   };
 }
 
@@ -425,6 +443,127 @@ export async function markRovvRulingEmailed(
   `);
 }
 
+/**
+ * The email a ruling owes its entrant, or null when it owes none. Shared by
+ * the decision route and the owner's rule-out, so an entrant hears the same
+ * thing whichever way their entry was ruled.
+ *
+ * Eligible says it is in the running; ineligible gives the reason the entry
+ * now holds and, while entries are open, how to fix it. Nothing for the
+ * ruling they were last emailed (ruling_emailed, 0074), even with a "back to
+ * waiting" between: the same news twice is noise. A judge's note on an
+ * eligible ruling never reaches them: rovvEligibleEmail takes no reason.
+ */
+export async function rovvRulingEmail(
+  admin: AdminIdentity,
+  entryId: string,
+  ruled: "eligible" | "ineligible",
+  /** The reason just given, for an ineligible ruling; the stored one wins. */
+  note: string | null,
+  /** Where a failure is logged from, so the log says which press it was. */
+  context: string,
+): Promise<Email | null> {
+  const entrant = await rovvEntrant(admin, entryId).catch((error) => {
+    logError(`${context} entrant`, error);
+    return null;
+  });
+  if (!entrant || entrant.rulingEmailed === ruled) return null;
+  /* "In the running" means nothing once the winners are out, so after the
+     first winner email it is not sent; a ruling-out still is. */
+  if (ruled === "eligible" && (await rovvWinnersAnnounced(admin).catch(() => false))) return null;
+
+  // A test entry can always be fixed (the window never applied to it), and
+  // its fix happens in test mode, not on the real form.
+  const open = entrant.isTest || Date.now() <= new Date(ROVV.closesAt).getTime();
+  if (ruled === "eligible") {
+    return rovvEligibleEmail({
+      to: entrant.email,
+      fullName: entrant.fullName,
+      tiktokUrl: entrant.tiktokUrl,
+      referralCode: entrant.referralCode,
+      // After the close there is no "reply before Sunday" to give.
+      closed: !open,
+    });
+  }
+  return rovvIneligibleEmail({
+    to: entrant.email,
+    fullName: entrant.fullName,
+    tiktokHandle: entrant.tiktokHandle,
+    tiktokUrl: entrant.tiktokUrl,
+    referralCode: entrant.referralCode,
+    reason: entrant.reviewNote ?? note ?? "",
+    canFix: open,
+    fixUrl: `${siteUrl()}${entrant.isTest ? `${rovvRoutes.home}?test=1#enter` : rovvRoutes.enter}`,
+  });
+}
+
+/**
+ * Send a ruling's email, and record which ruling it carried only once it has
+ * left, so a failed one is tried again the next time the entry is ruled that
+ * way. True only when it left. A failure is logged, never thrown: the ruling
+ * stands whatever happens to its email.
+ */
+export async function sendRovvRulingEmail(
+  admin: AdminIdentity,
+  entryId: string,
+  ruled: "eligible" | "ineligible",
+  email: Email,
+  context: string,
+): Promise<boolean> {
+  const result = await sendEmail(email);
+  if (!result.sent) {
+    logError(`${context} email`, new Error(`ruling email not sent: ${result.reason ?? "unknown"}`));
+    return false;
+  }
+  await markRovvRulingEmailed(admin, entryId, ruled).catch((error) => logError(`${context} ruling_emailed`, error));
+  return true;
+}
+
+/** A real entry named by an address in ROVV's answer, for the owner's rule-out. */
+export interface RovvEntryByEmail {
+  id: string;
+  email: string;
+  emailCanonical: string;
+  tiktokHandle: string;
+  status: RovvEntryStatus;
+  /** Ruled on as it stands now, so the database refuses it if it moves (P1012). */
+  revision: number;
+  winner: boolean;
+  /** The ruling last emailed to them, so a failed one can be sent again. */
+  rulingEmailed: RovvEntryStatus | null;
+}
+
+/**
+ * The real entries under these canonical addresses (one each at most:
+ * rovv_entry_one_per_email). Tests never: ROVV never saw one.
+ */
+export async function rovvEntriesByEmail(
+  admin: AdminIdentity,
+  canonicals: string[],
+): Promise<RovvEntryByEmail[]> {
+  void admin;
+  if (canonicals.length === 0) return [];
+
+  const result = await getDb().execute(sql`
+    SELECT e.id, e.email, e.email_canonical, e.tiktok_handle, e.status, e.revision, e.ruling_emailed,
+           (e.winner_at IS NOT NULL) AS winner
+      FROM rovv_entries e JOIN campaigns c ON c.id = e.campaign_id
+     WHERE c.slug = ${ROVV_SLUG} AND NOT e.is_test
+       AND e.email_canonical = ANY(${textArray(canonicals)})
+     ORDER BY e.created_at, e.id
+  `);
+  return ((result.rows ?? []) as Record<string, unknown>[]).map((r) => ({
+    id: String(r.id),
+    email: String(r.email),
+    emailCanonical: String(r.email_canonical),
+    tiktokHandle: String(r.tiktok_handle),
+    status: String(r.status) as RovvEntryStatus,
+    revision: Number(r.revision ?? 1),
+    winner: Boolean(r.winner),
+    rulingEmailed: r.ruling_emailed ? (String(r.ruling_emailed) as RovvEntryStatus) : null,
+  }));
+}
+
 /** Give a winner their ticket code, or clear it with an empty one. */
 export async function setRovvTicketCode(
   admin: AdminIdentity,
@@ -541,8 +680,10 @@ export function lagosStamp(date: Date): string {
  * every field in them was typed by the entrant.
  *
  * The file that goes to ROVV, and only what the privacy notice says ROVV
- * receives: name, email, TikTok username and referral code. Every entry, so
- * ROVV can confirm each code; nothing about how the team ruled on it.
+ * receives: name, email, TikTok username and referral code. The export
+ * route hands it every entry not ruled out (or, for ROVV's last check, only
+ * the picked winners), so ROVV confirms each code that can still win and is
+ * not asked again about one already out; nothing about how the team ruled.
  */
 export function rovvReferralCsv(rows: RovvEntryRow[]): string {
   return csvFile([

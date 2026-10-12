@@ -21,7 +21,8 @@ const state = vi.hoisted(() => ({
   role: "owner" as "owner" | "reviewer",
   /** In order: "copy" for the owner's copy, the address for each send. */
   events: [] as string[],
-  copies: [] as { to: string; sentTo: number; context: string }[],
+  /** The sample's text and html too, for what the owner's copy carries. */
+  copies: [] as { to: string; sentTo: number; context: string; text: string; html: string }[],
   failFor: new Set<string>(),
   /** Run while a mail to this address is "in flight", before it reports. */
   during: null as null | ((to: string) => Promise<void>),
@@ -58,9 +59,9 @@ vi.mock("@/lib/email/client", () => ({
   },
 }));
 vi.mock("@/lib/email/copy", () => ({
-  sendBulkCopy: async (sample: { to: string } | null, sentTo: number, context: string) => {
+  sendBulkCopy: async (sample: { to: string; text?: string; html?: string } | null, sentTo: number, context: string) => {
     state.events.push("copy");
-    state.copies.push({ to: sample?.to ?? "", sentTo, context });
+    state.copies.push({ to: sample?.to ?? "", sentTo, context, text: sample?.text ?? "", html: sample?.html ?? "" });
   },
 }));
 
@@ -535,19 +536,22 @@ describe("the export", () => {
     expect(lines[1]).toContain("Bola Ade");
   });
 
-  it("gives ROVV only the four fields the privacy notice names, for every entry", async () => {
+  it("gives ROVV only the four fields the privacy notice names, for every entry not ruled out", async () => {
     await entry({ status: "ineligible", name: "Chidi Eze" });
     await entry({ winner: true, notified: true, name: "Ada Obi" });
     const answer = await download("rovv");
     expect(answer.headers.get("content-disposition")).toBe('attachment; filename="rovv-referral-check-2026-10-19.csv"');
-    const lines = (await answer.text()).trim().split("\r\n");
+    const text = await answer.text();
+    const lines = text.trim().split("\r\n");
     expect(lines[0]).toBe("full_name,email,tiktok_handle,referral_code");
-    expect(lines).toHaveLength(3);
+    // A ruled-out entry stops going to ROVV.
+    expect(lines).toHaveLength(2);
+    expect(text).not.toContain("Chidi Eze");
     expect(lines.join("\n")).not.toMatch(/Seeded|eligible|tiktok\.com|yes/);
     const audit = await one<{ after: { of: string; rows: number } }>(
       `SELECT after FROM audit_log WHERE action = 'rovv.exported'`,
     );
-    expect(audit.after).toEqual({ of: "rovv", rows: 2 });
+    expect(audit.after).toEqual({ of: "rovv", rows: 1 });
   });
 
   it("refuses a reviewer and a cross-site request", async () => {
@@ -862,5 +866,108 @@ describe("the second review's fixes (0075)", () => {
     const e = await entry();
     await rule(e.id, "eligible");
     expect(state.mails[0].text).not.toMatch(/before 11:59 PM on Sunday 18 October/);
+  });
+});
+
+describe("privacy and the public page (results week)", () => {
+  const handleOf = async (id: string) =>
+    (await one<{ tiktok_handle: string }>(`SELECT tiktok_handle FROM rovv_entries WHERE id = $1`, [id])).tiktok_handle;
+
+  it("gives the owner's copy of the winner email a placeholder, never a winner's real code", async () => {
+    // A winner's code takes the full price off a pass. The copy shows the
+    // owner the layout; the code itself goes only to the winner.
+    const won = await entry({ winner: true, code: "BUIDLWIN7781" });
+    expect(await (await press()).json()).toMatchObject({ ok: true, sent: 1 });
+
+    expect(state.copies).toHaveLength(1);
+    const copy = state.copies[0];
+    expect(copy.text + copy.html).not.toMatch(/BUIDLWIN7781/i);
+    expect(copy.text).toContain("SAMPLE-CODE");
+    expect(copy.html).toContain("SAMPLE-CODE");
+    // The winner's own mail still carries the real one.
+    const theirs = state.mails.find((m) => m.to === won.email)!;
+    expect(theirs.text).toContain("BUIDLWIN7781");
+    expect(theirs.text).not.toContain("SAMPLE-CODE");
+  });
+
+  it("starts no results batch once its time is spent, and says how many are left for the next press", async () => {
+    // Netlify ends a function at the plan's limit, whatever maxDuration says;
+    // a press killed mid-batch reports nothing of what it sent.
+    const resultsPress = () => resultsRoute.POST(post("/api/admin/rovv/results", {}));
+    await entry({ winner: true, notified: true });
+    const people = [];
+    for (let i = 0; i < 7; i += 1) people.push(await entry());
+
+    let spent = false;
+    state.during = async () => {
+      // The first batch runs long: 36 seconds, past the 35 second budget.
+      if (spent) return;
+      spent = true;
+      vi.setSystemTime(Date.now() + 36_000);
+    };
+    expect(await (await resultsPress()).json()).toEqual({ ok: true, sent: 4, failed: 0, left: 3 });
+    const first = sends();
+    expect(first, "one batch of four, then it stopped").toHaveLength(4);
+
+    // Nobody it did not reach is left claimed: the next press sends the rest.
+    state.during = null;
+    state.events = [];
+    expect(await (await resultsPress()).json()).toEqual({ ok: true, sent: 3, failed: 0, left: 0 });
+    const second = sends();
+    expect(second).toHaveLength(3);
+    expect([...first, ...second].sort(), "everyone once, nobody twice").toEqual(people.map((p) => p.email).sort());
+  });
+
+  it("starts every batch while there is time", async () => {
+    await entry({ winner: true, notified: true });
+    for (let i = 0; i < 6; i += 1) await entry();
+    state.during = async () => {
+      vi.setSystemTime(Date.now() + 5_000);
+    };
+    // Five seconds a mail: the first batch ends at 20, so the second still starts.
+    expect(await (await resultsRoute.POST(post("/api/admin/rovv/results", {}))).json()).toMatchObject({
+      sent: 6,
+      left: 0,
+    });
+  });
+
+  it("lists only emailed real winners, and counts the picked ones still to be told", async () => {
+    const { publicRovvWinners } = await import("@/lib/rovv-winners");
+    expect(await publicRovvWinners()).toEqual({ handles: [], untold: 0 });
+
+    const told = await entry({ winner: true, notified: true });
+    const waiting = await entry({ winner: true });
+    await entry({ winner: true, notified: true, test: true });
+    await entry({ winner: true, test: true });
+    await entry({ status: "eligible" });
+
+    expect(await publicRovvWinners()).toEqual({ handles: [await handleOf(told.id)], untold: 1 });
+
+    // Once the last pick is emailed, "more winners are being told" goes.
+    await press();
+    expect(await publicRovvWinners()).toEqual({
+      handles: [await handleOf(told.id), await handleOf(waiting.id)].sort(),
+      untold: 0,
+    });
+  });
+
+  it("fails soft to nothing, and logs no entrant's details on the way", async () => {
+    const { publicRovvWinners } = await import("@/lib/rovv-winners");
+    const { DrizzleQueryError } = await import("drizzle-orm");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const real = state.db;
+    state.db = {
+      execute: async () => {
+        throw new DrizzleQueryError("SELECT $1", ["Ngozi Adeyemi-Bello"], new Error("Connection terminated"));
+      },
+    };
+    try {
+      expect(await publicRovvWinners()).toEqual({ handles: [], untold: 0 });
+      const logged = warn.mock.calls.flat().join(" ");
+      expect(logged).toContain("Connection terminated");
+      expect(logged).not.toContain("Ngozi");
+    } finally {
+      state.db = real;
+    }
   });
 });

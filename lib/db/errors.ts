@@ -1,4 +1,5 @@
 import "server-only";
+import { DrizzleQueryError } from "drizzle-orm";
 
 /**
  * Reading a Postgres error, whichever driver raised it.
@@ -126,8 +127,47 @@ export function pgErrorCode(error: unknown): string | null {
   return dig(error, 0);
 }
 
-/** Best-effort text, for logging and for the PGlite fallback. */
+/**
+ * Drizzle's wrapper around a failed query, by class or, failing that, by
+ * shape: a second copy of drizzle-orm in a bundle would make instanceof
+ * miss, and missing it is the leak below.
+ */
+function isDrizzleQueryError(error: unknown): error is Error & { cause?: unknown } {
+  if (error instanceof DrizzleQueryError) return true;
+  return (
+    error instanceof Error &&
+    "query" in error &&
+    "params" in error &&
+    error.message.startsWith("Failed query:")
+  );
+}
+
+/**
+ * Best-effort text, for logging and for the PGlite fallback.
+ *
+ * Never Drizzle's own message. Every query that fails through Drizzle,
+ * neon-http in production and PGlite in the suite alike, is rethrown as a
+ * DrizzleQueryError whose message is "Failed query: <sql>\nparams: <every
+ * bound value>". So one failed entry insert put the entrant's name, email,
+ * TikTok username, referral code and user agent in the function log, and
+ * the redactor knows the shape of only some of those. The driver's error it
+ * wraps, on `cause`, is the part that says what went wrong, and it is where
+ * the raise text is that the PGlite fallback in isPgError matches on.
+ * pgErrorCode needs nothing from here: it already digs through `cause`.
+ */
 export function pgErrorMessage(error: unknown): string {
+  return readMessage(error, 0);
+}
+
+function readMessage(error: unknown, depth: number): string {
+  if (isDrizzleQueryError(error)) {
+    const cause = error.cause;
+    // Nothing underneath to read: say that much, never the query or params.
+    if (cause === undefined || cause === null || cause === error || depth > 4) {
+      return "query failed (no driver error)";
+    }
+    return readMessage(cause, depth + 1);
+  }
   if (error instanceof Error) return error.message;
   return String(error);
 }

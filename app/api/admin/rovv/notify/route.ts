@@ -41,6 +41,9 @@ export const maxDuration = 300;
 /** Sends started together, as the announce routes do. */
 const BATCH = 4;
 
+/** Stands in for the winner's code in the owner's copy. */
+const SAMPLE_CODE = "SAMPLE-CODE";
+
 const FORBIDDEN = NextResponse.json(
   { ok: false, message: "Not allowed." },
   { status: 403 },
@@ -131,8 +134,16 @@ export async function POST(request: NextRequest) {
         ticketLink,
       });
 
-    // The owner's copy of what went out (lib/email/copy.ts), before the batch.
-    await sendBulkCopy(mail(claimed[0]), claimed.length, "rovv winner notice");
+    /* The owner's copy of what went out (lib/email/copy.ts), before the
+       batch. Not quite as sent: a winner's code takes the full price off a
+       pass, and a copy carrying the first winner's real one is a second
+       inbox holding a ticket that is not its own. The layout is what the
+       copy is for, so the code in it is a placeholder. */
+    await sendBulkCopy(
+      mail({ ...claimed[0], ticketCode: SAMPLE_CODE }),
+      claimed.length,
+      "rovv winner notice",
+    );
 
     let sent = 0;
     let failed = 0;

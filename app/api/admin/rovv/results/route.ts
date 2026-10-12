@@ -28,16 +28,30 @@ export const maxDuration = 300;
  *
  * Each recipient is claimed before their mail and the claim kept only if it
  * left, so a second press carries on from where the first stopped and nobody
- * gets it twice. A press sends at most PER_PRESS; the console says to press
- * again for the rest. The owner's copy goes first (lib/email/copy.ts).
+ * gets it twice. A press sends at most PER_PRESS, and starts no batch after
+ * BUDGET_MS; the console says to press again for the rest. The owner's copy
+ * goes first (lib/email/copy.ts).
  */
 const BATCH = 4;
 const PER_PRESS = 300;
+
+/*
+ * How long a press keeps starting batches. Netlify ends a function at the
+ * plan's own limit, which may be far under maxDuration (assume about 60
+ * seconds), and 300 sends at four at a time can outlast that. A press killed
+ * mid-batch answers with the platform's error page rather than ours, after
+ * some of the mail has gone, and the owner reads that as nothing sent. So no
+ * batch starts after this, a running one finishes well inside the limit,
+ * and `left` says how many the next press has to send.
+ */
+const BUDGET_MS = 35_000;
 
 const FORBIDDEN = NextResponse.json({ ok: false, message: "Not allowed." }, { status: 403 });
 
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return FORBIDDEN;
+  // From the request's start: the platform's clock does not wait for ours.
+  const stopAt = Date.now() + BUDGET_MS;
 
   const admin = await requireAdmin();
   if (!admin.ok) return FORBIDDEN;
@@ -77,6 +91,8 @@ export async function POST(request: NextRequest) {
     let sent = 0;
     let failed = 0;
     for (let i = 0; i < recipients.length; i += BATCH) {
+      // Out of time: the rest are unclaimed, so the next press finds them.
+      if (Date.now() >= stopAt) break;
       const results = await Promise.allSettled(
         recipients.slice(i, i + BATCH).map(async (person) => {
           if (!(await claimRovvResults(admin.admin, person.id))) return "skipped" as const;

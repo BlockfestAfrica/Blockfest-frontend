@@ -138,6 +138,13 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
     q: "How long does my video have to stay up?",
     a: "Keep it public, with its tags and hashtag, until Saturday 24 October 2026.",
   },
+  /* Against the scam a prize campaign draws: an account posing as us that
+     DMs entrants "you won" and asks for a fee, a login or the code. Every
+     email the campaign sends is named here, so anything else is not us. */
+  {
+    q: "Does it cost anything? Will anyone message me?",
+    a: "No. Entering costs nothing, and neither does the pass: a winner's code takes the full price off. We contact you only by email, from blockfestafrica.com: the receipt when you enter, the team's ruling on your entry, and your code if you win (everyone else gets one note when the winners are announced). Never by TikTok or Instagram DM. We never ask for money, your ROVV login or your ticket code. If anyone messages you saying you won, ignore them: it is not us.",
+  },
 ];
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
@@ -155,7 +162,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
  * the brief asks for the entry to happen "on the Blockfest campaign page".
  */
 export default async function RovvCampaignPage() {
-  const winners = await publicRovvWinners();
+  const { handles: winners, untold } = await publicRovvWinners();
   const run = campaignRun(CAMPAIGN);
   /* As of this render. The page is rebuilt at most five minutes apart, so
      what is decided here (which sections show) is never more than that
@@ -279,9 +286,16 @@ export default async function RovvCampaignPage() {
                 </li>
               ))}
             </ul>
-            {winners.length < ROVV.winners && (
+            {/* Only while a picked winner is still to be emailed: the team may
+                pick fewer than the full number, and then this would be up for
+                good, promising winners who are never coming. */}
+            {untold > 0 && (
               <p className="mt-6 text-sm text-ink-3">More winners are being told now, and appear here once they have been emailed.</p>
             )}
+            <p className="mt-6 max-w-prose text-sm font-semibold leading-relaxed text-ink-2">
+              We tell winners only by email from blockfestafrica.com, never by TikTok or Instagram DM, and never ask for
+              money, your ROVV login or your code. Anyone messaging you to say you won is not us: ignore them.
+            </p>
             <div className="mt-8 flex max-w-prose flex-col gap-2 text-sm leading-relaxed text-ink-3">
               <p>
                 Listed here, but no email from us? Check Spam and Promotions for mail from Blockfest Africa, then write
