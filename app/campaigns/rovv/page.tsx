@@ -331,7 +331,9 @@ export default async function RovvCampaignPage() {
                 Post your video and register on the ROVV app first. Every field is needed.
               </p>
               {/* The rules that most often rule a video out, where the
-                  decision to send is made, not only on the rules page. */}
+                  decision to send is made, not only on the rules page.
+                  The road-safety rule stays in the rules but not here, at
+                  the campaign's marketing team's request (12 October). */}
               <div className="mt-6 rounded-xl border border-line-2 bg-card p-5">
                 <p className="text-sm font-semibold text-white">Before you send, check your video:</p>
                 <ul className="mt-3 flex list-disc flex-col gap-1.5 pl-5 text-sm leading-relaxed text-ink-2 marker:text-ink-4">
@@ -339,7 +341,6 @@ export default async function RovvCampaignPage() {
                   <li>
                     is public, tags {ROVV.rovvHandle} and {ROVV.blockfestHandle}, and uses {ROVV.hashtag};
                   </li>
-                  <li>was not filmed while driving or riding;</li>
                   <li>and that you have registered on the ROVV app and can be in Lagos on Friday 23 October.</li>
                 </ul>
               </div>
