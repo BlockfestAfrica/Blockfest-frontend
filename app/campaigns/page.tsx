@@ -2,7 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, CalendarDays, Trophy } from "lucide-react";
-import { campaignRun, campaigns, type Campaign } from "@/lib/campaigns";
+import {
+  campaignOpensLabel,
+  campaignPhase,
+  campaignRun,
+  campaigns,
+  type Campaign,
+} from "@/lib/campaigns";
+import { CampaignPhasePill } from "@/components/campaigns/campaign-phase-pill";
 import { formatNaira } from "@/lib/tickets";
 import { SITE_URL } from "@/lib/seo-event";
 
@@ -89,10 +96,11 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
       />
 
       <div className="relative flex flex-1 flex-col p-6 sm:p-7">
-        <span className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-gold/15 px-3 py-1 text-xs font-semibold text-brand-gold">
-          <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
-          Open now
-        </span>
+        <CampaignPhasePill
+          campaign={campaign}
+          initial={campaignPhase(campaign)}
+          opensLabel={campaignOpensLabel(campaign)}
+        />
 
         <h2 className="mt-5 text-display-sm font-bold text-white">
           {campaign.name}
@@ -102,13 +110,15 @@ function FeaturedCampaign({ campaign }: { campaign: Campaign }) {
         </p>
         {/* The two facts a creator decides on, as labelled figures. */}
         <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-4">
-          {campaign.rewardPool && (
+          {(campaign.rewardPool || campaign.prizeLabel) && (
             <div className="flex items-start gap-2.5">
               <Trophy className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold" aria-hidden="true" />
               <div>
-                <dt className="eyebrow text-ink-3">Prize pool</dt>
+                <dt className="eyebrow text-ink-3">
+                  {campaign.rewardPool ? "Prize pool" : "Prizes"}
+                </dt>
                 <dd className="mt-0.5 font-bold tabular-nums text-white">
-                  {formatNaira(campaign.rewardPool)}
+                  {campaign.rewardPool ? formatNaira(campaign.rewardPool) : campaign.prizeLabel}
                 </dd>
               </div>
             </div>

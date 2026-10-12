@@ -2,6 +2,7 @@ import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { MONICA_SLUG } from "@/lib/campaigns";
+import { ROVV_SLUG } from "@/lib/rovv";
 import type { AdminIdentity } from "@/lib/admin/session";
 
 /**
@@ -32,6 +33,9 @@ export interface AuditRow {
  * Sign-ins and identity binds carry no campaign_id, and a trail that hides
  * the sign-in that anchors a day of actions is not a trail. 500 rows is
  * weeks of activity for a two-admin console; the page reveals ten at a time.
+ *
+ * Rovv's rows too (0073): its reviews, picks, exports and winner notices are
+ * the same console's actions, and their labels say which campaign they were.
  */
 export async function auditTrail(
   admin: AdminIdentity,
@@ -39,15 +43,32 @@ export async function auditTrail(
 ): Promise<AuditRow[]> {
   void admin;
 
+  /*
+   * Each campaign gets its own window, so a busy week of Rovv rulings never
+   * pushes Monica's history off the page (or the other way round). The two
+   * are then merged newest first.
+   */
   const result = await getDb().execute(sql`
-    SELECT l.id, l.action, l.entity_type, l.note, l.after, l.created_at,
-           a.email AS admin_email
-      FROM audit_log l
-      LEFT JOIN admin_users a ON a.id = l.actor_admin_id
-      LEFT JOIN campaigns c   ON c.id = l.campaign_id
-     WHERE l.campaign_id IS NULL OR c.slug = ${MONICA_SLUG}
-     ORDER BY l.created_at DESC
-     LIMIT ${limit}
+    SELECT * FROM (
+      (SELECT l.id, l.action, l.entity_type, l.note, l.after, l.created_at,
+              a.email AS admin_email
+         FROM audit_log l
+         LEFT JOIN admin_users a ON a.id = l.actor_admin_id
+         LEFT JOIN campaigns c   ON c.id = l.campaign_id
+        WHERE l.campaign_id IS NULL OR c.slug = ${MONICA_SLUG}
+        ORDER BY l.created_at DESC
+        LIMIT ${limit})
+      UNION ALL
+      (SELECT l.id, l.action, l.entity_type, l.note, l.after, l.created_at,
+              a.email AS admin_email
+         FROM audit_log l
+         LEFT JOIN admin_users a ON a.id = l.actor_admin_id
+         JOIN campaigns c        ON c.id = l.campaign_id
+        WHERE c.slug = ${ROVV_SLUG}
+        ORDER BY l.created_at DESC
+        LIMIT ${limit})
+    ) trail
+    ORDER BY created_at DESC
   `);
 
   return (result.rows ?? []).map((row) => {

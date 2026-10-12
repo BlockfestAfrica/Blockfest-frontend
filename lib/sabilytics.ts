@@ -135,6 +135,25 @@ export const GETDP_EVENTS = {
 /** Every DP event name, for the dashboard and for a test. */
 export const GETDP_EVENT_NAMES = Object.values(GETDP_EVENTS);
 
+/**
+ * Rovv's campaign (lib/rovv.ts), its own family so a Monica funnel never
+ * counts it. None of these carries anything typed into the form; the entry
+ * outcome is the only detail sent, and it is one of three fixed words.
+ */
+export const ROVV_EVENTS = {
+  /** The campaign page was seen. */
+  viewed: "campaign_rovv_viewed",
+  /** The first field of the entry form was touched, once a visit. */
+  entryStarted: "campaign_rovv_entry_started",
+  /** The server took an entry (created, updated or unchanged). */
+  entrySubmitted: "campaign_rovv_entry_submitted",
+  /** The rules page was seen. */
+  rulesViewed: "campaign_rovv_rules_viewed",
+} as const;
+
+/** Every Rovv event name, for the dashboard and for a test. */
+export const ROVV_EVENT_NAMES = Object.values(ROVV_EVENTS);
+
 /** Fire a custom event. Safe to call before the script loads. */
 export function track(event: string, data?: Record<string, unknown>): void {
   if (typeof window === "undefined") return;

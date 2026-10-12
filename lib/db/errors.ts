@@ -54,6 +54,27 @@ export const PG = {
   MANUAL_CAP_EXCEEDED: "P0508",
   CHECK_VIOLATION: "23514",
   UNDEFINED_FUNCTION: "42883",
+  /* Rovv's campaign (0073). P1xxx is Rovv's range. */
+  ROVV_CLOSED: "P1001",
+  ROVV_PAUSED: "P1002",
+  /** This email already has an entry with another TikTok username, or one already reviewed. */
+  ROVV_ENTRY_TAKEN: "P1003",
+  /** Somebody else has entered this video. */
+  ROVV_VIDEO_TAKEN: "P1004",
+  ROVV_BAD_STATUS: "P1005",
+  /** A winner is unpicked before being marked anything but eligible. */
+  ROVV_WINNER_STAYS_ELIGIBLE: "P1006",
+  ROVV_ENTRY_NOT_FOUND: "P1007",
+  ROVV_NOT_ELIGIBLE: "P1008",
+  ROVV_WINNERS_FULL: "P1009",
+  /** A winner who has been emailed stays a winner. */
+  ROVV_WINNER_ALREADY_TOLD: "P1010",
+  /** A winner whose email is being sent right now cannot be unpicked. */
+  ROVV_WINNER_BEING_TOLD: "P1011",
+  /** The entrant replaced the entry after the reviewer loaded it. */
+  ROVV_ENTRY_CHANGED: "P1012",
+  ADMIN_REQUIRED: "P0401",
+  REASON_REQUIRED: "P0402",
 } as const;
 
 /**

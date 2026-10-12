@@ -71,6 +71,20 @@ describe("claims the policy makes about the code", () => {
       /campaign registration/i.test(s.name),
     );
     expect(registration?.heldByUs).toBe(true);
+    // The form asks for a Monica tag and has not asked for a niche since it
+    // switched; the surface says what the form asks.
+    expect(registration!.collects).toMatch(/Monica tag/);
+    expect(registration!.collects).not.toMatch(/niche/i);
+  });
+
+  it("names Rovv's entry as ours, and says what Rovv itself receives", () => {
+    const rovv = privacySurfaces.find((s) => /rovv/i.test(s.name));
+    expect(rovv?.heldByUs).toBe(true);
+    expect(rovv!.destination).toMatch(/name, email address, TikTok username and referral code are also shared with ROVV/);
+    // The "nobody else" promise names the exception rather than standing
+    // beside it unqualified.
+    const notOurs = privacySections.find((s) => s.id === "not-ours")!.paragraphs.join(" ");
+    expect(notOurs).toMatch(/ROVV[^.]*referral codes/);
   });
 
   it("names the third parties it says handle things for us", () => {
