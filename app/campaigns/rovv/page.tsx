@@ -69,19 +69,23 @@ const STEPS: { title: string; body: string }[] = [
 const FAQS: { q: string; a: React.ReactNode }[] = [
   {
     q: "Who can enter?",
-    a: "Anyone aged 18 or over who can attend Blockfest Africa 2026 in Lagos, from 22 to 24 October.",
+    a: "Anyone aged 18 or over who can attend Blockfest Africa 2026 in Lagos on Friday 23 October, the day the prize is for.",
   },
   {
     q: "Can I enter more than once?",
-    a: "No, one entry each. If you made a mistake, send the form again before the close with the same email address and TikTok username, and your new details replace the old ones, as long as the team has not reviewed your entry yet.",
+    a: "No, one entry each. If you made a mistake, send the form again before the close with the same email address and TikTok username, and your new details replace the old ones, as long as the team has not accepted your entry yet.",
+  },
+  {
+    q: "What if my entry is ruled out?",
+    a: "We email you the reason. Fix it, then send the form again before the close with the same email address and TikTok username, and it goes back to the team.",
   },
   {
     q: "How are winners chosen?",
-    a: `The team watches every entry and picks ${ROVV.winners} for creativity and relevance to the prompt. Views, likes and follower counts do not decide it.`,
+    a: `The team watches every entry and picks ${ROVV.winners} for creativity and relevance to the prompt, the day after entries close. Views, likes and follower counts do not decide it. Winners are announced by ${ROVV.winnersByLabel}.`,
   },
   {
     q: "What do winners get?",
-    a: "One Blockfest Africa 2026 ticket each, issued in the winner's own name. It cannot be transferred or exchanged for cash, and travel is not included.",
+    a: `One ${ROVV.prize} each, for ${ROVV.prizeDay}: the main stage and the exhibition area. We email you a code that takes the full price off, and you register for the pass in your own name whenever you like. It cannot be exchanged for cash, and travel is not included.`,
   },
   {
     q: "Why do you need my ROVV referral code?",
@@ -142,8 +146,8 @@ export default async function RovvCampaignPage() {
               </h1>
               <p className="mt-4 text-2xl font-bold text-brand-gold sm:text-3xl">{ROVV.hashtag}</p>
               <p className="mt-6 max-w-prose text-lg leading-relaxed text-ink-2">
-                Make a TikTok on the prompt. The {ROVV.winners} most creative win a ticket to Blockfest Africa 2026, 22
-                to 24 October in Lagos.
+                Make a TikTok on the prompt. The {ROVV.winners} most creative each win a {ROVV.prize} to Blockfest
+                Africa 2026&apos;s Conference Day, Friday 23 October in Lagos.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
                 <a href="#enter" className={buttonClass("primary")}>
@@ -167,7 +171,9 @@ export default async function RovvCampaignPage() {
                     <p className="text-display-sm font-bold tabular-nums leading-none text-white">
                       {ROVV.winners} tickets
                     </p>
-                    <p className="mt-2 text-sm text-ink-3">One Blockfest Africa 2026 ticket for each winner.</p>
+                    <p className="mt-2 text-sm text-ink-3">
+                      One {ROVV.prize} each, for Conference Day on Friday 23 October.
+                    </p>
                   </Fact>
                   {run && (
                     <Fact label="Entries">
@@ -176,8 +182,8 @@ export default async function RovvCampaignPage() {
                     </Fact>
                   )}
                   <Fact label="Winners">
-                    <p className="text-base font-semibold text-white">By Tuesday 20 October</p>
-                    <p className="mt-1 text-sm text-ink-3">Emailed, then listed on this page.</p>
+                    <p className="text-base font-semibold text-white">By 4 PM, Monday 19 October</p>
+                    <p className="mt-1 text-sm text-ink-3">Emailed their code, then listed on this page.</p>
                   </Fact>
                   <Fact label="With">
                     {/* On a white chip, as the partner sections do it: the
@@ -212,7 +218,8 @@ export default async function RovvCampaignPage() {
               The winners
             </h2>
             <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-3">
-              Congratulations. Each wins a ticket to Blockfest Africa 2026, and has been emailed.
+              Congratulations. Each wins a {ROVV.prize} to Blockfest Africa 2026&apos;s Conference Day, and has been
+              emailed their code.
             </p>
             <ul className="mt-8 flex flex-wrap gap-3">
               {winners.map((handle) => (

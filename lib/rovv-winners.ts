@@ -9,7 +9,8 @@ import { ROVV_SLUG } from "@/lib/rovv";
  * Only winners who have been emailed: a name on the page before its owner
  * has heard is how somebody learns they won from a screenshot, and a pick
  * the team is still weighing is not a result. Usernames only, as the owner
- * decided; names and emails never leave the console.
+ * decided; names and emails never leave the console. Test entries (0074)
+ * never appear, whatever happened to them.
  *
  * Fails soft to an empty list. The page is the pitch and the entry form, and
  * a database that is asleep must not take either offline.
@@ -21,6 +22,7 @@ export async function publicRovvWinners(): Promise<string[]> {
         FROM rovv_entries e
         JOIN campaigns c ON c.id = e.campaign_id
        WHERE c.slug = ${ROVV_SLUG}
+         AND NOT e.is_test
          AND e.winner_at IS NOT NULL
          AND e.notified_at IS NOT NULL
        ORDER BY e.tiktok_handle

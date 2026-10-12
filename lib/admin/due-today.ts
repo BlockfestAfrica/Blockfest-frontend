@@ -7,6 +7,7 @@ import { nextReminder, REMINDER_DUE_MS, type ReminderSent } from "@/lib/reminder
 import { announcementSunday } from "@/lib/winner-weeks";
 import { closesWhen, closingAt, dayDate } from "@/lib/format";
 import { voteOpening } from "@/lib/vote-open-rule";
+import { ROVV, ROVV_SLUG } from "@/lib/rovv";
 
 /**
  * What needs a person on the Monica campaign today.
@@ -55,6 +56,16 @@ export interface DueFacts {
     reviewed: boolean;
     told: boolean;
   }[];
+  /** Rovv's campaign (lib/rovv.ts), real entries only. Absent if unread. */
+  rovv?: {
+    pending: number;
+    /** Waiting for review for over a day. */
+    pendingOverADay: number;
+    winners: number;
+    notified: number;
+    /** Picked, not emailed, and without a ticket code. */
+    needCode: number;
+  };
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -191,6 +202,36 @@ export function dueItems(facts: DueFacts, now: number): DueItem[] {
     }
   }
 
+  /*
+   * Rovv. While entries are open, entries left waiting over a day. Once
+   * they close, until the winners are all emailed (and for three days at
+   * most, so a finished campaign is not nagged about), what stands between
+   * now and the 4 PM Monday announcement the page promises.
+   */
+  if (facts.rovv) {
+    const r = facts.rovv;
+    const open = at(ROVV.opensAt) <= now && now <= at(ROVV.closesAt);
+    if (open && r.pendingOverADay > 0) {
+      items.push({
+        text: `${r.pendingOverADay} ROVV ${r.pendingOverADay === 1 ? "entry has" : "entries have"} waited over a day for review.`,
+        href: "/admin/rovv?status=pending",
+      });
+    }
+    const judging = now > at(ROVV.closesAt) && now < at(ROVV.closesAt) + 3 * DAY_MS;
+    if (judging && r.notified < ROVV.winners) {
+      const left = [
+        r.pending > 0 ? `${r.pending} ${r.pending === 1 ? "entry" : "entries"} still to review` : "",
+        `${r.winners} of ${ROVV.winners} winners picked`,
+        r.needCode > 0 ? `${r.needCode} picked without a ticket code` : "",
+        `${r.notified} emailed`,
+      ].filter(Boolean);
+      items.push({
+        text: `ROVV winners are due by ${ROVV.winnersByLabel}: ${left.join(", ")}.`,
+        href: "/admin/rovv#winners",
+      });
+    }
+  }
+
   return items;
 }
 
@@ -262,7 +303,35 @@ export async function loadDueFacts(): Promise<DueFacts> {
     reminders[c.id] = { sent, waiting };
   }
 
+  /* Rovv's counts, real entries only. A failure leaves Rovv out of the
+     email rather than taking Monica's list down with it. */
+  const rovv = await db
+    .execute(sql`
+      SELECT count(*) FILTER (WHERE e.status = 'pending')::int AS pending,
+             count(*) FILTER (WHERE e.status = 'pending'
+                                AND e.updated_at < now() - interval '1 day')::int AS pending_over_a_day,
+             count(*) FILTER (WHERE e.winner_at IS NOT NULL)::int AS winners,
+             count(*) FILTER (WHERE e.notified_at IS NOT NULL)::int AS notified,
+             count(*) FILTER (WHERE e.winner_at IS NOT NULL AND e.notified_at IS NULL
+                                AND e.ticket_code IS NULL)::int AS need_code
+        FROM rovv_entries e
+        JOIN campaigns c ON c.id = e.campaign_id
+       WHERE c.slug = ${ROVV_SLUG} AND NOT e.is_test
+    `)
+    .then((result) => {
+      const r = (result.rows?.[0] ?? {}) as Record<string, unknown>;
+      return {
+        pending: Number(r.pending ?? 0),
+        pendingOverADay: Number(r.pending_over_a_day ?? 0),
+        winners: Number(r.winners ?? 0),
+        notified: Number(r.notified ?? 0),
+        needCode: Number(r.need_code ?? 0),
+      };
+    })
+    .catch(() => undefined);
+
   return {
+    rovv,
     challenges: challengeRows,
     announced: ((announced.rows ?? []) as { entity_id?: string }[]).map((r) => String(r.entity_id)),
     reminders,

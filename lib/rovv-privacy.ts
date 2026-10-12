@@ -15,7 +15,10 @@
 import type { CollectedItem, PrivacySection } from "@/lib/monica-privacy";
 import { PRIVACY_CONTACT } from "@/lib/monica-privacy";
 
-export const ROVV_PRIVACY_VERSION = "1.0";
+/* 1.1, the same day and before any entry: winners register their own pass
+   with a code, so nothing goes to the ticketing provider from us; the team's
+   ruling is emailed; the ROVV sentence says our purpose, not ROVV's. */
+export const ROVV_PRIVACY_VERSION = "1.1";
 
 /** ISO date. Rendered in the event's own timezone. */
 export const ROVV_PRIVACY_UPDATED = "2026-10-12";
@@ -28,11 +31,11 @@ export const rovvPrivacyCollected: CollectedItem[] = [
   },
   {
     what: "Your full name",
-    why: "To identify your entry and, if you win, to issue your ticket in your name.",
+    why: "To identify your entry, and to address you when we write about it.",
   },
   {
     what: "Your email address",
-    why: "To confirm your entry, tell you if you win, and send a winner's ticket. It is also how you replace your entry if you made a mistake.",
+    why: "To confirm your entry, tell you the team's ruling on it, and if you win, send you the code for your pass. It is also how you replace your entry if you made a mistake.",
   },
   {
     what: "Your TikTok username",
@@ -89,8 +92,8 @@ export const rovvPrivacySections: PrivacySection[] = [
     id: "sharing",
     title: "Who else sees it",
     paragraphs: [
-      "ROVV, which runs this campaign with us, receives your name, email address, TikTok username and ROVV referral code, so it can confirm you registered on the ROVV app. ROVV uses them for this campaign only, not for its own marketing. Your ROVV account itself is held by ROVV under its own privacy policy, and a request about that account goes to ROVV.",
-      "If you win, your name and email address go to Meetumo, our ticketing provider, to issue your ticket.",
+      "ROVV, which runs this campaign with us, receives your name, email address, TikTok username and ROVV referral code, so it can confirm you registered on the ROVV app. We share them for that check and for nothing else. Your ROVV account itself is held by ROVV under its own privacy policy, and a request about that account goes to ROVV.",
+      "If you win, we email you a code, and you register for your pass yourself on the page of Meetumo, our ticketing provider. What you enter there goes to Meetumo under its own terms, as with any Blockfest ticket; we pass it nothing about you.",
       "Your details are not sold, and are not shared with anyone else for their own marketing.",
       "They are held on services we use to run the site, including our hosting and database provider and the service that sends our email. Those providers process the data on our instructions and for no purpose of their own.",
       "We may disclose information where the law requires it, or where it is needed to establish or defend a legal claim, such as a dispute over a prize.",
@@ -110,6 +113,7 @@ export const rovvPrivacySections: PrivacySection[] = [
     paragraphs: [
       "Entries are kept for 24 months after the campaign ends on 18 October 2026, to cover a late dispute and the record of the tickets given out. After that they are deleted or anonymised.",
       "If you opted in to hearing about future campaigns, your name and email address are kept for that until you tell us to stop. Every such message includes a way to stop it, and one line to the address above is enough.",
+      "If you win, the code we sent you is kept with your entry, as the record of the pass you were given.",
       "IP addresses and user agents are kept for 12 months and then deleted.",
     ],
   },

@@ -15,8 +15,12 @@ import type { AdminIdentity } from "@/lib/admin/session";
  * call from an unguarded place does not compile.
  */
 
-/** What the console's filter can ask for: a review state, the winners, or everything. */
-export type RovvFilter = "all" | RovvEntryStatus | "winners";
+/**
+ * What the console's filter can ask for: a review state, the winners, every
+ * real entry, or the test entries. Every filter but "test" leaves tests out,
+ * so nothing an export or a count reads ever includes one (0074).
+ */
+export type RovvFilter = "all" | RovvEntryStatus | "winners" | "test";
 
 export interface RovvEntryRow {
   id: string;
@@ -37,6 +41,10 @@ export interface RovvEntryRow {
   revision: number;
   /** How many other entries name the same video. Only one can be eligible. */
   sameVideo: number;
+  /** An admin's test entry (0074): never public, exported or counted. */
+  isTest: boolean;
+  /** The winner's 100%-off ticket code, once the owner has given one. */
+  ticketCode: string | null;
 }
 
 export interface RovvCounts {
@@ -49,6 +57,12 @@ export interface RovvCounts {
   notified: number;
   /** Winners whose email a press is sending right now. */
   sending: number;
+  /** Winners not yet emailed who have no ticket code, so cannot be. */
+  needCode: number;
+  /** Test entries, counted apart and in nothing above. */
+  tests: number;
+  /** Test winners not yet emailed and without a code, for the test panel. */
+  testNeedCode: number;
 }
 
 /** A winner not yet emailed, and not being emailed by another press. */
@@ -57,6 +71,8 @@ export interface RovvWinnerToNotify {
   fullName: string;
   email: string;
   tiktokUrl: string;
+  /** Always present: a winner without a code is never listed to email. */
+  ticketCode: string;
 }
 
 /**
@@ -65,6 +81,17 @@ export interface RovvWinnerToNotify {
  * may still be leaving. The database's unpick check uses the same interval.
  */
 const CLAIM_HOLDS = sql`interval '6 minutes'`;
+
+/**
+ * A text[] built from one parameter per element. drizzle's sql template
+ * spreads a JavaScript array into a parameter list, so `${codes}::text[]`
+ * would be ($1, $2)::text[], which is not an array.
+ */
+function textArray(values: string[]) {
+  return values.length === 0
+    ? sql`ARRAY[]::text[]`
+    : sql`ARRAY[${sql.join(values.map((v) => sql`${v}`), sql`, `)}]::text[]`;
+}
 
 /* PGlite hands back Date objects and neon-http hands back strings. */
 const toDate = (value: unknown): Date =>
@@ -80,19 +107,22 @@ export async function rovvEntries(
   void admin;
 
   const which =
-    status === "winners"
-      ? sql`AND e.winner_at IS NOT NULL`
-      : status === "all"
-        ? sql``
-        : sql`AND e.status = ${status}`;
+    status === "test"
+      ? sql`AND e.is_test`
+      : status === "winners"
+        ? sql`AND NOT e.is_test AND e.winner_at IS NOT NULL`
+        : status === "all"
+          ? sql`AND NOT e.is_test`
+          : sql`AND NOT e.is_test AND e.status = ${status}`;
 
   const result = await getDb().execute(sql`
     SELECT e.id, e.full_name, e.email, e.tiktok_handle, e.tiktok_url,
            e.referral_code, e.status, e.review_note, e.reviewed_at,
            e.winner_at, e.notified_at, e.created_at, e.revision,
+           e.is_test, e.ticket_code,
            (SELECT count(*)::int FROM rovv_entries o
              WHERE o.campaign_id = e.campaign_id AND o.post_key = e.post_key
-               AND o.id <> e.id) AS same_video,
+               AND o.is_test = e.is_test AND o.id <> e.id) AS same_video,
            a.email AS reviewer_email
       FROM rovv_entries e
       JOIN campaigns c ON c.id = e.campaign_id
@@ -121,6 +151,8 @@ export async function rovvEntries(
       createdAt: toDate(r.created_at),
       revision: Number(r.revision ?? 1),
       sameVideo: Number(r.same_video ?? 0),
+      isTest: Boolean(r.is_test),
+      ticketCode: r.ticket_code ? String(r.ticket_code) : null,
     };
   });
 }
@@ -129,14 +161,19 @@ export async function rovvCounts(admin: AdminIdentity): Promise<RovvCounts> {
   void admin;
 
   const result = await getDb().execute(sql`
-    SELECT count(*)::int                                            AS total,
-           count(*) FILTER (WHERE e.status = 'pending')::int        AS pending,
-           count(*) FILTER (WHERE e.status = 'eligible')::int       AS eligible,
-           count(*) FILTER (WHERE e.status = 'ineligible')::int     AS ineligible,
-           count(*) FILTER (WHERE e.winner_at IS NOT NULL)::int     AS winners,
-           count(*) FILTER (WHERE e.notified_at IS NOT NULL)::int   AS notified,
-           count(*) FILTER (WHERE e.winner_at IS NOT NULL AND e.notified_at IS NULL
-                              AND e.notice_claimed_at > now() - ${CLAIM_HOLDS})::int AS sending
+    SELECT count(*) FILTER (WHERE NOT e.is_test)::int                                   AS total,
+           count(*) FILTER (WHERE NOT e.is_test AND e.status = 'pending')::int          AS pending,
+           count(*) FILTER (WHERE NOT e.is_test AND e.status = 'eligible')::int         AS eligible,
+           count(*) FILTER (WHERE NOT e.is_test AND e.status = 'ineligible')::int       AS ineligible,
+           count(*) FILTER (WHERE NOT e.is_test AND e.winner_at IS NOT NULL)::int       AS winners,
+           count(*) FILTER (WHERE NOT e.is_test AND e.notified_at IS NOT NULL)::int     AS notified,
+           count(*) FILTER (WHERE NOT e.is_test AND e.winner_at IS NOT NULL AND e.notified_at IS NULL
+                              AND e.notice_claimed_at > now() - ${CLAIM_HOLDS})::int    AS sending,
+           count(*) FILTER (WHERE NOT e.is_test AND e.winner_at IS NOT NULL AND e.notified_at IS NULL
+                              AND e.ticket_code IS NULL)::int                           AS need_code,
+           count(*) FILTER (WHERE e.is_test)::int                                       AS tests,
+           count(*) FILTER (WHERE e.is_test AND e.winner_at IS NOT NULL AND e.notified_at IS NULL
+                              AND e.ticket_code IS NULL)::int                           AS test_need_code
       FROM rovv_entries e
       JOIN campaigns c ON c.id = e.campaign_id
      WHERE c.slug = ${ROVV_SLUG}
@@ -151,6 +188,9 @@ export async function rovvCounts(admin: AdminIdentity): Promise<RovvCounts> {
     winners: Number(r.winners ?? 0),
     notified: Number(r.notified ?? 0),
     sending: Number(r.sending ?? 0),
+    needCode: Number(r.need_code ?? 0),
+    tests: Number(r.tests ?? 0),
+    testNeedCode: Number(r.test_need_code ?? 0),
   };
 }
 
@@ -161,12 +201,14 @@ export async function rovvWinnersToNotify(
   void admin;
 
   const result = await getDb().execute(sql`
-    SELECT e.id, e.full_name, e.email, e.tiktok_url
+    SELECT e.id, e.full_name, e.email, e.tiktok_url, e.ticket_code
       FROM rovv_entries e
       JOIN campaigns c ON c.id = e.campaign_id
      WHERE c.slug = ${ROVV_SLUG}
+       AND NOT e.is_test
        AND e.winner_at IS NOT NULL
        AND e.notified_at IS NULL
+       AND e.ticket_code IS NOT NULL
        AND (e.notice_claimed_at IS NULL OR e.notice_claimed_at <= now() - ${CLAIM_HOLDS})
      ORDER BY e.winner_at, e.id
   `);
@@ -178,6 +220,7 @@ export async function rovvWinnersToNotify(
       fullName: String(r.full_name),
       email: String(r.email),
       tiktokUrl: String(r.tiktok_url),
+      ticketCode: String(r.ticket_code),
     };
   });
 }
@@ -198,19 +241,32 @@ export async function rovvWinnersToNotify(
 export async function claimRovvNotice(
   admin: AdminIdentity,
   winner: Pick<RovvWinnerToNotify, "id">,
-): Promise<boolean> {
+): Promise<RovvWinnerToNotify | null> {
   void admin;
 
+  /* Returns the row as it stands under the claim, and the mail is built from
+     that, not from the list read before: a code corrected in the second
+     between the two would otherwise be mailed in its old form, then locked
+     in its new one (set_rovv_ticket_code refuses a claimed winner). */
   const result = await getDb().execute(sql`
     UPDATE rovv_entries
        SET notice_claimed_at = now()
      WHERE id = ${winner.id}::uuid
        AND winner_at IS NOT NULL
        AND notified_at IS NULL
+       AND ticket_code IS NOT NULL
        AND (notice_claimed_at IS NULL OR notice_claimed_at <= now() - ${CLAIM_HOLDS})
-    RETURNING id
+    RETURNING id, full_name, email, tiktok_url, ticket_code
   `);
-  return (result.rows?.length ?? 0) > 0;
+  const r = result.rows?.[0] as Record<string, unknown> | undefined;
+  if (!r) return null;
+  return {
+    id: String(r.id),
+    fullName: String(r.full_name),
+    email: String(r.email),
+    tiktokUrl: String(r.tiktok_url),
+    ticketCode: String(r.ticket_code),
+  };
 }
 
 /** Let a claim go when its mail did not leave, so the next press retries them. */
@@ -256,14 +312,145 @@ export async function decideRovvEntry(
   note: string | null,
   /** The revision the reviewer was shown; refused (P1012) if it has moved. */
   revision: number,
-): Promise<{ status: RovvEntryStatus; winner: boolean }> {
+): Promise<{ status: RovvEntryStatus; winner: boolean; previous: RovvEntryStatus }> {
   const result = await getDb().execute(sql`
     SELECT * FROM decide_rovv_entry(
       ${entryId}::uuid, ${status}::text, ${note}::text, ${admin.adminId}::uuid, ${revision}::int
     )
   `);
-  const r = (result.rows?.[0] ?? {}) as { status?: string; winner?: boolean };
-  return { status: (r.status ?? status) as RovvEntryStatus, winner: Boolean(r.winner) };
+  const r = (result.rows?.[0] ?? {}) as { status?: string; winner?: boolean; previous?: string };
+  return {
+    status: (r.status ?? status) as RovvEntryStatus,
+    winner: Boolean(r.winner),
+    previous: (r.previous ?? status) as RovvEntryStatus,
+  };
+}
+
+/** Who to write to about an entry, for the review emails. */
+export async function rovvEntrant(
+  admin: AdminIdentity,
+  entryId: string,
+): Promise<{
+  fullName: string;
+  email: string;
+  tiktokUrl: string;
+  reviewNote: string | null;
+  isTest: boolean;
+  /** The ruling they were last emailed, if any (0074). */
+  rulingEmailed: RovvEntryStatus | null;
+} | null> {
+  void admin;
+
+  const result = await getDb().execute(sql`
+    SELECT full_name, email, tiktok_url, review_note, is_test, ruling_emailed
+      FROM rovv_entries WHERE id = ${entryId}::uuid
+  `);
+  const r = result.rows?.[0] as Record<string, unknown> | undefined;
+  if (!r) return null;
+  return {
+    fullName: String(r.full_name),
+    email: String(r.email),
+    tiktokUrl: String(r.tiktok_url),
+    reviewNote: r.review_note ? String(r.review_note) : null,
+    isTest: Boolean(r.is_test),
+    rulingEmailed: r.ruling_emailed ? (String(r.ruling_emailed) as RovvEntryStatus) : null,
+  };
+}
+
+/** Record which ruling the entrant was just emailed. */
+export async function markRovvRulingEmailed(
+  admin: AdminIdentity,
+  entryId: string,
+  status: "eligible" | "ineligible",
+): Promise<void> {
+  void admin;
+
+  await getDb().execute(sql`
+    UPDATE rovv_entries SET ruling_emailed = ${status} WHERE id = ${entryId}::uuid
+  `);
+}
+
+/** Give a winner their ticket code, or clear it with an empty one. */
+export async function setRovvTicketCode(
+  admin: AdminIdentity,
+  entryId: string,
+  code: string,
+): Promise<string | null> {
+  const result = await getDb().execute(sql`
+    SELECT * FROM set_rovv_ticket_code(${entryId}::uuid, ${code}::text, ${admin.adminId}::uuid)
+  `);
+  const r = result.rows?.[0] as { code?: string | null } | undefined;
+  return r?.code ?? null;
+}
+
+/**
+ * Hand a pasted list of codes out, one per winner without one, in the order
+ * they were picked (assign_rovv_ticket_codes, 0074). Real winners, or test
+ * ones, never both. Returns who got which code.
+ */
+export async function assignRovvTicketCodes(
+  admin: AdminIdentity,
+  codes: string[],
+  test: boolean,
+): Promise<{ entryId: string; handle: string; code: string }[]> {
+  const result = await getDb().execute(sql`
+    SELECT * FROM assign_rovv_ticket_codes(
+      ${ROVV_SLUG}, ${textArray(codes)}, ${test}::boolean, ${admin.adminId}::uuid
+    )
+  `);
+  return ((result.rows ?? []) as Record<string, unknown>[]).map((r) => ({
+    entryId: String(r.entry_id),
+    handle: String(r.handle),
+    code: String(r.code),
+  }));
+}
+
+/** Which of these codes a winner already holds, to name them when refusing. */
+export async function heldRovvTicketCodes(admin: AdminIdentity, codes: string[]): Promise<string[]> {
+  void admin;
+
+  const result = await getDb().execute(sql`
+    SELECT e.ticket_code FROM rovv_entries e
+      JOIN campaigns c ON c.id = e.campaign_id
+     WHERE c.slug = ${ROVV_SLUG}
+       AND upper(e.ticket_code) IN (SELECT upper(x) FROM unnest(${textArray(codes)}) AS x)
+  `);
+  return ((result.rows ?? []) as { ticket_code?: string }[]).map((r) => String(r.ticket_code));
+}
+
+/** Delete every test entry. Returns how many went. */
+export async function clearRovvTestEntries(admin: AdminIdentity): Promise<number> {
+  const result = await getDb().execute(sql`
+    SELECT * FROM clear_rovv_test_entries(${ROVV_SLUG}, ${admin.adminId}::uuid)
+  `);
+  return Number((result.rows?.[0] as { deleted?: number } | undefined)?.deleted ?? 0);
+}
+
+/**
+ * One test winner, for the owner's "send me the winner email" button: a
+ * test entry, picked, with a code, not yet emailed. Null otherwise.
+ */
+export async function rovvTestWinner(
+  admin: AdminIdentity,
+  entryId: string,
+): Promise<RovvWinnerToNotify | null> {
+  void admin;
+
+  const result = await getDb().execute(sql`
+    SELECT id, full_name, email, tiktok_url, ticket_code
+      FROM rovv_entries
+     WHERE id = ${entryId}::uuid AND is_test
+       AND winner_at IS NOT NULL AND notified_at IS NULL AND ticket_code IS NOT NULL
+  `);
+  const r = result.rows?.[0] as Record<string, unknown> | undefined;
+  if (!r) return null;
+  return {
+    id: String(r.id),
+    fullName: String(r.full_name),
+    email: String(r.email),
+    tiktokUrl: String(r.tiktok_url),
+    ticketCode: String(r.ticket_code),
+  };
 }
 
 /** Pick or unpick a winner. Returns how many are picked now. */
@@ -329,6 +516,7 @@ export function rovvCsv(rows: RovvEntryRow[]): string {
       "status",
       "review_note",
       "winner",
+      "ticket_code",
       "notified_at_lagos",
     ],
     ...rows.map((row) => [
@@ -341,6 +529,7 @@ export function rovvCsv(rows: RovvEntryRow[]): string {
       row.status,
       row.reviewNote ?? "",
       row.winnerAt ? "yes" : "no",
+      row.ticketCode ?? "",
       row.notifiedAt ? lagosStamp(row.notifiedAt) : "",
     ]),
   ]);

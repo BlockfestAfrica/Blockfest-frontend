@@ -7,7 +7,7 @@
  * #ROVVMeToBlockfest, registers on the ROVV app, then enters here once with
  * their name, email, TikTok username, the video's link and their ROVV
  * referral code. The team marks entries eligible or not and picks 20
- * winners, a Blockfest ticket each, emailed by 20 October; their TikTok
+ * winners, a BUIDL PASS each, announced by 4 PM on 19 October; their TikTok
  * usernames then show on the campaign page.
  *
  * Decided with the owner on 12 October: one entry per person (by email), 18
@@ -33,8 +33,13 @@ export const ROVV = {
   /** Entries open and close, Lagos time. The database holds the same (0073). */
   opensAt: "2026-10-13T00:00:00+01:00",
   closesAt: "2026-10-18T23:59:59+01:00",
-  /** Winners are emailed by the end of this day. */
-  winnersBy: "2026-10-20",
+  /** Winners are emailed, and listed on the page, by this time (the owner, 12 October). */
+  winnersBy: "2026-10-19T16:00:00+01:00",
+  /** The same, as every page and email says it. */
+  winnersByLabel: "4 PM on Monday 19 October",
+  /** The prize, as the owner set it on 12 October: Day 2 only. */
+  prize: "BUIDL PASS",
+  prizeDay: "Day 2, Conference Day, on Friday 23 October",
 } as const;
 
 export const rovvRoutes = {

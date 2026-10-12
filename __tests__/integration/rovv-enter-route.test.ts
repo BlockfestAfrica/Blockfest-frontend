@@ -16,7 +16,35 @@ import { applyMigrations } from "../helpers/migrations";
  * window), so nothing here depends on today's date.
  */
 
-const state = vi.hoisted(() => ({ db: null as unknown, sent: [] as { subject: string; to: string }[] }));
+const state = vi.hoisted(() => ({
+  db: null as unknown,
+  sent: [] as { subject: string; to: string }[],
+  /** Whether the request carries a console session (for test entries). */
+  admin: false,
+  /** What the route handed to after(), run by the test when it wants. */
+  later: [] as (() => unknown)[],
+  alerts: [] as { kind: string; who: string }[],
+}));
+
+vi.mock("next/server", async (importOriginal) => {
+  const real = await importOriginal<typeof import("next/server")>();
+  return { ...real, after: (fn: () => unknown) => state.later.push(fn) };
+});
+vi.mock("@/lib/admin/session", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/admin/session")>();
+  return {
+    ...real,
+    requireAdmin: async () =>
+      state.admin
+        ? { ok: true, admin: { adminId: "00000000-0000-0000-0000-000000000001", role: "owner", email: "o@example.test" } }
+        : { ok: false },
+  };
+});
+vi.mock("@/lib/notify/admin-activity", () => ({
+  notifyAdminsOfActivity: async (params: { kind: string; who: string }) => {
+    state.alerts.push(params);
+  },
+}));
 
 vi.mock("@/lib/db/client", async () => {
   const tables = await import("@/lib/db/schema");
@@ -30,6 +58,8 @@ vi.mock("@/lib/email/client", () => ({
 }));
 
 const { POST } = await import("@/app/api/campaigns/rovv/enter/route");
+const { ROVV_RULES_VERSION } = await import("@/lib/rovv-rules");
+const { ROVV_PRIVACY_VERSION } = await import("@/lib/rovv-privacy");
 
 let db: PGlite;
 
@@ -40,8 +70,8 @@ const ENTRY = {
   tiktokUrl: "https://www.tiktok.com/@adaobi/video/7300000000000000001",
   referralCode: "ADA123",
   acceptedRules: true,
-  rulesVersion: "1.0",
-  privacyVersion: "1.0",
+  rulesVersion: ROVV_RULES_VERSION,
+  privacyVersion: ROVV_PRIVACY_VERSION,
   elapsedMs: 30_000,
 };
 
@@ -77,6 +107,9 @@ beforeAll(async () => {
 afterAll(() => db?.close());
 beforeEach(async () => {
   state.sent = [];
+  state.admin = false;
+  state.later = [];
+  state.alerts = [];
   await db.exec(`DELETE FROM rovv_entries; DELETE FROM request_throttle;
     UPDATE campaigns SET starts_at = now() - interval '1 day', ends_at = now() + interval '1 day', paused_at = NULL, paused_reason = NULL WHERE slug = 'rovv';`);
 });
@@ -106,7 +139,7 @@ describe("an entry", () => {
   it("is taken, stored as typed and tidied, and receipted once", async () => {
     const response = await enter(ENTRY);
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, outcome: "created" });
+    expect(await response.json()).toEqual({ ok: true, outcome: "created", test: false });
     expect(await rows()).toEqual([
       {
         email: "ada@example.test",
@@ -114,8 +147,8 @@ describe("an entry", () => {
         referral_code: "ADA123",
         ip_address: "198.51.100.9",
         user_agent: "test-browser",
-        rules_version: "1.0",
-        privacy_version: "1.0",
+        rules_version: ROVV_RULES_VERSION,
+        privacy_version: ROVV_PRIVACY_VERSION,
       },
     ]);
     expect(state.sent).toEqual([{ subject: "We got your ROVV entry", to: "ada@example.test" }]);
@@ -123,9 +156,9 @@ describe("an entry", () => {
 
   it("sent again unchanged sends no second email, and changed replaces the first", async () => {
     await enter(ENTRY);
-    expect(await (await enter(ENTRY)).json()).toEqual({ ok: true, outcome: "unchanged" });
+    expect(await (await enter(ENTRY)).json()).toEqual({ ok: true, outcome: "unchanged", test: false });
     const changed = await enter({ ...ENTRY, tiktokUrl: "https://vt.tiktok.com/ZSqxCpWFD", referralCode: "ada999" });
-    expect(await changed.json()).toEqual({ ok: true, outcome: "updated" });
+    expect(await changed.json()).toEqual({ ok: true, outcome: "updated", test: false });
     expect((await rows()).map((r) => [r.tiktok_url, r.referral_code])).toEqual([["https://vt.tiktok.com/ZSqxCpWFD", "ADA999"]]);
     expect(state.sent.map((m) => m.subject)).toEqual(["We got your ROVV entry", "Your ROVV entry is updated"]);
   });
@@ -179,10 +212,53 @@ describe("an entry", () => {
   it("from a bot is answered as success, and nothing is written or sent", async () => {
     for (const trap of [{ hp_contact: "filled" }, { elapsedMs: 400 }]) {
       const response = await enter({ ...ENTRY, ...trap });
-      expect(await response.json()).toEqual({ ok: true, outcome: "created" });
+      expect(await response.json()).toEqual({ ok: true, outcome: "created", test: false });
     }
     expect(await rows()).toEqual([]);
     expect(state.sent).toEqual([]);
+  });
+});
+
+describe("the team's alert", () => {
+  it("goes after the response, for a new entry only, naming the username", async () => {
+    await enter(ENTRY);
+    await enter({ ...ENTRY, referralCode: "OTHER1" });
+    expect(state.later).toHaveLength(1);
+    await Promise.all(state.later.map((fn) => fn()));
+    expect(state.alerts).toEqual([{ kind: "rovv_entry", who: "@adaobi", test: false }]);
+  });
+});
+
+describe("test entries (0074)", () => {
+  const closeTheWindow = () =>
+    db.exec(`UPDATE campaigns SET starts_at = now() + interval '1 day', ends_at = now() + interval '2 days' WHERE slug = 'rovv'`);
+
+  it("are refused without a console session, whatever the form says", async () => {
+    await closeTheWindow();
+    const response = await enter({ ...ENTRY, test: true });
+    expect(response.status).toBe(403);
+    expect((await response.json()).message).toMatch(/signed-in admins/);
+    expect(await rows()).toEqual([]);
+  });
+
+  it("are taken from an admin before entries open, marked, receipted, and alerted as tests", async () => {
+    await closeTheWindow();
+    state.admin = true;
+    // A quick tester trips no bot check: the session is the check.
+    const response = await enter({ ...ENTRY, test: true, elapsedMs: 300 });
+    expect(await response.json()).toEqual({ ok: true, outcome: "created", test: true });
+    const flagged = (await db.query<{ is_test: boolean }>(`SELECT is_test FROM rovv_entries`)).rows;
+    expect(flagged).toEqual([{ is_test: true }]);
+    expect(state.sent).toEqual([{ subject: "We got your ROVV entry", to: "ada@example.test" }]);
+    await Promise.all(state.later.map((fn) => fn()));
+    expect(state.alerts).toEqual([{ kind: "rovv_entry", who: "@adaobi (test)", test: true }]);
+  });
+
+  it("leave a real entry from the same address free to be made", async () => {
+    state.admin = true;
+    await enter({ ...ENTRY, test: true });
+    state.admin = false;
+    expect(await (await enter(ENTRY)).json()).toEqual({ ok: true, outcome: "created", test: false });
   });
 });
 

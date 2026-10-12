@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Download } from "lucide-react";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { rovvCounts, rovvEntries, type RovvFilter } from "@/lib/admin/rovv";
-import { RovvNotify, RovvQueue } from "@/components/admin/rovv-queue";
+import { RovvCodePaste, RovvNotify, RovvQueue, RovvTestTools } from "@/components/admin/rovv-queue";
 import { PageHeader, Pill, SectionCard, SPACING, Stat } from "@/components/shared/panel";
 import { ROVV } from "@/lib/rovv";
 import { dateTime, dayDate } from "@/lib/format";
@@ -25,6 +25,7 @@ const FILTERS: { value: RovvFilter; label: string }[] = [
   { value: "eligible", label: "Eligible" },
   { value: "ineligible", label: "Ineligible" },
   { value: "winners", label: "Winners" },
+  { value: "test", label: "Test" },
 ];
 
 /**
@@ -60,8 +61,10 @@ export default async function RovvPage({
     eligible: counts.eligible,
     ineligible: counts.ineligible,
     winners: counts.winners,
+    test: counts.tests,
   };
-  const untold = counts.winners - counts.notified - counts.sending;
+  // Sendable now: picked, with a code, not emailed and not being emailed.
+  const untold = Math.max(0, counts.winners - counts.notified - counts.sending - counts.needCode);
   const closed = Date.now() > new Date(ROVV.closesAt).getTime();
 
   return (
@@ -69,7 +72,7 @@ export default async function RovvPage({
       <PageHeader
         context="ROVV"
         title="Entries"
-        hint={`Open each video. It must be the entrant's own, public, on the prompt, tagging ${ROVV.rovvHandle} and ${ROVV.blockfestHandle} with ${ROVV.hashtag}. Mark it eligible, or ineligible with the reason. Owners pick the ${ROVV.winners} winners from eligible entries; ROVV confirms the referral codes from the export.`}
+        hint={`Open each video. It must be the entrant's own, public, on the prompt, tagging ${ROVV.rovvHandle} and ${ROVV.blockfestHandle} with ${ROVV.hashtag}. Mark it eligible, or ineligible with the reason. Each ruling emails the entrant: eligible tells them they are in the running, ineligible sends them your reason word for word, so write it to them. Owners pick the ${ROVV.winners} winners from eligible entries; ROVV confirms the referral codes from the export.`}
       >
         {/* mobile-grid-ok: four one-word labels over numbers; two columns below
             sm, four above, so no column is ever narrower than about 150px. */}
@@ -96,14 +99,21 @@ export default async function RovvPage({
           }
         >
           <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
-            {counts.winners} of {ROVV.winners} picked. Winners are promised an
-            email by {dayDate(`${ROVV.winnersBy}T12:00:00+01:00`)}, and a winner
+            {counts.winners} of {ROVV.winners} picked. Winners are promised by{" "}
+            {ROVV.winnersByLabel}. Give each winner their 100%-off {ROVV.prize}{" "}
+            code on their card below; the winner email carries it, and a winner
             shows on the campaign page once theirs has gone.
           </p>
+          {counts.needCode > 0 && (
+            <div className="mt-4 border-t border-line pt-4">
+              <RovvCodePaste waiting={counts.needCode} />
+            </div>
+          )}
           <div className="mt-4">
             <RovvNotify
               untold={untold}
               sending={counts.sending}
+              needCode={counts.needCode}
               winners={counts.winners}
               cap={ROVV.winners}
               closed={closed}
@@ -137,6 +147,23 @@ export default async function RovvPage({
               The winners (CSV)
             </a>
           </div>
+        </SectionCard>
+      )}
+
+      {owner && (
+        <SectionCard
+          id="testing"
+          title="Try it yourself"
+          aside={counts.tests > 0 ? <Pill tone="neutral">{counts.tests} test {counts.tests === 1 ? "entry" : "entries"}</Pill> : undefined}
+        >
+          <div className="mt-3">
+            <RovvTestTools tests={counts.tests} />
+          </div>
+          {counts.testNeedCode > 0 && (
+            <div className="mt-4 border-t border-line pt-4">
+              <RovvCodePaste waiting={counts.testNeedCode} test />
+            </div>
+          )}
         </SectionCard>
       )}
 
@@ -196,6 +223,10 @@ export default async function RovvPage({
                 notifiedAtLabel: e.notifiedAt ? dateTime(e.notifiedAt) : null,
                 revision: e.revision,
                 sameVideo: e.sameVideo,
+                isTest: e.isTest,
+                // A code is a free pass, and owner business: a reviewer's
+                // page never carries one, even in the data behind it.
+                ticketCode: owner ? e.ticketCode : null,
               }))}
             />
           </div>

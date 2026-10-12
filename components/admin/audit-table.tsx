@@ -62,6 +62,11 @@ const ACTION_LABELS: Record<string, string> = {
   "rovv_winner.unpicked": "ROVV winner unpicked",
   "rovv.exported": "ROVV entries exported",
   "rovv.winners_notified": "ROVV winners emailed",
+  /* 0074. The codes themselves are never in the trail, only that they moved. */
+  "rovv_code.set": "ROVV ticket code given",
+  "rovv_code.cleared": "ROVV ticket code cleared",
+  "rovv_code.assigned": "ROVV ticket codes handed out",
+  "rovv.test_cleared": "ROVV test entries deleted",
 };
 
 export const actionLabel = (action: string) => ACTION_LABELS[action] ?? action;

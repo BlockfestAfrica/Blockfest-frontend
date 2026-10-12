@@ -21,6 +21,10 @@ import { ROVV_EVENTS, track } from "@/lib/sabilytics";
  * Shown only while entries are open, decided in the browser after the first
  * paint (the page is built once and served for days, so a build-time answer
  * would be stale). Until then it holds its space and says nothing.
+ *
+ * ?test=1 opens it at any time as a test entry (0074): the server accepts
+ * that only from a signed-in admin, and keeps it out of everything real. It
+ * is how the owner walks the flow before entries open.
  */
 
 type Field = "fullName" | "email" | "tiktokHandle" | "tiktokUrl" | "referralCode" | "acceptedRules";
@@ -84,11 +88,17 @@ export function RovvEntryForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ outcome: Outcome; handle: string } | null>(null);
+  const [test, setTest] = useState(false);
   const shownAt = useRef(0);
   const started = useRef(false);
 
   useEffect(() => {
     shownAt.current = Date.now();
+    if (new URLSearchParams(window.location.search).get("test") === "1") {
+      setTest(true);
+      setPhase("open");
+      return;
+    }
     let timer: ReturnType<typeof setTimeout> | undefined;
     const tick = () => {
       const next = phaseNow();
@@ -104,7 +114,8 @@ export function RovvEntryForm() {
   const set = (field: keyof typeof EMPTY) => (value: string) => {
     if (!started.current) {
       started.current = true;
-      track(ROVV_EVENTS.entryStarted);
+      // A test is not a visitor; the funnel counts people.
+      if (!test) track(ROVV_EVENTS.entryStarted);
     }
     setValues((v) => ({ ...v, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
@@ -128,6 +139,8 @@ export function RovvEntryForm() {
       hp_contact: trap,
       elapsedMs: shownAt.current === 0 ? undefined : Date.now() - shownAt.current,
     };
+    // Not part of the schema: the route reads it beside it, and checks the admin.
+    const body = test ? { ...payload, test: true } : payload;
 
     const checked = rovvEntrySchema.safeParse(payload);
     if (!checked.success) {
@@ -148,7 +161,7 @@ export function RovvEntryForm() {
       const response = await fetch("/api/campaigns/rovv/enter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(body),
       });
       const result = (await response.json().catch(() => null)) as
         | { ok: true; outcome: Outcome }
@@ -156,7 +169,7 @@ export function RovvEntryForm() {
         | null;
 
       if (result && result.ok) {
-        track(ROVV_EVENTS.entrySubmitted, { outcome: result.outcome });
+        if (!test) track(ROVV_EVENTS.entrySubmitted, { outcome: result.outcome });
         setDone({ outcome: result.outcome, handle: checked.data.tiktokHandle });
         window.scrollTo({ top: (document.getElementById("enter")?.offsetTop ?? 0) - 80, behavior: "smooth" });
         return;
@@ -170,7 +183,7 @@ export function RovvEntryForm() {
       } else {
         setFormError(message);
       }
-      if (response.status === 403) setPhase(phaseNow());
+      if (response.status === 403 && !test) setPhase(phaseNow());
     } catch {
       setFormError("We could not reach the server. Check your connection and try again.");
     } finally {
@@ -191,7 +204,7 @@ export function RovvEntryForm() {
         <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-3">
           {phase === "upcoming"
             ? "Make your video and register on the ROVV app now, then come back here to enter."
-            : `Entries closed at 11:59 PM on Sunday 18 October, Lagos time. Winners are emailed by Tuesday 20 October and listed on this page.`}
+            : `Entries closed at 11:59 PM on Sunday 18 October, Lagos time. Winners are announced by ${ROVV.winnersByLabel}, and listed on this page.`}
         </p>
       </div>
     );
@@ -214,13 +227,18 @@ export function RovvEntryForm() {
           {done.outcome === "unchanged"
             ? "Nothing needed changing, so we have not emailed you again."
             : "We have emailed you a copy of your entry."}{" "}
-          The team picks {ROVV.winners} winners by Tuesday 20 October. Keep your video public and tagged until
+          Winners are announced by {ROVV.winnersByLabel}. Keep your video public and tagged until
           Saturday 24 October.
         </p>
         <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
           Made a mistake? Send the form again before the close with the same email address and the TikTok username
           @{done.handle}, and the new details replace these.
         </p>
+        {test && (
+          <p className="mt-3 max-w-prose text-sm font-semibold leading-relaxed text-brand-gold">
+            This was a test entry. It is in the console under Test, and nowhere real.
+          </p>
+        )}
         <button
           type="button"
           onClick={() => setDone(null)}
@@ -237,6 +255,13 @@ export function RovvEntryForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="relative flex flex-col gap-6">
+      {test && (
+        <p role="status" className="rounded-lg border border-brand-gold/40 bg-brand-gold/10 px-4 py-3 text-sm leading-relaxed text-ink-2">
+          <strong className="font-semibold text-white">Test mode.</strong> This form is open for testing whatever the
+          date. Entries sent from here are marked as tests: kept off the public page, out of the exports and the
+          winner count, and deleted from the console in one go. It works only while you are signed in to the console.
+        </p>
+      )}
       {/* Off-screen, out of the tab order and hidden from assistive
           technology: a person never meets it and a script filling every
           input does. Named for nothing a password manager would fill. */}

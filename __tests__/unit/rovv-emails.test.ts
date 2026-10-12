@@ -8,7 +8,32 @@
  * change when the layout learned a second brand.
  */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { rovvEntryEmail, rovvWinnerEmail, submissionReceivedEmail } from "@/lib/email/templates";
+import {
+  rovvEligibleEmail,
+  rovvEntryAlertEmail,
+  rovvEntryEmail,
+  rovvIneligibleEmail,
+  rovvWinnerEmail,
+  submissionReceivedEmail,
+} from "@/lib/email/templates";
+
+const winner = (over: Partial<Parameters<typeof rovvWinnerEmail>[0]> = {}) =>
+  rovvWinnerEmail({
+    to: "a@example.test",
+    fullName: "Ada Obi",
+    tiktokUrl: "https://vt.tiktok.com/ZSqxCpWFD",
+    ticketCode: "BUIDL-ADA-1",
+    ticketLink: "https://meetumo.ai/e/blockfest-africa-2026?utm_source=blockfestafrica.com",
+    ...over,
+  });
+const ineligible = (canFix: boolean) =>
+  rovvIneligibleEmail({
+    to: "a@example.test",
+    fullName: "Ada <b>Obi</b>",
+    tiktokUrl: "https://vt.tiktok.com/ZSqxCpWFD",
+    reason: "Not tagging @rovvafrica & <script>",
+    canFix,
+  });
 
 const ORIGINAL = { ...process.env };
 beforeEach(() => {
@@ -29,7 +54,16 @@ const entry = (replaced = false) =>
 
 describe("Rovv's emails", () => {
   it("speak for Rovv's campaign, link its rules, and never mention Monica", () => {
-    for (const mail of [entry(), entry(true), rovvWinnerEmail({ to: "a@example.test", fullName: "Ada", tiktokUrl: "https://vt.tiktok.com/ZSqxCpWFD" })]) {
+    const all = [
+      entry(),
+      entry(true),
+      winner(),
+      rovvEligibleEmail({ to: "a@example.test", fullName: "Ada", tiktokUrl: "https://vt.tiktok.com/ZSqxCpWFD" }),
+      ineligible(true),
+      ineligible(false),
+      rovvEntryAlertEmail({ to: "o@example.test", who: "@adaobi", waiting: 3, consoleUrl: "https://blockfestafrica.com/admin/rovv" }),
+    ];
+    for (const mail of all) {
       expect(mail.html).toContain("If ROVV Takes Me to Blockfest");
       expect(mail.html).toContain("for the ROVV campaign");
       expect(mail.html).toContain("https://blockfestafrica.com/campaigns/rovv/rules");
@@ -58,20 +92,53 @@ describe("Rovv's emails", () => {
   });
 
   it("give the dates on the right weekdays", () => {
-    const text = entry().text + rovvWinnerEmail({ to: "a@example.test", fullName: "Ada", tiktokUrl: "x" }).text;
+    const text = entry().text + winner().text + ineligible(true).text;
     expect(text).toContain("Sunday 18 October");
-    expect(text).toContain("Tuesday 20 October");
-    expect(text).toContain("Wednesday 21 October");
-    expect(text).not.toMatch(/Saturday 18|Monday 20|Tuesday 21/);
+    expect(text).toContain("4 PM on Monday 19 October");
+    expect(text).toContain("Friday 23 October");
+    expect(text).not.toMatch(/Saturday 18|Monday 20|Tuesday 21|Sunday 19|Thursday 23/);
+    // No claim deadline any more (the owner, 12 October).
+    expect(text).not.toMatch(/Tuesday 20|Wednesday 21|6:00 PM/);
     // The rules' own date for keeping the video up, not a vaguer one.
     expect(entry().text).toContain("Keep the video public and tagged until Saturday 24 October.");
   });
 
-  it("tell a winner how to claim, with no link that signs anyone in", () => {
-    const mail = rovvWinnerEmail({ to: "a@example.test", fullName: "Ada Obi", tiktokUrl: "https://vt.tiktok.com/ZSqxCpWFD" });
-    expect(mail.subject).toBe("You won a Blockfest ticket with ROVV");
-    expect(mail.text).toMatch(/Reply to this email by 6:00 PM on Wednesday 21 October/);
+  it("give a winner their own code and the one step that turns it into a pass", () => {
+    const mail = winner();
+    expect(mail.subject).toBe("You won a BUIDL PASS with ROVV");
+    expect(mail.text).toContain("Your code: BUIDL-ADA-1");
+    expect(mail.html).toContain("BUIDL-ADA-1");
+    expect(mail.text).toContain("Register here: https://meetumo.ai/e/blockfest-africa-2026");
+    expect(mail.text).toMatch(/Day 2, Conference Day, on Friday 23 October/);
+    expect(mail.text).toMatch(/full price off/);
     expect(mail.html).not.toMatch(/\?t=|\/enter\b/);
+  });
+
+  it("say an eligible entry is in the running, never that it won", () => {
+    const mail = rovvEligibleEmail({ to: "a@example.test", fullName: "Ada", tiktokUrl: "https://vt.tiktok.com/ZSqxCpWFD" });
+    expect(mail.subject).toBe("Your ROVV entry is in the running");
+    expect(mail.text + mail.subject).not.toMatch(/you won|winner\b(?! )/i);
+  });
+
+  it("give the reason for a ruling-out, escaped, and the way to fix it only while that is possible", () => {
+    const open = ineligible(true);
+    const shut = ineligible(false);
+    expect(open.subject).toBe("Your ROVV entry needs a fix");
+    expect(open.text).toContain("Why: Not tagging @rovvafrica & <script>");
+    expect(open.html).toContain("Not tagging @rovvafrica &amp; &lt;script&gt;");
+    expect(open.html).not.toContain("<script>");
+    expect(open.html).toContain("/campaigns/rovv#enter");
+    expect(shut.subject).toBe("About your ROVV entry");
+    expect(shut.text).toMatch(/Entries have closed/);
+    expect(shut.html).not.toContain("Fix my entry");
+  });
+
+  it("tell the team who entered and how much is waiting, with no entrant email in it", () => {
+    const mail = rovvEntryAlertEmail({ to: "o@example.test", who: "@adaobi (test)", waiting: 1, alsoSince: 4, consoleUrl: "https://blockfestafrica.com/admin/rovv" });
+    expect(mail.subject).toBe("New ROVV entry: @adaobi (test)");
+    expect(mail.text).toContain("1 entry is waiting for review.");
+    expect(mail.text).toContain("4 more came in");
+    expect(mail.html).not.toContain("&amp;amp;");
   });
 });
 

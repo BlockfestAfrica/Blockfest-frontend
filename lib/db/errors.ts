@@ -73,6 +73,16 @@ export const PG = {
   ROVV_WINNER_BEING_TOLD: "P1011",
   /** The entrant replaced the entry after the reviewer loaded it. */
   ROVV_ENTRY_CHANGED: "P1012",
+  /** A winner's ticket code cannot change once their email has gone (0074). */
+  ROVV_CODE_LOCKED: "P1013",
+  /** Only a winner has a ticket code. */
+  ROVV_CODE_NEEDS_WINNER: "P1014",
+  /** Another winner already holds that code. */
+  ROVV_CODE_TAKEN: "P1015",
+  /** Not the shape of a ticket code. */
+  ROVV_BAD_CODE: "P1016",
+  /** A pasted list of codes has the same code in it twice. */
+  ROVV_CODES_REPEATED: "P1017",
   ADMIN_REQUIRED: "P0401",
   REASON_REQUIRED: "P0402",
 } as const;
