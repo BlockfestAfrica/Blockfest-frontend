@@ -11,14 +11,17 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Rovv's entries as a spreadsheet: for ROVV (?of=rovv), every entry with
- * every column for the team (?of=all, the default), or the winners
- * (?of=winners).
+ * Rovv's entries as a spreadsheet: for ROVV (?of=rovv), the picked winners
+ * for ROVV's last check before they are emailed (?of=rovv&picked=1), every
+ * entry with every column for the team (?of=all, the default), or the
+ * winners (?of=winners).
  *
- * The ROVV file carries exactly the four fields the privacy notice says ROVV
- * receives, so the file that leaves never says more than the notice does.
- * Owners only. Same shape as the payout export: a GET a link can reach,
- * refused cross-site, audited, never cached.
+ * Both ROVV files carry exactly the four fields the privacy notice says ROVV
+ * receives, so the file that leaves never says more than the notice does,
+ * and neither carries an entry already ruled out: it is not ROVV's to
+ * confirm any more, and sending it again would only ask the same question
+ * twice. Owners only. Same shape as the payout export: a GET a link can
+ * reach, refused cross-site, audited, never cached.
  */
 export async function GET(request: NextRequest) {
   if (!notCrossSite(request)) {
@@ -36,10 +39,23 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const asked = request.nextUrl.searchParams.get("of");
-  const of = asked === "winners" || asked === "rovv" ? asked : "all";
-  const rows = await rovvEntries(admin.admin, { status: of === "winners" ? "winners" : "all" });
-  const body = of === "rovv" ? rovvReferralCsv(rows) : rovvCsv(rows);
+  const params = request.nextUrl.searchParams;
+  const asked = params.get("of");
+  /* ROVV's Monday answer: the twenty picked, in ROVV's own four columns, so
+     ROVV checks only the codes that are about to win. Its own 'of', so the
+     audit trail tells it apart from the full referral file. */
+  const of =
+    asked === "rovv" && params.get("picked") === "1"
+      ? "rovv-picked"
+      : asked === "winners" || asked === "rovv"
+        ? asked
+        : "all";
+  const forRovv = of === "rovv" || of === "rovv-picked";
+  const read = await rovvEntries(admin.admin, { status: of === "winners" || of === "rovv-picked" ? "winners" : "all" });
+  // A winner is always eligible (rovv_entry_winner_is_eligible), so this
+  // only ever thins the full ROVV file; it is applied to both all the same.
+  const rows = forRovv ? read.filter((row) => row.status !== "ineligible") : read;
+  const body = forRovv ? rovvReferralCsv(rows) : rovvCsv(rows);
 
   /*
    * Who took every entrant's details, and when. Fail-soft, like the payout
@@ -62,7 +78,9 @@ export async function GET(request: NextRequest) {
       ? `rovv-winners-${stamp}.csv`
       : of === "rovv"
         ? `rovv-referral-check-${stamp}.csv`
-        : `rovv-entries-${stamp}.csv`;
+        : of === "rovv-picked"
+          ? `rovv-picked-check-${stamp}.csv`
+          : `rovv-entries-${stamp}.csv`;
 
   return new NextResponse(body, {
     headers: {

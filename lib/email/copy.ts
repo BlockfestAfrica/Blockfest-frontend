@@ -14,14 +14,18 @@ import { sendEmailQuietly, type Email } from "@/lib/email/client";
  *
  * One copy per send, not a BCC on every mail: a stage announcement to three
  * hundred creators would otherwise be three hundred identical emails in one
- * inbox. The copy is the email exactly as the first recipient got it,
- * readdressed, with the subject saying it is a copy and how many it went to.
- * It goes out before the batch, so a send cut short still leaves the copy.
+ * inbox. The copy is whatever sample the caller passes, readdressed, with the
+ * subject saying it is a copy and how many it went to; for most sends that is
+ * the email exactly as the first recipient got it. It goes out before the
+ * batch, so a send cut short still leaves the copy.
  *
- * None of the bulk templates carry a credential: they point at public pages
- * (the creator's own page, the voting page), never at a personal login
- * link, so a copy hands the reader nothing of the recipient's. A test pins
- * that for every template this is used with.
+ * None of the bulk templates carry a login credential: they point at public
+ * pages (the creator's own page, the voting page), never at a personal login
+ * link. A test pins that for every template this is used with. The one
+ * template that does carry something of value is the Rovv winner email: its
+ * ticket code takes the full price off a pass. So that copy is not the email
+ * as sent. app/api/admin/rovv/notify/route.ts builds it with SAMPLE-CODE in
+ * place of the winner's code, and a test pins that too.
  */
 export function bulkCopyRecipients(): string[] {
   return (process.env.BULK_EMAIL_COPY_TO ?? "")

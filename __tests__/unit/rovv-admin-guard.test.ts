@@ -69,6 +69,7 @@ const testNotify = await import("@/app/api/admin/rovv/test-notify/route");
 const codesRoute = await import("@/app/api/admin/rovv/codes/route");
 const correctRoute = await import("@/app/api/admin/rovv/correct/route");
 const resultsRoute = await import("@/app/api/admin/rovv/results/route");
+const ruleOutRoute = await import("@/app/api/admin/rovv/rule-out/route");
 
 const SITE = "https://blockfestafrica.com";
 const ENTRY = "00000000-0000-4000-8000-0000000000aa";
@@ -105,6 +106,8 @@ describe("a request from another site", () => {
     ["codes", () => codesRoute.POST(post("/api/admin/rovv/codes", { text: "A-1" }, "https://evil.example"))],
     ["correct", () => correctRoute.POST(post("/api/admin/rovv/correct", { entryId: ENTRY, tiktokHandle: "x1" }, "https://evil.example"))],
     ["results", () => resultsRoute.POST(post("/api/admin/rovv/results", {}, "https://evil.example"))],
+    ["rule-out", () => ruleOutRoute.POST(post("/api/admin/rovv/rule-out", { emails: "a@example.test" }, "https://evil.example"))],
+    ["rule-out, no origin", () => ruleOutRoute.POST(post("/api/admin/rovv/rule-out", { emails: "a@example.test" }, null))],
   ])("is refused at %s before the session is read", async (_name, call) => {
     const answer = await call();
     expect(answer.status).toBe(403);
@@ -144,6 +147,7 @@ describe("a reviewer at an owner route", () => {
     ["hand out pasted codes", () => codesRoute.POST(post("/api/admin/rovv/codes", { text: "A-1" }))],
     ["correct an entrant", () => correctRoute.POST(post("/api/admin/rovv/correct", { entryId: ENTRY, tiktokHandle: "x1" }))],
     ["email the results", () => resultsRoute.POST(post("/api/admin/rovv/results", {}))],
+    ["rule out a pasted list", () => ruleOutRoute.POST(post("/api/admin/rovv/rule-out", { emails: "a@example.test" }))],
   ])("cannot %s, and nothing is read or sent", async (_name, call) => {
     const answer = await call();
     expect(answer.status).toBe(403);
@@ -156,7 +160,7 @@ describe("a reviewer at an owner route", () => {
     expect(state.touched).toEqual([]);
   });
 
-  it.each(["all", "winners"])("cannot download ?of=%s", async (of) => {
+  it.each(["all", "winners", "rovv", "rovv&picked=1"])("cannot download ?of=%s", async (of) => {
     const answer = await exporter.GET(
       new NextRequest(`${SITE}/api/admin/rovv/export?of=${of}`, {
         headers: { "x-forwarded-host": "blockfestafrica.com" },

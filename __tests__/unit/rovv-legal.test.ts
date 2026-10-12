@@ -124,3 +124,39 @@ describe("the rules", () => {
     expect(rules + notice).not.toContain("—");
   });
 });
+
+describe("the page, against the 'you won' scam", () => {
+  /*
+   * A prize campaign draws accounts posing as its organiser, who DM entrants
+   * that they won and ask for a fee, a login or the code. The page says once
+   * in the questions, and again under the winners, how we do get in touch.
+   */
+  const faq = PAGE.slice(PAGE.indexOf("Does it cost anything? Will anyone message me?"));
+  const answer = faq.slice(0, faq.indexOf("},"));
+  const winners = PAGE.slice(PAGE.indexOf('id="winners"'), PAGE.indexOf('aria-labelledby="how"'));
+
+  it("asks the question and answers every part of it", () => {
+    expect(PAGE).toContain("Does it cost anything? Will anyone message me?");
+    expect(answer).toMatch(/Entering costs nothing, and neither does the pass/);
+    expect(answer).toMatch(/only by email, from blockfestafrica\.com/);
+    expect(answer).toMatch(/the receipt when you enter, the team's ruling on your entry, and your code if you win/);
+    expect(answer).toMatch(/Never by TikTok or Instagram DM/);
+    expect(answer).toMatch(/never ask for money, your ROVV login or your ticket code/);
+    expect(answer).toMatch(/If anyone messages you saying you won, ignore them/);
+  });
+
+  it("says it again under the winners list", () => {
+    expect(winners).toMatch(/only by email from blockfestafrica\.com/);
+    expect(winners).toMatch(/never by TikTok or Instagram DM/);
+    expect(winners).toMatch(/money, your ROVV login or your code/);
+  });
+
+  it("says more winners are coming only while some are picked and not yet emailed", () => {
+    expect(winners).toMatch(/\{untold > 0 && \(\s*<p[^>]*>More winners are being told now/);
+    expect(winners).not.toMatch(/winners\.length < ROVV\.winners/);
+  });
+
+  it("uses no em dash in what it adds", () => {
+    expect(answer + winners).not.toContain("—");
+  });
+});

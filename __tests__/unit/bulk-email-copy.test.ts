@@ -84,6 +84,16 @@ describe("what a copy can carry", () => {
         ticketLink: "https://meetumo.ai/e/blockfest-africa-2026?utm_source=blockfestafrica.com",
       }),
       templates.rovvResultsEmail({ to: "ada@example.test", fullName: "Ada Obi" }),
+      templates.rovvIneligibleEmail({
+        to: "ada@example.test",
+        fullName: "Ada Obi",
+        tiktokHandle: "adaobi",
+        tiktokUrl: "https://tiktok.com/@adaobi/video/7300000000000000001",
+        referralCode: "ada.123",
+        reason: "ROVV could not confirm your referral code.",
+        canFix: true,
+        fixUrl: "https://blockfestafrica.com/campaigns/rovv#enter",
+      }),
     ];
     const login = new URL(templates.personalLink("SECRET")).pathname;
     for (const mail of mails) {
@@ -102,6 +112,7 @@ describe("what a copy can carry", () => {
       "app/api/admin/pause/route.ts",
       "app/api/admin/rovv/notify/route.ts",
       "app/api/admin/rovv/results/route.ts",
+      "app/api/admin/rovv/rule-out/route.ts",
     ]) {
       expect(readFileSync(join(process.cwd(), route), "utf8"), route).toMatch(/await sendBulkCopy\(/);
     }

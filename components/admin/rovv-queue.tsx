@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { buttonClass, Pill } from "@/components/shared/panel";
 import { Confirm } from "@/components/shared/confirm";
 import { openableHref } from "@/lib/admin/openable-href";
+import { canonicalEmail } from "@/lib/campaign-registration";
 import { readTicketCodes } from "@/lib/rovv-codes";
 
 /** Rows shown before the reader asks for more. */
@@ -44,6 +45,11 @@ export interface RovvQueueItem {
   sameReferral?: number;
   /** When it last changed, Lagos, pre-formatted: shown on a replaced entry. */
   updatedAtLabel?: string;
+  /**
+   * The ruling the entrant was last emailed (0074), or null. Left out, the
+   * card says nothing about it, rather than guessing.
+   */
+  rulingEmailed?: RovvStatus | null;
 }
 
 /** Reasons reviewers give most, one tap each; the box stays editable. */
@@ -54,6 +60,7 @@ const QUICK_REASONS = [
   "The video is not from the TikTok account you entered with.",
   "Your video is not on the prompt \u201cIf ROVV takes me to Blockfest\u2026\u201d.",
   "ROVV could not confirm your referral code.",
+  "Entrants must be 18 or over.",
 ];
 
 const isShortLink = (url: string) => /\/\/(vm|vt)\.tiktok\.com\/|tiktok\.com\/t\//i.test(url);
@@ -101,9 +108,12 @@ async function postJson(url: string, body: unknown) {
     unusedCodes?: string[];
     skipped?: string[];
     emailed?: boolean;
+    /** A ruling's email was tried and did not leave. */
+    emailFailed?: boolean;
     freedCode?: string | null;
   };
-  return { good: response.ok && result.ok === true, result };
+  // The status too, for a long press that can tell "refused" from "cut off".
+  return { good: response.ok && result.ok === true, result, status: response.status };
 }
 
 /**
@@ -117,12 +127,17 @@ async function postJson(url: string, body: unknown) {
  * Every press waits for the server and then refreshes, refused or not, the
  * same as the review queue: two admins work this list at once, and a row
  * describing a state that has since changed must not keep its buttons live.
+ *
+ * Eligible can carry a judge's note, behind "Add a note" so a card stays
+ * short: kept for the team, never emailed (the eligible email has no place
+ * for one), unlike an ineligible reason, which is.
  */
 export function RovvQueue({
   items,
   owner,
   winners,
   cap,
+  announced = false,
 }: {
   items: RovvQueueItem[];
   /** Owners pick winners; reviewers only rule on entries. */
@@ -131,12 +146,20 @@ export function RovvQueue({
   winners: number;
   /** How many can be picked. */
   cap: number;
+  /**
+   * Whether any real winner has been emailed. An eligible ruling after that
+   * is deliberately not emailed, so it is not flagged as "Not emailed".
+   */
+  announced?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<{ id: string; action: Action } | null>(null);
   /** The entry whose reason box is open, if any. */
   const [ruling, setRuling] = useState<string | null>(null);
   const [reasons, setReasons] = useState<Record<string, string>>({});
+  /** Judges' notes being written, and which cards have the note box open. */
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [noting, setNoting] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<string | null>(null);
   const [visible, setVisible] = useState(PAGE);
   /** The winner whose unpick is waiting for a second tap (it frees their code). */
@@ -154,6 +177,9 @@ export function RovvQueue({
 
   async function act(item: RovvQueueItem, action: Action) {
     const note = (reasons[item.id] ?? "").trim();
+    // Only from a box on screen, so a note typed and then put away (or
+    // hidden by the reason box) is never sent without being seen.
+    const judgeNote = noting[item.id] && ruling !== item.id ? (notes[item.id] ?? "").trim() : "";
     if (action === "ineligible" && !note) {
       toast.error("Ruling an entry out needs a reason. The entrant is emailed it.");
       return;
@@ -174,7 +200,7 @@ export function RovvQueue({
           : await postJson("/api/admin/rovv/decision", {
               entryId: item.id,
               status: action,
-              note: action === "ineligible" ? note : undefined,
+              note: action === "ineligible" ? note : action === "eligible" && judgeNote ? judgeNote : undefined,
               revision: item.revision,
               from: item.status,
             });
@@ -186,12 +212,13 @@ export function RovvQueue({
       }
 
       // Named, so a mis-tap can be found again by who it was. And whether
-      // the entrant heard, since a ruling now emails them.
+      // the entrant heard, since a ruling now emails them; a send that failed
+      // gets its own red toast below rather than a line in a green one.
       const heard =
-        action === "eligible" || action === "ineligible"
+        (action === "eligible" || action === "ineligible") && !result.emailFailed
           ? result.emailed
             ? " The entrant has been emailed."
-            : " No email went to the entrant (already told, or it did not send)."
+            : " No email went to the entrant (already told, or not due)."
           : "";
       const freed = action === "unpick" && result.freedCode ? ` Their code ${result.freedCode} is free again.` : "";
       toast.success(
@@ -199,10 +226,17 @@ export function RovvQueue({
           typeof result.winners === "number" ? `. ${result.winners} of ${cap} picked.` : ""
         }${heard}${freed}`,
       );
+      if (result.emailFailed) {
+        toast.error("The email did not send. Move it back to waiting and rule again to retry.");
+      }
       if (action === "ineligible") {
         setRuling(null);
         setReasons((r) => ({ ...r, [item.id]: "" }));
       }
+      // After any ruling: a half-written judge's note must not come back on
+      // the card and be saved with a later Eligible it was not written for.
+      setNoting((n) => ({ ...n, [item.id]: false }));
+      setNotes((n) => ({ ...n, [item.id]: "" }));
       await router.refresh();
     } catch {
       toast.error("We could not reach the server.");
@@ -231,6 +265,17 @@ export function RovvQueue({
           const state = STATUS[item.status];
           const href = openableHref(item.tiktokUrl);
           const locked = busy?.id === item.id;
+          /* Ruled, but the entrant was never emailed that ruling: the send
+             failed, or their address was corrected since. Not an eligible
+             ruling made after the winners went out, which is not emailed on
+             purpose. */
+          const unheard =
+            item.rulingEmailed !== undefined &&
+            item.status !== "pending" &&
+            item.rulingEmailed !== item.status &&
+            !(item.status === "eligible" && announced);
+          // Not beside an open reason box: a card is being ruled one way or the other.
+          const noteOpen = Boolean(noting[item.id]) && ruling !== item.id;
           return (
             <li
               key={item.id}
@@ -239,6 +284,7 @@ export function RovvQueue({
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 {item.isTest && <Pill tone="neutral">Test entry</Pill>}
                 <Pill tone={state.tone}>{state.label}</Pill>
+                {unheard && <Pill tone="warn">Not emailed</Pill>}
                 {item.winner && (
                   <Pill tone="gold">{item.notifiedAtLabel ? "Winner · emailed" : "Winner"}</Pill>
                 )}
@@ -332,8 +378,40 @@ export function RovvQueue({
               )}
               {item.reviewNote && (
                 <p className="mt-2 border-l-2 border-line-2 pl-3 text-sm leading-relaxed text-ink-2 [overflow-wrap:anywhere]">
-                  {item.reviewNote}
+                  {/* Said, because an ineligible reason on the next card was
+                      emailed word for word and this was not. */}
+                  {item.status === "eligible" && <span className="text-ink-3">Judge&apos;s note, not emailed: </span>}
+                  <span>{item.reviewNote}</span>
                 </p>
+              )}
+              {unheard && (
+                <p className="mt-2 text-sm text-ink-3">
+                  {/* A winner cannot go back to waiting, and their winner
+                      email says more than "in the running" would. */}
+                  {item.winner
+                    ? "The entrant has not been emailed this ruling. Their winner email will tell them."
+                    : "The entrant has not been emailed this ruling. Move it back to waiting and rule again to send it."}
+                </p>
+              )}
+
+              {item.status !== "eligible" && noteOpen && (
+                <div className="mt-3 flex flex-col gap-1">
+                  <label htmlFor={`note-${item.id}`} className="text-sm font-semibold text-white">
+                    Judge&apos;s note (not emailed)
+                  </label>
+                  <input
+                    id={`note-${item.id}`}
+                    value={notes[item.id] ?? ""}
+                    onChange={(e) => setNotes((n) => ({ ...n, [item.id]: e.target.value }))}
+                    maxLength={500}
+                    aria-describedby={`note-hint-${item.id}`}
+                    placeholder="For the team: what stood out, for picking winners"
+                    className="min-h-12 w-full min-w-0 rounded-lg border border-line bg-control px-4 py-3 text-base text-white placeholder:text-ink-3"
+                  />
+                  <p id={`note-hint-${item.id}`} className="text-sm text-ink-3">
+                    Saved with Eligible and shown here. Never emailed, never sent to ROVV.
+                  </p>
+                </div>
               )}
 
               <div className="mt-3 flex flex-wrap gap-2">
@@ -347,6 +425,22 @@ export function RovvQueue({
                   >
                     <Check className="h-4 w-4" aria-hidden="true" />
                     {isBusy(item, "eligible") ? BUSY_LABEL.eligible : "Eligible"}
+                  </button>
+                )}
+                {/* Behind a toggle, so a card without a note stays as short
+                    as it was. Removing it clears it, so nothing unseen goes. */}
+                {item.status !== "eligible" && ruling !== item.id && (
+                  <button
+                    type="button"
+                    disabled={locked}
+                    aria-expanded={noteOpen}
+                    onClick={() => {
+                      if (noteOpen) setNotes((n) => ({ ...n, [item.id]: "" }));
+                      setNoting((n) => ({ ...n, [item.id]: !noteOpen }));
+                    }}
+                    className="inline-flex min-h-11 cursor-pointer items-center px-2 text-sm text-ink-3 underline underline-offset-2 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {noteOpen ? "Remove the note" : "Add a note"}
                   </button>
                 )}
                 {/* A winner stays eligible until an owner unpicks them
@@ -825,6 +919,159 @@ export function RovvCodePaste({
 }
 
 /**
+ * The addresses in pasted text, once each by canonical form, as typed (in
+ * lower case); anything else skipped, so a pasted spreadsheet row reads as
+ * its address. The rule-out route reads the text the same way
+ * (app/api/admin/rovv/rule-out/route.ts), so this count is the one it gets.
+ */
+function readPastedEmails(text: string): string[] {
+  const seen = new Set<string>();
+  const found: string[] = [];
+  for (const piece of text.split(/[\s,;]+/)) {
+    const typed = piece
+      .replace(/^[<("'[]+|[>)"'\].:]+$/g, "")
+      .replace(/^mailto:/i, "")
+      .toLowerCase();
+    if (!/^[^\s@<>()"':]+@[^\s@<>()"':]+\.[a-z]{2,}$/.test(typed)) continue;
+    const canonical = canonicalEmail(typed);
+    if (seen.has(canonical)) continue;
+    seen.add(canonical);
+    found.push(typed);
+  }
+  return found;
+}
+
+/** What the rule-out route answers. */
+interface RuleOutAnswer {
+  ruledOut?: number;
+  alreadyOut?: number;
+  winners?: { handle: string; email: string }[];
+  unmatched?: string[];
+  notRuled?: { handle: string; email: string }[];
+  unsent?: { handle: string; email: string }[];
+  emailed?: number;
+  emailFailed?: number;
+  /** Not reached before the press ran out of time: press again for them. */
+  left?: number;
+}
+
+const handles = (list: { handle: string }[]) => list.map((w) => `@${w.handle}`).join(", ");
+
+/**
+ * ROVV's answer, applied in one go (the owner, for the Monday the winners are
+ * due): paste the addresses ROVV could not confirm, and each matching entry
+ * is ruled out with "ROVV could not confirm your referral code." and its
+ * entrant emailed, as a reviewer's ruling would. Nothing is asked of the
+ * server until the owner confirms; the count is read here as it is typed.
+ *
+ * Picked winners are left alone, named, and kept in the box to paste again
+ * once they are unpicked; addresses with no entry stay too, to check.
+ */
+export function RovvRuleOut() {
+  const router = useRouter();
+  const [text, setText] = useState("");
+  const [pending, setPending] = useState(false);
+  const emails = readPastedEmails(text);
+  const n = emails.length;
+  const fieldId = "rovv-rule-out";
+
+  async function ruleOut() {
+    setPending(true);
+    try {
+      const { good, result, status } = await postJson("/api/admin/rovv/rule-out", { emails: text });
+      if (!good && (status >= 500 || !result.message)) {
+        /* Cut off by the platform, maybe after some were ruled out and
+           emailed: "did not work" would say nothing was. Pressing again is
+           safe, since anyone already out is skipped. */
+        toast.error("It may have partly gone through. Reload to see the entries, then press again for the rest.");
+      } else if (!good) {
+        toast.error(result.message ?? "That did not work.");
+      } else {
+        const r = result as unknown as RuleOutAnswer;
+        const ruled = r.ruledOut ?? 0;
+        const winners = r.winners ?? [];
+        const unmatched = r.unmatched ?? [];
+        const notRuled = r.notRuled ?? [];
+        const unsent = r.unsent ?? [];
+        const failed = r.emailFailed ?? 0;
+        const left = r.left ?? 0;
+        toast.success(
+          `Ruled out ${ruled} ${ruled === 1 ? "entry" : "entries"}${
+            (r.alreadyOut ?? 0) > 0 ? `; ${r.alreadyOut} already out` : ""
+          }. Emailed ${r.emailed ?? 0}.${left > 0 ? ` ${left} still to go: press again.` : ""}`,
+        );
+        const attention = [
+          failed > 0
+            ? `${failed} ${failed === 1 ? "email" : "emails"} did not send${unsent.length > 0 ? ` (${handles(unsent)})` : ""}: they are kept in the box, and pressing again resends them.`
+            : "",
+          winners.length > 0
+            ? `Picked winners, not ruled out: ${handles(winners)}. Unpick them first if ROVV is sure, then paste again.`
+            : "",
+          notRuled.length > 0 ? `Changed while this ran, not ruled out: ${handles(notRuled)}. Paste again.` : "",
+          unmatched.length > 0 ? `No entry for: ${unmatched.join(", ")}.` : "",
+        ].filter(Boolean);
+        // Long enough to read a list; the box keeps it anyway.
+        if (attention.length > 0) toast.error(attention.join(" "), { duration: 20_000 });
+        // What still needs a look stays in the box, never lost with the toast;
+        // with some still to go, the whole list stays, to press again.
+        if (left === 0) {
+          setText(
+            [...winners.map((w) => w.email), ...notRuled.map((n) => n.email), ...unsent.map((u) => u.email), ...unmatched].join("\n"),
+          );
+        }
+      }
+      await router.refresh();
+    } catch {
+      toast.error("We could not reach the server.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <label htmlFor={fieldId} className="text-sm font-semibold text-white">
+        Paste the emails ROVV could not confirm
+      </label>
+      <p id={`${fieldId}-hint`} className="max-w-prose text-sm leading-relaxed text-ink-3">
+        One per line, or separated by commas or spaces; a pasted spreadsheet works too. Each entry under them is ruled
+        out, and its entrant emailed &ldquo;ROVV could not confirm your referral code.&rdquo; Picked winners are left
+        alone and named.
+      </p>
+      <textarea
+        id={fieldId}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={4}
+        spellCheck={false}
+        autoCapitalize="none"
+        aria-describedby={`${fieldId}-hint`}
+        className="w-full rounded-lg border border-line bg-control px-4 py-3 font-mono text-base text-white placeholder:font-sans placeholder:text-ink-3"
+        placeholder={"ada@example.com\nbola@example.com\n…"}
+      />
+      {text.trim() && (
+        <p role="status" className="text-sm text-ink-2">
+          {n === 0
+            ? "No email addresses found yet."
+            : `${n} email ${n === 1 ? "address" : "addresses"} found.`}
+        </p>
+      )}
+      {n > 0 && (
+        <Confirm
+          label={`Rule out up to ${n} ${n === 1 ? "entry" : "entries"}`}
+          question={`Rule out the entries under these ${n} email ${n === 1 ? "address" : "addresses"}?`}
+          consequence={`Each one that is not already out is marked ineligible, and its entrant is emailed: “ROVV could not confirm your referral code.” Picked winners are left alone and named, so you can unpick them first. Addresses with no entry are named too. You get one copy of the email first.`}
+          confirmLabel={`Yes, rule out up to ${n}`}
+          intent="danger"
+          pending={pending}
+          onConfirm={ruleOut}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
  * Test entries (0074): how to make one, and a button to delete them all.
  * Owners only; the console is the only place tests appear.
  */
@@ -900,13 +1147,32 @@ export function RovvResults({
   async function send() {
     setPending(true);
     try {
-      const { good, result } = await postJson("/api/admin/rovv/results", {});
-      const r = result as typeof result & { left?: number };
-      if (!good) toast.error(result.message ?? "That did not work.");
-      else
+      /* Its own fetch rather than postJson, which cannot say whether the
+         answer was ours. A press the platform cut off at its time limit
+         answers with the platform's error page, often after some of the
+         mail has gone, and "that did not work" would be a reason to think
+         nothing did. The counts on a reload are the truth. */
+      const response = await fetch("/api/admin/rovv/results", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const result = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        message?: string;
+        sent?: number;
+        failed?: number;
+        left?: number;
+      } | null;
+      if (response.status >= 500 || !result || typeof result !== "object") {
+        toast.error("It may have partly sent. Reload to see the counts before pressing again.");
+      } else if (!response.ok || result.ok !== true) {
+        toast.error(result.message ?? "That did not work.");
+      } else {
         toast.success(
-          `Sent the results to ${result.sent ?? 0}.${(result.failed ?? 0) > 0 ? ` ${result.failed} did not send; press again to retry them.` : ""}${(r.left ?? 0) > 0 ? ` ${r.left} still to go: press again.` : ""}`,
+          `Sent the results to ${result.sent ?? 0}.${(result.failed ?? 0) > 0 ? ` ${result.failed} did not send; press again to retry them.` : ""}${(result.left ?? 0) > 0 ? ` ${result.left} still to go: press again.` : ""}`,
         );
+      }
       await router.refresh();
     } catch {
       toast.error("We could not reach the server.");
