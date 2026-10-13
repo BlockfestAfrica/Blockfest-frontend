@@ -523,6 +523,17 @@ export const SpeakersList: Speaker[] = [
     bio: "Dr. Bolutife Kusimo is a venture operator and investor supporting founders and investors in building and backing scalable African businesses.\n\nAt HoaQ, he helps manage the investment process and supports a global angel community that has invested over $5 million in more than 130 startups.\n\nAt Blockfest Africa 2026, Bolutife joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Nebeokike Sunday",
+    pronouns: "he",
+    title: "Founder, Prompten",
+    image: "/2026/speakers/sunday.jpeg",
+    expertise: ["Web3 & AI", "Web3 & Blockchain", "Research & Analysis"],
+    company: "Prompten",
+    twitter: "https://x.com/bloomstarbms",
+    bio: "Nebeokike Sunday is a crypto researcher and AI and Web3 builder focused on market research, emerging technologies and practical solutions for African users.\n\nAs the founder of Prompten, he is exploring new ways to combine AI and blockchain.\n\nAt Blockfest Africa 2026, Nebeokike joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
 
   /*
    * Returning from a previous edition. His entry up the list stays as it is,

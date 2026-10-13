@@ -61,6 +61,7 @@ describe("the 2026 lineup", () => {
       "Ashley Rene Olika",
       "Dr. Bolutife Kusimo",
       "Ian Issa",
+      "Nebeokike Sunday",
       "Olamilekan Majekodunmi",
       "Salemking",
       "Scott C. Eneje",
