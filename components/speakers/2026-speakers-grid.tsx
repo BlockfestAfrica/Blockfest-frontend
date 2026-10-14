@@ -113,8 +113,15 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
             const bioTeaser = speaker.bio?.split("\n\n")[0];
             const isSpecialGuest = speaker.role === "special-guest";
             const isKeynote = speaker.role === "keynote";
+            const isFacilitator = speaker.role === "facilitator";
             /* The one label a speaker wears in gold over their portrait. */
-            const badge = isKeynote ? "Keynote Speaker" : isSpecialGuest ? "Special Guest" : null;
+            const badge = isKeynote
+              ? "Keynote Speaker"
+              : isSpecialGuest
+                ? "Special Guest"
+                : isFacilitator
+                  ? "Facilitator"
+                  : null;
 
             return (
               /* The ring is on the card: the profile link covering it is
@@ -147,7 +154,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                     priority={speaker === speakers[0]}
                   />
 
-                  {/* Keynote speakers and special guests wear the brand gold,
+                  {/* Keynote speakers, special guests and facilitators wear the brand gold,
                       the same one the site's gold CTAs use. Everyone else
                       keeps their expertise chip. */}
                   {badge ? (

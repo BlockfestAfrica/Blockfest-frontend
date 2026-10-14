@@ -11,7 +11,11 @@ export interface Speaker {
   company?: string; 
   bio?: string;
   cohort?: "2026" | "past";
-  role?: "speaker" | "special-guest" | "keynote";
+  /**
+   * How the programme uses them. A facilitator guides a session rather than
+   * speaking in it, so they wear their own label and come after the speakers.
+   */
+  role?: "speaker" | "special-guest" | "keynote" | "facilitator";
   /**
    * As the team's own bio states them, for balancing the 2026 lineup (see
    * arrangeLineup). Never guessed from a name or a photo: a speaker without
@@ -534,6 +538,28 @@ export const SpeakersList: Speaker[] = [
     bio: "Nebeokike Sunday is a crypto researcher and AI and Web3 builder focused on market research, emerging technologies and practical solutions for African users.\n\nAs the founder of Prompten, he is exploring new ways to combine AI and blockchain.\n\nAt Blockfest Africa 2026, Nebeokike joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Adewale Akinpelu",
+    pronouns: "he",
+    title: "Marketing Executive, Monica Technologies Limited",
+    image: "/2026/speakers/adewale.JPG",
+    expertise: ["Marketing & Media", "Business & Finance"],
+    company: "Monica Technologies Limited",
+    bio: "Adewale Akinpelu is a brand strategist and marketing executive with nearly a decade of experience building brands across real estate, fintech and media.\n\nAt Monica, he focuses on marketing growth, helping turn brand attention into revenue through strategy-driven marketing.\n\nAt Blockfest Africa 2026, Adewale joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
+  {
+    name: "Tobiloba Adedeji",
+    pronouns: "he",
+    title: "Technical Lead, Boh.ai & Co-Founder, Solana Students Africa",
+    image: "/2026/speakers/tobilola.png",
+    expertise: ["Web3 & AI", "Web3 & Blockchain", "Development", "Education"],
+    company: "Boh.ai & Solana Students Africa",
+    twitter: "https://x.com/toby_solutions",
+    bio: "Tobiloba Adedeji is a developer educator and engineer working across AI, blockchain and open-source technology.\n\nHe has contributed to the Solana Developer Platform and its payment tools, alongside work in developer relations and open-source projects.\n\nAs co-founder of Solana Students Africa, he has led university programmes and workshops introducing hundreds of students to Solana development.\n\nTobiloba joins Blockfest Africa 2026 as a facilitator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "facilitator",
+  },
 
   /*
    * Returning from a previous edition. His entry up the list stays as it is,
@@ -574,10 +600,10 @@ const HONORIFIC =
 /**
  * The 2026 lineup's priority, for the home carousel and /speakers alike: a
  * fixed `order` first, lowest first; then keynote speakers, then special
- * guests, then everyone else in the order of SpeakersList. Array sort is
- * stable, so ties keep it.
+ * guests, then everyone else in the order of SpeakersList, with facilitators
+ * after the speakers. Array sort is stable, so ties keep it.
  */
-const ROLE_RANK = { keynote: 0, "special-guest": 1, speaker: 2 } as const;
+const ROLE_RANK = { keynote: 0, "special-guest": 1, speaker: 2, facilitator: 3 } as const;
 
 export function lineupOrder(a: Speaker, b: Speaker): number {
   const placed = (s: Speaker) => s.order ?? Number.POSITIVE_INFINITY;
