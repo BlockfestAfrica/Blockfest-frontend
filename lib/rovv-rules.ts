@@ -17,7 +17,10 @@
 import type { RuleSection } from "@/lib/monica-rules";
 import { PRIVACY_CONTACT } from "@/lib/monica-privacy";
 
-export const ROVV_RULES_VERSION = "1.0";
+/* 1.1, the same day and before any entry: the prize is a BUIDL PASS for
+   Day 2, claimed with a 100%-off code and no deadline; winners by 4 PM on
+   Monday 19 October; a ruled-out entry can be fixed and sent again. */
+export const ROVV_RULES_VERSION = "1.1";
 
 /** ISO date. Rendered in the event's own timezone. */
 export const ROVV_RULES_UPDATED = "2026-10-12";
@@ -28,7 +31,7 @@ export const rovvRules: RuleSection[] = [
     title: "Who can enter",
     paragraphs: [
       "This campaign is organised by Blockfest Africa with ROVV. Blockfest Africa is operated by Tevah Synergy, which is responsible for the campaign and for giving out the prizes.",
-      "Entry is free and open to anyone aged 18 or over who can attend Blockfest Africa 2026 in Lagos, from 22 to 24 October 2026. The prize is a ticket only: getting to Lagos and staying there is up to you.",
+      "Entry is free and open to anyone aged 18 or over who can attend Blockfest Africa 2026 in Lagos on Friday 23 October 2026, the day the prize is for. The prize is a pass only: getting to Lagos and staying there is up to you.",
       "Employees of Blockfest Africa and of ROVV cannot enter.",
     ],
   },
@@ -47,7 +50,7 @@ export const rovvRules: RuleSection[] = [
     title: "Dates",
     paragraphs: [
       "Entries open at 12:00 AM on Tuesday 13 October 2026 and close at 11:59 PM on Sunday 18 October 2026, Lagos time. Entries received outside that window are not accepted.",
-      "Winners are emailed by the end of Tuesday 20 October 2026.",
+      "The team judges the entries the day after they close. Winners are announced by 4:00 PM on Monday 19 October 2026: each is emailed, and their TikTok username is listed on the campaign page.",
     ],
   },
   {
@@ -55,8 +58,9 @@ export const rovvRules: RuleSection[] = [
     title: "One entry each",
     paragraphs: [
       "Each person may enter once, with one video. Your email address is your entry.",
-      "If you made a mistake, enter again before the close with the same email address and the same TikTok username. Your new details replace the old ones, as long as the team has not already reviewed your entry.",
-      "Each video can be entered once. A video someone else has already entered cannot be entered again.",
+      "If you made a mistake, enter again before the close with the same email address and the same TikTok username. Your new details replace the old ones, as long as the team has not already accepted your entry.",
+      "If the team rules your entry out, we email you the reason. You can fix it and enter again the same way before the close, and it goes back to the team.",
+      "Only one entry per video can be accepted, and it must be from the person who posted it. If the same video is entered more than once, the team decides whose it is. Once a video has been accepted for one person, nobody else can enter it.",
     ],
   },
   {
@@ -81,7 +85,7 @@ export const rovvRules: RuleSection[] = [
     id: "keeping-it-up",
     title: "Keeping your video up",
     paragraphs: [
-      "Keep your video public, with its tags and hashtag, until Saturday 24 October 2026. A winning video that is deleted or made private before winners are announced may lose its prize.",
+      "Keep your video public, with its tags and hashtag, until Saturday 24 October 2026. A winning video that is deleted or made private before then may lose its prize.",
     ],
   },
   {
@@ -97,9 +101,9 @@ export const rovvRules: RuleSection[] = [
     id: "prize",
     title: "The prize",
     paragraphs: [
-      "Each of the 20 winners receives one ticket to Blockfest Africa 2026.",
-      "Winners are told by email and must reply by 6:00 PM on Wednesday 21 October 2026, Lagos time, with the full name to put on the ticket. A winner who does not reply by then may lose the prize, and it may go to another entrant.",
-      "Tickets are issued in the winner's own name and cannot be transferred, resold or exchanged for cash. Travel and accommodation are not included.",
+      "Each of the 20 winners receives one BUIDL PASS to Blockfest Africa 2026, for Day 2, Conference Day, on Friday 23 October 2026, with access to the main stage and the exhibition area.",
+      "Each winner is emailed their own code. They register for the BUIDL PASS on our ticket page in their own name, and the code takes the full price off. There is no deadline to register before the event.",
+      "The code is for the winner's own use and cannot be exchanged for cash. Travel and accommodation are not included.",
       "Winners' TikTok usernames are published on the campaign page once they have been told.",
     ],
   },
@@ -134,6 +138,4 @@ export const rovvRules: RuleSection[] = [
  * What the campaign team still has to settle, shown on the rules page rather
  * than guessed at. Remove each line once the clause above says it.
  */
-export const rovvRulesOpenPoints: string[] = [
-  "Which Blockfest Africa 2026 pass the prize ticket is, and for which days.",
-];
+export const rovvRulesOpenPoints: string[] = [];

@@ -72,7 +72,7 @@ export const sponsors: Sponsor[] = [
     logo: "/2026/logos/rovv.png",
     width: 748,
     height: 167,
-    href: "https://x.com/rovvafrica",
+    href: "https://www.getrovv.com/",
   },
   {
     name: "Hoaq",

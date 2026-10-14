@@ -7,7 +7,7 @@
  * #ROVVMeToBlockfest, registers on the ROVV app, then enters here once with
  * their name, email, TikTok username, the video's link and their ROVV
  * referral code. The team marks entries eligible or not and picks 20
- * winners, a Blockfest ticket each, emailed by 20 October; their TikTok
+ * winners, a BUIDL PASS each, announced by 4 PM on 19 October; their TikTok
  * usernames then show on the campaign page.
  *
  * Decided with the owner on 12 October: one entry per person (by email), 18
@@ -27,14 +27,32 @@ export const ROVV = {
   hashtag: "#ROVVMeToBlockfest",
   rovvHandle: "@rovvafrica",
   blockfestHandle: "@blockfestafrica",
-  rovvUrl: "https://x.com/rovvafrica",
+  /** ROVV's own website (the owner, 12 October), where people get the app. */
+  rovvUrl: "https://www.getrovv.com/",
   /** How many entries win, one ticket each. */
   winners: 20,
   /** Entries open and close, Lagos time. The database holds the same (0073). */
   opensAt: "2026-10-13T00:00:00+01:00",
   closesAt: "2026-10-18T23:59:59+01:00",
-  /** Winners are emailed by the end of this day. */
-  winnersBy: "2026-10-20",
+  /** Winners are emailed, and listed on the page, by this time (the owner, 12 October). */
+  winnersBy: "2026-10-19T16:00:00+01:00",
+  /** The same, as every page and email says it. */
+  winnersByLabel: "4 PM on Monday 19 October",
+  /** The prize, as the owner set it on 12 October: Day 2 only. */
+  prize: "BUIDL PASS",
+  prizeDay: "Day 2, Conference Day, on Friday 23 October",
+  /**
+   * The passenger app's store pages. getrovv.com shows them only as QR
+   * codes; the codes are ROVV's own onelink.to/p95t3a, which opens these two
+   * listings (checked 12 October: "Rovv" by Rovv on Google Play, "ROVV: Ride
+   * on Rovv App" on the App Store). The addresses still say jetride, the
+   * app's earlier name. onelink.to/dzak96 is the driver app, not for
+   * entrants.
+   */
+  appLinks: {
+    android: "https://play.google.com/store/apps/details?id=com.jetRide.rider" as string | null,
+    ios: "https://apps.apple.com/ng/app/jetride-no-surge-rides/id1366805176" as string | null,
+  },
 } as const;
 
 export const rovvRoutes = {
@@ -69,7 +87,11 @@ const TIKTOK_HOSTS = ["tiktok.com", "m.tiktok.com", "vm.tiktok.com", "vt.tiktok.
  * way. Returns the link tidied, or null with why it was refused.
  */
 export function readTikTokLink(raw: string): { url: string } | { error: string } {
-  const text = raw.trim();
+  /* TikTok's share sheet often copies a sentence around the link ("Check out
+     this video! https://vm.tiktok.com/abc/ #fyp"), so the first link in what
+     was pasted is the one read, without the punctuation after it. */
+  const found = raw.match(/https?:\/\/[^\s<>"']+/i)?.[0];
+  const text = (found ?? raw).trim().replace(/[).,!?;:]+$/, "");
   let url: URL;
   try {
     url = new URL(text);
@@ -141,12 +163,15 @@ export const rovvEntryFields = z.object({
         message: "Enter your TikTok username, for example yourname.",
       }),
     tiktokUrl: z.string().trim().min(1, "Paste the link to your TikTok video.").max(500, "That link is too long."),
+    /* Kept as typed, case and all, with only spaces taken out: we do not
+       know whether ROVV's codes are case-sensitive, and changing one would
+       be worse than storing it as the person copied it. */
     referralCode: z
       .string()
       .trim()
-      .transform((v) => v.replace(/\s+/g, "").toUpperCase())
-      .refine((v) => /^[A-Z0-9_-]{3,32}$/.test(v), {
-        message: "Enter your ROVV referral code as the app shows it.",
+      .transform((v) => v.replace(/\s+/g, ""))
+      .refine((v) => /^[A-Za-z0-9._-]{3,40}$/.test(v), {
+        message: "Enter your ROVV referral code exactly as the app shows it.",
       }),
     acceptedRules: z.literal(true, { message: "Tick the box to confirm the rules and your eligibility." }),
     rulesVersion: z.string().min(1),
@@ -179,3 +204,40 @@ export const rovvEntrySchema = rovvEntryFields
 
 export type RovvEntryInput = z.input<typeof rovvEntrySchema>;
 export type RovvEntry = z.output<typeof rovvEntrySchema>;
+
+/* ------------------------------------------------------------------ */
+/* An email address that is probably mistyped                          */
+/* ------------------------------------------------------------------ */
+
+const DOMAIN_TYPOS: Record<string, string> = {
+  "gmail.con": "gmail.com",
+  "gmail.co": "gmail.com",
+  "gmail.cm": "gmail.com",
+  "gmail.om": "gmail.com",
+  "gmial.com": "gmail.com",
+  "gamil.com": "gmail.com",
+  "gmal.com": "gmail.com",
+  "gmaill.com": "gmail.com",
+  "gnail.com": "gmail.com",
+  "yahoo.con": "yahoo.com",
+  "yahooo.com": "yahoo.com",
+  "yaho.com": "yahoo.com",
+  "hotmail.con": "hotmail.com",
+  "hotmal.com": "hotmail.com",
+  "outlook.con": "outlook.com",
+  "icloud.con": "icloud.com",
+};
+
+/**
+ * "Did you mean ada@gmail.com?" for the domains people mistype most. Every
+ * email about an entry (the ruling, a fix, a winner's code) goes only to
+ * this address, and nothing checks it, so a typo is caught where it is made.
+ * A suggestion, never a refusal: an address can be odd and still be right.
+ */
+export function suggestEmail(email: string): string | null {
+  const at = email.trim().lastIndexOf("@");
+  if (at < 1) return null;
+  const domain = email.trim().slice(at + 1).toLowerCase();
+  const fixed = DOMAIN_TYPOS[domain];
+  return fixed ? `${email.trim().slice(0, at)}@${fixed}` : null;
+}

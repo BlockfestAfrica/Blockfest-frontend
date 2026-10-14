@@ -53,7 +53,9 @@ describe("the privacy notice", () => {
   it("says exactly what ROVV receives, and the form says the same", () => {
     const sharing = rovvPrivacySections.find((s) => s.id === "sharing")!.paragraphs.join(" ");
     expect(sharing).toMatch(/ROVV[^.]*receives your name, email address, TikTok username and ROVV referral code/);
-    expect(sharing).toMatch(/not for its own marketing/);
+    expect(sharing).toMatch(/for that check and for nothing else/);
+    // Winners register their own pass with a code; we pass the ticketing provider nothing.
+    expect(sharing).toMatch(/we pass it nothing about you/);
     expect(FORM).toMatch(/shares my name, email address, TikTok username and referral code\s+with ROVV/);
   });
 
@@ -83,8 +85,11 @@ describe("the rules", () => {
     ["the tags and hashtag", /@rovvafrica[^.]*@blockfestafrica[^.]*#ROVVMeToBlockfest/],
     ["how many win, and on what", /20 winners for creativity and relevance/],
     ["that engagement does not decide it", /Views, likes and follower counts do not decide it/],
-    ["the ticket is not transferable", /cannot be transferred/],
-    ["when winners must reply", /6:00 PM on Wednesday 21 October 2026/],
+    ["the prize, and which day it is for", /one BUIDL PASS[^.]*Day 2, Conference Day, on Friday 23 October 2026/],
+    ["how a winner claims it, with no deadline", /code takes the full price off\. There is no deadline/],
+    ["when winners are announced", /by 4:00 PM on Monday 19 October 2026/],
+    ["that a ruled-out entry can be fixed", /rules your entry out, we email you the reason\. You can fix it/],
+    ["that the code cannot become cash", /cannot be exchanged for cash/],
     ["what ROVV receives", /share your name, email address, TikTok username and referral code with ROVV/],
     ["road safety", /driving or riding/],
     ["the operator", /Tevah Synergy/],
@@ -104,6 +109,11 @@ describe("the rules", () => {
     expect(Array.isArray(rovvRulesOpenPoints)).toBe(true);
   });
 
+  it("keep road safety in the rules but out of the page's checklist (marketing, 12 October)", () => {
+    expect(rules).toMatch(/driving or riding/);
+    expect(PAGE).not.toMatch(/driving or riding/);
+  });
+
   it("agree with the page on the numbers people decide on", () => {
     expect(rules).toContain(String(ROVV.winners));
     expect(PAGE).toMatch(/Saturday 24 October 2026/);
@@ -112,5 +122,41 @@ describe("the rules", () => {
 
   it("set no em dash anywhere a reader sees", () => {
     expect(rules + notice).not.toContain("—");
+  });
+});
+
+describe("the page, against the 'you won' scam", () => {
+  /*
+   * A prize campaign draws accounts posing as its organiser, who DM entrants
+   * that they won and ask for a fee, a login or the code. The page says once
+   * in the questions, and again under the winners, how we do get in touch.
+   */
+  const faq = PAGE.slice(PAGE.indexOf("Does it cost anything? Will anyone message me?"));
+  const answer = faq.slice(0, faq.indexOf("},"));
+  const winners = PAGE.slice(PAGE.indexOf('id="winners"'), PAGE.indexOf('aria-labelledby="how"'));
+
+  it("asks the question and answers every part of it", () => {
+    expect(PAGE).toContain("Does it cost anything? Will anyone message me?");
+    expect(answer).toMatch(/Entering costs nothing, and neither does the pass/);
+    expect(answer).toMatch(/only by email, from blockfestafrica\.com/);
+    expect(answer).toMatch(/the receipt when you enter, the team's ruling on your entry, and your code if you win/);
+    expect(answer).toMatch(/Never by TikTok or Instagram DM/);
+    expect(answer).toMatch(/never ask for money, your ROVV login or your ticket code/);
+    expect(answer).toMatch(/If anyone messages you saying you won, ignore them/);
+  });
+
+  it("says it again under the winners list", () => {
+    expect(winners).toMatch(/only by email from blockfestafrica\.com/);
+    expect(winners).toMatch(/never by TikTok or Instagram DM/);
+    expect(winners).toMatch(/money, your ROVV login or your code/);
+  });
+
+  it("says more winners are coming only while some are picked and not yet emailed", () => {
+    expect(winners).toMatch(/\{untold > 0 && \(\s*<p[^>]*>More winners are being told now/);
+    expect(winners).not.toMatch(/winners\.length < ROVV\.winners/);
+  });
+
+  it("uses no em dash in what it adds", () => {
+    expect(answer + winners).not.toContain("—");
   });
 });

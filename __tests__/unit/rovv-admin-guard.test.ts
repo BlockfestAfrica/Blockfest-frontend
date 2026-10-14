@@ -63,6 +63,13 @@ const decision = await import("@/app/api/admin/rovv/decision/route");
 const winner = await import("@/app/api/admin/rovv/winner/route");
 const notify = await import("@/app/api/admin/rovv/notify/route");
 const exporter = await import("@/app/api/admin/rovv/export/route");
+const coder = await import("@/app/api/admin/rovv/code/route");
+const testClear = await import("@/app/api/admin/rovv/test-clear/route");
+const testNotify = await import("@/app/api/admin/rovv/test-notify/route");
+const codesRoute = await import("@/app/api/admin/rovv/codes/route");
+const correctRoute = await import("@/app/api/admin/rovv/correct/route");
+const resultsRoute = await import("@/app/api/admin/rovv/results/route");
+const ruleOutRoute = await import("@/app/api/admin/rovv/rule-out/route");
 
 const SITE = "https://blockfestafrica.com";
 const ENTRY = "00000000-0000-4000-8000-0000000000aa";
@@ -92,6 +99,15 @@ describe("a request from another site", () => {
     ["notify", () => notify.POST(post("/api/admin/rovv/notify", {}, "https://evil.example"))],
     ["decision, no origin", () => decision.POST(post("/api/admin/rovv/decision", { entryId: ENTRY, status: "eligible", revision: 1 }, null))],
     ["winner, no origin", () => winner.POST(post("/api/admin/rovv/winner", { entryId: ENTRY, pick: true }, null))],
+    ["code", () => coder.POST(post("/api/admin/rovv/code", { entryId: ENTRY, code: "X-1" }, "https://evil.example"))],
+    ["test-clear", () => testClear.POST(post("/api/admin/rovv/test-clear", {}, "https://evil.example"))],
+    ["test-notify", () => testNotify.POST(post("/api/admin/rovv/test-notify", { entryId: ENTRY }, "https://evil.example"))],
+    ["test-clear, no origin", () => testClear.POST(post("/api/admin/rovv/test-clear", {}, null))],
+    ["codes", () => codesRoute.POST(post("/api/admin/rovv/codes", { text: "A-1" }, "https://evil.example"))],
+    ["correct", () => correctRoute.POST(post("/api/admin/rovv/correct", { entryId: ENTRY, tiktokHandle: "x1" }, "https://evil.example"))],
+    ["results", () => resultsRoute.POST(post("/api/admin/rovv/results", {}, "https://evil.example"))],
+    ["rule-out", () => ruleOutRoute.POST(post("/api/admin/rovv/rule-out", { emails: "a@example.test" }, "https://evil.example"))],
+    ["rule-out, no origin", () => ruleOutRoute.POST(post("/api/admin/rovv/rule-out", { emails: "a@example.test" }, null))],
   ])("is refused at %s before the session is read", async (_name, call) => {
     const answer = await call();
     expect(answer.status).toBe(403);
@@ -124,13 +140,27 @@ describe("a reviewer at an owner route", () => {
     expect(state.touched).toEqual([]);
   });
 
+  it.each([
+    ["set a ticket code", () => coder.POST(post("/api/admin/rovv/code", { entryId: ENTRY, code: "X-1" }))],
+    ["delete the test entries", () => testClear.POST(post("/api/admin/rovv/test-clear", {}))],
+    ["send a test winner email", () => testNotify.POST(post("/api/admin/rovv/test-notify", { entryId: ENTRY }))],
+    ["hand out pasted codes", () => codesRoute.POST(post("/api/admin/rovv/codes", { text: "A-1" }))],
+    ["correct an entrant", () => correctRoute.POST(post("/api/admin/rovv/correct", { entryId: ENTRY, tiktokHandle: "x1" }))],
+    ["email the results", () => resultsRoute.POST(post("/api/admin/rovv/results", {}))],
+    ["rule out a pasted list", () => ruleOutRoute.POST(post("/api/admin/rovv/rule-out", { emails: "a@example.test" }))],
+  ])("cannot %s, and nothing is read or sent", async (_name, call) => {
+    const answer = await call();
+    expect(answer.status).toBe(403);
+    expect(state.touched).toEqual([]);
+  });
+
   it("cannot email the winners, and nothing is throttled, read or sent", async () => {
     const answer = await notify.POST(post("/api/admin/rovv/notify", {}));
     expect(answer.status).toBe(403);
     expect(state.touched).toEqual([]);
   });
 
-  it.each(["all", "winners"])("cannot download ?of=%s", async (of) => {
+  it.each(["all", "winners", "rovv", "rovv&picked=1"])("cannot download ?of=%s", async (of) => {
     const answer = await exporter.GET(
       new NextRequest(`${SITE}/api/admin/rovv/export?of=${of}`, {
         headers: { "x-forwarded-host": "blockfestafrica.com" },

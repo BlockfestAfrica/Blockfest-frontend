@@ -1,4 +1,5 @@
 import "server-only";
+import { DrizzleQueryError } from "drizzle-orm";
 
 /**
  * Reading a Postgres error, whichever driver raised it.
@@ -73,6 +74,22 @@ export const PG = {
   ROVV_WINNER_BEING_TOLD: "P1011",
   /** The entrant replaced the entry after the reviewer loaded it. */
   ROVV_ENTRY_CHANGED: "P1012",
+  /** A winner's ticket code cannot change once their email has gone (0074). */
+  ROVV_CODE_LOCKED: "P1013",
+  /** Only a winner has a ticket code. */
+  ROVV_CODE_NEEDS_WINNER: "P1014",
+  /** Another winner already holds that code. */
+  ROVV_CODE_TAKEN: "P1015",
+  /** Not the shape of a ticket code. */
+  ROVV_BAD_CODE: "P1016",
+  /** A pasted list of codes has the same code in it twice. */
+  ROVV_CODES_REPEATED: "P1017",
+  /** Another reviewer ruled on the entry since the card was loaded (0075). */
+  ROVV_RULED_MEANWHILE: "P1018",
+  /** Another entry under this TikTok username has already won. */
+  ROVV_ALREADY_WON: "P1019",
+  /** This entrant has already been sent the results email, so cannot be picked. */
+  ROVV_RESULTS_SENT: "P1020",
   ADMIN_REQUIRED: "P0401",
   REASON_REQUIRED: "P0402",
 } as const;
@@ -110,8 +127,47 @@ export function pgErrorCode(error: unknown): string | null {
   return dig(error, 0);
 }
 
-/** Best-effort text, for logging and for the PGlite fallback. */
+/**
+ * Drizzle's wrapper around a failed query, by class or, failing that, by
+ * shape: a second copy of drizzle-orm in a bundle would make instanceof
+ * miss, and missing it is the leak below.
+ */
+function isDrizzleQueryError(error: unknown): error is Error & { cause?: unknown } {
+  if (error instanceof DrizzleQueryError) return true;
+  return (
+    error instanceof Error &&
+    "query" in error &&
+    "params" in error &&
+    error.message.startsWith("Failed query:")
+  );
+}
+
+/**
+ * Best-effort text, for logging and for the PGlite fallback.
+ *
+ * Never Drizzle's own message. Every query that fails through Drizzle,
+ * neon-http in production and PGlite in the suite alike, is rethrown as a
+ * DrizzleQueryError whose message is "Failed query: <sql>\nparams: <every
+ * bound value>". So one failed entry insert put the entrant's name, email,
+ * TikTok username, referral code and user agent in the function log, and
+ * the redactor knows the shape of only some of those. The driver's error it
+ * wraps, on `cause`, is the part that says what went wrong, and it is where
+ * the raise text is that the PGlite fallback in isPgError matches on.
+ * pgErrorCode needs nothing from here: it already digs through `cause`.
+ */
 export function pgErrorMessage(error: unknown): string {
+  return readMessage(error, 0);
+}
+
+function readMessage(error: unknown, depth: number): string {
+  if (isDrizzleQueryError(error)) {
+    const cause = error.cause;
+    // Nothing underneath to read: say that much, never the query or params.
+    if (cause === undefined || cause === null || cause === error || depth > 4) {
+      return "query failed (no driver error)";
+    }
+    return readMessage(cause, depth + 1);
+  }
   if (error instanceof Error) return error.message;
   return String(error);
 }

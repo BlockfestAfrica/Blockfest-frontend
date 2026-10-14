@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { readJsonBody, sameOrigin } from "@/lib/admin/request";
-import { setRovvWinner } from "@/lib/admin/rovv";
+import { rovvTicketCodeOf, setRovvWinner } from "@/lib/admin/rovv";
 import { PG, pgErrorCode } from "@/lib/db/errors";
 import { ROVV } from "@/lib/rovv";
 import { logError } from "@/lib/log";
@@ -54,6 +54,15 @@ const MESSAGES: Record<string, { status: number; message: string }> = {
     message: "That entry is not there any more. The list has been reloaded.",
   },
   [PG.ADMIN_REQUIRED]: { status: 403, message: "Only a signed-in admin can do this." },
+  /* Both held by set_rovv_winner under the campaign's lock (0075). */
+  [PG.ROVV_ALREADY_WON]: {
+    status: 409,
+    message: "This TikTok username is already a winner from another entry. Each person wins once.",
+  },
+  [PG.ROVV_RESULTS_SENT]: {
+    status: 409,
+    message: "This entrant has already been emailed that they did not win, so they cannot be picked now.",
+  },
 };
 
 export async function POST(request: NextRequest) {
@@ -80,8 +89,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const winners = await setRovvWinner(admin.admin, parsed.data.entryId, parsed.data.pick);
-    return NextResponse.json({ ok: true, winners });
+    const { entryId, pick } = parsed.data;
+    // Read before the unpick clears it, so the owner is told which code is free again.
+    const freedCode = pick ? null : await rovvTicketCodeOf(admin.admin, entryId);
+    const winners = await setRovvWinner(admin.admin, entryId, pick);
+    return NextResponse.json({ ok: true, winners, freedCode });
   } catch (error) {
     const code = pgErrorCode(error);
     const known = code ? MESSAGES[code] : undefined;

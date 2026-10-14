@@ -45,6 +45,13 @@ export interface Campaign {
   sponsor: string;
   /** Sponsor logo, reusing the partner asset already in the repo. */
   sponsorLogo?: string;
+  /**
+   * What the sponsor is to Blockfest, as the card names it under the logo.
+   * Per campaign, because not every campaign's sponsor is the headline one:
+   * ROVV is the mobility sponsor (the owner, 12 October), as the partners
+   * wall lists it.
+   */
+  sponsorLabel: string;
   sponsorUrl?: string;
   summary: string;
   status: CampaignStatus;
@@ -67,6 +74,7 @@ export const campaigns: Campaign[] = [
     cardImage: "/images/monica/monica-card.jpg",
     sponsor: "Monica",
     sponsorLogo: "/2026/sponsors/Monica.png",
+    sponsorLabel: "Headline sponsor",
     sponsorUrl: "https://x.com/monicanigeria",
     /*
      * One sentence, because this is a card on a phone. The longer version,
@@ -92,7 +100,8 @@ export const campaigns: Campaign[] = [
     hook: "#ROVVMeToBlockfest",
     sponsor: "ROVV",
     sponsorLogo: "/2026/logos/rovv.png",
-    sponsorUrl: "https://x.com/rovvafrica",
+    sponsorLabel: "Mobility sponsor",
+    sponsorUrl: "https://www.getrovv.com/",
     summary:
       "Make a TikTok on the prompt, tag @rovvafrica and @blockfestafrica, and 20 of the most creative win a Blockfest Africa 2026 ticket.",
     status: "live",

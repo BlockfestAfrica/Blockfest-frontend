@@ -1,12 +1,14 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
 import { sql } from "drizzle-orm";
 import { sameOrigin } from "@/lib/admin/request";
+import { requireAdmin } from "@/lib/admin/session";
+import { notifyAdminsOfActivity } from "@/lib/notify/admin-activity";
 import { looksAutomated } from "@/lib/campaign-registration";
 import { pauseState } from "@/lib/campaign-pause";
 import { CONTACT_EMAIL } from "@/lib/constants";
 import { getDb } from "@/lib/db/client";
 import { PG, pgErrorCode } from "@/lib/db/errors";
-import { sendEmailQuietly } from "@/lib/email/client";
+import { sendEmail } from "@/lib/email/client";
 import { rovvEntryEmail } from "@/lib/email/templates";
 import { logError } from "@/lib/log";
 import { ROVV, ROVV_SLUG, rovvEntrySchema } from "@/lib/rovv";
@@ -20,9 +22,19 @@ export const runtime = "nodejs";
 /** An entry is well under a kilobyte. Anything larger is not a form. */
 const MAX_BODY_BYTES = 8 * 1024;
 
-function fail(message: string, status = 400, field?: string) {
-  return NextResponse.json({ ok: false, message, field }, { status });
+function fail(message: string, status = 400, field?: string, extra: Record<string, unknown> = {}) {
+  return NextResponse.json({ ok: false, message, field, ...extra }, { status });
 }
+
+/**
+ * An email already holding an entry that this one cannot replace: entered
+ * under a different TikTok username, or already accepted. One message for
+ * both, on purpose. Emails are not verified, so telling the two apart would
+ * let anybody holding somebody's address learn which account entered with
+ * it, or that the team accepted it. The person who really entered knows
+ * which it is, and has a reply route either way.
+ */
+const TAKEN = `This email address already has an entry that can't be changed from here: it was entered under a different TikTok username, or the team has already accepted it. Each person enters once. If something needs changing, reply to the email we sent you or write to ${CONTACT_EMAIL}.`;
 
 /**
  * Why a closed window is closed, from the clock: before the start it has not
@@ -67,6 +79,24 @@ export async function POST(request: NextRequest) {
     return fail("We could not read that. Please try again.");
   }
 
+  /*
+   * A test entry (0074): only from a signed-in admin, checked against the
+   * session here because the database takes p_test on trust. It skips the
+   * window, so the owner can walk the flow before entries open, and is kept
+   * out of everything real. Asked for by the form's ?test=1.
+   */
+  const test = (body as { test?: unknown } | null)?.test === true;
+  /* The form asks for the copy again when the last send said it could not
+     email one, even if nothing in the entry changed. Still under the
+     per-address cap below. */
+  const resendReceipt = (body as { resendReceipt?: unknown } | null)?.resendReceipt === true;
+  if (test) {
+    const admin = await requireAdmin();
+    if (!admin.ok) {
+      return fail("Test entries are for signed-in admins. Sign in to the console, then reload this page.", 403);
+    }
+  }
+
   const parsed = rovvEntrySchema.safeParse(body);
   if (!parsed.success) {
     const first = parsed.error.issues[0];
@@ -94,10 +124,12 @@ export async function POST(request: NextRequest) {
   // Answered as though it worked, so a bot learns nothing. The reason is
   // logged; the address is not, because logs are no place for one. A real
   // person caught by it gets no receipt, which is their sign to write in.
-  const automated = looksAutomated(input);
+  const automated = test ? null : looksAutomated(input);
   if (automated) {
     console.warn("[rovv/enter] refused as automated:", automated);
-    return NextResponse.json({ ok: true, outcome: "created" });
+    // The same shape as a real first entry, field for field, or the
+    // difference is the tell.
+    return NextResponse.json({ ok: true, outcome: "created", test: false, emailed: true });
   }
 
   // Read for the reason only; the database refuses a paused entry anyway.
@@ -119,7 +151,7 @@ export async function POST(request: NextRequest) {
         ${ROVV_SLUG}, ${input.fullName}, ${input.email}, ${input.emailCanonical},
         ${input.tiktokHandle}, ${input.tiktokUrl}, ${input.referralCode},
         ${ROVV_RULES_VERSION}, ${ROVV_PRIVACY_VERSION}, ${input.marketingOptIn},
-        ${ip}, ${userAgent}
+        ${ip}, ${userAgent}, ${test}
       )
     `);
     const row = (result.rows?.[0] ?? {}) as { outcome?: string };
@@ -127,15 +159,15 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     switch (pgErrorCode(error)) {
       case PG.ROVV_CLOSED:
-        return fail(closedMessage(), 403);
+        // Which side of the window, so the form shows "opens at midnight"
+        // or "closed", not one for the other.
+        return fail(closedMessage(), 403, undefined, {
+          closed: Date.now() < new Date(ROVV.opensAt).getTime() ? "before" : "after",
+        });
       case PG.ROVV_PAUSED:
         return fail("Entries are paused. Please try again shortly.", 503);
       case PG.ROVV_ENTRY_TAKEN:
-        return fail(
-          `This email address already has an entry, from another TikTok username or one the team has already reviewed. Each person enters once. If something needs changing, write to ${CONTACT_EMAIL}.`,
-          409,
-          "email",
-        );
+        return fail(TAKEN, 409, "email");
       case PG.ROVV_VIDEO_TAKEN:
         return fail(
           `That video is already in the campaign as somebody else's entry. If it is your video, write to ${CONTACT_EMAIL} and we will look into it.`,
@@ -160,18 +192,35 @@ export async function POST(request: NextRequest) {
    * inbox a script names, from our domain, hundreds of times an hour. The
    * entry is saved either way; only the mail is skipped.
    */
-  if (outcome !== "unchanged" && (await allowKeyStrict(input.emailCanonical, "rovv-receipt", 3, 3600))) {
-    await sendEmailQuietly(
+  /* Whether the copy left, so the page tells the truth about it: "we've
+     emailed you" only when we have, and a nudge to check the address when
+     we could not. A failure is logged with no address in it. */
+  let emailed = false;
+  if (
+    (outcome !== "unchanged" || resendReceipt) &&
+    (test || (await allowKeyStrict(input.emailCanonical, "rovv-receipt", 3, 3600)))
+  ) {
+    const sent = await sendEmail(
       rovvEntryEmail({
         to: input.email,
         fullName: input.fullName,
+        tiktokHandle: input.tiktokHandle,
         tiktokUrl: input.tiktokUrl,
         referralCode: input.referralCode,
         replaced: outcome === "updated",
       }),
-      outcome === "updated" ? "rovv entry updated" : "rovv entry received",
+    );
+    emailed = sent.sent;
+    if (!sent.sent) logError("rovv/enter receipt", new Error(`receipt not sent: ${sent.reason ?? "unknown"}`));
+  }
+
+  /* The team hears about a new entry, after the response and never in front
+     of it, paced as Monica's alerts are. A replacement is not new work. */
+  if (outcome === "created") {
+    after(() =>
+      notifyAdminsOfActivity({ kind: "rovv_entry", who: `@${input.tiktokHandle}${test ? " (test)" : ""}`, test }),
     );
   }
 
-  return NextResponse.json({ ok: true, outcome });
+  return NextResponse.json({ ok: true, outcome, test, emailed });
 }
