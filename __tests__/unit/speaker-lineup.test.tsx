@@ -57,15 +57,23 @@ describe("the 2026 lineup", () => {
     ]);
     // Not in the team's list: after it, not dropped.
     expect(lineup.slice(9).map((s) => s.name).sort()).toEqual([
+      "Adewale Akinpelu",
       "Akitoye Balogun",
       "Ashley Rene Olika",
       "Dr. Bolutife Kusimo",
       "Ian Issa",
+      "Nebeokike Sunday",
       "Olamilekan Majekodunmi",
       "Salemking",
       "Scott C. Eneje",
+      "Tobiloba Adedeji",
       "Uchenna Edeoga",
     ]);
+  });
+
+  it("lists Tobiloba Adedeji as a facilitator, and no one else", () => {
+    const facilitators = lineup.filter((s) => s.role === "facilitator").map((s) => s.name);
+    expect(facilitators).toEqual(["Tobiloba Adedeji"]);
   });
 
   it("records pronouns for every announced speaker, so the lineup can balance", () => {
@@ -117,6 +125,14 @@ describe("arrangeLineup", () => {
     const list = [person("X"), person("A", { pronouns: "he" }), person("B", { pronouns: "she" })];
     expect(arrangeLineup(list).map((s) => s.name)).toEqual(["A", "B", "X"]);
   });
+
+  it("puts a facilitator after the speakers of the same group", () => {
+    const list = [
+      person("Facilitator", { pronouns: "he", role: "facilitator" }),
+      person("Speaker", { pronouns: "he", role: "speaker" }),
+    ];
+    expect(arrangeLineup(list).map((s) => s.name)).toEqual(["Speaker", "Facilitator"]);
+  });
 });
 
 describe("the /speakers grid", () => {
@@ -135,5 +151,19 @@ describe("the /speakers grid", () => {
     expect(screen.getByRole("link", { name: "View Plain Person's profile" })).toBeTruthy();
     expect(screen.getAllByText("Keynote Speaker")).toHaveLength(1);
     expect(screen.getAllByText("Special Guest")).toHaveLength(1);
+  });
+
+  it("wears Facilitator on a facilitator, and says so in the link's name", () => {
+    render(
+      <FeaturedSpeakersGrid
+        speakers={[
+          person("Guide Person", { pronouns: "he", role: "facilitator" }),
+          person("Plain Person", { pronouns: "she", role: "speaker" }),
+        ]}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "View Guide Person's profile (facilitator)" })).toBeTruthy();
+    expect(screen.getAllByText("Facilitator")).toHaveLength(1);
+    expect(screen.queryByText("Keynote Speaker")).toBeNull();
   });
 });
