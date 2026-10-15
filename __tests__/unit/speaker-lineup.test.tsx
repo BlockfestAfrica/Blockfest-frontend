@@ -60,7 +60,10 @@ describe("the 2026 lineup", () => {
       "Adewale Akinpelu",
       "Akitoye Balogun",
       "Ashley Rene Olika",
+      "Bibi Eneje",
+      "Christine Imoukhuede",
       "Dr. Bolutife Kusimo",
+      "Hon. Olatunbosun Alake",
       "Ian Issa",
       "Nebeokike Sunday",
       "Olamilekan Majekodunmi",
@@ -71,9 +74,9 @@ describe("the 2026 lineup", () => {
     ]);
   });
 
-  it("lists Tobiloba Adedeji as a facilitator, and no one else", () => {
+  it("lists Bibi Eneje and Tobiloba Adedeji as facilitators, and no one else", () => {
     const facilitators = lineup.filter((s) => s.role === "facilitator").map((s) => s.name);
-    expect(facilitators).toEqual(["Tobiloba Adedeji"]);
+    expect(facilitators.sort()).toEqual(["Bibi Eneje", "Tobiloba Adedeji"]);
   });
 
   it("records pronouns for every announced speaker, so the lineup can balance", () => {
