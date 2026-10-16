@@ -62,6 +62,7 @@ describe("the 2026 lineup", () => {
       "Ashley Rene Olika",
       "Bibi Eneje",
       "Christine Imoukhuede",
+      "Daniel Emeka",
       "Dr. Bolutife Kusimo",
       "Hon. Olatunbosun Alake",
       "Ian Issa",
@@ -76,9 +77,9 @@ describe("the 2026 lineup", () => {
     ]);
   });
 
-  it("lists Bibi Eneje and Tobiloba Adedeji as facilitators, and no one else", () => {
+  it("lists Bibi Eneje, Daniel Emeka and Tobiloba Adedeji as facilitators, and no one else", () => {
     const facilitators = lineup.filter((s) => s.role === "facilitator").map((s) => s.name);
-    expect(facilitators.sort()).toEqual(["Bibi Eneje", "Tobiloba Adedeji"]);
+    expect(facilitators.sort()).toEqual(["Bibi Eneje", "Daniel Emeka", "Tobiloba Adedeji"]);
   });
 
   it("lists Oluwanifemi David Babanumi as a moderator, and no one else", () => {
