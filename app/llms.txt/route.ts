@@ -106,7 +106,7 @@ ${TICKET_PLATFORM_URL} is the official ticket platform.
 - ${SITE_URL}/speakers: past speakers; the ${e.year} lineup is announced in the coming weeks
 - ${SITE_URL}/call-for-speakers: session formats, tracks and what the speaker application asks for
 - ${SITE_URL}/volunteer: volunteer departments, roles and the application form
-- ${SITE_URL}/schedule: the ${past.year} programme; the ${e.year} schedule is published in the coming weeks
+- ${SITE_URL}/schedule: the ${e.year} run of show, day by day, and the ${past.year} programme
 - ${SITE_URL}/blockfest-2025: recap of ${past.name}
 - ${SITE_URL}/blockfest-south-africa-2026: recap of the Cape Town roadshow, May 2026
 

@@ -1,28 +1,29 @@
 import { PastAgenda } from "@/components/schedule/past-agenda";
+import { RunOfShow } from "@/components/schedule/run-of-show";
 import { gotham } from "@/lib/fonts";
 import type { Metadata } from "next";
 import { BaseSchema } from "@/components/seo/schema-markup";
-import { ComingSoonNotice } from "@/components/shared/coming-soon-notice";
 import { EVENT_ID, CURRENT_EDITION } from "@/lib/seo-event";
 import { jsonLd } from "@/lib/json-ld";
 
+const TITLE = "Schedule | Blockfest Africa - Event Program & Activities";
+const DESCRIPTION =
+  "The Blockfest Africa Lagos '26 run of show: workshops and masterclasses on October 22 at Ibis Hotel, Lekki, and the main conference on October 23 at the National Art Theatre.";
+
 export const metadata: Metadata = {
-  title: "Schedule | Blockfest Africa - Event Program & Activities",
-  description:
-    "The Lagos '26 three-day programme is published in the coming weeks. Meanwhile, see how the 2025 edition ran: keynotes, workshops, panels and networking.",
+  title: TITLE,
+  description: DESCRIPTION,
   keywords:
-    "Blockfest Africa schedule, event program, blockchain conference schedule, tech conference activities, AI workshops",
+    "Blockfest Africa schedule, event program, run of show, blockchain conference schedule, tech conference activities, AI workshops",
   openGraph: {
-    title: "Schedule | Blockfest Africa - Event Program & Activities",
-    description:
-      "The Lagos '26 three-day programme is published in the coming weeks. Meanwhile, see how the 2025 edition ran: keynotes, workshops, panels and networking.",
+    title: TITLE,
+    description: DESCRIPTION,
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Schedule | Blockfest Africa - Event Program & Activities",
-    description:
-      "The Lagos '26 three-day programme is published in the coming weeks. Meanwhile, see how the 2025 edition ran: keynotes, workshops, panels and networking.",
+    title: TITLE,
+    description: DESCRIPTION,
   },
   alternates: {
     canonical: "https://blockfestafrica.com/schedule",
@@ -41,8 +42,7 @@ export default function Schedule() {
 
   const schedulePageData = {
     name: `Schedule - ${CURRENT_EDITION.name}`,
-    description:
-      "The Lagos '26 three-day programme is published in the coming weeks. Meanwhile, see how the 2025 edition ran: keynotes, workshops, panels and networking.",
+    description: DESCRIPTION,
     url: "https://blockfestafrica.com/schedule",
     isPartOf: {
       "@type": "WebSite",
@@ -55,7 +55,7 @@ export default function Schedule() {
     mainEntity: {
       "@type": "EventSchedule",
       name: `${CURRENT_EDITION.name} Schedule`,
-      description: `Programme of activities for ${CURRENT_EDITION.name} on ${CURRENT_EDITION.date.displayDate}. Times are published closer to the event.`,
+      description: `Programme of activities for ${CURRENT_EDITION.name} on ${CURRENT_EDITION.date.displayDate}.`,
     },
   };
 
@@ -67,11 +67,6 @@ export default function Schedule() {
         dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
       />
       <main id="main" className={`${gotham.className} min-h-screen bg-paper`}>
-        <ComingSoonNotice
-          title="2026 schedule coming soon"
-          description="The Lagos '26 programme is published in the coming weeks. October 22 is the workshop and The Back Room, October 23 the main conference, October 24 the invitation-only Mixer."
-        />
-
         {/* Header Section */}
         <section className="section-y bg-ground">
           <div className="container-page">
@@ -84,9 +79,9 @@ export default function Schedule() {
                 Schedule of <span className="text-white">Activities</span>
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
-                Times for October 22 to 24 land in the coming weeks.
-                Last year&apos;s programme is a good guide to the shape of the
-                days.
+                Two days, hour by hour: workshops and masterclasses on October
+                22, and the main conference on October 23. Times are Lagos
+                time, and the programme may shift on the day.
               </p>
             </div>
           </div>
@@ -94,6 +89,24 @@ export default function Schedule() {
 
         <section className="section-y bg-paper">
           <div className="container-page">
+            <RunOfShow />
+          </div>
+        </section>
+
+        <section
+          aria-labelledby="past-agenda-heading"
+          className="section-y border-t border-gray-200 bg-paper"
+        >
+          <div className="container-page">
+            <h2
+              id="past-agenda-heading"
+              className="text-display-sm font-bold text-gray-900"
+            >
+              Last year&apos;s programme
+            </h2>
+            <p className="mb-8 mt-3 max-w-2xl text-base text-gray-600">
+              For a feel of how a Blockfest Africa day runs, here is 2025.
+            </p>
             <PastAgenda />
           </div>
         </section>

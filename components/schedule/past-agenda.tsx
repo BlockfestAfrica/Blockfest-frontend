@@ -7,11 +7,9 @@ import { Agenda } from "@/components/agenda";
 /**
  * Last year's agenda, collapsed.
  *
- * /schedule answers "when is what in 2026", and the answer today is "not
- * published yet". Rendering the 2025 programme hour by hour underneath that
- * gave the page a wall of specific times that a buyer skimming it could easily
- * read as this year's, however it was labelled. Collapsed, "coming soon" is the
- * page's answer and 2025 is there for anyone who deliberately asks for it.
+ * /schedule answers "when is what in 2026". Last year's programme sits under
+ * it, collapsed, so a buyer skimming the page cannot read 2025's times as
+ * this year's. It is there for anyone who deliberately asks for it.
  */
 export function PastAgenda() {
   const [open, setOpen] = useState(false);
