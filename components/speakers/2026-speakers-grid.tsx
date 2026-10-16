@@ -7,6 +7,14 @@ import { useMemo, useState } from "react";
 import { FaXTwitter, FaLinkedin, FaYoutube } from "react-icons/fa6";
 import { arrangeLineup, type Speaker } from "@/lib/speakers";
 
+/** The gold label each role wears; a plain speaker wears none. */
+const ROLE_BADGE: Partial<Record<NonNullable<Speaker["role"]>, string>> = {
+  keynote: "Keynote Speaker",
+  "special-guest": "Special Guest",
+  facilitator: "Facilitator",
+  moderator: "Moderator",
+};
+
 function generateSpeakerSlug(name: string) {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
@@ -111,17 +119,8 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
           {filteredSpeakers.map((speaker) => {
             const slug = generateSpeakerSlug(speaker.name);
             const bioTeaser = speaker.bio?.split("\n\n")[0];
-            const isSpecialGuest = speaker.role === "special-guest";
-            const isKeynote = speaker.role === "keynote";
-            const isFacilitator = speaker.role === "facilitator";
             /* The one label a speaker wears in gold over their portrait. */
-            const badge = isKeynote
-              ? "Keynote Speaker"
-              : isSpecialGuest
-                ? "Special Guest"
-                : isFacilitator
-                  ? "Facilitator"
-                  : null;
+            const badge = (speaker.role && ROLE_BADGE[speaker.role]) ?? null;
 
             return (
               /* The ring is on the card: the profile link covering it is
@@ -154,7 +153,7 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                     priority={speaker === speakers[0]}
                   />
 
-                  {/* Keynote speakers, special guests and facilitators wear the brand gold,
+                  {/* Keynote speakers, special guests, facilitators and moderators wear the brand gold,
                       the same one the site's gold CTAs use. Everyone else
                       keeps their expertise chip. */}
                   {badge ? (

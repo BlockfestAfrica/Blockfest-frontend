@@ -12,10 +12,11 @@ export interface Speaker {
   bio?: string;
   cohort?: "2026" | "past";
   /**
-   * How the programme uses them. A facilitator guides a session rather than
-   * speaking in it, so they wear their own label and come after the speakers.
+   * How the programme uses them. A facilitator or a moderator guides a
+   * session rather than speaking in it, so they wear their own label and come
+   * after the speakers.
    */
-  role?: "speaker" | "special-guest" | "keynote" | "facilitator";
+  role?: "speaker" | "special-guest" | "keynote" | "facilitator" | "moderator";
   /**
    * As the team's own bio states them, for balancing the 2026 lineup (see
    * arrangeLineup). Never guessed from a name or a photo: a speaker without
@@ -592,6 +593,28 @@ export const SpeakersList: Speaker[] = [
     bio: "Christine Imoukhuede is a tech entrepreneur, product leader, and Founder & CEO of Ahavaplan, an AI-powered platform helping African event professionals manage and grow their businesses.\n\nWith over 10 years of experience, she has built technology products at Apple, Lockheed Martin, Toyota and UPS.\n\nAfter launching Ahavaplan in the US, Christine relocated to Nigeria in 2026 to scale the company across Africa. In 2026, she was one of five winners of the Standard Chartered Foundation Women in Tech Accelerator Nigeria.\n\nAt Blockfest Africa 2026, Christine joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Oluwanifemi David Babanumi",
+    pronouns: "he",
+    title: "Founder, The Switch Labs",
+    image: "/2026/speakers/david.jpeg",
+    expertise: ["Marketing & Media", "Web3 & Blockchain"],
+    company: "The Switch Labs",
+    twitter: "https://x.com/niphermedave",
+    bio: "Oluwanifemi David Babanumi is a creator, influencer and marketing strategist who has worked with products across prediction markets, AI, DeFi, gaming, NFTs and more.\n\nHe focuses on helping strong products scale through user retention.\n\nOluwanifemi joins Blockfest Africa 2026 as a moderator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "moderator",
+  },
+  {
+    name: "Kayode Oluwatimilehin",
+    pronouns: "he",
+    title: "CEO, Spendin",
+    image: "/2026/speakers/kayode.jpeg",
+    expertise: ["Fintech", "Entrepreneurship"],
+    company: "Spendin",
+    bio: "Kayode Oluwatimilehin is a technology entrepreneur building fintech solutions that make financial services more accessible to Africans.\n\nThrough Neona Technologies and Spendin, he is building products spanning payments, multi-currency finance and credit, now live across 15 markets.\n\nAt Blockfest Africa 2026, Kayode joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
 
   /*
    * Returning from a previous edition. His entry up the list stays as it is,
@@ -633,9 +656,15 @@ const HONORIFIC =
  * The 2026 lineup's priority, for the home carousel and /speakers alike: a
  * fixed `order` first, lowest first; then keynote speakers, then special
  * guests, then everyone else in the order of SpeakersList, with facilitators
- * after the speakers. Array sort is stable, so ties keep it.
+ * and moderators after the speakers. Array sort is stable, so ties keep it.
  */
-const ROLE_RANK = { keynote: 0, "special-guest": 1, speaker: 2, facilitator: 3 } as const;
+const ROLE_RANK = {
+  keynote: 0,
+  "special-guest": 1,
+  speaker: 2,
+  facilitator: 3,
+  moderator: 3,
+} as const;
 
 export function lineupOrder(a: Speaker, b: Speaker): number {
   const placed = (s: Speaker) => s.order ?? Number.POSITIVE_INFINITY;
