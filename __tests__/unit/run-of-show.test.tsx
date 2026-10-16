@@ -107,11 +107,11 @@ describe("the run of show on the page", () => {
     expect(screen.getByRole("link", { name: "Tobiloba Adedeji" }).getAttribute("href")).toBe(
       "/speakers/tobiloba-adedeji",
     );
-    expect(screen.getByRole("link", { name: "Oluwanifemi David Babanumi" }).getAttribute("href")).toBe(
-      "/speakers/oluwanifemi-david-babanumi",
-    );
     expect(screen.getByRole("link", { name: "Dr. Maruf Olatunji Alausa" }).getAttribute("href")).toBe(
       "/speakers/dr-tunji-alausa",
+    );
+    expect(screen.getByRole("link", { name: "Oluwanifemi David Babanumi" }).getAttribute("href")).toBe(
+      "/speakers/oluwanifemi-david-babanumi",
     );
   });
 });
