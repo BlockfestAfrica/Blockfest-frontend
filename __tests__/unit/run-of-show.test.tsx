@@ -104,15 +104,16 @@ describe("the run of show on the page", () => {
 
   it("links a 2026 speaker's name to their profile", () => {
     render(<RunOfShow />);
+    // Only names already on the 2026 lineup. Oluwanifemi and Kayode are on
+    // the sheet and will become links when their speaker PR lands.
     expect(screen.getByRole("link", { name: "Tobiloba Adedeji" }).getAttribute("href")).toBe(
       "/speakers/tobiloba-adedeji",
-    );
-    expect(screen.getByRole("link", { name: "Oluwanifemi David Babanumi" }).getAttribute("href")).toBe(
-      "/speakers/oluwanifemi-david-babanumi",
     );
     expect(screen.getByRole("link", { name: "Dr. Maruf Olatunji Alausa" }).getAttribute("href")).toBe(
       "/speakers/dr-tunji-alausa",
     );
+    expect(screen.getByText("Oluwanifemi David Babanumi")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Oluwanifemi David Babanumi" })).toBeNull();
   });
 });
 
