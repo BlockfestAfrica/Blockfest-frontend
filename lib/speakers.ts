@@ -574,6 +574,18 @@ export const SpeakersList: Speaker[] = [
     role: "facilitator",
   },
   {
+    name: "Daniel Emeka",
+    pronouns: "he",
+    title: "Managing Director & Co-Founder, The Republic",
+    image: "/2026/speakers/emeka.JPG",
+    expertise: ["Marketing & Media", "Entrepreneurship"],
+    company: "The Republic",
+    twitter: "https://x.com/realdanielemeka",
+    bio: "Daniel Emeka is Managing Director and Co-Founder of The Republic, with over 18 years of experience in brand strategy, creative direction, design and filmmaking.\n\nHe has led creative work for brands including Cowbell, Chivita and Capri-Sun. He also founded Naija Graphic Designers, a community of over 331,000 members, and his work on the Chivita 2.0 campaign won Best Use of Social Media at the Nigerian Marketing Awards 2024.\n\nDaniel joins Blockfest Africa 2026 as a facilitator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "facilitator",
+  },
+  {
     name: "Hon. Olatunbosun Alake",
     pronouns: "he",
     title: "Commissioner for Innovation, Science & Technology, LASG",
