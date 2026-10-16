@@ -221,7 +221,9 @@ export default async function SpeakerPage({
                     {speaker.cohort === "2026"
                       ? speaker.role === "facilitator"
                         ? "Facilitating at Blockfest Africa 2026"
-                        : "Speaking at Blockfest Africa 2026"
+                        : speaker.role === "moderator"
+                          ? "Moderating at Blockfest Africa 2026"
+                          : "Speaking at Blockfest Africa 2026"
                       : "Spoke at Blockfest Africa"}
                   </p>
                   <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">

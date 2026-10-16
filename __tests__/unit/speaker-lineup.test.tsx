@@ -65,8 +65,10 @@ describe("the 2026 lineup", () => {
       "Dr. Bolutife Kusimo",
       "Hon. Olatunbosun Alake",
       "Ian Issa",
+      "Kayode Oluwatimilehin",
       "Nebeokike Sunday",
       "Olamilekan Majekodunmi",
+      "Oluwanifemi David Babanumi",
       "Salemking",
       "Scott C. Eneje",
       "Tobiloba Adedeji",
@@ -77,6 +79,11 @@ describe("the 2026 lineup", () => {
   it("lists Bibi Eneje and Tobiloba Adedeji as facilitators, and no one else", () => {
     const facilitators = lineup.filter((s) => s.role === "facilitator").map((s) => s.name);
     expect(facilitators.sort()).toEqual(["Bibi Eneje", "Tobiloba Adedeji"]);
+  });
+
+  it("lists Oluwanifemi David Babanumi as a moderator, and no one else", () => {
+    const moderators = lineup.filter((s) => s.role === "moderator").map((s) => s.name);
+    expect(moderators).toEqual(["Oluwanifemi David Babanumi"]);
   });
 
   it("records pronouns for every announced speaker, so the lineup can balance", () => {
@@ -129,12 +136,13 @@ describe("arrangeLineup", () => {
     expect(arrangeLineup(list).map((s) => s.name)).toEqual(["A", "B", "X"]);
   });
 
-  it("puts a facilitator after the speakers of the same group", () => {
+  it("puts a facilitator or a moderator after the speakers of the same group", () => {
     const list = [
       person("Facilitator", { pronouns: "he", role: "facilitator" }),
+      person("Moderator", { pronouns: "he", role: "moderator" }),
       person("Speaker", { pronouns: "he", role: "speaker" }),
     ];
-    expect(arrangeLineup(list).map((s) => s.name)).toEqual(["Speaker", "Facilitator"]);
+    expect(arrangeLineup(list).map((s) => s.name)).toEqual(["Speaker", "Facilitator", "Moderator"]);
   });
 });
 
@@ -168,5 +176,18 @@ describe("the /speakers grid", () => {
     expect(screen.getByRole("link", { name: "View Guide Person's profile (facilitator)" })).toBeTruthy();
     expect(screen.getAllByText("Facilitator")).toHaveLength(1);
     expect(screen.queryByText("Keynote Speaker")).toBeNull();
+  });
+
+  it("wears Moderator on a moderator, and says so in the link's name", () => {
+    render(
+      <FeaturedSpeakersGrid
+        speakers={[
+          person("Host Person", { pronouns: "he", role: "moderator" }),
+          person("Plain Person", { pronouns: "she", role: "speaker" }),
+        ]}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "View Host Person's profile (moderator)" })).toBeTruthy();
+    expect(screen.getAllByText("Moderator")).toHaveLength(1);
   });
 });
