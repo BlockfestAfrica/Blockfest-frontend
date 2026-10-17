@@ -223,7 +223,9 @@ export default async function SpeakerPage({
                         ? "Facilitating at Blockfest Africa 2026"
                         : speaker.role === "moderator"
                           ? "Moderating at Blockfest Africa 2026"
-                          : "Speaking at Blockfest Africa 2026"
+                          : speaker.role === "host"
+                            ? "Hosting at Blockfest Africa 2026"
+                            : "Speaking at Blockfest Africa 2026"
                       : "Spoke at Blockfest Africa"}
                   </p>
                   <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
@@ -256,44 +258,48 @@ export default async function SpeakerPage({
           </div>
         </section>
 
-        {/* Biography Section */}
-        <section className="section-y bg-paper border-t border-gray-200">
-          <div className="container-page">
-            {speaker.bio ? (
-              <>
-                <div className="mb-10 lg:mb-14">
-                  <h2
-                    className={`${gotham.className} text-display-sm font-bold text-gray-900`}
-                  >
-                    About {speakerShortName(speaker.name)}
-                  </h2>
-                </div>
-
-                <article className="max-w-3xl">
-                  <div className="space-y-6 text-base leading-relaxed text-gray-600">
-                    {formatBio(speaker.bio)}
+        {/* Hosts are announced without a bio; the coming-soon block is for
+            speakers whose write-up is still on the way, not for a role that
+            was never going to have one. */}
+        {(speaker.bio || speaker.role !== "host") && (
+          <section className="section-y bg-paper border-t border-gray-200">
+            <div className="container-page">
+              {speaker.bio ? (
+                <>
+                  <div className="mb-10 lg:mb-14">
+                    <h2
+                      className={`${gotham.className} text-display-sm font-bold text-gray-900`}
+                    >
+                      About {speakerShortName(speaker.name)}
+                    </h2>
                   </div>
-                </article>
-              </>
-            ) : (
-              <div className="max-w-2xl">
-                <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
-                  <Users className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <h2
-                  className={`${gotham.className} mt-4 text-2xl font-bold text-gray-900`}
-                >
-                  Biography Coming Soon
-                </h2>
-                <p className="mt-3 text-base leading-relaxed text-gray-600">
-                  We&apos;re currently crafting a comprehensive biography for{" "}
-                  {speakerShortName(speaker.name)}. Check back soon for their
-                  inspiring story and professional journey.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
+
+                  <article className="max-w-3xl">
+                    <div className="space-y-6 text-base leading-relaxed text-gray-600">
+                      {formatBio(speaker.bio)}
+                    </div>
+                  </article>
+                </>
+              ) : (
+                <div className="max-w-2xl">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-blue/10 text-brand-blue">
+                    <Users className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <h2
+                    className={`${gotham.className} mt-4 text-2xl font-bold text-gray-900`}
+                  >
+                    Biography Coming Soon
+                  </h2>
+                  <p className="mt-3 text-base leading-relaxed text-gray-600">
+                    We&apos;re currently crafting a comprehensive biography for{" "}
+                    {speakerShortName(speaker.name)}. Check back soon for their
+                    inspiring story and professional journey.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* CTA Section */}
         <section className="section-y bg-ground">

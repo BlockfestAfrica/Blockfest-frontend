@@ -16,6 +16,7 @@ import { is2026Speaker, SpeakersList, speakerSlug } from "@/lib/speakers";
 /** Sheet names that are the same person as a 2026 speaker profile. */
 const NAME_ALIASES: ReadonlyArray<readonly [string, string]> = [
   ["Dr. Maruf Olatunji Alausa", "Dr. Tunji Alausa"],
+  ["Xploit", "Achebo Edwin (Xploit)"],
 ];
 
 const PROFILES = SpeakersList.filter(is2026Speaker)

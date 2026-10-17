@@ -57,12 +57,17 @@ describe("the 2026 lineup", () => {
     ]);
     // Not in the team's list: after it, not dropped.
     expect(lineup.slice(9).map((s) => s.name).sort()).toEqual([
+      "Achebo Edwin (Xploit)",
       "Adewale Akinpelu",
+      "Akintola Oluwapelumi (Flames)",
       "Akitoye Balogun",
       "Ashley Rene Olika",
       "Bibi Eneje",
       "Christine Imoukhuede",
+      "Daniel Emeka",
+      "David Ogooluwa (Iamdotify)",
       "Dr. Bolutife Kusimo",
+      "Hon. Abdul-Ganiyu Vinod Obasa",
       "Hon. Olatunbosun Alake",
       "Ian Issa",
       "Kayode Oluwatimilehin",
@@ -73,17 +78,32 @@ describe("the 2026 lineup", () => {
       "Scott C. Eneje",
       "Tobiloba Adedeji",
       "Uchenna Edeoga",
+      "Yewande Abiodun",
     ]);
   });
 
-  it("lists Bibi Eneje and Tobiloba Adedeji as facilitators, and no one else", () => {
+  it("lists Bibi Eneje, Daniel Emeka, Tobiloba Adedeji and Yewande Abiodun as facilitators, and no one else", () => {
     const facilitators = lineup.filter((s) => s.role === "facilitator").map((s) => s.name);
-    expect(facilitators.sort()).toEqual(["Bibi Eneje", "Tobiloba Adedeji"]);
+    expect(facilitators.sort()).toEqual([
+      "Bibi Eneje",
+      "Daniel Emeka",
+      "Tobiloba Adedeji",
+      "Yewande Abiodun",
+    ]);
   });
 
   it("lists Oluwanifemi David Babanumi as a moderator, and no one else", () => {
     const moderators = lineup.filter((s) => s.role === "moderator").map((s) => s.name);
     expect(moderators).toEqual(["Oluwanifemi David Babanumi"]);
+  });
+
+  it("lists Achebo Edwin (Xploit), Akintola Oluwapelumi (Flames) and David Ogooluwa (Iamdotify) as hosts, and no one else", () => {
+    const hosts = lineup.filter((s) => s.role === "host").map((s) => s.name);
+    expect(hosts.sort()).toEqual([
+      "Achebo Edwin (Xploit)",
+      "Akintola Oluwapelumi (Flames)",
+      "David Ogooluwa (Iamdotify)",
+    ]);
   });
 
   it("records pronouns for every announced speaker, so the lineup can balance", () => {
@@ -136,13 +156,19 @@ describe("arrangeLineup", () => {
     expect(arrangeLineup(list).map((s) => s.name)).toEqual(["A", "B", "X"]);
   });
 
-  it("puts a facilitator or a moderator after the speakers of the same group", () => {
+  it("puts a facilitator, a moderator or a host after the speakers of the same group", () => {
     const list = [
       person("Facilitator", { pronouns: "he", role: "facilitator" }),
       person("Moderator", { pronouns: "he", role: "moderator" }),
+      person("Host", { pronouns: "he", role: "host" }),
       person("Speaker", { pronouns: "he", role: "speaker" }),
     ];
-    expect(arrangeLineup(list).map((s) => s.name)).toEqual(["Speaker", "Facilitator", "Moderator"]);
+    expect(arrangeLineup(list).map((s) => s.name)).toEqual([
+      "Speaker",
+      "Facilitator",
+      "Moderator",
+      "Host",
+    ]);
   });
 });
 
@@ -189,5 +215,18 @@ describe("the /speakers grid", () => {
     );
     expect(screen.getByRole("link", { name: "View Host Person's profile (moderator)" })).toBeTruthy();
     expect(screen.getAllByText("Moderator")).toHaveLength(1);
+  });
+
+  it("wears Host on a host, and says so in the link's name", () => {
+    render(
+      <FeaturedSpeakersGrid
+        speakers={[
+          person("Stage Person", { pronouns: "he", role: "host" }),
+          person("Plain Person", { pronouns: "she", role: "speaker" }),
+        ]}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "View Stage Person's profile (host)" })).toBeTruthy();
+    expect(screen.getAllByText("Host")).toHaveLength(1);
   });
 });
