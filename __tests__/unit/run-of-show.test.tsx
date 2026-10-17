@@ -113,6 +113,15 @@ describe("the run of show on the page", () => {
     expect(screen.getByRole("link", { name: "Oluwanifemi David Babanumi" }).getAttribute("href")).toBe(
       "/speakers/oluwanifemi-david-babanumi",
     );
+    // A name inside a comma-separated panel list links too.
+    expect(screen.getByRole("link", { name: "Kayode Oluwatimilehin" }).getAttribute("href")).toBe(
+      "/speakers/kayode-oluwatimilehin",
+    );
+    // A name with no profile stays plain text. The placeholder never gets a
+    // profile, so a speaker PR landing cannot flip this the way it did when
+    // this test pinned a real name that was still on its way.
+    expect(screen.getByText("To be announced")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "To be announced" })).toBeNull();
   });
 });
 
