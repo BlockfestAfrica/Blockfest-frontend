@@ -104,16 +104,24 @@ describe("the run of show on the page", () => {
 
   it("links a 2026 speaker's name to their profile", () => {
     render(<RunOfShow />);
-    // Only names already on the 2026 lineup. Oluwanifemi and Kayode are on
-    // the sheet and will become links when their speaker PR lands.
     expect(screen.getByRole("link", { name: "Tobiloba Adedeji" }).getAttribute("href")).toBe(
       "/speakers/tobiloba-adedeji",
     );
     expect(screen.getByRole("link", { name: "Dr. Maruf Olatunji Alausa" }).getAttribute("href")).toBe(
       "/speakers/dr-tunji-alausa",
     );
-    expect(screen.getByText("Oluwanifemi David Babanumi")).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "Oluwanifemi David Babanumi" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Oluwanifemi David Babanumi" }).getAttribute("href")).toBe(
+      "/speakers/oluwanifemi-david-babanumi",
+    );
+    // A name inside a comma-separated panel list links too.
+    expect(screen.getByRole("link", { name: "Kayode Oluwatimilehin" }).getAttribute("href")).toBe(
+      "/speakers/kayode-oluwatimilehin",
+    );
+    // A name with no profile stays plain text. The placeholder never gets a
+    // profile, so a speaker PR landing cannot flip this the way it did when
+    // this test pinned a real name that was still on its way.
+    expect(screen.getByText("To be announced")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "To be announced" })).toBeNull();
   });
 });
 
