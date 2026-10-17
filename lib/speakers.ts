@@ -12,11 +12,11 @@ export interface Speaker {
   bio?: string;
   cohort?: "2026" | "past";
   /**
-   * How the programme uses them. A facilitator or a moderator guides a
-   * session rather than speaking in it, so they wear their own label and come
-   * after the speakers.
+   * How the programme uses them. A facilitator, a moderator or a host
+   * guides the day rather than speaking in it, so they wear their own
+   * label and come after the speakers.
    */
-  role?: "speaker" | "special-guest" | "keynote" | "facilitator" | "moderator";
+  role?: "speaker" | "special-guest" | "keynote" | "facilitator" | "moderator" | "host";
   /**
    * As the team's own bio states them, for balancing the 2026 lineup (see
    * arrangeLineup). Never guessed from a name or a photo: a speaker without
@@ -639,6 +639,44 @@ export const SpeakersList: Speaker[] = [
     bio: "Kayode Oluwatimilehin is a technology entrepreneur building fintech solutions that make financial services more accessible to Africans.\n\nThrough Neona Technologies and Spendin, he is building products spanning payments, multi-currency finance and credit, now live across 15 markets.\n\nAt Blockfest Africa 2026, Kayode joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
   },
+  {
+    name: "Hon. Abdul-Ganiyu Vinod Obasa",
+    pronouns: "he",
+    title: "Executive Chairman, Agege Local Government",
+    image: "/2026/speakers/abdul.JPG",
+    expertise: ["Government & Policy", "Tech Innovation", "Business & Finance"],
+    company: "Agege Local Government",
+    bio: "Hon. Abdul-Ganiyu Vinod Obasa is the Executive Chairman of Agege Local Government, with experience in public service, emerging technology, finance and entrepreneurship.\n\nAt Blockfest Africa 2026, he joins as a special guest as we celebrate technology and explore new ways to support its growth in Lagos and across the continent.",
+    cohort: "2026",
+    role: "special-guest",
+  },
+  {
+    name: "Achebo Edwin (Xploit)",
+    pronouns: "he",
+    title: "Host",
+    image: "/2026/speakers/Xploit.jpg",
+    twitter: "https://x.com/xploit_vobe",
+    cohort: "2026",
+    role: "host",
+  },
+  {
+    name: "Akintola Oluwapelumi (Flames)",
+    pronouns: "he",
+    title: "Host",
+    image: "/2026/speakers/Flames.jpg",
+    twitter: "https://x.com/flame_s__",
+    cohort: "2026",
+    role: "host",
+  },
+  {
+    name: "David Ogooluwa (Iamdotify)",
+    pronouns: "he",
+    title: "Host",
+    image: "/2026/speakers/Dotify.jpg",
+    twitter: "https://x.com/iamdotify",
+    cohort: "2026",
+    role: "host",
+  },
 
   /*
    * Returning from a previous edition. His entry up the list stays as it is,
@@ -679,8 +717,8 @@ const HONORIFIC =
 /**
  * The 2026 lineup's priority, for the home carousel and /speakers alike: a
  * fixed `order` first, lowest first; then keynote speakers, then special
- * guests, then everyone else in the order of SpeakersList, with facilitators
- * and moderators after the speakers. Array sort is stable, so ties keep it.
+ * guests, then everyone else in the order of SpeakersList, with facilitators,
+ * moderators and hosts after the speakers. Array sort is stable, so ties keep it.
  */
 const ROLE_RANK = {
   keynote: 0,
@@ -688,6 +726,7 @@ const ROLE_RANK = {
   speaker: 2,
   facilitator: 3,
   moderator: 3,
+  host: 3,
 } as const;
 
 export function lineupOrder(a: Speaker, b: Speaker): number {
