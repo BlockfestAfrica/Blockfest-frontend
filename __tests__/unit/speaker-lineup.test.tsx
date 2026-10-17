@@ -74,12 +74,18 @@ describe("the 2026 lineup", () => {
       "Scott C. Eneje",
       "Tobiloba Adedeji",
       "Uchenna Edeoga",
+      "Yewande Abiodun",
     ]);
   });
 
-  it("lists Bibi Eneje, Daniel Emeka and Tobiloba Adedeji as facilitators, and no one else", () => {
+  it("lists Bibi Eneje, Daniel Emeka, Tobiloba Adedeji and Yewande Abiodun as facilitators, and no one else", () => {
     const facilitators = lineup.filter((s) => s.role === "facilitator").map((s) => s.name);
-    expect(facilitators.sort()).toEqual(["Bibi Eneje", "Daniel Emeka", "Tobiloba Adedeji"]);
+    expect(facilitators.sort()).toEqual([
+      "Bibi Eneje",
+      "Daniel Emeka",
+      "Tobiloba Adedeji",
+      "Yewande Abiodun",
+    ]);
   });
 
   it("lists Oluwanifemi David Babanumi as a moderator, and no one else", () => {

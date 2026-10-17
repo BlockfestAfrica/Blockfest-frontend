@@ -586,6 +586,18 @@ export const SpeakersList: Speaker[] = [
     role: "facilitator",
   },
   {
+    name: "Yewande Abiodun",
+    pronouns: "she",
+    title: "Africa GTM & Distribution Strategist",
+    image: "/2026/speakers/Yewande.jpeg",
+    expertise: ["Web3 & Blockchain", "Entrepreneurship"],
+    company: "Blocstreets",
+    twitter: "https://x.com/lionessatease",
+    bio: "Yewande Abiodun is a Web3 operator and ecosystem builder focused on growing crypto adoption across Africa.\n\nAs the former Southwest Nigeria Lead for Base Africa, she helped onboard over 25 products, organized hackathons and connected founders to global incubators and capital.\n\nShe is also the founder of Blocstreets, a distribution startup helping tech products map distribution networks across Africa.\n\nYewande joins Blockfest Africa 2026 as a facilitator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "facilitator",
+  },
+  {
     name: "Hon. Olatunbosun Alake",
     pronouns: "he",
     title: "Commissioner for Innovation, Science & Technology, LASG",
