@@ -67,6 +67,14 @@ export const sponsors: Sponsor[] = [
     href: "https://x.com/cakewallet",
   },
   {
+    name: "Luli",
+    tier: "Silver",
+    logo: "/2026/logos/luli.png",
+    width: 421,
+    height: 373,
+    href: "https://x.com/luli_fiber",
+  },
+  {
     name: "Rovv",
     tier: "Mobility",
     logo: "/2026/logos/rovv.png",
@@ -97,6 +105,32 @@ export const sponsors: Sponsor[] = [
     width: 572,
     height: 480,
     href: "https://web3afrika.com",
+  },
+
+  {
+    name: "Jeroid Angels",
+    tier: "Community",
+    logo: "/2026/logos/jeroidangels.png",
+    width: 1195,
+    height: 480,
+    href: "https://x.com/jeroidangels",
+  },
+ 
+  {
+    name: "Mascot",
+    tier: "Gadget",
+    logo: "/2026/logos/mascot.png",
+    width: 225,
+    height: 187,
+    href: "https://x.com/mascotvibes_ng",
+  },
+  {
+    name: "SheCode",
+    tier: "Community",
+    logo: "/2026/logos/shecode.png",
+    width: 480,
+    height: 480,
+    href: "https://x.com/shecodeafrica",
   },
   {
     name: "Women in DeFi",

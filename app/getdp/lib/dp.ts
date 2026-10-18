@@ -675,13 +675,14 @@ export const FOOTER = {
   sponsorMaxH: 46,
   sponsorMaxW: 200,
   /**
-   * No sponsor is drawn shorter than this, above the partners' floor. A wing
-   * beside the headline shrinks only this far; past it, the next sponsors
-   * move to a line of their own under the headline row, full size. 33 since
-   * Nirvana Academy joined (12 October), so every sponsor still fits beside
-   * the headline.
+   * No sponsor is drawn shorter than this. A wing beside the headline shrinks
+   * only this far; past it, the next sponsors move to a line of their own
+   * under the headline row, full size. 22 since Luli, Jeroid Angels, Mascot
+   * and SheCode joined (18 October), so every sponsor still fits beside the
+   * headline. That is under the partners' floor: the row is too long to keep
+   * both.
    */
-  sponsorMinH: 33,
+  sponsorMinH: 22,
   sponsorGap: 60,
   wingGap: 84,
   rowGap: 16,
