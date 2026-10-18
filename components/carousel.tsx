@@ -44,7 +44,7 @@ const Speakers: React.FC<PropType> = (props) => {
   );
 
   /*
-   * Moves only when someone moves it: arrows, dots, swipe or the arrow keys.
+   * Moves only when someone moves it: arrows, swipe or the arrow keys.
    *
    * It used to advance itself every four seconds, which obliged a Pause button
    * under it (auto-moving content needs a way to stop it, WCAG 2.2.2). The
@@ -63,11 +63,6 @@ const Speakers: React.FC<PropType> = (props) => {
     onPrevButtonClick,
     onNextButtonClick,
   } = usePrevNextButtons(emblaApi);
-
-  const scrollTo = useCallback(
-    (index: number) => emblaApi?.scrollTo(index),
-    [emblaApi]
-  );
 
   const onInit = useCallback((emblaApi: EmblaCarouselType) => {
     setScrollSnaps(emblaApi.scrollSnapList());
@@ -222,34 +217,25 @@ const Speakers: React.FC<PropType> = (props) => {
         </div>
       </div>
 
-      {/* Dot Indicators */}
+      {/* One mark for the whole lineup. A dot per person became a row of
+          pebbles once the lineup passed a dozen. */}
       {showDots && scrollSnaps.length > 1 && (
-        // Plain buttons in a group, not a tablist: there are no tabpanels here,
-        // and the tab pattern promises a keyboard model this does not implement.
-        <div
-          className="hidden md:flex justify-center gap-2 mt-5"
-          role="group"
-          aria-label="Choose speaker slide"
-        >
-          {scrollSnaps.map((_, index) => (
-            <button
-              type="button"
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              key={index}
-              // The dot stays 12px; the hit area around it is a full 44px.
-              className="flex min-h-11 w-6 shrink-0 items-center justify-center"
-              onClick={() => scrollTo(index)}
-              aria-current={index === selectedIndex}
-              aria-label={`Go to slide ${index + 1}: ${speakers[index]?.name}`}
-            >
-              <span
-                className={`block h-3 w-3 rounded-full transition-colors duration-300 ${index === selectedIndex
-                  ? "bg-brand-blue-light"
-                  : "bg-white/20 hover:bg-white/60"
-                  }`}
-              />
-            </button>
-          ))}
+        <div className="mt-5 hidden w-full max-w-48 flex-col items-center gap-2 md:flex">
+          <div
+            className="h-0.5 w-full overflow-hidden rounded-full bg-white/15"
+            aria-hidden="true"
+          >
+            <div
+              className="h-full rounded-full bg-brand-blue-light transition-[width] duration-300"
+              style={{
+                width: `${((selectedIndex + 1) / scrollSnaps.length) * 100}%`,
+              }}
+            />
+          </div>
+          <p className="text-sm tabular-nums text-ink-3">
+            <span className="sr-only">Slide </span>
+            {selectedIndex + 1} of {scrollSnaps.length}
+          </p>
         </div>
       )}
 
