@@ -113,7 +113,7 @@ export function HeroSection2026() {
               asChild
               className="rounded-full border border-line-2 bg-card-3 px-7 text-base font-semibold text-white hover:bg-white/20"
             >
-              <Link href="#lagos-2026">See the programme</Link>
+              <Link href="/schedule">See the programme</Link>
             </Button>
           </div>
 

@@ -57,13 +57,19 @@ describe("the 2026 lineup", () => {
     ]);
     // Not in the team's list: after it, not dropped.
     expect(lineup.slice(9).map((s) => s.name).sort()).toEqual([
+      "Abdulsamad Tiamiyu (Crypto Oracle)",
       "Achebo Edwin (Xploit)",
+      "Ada Nduka Oyom",
       "Adewale Akinpelu",
+      "Aiseosa Uyi-Idahor",
       "Akintola Oluwapelumi (Flames)",
       "Akitoye Balogun",
+      "Amara Achusi",
       "Ashley Rene Olika",
       "Bibi Eneje",
+      "Chibuotu Amadi",
       "Christine Imoukhuede",
+      "Coach Yemi",
       "Daniel Emeka",
       "David Ogooluwa (Iamdotify)",
       "Dr. Bolutife Kusimo",
@@ -74,27 +80,39 @@ describe("the 2026 lineup", () => {
       "Nebeokike Sunday",
       "Olamilekan Majekodunmi",
       "Oluwanifemi David Babanumi",
+      "Onone Peace Ega",
       "Salemking",
       "Scott C. Eneje",
+      "Shodipo Ayomide",
+      "Sodiq Akinjobi",
       "Tobiloba Adedeji",
       "Uchenna Edeoga",
       "Yewande Abiodun",
     ]);
   });
 
-  it("lists Bibi Eneje, Daniel Emeka, Tobiloba Adedeji and Yewande Abiodun as facilitators, and no one else", () => {
+  it("lists Bibi Eneje, Daniel Emeka, Tobiloba Adedeji, Yewande Abiodun, Shodipo Ayomide, Aiseosa Uyi-Idahor, Sodiq Akinjobi and Onone Peace Ega as facilitators, and no one else", () => {
     const facilitators = lineup.filter((s) => s.role === "facilitator").map((s) => s.name);
     expect(facilitators.sort()).toEqual([
+      "Aiseosa Uyi-Idahor",
       "Bibi Eneje",
       "Daniel Emeka",
+      "Onone Peace Ega",
+      "Shodipo Ayomide",
+      "Sodiq Akinjobi",
       "Tobiloba Adedeji",
       "Yewande Abiodun",
     ]);
   });
 
-  it("lists Oluwanifemi David Babanumi as a moderator, and no one else", () => {
+  it("lists Oluwanifemi David Babanumi, Coach Yemi, Abdulsamad Tiamiyu (Crypto Oracle) and Amara Achusi as moderators, and no one else", () => {
     const moderators = lineup.filter((s) => s.role === "moderator").map((s) => s.name);
-    expect(moderators).toEqual(["Oluwanifemi David Babanumi"]);
+    expect(moderators.sort()).toEqual([
+      "Abdulsamad Tiamiyu (Crypto Oracle)",
+      "Amara Achusi",
+      "Coach Yemi",
+      "Oluwanifemi David Babanumi",
+    ]);
   });
 
   it("lists Achebo Edwin (Xploit), Akintola Oluwapelumi (Flames) and David Ogooluwa (Iamdotify) as hosts, and no one else", () => {

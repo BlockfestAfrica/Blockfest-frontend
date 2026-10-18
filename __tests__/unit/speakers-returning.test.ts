@@ -77,6 +77,7 @@ describe("how a profile refers to its speaker", () => {
   it("names somebody with an honorific in full, never by the honorific alone", () => {
     expect(speakerShortName(RETURNING)).toBe(RETURNING);
     expect(speakerShortName("Dr. Tunji Alausa")).toBe("Dr. Tunji Alausa");
+    expect(speakerShortName("Coach Yemi")).toBe("Coach Yemi");
     expect(speakerShortName("Rt. Hon. Somebody")).toBe("Rt. Hon. Somebody");
     expect(speakerShortName("Prof Ada Obi")).toBe("Prof Ada Obi");
     // Titles still to come on a Lagos stage, and initials or a missing space.
