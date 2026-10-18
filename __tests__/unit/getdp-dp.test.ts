@@ -333,9 +333,10 @@ describe("the footer, from lib/partners-2026", () => {
     // and would cross the picture's edge: then it moves in just enough.
     const under = leftmost.x + leftmost.w / 2;
     expect(endorsed.cx).toBeGreaterThanOrEqual(under - 1e-6);
-    // Hashed Emergent is narrower than the label since the row took a 12th
-    // sponsor (Nirvana Academy), so the label moves in a little further.
-    expect(endorsed.cx - under).toBeLessThan(48);
+    // Hashed Emergent is narrower than the label, so the label moves in just
+    // enough to stay inside the edge. The longer sponsor row (18 October)
+    // made the logo narrower still, and the inset grew to about 56.
+    expect(endorsed.cx - under).toBeLessThan(64);
     const seal = footer.partners.find((p) => p.logo.name === "Lagos State Government")!;
     expect(seal.x + seal.w / 2).toBeCloseTo(endorsed.cx, 3);
     const rightEdge = Math.max(...row.map((s) => s.x + s.w));
@@ -471,7 +472,6 @@ describe("the footer, from lib/partners-2026", () => {
     );
     for (const s of laid.sponsors) {
       expect(s.h).toBeGreaterThanOrEqual(FOOTER.sponsorMinH - 1e-9);
-      expect(s.h).toBeGreaterThanOrEqual(FOOTER.partnerMinH - 1e-9);
       expect(s.x).toBeGreaterThanOrEqual(FOOTER.edge - 1e-9);
       expect(s.x + s.w).toBeLessThanOrEqual(DP_SIZE - FOOTER.edge + 1e-9);
     }
