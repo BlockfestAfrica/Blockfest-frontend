@@ -13,6 +13,7 @@ const ROLE_BADGE: Partial<Record<NonNullable<Speaker["role"]>, string>> = {
   "special-guest": "Special Guest",
   facilitator: "Facilitator",
   moderator: "Moderator",
+  host: "Host",
 };
 
 function generateSpeakerSlug(name: string) {
@@ -153,9 +154,9 @@ export function FeaturedSpeakersGrid({ speakers }: { speakers: Speaker[] }) {
                     priority={speaker === speakers[0]}
                   />
 
-                  {/* Keynote speakers, special guests, facilitators and moderators wear the brand gold,
-                      the same one the site's gold CTAs use. Everyone else
-                      keeps their expertise chip. */}
+                  {/* Keynote speakers, special guests, facilitators, moderators
+                      and hosts wear the brand gold, the same one the site's
+                      gold CTAs use. Everyone else keeps their expertise chip. */}
                   {badge ? (
                     <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-brand-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-gray-900">
                       {badge}
