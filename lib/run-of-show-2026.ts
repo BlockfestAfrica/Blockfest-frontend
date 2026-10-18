@@ -77,8 +77,8 @@ export interface RunDay {
   blocks: RunBlock[];
 }
 
-const TECHNICAL = "Technical Room (Room A)";
-const NON_TECHNICAL = "Non-Technical Room (Room B)";
+const TECHNICAL = "Technical Room (Room 1)";
+const NON_TECHNICAL = "Non-Technical Room (Room 2)";
 const TBA = "To be announced";
 
 export const runOfShow2026: RunDay[] = [

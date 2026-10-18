@@ -49,8 +49,8 @@ describe("the run of show's data", () => {
     ]);
     for (const split of splits) {
       expect(split.tracks.map((t) => t.room)).toEqual([
-        "Technical Room (Room A)",
-        "Non-Technical Room (Room B)",
+        "Technical Room (Room 1)",
+        "Non-Technical Room (Room 2)",
       ]);
     }
   });
@@ -84,8 +84,8 @@ describe("the run of show on the page", () => {
   it("shows both rooms side by side with their facilitators", () => {
     render(<RunOfShow />);
     const day = document.getElementById("day-1")!;
-    expect(within(day).getAllByText("Technical Room (Room A)")).toHaveLength(4);
-    expect(within(day).getAllByText("Non-Technical Room (Room B)")).toHaveLength(4);
+    expect(within(day).getAllByText("Technical Room (Room 1)")).toHaveLength(4);
+    expect(within(day).getAllByText("Non-Technical Room (Room 2)")).toHaveLength(4);
     expect(within(day).getByText("Tobiloba Adedeji")).toBeTruthy();
     expect(within(day).getByText("Bibi Eneje")).toBeTruthy();
   });
