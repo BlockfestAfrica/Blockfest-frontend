@@ -17,6 +17,9 @@ import { is2026Speaker, SpeakersList, speakerSlug } from "@/lib/speakers";
 const NAME_ALIASES: ReadonlyArray<readonly [string, string]> = [
   ["Dr. Maruf Olatunji Alausa", "Dr. Tunji Alausa"],
   ["Xploit", "Achebo Edwin (Xploit)"],
+  ["Ayomide Shodipo", "Shodipo Ayomide"],
+  ["Achusi Amara", "Amara Achusi"],
+  ["Crypto Oracle", "Abdulsamad Tiamiyu (Crypto Oracle)"],
 ];
 
 const PROFILES = SpeakersList.filter(is2026Speaker)

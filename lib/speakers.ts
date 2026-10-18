@@ -677,14 +677,137 @@ export const SpeakersList: Speaker[] = [
     cohort: "2026",
     role: "host",
   },
+  {
+    name: "Ada Nduka Oyom",
+    pronouns: "she",
+    title: "Founder & Executive Director, She Code Africa",
+    image: "/2026/speakers/nduka.jpg",
+    expertise: ["Education", "Community Building", "Tech Innovation"],
+    company: "She Code Africa",
+    twitter: "https://x.com/kolokodess",
+    bio: "Ada Nduka Oyom is the founder and Executive Director of She Code Africa, a pan-African nonprofit that has impacted over 65,000 women across the continent.\n\nWith over a decade of experience, she has built and scaled initiatives that reached over 500,000 developers across EMEA, securing six-figure investments and forging partnerships with Google, HP and FedEx.\n\nShe also co-founded Open Source Community Africa, now home to over 5,000 contributors, and serves as a Non-executive director on a U.S. non-profit board shaping AI ethics and policy.\n\nAt Blockfest Africa 2026, Ada joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
+  {
+    name: "Chibuotu Amadi",
+    pronouns: "he",
+    title: "Co-Founder & CEO, Paycrest",
+    image: "/2026/speakers/chibuotu.jpg",
+    expertise: ["Fintech", "Web3 & Blockchain", "Entrepreneurship"],
+    company: "Paycrest",
+    twitter: "https://x.com/stchibie",
+    bio: "Chibuotu Amadi is Co-Founder and CEO of Paycrest, building decentralized payment rails for the stablecoin era.\n\nHe has raised venture capital from local and international investors to build infrastructure for emerging markets. Previously at Gitcoin and ConsenSys, he built cross-chain funding tools that have moved over $50M toward public goods.\n\nHaving funded Paycrest through a mix of venture capital, ecosystem grants and revenue, he is a strong advocate for capital-efficient company building.\n\nAt Blockfest Africa 2026, Chibuotu joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
+  {
+    name: "Shodipo Ayomide",
+    pronouns: "he",
+    title: "Developer Relations & Engineering Lead",
+    image: "/2026/speakers/shodipo.jpeg",
+    expertise: ["Development", "Web3 & Blockchain", "Education"],
+    twitter: "https://x.com/developerayo",
+    bio: "Shodipo Ayomide has spent more than a decade building software, leading engineering and developer relations teams, and working with founders across the globe.\n\nHis recent work has focused on blockchain, AI, and architecting financial systems that scale.\n\nShodipo joins Blockfest Africa 2026 as a facilitator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "facilitator",
+  },
+  {
+    name: "Aiseosa Uyi-Idahor",
+    pronouns: "he",
+    title: "Founder, Gruve Events",
+    image: "/2026/speakers/idahor.jpeg",
+    expertise: ["Tech Innovation", "Entrepreneurship"],
+    company: "Gruve Events",
+    linkedin: "https://www.linkedin.com/in/aise",
+    bio: "Aiseosa Uyi-Idahor is a Senior Product Designer and Design Engineer with eight years of experience building products across fintech, Web3, SaaS and developer tools.\n\nHe is the co-founder and Head of Products at Gruve Tickets, a B2B event ticketing platform built for Africa, and also leads Sippy Life, an AI-native drinks distribution company.\n\nHis recent work focuses on building AI-native products end to end, keeping craft at the centre of fast, AI-assisted workflows.\n\nAiseosa joins Blockfest Africa 2026 as a facilitator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "facilitator",
+  },
+  {
+    name: "Sodiq Akinjobi",
+    pronouns: "he",
+    title: "Technical Program Manager, Google Developer Groups",
+    image: "/2026/speakers/sodiq.JPG",
+    expertise: ["Education", "Community Building", "Development"],
+    company: "Google Developer Groups",
+    twitter: "https://x.com/geektutor",
+    bio: "Sodiq Akinjobi is a Technical Program Manager supporting Google Developer Groups across Sub-Saharan Africa, reaching over 200,000 developers annually.\n\nA Systems Engineering graduate of the University of Lagos, he sits at the intersection of people, programs and products. He co-founded API Conference Lagos, organizes DevFest Lagos, and builds products like MorningScroll, a daily tech digest for African builders.\n\nSodiq joins Blockfest Africa 2026 as a facilitator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "facilitator",
+  },
+  {
+    name: "Coach Yemi",
+    pronouns: "she",
+    title: "Growth Strategist & Founder, Mentara Limited",
+    image: "/2026/speakers/yemi.jpg",
+    expertise: ["Marketing & Media", "Entrepreneurship"],
+    company: "Mentara Limited",
+    twitter: "https://x.com/theglobalcy",
+    bio: "Odunayo Olajide, known as Coach Yemi, is a marketing, communications and growth strategist with over seven years of experience helping businesses, founders and communities grow.\n\nShe has led marketing, public relations and communications work across Africa, the UK and the Middle East.\n\nAs the founder of Mentara Limited, she coaches entrepreneurs, professionals and emerging leaders. Her work sits at the intersection of business growth, communication and personal development.\n\nCoach Yemi joins Blockfest Africa 2026 as a moderator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "moderator",
+  },
+  {
+    name: "Abdulsamad Tiamiyu (Crypto Oracle)",
+    pronouns: "he",
+    title: "Web3 Creator & Educator, Lead, Pudgy Africa",
+    image: "/2026/speakers/tiamiyu.jpg",
+    expertise: ["Education", "Web3 & Blockchain", "Community Building"],
+    company: "Pudgy Africa",
+    twitter: "https://x.com/0xcryptooracle",
+    youtube: "https://youtube.com/@thecryptooracle",
+    bio: "Abdulsamad Tiamiyu, known as Crypto Oracle, is a Web3 educator, community builder and Solana ecosystem contributor.\n\nHe is a Solana Global Creator Competition winner. Through educational content and community initiatives, he focuses on making Web3, blockchain and crypto easy to understand for beginners, particularly across Africa.\n\nWith over 500 videos and millions of views, he has worked with Web3 ecosystems and brands while helping train emerging creators.\n\nAbdulsamad joins Blockfest Africa 2026 as a moderator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "moderator",
+  },
+  {
+    name: "Amara Achusi",
+    pronouns: "she",
+    title: "CMO, Tulay Labs and Acute",
+    image: "/2026/speakers/amara.jpg",
+    expertise: ["Marketing & Media", "Web3 & Blockchain"],
+    company: "Tulay Labs and Acute",
+    twitter: "https://x.com/themarablossom",
+    bio: "Amara Achusi is a Web3 growth strategist who designs systems that connect community, marketing and operations.\n\nShe has led marketing and community initiatives across African and Asian markets, and led community and mentorship programs at Women In DeFi.\n\nShe is currently CMO of Acute, a payments app, and is also building Tulay Labs, an innovation lab connecting African talent and founders to global opportunities.\n\nAmara joins Blockfest Africa 2026 as a moderator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "moderator",
+  },
 
   /*
-   * Returning from a previous edition. His entry up the list stays as it is,
-   * so the archive and the 2025 recap keep him where they had him; this one
-   * is his place in the 2026 lineup, in announcement order, reusing the same
-   * portrait. Both share one profile page: speakerBySlug below prefers this
-   * entry, because it is the current one.
+   * Returning from a previous edition. The older entry stays as it is, so the
+   * archive and the 2025 recap keep them where they had them; this one is
+   * their place in the 2026 lineup, in announcement order. Both share one
+   * profile page: speakerBySlug below prefers this entry, because it is the
+   * current one.
    */
+  /*
+   * Held off the 2026 lineup for now. Her past entry above stays, so last
+   * year's programme and recap still have her. Put this back to show her
+   * on this year's grid; the schedule already names her.
+   *
+  {
+    name: "Sarah Idahosa",
+    pronouns: "she",
+    title: "Founder, Women In DeFi & Africa Sales & Partnerships Lead, MANSA",
+    image: "/images/speakers/sarah.jpg",
+    expertise: ["Web3 & Blockchain", "DeFi", "Community Building", "Education"],
+    company: "Women In DeFi",
+    twitter: "https://x.com/thesarahidahosa",
+    bio: "Sarah Idahosa is a Web3 community builder, educator and decentralized finance researcher.\n\nShe is the Africa Partnership & Sales Lead at MANSA, a Tether-backed stablecoin liquidity provider, and the founder of Women In DeFi, a pan-African non-profit that has reached over 8,000 women since 2022.\n\nShe has spoken at Blockfest Africa before, and returns for 2026.\n\nAt Blockfest Africa 2026, she joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+  },
+  */
+  {
+    name: "Onone Peace Ega",
+    pronouns: "she",
+    title: "Technical Program Manager, Fintech & Web3 Innovation",
+    image: "/2026/speakers/onone.JPG",
+    expertise: ["Education", "Web3 & Blockchain", "Fintech"],
+    company: "Fintech & Web3 Innovation",
+    twitter: "https://x.com/10x_ega",
+    bio: "Onone Peace Ega is a Technical Program Manager working at the intersection of traditional and decentralized technologies.\n\nWith a background across banking, fintech and edtech, she has spent years delivering solutions and leading cross-functional teams, with a focus on AI and Web3.\n\nThrough her work, she focuses on creating opportunities, driving inclusion, and empowering women in decentralized tech.\n\nShe has spoken at Blockfest Africa before, and returns for 2026.\n\nOnone joins Blockfest Africa 2026 as a facilitator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "facilitator",
+  },
   {
     name: "Hon. Mobolaji Ogunlende Abubakre",
     order: 5,
@@ -704,7 +827,7 @@ export const isPastSpeaker = (speaker: Speaker) => speaker.cohort !== "2026";
 export const is2026Speaker = (speaker: Speaker) => speaker.cohort === "2026";
 
 const HONORIFIC =
-  /^(hon|dr|prof|mr|mrs|ms|miss|engr|chief|sen|rt|barr|arc|rev|pst|pastor|sir|hrh|amb|gov|col|gen|capt|prince|princess|alhaji|alhaja|otunba|oba|madam|lady|dame|mazi)\.?$/i;
+  /^(hon|dr|prof|mr|mrs|ms|miss|engr|chief|sen|rt|barr|arc|rev|pst|pastor|sir|hrh|amb|gov|col|gen|capt|prince|princess|alhaji|alhaja|otunba|oba|madam|lady|dame|mazi|coach)\.?$/i;
 
 /**
  * How the profile page refers to a speaker in a sentence: "About Teddi".
