@@ -325,7 +325,7 @@ export const runOfShow2026: RunDay[] = [
         label: "Lightning talk 2",
         title: "You Are Already Using It, Now Imagine Shaping It",
         place: "Main Hall",
-        people: [{ label: "Speaker", names: "Sultan Akintunde, Co-founder & CTO, Altschool Africa" }],
+        people: [{ label: "Speaker", names: TBA }],
       },
       {
         start: "12:00",
@@ -433,7 +433,7 @@ export const runOfShow2026: RunDay[] = [
         label: "Gadget giveaway 2",
         title: "Mascot gadget giveaway",
         place: "Main Hall",
-        people: [{ label: "Presented by", names: "Revva and the convener" }],
+        people: [{ label: "Presented by", names: "Mascot and the convener" }],
       },
       {
         start: "16:40",

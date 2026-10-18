@@ -90,9 +90,9 @@ describe("the run of show on the page", () => {
     expect(within(day).getByText("Bibi Eneje")).toBeTruthy();
   });
 
-  it("says plainly that one facilitator is still to be named", () => {
+  it("says plainly that a facilitator and a speaker are still to be named", () => {
     render(<RunOfShow />);
-    expect(screen.getAllByText("To be announced")).toHaveLength(1);
+    expect(screen.getAllByText("To be announced")).toHaveLength(2);
   });
 
   it("names the moderator and the panelists of each panel", () => {
@@ -120,7 +120,7 @@ describe("the run of show on the page", () => {
     // A name with no profile stays plain text. The placeholder never gets a
     // profile, so a speaker PR landing cannot flip this the way it did when
     // this test pinned a real name that was still on its way.
-    expect(screen.getByText("To be announced")).toBeTruthy();
+    expect(screen.getAllByText("To be announced").length).toBeGreaterThan(0);
     expect(screen.queryByRole("link", { name: "To be announced" })).toBeNull();
   });
 });
