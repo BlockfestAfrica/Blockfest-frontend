@@ -18,4 +18,16 @@ export const gotham = localFont({
   // which is what actually gates LCP on this site. Measured at 600kbps: the
   // preload cost 304ms of LCP.
   preload: false,
+  /*
+   * Every character but the no-break space (U+00A0). This build of Gotham
+   * draws that one character 400px wide at 16px (25em; a space is about
+   * 4px), so a no-break space anywhere in the page's text, pasted into a bio
+   * or written as &nbsp;, opened a gap wider than a phone and pushed the rest
+   * of the line out of view. With it outside the face's range the browser
+   * draws it from the fallback font, as an ordinary space. Each of the other
+   * 929 characters measured (ASCII, Latin-1, Latin Extended-A, punctuation,
+   * spaces, currency including the naira sign, letterlike, arrows, maths) has
+   * a normal width, so nothing else is excluded.
+   */
+  declarations: [{ prop: "unicode-range", value: "U+0000-009F, U+00A1-10FFFF" }],
 });
