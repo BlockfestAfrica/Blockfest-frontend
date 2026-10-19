@@ -289,7 +289,7 @@ describe("the footer, from lib/partners-2026", () => {
     const ecosystem = tierNames("Ecosystem");
     // Hashed Emergent last, so it takes the left wing's outer place (see below).
     expect(ecosystem).toEqual(["Microtraction", "Hashed Emergent"]);
-    const named = tieredSponsors.map((s) => s.name);
+    const named = onDp(tieredSponsors);
     expect(tiers.sponsors.map((s) => s.name)).toEqual([...named, ...ecosystem]);
     expect(footer.sponsors.map((s) => s.logo.name).sort()).toEqual(
       ["Monica", ...named, ...ecosystem].sort(),
@@ -468,7 +468,7 @@ describe("the footer, from lib/partners-2026", () => {
       measureLabel,
     );
     expect(laid.sponsors).toHaveLength(
-      1 + tieredSponsors.length + extra.length + tierNames("Ecosystem").length,
+      1 + onDp(tieredSponsors).length + extra.length + tierNames("Ecosystem").length,
     );
     for (const s of laid.sponsors) {
       expect(s.h).toBeGreaterThanOrEqual(FOOTER.sponsorMinH - 1e-9);
