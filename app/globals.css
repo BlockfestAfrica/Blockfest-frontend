@@ -226,11 +226,27 @@
   }
 
   /* One focus ring for the whole site. Individual components no longer
-     declare their own, and none may use outline-none without a replacement. */
-  :focus-visible {
+     declare their own, and none may use outline-none without a replacement.
+
+     [tabindex]:focus-visible is named as well because the rule above gives
+     any element with a tabindex a half-transparent outline colour, and its
+     selector, (0,2,0), outranks a bare :focus-visible, (0,1,0). So a tab or a
+     focusable panel showed the ring at 1.9:1 on white, under the 3:1 a focus
+     ring needs. Named here, at equal rank and later, the site's ring wins. */
+  :focus-visible,
+  [tabindex]:focus-visible {
     outline: 2px solid var(--color-brand-blue-light);
     outline-offset: 2px;
     border-radius: 2px;
+  }
+
+  /* The same ring for a control that is visually hidden, such as an sr-only
+     radio inside its label: the wrapper carries it, inside its own edge,
+     because a rounded group around it clips anything drawn outside. One
+     recipe here rather than a copy in each component. */
+  .focus-ring-within:has(:focus-visible) {
+    outline: 2px solid var(--color-brand-blue-light);
+    outline-offset: -2px;
   }
 
   /* Headings break on sense rather than on width. */

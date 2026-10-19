@@ -260,7 +260,7 @@ export const runOfShow2026: RunDay[] = [
         title: "Building Africa's Future Through Technology and Education",
         place: "Main Hall",
         people: [
-          { label: "Keynote", names: "Dr. Maruf Olatunji Alausa, CON, Minister of Education" },
+          { label: "Speaker", names: "Dr. Maruf Olatunji Alausa, CON, Minister of Education" },
         ],
       },
       {

@@ -27,6 +27,8 @@ const SCREENS = [
   "app/admin",
   "components/campaigns",
   "components/admin",
+  "app/schedule",
+  "components/schedule",
 ];
 
 function filesUnder(dir: string): string[] {

@@ -78,10 +78,13 @@ export default function Schedule() {
               >
                 Schedule of <span className="text-white">Activities</span>
               </h1>
+              {/* One clause per day: the switcher below shows one day at a
+                  time, so this is the only place a visitor learns, before a
+                  tap, that the main conference is the Friday. The tabs carry
+                  the dates, so the days are named here, not dated twice. */}
               <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-3">
-                Two days, hour by hour: workshops and masterclasses on October
-                22, and the main conference on October 23. Times are Lagos
-                time, and the programme may shift on the day.
+                Workshops on Thursday, the main conference on Friday. Times
+                are Lagos time, and the programme may shift on the day.
               </p>
             </div>
           </div>
