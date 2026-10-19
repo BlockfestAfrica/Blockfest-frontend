@@ -3,6 +3,7 @@ import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import {
+  announcedWinners,
   snapshotsTaken,
   tiebreakPoints,
   voteVerdict as computeVoteVerdict,
@@ -20,6 +21,7 @@ import {
 import { WinnersPanel } from "@/components/admin/winners-panel";
 import { VoteRoundPanel } from "@/components/admin/vote-round-panel";
 import { BlockedDomainsCard } from "@/components/admin/blocked-domains-card";
+import { WinnerTags } from "@/components/admin/winner-tags";
 import { PageHeader, SectionCard, SPACING } from "@/components/shared/panel";
 import { currentWeekNo } from "@/lib/campaigns";
 import { voteOpening } from "@/lib/vote-open-rule";
@@ -90,7 +92,7 @@ export default async function WinnersPage({
       ? asked
       : ((await unfinishedVoteWeek(admin.admin, current)) ?? current);
 
-  const [creators, favourites, picked, snapshots, frozenPoints, round, entries, blocks] =
+  const [creators, favourites, picked, snapshots, frozenPoints, round, entries, blocks, announced] =
     await Promise.all([
       winnerCandidates(admin.admin, "creator_of_week"),
       winnerCandidates(admin.admin, "community_favourite"),
@@ -100,6 +102,7 @@ export default async function WinnersPage({
       currentRound(admin.admin, weekNo),
       candidateEntries(admin.admin, weekNo),
       blockedDomains(admin.admin),
+      announcedWinners(admin.admin),
     ]);
 
   /*
@@ -303,6 +306,22 @@ export default async function WinnersPage({
           byYou: b.createdByAdminId === admin.admin.adminId,
           by: b.createdByEmail,
           held: b.held,
+        }))}
+      />
+
+      {/*
+       * Who has won, of both awards, and the Monica tag each prize is paid
+       * to, for copying. Every week, not just this one, so it sits with the
+       * paperwork rather than with the week's jobs.
+       */}
+      <WinnerTags
+        winners={announced.map((w) => ({
+          weekNo: w.weekNo,
+          category: w.category,
+          name: w.name,
+          monicaTag: w.monicaTag,
+          email: w.email,
+          prizeNaira: w.prizeNaira,
         }))}
       />
 
