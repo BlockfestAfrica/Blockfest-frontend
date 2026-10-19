@@ -225,6 +225,16 @@ const LOGOS = [
         from: "2026/sponsors/shecode.png",
         to: "shecode.png",
     },
+    {
+        year: 2026,
+        from: "2026/sponsors/herdao.PNG",
+        to: "herdao.png",
+    },
+    {
+        year: 2026,
+        from: "2026/sponsors/rebirth.PNG",
+        to: "rebirth.png",
+    },
 ];
 
 /** The lightness of a light neutral pixel (white, light grey, cream), else 0. */

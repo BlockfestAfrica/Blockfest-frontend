@@ -133,6 +133,22 @@ export const sponsors: Sponsor[] = [
     href: "https://x.com/shecodeafrica",
   },
   {
+    name: "HerDAO",
+    tier: "Community",
+    logo: "/2026/logos/herdao.png",
+    width: 923,
+    height: 339,
+    onDp: false,
+  },
+  {
+    name: "Rebirth",
+    tier: "Community",
+    logo: "/2026/logos/rebirth.png",
+    width: 1280,
+    height: 443,
+    onDp: false,
+  },
+  {
     name: "Women in DeFi",
     tier: "Community",
     logo: "/2026/logos/wid.png",
