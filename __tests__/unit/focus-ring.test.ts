@@ -107,4 +107,21 @@ describe("the focus ring", () => {
     expect(replaced("group focus-visible:outline-none", "group-hover:bg-card-3")).toBe(false);
     expect(replaced("focus-visible:outline-none", "group-focus-visible:ring-2")).toBe(false);
   });
+
+  /*
+   * A ring can also be weakened without being removed. globals.css gives any
+   * element with a tabindex a half-transparent outline colour, from a
+   * selector that outranks a bare :focus-visible, so the schedule's day tabs
+   * showed the ring at 1.9:1 on white. The ring rule names
+   * [tabindex]:focus-visible to win back that colour, and must keep doing so.
+   */
+  it("keeps its full colour on elements with a tabindex", () => {
+    // Comments name the selector too, and must not satisfy the test.
+    const css = readFileSync(join(ROOT, "app/globals.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    const ring =/((?:[^{}]*,\s*)?\[tabindex\]:focus-visible[^{]*)\{([^}]*)\}/.exec(css);
+    expect(ring, "the ring rule must name [tabindex]:focus-visible").not.toBeNull();
+    expect(ring![2]).toMatch(/outline:\s*2px solid var\(--color-brand-blue-light\)/);
+    // And it must come after the rule it outranks, which it only ties with.
+    expect(css.indexOf("[tabindex]:focus-visible")).toBeGreaterThan(css.indexOf('[tabindex]:not([tabindex="-1"])'));
+  });
 });

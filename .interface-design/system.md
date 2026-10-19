@@ -239,6 +239,41 @@ timeline rail) he picked "Do this now":
 - lib/winner-weeks.ts decides where each week stands (weekTimeline) and
   what can be done (actionsNow); components only draw.
 
+### The schedule (/schedule): one day at a time
+
+On 19 October 2026 the owner said the schedule page had a lot going on. It
+showed both days in full with a card per item. A five-minute host bit weighed
+as much as a panel, "Main Hall" was printed on 20 cards, and Day 2, the main
+conference, sat about eleven phone screens down. There were three previews:
+everything visible, one day at a time, and a timeline with the rooms as
+columns. He picked one day at a time.
+
+- A Day 1 / Day 2 tab switch under the hero shows one day.
+  - Both days are in the HTML. The other day is `hidden`, upgraded to
+    `until-found` so find-in-page still reaches it.
+  - `#day-2` opens Day 2, and a tap writes the hash with replaceState.
+  - On a day of the event, in Lagos time, the page opens on that day.
+  - Without JavaScript both days show, each with its date line.
+  - The foot of each day links to the other one, because nothing can stick
+    on this site (see the end of this file).
+- A day is one hairline card per part ("Morning", "Afternoon"), cut at its
+  long break. The break sits between the cards as a plain line, and each
+  card's header row gives the part's hours once.
+- The sessions people come for (`PROGRAMME` in lib/run-of-show-layout.ts)
+  show in full: the time column, the kind in blue, the title as an h3, and
+  the people.
+- A run of supporting items (hosts, sponsors, entertainment, doors, closing)
+  is one quiet row that opens in place. A lone item with nothing more to say
+  is a plain line, never a fold.
+- Each fact is said once:
+  - the venue and the hall in the day's head ("All sessions in the Main Hall
+    unless noted"), with only the exceptions on the rows;
+  - "two rooms run at the same time" once, above Day 1's room filter (Both
+    rooms, Room 1, Room 2);
+  - Lagos time in the hero only.
+- The time is a narrow column at every width, never a block above the item.
+- On Day 1 the two rooms' sessions sit side by side from md.
+
 ### Get DP (/getdp): concept C, "New trade routes"
 
 Of three concepts drawn as previews (A, B, C) the owner picked C on 9

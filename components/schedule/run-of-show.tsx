@@ -1,89 +1,47 @@
-import type { ReactNode } from "react";
-import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { ChevronDown, Clock, MapPin } from "lucide-react";
+import { DaySwitch, type DayTab } from "@/components/schedule/day-switch";
+import { LinkedNames } from "@/components/schedule/linked-names";
+import { RoomScope, SplitTracks } from "@/components/schedule/room-scope";
+import {
+  homePlace,
+  labelSaid,
+  quietName,
+  roomNumber,
+  roomOf,
+  roomsOf,
+  segmentsOf,
+  type Segment,
+} from "@/lib/run-of-show-layout";
 import {
   isSplit,
   runOfShow2026,
-  sessionLength,
   type RunDay,
   type RunPeople,
   type RunSession,
   type RunSplit,
   type SessionKind,
 } from "@/lib/run-of-show-2026";
-import { is2026Speaker, SpeakersList, speakerSlug } from "@/lib/speakers";
 
-/** Sheet names that are the same person as a 2026 speaker profile. */
-const NAME_ALIASES: ReadonlyArray<readonly [string, string]> = [
-  ["Dr. Maruf Olatunji Alausa", "Dr. Tunji Alausa"],
-  ["Xploit", "Achebo Edwin (Xploit)"],
-  ["Ayomide Shodipo", "Shodipo Ayomide"],
-  ["Achusi Amara", "Amara Achusi"],
-  ["Crypto Oracle", "Abdulsamad Tiamiyu (Crypto Oracle)"],
-];
-
-const PROFILES = SpeakersList.filter(is2026Speaker)
-  .flatMap((s) => {
-    const href = `/speakers/${speakerSlug(s.name)}`;
-    const aliases = NAME_ALIASES.filter(([, canonical]) => canonical === s.name).map(([sheet]) => sheet);
-    return [s.name, ...aliases].map((name) => ({ name, href }));
-  })
-  .sort((a, b) => b.name.length - a.name.length);
-
-/** Turn a names line into text with profile links for anyone on the 2026 lineup. */
-function LinkedNames({ text }: { text: string }) {
-  type Part = { t: string; href?: string };
-  let parts: Part[] = [{ t: text }];
-  for (const person of PROFILES) {
-    const next: Part[] = [];
-    for (const part of parts) {
-      if (part.href) {
-        next.push(part);
-        continue;
-      }
-      const at = part.t.indexOf(person.name);
-      if (at < 0) {
-        next.push(part);
-        continue;
-      }
-      if (at > 0) next.push({ t: part.t.slice(0, at) });
-      next.push({ t: person.name, href: person.href });
-      if (at + person.name.length < part.t.length) {
-        next.push({ t: part.t.slice(at + person.name.length) });
-      }
-    }
-    parts = next;
-  }
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.href ? (
-          <Link
-            key={i}
-            href={part.href}
-            className="font-medium text-brand-blue underline-offset-2 hover:underline"
-          >
-            {part.t}
-          </Link>
-        ) : (
-          <span key={i}>{part.t}</span>
-        ),
-      )}
-    </>
-  );
-}
-
-/** Programme content wears the brand blue; everything that supports it stays quiet. */
-const CONTENT: ReadonlySet<SessionKind> = new Set([
-  "welcome",
-  "address",
-  "keynote",
-  "panel",
-  "fireside",
-  "talk",
-  "workshop",
-  "masterclass",
-]);
+/**
+ * The 2026 run of show on /schedule: one day at a time.
+ *
+ * Picked by eye by the owner from three previews on 19 October 2026 (the
+ * others: everything visible at once, and a timeline). The page had shown
+ * both days in full, a card per item, so Day 2, the main conference, sat
+ * thirteen phone screens down and a five-minute host bit weighed as much as
+ * a panel. Now:
+ *
+ * - A day switcher shows one day (components/schedule/day-switch.tsx). Both
+ *   are in the HTML.
+ * - A day is one hairline card per part ("Morning", "Afternoon"), split at its
+ *   long break, which sits between the cards (lib/run-of-show-layout.ts).
+ * - Programme sessions show in full with their people. A run of supporting
+ *   items (hosts, sponsors, entertainment, doors, closing) is one quiet row
+ *   that opens to show each one with its time.
+ * - Each fact is said once, where it is true: the venue and the hall once per
+ *   day, "two rooms at the same time" once, Lagos time in the page's hero.
+ * - The time is a narrow column at every width, never a block on top.
+ */
 
 const KIND_NAME: Record<SessionKind, string> = {
   welcome: "Welcome",
@@ -119,27 +77,46 @@ const shortDay = (iso: string) =>
     timeZone: "UTC",
   });
 
-function Chip({ kind, children }: { kind: SessionKind; children: ReactNode }) {
-  const style = CONTENT.has(kind)
-    ? "bg-brand-blue/10 text-brand-blue"
-    : "border border-gray-200 bg-paper-muted text-gray-600";
+// The row: a narrow time column, then the content. Flex, not grid: the time
+// column is the point of the layout at every width, phones too.
+const ROW = "flex gap-3 px-4 sm:gap-5 sm:px-5";
+
+function Times({
+  date,
+  start,
+  end,
+  quiet = false,
+}: {
+  date: string;
+  start: string;
+  end: string;
+  quiet?: boolean;
+}) {
+  // A span, not a <p>: the quiet rows put it inside a <summary>.
   return (
-    <span
-      className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${style}`}
-    >
-      {children}
+    <span className="block w-12 shrink-0 text-sm leading-5 tabular-nums sm:w-14">
+      <time
+        dateTime={`${date}T${start}`}
+        className={`block ${quiet ? "text-gray-500" : "font-semibold text-gray-900"}`}
+      >
+        {start}
+      </time>
+      <span className="sr-only"> to </span>
+      <time dateTime={`${date}T${end}`} className="block text-gray-500">
+        {end}
+      </time>
     </span>
   );
 }
 
-function People({ people }: { people?: RunPeople[] }) {
+function People({ people, className = "mt-2" }: { people?: RunPeople[]; className?: string }) {
   if (!people?.length) return null;
   return (
-    <dl className="mt-3 space-y-1 text-sm">
+    <dl className={`${className} space-y-0.5 text-sm leading-relaxed`}>
       {people.map((line) => (
-        <div key={line.label} className="flex flex-wrap gap-x-2">
-          <dt className="font-semibold text-gray-900">{line.label}:</dt>
-          <dd className="text-gray-600">
+        <div key={line.label}>
+          <dt className="inline text-gray-500">{line.label}:</dt>{" "}
+          <dd className="inline text-gray-800">
             <LinkedNames text={line.names} />
           </dd>
         </div>
@@ -148,137 +125,314 @@ function People({ people }: { people?: RunPeople[] }) {
   );
 }
 
-function Time({ start, end, date }: { start: string; end: string; date: string }) {
+/** A place on its own line, so it never wraps behind a separator. A span, so it may sit in a <summary>. */
+function Place({ place, className = "mt-1" }: { place: string; className?: string }) {
   return (
-    <div className="shrink-0 sm:w-28">
-      <time
-        dateTime={`${date}T${start}`}
-        className="text-base font-bold tabular-nums text-gray-900"
-      >
-        {start}
-      </time>
-      <span className="text-sm tabular-nums text-gray-500">
-        {" "}
-        <span aria-hidden="true">to</span>
-        <span className="sr-only">until</span>{" "}
-        <time dateTime={`${date}T${end}`}>{end}</time>
-      </span>
-      <p className="text-xs text-gray-500">{sessionLength(start, end)}</p>
-    </div>
+    <span className={`${className} flex w-fit items-center gap-1 text-sm leading-5 text-gray-500`}>
+      <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      {place}
+    </span>
   );
 }
 
-function SessionRow({ session, date }: { session: RunSession; date: string }) {
-  const content = CONTENT.has(session.kind);
+function ProgrammeRow({ session, date, home }: { session: RunSession; date: string; home?: string }) {
+  const kind = session.label ?? KIND_NAME[session.kind];
+  const showKind = kind.toLowerCase() !== session.title.toLowerCase();
   return (
-    <li className="flex flex-col gap-2 sm:flex-row sm:gap-6">
-      <Time start={session.start} end={session.end} date={date} />
-      {content ? (
-        <div className="flex-1 rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-brand-blue">
-          <div className="flex flex-wrap items-center gap-2">
-            <Chip kind={session.kind}>{session.label ?? KIND_NAME[session.kind]}</Chip>
-            {session.place && <span className="text-xs text-gray-500">{session.place}</span>}
-          </div>
-          <h3 className="mt-3 text-lg font-bold leading-snug text-gray-900">{session.title}</h3>
-          {session.detail && <p className="mt-1 text-sm text-gray-600">{session.detail}</p>}
-          <People people={session.people} />
-        </div>
-      ) : (
-        <div className="flex-1 rounded-xl bg-paper-muted px-5 py-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Chip kind={session.kind}>{session.label ?? KIND_NAME[session.kind]}</Chip>
-            {session.place && <span className="text-xs text-gray-500">{session.place}</span>}
-          </div>
-          <h3 className="mt-2 text-base font-semibold text-gray-900">{session.title}</h3>
-          {session.detail && <p className="mt-1 text-sm text-gray-600">{session.detail}</p>}
-          <People people={session.people} />
-        </div>
-      )}
+    <li className={`${ROW} py-4`}>
+      <Times date={date} start={session.start} end={session.end} />
+      <div className="min-w-0 flex-1">
+        {showKind && <p className="text-[13px] font-semibold leading-5 text-brand-blue">{kind}</p>}
+        <h3 className="text-base font-bold leading-snug text-gray-900 sm:text-lg sm:leading-snug">
+          {session.title}
+        </h3>
+        {session.detail && <p className="mt-1 text-sm leading-relaxed text-gray-600">{session.detail}</p>}
+        {session.place && session.place !== home && <Place place={session.place} />}
+        <People people={session.people} />
+      </div>
     </li>
   );
 }
 
 function SplitRow({ split, date }: { split: RunSplit; date: string }) {
+  const tracks = split.tracks
+    .map((track) => ({ track, room: roomOf(track.room) }))
+    .sort((a, b) => roomNumber(a.room) - roomNumber(b.room));
   return (
-    <li className="flex flex-col gap-2 sm:flex-row sm:gap-6">
-      <Time start={split.start} end={split.end} date={date} />
-      <div className="flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <Chip kind={split.kind}>{split.label}</Chip>
-          <span className="text-xs text-gray-500">Two rooms, at the same time</span>
-        </div>
-        <ul className="mt-3 grid gap-3 md:grid-cols-2">
-          {split.tracks.map((track) => (
-            <li
-              key={track.room}
-              className="rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-brand-blue"
-            >
-              <p className="eyebrow text-brand-blue">{track.room}</p>
-              <h4 className="mt-2 text-lg font-bold leading-snug text-gray-900">{track.title}</h4>
-              <People people={track.people} />
-            </li>
-          ))}
-        </ul>
+    <li className={`${ROW} py-4`}>
+      <Times date={date} start={split.start} end={split.end} />
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-semibold leading-5 text-brand-blue">{split.label}</p>
+        <SplitTracks
+          tracks={tracks.map(({ track, room }) => ({
+            room: room.key,
+            node: (
+              <>
+                <p className="text-[13px] font-medium leading-5 text-gray-500">
+                  {room.number}
+                  {room.name && ` · ${room.name}`}
+                </p>
+                <h3 className="text-base font-bold leading-snug text-gray-900 sm:text-lg sm:leading-snug">
+                  {track.title}
+                </h3>
+                <People people={track.people} />
+              </>
+            ),
+          }))}
+        />
       </div>
     </li>
   );
 }
 
-function Day({ day }: { day: RunDay }) {
+/** What a supporting item has beyond its name and time. */
+function Extra({
+  session,
+  home,
+  placeSaid,
+  showLabel,
+}: {
+  session: RunSession;
+  home?: string;
+  placeSaid: boolean;
+  showLabel: boolean;
+}) {
   return (
-    <section
-      id={day.id}
-      aria-labelledby={`${day.id}-heading`}
-      className="scroll-mt-24"
-    >
-      <p className="eyebrow text-brand-blue">
-        {day.name} · {dayName(day.date)}
-      </p>
-      <h2
-        id={`${day.id}-heading`}
-        className="text-display-sm mt-3 font-bold text-gray-900"
-      >
-        {day.theme}
-      </h2>
-      <p className="mt-3 flex items-center gap-2 text-base font-medium text-gray-600">
-        <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
-        {day.venue}, Lagos
-      </p>
-
-      <ol className="mt-8 space-y-4">
-        {day.blocks.map((block) =>
-          isSplit(block) ? (
-            <SplitRow key={`${block.start}-${block.label}`} split={block} date={day.date} />
-          ) : (
-            <SessionRow key={`${block.start}-${block.title}`} session={block} date={day.date} />
-          ),
-        )}
-      </ol>
-    </section>
+    <>
+      {showLabel && session.label && <p className="text-[13px] leading-5 text-gray-500">{session.label}</p>}
+      {session.detail && <p className="text-sm leading-relaxed text-gray-600">{session.detail}</p>}
+      {!placeSaid && session.place && session.place !== home && <Place place={session.place} />}
+      <People people={session.people} className="mt-1" />
+    </>
   );
 }
 
-/** The 2026 run of show: a jump link per day, then each day hour by hour. */
-export function RunOfShow() {
-  return (
-    <div>
-      <nav aria-label="Jump to a day" className="mb-12 flex flex-wrap gap-3">
-        {runOfShow2026.map((day) => (
-          <a
-            key={day.id}
-            href={`#${day.id}`}
-            className="inline-flex min-h-11 items-center rounded-full border border-gray-200 bg-white px-6 text-sm font-semibold text-gray-900 transition-colors hover:border-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2"
-          >
-            {day.name} · {shortDay(day.date)}
-          </a>
-        ))}
-      </nav>
+/**
+ * A run of supporting items as one quiet row. It opens when there is more
+ * to it than its name: several items, or a detail, a place or people.
+ */
+function QuietRow({ items, date, home }: { items: RunSession[]; date: string; home?: string }) {
+  const first = items[0];
+  const last = items[items.length - 1];
+  const single = items.length === 1;
+  const places = new Set(items.map((s) => s.place));
+  const shared = places.size === 1 ? first.place : undefined;
+  const place = shared && shared !== home ? shared : undefined;
+  const more =
+    !single ||
+    Boolean(
+      (first.label && quietName(first) === first.title) ||
+        first.detail ||
+        first.people?.length ||
+        (first.place && first.place !== home && !place),
+    );
 
-      <div className="space-y-20">
-        {runOfShow2026.map((day) => (
-          <Day key={day.id} day={day} />
-        ))}
+  const name = <span className="text-gray-700">{items.map(quietName).join(" · ")}</span>;
+
+  if (!more) {
+    return (
+      <li className={`${ROW} py-3`}>
+        <Times date={date} start={first.start} end={last.end} quiet />
+        <div className="min-w-0 flex-1 text-sm leading-5">
+          {name}
+          {place && <Place place={place} className="mt-0.5" />}
+        </div>
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      {/* Open is state, so it shows on a 2px left edge: an inset shadow,
+          not a border, so nothing in the row moves when it opens. */}
+      <details className="group/fold open:shadow-[inset_2px_0_0_var(--color-gray-300)]">
+        <summary
+          className={`${ROW} min-h-11 cursor-pointer list-none py-3 -outline-offset-2 transition-colors duration-150 hover:bg-paper-muted [&::-webkit-details-marker]:hidden`}
+        >
+          <Times date={date} start={first.start} end={last.end} quiet />
+          <span className="min-w-0 flex-1 text-sm leading-5">
+            {name}
+            <ChevronDown
+              className="ml-1 inline-block h-4 w-4 align-[-3px] text-gray-500 transition-transform duration-150 group-open/fold:rotate-180"
+              aria-hidden="true"
+            />
+            {place && <Place place={place} className="mt-0.5" />}
+          </span>
+        </summary>
+        {single ? (
+          <div className={`${ROW} pb-3`}>
+            <span className="w-12 shrink-0 sm:w-14" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <Extra
+                session={first}
+                home={home}
+                placeSaid={Boolean(place)}
+                showLabel={quietName(first) === first.title}
+              />
+            </div>
+          </div>
+        ) : (
+          <ol className="pb-2">
+            {items.map((s) => (
+              <li key={`${s.start}-${s.title}`} className={`${ROW} py-1.5`}>
+                <Times date={date} start={s.start} end={s.end} quiet />
+                <div className="min-w-0 flex-1">
+                  {s.label && quietName(s) === s.title && (
+                    <p className="text-[13px] leading-5 text-gray-500">{s.label}</p>
+                  )}
+                  <p className="text-sm font-medium leading-5 text-gray-900">{quietName(s)}</p>
+                  <Extra session={s} home={home} placeSaid={Boolean(place)} showLabel={false} />
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </details>
+    </li>
+  );
+}
+
+/** The long break between two parts of the day, between their cards. */
+function Pause({ items, date, home }: { items: RunSession[]; date: string; home?: string }) {
+  return (
+    <div className="border-x border-transparent py-1">
+      {items.map((s) => (
+        <div key={`${s.start}-${s.title}`} className={`${ROW} py-3`}>
+          <Times date={date} start={s.start} end={s.end} quiet />
+          <div className="min-w-0 flex-1 text-sm leading-5">
+            <p>
+              {!labelSaid(s) && <span className="text-gray-500">{s.label}: </span>}
+              <span className="font-semibold text-gray-900">{s.title}</span>
+            </p>
+            {s.place && s.place !== home && <Place place={s.place} className="mt-0.5" />}
+            {s.detail && <p className="mt-1 text-gray-600">{s.detail}</p>}
+            <People people={s.people} className="mt-1" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PartCard({
+  part,
+  date,
+  home,
+}: {
+  part: Extract<Segment, { type: "part" }>;
+  date: string;
+  home?: string;
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <div className="flex items-baseline justify-between gap-x-4 border-b border-gray-200 px-4 py-3 sm:px-5">
+        <p className="text-base font-bold text-gray-900">{part.name}</p>
+        <p className="text-sm tabular-nums text-gray-500">
+          <time dateTime={`${date}T${part.start}`}>{part.start}</time> to{" "}
+          <time dateTime={`${date}T${part.end}`}>{part.end}</time>
+        </p>
       </div>
+      <ol className="divide-y divide-gray-200">
+        {part.rows.map((row) =>
+          row.type === "split" ? (
+            <SplitRow key={`${row.split.start}-split`} split={row.split} date={date} />
+          ) : row.type === "programme" ? (
+            <ProgrammeRow
+              key={`${row.session.start}-${row.session.title}`}
+              session={row.session}
+              date={date}
+              home={home}
+            />
+          ) : (
+            <QuietRow key={`${row.items[0].start}-quiet`} items={row.items} date={date} home={home} />
+          ),
+        )}
+      </ol>
+    </div>
+  );
+}
+
+function DayPanel({ day }: { day: RunDay }) {
+  const home = homePlace(day);
+  const splits = day.blocks.filter(isSplit);
+  const opens = day.blocks[0]?.start;
+  const closes = day.blocks[day.blocks.length - 1]?.end;
+
+  const body = (
+    <div className="mt-6">
+      {segmentsOf(day).map((segment) =>
+        segment.type === "part" ? (
+          <PartCard key={`part-${segment.start}`} part={segment} date={day.date} home={home} />
+        ) : (
+          <Pause key={`pause-${segment.items[0].start}`} items={segment.items} date={day.date} home={home} />
+        ),
+      )}
+    </div>
+  );
+
+  return (
+    <div className="pt-6 sm:pt-8">
+      {/* The tab says the date. Without JavaScript there are no tabs, so the
+          <noscript> style shows this line instead. */}
+      <p hidden data-schedule-nojs className="eyebrow mb-3 text-brand-blue">
+        {day.name} · {dayName(day.date)}
+      </p>
+      <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{day.theme}</h2>
+      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-base text-gray-600">
+        <p className="inline-flex items-center gap-1.5">
+          <MapPin className="h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
+          {day.venue}, Lagos
+        </p>
+        {opens && closes && (
+          <p className="inline-flex items-center gap-1.5 tabular-nums">
+            <Clock className="h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
+            <time dateTime={`${day.date}T${opens}`}>{opens}</time> to{" "}
+            <time dateTime={`${day.date}T${closes}`}>{closes}</time>
+          </p>
+        )}
+      </div>
+      {home && <p className="mt-1 text-base text-gray-600">All sessions in the {home} unless noted.</p>}
+      {splits.length > 0 ? (
+        <RoomScope rooms={roomsOf(splits)} from={splits[0].start}>
+          {body}
+        </RoomScope>
+      ) : (
+        body
+      )}
+    </div>
+  );
+}
+
+/*
+ * Without JavaScript there is nothing to switch with: both days show, each
+ * with its date line, and the controls go. The panels' `hidden` is overridden
+ * from the theme layer because Tailwind's preflight hides [hidden] with
+ * !important in the base layer, and for !important rules an earlier layer
+ * beats a later one (and any layer beats unlayered CSS), so a rule anywhere
+ * else would lose. Exported so a test can hold the markup to it.
+ */
+export const NO_SCRIPT = `<style>[data-schedule-js]{display:none!important}@layer theme{[data-schedule-panel][hidden],[data-schedule-nojs][hidden]{display:block!important}}</style>`;
+
+/** The 2026 run of show: the day switcher, then the chosen day, part by part. */
+export function RunOfShow() {
+  const days: DayTab[] = runOfShow2026.map((day) => ({
+    id: day.id,
+    name: day.name,
+    date: day.date,
+    short: shortDay(day.date),
+    long: dayName(day.date),
+    theme: day.theme,
+  }));
+
+  return (
+    <div className="max-w-4xl">
+      <noscript dangerouslySetInnerHTML={{ __html: NO_SCRIPT }} />
+      <DaySwitch
+        days={days}
+        panels={runOfShow2026.map((day) => (
+          <DayPanel key={day.id} day={day} />
+        ))}
+      />
     </div>
   );
 }
