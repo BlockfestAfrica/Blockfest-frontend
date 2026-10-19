@@ -338,7 +338,6 @@ export const SpeakersList: Speaker[] = [
  
   {
     name: "Dr. Tunji Alausa",
-    order: 8,
     pronouns: "he",
     title: "Honourable Minister of Education, Federal Republic of Nigeria",
     image: "/2026/speakers/alausa.jpeg",
@@ -354,9 +353,10 @@ export const SpeakersList: Speaker[] = [
     name: "Dr. Kadri Obafemi Hamzat",
     pronouns: "he",
     title: "Deputy Governor of Lagos State",
-    // The lineup's first nine are in the order the team set (3 October):
-    // the Deputy Governor, Teddi Speaks, Prof. Ogundipe, Eniola Osiyoku,
-    // Hon. Abubakre, Opeyemi Stephen, Faith Jerry, Dr. Alausa, Dára Sobaloju.
+    // The lineup's first ten are in the order the team set: the Deputy
+    // Governor, Hon. Alake, Salemking, Akitoye Balogun, Daniel Emeka,
+    // Teddi Speaks, Dára Sobaloju, Ada Nduka Oyom, Nebeokike Sunday,
+    // Chibuotu Amadi.
     order: 1,
     image: "/2026/speakers/dept.jpeg",
     expertise: ["Government & Policy", "Tech Innovation"],
@@ -368,7 +368,6 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Prof. Temitayo Ogundipe",
-    order: 3,
     pronouns: "he",
     title: "Chairman, Governing Board, National Universities Commission (NUC)",
     image: "/2026/speakers/prof.JPEG",
@@ -382,7 +381,7 @@ export const SpeakersList: Speaker[] = [
 
   {
     name: "Teddi Speaks",
-    order: 2,
+    order: 6,
     pronouns: "he",
     title: "Founder & Convener, Unchain Summer",
     image: "/2026/speakers/teddi.png",
@@ -394,7 +393,6 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Opeyemi Stephen",
-    order: 6,
     pronouns: "he",
     title: "QA & Releases Manager, Solana Developer Platform",
     image: "/2026/speakers/opeyemi.jpeg", 
@@ -429,7 +427,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Dára Sobaloju",
-    order: 9,
+    order: 7,
     pronouns: "he",
     title: "Founder, Pewbeam",
     image: "/2026/speakers/dara.jpg",
@@ -442,7 +440,6 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Eniola Osiyoku",
-    order: 4,
     pronouns: "she",
     title: "Senior Product Manager, PawaPay",
     image: "/2026/speakers/eniola.jpg",
@@ -453,7 +450,6 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Faith Jerry",
-    order: 7,
     pronouns: "she",
     title: "Founder & CEO, AILE Group",
     image: "/2026/speakers/faith.jpg",
@@ -464,6 +460,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Salemking",
+    order: 3,
     pronouns: "he",
     title: "Storyteller & Co-Founder, Crea8torium",
     image: "/2026/speakers/salem.JPG",
@@ -508,6 +505,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Akitoye Balogun",
+    order: 4,
     pronouns: "he",
     title: "CEO, Muva Networks",
     image: "/2026/speakers/balogun.jpg",
@@ -530,6 +528,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Nebeokike Sunday",
+    order: 9,
     pronouns: "he",
     title: "Founder, Prompten",
     image: "/2026/speakers/sunday.jpeg",
@@ -575,6 +574,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Daniel Emeka",
+    order: 5,
     pronouns: "he",
     title: "Managing Director & Co-Founder, The Republic",
     image: "/2026/speakers/emeka.JPG",
@@ -599,6 +599,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Hon. Olatunbosun Alake",
+    order: 2,
     pronouns: "he",
     title: "Commissioner for Innovation, Science & Technology, LASG",
     image: "/2026/speakers/alake.jpg",
@@ -679,6 +680,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Ada Nduka Oyom",
+    order: 8,
     pronouns: "she",
     title: "Founder & Executive Director, She Code Africa",
     image: "/2026/speakers/nduka.jpg",
@@ -690,6 +692,7 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Chibuotu Amadi",
+    order: 10,
     pronouns: "he",
     title: "Co-Founder & CEO, Paycrest",
     image: "/2026/speakers/chibuotu.jpg",
@@ -810,7 +813,6 @@ export const SpeakersList: Speaker[] = [
   },
   {
     name: "Hon. Mobolaji Ogunlende Abubakre",
-    order: 5,
     pronouns: "he",
     title: "Commissioner for Youth & Social Development, LASG",
     image: "/images/speakers/mobolaji.jpg",
