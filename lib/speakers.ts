@@ -353,10 +353,10 @@ export const SpeakersList: Speaker[] = [
     name: "Dr. Kadri Obafemi Hamzat",
     pronouns: "he",
     title: "Deputy Governor of Lagos State",
-    // The lineup's first ten are in the order the team set: the Deputy
+    // The lineup's first eleven are in the order the team set: the Deputy
     // Governor, Hon. Alake, Salemking, Akitoye Balogun, Daniel Emeka,
     // Teddi Speaks, Dára Sobaloju, Ada Nduka Oyom, Nebeokike Sunday,
-    // Chibuotu Amadi.
+    // Chibuotu Amadi, Idris Olubisi.
     order: 1,
     image: "/2026/speakers/dept.jpeg",
     expertise: ["Government & Policy", "Tech Innovation"],
@@ -822,6 +822,21 @@ export const SpeakersList: Speaker[] = [
     bio: "Hon. Mobolaji Ogunlende Abubakre is the Commissioner for Youth & Social Development in the Lagos State Government.\n\nHe has spoken at Blockfest Africa before, and returns for 2026.\n\nAt Blockfest Africa 2026, he joins the founders, regulators and builders shaping Africa's next chapter, onchain.",
     cohort: "2026",
     role: "special-guest",
+  },
+  {
+    name: "Idris Olubisi",
+    order: 11,
+    pronouns: "he",
+    title: "Developer Relations Engineer & Founder, Web3 Afrika",
+    image: "/2026/speakers/IDRIS.JPEG",
+    expertise: ["Web3 & Blockchain", "Education", "Development"],
+    company: "Web3 Afrika",
+    twitter: "https://x.com/olanetsoft",
+    website: "https://web3afrika.com",
+    linkedin: "https://www.linkedin.com/in/idris-olubisi/",
+    bio: "Idris Olubisi is a senior software and AI engineer with expertise in open source, blockchain and software development.\n\nHis technical writing has reached millions of readers through publications including freeCodeCamp, LogRocket and Alchemy.\n\nAs the founder of Web3 Afrika, he helps developers learn, build and grow in the Web3 ecosystem through community programs, boot camps, hackathons and training.\n\nHe has spoken at Blockfest Africa before, and returns for 2026.\n\nIdris joins Blockfest Africa 2026 as a facilitator, alongside the founders, regulators and builders shaping Africa's next chapter, onchain.",
+    cohort: "2026",
+    role: "facilitator",
   },
 ];
 
