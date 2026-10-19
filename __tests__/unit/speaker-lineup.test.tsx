@@ -5,7 +5,7 @@
  * keynote speaker, for the Minister of Education to be shown as a speaker
  * rather than a special guest, and for the lineup to go one man, one woman,
  * knowing there are fewer women announced so far. Then (3 October) set the
- * first ten by hand; a fixed place is kept exactly and only the rest
+ * first eleven by hand; a fixed place is kept exactly and only the rest
  * alternate. Pronouns come from the team's own bios, never from a name.
  */
 
@@ -44,7 +44,7 @@ describe("the 2026 lineup", () => {
   });
 
   it("follows the order the team set, exactly, then everyone else", () => {
-    expect(lineup.slice(0, 10).map((s) => s.name)).toEqual([
+    expect(lineup.slice(0, 11).map((s) => s.name)).toEqual([
       "Dr. Kadri Obafemi Hamzat",
       "Hon. Olatunbosun Alake",
       "Salemking",
@@ -55,9 +55,10 @@ describe("the 2026 lineup", () => {
       "Ada Nduka Oyom",
       "Nebeokike Sunday",
       "Chibuotu Amadi",
+      "Idris Olubisi",
     ]);
     // Not in the team's list: after it, not dropped.
-    expect(lineup.slice(10).map((s) => s.name).sort()).toEqual([
+    expect(lineup.slice(11).map((s) => s.name).sort()).toEqual([
       "Abdulsamad Tiamiyu (Crypto Oracle)",
       "Achebo Edwin (Xploit)",
       "Adewale Akinpelu",
@@ -91,12 +92,13 @@ describe("the 2026 lineup", () => {
     ]);
   });
 
-  it("lists Bibi Eneje, Daniel Emeka, Tobiloba Adedeji, Yewande Abiodun, Shodipo Ayomide, Aiseosa Uyi-Idahor, Sodiq Akinjobi and Onone Peace Ega as facilitators, and no one else", () => {
+  it("lists Bibi Eneje, Daniel Emeka, Tobiloba Adedeji, Yewande Abiodun, Shodipo Ayomide, Aiseosa Uyi-Idahor, Sodiq Akinjobi, Onone Peace Ega and Idris Olubisi as facilitators, and no one else", () => {
     const facilitators = lineup.filter((s) => s.role === "facilitator").map((s) => s.name);
     expect(facilitators.sort()).toEqual([
       "Aiseosa Uyi-Idahor",
       "Bibi Eneje",
       "Daniel Emeka",
+      "Idris Olubisi",
       "Onone Peace Ega",
       "Shodipo Ayomide",
       "Sodiq Akinjobi",

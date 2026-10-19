@@ -32,8 +32,9 @@ describe("a returning speaker", () => {
 
   it("joins the lineup in announcement order, after the names already out", () => {
     const lineup = SpeakersList.filter(is2026Speaker).map((s) => s.name);
-    expect(lineup[lineup.length - 1]).toBe(RETURNING);
     expect(lineup[0]).toBe("Dr. Tunji Alausa");
+    expect(lineup.indexOf(RETURNING)).toBeGreaterThan(lineup.indexOf("Onone Peace Ega"));
+    expect(lineup[lineup.length - 1]).toBe("Idris Olubisi");
   });
 
   it("has one profile, and it is the 2026 one", () => {
