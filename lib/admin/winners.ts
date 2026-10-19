@@ -94,6 +94,61 @@ export async function winnersSoFar(admin: AdminIdentity): Promise<WinnerRow[]> {
   });
 }
 
+/** One announced win, with what the owner needs to pay it. */
+export interface AnnouncedWinner {
+  weekNo: number;
+  category: WinnerCategory;
+  name: string;
+  /**
+   * Their Monica username, as given at registration, which is where the prize
+   * is paid. Null for anyone who registered before the form asked for it
+   * (0032): the screen says so and gives their email to ask.
+   */
+  monicaTag: string | null;
+  email: string;
+  prizeNaira: number;
+  publishedAt: Date;
+}
+
+/**
+ * Every announced win, both awards, oldest week first, for paying them.
+ *
+ * Announced only, unlike winnersSoFar: a draft is not a win (0071) and is
+ * not owed anything. One row per win, so a creator who won two awards, or
+ * Community Favourite twice, is paid twice and listed twice.
+ */
+export async function announcedWinners(admin: AdminIdentity): Promise<AnnouncedWinner[]> {
+  void admin;
+  const result = await getDb().execute(sql`
+    SELECT w.week_no, w.category::text AS category, c.full_name, c.monica_tag,
+           c.email, w.prize_amount_naira, w.published_at
+      FROM weekly_winners w
+      JOIN campaigns cm         ON cm.id = w.campaign_id
+      JOIN campaign_creators cc ON cc.id = w.campaign_creator_id
+      JOIN creators c           ON c.id = cc.creator_id
+     WHERE cm.slug = ${MONICA_SLUG}
+       AND w.published_at IS NOT NULL
+     ORDER BY w.week_no, w.category, w.published_at
+  `);
+
+  return (result.rows ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    const tag = typeof r.monica_tag === "string" ? r.monica_tag.trim() : "";
+    return {
+      weekNo: Number(r.week_no ?? 0),
+      category:
+        r.category === "community_favourite"
+          ? ("community_favourite" as const)
+          : ("creator_of_week" as const),
+      name: String(r.full_name ?? "").trim(),
+      monicaTag: tag || null,
+      email: String(r.email ?? ""),
+      prizeNaira: Number(r.prize_amount_naira ?? 0),
+      publishedAt: new Date(String(r.published_at)),
+    };
+  });
+}
+
 /** What has been frozen, so the screen can say whether this week is recorded. */
 export async function snapshotsTaken(
   admin: AdminIdentity,
