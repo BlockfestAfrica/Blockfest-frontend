@@ -5,7 +5,7 @@
  * keynote speaker, for the Minister of Education to be shown as a speaker
  * rather than a special guest, and for the lineup to go one man, one woman,
  * knowing there are fewer women announced so far. Then (3 October) set the
- * first nine by hand; a fixed place is kept exactly and only the rest
+ * first ten by hand; a fixed place is kept exactly and only the rest
  * alternate. Pronouns come from the team's own bios, never from a name.
  */
 
@@ -44,44 +44,44 @@ describe("the 2026 lineup", () => {
   });
 
   it("follows the order the team set, exactly, then everyone else", () => {
-    expect(lineup.slice(0, 9).map((s) => s.name)).toEqual([
+    expect(lineup.slice(0, 10).map((s) => s.name)).toEqual([
       "Dr. Kadri Obafemi Hamzat",
+      "Hon. Olatunbosun Alake",
+      "Salemking",
+      "Akitoye Balogun",
+      "Daniel Emeka",
       "Teddi Speaks",
-      "Prof. Temitayo Ogundipe",
-      "Eniola Osiyoku",
-      "Hon. Mobolaji Ogunlende Abubakre",
-      "Opeyemi Stephen",
-      "Faith Jerry",
-      "Dr. Tunji Alausa",
       "Dára Sobaloju",
+      "Ada Nduka Oyom",
+      "Nebeokike Sunday",
+      "Chibuotu Amadi",
     ]);
     // Not in the team's list: after it, not dropped.
-    expect(lineup.slice(9).map((s) => s.name).sort()).toEqual([
+    expect(lineup.slice(10).map((s) => s.name).sort()).toEqual([
       "Abdulsamad Tiamiyu (Crypto Oracle)",
       "Achebo Edwin (Xploit)",
-      "Ada Nduka Oyom",
       "Adewale Akinpelu",
       "Aiseosa Uyi-Idahor",
       "Akintola Oluwapelumi (Flames)",
-      "Akitoye Balogun",
       "Amara Achusi",
       "Ashley Rene Olika",
       "Bibi Eneje",
-      "Chibuotu Amadi",
       "Christine Imoukhuede",
       "Coach Yemi",
-      "Daniel Emeka",
       "David Ogooluwa (Iamdotify)",
       "Dr. Bolutife Kusimo",
+      "Dr. Tunji Alausa",
+      "Eniola Osiyoku",
+      "Faith Jerry",
       "Hon. Abdul-Ganiyu Vinod Obasa",
-      "Hon. Olatunbosun Alake",
+      "Hon. Mobolaji Ogunlende Abubakre",
       "Ian Issa",
       "Kayode Oluwatimilehin",
-      "Nebeokike Sunday",
       "Olamilekan Majekodunmi",
       "Oluwanifemi David Babanumi",
       "Onone Peace Ega",
-      "Salemking",
+      "Opeyemi Stephen",
+      "Prof. Temitayo Ogundipe",
       "Scott C. Eneje",
       "Shodipo Ayomide",
       "Sodiq Akinjobi",
