@@ -190,6 +190,7 @@ export const sponsors: Sponsor[] = [
   /* Hashed Emergent last of the sponsors' row on the DP, so it takes the
      left wing's outer place and "Endorsed by" lines up under it (the owner,
      9 October). Each new sponsor flips which wing the last one lands in. */
+  { name: "Pulse", tier: "Media", logo: "/2026/logos/pulse.png", width: 447, height: 195, href: "https://x.com/pulsenigeria247" },
   { name: "Techpoint", tier: "Media", logo: "/images/partners-2025/techpoint.png", width: 407, height: 480, href: "https://techpoint.africa" },
   { name: "AllConfsBot", tier: "Media", logo: "/2026/logos/allconfsbot.png", width: 1280, height: 457, href: "https://x.com/allconfsbot" },
   { name: "Blockchain Marketing Ninja", tier: "Media", logo: "/2026/logos/blockchain-marketing-ninja.png", width: 1280, height: 331, href: "https://x.com/0xblockchainmkt" },

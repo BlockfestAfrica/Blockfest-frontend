@@ -190,6 +190,11 @@ const LOGOS = [
         from: "2026/media/BSN.png",
         to: "blockchain-staffing-ninja.png",
     },
+    {
+        year: 2026,
+        from: "2026/media/pulse.png",
+        to: "pulse.png",
+    },
     { year: 2026, from: "2026/media/coingabbar.png", to: "coingabbar.png" },
     { year: 2026, from: "2026/media/Coinn.png", to: "coinnewsspan.png" },
     { year: 2026, from: "2026/media/Crypto.png", to: "cryptonewsz.png" },
