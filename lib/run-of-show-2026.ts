@@ -176,7 +176,7 @@ export const runOfShow2026: RunDay[] = [
           {
             room: TECHNICAL,
             title: "Build Your First AI Agent: From Prompt to Autonomous Action",
-            people: [{ label: "Facilitator", names: TBA }],
+            people: [{ label: "Facilitator", names: "Idris Olubisi" }],
           },
           {
             room: NON_TECHNICAL,
