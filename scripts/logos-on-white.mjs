@@ -165,6 +165,7 @@ const LOGOS = [
         light: true,
     },
     { year: 2026, from: "2026/sponsors/Monica.png", to: "monica.png" },
+    { year: 2026, from: "2026/sponsors/mtn.jpg", to: "mtn.png" },
     { year: 2026, from: "2026/sponsors/rovv.png", to: "rovv.png" },
     { year: 2026, from: "2026/sponsors/hoaq.png", to: "hoaq.png" },
     { year: 2026, from: "2026/sponsors/reeva.PNG", to: "reeva.PNG" },
