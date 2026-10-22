@@ -56,8 +56,18 @@ export const headline: Sponsor | null = {
   href: "https://x.com/monicanigeria",
 };
 
+
+
 /** Every other sponsor, highest tier first. */
 export const sponsors: Sponsor[] = [
+  {
+    name: "MTN",
+    tier: "Gold",
+    logo: "/2026/logos/mtn.png",
+    width: 960,
+    height: 480,
+    href: "https://x.com/mtnng",
+  },
   {
     name: "Cake Wallet",
     tier: "Silver",
@@ -66,6 +76,7 @@ export const sponsors: Sponsor[] = [
     height: 1250,
     href: "https://x.com/cakewallet",
   },
+
   {
     name: "Luli",
     tier: "Silver",
@@ -189,7 +200,8 @@ export const sponsors: Sponsor[] = [
   { name: "Hashed Emergent", tier: "Ecosystem", logo: "/2026/logos/hashed-emergent.png", width: 1280, height: 405, href: "https://x.com/HashedEM" },
   /* Hashed Emergent last of the sponsors' row on the DP, so it takes the
      left wing's outer place and "Endorsed by" lines up under it (the owner,
-     9 October). Each new sponsor flips which wing the last one lands in. */
+     9 October). A new sponsor does not move it off that place. */
+  { name: "Pulse", tier: "Media", logo: "/2026/logos/pulse.png", width: 447, height: 195, href: "https://x.com/pulsenigeria247" },
   { name: "Techpoint", tier: "Media", logo: "/images/partners-2025/techpoint.png", width: 407, height: 480, href: "https://techpoint.africa" },
   { name: "AllConfsBot", tier: "Media", logo: "/2026/logos/allconfsbot.png", width: 1280, height: 457, href: "https://x.com/allconfsbot" },
   { name: "Blockchain Marketing Ninja", tier: "Media", logo: "/2026/logos/blockchain-marketing-ninja.png", width: 1280, height: 331, href: "https://x.com/0xblockchainmkt" },

@@ -985,12 +985,17 @@ export function layoutFooter(
     wing.length ? Math.min(1, wingW / rowWidth(wing, F.sponsorGap)) : 1;
   const wingFits = (wing: readonly Sized[]) =>
     !wing.length || wingScale(wing) * Math.min(...wing.map((s) => s.h)) >= F.sponsorMinH - 1e-9;
-  // Higher tiers sit nearest the headline: the left wing reads outward too.
+  // Higher tiers sit nearest the headline. The last logo is reserved for
+  // the outer left, so the endorsement stays under it when a new sponsor
+  // would otherwise flip which wing it lands in.
   const wings = (n: number) => {
     const list = others.slice(0, n);
+    if (!list.length) return { left: [] as Sized[], right: [] as Sized[] };
+    const last = list[list.length - 1];
+    const rest = list.slice(0, -1);
     return {
-      left: list.filter((_, i) => i % 2 === 0).reverse(),
-      right: list.filter((_, i) => i % 2 === 1),
+      left: [last, ...rest.filter((_, i) => i % 2 === 0).reverse()],
+      right: rest.filter((_, i) => i % 2 === 1),
     };
   };
   let inWings = others.length;
