@@ -3,7 +3,7 @@
  *
  * Built from the team's sheet of 16 October. These pin what matters when the
  * sheet changes: the days and venues, every session in order with no overlap,
- * both rooms of the workshop day, the one facilitator still to be named, and
+ * both rooms of the workshop day, the one speaker still to be named, and
  * that the sheet's working notes never reach a public page.
  */
 
@@ -334,9 +334,9 @@ describe("a day on the page", () => {
     expect(within(day).getByText("Bibi Eneje")).toBeTruthy();
   });
 
-  it("says plainly that a facilitator and a speaker are still to be named", () => {
+  it("says plainly that a speaker is still to be named", () => {
     render(<RunOfShow />);
-    expect(screen.getAllByText("To be announced")).toHaveLength(2);
+    expect(screen.getAllByText("To be announced")).toHaveLength(1);
   });
 
   it("names the moderator and the panelists of each panel", () => {
@@ -361,6 +361,7 @@ describe("a day on the page", () => {
     render(<RunOfShow />);
     const link = (name: string) => screen.getByRole("link", { name, hidden: true }).getAttribute("href");
     expect(link("Tobiloba Adedeji")).toBe("/speakers/tobiloba-adedeji");
+    expect(link("Idris Olubisi")).toBe("/speakers/idris-olubisi");
     expect(link("Dr. Maruf Olatunji Alausa")).toBe("/speakers/dr-tunji-alausa");
     expect(link("Oluwanifemi David Babanumi")).toBe("/speakers/oluwanifemi-david-babanumi");
     // A name inside a comma-separated panel list links too.
