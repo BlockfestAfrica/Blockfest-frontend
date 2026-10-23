@@ -79,7 +79,6 @@ export interface RunDay {
 
 const TECHNICAL = "Technical Room (Room 2)";
 const NON_TECHNICAL = "Non-Technical Room (Room 1)";
-const TBA = "To be announced";
 
 export const runOfShow2026: RunDay[] = [
   {
@@ -240,9 +239,9 @@ export const runOfShow2026: RunDay[] = [
         start: "09:00",
         end: "09:30",
         kind: "welcome",
-        title: "Welcome",
-        detail: "The hosts set the scene",
+        title: "Hosts intro: Setting the scene",
         place: "Main Hall",
+        people: [{ label: "Host", names: "Hosts" }],
       },
       {
         start: "09:30",
@@ -274,7 +273,7 @@ export const runOfShow2026: RunDay[] = [
           { label: "Moderator", names: "Coach Yemi" },
           {
             label: "Panelists",
-            names: "Uchenna Edeoga, Dr. Bolutife Kusimo, Ada Nduka Oyom, Chibuotu Amadi",
+            names: "Uchenna Edeoga, Bolutife Kusimo, Ada Nduka Oyom, Chibuotu Amadi",
           },
         ],
       },
@@ -285,22 +284,21 @@ export const runOfShow2026: RunDay[] = [
         label: "Lightning talk 1",
         title: "Creators + Monetisation: Who Owns African Culture Now?",
         place: "Main Hall",
-        people: [{ label: "Speaker", names: "Salemking, Co-founder, Crea8torium" }],
+        people: [{ label: "Speaker", names: "Salem King, Co-founder, Crea8torium" }],
       },
       {
         start: "10:55",
         end: "11:00",
         kind: "sponsor",
         label: "Sponsor spotlight",
-        title: "Monica",
-        detail: "Our headline sponsor, on screen",
+        title: "Monica video display on screen",
         place: "Main Hall",
       },
       {
         start: "11:00",
         end: "11:05",
         kind: "host",
-        title: "Energy reset with the hosts",
+        title: "Energy reset by hosts",
         place: "Main Hall",
       },
       {
@@ -314,7 +312,7 @@ export const runOfShow2026: RunDay[] = [
           { label: "Moderator", names: "Achusi Amara" },
           {
             label: "Panelists",
-            names: "Akitoye Balogun, Ashley Rene Olika, Eniola Osiyoku, Kayode Oluwatimilehin",
+            names: "Akitoye Balogun, Ashley Olika, Eniola Osiyoku, Timilehin Kayode",
           },
         ],
       },
@@ -323,9 +321,11 @@ export const runOfShow2026: RunDay[] = [
         end: "12:00",
         kind: "talk",
         label: "Lightning talk 2",
-        title: "You Are Already Using It, Now Imagine Shaping It",
+        title: "Tokenizing Africa: Who owns the next economy?",
         place: "Main Hall",
-        people: [{ label: "Speaker", names: TBA }],
+        people: [
+          { label: "Speaker", names: "Samuel Olaoyenikan Oladokun, Convener, Blockfest Africa" },
+        ],
       },
       {
         start: "12:00",
@@ -346,9 +346,19 @@ export const runOfShow2026: RunDay[] = [
       },
       {
         start: "12:25",
-        end: "12:35",
+        end: "12:30",
         kind: "entertainment",
-        title: "Entertainment",
+        label: "Entertainment",
+        title: "Spoken words",
+        place: "Main Hall",
+        people: [{ label: "Speaker", names: "Xploit" }],
+      },
+      {
+        start: "12:30",
+        end: "12:35",
+        kind: "sponsor",
+        label: "Sponsor spotlight",
+        title: "MTN",
         place: "Main Hall",
       },
       {
@@ -363,8 +373,8 @@ export const runOfShow2026: RunDay[] = [
         start: "13:45",
         end: "13:55",
         kind: "host",
-        title: "Back in the room",
-        detail: "Post-lunch warm-up with the hosts",
+        title: "Hosts re-energise the room",
+        detail: "Post-lunch warm-up and an audience participation moment",
         place: "Main Hall",
       },
       {
@@ -389,7 +399,7 @@ export const runOfShow2026: RunDay[] = [
           { label: "Moderator", names: "Crypto Oracle" },
           {
             label: "Panelists",
-            names: "Ola Elixir, Scott C. Eneje, Dára Sobaloju, Faith Jerry",
+            names: "Ola Elixir, Scott Eneje, Dara Sobaloju, Faith Jerry",
           },
         ],
       },
@@ -419,10 +429,10 @@ export const runOfShow2026: RunDay[] = [
         title: "Careers & Entry Paths: How to Get In, Stay In, and Build a Name",
         place: "Main Hall",
         people: [
-          { label: "Moderator", names: "Oluwanifemi David Babanumi" },
+          { label: "Moderator", names: "Nifemi Dave" },
           {
             label: "Panelists",
-            names: "Opeyemi Bangkok, Ian Issa, Nebeokike Sunday, Teddi Speaks",
+            names: "Opeyemi Bangkok, Ian Issa, Nebeokike Sunday, Teddi",
           },
         ],
       },
@@ -441,14 +451,13 @@ export const runOfShow2026: RunDay[] = [
         kind: "closing",
         title: "Closing address & farewell",
         place: "Main Hall",
-        people: [{ label: "Speaker", names: "Xeus the Great, Convener, Blockfest Africa" }],
       },
       {
         start: "16:50",
         end: "17:00",
         kind: "logistics",
-        label: "Exit",
-        title: "Photos and final networking",
+        label: "Managed exit",
+        title: "Photography and final networking",
         place: "Main Hall",
       },
     ],

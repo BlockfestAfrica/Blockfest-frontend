@@ -8,6 +8,14 @@ const NAME_ALIASES: ReadonlyArray<readonly [string, string]> = [
   ["Ayomide Shodipo", "Shodipo Ayomide"],
   ["Achusi Amara", "Amara Achusi"],
   ["Crypto Oracle", "Abdulsamad Tiamiyu (Crypto Oracle)"],
+  ["Salem King", "Salemking"],
+  ["Bolutife Kusimo", "Dr. Bolutife Kusimo"],
+  ["Ashley Olika", "Ashley Rene Olika"],
+  ["Timilehin Kayode", "Kayode Oluwatimilehin"],
+  ["Scott Eneje", "Scott C. Eneje"],
+  ["Dara Sobaloju", "Dára Sobaloju"],
+  ["Nifemi Dave", "Oluwanifemi David Babanumi"],
+  ["Teddi", "Teddi Speaks"],
 ];
 
 const PROFILES = SpeakersList.filter(is2026Speaker)

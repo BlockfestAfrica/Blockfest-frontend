@@ -3,7 +3,7 @@
  *
  * Built from the team's sheet of 16 October. These pin what matters when the
  * sheet changes: the days and venues, every session in order with no overlap,
- * both rooms of the workshop day, the one speaker still to be named, and
+ * both rooms of the workshop day, and
  * that the sheet's working notes never reach a public page.
  */
 
@@ -305,12 +305,12 @@ describe("a day on the page", () => {
     render(<RunOfShow />);
     const day = panel("day-2");
     const closing = within(day)
-      .getByText("Mascot gadget giveaway · Closing address & farewell · Photos and final networking")
+      .getByText("Mascot gadget giveaway · Closing address & farewell · Photography and final networking")
       .closest("details")!;
     expect(closing).toBeTruthy();
     expect(closing.open).toBe(false);
     // Inside the fold, each with its own time and people.
-    expect(within(closing).getByText(/Xeus the Great/)).toBeTruthy();
+    expect(within(closing).getByText(/Mascot and the convener/)).toBeTruthy();
     expect(closing.querySelectorAll("ol > li")).toHaveLength(3);
     // "Internet takeover" has nothing more to say, so it is a line, not a fold.
     expect(within(day).getByText("Internet takeover").closest("details")).toBeNull();
@@ -334,9 +334,10 @@ describe("a day on the page", () => {
     expect(within(day).getByText("Bibi Eneje")).toBeTruthy();
   });
 
-  it("says plainly that a speaker is still to be named", () => {
+  it("names the convener on the second lightning talk", () => {
     render(<RunOfShow />);
-    expect(screen.getAllByText("To be announced")).toHaveLength(1);
+    expect(screen.getByText(/Samuel Olaoyenikan Oladokun/)).toBeTruthy();
+    expect(screen.queryByText("To be announced")).toBeNull();
   });
 
   it("names the moderator and the panelists of each panel", () => {
@@ -363,14 +364,19 @@ describe("a day on the page", () => {
     expect(link("Tobiloba Adedeji")).toBe("/speakers/tobiloba-adedeji");
     expect(link("Idris Olubisi")).toBe("/speakers/idris-olubisi");
     expect(link("Dr. Maruf Olatunji Alausa")).toBe("/speakers/dr-tunji-alausa");
-    expect(link("Oluwanifemi David Babanumi")).toBe("/speakers/oluwanifemi-david-babanumi");
-    // A name inside a comma-separated panel list links too.
-    expect(link("Kayode Oluwatimilehin")).toBe("/speakers/kayode-oluwatimilehin");
-    // A name with no profile stays plain text. The placeholder never gets a
-    // profile, so a speaker PR landing cannot flip this the way it did when
-    // this test pinned a real name that was still on its way.
-    expect(screen.getAllByText("To be announced").length).toBeGreaterThan(0);
-    expect(screen.queryByRole("link", { name: "To be announced", hidden: true })).toBeNull();
+    expect(link("Nifemi Dave")).toBe("/speakers/oluwanifemi-david-babanumi");
+    // A name inside a comma-separated panel list links too, including the
+    // sheet's shorter form of a lineup name.
+    expect(link("Timilehin Kayode")).toBe("/speakers/kayode-oluwatimilehin");
+    expect(link("Salem King")).toBe("/speakers/salemking");
+    expect(link("Bolutife Kusimo")).toBe("/speakers/dr-bolutife-kusimo");
+    expect(
+      screen.getAllByRole("link", { name: "Xploit", hidden: true }).map((a) => a.getAttribute("href")),
+    ).toEqual([
+      "/speakers/achebo-edwin-xploit",
+      "/speakers/achebo-edwin-xploit",
+      "/speakers/achebo-edwin-xploit",
+    ]);
   });
 
   it("loses nothing from the sheet: every time, title, label, detail, person, place and room is in its own day", () => {
