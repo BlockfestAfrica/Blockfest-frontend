@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { participantCounts, participants } from "@/lib/admin/participants";
 import { pendingHandleRequests } from "@/lib/admin/handle-requests";
-import { HandleRequestQueue } from "@/components/admin/handle-request-queue";
 import { ParticipantsTable } from "@/components/admin/participants-table";
 import {
   buttonClass,
@@ -107,20 +107,15 @@ export default async function AdminParticipantsPage({
         </div>
       </PageHeader>
 
+      {/* The queue itself has its own screen; a creator stuck on it is
+          worth a line here, where the owner is looking at people. */}
       {owner && requests.length > 0 && (
-        <HandleRequestQueue
-          requests={requests.map((r) => ({
-            id: r.id,
-            creatorName: r.creatorName,
-            creatorEmail: r.creatorEmail,
-            platform: r.platform,
-            oldHandle: r.oldHandle,
-            requestedHandle: r.requestedHandle,
-            takenBy: r.takenBy,
-            reason: r.reason,
-            createdAt: r.createdAt.toISOString(),
-          }))}
-        />
+        <p className="text-sm text-ink-2">
+          <Pill tone="warn">{requests.length} waiting</Pill>{" "}
+          <Link href="/admin/handle-requests" className="text-link underline underline-offset-2 hover:text-white">
+            {requests.length === 1 ? "A creator is" : `${requests.length} creators are`} asking to correct a handle
+          </Link>
+        </p>
       )}
 
       {counts.joined === 0 ? (

@@ -73,7 +73,7 @@ const at = (iso: string) => new Date(iso).getTime();
 
 export function dueItems(facts: DueFacts, now: number): DueItem[] {
   const items: DueItem[] = [];
-  const stages = "/admin/campaign#stages";
+  const stages = "/admin/challenges";
   const winners = (week: number) => `/admin/winners?week=${week}`;
 
   for (const c of facts.challenges) {
@@ -217,7 +217,7 @@ export function dueItems(facts: DueFacts, now: number): DueItem[] {
     if (lastDay) {
       items.push({
         text: `ROVV closes tonight at 11:59 PM, and winners are due by ${ROVV.winnersByLabel}: have the ${ROVV.winners} ${ROVV.prize} codes ready.`,
-        href: "/admin/rovv#winners",
+        href: "/admin/rovv/winners",
       });
     }
     /* ROVV confirms the referral codes from this file, and a winner email
@@ -225,7 +225,7 @@ export function dueItems(facts: DueFacts, now: number): DueItem[] {
     if (open) {
       items.push({
         text: "ROVV: send ROVV today's referral check file, and rule out what they cannot confirm.",
-        href: "/admin/rovv#winners",
+        href: "/admin/rovv/winners",
       });
     }
     if (open && r.pendingOverADay > 0) {
@@ -244,7 +244,7 @@ export function dueItems(facts: DueFacts, now: number): DueItem[] {
     if (judging && r.notified === 0) {
       items.push({
         text: "ROVV: send ROVV the final referral check file, and rule out what they cannot confirm, before picking winners.",
-        href: "/admin/rovv#winners",
+        href: "/admin/rovv/winners",
       });
     }
     if (judging && unfinished) {
@@ -257,7 +257,7 @@ export function dueItems(facts: DueFacts, now: number): DueItem[] {
       const late = now > at(ROVV.winnersBy);
       items.push({
         text: `ROVV winners ${late ? "were" : "are"} due by ${ROVV.winnersByLabel}: ${left.join(", ")}.`,
-        href: "/admin/rovv#winners",
+        href: "/admin/rovv/winners",
       });
     }
   }

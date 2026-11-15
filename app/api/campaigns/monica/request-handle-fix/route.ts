@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
         reason: parsed.data.reason,
         /* From the configured site, not a literal: a hardcoded production
            URL in a preview's mail points the reviewer at the wrong console. */
-        consoleUrl: `${siteUrl()}/admin/participants`,
+        consoleUrl: `${siteUrl()}/admin/handle-requests`,
       }),
       "handle request notification",
     );

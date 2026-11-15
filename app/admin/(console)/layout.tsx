@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { pauseState } from "@/lib/campaign-pause";
-import { ConsoleTabs, type ConsoleTab } from "@/components/admin/console-tabs";
+import { ConsoleMenu } from "@/components/admin/console-menu";
 import { ConsoleNav } from "@/components/admin/console-nav";
+import { consoleNavFor } from "@/lib/admin/console-nav";
 import { SignOut } from "@/components/admin/sign-out";
 import { SessionClock } from "@/components/admin/session-clock";
 import { buttonClass, Pill } from "@/components/shared/panel";
@@ -104,31 +105,11 @@ export default async function AdminLayout({
   const pause = await pauseState();
   const owner = isOwner(admin.admin);
 
-  const tabs: ConsoleTab[] = [
-    { href: "/admin", label: "Review" },
-    { href: "/admin/overview", label: "Overview" },
-    { href: "/admin/participants", label: "People" },
-    { href: "/admin/decided", label: "Decided" },
-    // Rovv's entries. Every admin reviews them; the page and its routes keep
-    // picking, exporting and emailing winners to owners.
-    { href: "/admin/rovv", label: "ROVV" },
-    { href: "/admin/tools", label: "Tools" },
-    // Pausing and clearing are owner work, so the tab is not offered to a
-    // reviewer. The routes check the role again themselves: a hidden tab is a
-    // tidy interface, not a permission.
-    ...(owner
-      ? [
-          { href: "/admin/winners", label: "Winners" },
-          { href: "/admin/campaign", label: "Campaign" },
-          // One-off emails to every creator who said yes to future campaigns.
-          { href: "/admin/emails", label: "Emails" },
-          { href: "/admin/audit", label: "Audit" },
-          // Names every admin and whose access is live, so it sits with the
-          // audit log behind the same role check.
-          { href: "/admin/admins", label: "Admins" },
-        ]
-      : []),
-  ];
+  /* The grouped menu (lib/admin/console-nav.ts). Owner screens are left out
+     for a reviewer; every one of those pages and routes checks the role
+     again itself, because a hidden line is a tidy interface, not a
+     permission. */
+  const groups = consoleNavFor(owner);
 
   const notOpenYet =
     CAMPAIGN.startsAt && new Date(CAMPAIGN.startsAt) > new Date();
@@ -146,16 +127,19 @@ export default async function AdminLayout({
 
   return (
     /*
-     * The dashboard shell: a persistent rail on desktop, tabs on a phone.
+     * The dashboard shell: a persistent rail on desktop, a menu on a phone.
      *
      * The seven screens used to share nothing but a tab row floating above a
      * column, which is why they read as disconnected tables on a page. The
      * rail holds where-you-are, who-you-are and the campaign state in one
      * fixed place, and the content area holds exactly one thing: the screen.
+     * The rail is grouped and each group folds, since there are now far
+     * more screens than seven.
      *
      * On a phone the rail would spend a third of the width on chrome, so the
-     * horizontal tabs stay, in a sticky header that also carries the state
-     * pills. One-handed reviewing on launch weekend is the constraint there.
+     * sticky header names the screen you are on and opens the same grouped
+     * menu as a sheet, beside the state pills. One-handed reviewing on launch
+     * weekend is the constraint there.
      */
     <main id="main" className="min-h-dvh bg-ground lg:grid lg:grid-cols-[230px_minmax(0,1fr)]">
       {/* The border lives on the grid track, not the sticky aside: the
@@ -168,8 +152,8 @@ export default async function AdminLayout({
           <p className="mt-1 text-lg font-bold text-white">Console</p>
         </div>
 
-        <div className="mt-8 flex-1 overflow-y-auto">
-          <ConsoleNav tabs={tabs} />
+        <div className="mt-6 flex-1 overflow-y-auto overscroll-contain">
+          <ConsoleNav groups={groups} />
         </div>
 
         {/* Who is signed in, pinned to the bottom of the rail where a
@@ -194,8 +178,8 @@ export default async function AdminLayout({
         {/* z-40 sits under the skip link at z-100 and over the desktop table's
             sticky first column at z-10. */}
         <header className="sticky top-0 z-40 border-b border-line bg-ground/95 backdrop-blur lg:hidden">
-          <div className="flex w-full items-center gap-3 px-4">
-            <ConsoleTabs tabs={tabs} />
+          <div className="flex min-h-14 w-full items-center gap-3 px-4">
+            <ConsoleMenu groups={groups} />
             <div className="ml-auto flex shrink-0 items-center gap-2">
               {statePills}
               <SignOut />

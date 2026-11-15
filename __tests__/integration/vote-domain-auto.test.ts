@@ -588,7 +588,7 @@ describe("telling the owners", () => {
       expect(mail.text).toContain("Forwarding service (route1.mx.cloudflare.net), 3 verified votes this round.");
       expect(mail.text).toContain("3 votes from it are held for you to review this round.");
       expect(mail.text).toMatch(/They were verified between .+ and .+, Lagos time\./);
-      expect(mail.text).toContain("https://blockfestafrica.com/admin/winners#blocked-domains");
+      expect(mail.text).toContain("https://blockfestafrica.com/admin/vote-domains");
       const everything = `${mail.subject} ${mail.text} ${mail.html}`;
       expect(everything).not.toContain("@oemails.com");
       for (const local of INCIDENT) expect(everything).not.toContain(local);

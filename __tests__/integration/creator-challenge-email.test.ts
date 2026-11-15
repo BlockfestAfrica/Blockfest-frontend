@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/pglite";
 import { NextRequest } from "next/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as schema from "@/lib/db/schema";
+import type { AdminIdentity } from "@/lib/admin/session";
 import { applyMigrations } from "../helpers/migrations";
 
 /*
@@ -102,7 +103,7 @@ const stopTokenIn = (text: string) => {
   const match = text.match(/stop-emails\?s=([^\s"&]+)/);
   return match ? decodeURIComponent(match[1]) : "";
 };
-const owner = { adminId: "", role: "owner" as const, email: "owner@example.test" };
+const owner = { adminId: "", role: "owner", email: "owner@example.test" } as unknown as AdminIdentity;
 
 beforeAll(async () => {
   db = new PGlite();
@@ -115,7 +116,7 @@ beforeAll(async () => {
        VALUES ('owner@example.test', 'owner@example.test', 'x', 'owner') RETURNING id`,
     )
   ).id;
-  owner.adminId = state.adminId;
+  (owner as { adminId: string }).adminId = state.adminId;
 }, 60_000);
 
 afterAll(async () => {

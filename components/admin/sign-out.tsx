@@ -63,7 +63,9 @@ export function SignOut() {
       className={buttonClass("quiet")}
     >
       <LogOut className="h-4 w-4" aria-hidden="true" />
-      {busy ? "Signing out…" : "Sign out"}
+      {/* Icon only on a phone, where the header also has to name the
+          screen; the words stay for a screen reader. */}
+      <span className="sr-only sm:not-sr-only">{busy ? "Signing out…" : "Sign out"}</span>
     </button>
   );
 }

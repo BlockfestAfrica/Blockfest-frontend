@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { requireAdmin } from "@/lib/admin/session";
 import {
   addressClusters,
   campaignMetrics,
-  dpGenerations,
   weeklyActivity,
 } from "@/lib/admin/metrics";
 import { SectionCard, Stat } from "@/components/shared/panel";
 import { AddressClusters } from "@/components/admin/address-clusters";
-import { DpGenerationsCard } from "@/components/admin/dp-generations";
 import { SABILYTICS_SHARE_URL } from "@/lib/sabilytics";
 
 export const metadata: Metadata = {
@@ -37,17 +34,17 @@ const TARGETS = {
  * counter always looks like an answer.
  *
  * Open to every admin. These are the numbers the team needs daily and none of
- * them is an action.
+ * them is an action. The /getdp counts that used to sit here are the event's,
+ * not the campaign's, and have their own screen under Site.
  */
 export default async function OverviewPage() {
   const admin = await requireAdmin();
   if (!admin.ok) return null;
 
-  const [metrics, weeks, clusters, dps] = await Promise.all([
+  const [metrics, weeks, clusters] = await Promise.all([
     campaignMetrics(admin.admin),
     weeklyActivity(admin.admin),
     addressClusters(admin.admin),
-    dpGenerations(admin.admin),
   ]);
 
   const pct = (value: number, target: number) =>
@@ -55,7 +52,7 @@ export default async function OverviewPage() {
 
   return (
     <>
-      <p className="eyebrow text-brand-gold">Overview</p>
+      <p className="eyebrow text-brand-gold">Monica · Overview</p>
       <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-white">
         Where we are
       </h1>
@@ -93,8 +90,6 @@ export default async function OverviewPage() {
         <Stat label="Points" value={metrics.pointsAwarded} />
       </div>
 
-
-      <DpGenerationsCard dps={dps} sabilyticsUrl={SABILYTICS_SHARE_URL || undefined} />
 
       <SectionCard id="by-week" title="By week" className="mt-10">
         <div className="mt-4 overflow-x-auto rounded-lg border border-line">

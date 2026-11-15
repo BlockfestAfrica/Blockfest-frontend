@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download } from "lucide-react";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
-import { rovvCodeQueue, rovvCounts, rovvEntries, rovvHeldCodes, type RovvFilter } from "@/lib/admin/rovv";
-import { RovvCodePaste, RovvNotify, RovvQueue, RovvResults, RovvRuleOut, RovvTestTools } from "@/components/admin/rovv-queue";
-import { PageHeader, Pill, SectionCard, SPACING, Stat } from "@/components/shared/panel";
+import { rovvCounts, rovvEntries, type RovvFilter } from "@/lib/admin/rovv";
+import { RovvQueue } from "@/components/admin/rovv-queue";
+import { PageHeader, SPACING, Stat } from "@/components/shared/panel";
 import { ROVV } from "@/lib/rovv";
 import { dateTime, dayDate } from "@/lib/format";
 
@@ -32,8 +31,9 @@ const FILTERS: { value: RovvFilter; label: string; owner?: boolean }[] = [
 ];
 
 /**
- * Rovv's campaign, on one screen: every entry, the ruling on it, and for
- * owners the winners, the exports and the winner email.
+ * Rovv's entries: every one, and the ruling on it. The winners, the exports
+ * and the winner email were above the list here; they have their own screen
+ * now (ROVV → Winners), as do the test tools (ROVV → Try it yourself).
  *
  * Every admin reviews; picking, exporting and emailing are owner work, and
  * each of those routes checks the role again itself. The filter is links,
@@ -59,12 +59,9 @@ export default async function RovvPage({
   const q = params.q?.trim().slice(0, 100) || undefined;
   const withQ = (href: string) => (q ? `${href}${href.includes("?") ? "&" : "?"}q=${encodeURIComponent(q)}` : href);
 
-  const [entries, counts, codeQueue, testCodeQueue, heldCodes] = await Promise.all([
+  const [entries, counts] = await Promise.all([
     rovvEntries(admin.admin, { status: filter, limit: PAGE_SIZE, q }),
     rovvCounts(admin.admin),
-    owner ? rovvCodeQueue(admin.admin, false) : Promise.resolve([] as string[]),
-    owner ? rovvCodeQueue(admin.admin, true) : Promise.resolve([] as string[]),
-    rovvHeldCodes(admin.admin),
   ]);
 
   const matching: Record<RovvFilter, number> = {
@@ -76,9 +73,6 @@ export default async function RovvPage({
     test: counts.tests,
     noted: counts.noted,
   };
-  // Sendable now: picked, with a code, not emailed and not being emailed.
-  const untold = Math.max(0, counts.winners - counts.notified - counts.sending - counts.needCode);
-  const closed = Date.now() > new Date(ROVV.closesAt).getTime();
 
   return (
     <div className={SPACING.page}>
@@ -100,120 +94,6 @@ export default async function RovvPage({
           />
         </div>
       </PageHeader>
-
-      {owner && (
-        <SectionCard
-          id="winners"
-          title="Winners"
-          aside={
-            <Pill tone={untold > 0 ? "warn" : "neutral"}>
-              {untold > 0 ? `${untold} not emailed` : `${counts.notified} emailed`}
-            </Pill>
-          }
-        >
-          <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
-            {counts.winners} of {ROVV.winners} picked. Winners are promised by {ROVV.winnersByLabel}.
-          </p>
-          {/* The order the owner works in. A winner email cannot be taken
-              back, so ROVV's check of the referral codes comes first. */}
-          <ol className="mt-3 flex max-w-prose list-decimal flex-col gap-1 pl-5 text-sm leading-relaxed text-ink-2 marker:text-ink-4">
-            <li>
-              Send ROVV the referral check file below: daily while entries are open, and once more after the close.
-            </li>
-            <li>
-              Rule out whatever ROVV cannot confirm: paste the emails in the box below (each entrant is emailed the
-              reason).
-            </li>
-            <li>
-              Pick the {ROVV.winners} winners from eligible entries, and send ROVV the picked winners file for a last
-              check.
-            </li>
-            <li>Paste the {ROVV.winners} {ROVV.prize} codes: each winner gets their own.</li>
-            <li>Email the winners. Each gets their own code, and their username goes on the campaign page.</li>
-          </ol>
-          <div className="mt-4 border-t border-line pt-4">
-            <RovvRuleOut />
-          </div>
-          {counts.needCode > 0 && (
-            <div className="mt-4 border-t border-line pt-4">
-              <RovvCodePaste waiting={counts.needCode} queue={codeQueue} held={heldCodes} />
-            </div>
-          )}
-          <div className="mt-4">
-            <RovvNotify
-              untold={untold}
-              sending={counts.sending}
-              needCode={counts.needCode}
-              winners={counts.winners}
-              cap={ROVV.winners}
-              closed={closed}
-            />
-          </div>
-          {counts.notified > 0 && counts.notified === counts.winners && (
-            <div className="mt-4 border-t border-line pt-4">
-              <RovvResults
-                toSend={counts.resultsToSend}
-                sent={counts.resultsSent}
-                winners={counts.winners}
-                cap={ROVV.winners}
-              />
-            </div>
-          )}
-
-          {/* Links rather than buttons: a GET that changes nothing, and a file
-              somebody attaches to an email. The ROVV files are the ones that
-              leave: the four fields the privacy notice says ROVV receives,
-              for every entry not ruled out, or for the picked winners only,
-              so ROVV can confirm each referral code. */}
-          <div className="mt-6 flex flex-wrap gap-3 border-t border-line pt-5">
-            <a
-              href="/api/admin/rovv/export?of=rovv"
-              className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
-            >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              Referral check, for ROVV (CSV)
-            </a>
-            <a
-              href="/api/admin/rovv/export?of=rovv&picked=1"
-              className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
-            >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              Picked winners, for ROVV&apos;s final check (CSV)
-            </a>
-            <a
-              href="/api/admin/rovv/export?of=all"
-              className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
-            >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              Every entry, for the team only (CSV: has codes and notes)
-            </a>
-            <a
-              href="/api/admin/rovv/export?of=winners"
-              className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
-            >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              The winners, for the team only (CSV: has codes)
-            </a>
-          </div>
-        </SectionCard>
-      )}
-
-      {owner && (
-        <SectionCard
-          id="testing"
-          title="Try it yourself"
-          aside={counts.tests > 0 ? <Pill tone="neutral">{counts.tests} test {counts.tests === 1 ? "entry" : "entries"}</Pill> : undefined}
-        >
-          <div className="mt-3">
-            <RovvTestTools tests={counts.tests} />
-          </div>
-          {counts.testNeedCode > 0 && (
-            <div className="mt-4 border-t border-line pt-4">
-              <RovvCodePaste waiting={counts.testNeedCode} queue={testCodeQueue} held={heldCodes} test />
-            </div>
-          )}
-        </SectionCard>
-      )}
 
       <section aria-labelledby="entries-title">
         <h2 id="entries-title" className="sr-only">

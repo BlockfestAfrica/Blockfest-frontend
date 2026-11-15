@@ -1106,7 +1106,7 @@ export function RovvTestTools({ tests }: { tests: number }) {
           the campaign page in test mode
         </a>{" "}
         while signed in here, and enter as anyone would, at any time. Test entries get the same emails, appear under
-        Test below, and are kept off the public page, out of the exports and out of the winner count. Pick one as a
+        Test on Entries, and are kept off the public page, out of the exports and out of the winner count. Pick one as a
         winner, give it a made-up code (on its card, or several at once in the box below, the way you will paste the
         real ones), and send yourself the winner email from its card.
       </p>
