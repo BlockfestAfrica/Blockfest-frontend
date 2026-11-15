@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { isOwner, requireAdmin } from "@/lib/admin/session";
 import {
-  announcedWinners,
   snapshotsTaken,
   tiebreakPoints,
   voteVerdict as computeVoteVerdict,
@@ -11,7 +9,6 @@ import {
   winnersSoFar,
 } from "@/lib/admin/winners";
 import {
-  blockedDomains,
   candidateEntries,
   currentRound,
   roundTally,
@@ -20,12 +17,9 @@ import {
 } from "@/lib/admin/vote-round";
 import { WinnersPanel } from "@/components/admin/winners-panel";
 import { VoteRoundPanel } from "@/components/admin/vote-round-panel";
-import { BlockedDomainsCard } from "@/components/admin/blocked-domains-card";
-import { WinnerTags } from "@/components/admin/winner-tags";
-import { PageHeader, SectionCard, SPACING } from "@/components/shared/panel";
+import { PageHeader, SPACING } from "@/components/shared/panel";
 import { currentWeekNo } from "@/lib/campaigns";
 import { voteOpening } from "@/lib/vote-open-rule";
-import { count, dateTime } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Winners",
@@ -41,8 +35,10 @@ export const revalidate = 0;
  * Owners only, checked here as well as by the tab being hidden and by the API
  * refusing again. A hidden tab is a tidy interface, not a permission.
  *
- * The page is four things in a fixed order: where you are, the two jobs, the
- * paperwork, and the record of what has been recorded. Each job carries its own
+ * The page is the week and its jobs, in order: record, announce, and the
+ * Community Favourite vote. The paperwork, the winners so far and the blocked
+ * vote domains are about every week, and have their own screens (Payouts,
+ * Blocked vote domains). Each job carries its own
  * state, which is why the yellow warning bar that used to sit at the top is
  * gone: it announced "week 3 is not frozen yet" directly above a control headed
  * "Freeze week 3", in an alarm colour, for the ordinary condition of a Saturday
@@ -92,7 +88,7 @@ export default async function WinnersPage({
       ? asked
       : ((await unfinishedVoteWeek(admin.admin, current)) ?? current);
 
-  const [creators, favourites, picked, snapshots, frozenPoints, round, entries, blocks, announced] =
+  const [creators, favourites, picked, snapshots, frozenPoints, round, entries] =
     await Promise.all([
       winnerCandidates(admin.admin, "creator_of_week"),
       winnerCandidates(admin.admin, "community_favourite"),
@@ -101,8 +97,6 @@ export default async function WinnersPage({
       tiebreakPoints(admin.admin, weekNo),
       currentRound(admin.admin, weekNo),
       candidateEntries(admin.admin, weekNo),
-      blockedDomains(admin.admin),
-      announcedWinners(admin.admin),
     ]);
 
   /*
@@ -290,105 +284,6 @@ export default async function WinnersPage({
             : null
         }
       />
-
-      {/*
-       * Under the vote it guards, on every week: a block is campaign-wide,
-       * so it outlives the round it was made in, and the card is where an
-       * owner lifts one or blocks a domain before anybody has used it.
-       */}
-      <BlockedDomainsCard
-        blocks={blocks.map((b) => ({
-          domain: b.domain,
-          source: b.source,
-          reason: b.reason,
-          evidence: b.evidence,
-          createdAt: b.createdAt.toISOString(),
-          byYou: b.createdByAdminId === admin.admin.adminId,
-          by: b.createdByEmail,
-          held: b.held,
-        }))}
-      />
-
-      {/*
-       * Who has won, of both awards, and the Monica tag each prize is paid
-       * to, for copying. Every week, not just this one, so it sits with the
-       * paperwork rather than with the week's jobs.
-       */}
-      <WinnerTags
-        winners={announced.map((w) => ({
-          weekNo: w.weekNo,
-          category: w.category,
-          name: w.name,
-          monicaTag: w.monicaTag,
-          email: w.email,
-          prizeNaira: w.prizeNaira,
-        }))}
-      />
-
-      {/*
-       * The working, for the people being paid.
-       *
-       * Links rather than buttons: a GET that changes nothing, and a link can be
-       * opened, saved and attached to an email, which is what somebody actually
-       * does with it two days before a transfer.
-       */}
-      <SectionCard id="paperwork" title="Paperwork">
-        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-2">
-          Every ledger row for the top five, with who awarded it and why: the
-          document a dispute is answered with. No bank details; the platform
-          never holds any.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <a
-            href="/api/admin/payout"
-            className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
-          >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            Points, with the working
-          </a>
-          <a
-            href="/api/admin/payout?of=entries"
-            className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-2 px-5 text-sm font-semibold text-white transition-colors hover:bg-card-3"
-          >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            The entries they were paid for
-          </a>
-        </div>
-
-        {snapshots.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-ink-4">
-              Recorded so far
-            </h3>
-            {/* A definition list, because every row is week then facts about
-                that week. It was four spans in a flex row, which on a phone
-                wrapped into a shape with no grammar. */}
-            {/* Each row opens the frozen table it names: the freeze is the
-                payout record, and a record nobody can open is a rumour. */}
-            <dl className="mt-3 divide-y divide-line border-y border-line">
-              {snapshots.map((s) => (
-                <div key={`${s.weekNo}-${s.version}`}>
-                  <Link
-                    href={`/admin/winners/snapshots?week=${s.weekNo}&version=${s.version}`}
-                    className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 transition-colors hover:bg-card-2"
-                  >
-                    <dt className="font-semibold text-link underline underline-offset-4">
-                      Week {s.weekNo}
-                    </dt>
-                    <dd className="text-sm text-ink-3">
-                      {count(s.rows)} creators
-                      {s.version > 1 && ` · version ${s.version}`}
-                      <span className="ml-2 text-ink-4">
-                        {dateTime(s.takenAt)}
-                      </span>
-                    </dd>
-                  </Link>
-                </div>
-              ))}
-            </dl>
-          </div>
-        )}
-      </SectionCard>
     </div>
   );
 }

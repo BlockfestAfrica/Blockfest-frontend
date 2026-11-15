@@ -80,7 +80,7 @@ export async function notifyOwnersOfAutoBlock(params: {
           held: Number(row.held ?? 0),
           firstAtLagos: at(e.first_at),
           lastAtLagos: at(e.last_at),
-          consoleUrl: `${siteUrl()}/admin/winners#blocked-domains`,
+          consoleUrl: `${siteUrl()}/admin/vote-domains`,
         }),
         "domain auto-block alert",
       );

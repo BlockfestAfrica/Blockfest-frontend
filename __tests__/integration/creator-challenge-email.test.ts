@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/pglite";
 import { NextRequest } from "next/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as schema from "@/lib/db/schema";
+import type { AdminIdentity } from "@/lib/admin/session";
 import { applyMigrations } from "../helpers/migrations";
 
 /*
@@ -57,6 +58,12 @@ vi.mock("@/lib/email/copy", () => ({
   },
 }));
 
+/* A test here can make two full presses against PGlite, each a dozen
+   queries. Alone that is well under a second; inside a full run that
+   loads every core it once passed the default five seconds, failing a
+   suite that production deploys run. */
+vi.setConfig({ testTimeout: 20_000 });
+
 const broadcastRoute = await import("@/app/api/admin/broadcast/route");
 const stopRoute = await import("@/app/api/campaigns/monica/stop-emails/route");
 const { broadcastCounts, CREATOR_CHALLENGE } = await import("@/lib/admin/broadcast");
@@ -102,7 +109,7 @@ const stopTokenIn = (text: string) => {
   const match = text.match(/stop-emails\?s=([^\s"&]+)/);
   return match ? decodeURIComponent(match[1]) : "";
 };
-const owner = { adminId: "", role: "owner" as const, email: "owner@example.test" };
+const owner = { adminId: "", role: "owner", email: "owner@example.test" } as unknown as AdminIdentity;
 
 beforeAll(async () => {
   db = new PGlite();
@@ -115,7 +122,7 @@ beforeAll(async () => {
        VALUES ('owner@example.test', 'owner@example.test', 'x', 'owner') RETURNING id`,
     )
   ).id;
-  owner.adminId = state.adminId;
+  (owner as { adminId: string }).adminId = state.adminId;
 }, 60_000);
 
 afterAll(async () => {

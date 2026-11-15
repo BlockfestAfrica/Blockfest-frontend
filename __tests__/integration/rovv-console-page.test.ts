@@ -33,6 +33,8 @@ vi.mock("@/lib/admin/session", async (importOriginal) => {
 });
 
 const Page = (await import("@/app/admin/(console)/rovv/page")).default;
+/* The winners steps, the rule-out box and the exports moved to their own screen. */
+const WinnersPage = (await import("@/app/admin/(console)/rovv/winners/page")).default;
 const { RovvQueue, RovvRuleOut } = await import("@/components/admin/rovv-queue");
 
 let db: PGlite;
@@ -120,15 +122,24 @@ describe("the console page's tools for ROVV's answer", () => {
   };
 
   it("gives the rule-out box and ROVV's picked winners file to an owner, and neither to a reviewer", async () => {
-    const owner = await page("owner");
+    state.role = "owner";
+    const owner = await WinnersPage();
     expect(propsOf(owner, RovvRuleOut)).not.toBeNull();
     const picked = elements(owner).find((el) => el.props.href === "/api/admin/rovv/export?of=rovv&picked=1");
     expect(picked).toBeTruthy();
     expect(words(picked)).toContain("Picked winners, for ROVV's final check (CSV)");
 
-    const reviewer = await page("reviewer");
-    expect(propsOf(reviewer, RovvRuleOut)).toBeNull();
-    expect(elements(reviewer).some((el) => String(el.props.href ?? "").includes("/export"))).toBe(false);
+    state.role = "reviewer";
+    const refused = await WinnersPage();
+    expect(propsOf(refused, RovvRuleOut)).toBeNull();
+    expect(elements(refused).some((el) => String(el.props.href ?? "").includes("/export"))).toBe(false);
+
+    // The entries screen, which a reviewer works from, carries neither for anybody.
+    for (const role of ["owner", "reviewer"] as const) {
+      const entries = await page(role);
+      expect(propsOf(entries, RovvRuleOut)).toBeNull();
+      expect(elements(entries).some((el) => String(el.props.href ?? "").includes("/export"))).toBe(false);
+    }
   });
 
   it("tells reviewers what to do about an entrant who looks under 18", async () => {

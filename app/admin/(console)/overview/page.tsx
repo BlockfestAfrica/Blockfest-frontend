@@ -5,12 +5,9 @@ import { requireAdmin } from "@/lib/admin/session";
 import {
   addressClusters,
   campaignMetrics,
-  dpGenerations,
   weeklyActivity,
 } from "@/lib/admin/metrics";
 import { SectionCard, Stat } from "@/components/shared/panel";
-import { AddressClusters } from "@/components/admin/address-clusters";
-import { DpGenerationsCard } from "@/components/admin/dp-generations";
 import { SABILYTICS_SHARE_URL } from "@/lib/sabilytics";
 
 export const metadata: Metadata = {
@@ -37,17 +34,17 @@ const TARGETS = {
  * counter always looks like an answer.
  *
  * Open to every admin. These are the numbers the team needs daily and none of
- * them is an action.
+ * them is an action. The /getdp counts that used to sit here are the event's,
+ * not the campaign's, and have their own screen under Site.
  */
 export default async function OverviewPage() {
   const admin = await requireAdmin();
   if (!admin.ok) return null;
 
-  const [metrics, weeks, clusters, dps] = await Promise.all([
+  const [metrics, weeks, clusters] = await Promise.all([
     campaignMetrics(admin.admin),
     weeklyActivity(admin.admin),
     addressClusters(admin.admin),
-    dpGenerations(admin.admin),
   ]);
 
   const pct = (value: number, target: number) =>
@@ -55,7 +52,7 @@ export default async function OverviewPage() {
 
   return (
     <>
-      <p className="eyebrow text-brand-gold">Overview</p>
+      <p className="eyebrow text-brand-gold">Monica · Overview</p>
       <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-white">
         Where we are
       </h1>
@@ -93,8 +90,6 @@ export default async function OverviewPage() {
         <Stat label="Points" value={metrics.pointsAwarded} />
       </div>
 
-
-      <DpGenerationsCard dps={dps} sabilyticsUrl={SABILYTICS_SHARE_URL || undefined} />
 
       <SectionCard id="by-week" title="By week" className="mt-10">
         <div className="mt-4 overflow-x-auto rounded-lg border border-line">
@@ -148,36 +143,17 @@ export default async function OverviewPage() {
         </p>
       </SectionCard>
 
+      {/* The list itself is under Creators (Shared addresses): it is a list
+          to work through, not a figure. The count stays here. */}
       {clusters.length > 0 && (
-        <SectionCard
-          id="clusters"
-          title="Registrations sharing an address"
-          className="mt-6"
-        >
+        <SectionCard id="clusters" title="Shared addresses" className="mt-6">
           <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
-            For a person to look at, never acted on automatically.
+            {clusters.length} internet {clusters.length === 1 ? "address is" : "addresses are"} shared by
+            more than one registration.{" "}
+            <Link href="/admin/shared-addresses" className="text-link underline underline-offset-2 hover:text-white">
+              Look through them
+            </Link>
           </p>
-          <details className="mt-2">
-            <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink-2 hover:text-white">
-              Why a shared address is usually innocent
-            </summary>
-            <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-3">
-              Nigerian mobile carriers put very large numbers of subscribers
-              behind each address, so this is far more likely to be two
-              creators on the same network than one person with two accounts.
-              It is here because it is the only signal in the database that
-              points at the fraud the rules forbid, and a human comparing the
-              names and the work can tell those apart where a threshold
-              cannot.
-            </p>
-          </details>
-          <AddressClusters
-            clusters={clusters.map((cluster) => ({
-              ip: cluster.ip,
-              creators: cluster.creators,
-              names: cluster.names,
-            }))}
-          />
         </SectionCard>
       )}
 

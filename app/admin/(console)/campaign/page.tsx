@@ -4,15 +4,9 @@ import { isOwner, requireAdmin } from "@/lib/admin/session";
 import { pauseState } from "@/lib/campaign-pause";
 import { PauseSwitch } from "@/components/admin/pause-switch";
 import { SectionCard } from "@/components/shared/panel";
-import { listChallenges } from "@/lib/admin/challenges";
-import { ChallengeEditor } from "@/components/admin/challenge-editor";
-import { reminderState } from "@/lib/admin/reminders";
-import { listPointRules } from "@/lib/admin/point-rules";
-import { PointRulesEditor } from "@/components/admin/point-rules-editor";
-import { currentWeekNo } from "@/lib/campaigns";
 
 export const metadata: Metadata = {
-  title: "Campaign",
+  title: "Pause and clear",
   robots: { index: false, follow: false, nocache: true },
 };
 
@@ -21,6 +15,10 @@ export const revalidate = 0;
 
 /**
  * Starting and stopping the campaign.
+ *
+ * The weekly challenges and the point values used to share this page; they
+ * have their own screens now (Weekly challenges, Points), and this one is
+ * the switch and the test-data purge beyond it.
  *
  * Owners only, checked here as well as by the tab being absent. A hidden tab is
  * a tidy interface, not a permission: the route has to refuse a reviewer who
@@ -44,29 +42,13 @@ export default async function CampaignPage() {
     );
   }
 
-  const [pause, challenges, rules] = await Promise.all([
-    pauseState(),
-    listChallenges(admin.admin),
-    listPointRules(admin.admin),
-  ]);
-  const thisWeek = challenges.find((c) => c.weekNo === currentWeekNo());
-  /* The deadline reminder's state, for a week that is taking entries now:
-     active, opened, not yet closed. An owner can set next week active
-     ahead of its Monday, and that week must not offer a reminder. */
-  const now = new Date();
-  const reminders = new Map(
-    await Promise.all(
-      challenges
-        .filter((c) => c.status === "active" && c.startsAt <= now && c.endsAt > now)
-        .map(async (c) => [c.id, await reminderState(admin.admin, c.id)] as const),
-    ),
-  );
+  const pause = await pauseState();
   const beforeLaunch =
     pause.startsAt !== null && pause.startsAt > new Date();
 
   return (
     <>
-      <p className="eyebrow text-brand-gold">Campaign</p>
+      <p className="eyebrow text-brand-gold">Monica · Setup</p>
       <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-white">
         {pause.paused ? "Paused" : "Running"}
       </h1>
@@ -86,33 +68,6 @@ export default async function CampaignPage() {
           <PauseSwitch paused={pause.paused} />
         </div>
       </SectionCard>
-
-      {/* The weekly challenges, right where starting and stopping already lives,
-          because writing Monday's challenge is the other thing an owner does here
-          every week (#67). */}
-      <div className="mt-10">
-        <ChallengeEditor
-          challenges={challenges.map((challenge) => ({
-            id: challenge.id,
-            weekNo: challenge.weekNo,
-            title: challenge.title,
-            description: challenge.description,
-            question: challenge.question,
-            focus: challenge.focus,
-            skills: challenge.skills,
-            basePoints: challenge.basePoints,
-            status: challenge.status,
-            startsAt: challenge.startsAt.toISOString(),
-            endsAt: challenge.endsAt.toISOString(),
-            readonly_: challenge.endsAt < new Date(),
-            reminder: reminders.get(challenge.id),
-          }))}
-        />
-      </div>
-
-      <div className="mt-10">
-        <PointRulesEditor rules={rules} weekBase={thisWeek?.basePoints ?? 100} />
-      </div>
 
       {/*
        * The destructive control is a link, not a control.

@@ -49,11 +49,11 @@ export default async function SnapshotPage({
   return (
     <>
       <Link
-        href="/admin/winners"
+        href="/admin/payouts"
         className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-link underline underline-offset-4 hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        Winners
+        Payouts
       </Link>
 
       <div className="mt-6">

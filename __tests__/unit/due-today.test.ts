@@ -61,7 +61,7 @@ describe("the morning list", () => {
     expect(items.map((i) => i.text)).toEqual([
       "Send the week 3 last call: it closes today at 12:00 noon, and 40 creators have nothing in.",
     ]);
-    expect(items[0].href).toBe("/admin/campaign#stages");
+    expect(items[0].href).toBe("/admin/challenges");
   });
 
   it("does not ask for a reminder days early, or once both have gone, or with everyone in", () => {
@@ -209,6 +209,6 @@ describe("the morning list, for ROVV", () => {
 
   it("links each line to the ROVV console", () => {
     const items = dueItems(rovv({ pending: 1 }), at("2026-10-19T08:00:00+01:00"));
-    expect(items.map((i) => i.href)).toEqual(["/admin/rovv#winners", "/admin/rovv#winners"]);
+    expect(items.map((i) => i.href)).toEqual(["/admin/rovv/winners", "/admin/rovv/winners"]);
   });
 });

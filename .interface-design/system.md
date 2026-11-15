@@ -172,6 +172,29 @@ sections start from it rather than from SectionCard.
   the week header, the week on its group row, the total in the points
   header, who picks each award in the section hint.
 
+### The console menu: grouped, one job per line
+
+On 15 November 2026 the owner asked for the console to be a dashboard
+where every job can be found on its own: twelve flat tabs had grown a tab
+at a time, and a third of the jobs lived halfway down pages named for
+something else. The rulings:
+
+- The menu lives in lib/admin/console-nav.ts and nowhere else. Groups by
+  campaign first (Monica, ROVV), then Outreach and Team; inside a big group,
+  small non-interactive section labels (Review, Creators, Results, Setup).
+  A new campaign is a new group, not a reshuffle.
+- One line per job worth finding, each on its own screen. A job buried in
+  another page is brought out to its own page, not reached by an anchor.
+  Jobs that are one sequence stay together (the week's record, announce
+  and vote on Weekly winners).
+- Groups fold from their heading and remember it per browser; the group
+  you are in opens on arrival. The active line wears the gold left edge.
+- Desktop lines are 32px (mouse); every line and heading is 44px on a
+  phone, where the header names the screen and opens the same menu as a
+  sheet from the left. Sign out is icon-only below sm so the name fits.
+- A test walks the menu against the page files: every line opens a page,
+  every page has a line or a written reason, owner pages refuse reviewers.
+
 ### Partner walls: two groups, white tiles, hierarchy by size
 
 The owner called the home page's sponsor section ugly: a centred title

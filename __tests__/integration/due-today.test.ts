@@ -112,7 +112,7 @@ describe("the morning list endpoint", () => {
     expect(state.sends.map((s) => s.to)).not.toContain("reviewer@example.test");
     expect(state.sends.map((s) => s.to)).not.toContain("gone@example.test");
     expect(state.sends[0].text).toContain("Announce week 3 to creators");
-    expect(state.sends[0].text).toContain("https://blockfestafrica.com/admin/campaign#stages");
+    expect(state.sends[0].text).toContain("https://blockfestafrica.com/admin/challenges");
 
     const sent = state.sends.length;
     const again = await call("Bearer test-secret");
