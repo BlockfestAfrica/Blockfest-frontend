@@ -120,6 +120,8 @@ export default async function AdminLayout({
       ? [
           { href: "/admin/winners", label: "Winners" },
           { href: "/admin/campaign", label: "Campaign" },
+          // One-off emails to every creator who said yes to future campaigns.
+          { href: "/admin/emails", label: "Emails" },
           { href: "/admin/audit", label: "Audit" },
           // Names every admin and whose access is live, so it sits with the
           // audit log behind the same role check.

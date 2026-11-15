@@ -269,6 +269,9 @@ export const monicaRoutes = {
   winners: `/campaigns/${MONICA_SLUG}/winners`,
   /** The console-published resources list, anchored on the landing page. */
   resources: `/campaigns/${MONICA_SLUG}#resources`,
+  /** Where a future-campaigns email's "stop these emails" link lands (0076).
+   *  Asks before it acts, so a mail scanner opening the link stops nothing. */
+  stopEmails: `/campaigns/${MONICA_SLUG}/stop-emails`,
 } as const;
 
 export interface CampaignSkill {
