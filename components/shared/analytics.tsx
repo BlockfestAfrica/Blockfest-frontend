@@ -57,6 +57,9 @@ const OFF_LIMITS = [
      with a third-party script; the same rule has to hold here, and the
      success screen measures nothing worth the exception. */
   "/campaigns/monica-money-story/register",
+  /* Carries a token that withdraws one person's consent. A pageview tag
+     sends the URL it is on, so a vendor would hold everybody's. */
+  "/campaigns/monica-money-story/stop-emails",
 ];
 
 export function Analytics() {

@@ -138,8 +138,17 @@ interface Shell {
   /** Already-escaped HTML paragraphs and blocks. */
   body: string;
   action?: { label: string; href: string };
+  /** Already-escaped HTML below the button, for a letter that signs off. */
+  after?: string;
   /** Whose campaign the mail is about. Monica unless it says otherwise. */
   brand?: Brand;
+  /**
+   * For a future-campaigns email only: why they are getting it, and the link
+   * that stops them (lib/email-stop.ts). The privacy notice promises every
+   * one of those carries it. Campaign mail does not, because it is part of
+   * the entry they made rather than something they can opt out of.
+   */
+  stop?: { reason: string; href: string };
 }
 
 /**
@@ -169,7 +178,7 @@ const ROVV_BRAND: Brand = {
   privacy: rovvRoutes.privacy,
 };
 
-function layout({ preheader, heading, body, action, brand = MONICA_BRAND }: Shell): string {
+function layout({ preheader, heading, body, action, after = "", brand = MONICA_BRAND, stop }: Shell): string {
   const button = action
     ? `
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 8px;">
@@ -196,10 +205,12 @@ function layout({ preheader, heading, body, action, brand = MONICA_BRAND }: Shel
     <tr><td style="padding:4px 28px 32px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${INK};">
       ${body}
       ${button}
+      ${after ? `<div style="margin-top:20px;">${after}</div>` : ""}
     </td></tr>
     <tr><td style="padding:20px 28px 28px;border-top:1px solid ${LINE};font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:${MUTED};">
       <p style="margin:0;">Blockfest Africa, for ${escape(brand.campaign)}. Reply to this email and a person reads it.</p>
       <p style="margin:8px 0 0;"><a href="${siteUrl()}${brand.rules}" style="color:${MUTED};">Rules</a> &nbsp;·&nbsp; <a href="${siteUrl()}${brand.privacy}" style="color:${MUTED};">How we handle your details</a></p>
+      ${stop ? `<p style="margin:8px 0 0;">${escape(stop.reason)} <a href="${escape(stop.href)}" style="color:${MUTED};">Stop these emails</a></p>` : ""}
     </td></tr>
   </table>
 </td></tr></table></body></html>`;
@@ -2225,6 +2236,99 @@ export function rovvEntryAlertEmail(params: {
       heading: headline,
       body: [queue ? p(escape(queue)) : "", burst ? quiet(escape(burst)) : ""].join(""),
       action: { label: "Open the console", href: params.consoleUrl },
+    }),
+  };
+}
+
+/** Where Monica's Creator Challenge lives. Monica's own page, not ours. */
+export const MONICA_CREATOR_CHALLENGE_URL = "https://monica.cash/creator-challenge/";
+
+/**
+ * Monica's ₦50 million Creator Challenge, to the creators who said yes to
+ * future campaigns (lib/admin/broadcast.ts, 0076).
+ *
+ * The words are Monica's marketing team's draft as they sent it, set into
+ * the campaign's layout: the greeting takes the creator's first name, and
+ * the season line is set apart because it carries the one date. Change the
+ * copy with them, not here.
+ *
+ * The only mail here with a "stop these emails" link, because it is the
+ * only one sent on marketing consent rather than as part of an entry. Like
+ * every bulk template it carries no login link, so the owner's copy is safe
+ * to forward; the copy and the test carry SAMPLE_STOP_TOKEN in place of a
+ * real stop link, so pressing it in either stops nobody.
+ */
+export function creatorChallengeEmail(params: {
+  to: string;
+  fullName: string;
+  stopUrl: string;
+}): Email {
+  const name = firstName(params.fullName);
+  const url = MONICA_CREATOR_CHALLENGE_URL;
+  const reason =
+    "You are getting this because you said yes to hearing about future campaigns when you registered for Monica: The Money Story.";
+  const season = "Season 1: The Art of the Unexpected launches November 16!";
+
+  const lines = [
+    "Remember when we brought creators together at Blockfest Africa and Monica rewarded creativity with ₦5 million?",
+    "Well, there's something even bigger on the horizon!",
+  ];
+  const pitch =
+    "Monica is back with a ₦50 million Creator Challenge, celebrating creativity, originality and bold ideas across three exciting seasons.";
+  const who = [
+    "Whether you're a filmmaker, designer, writer, musician, photographer, comedian or work in any other creative discipline, this is another opportunity to put your creativity to work and get rewarded for it.",
+    "And since you were part of the Blockfest Africa creator community, we wanted to make sure you heard about it.",
+  ];
+  const close = [
+    "Three seasons. Three creative worlds. ₦50 million in total rewards.",
+    "Your next creative moment could be just around the corner.",
+  ];
+  const signOff = [
+    "We can't wait to see what you come up with.",
+    "Here's to more opportunities to create, connect and get rewarded.",
+  ];
+
+  return {
+    to: params.to,
+    toName: params.fullName,
+    replyTo: CONTACT_EMAIL,
+    subject: "Remember the ₦5M? There's something bigger from Monica",
+    text: [
+      `Hi ${name},`,
+      ``,
+      ...[...lines, pitch, ...who, season, ...close].flatMap((line) => [line, ``]),
+      `Get ready for the challenge: ${url}`,
+      ``,
+      ...signOff.flatMap((line) => [line, ``]),
+      `Team Blockfest Africa`,
+      ``,
+      `--`,
+      reason,
+      `Stop these emails: ${params.stopUrl}`,
+    ].join("\n"),
+    html: layout({
+      brand: { ...MONICA_BRAND, eyebrow: "Monica Creator Challenge" },
+      preheader: "Monica is back with a ₦50 million Creator Challenge. Season 1 launches November 16.",
+      heading: "Something bigger from Monica",
+      body: [
+        p(`Hi ${escape(name)},`),
+        ...lines.map((line) => p(escape(line))),
+        p(
+          `Monica is back with a <strong>₦50 million Creator Challenge</strong>, celebrating creativity, originality and bold ideas across three exciting seasons.`,
+        ),
+        ...who.map((line) => p(escape(line))),
+        `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:6px 0 20px;">
+           <tr><td style="padding:14px 16px;background:#fdf6dc;border-left:4px solid ${GOLD};border-radius:10px;">
+             <p style="margin:0 0 4px;font-family:Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${MUTED};">Season 1 launches November 16</p>
+             <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:17px;font-weight:700;color:${INK};">The Art of the Unexpected</p>
+           </td></tr>
+         </table>`,
+        ...close.map((line) => p(escape(line))),
+      ].join(""),
+      action: { label: "Get ready for the challenge", href: url },
+      // The sign-off sits below the button, where the draft has it.
+      after: [...signOff.map((line) => p(escape(line))), p("Team Blockfest Africa")].join(""),
+      stop: { reason, href: params.stopUrl },
     }),
   };
 }

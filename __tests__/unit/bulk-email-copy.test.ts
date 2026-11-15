@@ -84,6 +84,7 @@ describe("what a copy can carry", () => {
         ticketLink: "https://meetumo.ai/e/blockfest-africa-2026?utm_source=blockfestafrica.com",
       }),
       templates.rovvResultsEmail({ to: "ada@example.test", fullName: "Ada Obi" }),
+      templates.creatorChallengeEmail({ to: "ada@example.test", fullName: "Ada Obi", stopUrl: "https://blockfestafrica.com/campaigns/monica-money-story/stop-emails?s=sample" }),
       templates.rovvIneligibleEmail({
         to: "ada@example.test",
         fullName: "Ada Obi",
@@ -113,6 +114,7 @@ describe("what a copy can carry", () => {
       "app/api/admin/rovv/notify/route.ts",
       "app/api/admin/rovv/results/route.ts",
       "app/api/admin/rovv/rule-out/route.ts",
+      "app/api/admin/broadcast/route.ts",
     ]) {
       expect(readFileSync(join(process.cwd(), route), "utf8"), route).toMatch(/await sendBulkCopy\(/);
     }
