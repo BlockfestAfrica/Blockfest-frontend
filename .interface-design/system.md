@@ -180,7 +180,7 @@ at a time, and a third of the jobs lived halfway down pages named for
 something else. The rulings:
 
 - The menu lives in lib/admin/console-nav.ts and nowhere else. Groups by
-  campaign first (Monica, ROVV), then Site and Access; inside a big group,
+  campaign first (Monica, ROVV), then Outreach and Team; inside a big group,
   small non-interactive section labels (Review, Creators, Results, Setup).
   A new campaign is a new group, not a reshuffle.
 - One line per job worth finding, each on its own screen. A job buried in

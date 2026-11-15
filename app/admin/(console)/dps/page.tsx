@@ -15,8 +15,8 @@ export const revalidate = 0;
 
 /**
  * The DPs made on /getdp. Was a card on Monica's overview, but /getdp is the
- * event's, not the campaign's, so it sits under Site. Open to every admin,
- * as it was.
+ * event's, not the campaign's, so it sits under Outreach. Open to every
+ * admin, as it was.
  */
 export default async function DpsPage() {
   const admin = await requireAdmin();
@@ -25,7 +25,7 @@ export default async function DpsPage() {
   return (
     <>
       <PageHeader
-        context="Site"
+        context="Outreach"
         title="DPs generated"
         hint="Every DP made on /getdp, counted in our own database."
       />

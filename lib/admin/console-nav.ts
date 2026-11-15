@@ -12,6 +12,8 @@
  * entry, a ROVV video), and a campaign added later is one more group rather
  * than a reshuffle. Within Monica, sections follow the week: reviewing what
  * came in, looking after the people, the results, and the setup behind it.
+ * Then what reaches people beyond a campaign (Outreach: the /getdp counts and
+ * the one-off emails), and the team itself (who has access, what they did).
  *
  * Plain data, no React and no server imports: the rail and the phone menu
  * render it, and a test walks it against the page files so a screen cannot
@@ -59,6 +61,7 @@ export const CONSOLE_NAV: ConsoleNavGroup[] = [
           { href: "/admin/participants", label: "People" },
           { href: "/admin/handle-requests", label: "Handle corrections", owner: true },
           { href: "/admin/reissue", label: "New personal link", owner: true },
+          { href: "/admin/shared-addresses", label: "Shared addresses" },
         ],
       },
       {
@@ -94,8 +97,8 @@ export const CONSOLE_NAV: ConsoleNavGroup[] = [
     ],
   },
   {
-    id: "site",
-    label: "Site",
+    id: "outreach",
+    label: "Outreach",
     sections: [
       {
         items: [
@@ -106,8 +109,8 @@ export const CONSOLE_NAV: ConsoleNavGroup[] = [
     ],
   },
   {
-    id: "access",
-    label: "Access",
+    id: "team",
+    label: "Team",
     sections: [
       {
         items: [

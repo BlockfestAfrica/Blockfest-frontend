@@ -81,7 +81,7 @@ describe("what a reviewer sees", () => {
     const reviewer = consoleNavFor(false);
     expect(items(reviewer).some((i) => i.owner)).toBe(false);
     expect(items(reviewer).map((i) => i.href)).toEqual(items().filter((i) => !i.owner).map((i) => i.href));
-    expect(reviewer.map((g) => g.id)).toEqual(["monica", "rovv", "site"]);
+    expect(reviewer.map((g) => g.id)).toEqual(["monica", "rovv", "outreach"]);
     for (const group of reviewer) for (const section of group.sections) expect(section.items.length).toBeGreaterThan(0);
   });
 
@@ -139,7 +139,7 @@ describe("the groups", () => {
   });
 
   it("comes back the way it was left", async () => {
-    window.localStorage.setItem("console-nav:open", JSON.stringify({ site: true }));
+    window.localStorage.setItem("console-nav:open", JSON.stringify({ outreach: true }));
     await act(async () => {
       render(<ConsoleNav groups={CONSOLE_NAV} />);
     });

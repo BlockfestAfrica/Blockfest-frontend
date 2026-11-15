@@ -49,7 +49,7 @@ export default async function EmailsPage() {
 
   return (
     <>
-      <p className="eyebrow text-brand-gold">Emails</p>
+      <p className="eyebrow text-brand-gold">Outreach · Emails</p>
       <h1 className="mt-2 text-display-sm font-bold uppercase tracking-[-0.03em] text-white">
         Monica Creator Challenge
       </h1>

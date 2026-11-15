@@ -58,6 +58,12 @@ vi.mock("@/lib/email/copy", () => ({
   },
 }));
 
+/* A test here can make two full presses against PGlite, each a dozen
+   queries. Alone that is well under a second; inside a full run that
+   loads every core it once passed the default five seconds, failing a
+   suite that production deploys run. */
+vi.setConfig({ testTimeout: 20_000 });
+
 const broadcastRoute = await import("@/app/api/admin/broadcast/route");
 const stopRoute = await import("@/app/api/campaigns/monica/stop-emails/route");
 const { broadcastCounts, CREATOR_CHALLENGE } = await import("@/lib/admin/broadcast");
